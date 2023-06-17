@@ -2,50 +2,51 @@ import hotTemp from './hot.png';
 import coldTemp from './cold.png';
 import neutralTemp from './neutral.png';
 
+// Hard coded the variable units and images for now
 const variableUnits: { variable: string; unit: string; images: string[] }[] = [
   {
     variable: 'air_temp',
-    unit: 'Celcius',
+    unit: 'C\u00B0',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'dew_point_temperature',
-    unit: 'Celcius',
+    unit: 'C\u00B0',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'elevation',
-    unit: 'ft',
+    unit: 'ft.',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'incoming_radiation_lw',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'net_radiation',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'net_radiation_sw',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'net_radiation_lw',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'outgoing_radiation_lw',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'outgoing_radiation_sw',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
@@ -55,7 +56,7 @@ const variableUnits: { variable: string; unit: string; images: string[] }[] = [
   },
   {
     variable: 'precip_accum_five_minute',
-    unit: 'Millimeters',
+    unit: 'mm',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
@@ -70,17 +71,17 @@ const variableUnits: { variable: string; unit: string; images: string[] }[] = [
   },
   {
     variable: 'soil_temp',
-    unit: 'Celcius',
+    unit: 'C\u00B0',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'solar_radiation',
-    unit: 'W/m2',
+    unit: 'W/m\u00B2',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {
     variable: 'wind_direction',
-    unit: 'Degrees',
+    unit: '\u00B0',
     images: [coldTemp, neutralTemp, hotTemp],
   },
   {

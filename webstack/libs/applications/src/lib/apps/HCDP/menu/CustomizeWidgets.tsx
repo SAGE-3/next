@@ -13,12 +13,8 @@ import {
   Text,
   Drawer,
   DrawerContent,
-  DrawerHeader,
   DrawerBody,
-  HStack,
   Select,
-  VStack,
-  Flex,
   Accordion,
   AccordionButton,
   AccordionIcon,
@@ -27,26 +23,27 @@ import {
   UnorderedList,
   ListItem,
   Input,
-  Divider,
   Heading,
   Tooltip,
   useColorModeValue,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
 import LeafletWrapper from '../LeafletWrapper';
-import { App, AppState } from '@sage3/applications/schema';
-import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay, MapContainer } from 'react-leaflet';
-import { SAGEColors, colors } from '@sage3/shared';
+import { App } from '@sage3/applications/schema';
+import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
 
-import { useAppStore, useHexColor } from '@sage3/frontend';
+import { useAppStore } from '@sage3/frontend';
 import VariableCard from '../viewers/VariableCard';
 import EChartsViewer from '../viewers/EChartsViewer';
+import { getColor } from '../../EChartsViewer/ChartManager';
 
 type NLPRequestResponse = {
   success: boolean;
   message: string;
 };
 
+// This function is used to only display common variables between all stations
+// Will return an array of variables that are common between all stations
 function findDuplicateElements(...arrays: any) {
   const elementCount: any = {};
 
@@ -70,6 +67,7 @@ function findDuplicateElements(...arrays: any) {
   return duplicates;
 }
 
+// Not used for now. TODO in future, will ask ChatGPT to generate a chart
 export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
   const response = await fetch('/api/nlp', {
     method: 'POST',
@@ -83,6 +81,7 @@ export async function NLPHTTPRequest(message: string): Promise<NLPRequestRespons
   return (await response.json()) as NLPRequestResponse;
 }
 
+// Convert the dateTime to ECharts format
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
   const year = now.getFullYear();
@@ -94,6 +93,7 @@ function convertToFormattedDateTime(date: Date) {
   return `${year}${month}${day}${hours}${minutes}`;
 }
 
+// Get the dateTime 24 hours before
 function getFormattedDateTime24HoursBefore() {
   const now = new Date();
   now.setHours(now.getHours() - 24);
@@ -107,6 +107,7 @@ function getFormattedDateTime24HoursBefore() {
   return `${year}${month}${day}${hours}${minutes}`;
 }
 
+// Convert the dateTime to Chakra format
 function convertToChakraDateTime(dateTime: string) {
   const year = dateTime.slice(0, 4);
   const month = dateTime.slice(4, 6);
@@ -123,9 +124,9 @@ function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
   if (mins > 0) {
-    return `Refreshed ${mins} minutes ago`;
+    return `${mins} minutes ago`;
   } else {
-    return `Refreshed less than a minute ago`;
+    return `less than a minute ago`;
   }
 }
 
@@ -135,31 +136,41 @@ const CustomizeWidgets = React.memo((props: App) => {
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
-  const [selectedStations, setSelectedStations] = useState<any>([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const { onClose } = useDisclosure();
+
+  // Station & Echart variables
   const [axisVariableNames, setAxisVariableNames] = useState<string[]>([]);
-  // const [selectedColor, setSelectedColor] = useState<SAGEColors>('blue');
   const [stationMetadata, setStationMetadata] = useState<any>([]);
+
+  // Timing
   const [isLoaded, setIsLoaded] = useState(false);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
-
-  const [prompt, setPrompt] = useState<string>('');
   const [startDate, setStartDate] = useState<string>(getFormattedDateTime24HoursBefore());
-
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
 
-  const fetchData = async (dateToUse: string) => {
+  // For color theme
+  const textColor = useColorModeValue('gray.800', 'gray.50');
+  const drawerBackgroundColor: string = useColorModeValue('gray.50', 'gray.700');
+  const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
+  const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
+
+  // TODO used for ChatGPT
+  const [, setPrompt] = useState<string>('');
+
+  // Fetches all station data given a startDate
+  const fetchData = async (startDate: string) => {
     setIsLoaded(false);
     let tmpSensorMetadata: any = [];
     const tmpVariableNames: any = [];
     let response: Response | null = null;
     let stationData = null;
 
+    // Fetch all station data
     response = await fetch(
       `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
         props.data.state.stationNames
-      )}&showemptystations=1&start=${dateToUse}&end=${convertToFormattedDateTime(
+      )}&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
         new Date()
       )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
     );
@@ -174,11 +185,16 @@ const CustomizeWidgets = React.memo((props: App) => {
         tmpSensorMetadata = stationData['STATION'];
       }
     }
+
+    // StationData
+    setStationMetadata(tmpSensorMetadata);
+
+    // Variable names used to display on the Select Dropdown
     const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
     filteredVariableNames.push('elevation', 'latitude', 'longitude', 'name', 'current temperature');
-    setIsLoaded(true);
     setAxisVariableNames(filteredVariableNames);
-    setStationMetadata(tmpSensorMetadata);
+
+    setIsLoaded(true);
   };
 
   useEffect(() => {
@@ -196,6 +212,7 @@ const CustomizeWidgets = React.memo((props: App) => {
     fetchData(startDate);
   }, [startDate]);
 
+  // Update the time since last update
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
       if (lastUpdate > 0) {
@@ -224,24 +241,23 @@ const CustomizeWidgets = React.memo((props: App) => {
     setAxisVariableNames([]);
     updateState(props._id, { stationNames: [...props.data.state.stationNames, station.name] });
   };
+
+  // Select Dropdown handler
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     updateState(props._id, { widget: { ...props.data.state.widget, visualizationType: value } });
   };
+
+  // Select Dropdown handler
   const handleYAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
 
     updateState(props._id, { widget: { ...props.data.state.widget, yAxisNames: [value] } });
   };
-
+  // Select Dropdown handler
   const handleXAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
     updateState(props._id, { widget: { ...props.data.state.widget, xAxisNames: [value] } });
-  };
-
-  const handleColorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const color = event.target.value;
-    updateState(props._id, { widget: { ...props.data.state.widget, color: color } });
   };
 
   const generateWidget = async () => {
@@ -273,6 +289,7 @@ const CustomizeWidgets = React.memo((props: App) => {
     setPrompt(value);
   };
 
+  // TODO send prompt to ChatGPT
   const sendToChatGPT = async () => {
     // const message = await NLPHTTPRequest(prompt);
   };
@@ -292,7 +309,6 @@ const CustomizeWidgets = React.memo((props: App) => {
       <Drawer
         blockScrollOnMount={false}
         trapFocus={false}
-        // closeOnOverlayClick={false}
         placement={'bottom'}
         onClose={onClose}
         isOpen={props.data.state.isWidgetOpen}
@@ -301,12 +317,9 @@ const CustomizeWidgets = React.memo((props: App) => {
           console.log('clicked');
         }}
       >
-        <DrawerContent bg="transparent">
-          <Box display="flex" justifyContent="center">
-            <Box width="400px" background="#393E46" display="flex" justifyContent={'center'} borderRadius="20px 20px 0 0"></Box>
-          </Box>
-          <Box display="flex" justifyContent="center" background="#393E46" alignContent="center">
-            <Text fontSize="4xl" fontWeight="bold">
+        <DrawerContent bg="transparent" borderTop={`5px solid ${accentColor}`}>
+          <Box display="flex" justifyContent="center" background={drawerBackgroundColor} alignContent="center">
+            <Text fontSize="4xl" fontWeight="bold" color={textColor}>
               Visualization Generator
             </Text>
             <Button
@@ -323,14 +336,11 @@ const CustomizeWidgets = React.memo((props: App) => {
               X
             </Button>
           </Box>
-          {/* <DrawerHeader bg="#393E46" textAlign={'center'} borderBottomWidth="1px">
-              Visualization Generator
-            </DrawerHeader> */}
-          <DrawerBody bg="#393E46">
+          <DrawerBody bg={drawerBackgroundColor}>
             <Box display="flex" justifyContent="center" alignContent="center" height="100%" pb={4}>
-              <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="30rem">
-                <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
-                  <Heading size="md" isTruncated={true}>
+              <Box border="3px solid" borderColor={accentColor} boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="30rem">
+                <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
+                  <Heading color={textColor} size="md" isTruncated={true}>
                     Selected Stations
                   </Heading>
                 </Box>
@@ -338,14 +348,14 @@ const CustomizeWidgets = React.memo((props: App) => {
                   {!isLoaded
                     ? props.data.state.stationNames.map((stationName: string, index: number) => {
                         return (
-                          <Box p="1rem" key={index} bg={index % 2 == 1 ? '#393E46' : '#42474E'}>
+                          <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
                             Loading Station...
                           </Box>
                         );
                       })
                     : stationMetadata.map((station: any, index: number) => {
                         return (
-                          <Box key={index} bg={index % 2 == 1 ? '#393E46' : '#42474E'}>
+                          <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
                             <AccordionItem>
                               <h2>
                                 <AccordionButton>
@@ -372,9 +382,11 @@ const CustomizeWidgets = React.memo((props: App) => {
                       })}
                 </Accordion>
               </Box>
-              <Box border="3px solid" borderColor="gray.700" boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="40rem">
-                <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
-                  <Heading size="md">Map</Heading>
+              <Box border="3px solid" borderColor={accentColor} boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="40rem">
+                <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
+                  <Heading color={textColor} size="md">
+                    Map
+                  </Heading>
                 </Box>
 
                 <LeafletWrapper map={map} setMap={setMap} {...props}>
@@ -401,13 +413,22 @@ const CustomizeWidgets = React.memo((props: App) => {
                             eventHandlers={{
                               click: (e) => {
                                 if (station.selected) {
-                                  handleRemoveSelectedStation(station);
+                                  if (props.data.state.stationNames.length >= 2) {
+                                    handleRemoveSelectedStation(station);
+                                  }
                                 } else {
-                                  handleAddSelectedStation(station);
+                                  if (props.data.state.stationNames.length <= 8) {
+                                    handleAddSelectedStation(station);
+                                  }
                                 }
                               },
                             }}
-                          ></CircleMarker>
+                          >
+                            {props.data.state.stationNames.length >= 9 ? (
+                              <LeafletTooltip>'You have reached the max number of visualizations' </LeafletTooltip>
+                            ) : null}
+                          </CircleMarker>
+
                           <SVGOverlay
                             bounds={[
                               [station.lat - 0.17, station.lon - 0.05],
@@ -435,7 +456,7 @@ const CustomizeWidgets = React.memo((props: App) => {
               </Box>
               <Box
                 border="3px solid"
-                borderColor="gray.700"
+                borderColor={accentColor}
                 boxShadow="lg"
                 overflow="hidden"
                 mx="3"
@@ -443,8 +464,10 @@ const CustomizeWidgets = React.memo((props: App) => {
                 height="40rem"
                 width="40rem"
               >
-                <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
-                  <Heading size="md">Options</Heading>
+                <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
+                  <Heading color={textColor} size="md">
+                    Options
+                  </Heading>
                 </Box>
                 <Box py="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                   <Box
@@ -518,29 +541,6 @@ const CustomizeWidgets = React.memo((props: App) => {
                         })}
                       </Select>
                     </Box>
-                    <Box display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
-                      <Text>Color: </Text>
-                      <Select
-                        w="15rem"
-                        placeholder={'Select Color'}
-                        mr="1rem"
-                        value={props.data.state.widget.color}
-                        onChange={(e) => {
-                          handleColorChange(e);
-                        }}
-                      >
-                        {colors.map((color: SAGEColors, index: number) => {
-                          const c = useHexColor(color);
-                          return (
-                            <>
-                              <option key={c} value={c}>
-                                {color.charAt(0).toUpperCase() + color.slice(1)}
-                              </option>
-                            </>
-                          );
-                        })}
-                      </Select>
-                    </Box>
                   </Box>
                 ) : null}
                 {props.data.state.widget.visualizationType === 'line' ||
@@ -604,7 +604,7 @@ const CustomizeWidgets = React.memo((props: App) => {
               </Box>
               <Box
                 border="3px solid"
-                borderColor="gray.700"
+                borderColor={accentColor}
                 boxShadow="lg"
                 overflow="hidden"
                 mx="3"
@@ -615,8 +615,10 @@ const CustomizeWidgets = React.memo((props: App) => {
                 flexDirection={'column'}
                 alignContent={'center'}
               >
-                <Box bg="gray.800" p="1rem" borderBottom={'1px solid black'}>
-                  <Heading size="md">Preview</Heading>
+                <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
+                  <Heading color={textColor} size="md">
+                    Preview
+                  </Heading>
                 </Box>
                 <Box color={textColor} height="100%" width="100%" justifyContent={'center'}>
                   {props.data.state.widget.visualizationType === 'variableCard' ? (
@@ -649,67 +651,6 @@ const CustomizeWidgets = React.memo((props: App) => {
     </>
   );
 });
-
-function arePropsEqual(
-  prevProps: {
-    size: {
-      width: number;
-      height: number;
-      depth: number;
-    };
-    widget: {
-      visualizationType: string;
-      yAxisNames: string[];
-      xAxisNames: string[];
-      stationNames: string[];
-    };
-    assetid: string;
-    overlay: boolean;
-    isWidgetOpen: boolean;
-    location: number[];
-    baseLayer: any;
-    zoom: number;
-    stationNames: string[];
-    _id: string;
-    roomId: string;
-    boardId: string;
-  },
-  nextProps: {
-    size: {
-      width: number;
-      height: number;
-      depth: number;
-    };
-    widget: {
-      visualizationType: string;
-      yAxisNames: string[];
-      xAxisNames: string[];
-      stationNames: string[];
-    };
-    assetid: string;
-    overlay: boolean;
-    isWidgetOpen: boolean;
-    location: number[];
-    baseLayer: any;
-    zoom: number;
-    stationNames: string[];
-    _id: string;
-    roomId: string;
-    boardId: string;
-  }
-) {
-  // Compare all properties to determine equality
-  return (
-    prevProps.size.width === nextProps.size.width &&
-    prevProps.size.height === nextProps.size.height &&
-    prevProps.size.depth === nextProps.size.depth &&
-    prevProps.widget.visualizationType === nextProps.widget.visualizationType &&
-    prevProps.widget.yAxisNames === nextProps.widget.yAxisNames &&
-    prevProps.widget.xAxisNames === nextProps.widget.xAxisNames &&
-    prevProps.widget.stationNames === nextProps.widget.stationNames &&
-    prevProps.isWidgetOpen === nextProps.isWidgetOpen
-  );
-}
 
 export default CustomizeWidgets;
 

@@ -1,5 +1,6 @@
 import type { EChartsOption } from 'echarts';
 
+//Types
 type filterType = {
   attribute: string;
   operator: string;
@@ -14,26 +15,17 @@ type aggregateType = {
   yAxisAggregator: string;
 };
 
-type seriesType = {
-  name: string;
-  type: string;
-  data: any[];
-};
-
 export const stationColors: { stationName: string; color: string }[] = [];
+export const colors: string[] = ['#EA6343', '#F69637', '#FFB92E', '#60CC8D', '#60CDBA', '#5AB2D3', '#58D5D5', '#7D78B4', '#DB5296'];
 
-export const getRandomColor = () => {
-  // Generate random values for red, green, and blue between 150 and 255
-  const red = Math.floor(Math.random() * 156) + 100;
-  const green = Math.floor(Math.random() * 156) + 100;
-  const blue = Math.floor(Math.random() * 156) + 100;
-
-  // Convert the red, green, and blue values to hexadecimal format and combine them into a color string
-  const color = `#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
-
-  return color;
+// Note: Also used by SensorOverview to color the individual "Current Value" cards
+// Generates a "bright" random color
+// Chose "bright" because it is easier to read on a black background
+export const getColor = (index: number) => {
+  return colors[index];
 };
 
+// Convert to ECharts formatted dateTime
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
   const year = now.getFullYear();
@@ -45,6 +37,7 @@ function convertToFormattedDateTime(date: Date) {
   return `${year}${month}${day}${hours}${minutes}`;
 }
 
+// Generates the options for charts
 export const ChartManager = async (
   stationNames: string[],
   chartType: string,
@@ -56,22 +49,26 @@ export const ChartManager = async (
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
   let options: EChartsOption = {};
-
   let data = [];
   const stationReadableNames = [];
+
+  // If higher component already has data, use that date
+  // Otherwise, it is undefined, so fetch the data
   if (stationMetadata === undefined) {
-    for (let i = 0; i < stationNames.length; i++) {
-      const response = await fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${
-          stationNames[i]
-        }&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
-          new Date()
-        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-      );
-      const sensor = await response.json();
-      const sensorData = sensor['STATION'][0];
-      stationReadableNames.push(sensorData.NAME);
-      data.push(sensorData);
+    // fetch all stations
+    const response = await fetch(
+      `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+        stationNames
+      )}&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
+        new Date()
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
+    );
+    const sensor = await response.json();
+    data = sensor['STATION'];
+
+    // Create a list of station names
+    for (let i = 0; i < data.length; i++) {
+      stationReadableNames.push(data[i].NAME);
     }
   } else {
     data = stationMetadata;
@@ -79,6 +76,9 @@ export const ChartManager = async (
       stationReadableNames.push(stationMetadata[i].NAME);
     }
   }
+
+  // These attributes are not in the data, so add them
+  // They are single values for each station, rather than multiple values
   for (let i = 0; i < data.length; i++) {
     data[i].OBSERVATIONS['elevation'] = [data[i].ELEVATION];
     data[i].OBSERVATIONS['latitude'] = [data[i].LATITUDE];
@@ -89,9 +89,9 @@ export const ChartManager = async (
     ];
   }
 
-  //
-
+  // This generates the data for charts, NOT the chart itself
   const { xAxisData, yAxisData } = createAxisData(data, yAxisAttributes, xAxisAttributes);
+
   switch (chartType) {
     case 'line':
       if (data.length > 1) {
@@ -107,9 +107,12 @@ export const ChartManager = async (
       createScatterPlot(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       break;
   }
+
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
   options = customizeChart(options, colorMode);
   options.color = createColors(options, data);
+
+  //Next two calls generates the X and Y axis for the charts
   createXAxis(options, xAxisAttributes, xAxisData, chartType);
   createYAxis(options);
   createGrid(options);
@@ -171,7 +174,7 @@ const createColors = (options: any, data: any): string[] => {
     const stationName = data[i].NAME;
     const stationIndex = stationColors.findIndex((station) => station.stationName === stationName);
     if (stationIndex === -1) {
-      const color = getRandomColor();
+      const color = getColor(stationColors.length % 9);
       stationColors.push({ stationName, color });
       colors.push(color);
     } else {

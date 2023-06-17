@@ -6,16 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Box, Button, Spinner, Text, Wrap, WrapItem, Image } from '@chakra-ui/react';
-import { useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { TbWind } from 'react-icons/tb';
+import { Box, Spinner, Text, Image } from '@chakra-ui/react';
 import VariableUnits from '../data/VariableUnits';
-import { stationColors, getRandomColor } from '../../EChartsViewer/ChartManager';
+import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
-
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -58,7 +55,6 @@ function compareWithStandardDeviation(average: number, standardDeviation: number
 }
 
 function lightenColor(hexColor: string) {
-  console.log(hexColor, '****');
   // Parse the hexadecimal color string to RGB values
   let r = parseInt(hexColor.substr(1, 2), 16);
   let g = parseInt(hexColor.substr(3, 2), 16);
@@ -104,7 +100,6 @@ export default function VariableCard(
   const s = props.state as AppState;
   const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
   const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
-  const [variableUnit, setVariableUnit] = useState<string>('');
 
   useEffect(() => {
     const values: VariableProps[] = [];
@@ -134,10 +129,11 @@ export default function VariableCard(
       const stationIndex = stationColors.findIndex((station) => station.stationName === props.stationMetadata[i].NAME);
       let color = '';
       if (stationIndex === -1) {
-        color = getRandomColor();
+        color = getColor(stationColors.length % 9);
         stationColors.push({ stationName: props.stationMetadata[i].NAME, color });
       } else {
-        color = stationColors[stationIndex].color;
+        // color = stationColors[stationIndex].color;
+        color = getColor(stationIndex % 9);
       }
       console.log(color);
       if (sensorValues.length !== 0) {
@@ -302,10 +298,11 @@ const Content = (props: {
       boxShadow={'lg'}
       p="1rem"
       w={500}
-      h={500}
+      h={300}
       border="solid white 6px"
       borderRadius={'24px'}
-      style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
+      style={{ background: 'white' }}
+      // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
       display="flex"
       margin="1rem"
       flexDirection="column"
@@ -325,11 +322,11 @@ const Content = (props: {
           {props.variable.stationName}
         </Text>
       </Box>
-      <Box>
+      {/* <Box>
         <Text color="black" textAlign={'center'} fontSize={35} fontWeight="bold">
           {variableName.join(' ')}
         </Text>
-      </Box>
+      </Box> */}
 
       <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
         {props.variable.images ? (
@@ -355,7 +352,6 @@ const Content = (props: {
               fontSize={35}
               fontWeight="bold"
             >
-              Current:{' '}
               {isNaN(props.variable.value)
                 ? props.variable.value
                 : props.variable.value % 1
@@ -424,7 +420,7 @@ const Content = (props: {
               fontSize={20}
               fontWeight="bold"
             >
-              <>24 hour observation</>
+              <>Last 24 hours</>
             </Text>
           </>
         ) : (

@@ -6,16 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
+// Sage Imports
+import { useAppStore, useHexColor } from '@sage3/frontend';
 import { App } from '../../schema';
-
-import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+
+// React Imports
+import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
 
 // Styling
 import './styling.css';
-import { HtmlHTMLAttributes, useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+// Visualization imports
 import VariableCard from '../HCDP/viewers/VariableCard';
 import EChartsViewer from '../HCDP/viewers/EChartsViewer';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
@@ -35,9 +39,9 @@ function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
   if (mins > 0) {
-    return `Refreshed ${mins} minutes ago`;
+    return `${mins} minutes ago`;
   } else {
-    return `Refreshed less than a minute ago`;
+    return `less than a minute ago`;
   }
 }
 
@@ -59,16 +63,17 @@ function getFormattedDateTime24HoursBefore() {
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
   const [stationMetadata, setStationMetadata] = useState([]);
 
+  // Color Variables
   const bgColor = useColorModeValue('gray.100', 'gray.900');
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
+  // Time Variables
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
+
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
       if (lastUpdate > 0) {
@@ -82,6 +87,7 @@ function AppComponent(props: App): JSX.Element {
     }, 1000 * 30); // 30 seconds
     return () => clearInterval(interval);
   }, [lastUpdate]);
+
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
@@ -108,7 +114,6 @@ function AppComponent(props: App): JSX.Element {
 
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
-      // return tmpStationMetadata;
     };
     fetchStationData().catch((err) => {
       fetchStationData();

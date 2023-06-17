@@ -8,11 +8,9 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Spinner, useColorMode } from '@chakra-ui/react';
+import { Box, Spinner, useColorMode } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
-import { useAppStore } from '@sage3/frontend';
-import VariableUnits from '../data/VariableUnits';
 import '../styling.css';
 
 const EChartsViewer = (props: {
@@ -28,8 +26,10 @@ const EChartsViewer = (props: {
   // HTML element reference
   const chartRef = useRef<any>(null);
   const outboxRef = useRef<any>(null);
+
   // Echart options
   const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption | null>(null);
+
   // Users SAGE 3 color mode
   const { colorMode } = useColorMode();
 
@@ -48,7 +48,8 @@ const EChartsViewer = (props: {
 
     chartInstance.setOption(chartOptions);
   }, [chartRef.current, outboxRef.current, colorMode, chartOptions, JSON.stringify(props.size)]);
-  // Props update
+
+  // If any properties for visualization changes, update the chart options
   useEffect(() => {
     async function callToChartMangaer() {
       const options = await ChartManager(

@@ -6,13 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// Sage Imports
 import { useAppStore } from '@sage3/frontend';
 import { useColorMode } from '@chakra-ui/react';
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
+// EChart imports
 import * as echarts from 'echarts';
 
 // Styling
@@ -20,10 +21,8 @@ import './styling.css';
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 
 /* App component for EChartsViewer */
-
 function AppComponent(props: App): JSX.Element {
   const chartRef = useRef<any>(null);
-
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
 
@@ -44,15 +43,9 @@ function AppComponent(props: App): JSX.Element {
       height: props.data.size.height,
       width: props.data.size.width,
     });
-    async function callToChartMangaer() {
-      // const options = await ChartManager(s.stationName, s.chartType, s.yAxisAttributes, s.xAxisAttributes, s.transform);
-      // if (chartInstance) chartInstance.setOption(options);
-    }
-    const options = callToChartMangaer();
+
     setChartStateInstance(chartInstance);
   }, [chartRef, colorMode]);
-
-  useEffect(() => {}, [colorMode, chartStateInstance]);
 
   useEffect(() => {
     if (chartStateInstance) {

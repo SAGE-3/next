@@ -6,24 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import {
-  HStack,
-  ButtonGroup,
-  Tooltip,
-  Button,
-  useColorModeValue,
-  Text,
-  Center,
-  VStack,
-  Box,
-  RadioGroup,
-  Radio,
-  Stack,
-} from '@chakra-ui/react';
+import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, Box, RadioGroup, Radio, Stack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -32,14 +19,13 @@ import { state as AppState } from './index';
 
 // Leaflet plus React
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { TileLayer, LayersControl, Popup, CircleMarker, SVGOverlay } from 'react-leaflet';
+import { TileLayer, LayersControl, CircleMarker, SVGOverlay } from 'react-leaflet';
 import LeafletWrapper from './LeafletWrapper';
 
-import { SensorTypes, stationDataTemplate } from './data/stationData';
+import { SensorTypes } from './data/stationData';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
-import { useStore } from './LeafletWrapper';
 
 // Icon imports
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
@@ -61,14 +47,11 @@ function AppComponent(props: App): JSX.Element {
   // State and Store
   const s = props.data.state as AppState;
 
-  const createApp = useAppStore((state) => state.create);
   const updateState = useAppStore((state) => state.updateState);
-
-  const arrowRef = useRef<any>(null);
 
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
-  const [stationMetadata, setStationMetadata] = useState([]);
+  const [, setStationMetadata] = useState([]);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -196,22 +179,10 @@ function AppComponent(props: App): JSX.Element {
                   bounds={[
                     [data.lat - 0.17, data.lon - 0.05],
                     [data.lat + 0.15, data.lon + 0.05],
-                    // [data.lat - 0.17, data.lon - 0.05],
-                    // [data.lat + 0.17, data.lon + 0.05],
                   ]}
                 >
                   {s.variableToDisplay === 'windSpeed' ? (
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                      {/* {data['windDirection'] == 0 ? null : (
-                      <g
-                        ref={arrowRef}
-                        fill="white"
-                        transform={`translate(100, 100) scale(2) translate(-100, -100) rotate(${data['windDirection'] + 180},100,100)`}
-                      >
-                        <Arrow degree={data['windDirection']} />
-
-                      </g>
-                    )} */}
                       <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
                         <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
@@ -270,9 +241,6 @@ const hawaiiLatLngCoordinates = [
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const [addrValue, setAddrValue] = useState('');
-  const map = useStore((state: any) => state.map[props._id]);
-  const update = useAppStore((state) => state.update);
   // BoardInfo
   const { boardId, roomId } = useParams();
   const createApp = useAppStore((state) => state.create);

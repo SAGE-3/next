@@ -293,7 +293,6 @@ function ToolbarComponent(props: App): JSX.Element {
     if (input == 'yes') {
       currentStoryIndex++;
       let listOfSelectedStationsAsString = '';
-      console.log(currentStoryIndex);
       switch (currentStoryIndex) {
         case 0:
           break;

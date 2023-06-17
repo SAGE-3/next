@@ -133,13 +133,15 @@ export function Apps() {
     { dependencies: [previousLocation.set] }
   );
 
+  // Used for dragging individual stations from SensorOverview app
   useEffect(() => {
+    // Handle the drop event
     const handleDrop = (event: any) => {
       event.preventDefault();
       const { x, y } = userCursor.uiToBoard(event.pageX, event.pageY);
-      const { id } = event.target;
-      // const cursorPosition = cursorPositionRef.current;
       const state = JSON.parse(event.dataTransfer.getData('text'));
+
+      // On drop, create new SensorOverview app with single station
       createApp({
         title: 'SensorOverview',
         roomId: roomId!,
@@ -164,6 +166,7 @@ export function Apps() {
     return cleanup;
   }, []);
 
+  // Update the cursor position
   useEffect(() => {
     cursorPositionRef.current = userCursor;
   }, [userCursor]);
