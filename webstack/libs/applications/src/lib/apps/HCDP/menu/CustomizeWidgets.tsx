@@ -425,7 +425,7 @@ const CustomizeWidgets = React.memo((props: App) => {
                             }}
                           >
                             {props.data.state.stationNames.length >= 9 ? (
-                              <LeafletTooltip>'You have reached the max number of visualizations' </LeafletTooltip>
+                              <LeafletTooltip>'You have reached the max number of selected stations' </LeafletTooltip>
                             ) : null}
                           </CircleMarker>
 
