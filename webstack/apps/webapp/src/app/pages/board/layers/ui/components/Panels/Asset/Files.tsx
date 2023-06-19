@@ -31,7 +31,7 @@ import {
   ModalOverlay,
 } from '@chakra-ui/react';
 
-import { getExtension } from '@sage3/shared';
+import { SAGE3Ability, getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
 import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
 import { FileEntry } from './types';
@@ -50,6 +50,7 @@ type sortType = {
 
 export function Files(props: FilesProps): JSX.Element {
   const { user } = useUser();
+
   // The data list
   const [filesList, setList] = useState(props.files);
   // Room and board
@@ -388,7 +389,7 @@ export function Files(props: FilesProps): JSX.Element {
     }
     // Create all the apps in batch
     createBatch(setupArray);
-  }
+  };
 
   // Select the file when clicked
   const onKeyboard = (e: React.KeyboardEvent) => {

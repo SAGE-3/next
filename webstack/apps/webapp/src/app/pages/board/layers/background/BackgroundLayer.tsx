@@ -11,9 +11,10 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
 
 import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
+import { SAGE3Ability } from '@sage3/shared';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -21,6 +22,10 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
+  // Abilities
+  const { user } = useUser();
+  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'app');
+
   // Apps Store
   const apps = useAppStore((state) => state.apps);
   const appsFetched = useAppStore((state) => state.fetched);
@@ -106,7 +111,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
         {/*Lasso */}
-        <Lasso boardId={props.boardId} />
+        {canLasso && <Lasso boardId={props.boardId} />}
         {/* The board's apps */}
         <Apps />
         {/* User Cursors */}

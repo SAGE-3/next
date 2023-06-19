@@ -17,6 +17,7 @@ import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { APIHttp } from '../api';
 import { useAuth } from './useAuth';
+import { SAGE3Ability } from '@sage3/shared';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
@@ -30,6 +31,10 @@ export function useUser() {
   return useContext(UserContext);
 }
 
+function setAbilityUser(user: User) {
+  SAGE3Ability.setUser(user);
+}
+
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
@@ -40,7 +45,9 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     if (auth) {
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
-        setUser(userResponse.data[0]);
+        const user = userResponse.data[0];
+        setUser(user);
+        setAbilityUser(user);
         setExists(true);
       } else {
         setUser(undefined);

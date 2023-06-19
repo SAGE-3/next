@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { UserSchema } from '@sage3/shared/types';
+import { User, UserSchema } from '@sage3/shared/types';
 
 // Actions
 export type Action = ActionArg | 'all';
-export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move';
+export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move' | 'lasso';
 
 // Roles
 export type Role = RoleArg | 'all';
@@ -32,7 +32,7 @@ const config: AbilityConfig = {
     { role: ['admin'], resource: ['all'], action: ['all'] },
     { role: ['user'], resource: ['all'], action: ['all'] },
     { role: ['guest'], resource: ['app', 'presence', 'user'], action: ['create', 'read', 'update'] },
-    { role: ['guest'], resource: ['app'], action: ['resize', 'move'] },
+    { role: ['guest'], resource: ['app'], action: ['resize', 'move', 'lasso'] },
     { role: ['guest'], resource: ['assets', 'board', 'message', 'plugin', 'room'], action: ['read'] },
     { role: ['guest'], resource: ['assets'], action: ['upload', 'download'] },
     { role: ['spectator'], resource: ['assets', 'app', 'board', 'message', 'plugin', 'presence', 'room', 'user'], action: ['read'] },
@@ -52,9 +52,17 @@ const config: AbilityConfig = {
  */
 class SAGE3AbilityClass {
   private _config: AbilityConfig;
+  private _user: User | undefined;
   constructor(config: AbilityConfig) {
     this._config = config;
+    this._user = undefined;
   }
+
+  // Set the user. Not required.
+  public setUser(user: User) {
+    this._user = user;
+  }
+
   // Check if a user role can perform a specific action ability
   private checkAbility(role: RoleArg, action: ActionArg, resource: ResourceArg, ability: Ability) {
     // Check if the role is allowed
@@ -81,6 +89,11 @@ class SAGE3AbilityClass {
     const abilities = this._config.abilites.filter((ability) => this.checkAbility(role, action, resource, ability));
     // Return true if the user has at least one ability
     return abilities.length > 0;
+  }
+
+  // Check if the current user can do something
+  public canCurrentUser(action: ActionArg, resource: ResourceArg) {
+    return this.can(this._user?.data.userRole, action, resource);
   }
 }
 

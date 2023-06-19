@@ -8,8 +8,18 @@
 
 import { useEffect, useRef } from 'react';
 import {
-  Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure,
-  ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+  Box,
+  useColorModeValue,
+  useToast,
+  ToastId,
+  Modal,
+  useDisclosure,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
 } from '@chakra-ui/react';
 
 import { isValidURL, setupApp } from '@sage3/frontend';
@@ -28,6 +38,7 @@ import {
 } from '@sage3/frontend';
 import { AppName, AppSchema } from '@sage3/applications/schema';
 import { HelpModal } from './HelpModal';
+import { SAGE3Ability } from '@sage3/shared';
 
 type BackgroundProps = {
   roomId: string;
@@ -60,6 +71,9 @@ export function Background(props: BackgroundProps) {
   const { user } = useUser();
   const { auth } = useAuth();
   const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+
+  // Abilities
+  const canDrop = SAGE3Ability.can(user?.data.userRole, 'upload', 'assets');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -132,6 +146,15 @@ export function Background(props: BackgroundProps) {
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
+    if (!canDrop) {
+      toast({
+        title: 'Guests and Spectators cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -140,24 +163,16 @@ export function Background(props: BackgroundProps) {
       event.preventDefault();
       event.stopPropagation();
 
-      // Block guests from uploading assets
-      if (auth?.provider === 'guest') {
-        toast({
-          title: 'Guests cannot upload assets',
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
       // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer).then((files) => {
-        // do the actual upload
-        uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
-      }).catch((err) => {
-        console.log('Error> uploading files', err);
-        lotsOnOpen();
-      });
+      collectFiles(event.dataTransfer)
+        .then((files) => {
+          // do the actual upload
+          uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+        })
+        .catch((err) => {
+          console.log('Error> uploading files', err);
+          lotsOnOpen();
+        });
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
@@ -330,8 +345,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'50px 50px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -366,7 +382,6 @@ export function Background(props: BackgroundProps) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </Box>
   );
 }
