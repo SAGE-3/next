@@ -281,6 +281,7 @@ const CustomizeWidgets = React.memo((props: App) => {
         widget: props.data.state.widget,
       },
       raised: true,
+      dragging: false,
     });
   };
 

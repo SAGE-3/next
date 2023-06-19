@@ -153,6 +153,7 @@ export function Apps() {
         type: 'SensorOverview',
         state: state,
         raised: true,
+        dragging: false,
       });
     };
     // Remove existing event listeners

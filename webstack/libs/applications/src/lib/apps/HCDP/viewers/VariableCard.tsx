@@ -302,31 +302,17 @@ const Content = (props: {
       border="solid white 6px"
       borderRadius={'24px'}
       style={{ background: 'white' }}
-      // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
       display="flex"
       margin="1rem"
       flexDirection="column"
       justifyContent={'center'}
       alignContent="center"
     >
-      {/* {props.size ? null : (
-        <Box>
-          <Text color="gray.700" justifyContent={'center'} alignContent="center" textAlign={'center'} fontSize={20} fontWeight="bold">
-            Note: These values are not real. They are just placeholders for the real values.
-          </Text>
-        </Box>
-      )} */}
-
       <Box>
         <Text color="black" textAlign={'center'} fontSize={30}>
           {props.variable.stationName}
         </Text>
       </Box>
-      {/* <Box>
-        <Text color="black" textAlign={'center'} fontSize={35} fontWeight="bold">
-          {variableName.join(' ')}
-        </Text>
-      </Box> */}
 
       <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
         {props.variable.images ? (
@@ -338,7 +324,6 @@ const Content = (props: {
         ) : (
           'No Image Available'
         )}
-        {/* <TbWind fontSize="120px" color="black" /> */}
       </Box>
       <Box mt={2}>
         {props.isLoaded ? (
@@ -357,20 +342,9 @@ const Content = (props: {
                 : props.variable.value % 1
                 ? Number(props.variable.value).toFixed(2)
                 : props.variable.value}
-              <Text
-                color="grey.500"
-                sx={{
-                  verticalAlign: 'text-bottom',
-                  marginTop: '12px', // Adjust this value as needed
-                  marginLeft: '3px', // Adjust this value as needed
-                }}
-                fontSize={20}
-              >
+              <span style={{ color: 'gray', verticalAlign: 'text-bottom', marginTop: '12px', marginLeft: '3px', fontSize: 20 }}>
                 {props.variable.unit}
-              </Text>
-              {/* <Text color="black" textAlign={'center'} fontSize={15}>
-                {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
-              </Text> */}
+              </span>
             </Text>
 
             <Text
