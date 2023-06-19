@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { Box, useToast, Text, Spinner, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 // Just to get the type
@@ -15,9 +15,12 @@ import { ResizeDirection } from 're-resizable';
 // Slowdown the events
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useAuth, useUser } from '@sage3/frontend';
-import { App, AppSchema } from '../schema';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useUser } from '@sage3/frontend';
 import { SAGE3Ability } from '@sage3/shared';
+import { App, AppSchema } from '../../schema';
+
+// Window Components
+import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
 
 // Time in ms to send updates to the server
 const UpdateRate = 1000 / 3;
@@ -39,26 +42,36 @@ export function AppWindow(props: WindowProps) {
   // Can update
   const canMove = SAGE3Ability.can(user?.data.userRole, 'move', 'app');
   const canResize = SAGE3Ability.can(user?.data.userRole, 'resize', 'app');
-  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
+
+  // App Store
+  const apps = useAppStore((state) => state.apps);
+  const update = useAppStore((state) => state.update);
+  const updateBatch = useAppStore((state) => state.updateBatch);
+
+  // Error Display Handling
+  const storeError = useAppStore((state) => state.error);
+  const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
   const scale = useUIStore((state) => state.scale);
   const zindex = useUIStore((state) => state.zIndex);
-  const appTitles = useUIStore((state) => state.showAppTitle);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
   const setAppDragging = useUIStore((state) => state.setAppDragging);
   const incZ = useUIStore((state) => state.incZ);
   const gridSize = useUIStore((state) => state.gridSize);
+
+  // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
-  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const selectedAppsSnapshot = useUIStore((state) => state.selectedAppsSnapshot);
-  const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
-
   const isGrouped = selectedApps.includes(props.app._id);
+  const selectedAppsSnapshot = useUIStore((state) => state.selectedAppsSnapshot);
+  const [groupedAppsStart, setGroupedAppsStart] = useState<{ [id: string]: Position }>({});
+
   const lassoMode = useUIStore((state) => state.lassoMode);
   const deltaPosition = useUIStore((state) => state.deltaPos);
   const setDeltaPosition = useUIStore((state) => state.setDeltaPostion);
@@ -69,40 +82,25 @@ export function AppWindow(props: WindowProps) {
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
 
-  const [groupedAppsStart, setGroupedAppsStart] = useState<{ [id: string]: Position }>({});
-
-  // Colors
+  // Colors and Styling
   const bg = useColorModeValue('gray.100', 'gray.700');
   const backgroundColor = useHexColor(bg);
-
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
-  // const borderColorGroupSelect = useHexColor('gray');
-
-  const titleBackground = useColorModeValue('#00000000', '#ffffff26');
-  const titleBrightness = useColorModeValue('85%', '65%');
-  const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
-  const enableResize = props.disableResize === undefined ? true : !props.disableResize;
-
-  // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
-  const outerBorderRadius = 12;
-  const innerBorderRadius = outerBorderRadius - borderWidth;
-  const titleColor = useColorModeValue('white', 'white');
   const selectColor = useHexColor('teal');
 
+  // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
+  const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
+  const outerBorderRadius = 12;
+  const innerBorderRadius = outerBorderRadius - borderWidth;
+
   // Resize Handle scale
+  const enableResize = props.disableResize === undefined ? true : !props.disableResize;
   const handleScale = Math.max(1, 1 / scale);
 
   // Display messages
   const toast = useToast();
   const toastID = 'error-toast';
-
-  // App Store
-  const apps = useAppStore((state) => state.apps);
-  const update = useAppStore((state) => state.update);
-  const storeError = useAppStore((state) => state.error);
-  const clearError = useAppStore((state) => state.clearError);
-  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
@@ -116,7 +114,7 @@ export function AppWindow(props: WindowProps) {
         setPos({ x, y });
       }
     }
-  }, [deltaPosition, selectedAppsSnapshot]);
+  }, [deltaPosition.p.x, deltaPosition.p.y, deltaPosition.id, selectedAppsSnapshot]);
 
   // Track the app store errors
   useEffect(() => {
@@ -138,11 +136,11 @@ export function AppWindow(props: WindowProps) {
 
   // If size or position change, update the local state.
   useEffect(() => {
-    if (!selectedApps.includes(props.app._id)) {
+    if (!selectedApps.includes(props.app._id) && !selected) {
       setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
       setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
     }
-  }, [props.app.data.size, props.app.data.position, selectedApps]);
+  }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y, selectedApps]);
 
   // Throttle the position update
   const throttlePositionUpdate = throttle(UpdateRate, (x: number, y: number) => {
@@ -338,10 +336,19 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  // When closing the app, deselect it
+  useEffect(() => {
+    return () => {
+      if (selectedApp === props.app._id) {
+        setSelectedApp('');
+      }
+    };
+  }, [selectedApp]);
+
   return (
     <Rnd
       bounds="parent"
-      dragHandleClassName={'handle'}
+      dragHandleClassName="handle"
       size={{ width: size.width, height: size.height }}
       position={pos}
       onDragStart={handleDragStart}
@@ -378,48 +385,19 @@ export function AppWindow(props: WindowProps) {
       dragGrid={[gridSize, gridSize]}
     >
       {/* Title Above app */}
-      {appTitles ? (
-        <Box
-          position="absolute"
-          top="0px"
-          left="0px"
-          width={size.width}
-          transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
-          display="flex"
-          justifyContent="left"
-          alignItems="center"
-          pointerEvents="none"
-        >
-          <Text
-            color={titleColor}
-            fontSize={16 / scale}
-            whiteSpace="nowrap"
-            textOverflow="ellipsis"
-            overflow="hidden"
-            background={titleBackground}
-            backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
-            borderRadius={6}
-            px={2}
-          >
-            {props.app.data.title}
-          </Text>
-        </Box>
-      ) : null}
+      <WindowTitle size={size} scale={scale} title={props.app.data.title} />
 
       {/* Border Box around app to show it is selected */}
-      <Box
-        position="absolute"
-        left={`${-borderWidth}px`}
-        top={`${-borderWidth}px`}
-        width={size.width + borderWidth * 2}
-        height={size.height + borderWidth * 2}
+      <WindowBorder
+        size={size}
+        selected={selected}
+        isGrouped={isGrouped}
+        dragging={!appDragging && props.app.data.dragging}
+        borderWidth={borderWidth}
+        borderColor={borderColor}
+        selectColor={selectColor}
         borderRadius={outerBorderRadius}
-        opacity={isGrouped || (!appDragging && props.app.data.dragging) ? 0.6 : 1}
-        zIndex={isGrouped || (!appDragging && props.app.data.dragging) ? 1000000 : -1} // Behind everything
-        background={selected || isGrouped ? selectColor : borderColor}
-        boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
-        pointerEvents={'none'}
-      ></Box>
+      />
 
       {/* The Application */}
       <Box
@@ -435,7 +413,7 @@ export function AppWindow(props: WindowProps) {
       </Box>
 
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
-      {!selected ? (
+      {!selected && (
         <Box
           className="handle" // The CSS name react-rnd latches on to for the drag events
           position="absolute"
@@ -448,42 +426,15 @@ export function AppWindow(props: WindowProps) {
           zIndex={3}
           borderRadius={innerBorderRadius}
         ></Box>
-      ) : null}
-      {/* This div is to block the app from being interacted with when the user is dragging the board or an app */}
-      {boardDragging || appDragging || props.app.data.dragging ? (
-        <Box
-          position="absolute"
-          left="0px"
-          top="0px"
-          width="100%"
-          height="100%"
-          pointerEvents={'none'}
-          userSelect={'none'}
-          borderRadius={innerBorderRadius}
-          zIndex={999999999} // Really big number to just force it to be on top
-        ></Box>
-      ) : null}
+      )}
+
+      {/* If the app is being dragged block interaction with the app */}
+      {(boardDragging || appDragging || props.app.data.dragging) && <BlockInteraction innerBorderRadius={innerBorderRadius} />}
+
       {/* Processing Box */}
-      {props.processing ? (
-        <Box
-          position="absolute"
-          left="0px"
-          top="0px"
-          width={size.width}
-          height={size.height}
-          pointerEvents={'none'}
-          userSelect={'none'}
-          zIndex={999999999}
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          backgroundColor={backgroundColor}
-        >
-          <Box transform={`scale(${4 * Math.min(size.width / 300, size.height / 300)})`}>
-            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color={selected ? selectColor : 'gray'} size="xl" />
-          </Box>
-        </Box>
-      ) : null}
+      {props.processing && (
+        <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
+      )}
     </Rnd>
   );
 }
