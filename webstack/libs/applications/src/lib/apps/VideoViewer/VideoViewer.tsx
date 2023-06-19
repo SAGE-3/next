@@ -8,7 +8,11 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
-import { Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack } from '@chakra-ui/react';
+import {
+  Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack,
+  Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
+  UnorderedList, ListItem,
+} from '@chakra-ui/react';
 import {
   MdAccessTime,
   MdArrowRightAlt,
@@ -22,11 +26,12 @@ import {
   MdVolumeOff,
   MdVolumeUp,
   MdScreenshotMonitor,
+  MdInfoOutline,
 } from 'react-icons/md';
 // Time functions
 import { format as formatTime } from 'date-fns';
 
-import { Asset, ExtraImageType } from '@sage3/shared/types';
+import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, downloadFile, useHexColor } from '@sage3/frontend';
 
 import { App, AppSchema } from '../../schema';
@@ -50,6 +55,7 @@ function AppComponent(props: App): JSX.Element {
   const { roomId, boardId } = useParams();
   // App store
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   // Assets
   const [url, setUrl] = useState<string>();
@@ -67,7 +73,7 @@ function AppComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
-      const extras = myasset.data.derived as ExtraImageType;
+      const extras = myasset.data.derived as ExtraVideoType;
       setAspecRatio(extras.aspectRatio || 1);
       // Update the app title
       update(props._id, { title: myasset?.data.originalfilename });
@@ -77,7 +83,7 @@ function AppComponent(props: App): JSX.Element {
   // If the file is updated, update the url
   useEffect(() => {
     if (file) {
-      const extras = file.data.derived as ExtraImageType;
+      const extras = file.data.derived as ExtraVideoType;
       const video_url = extras.url;
       // save the url of the video
       setUrl(video_url);
@@ -111,11 +117,24 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.loop, videoRef]);
 
+  // Handle a play action
+  const handlePlay = () => {
+    if (videoRef.current) {
+      const paused = !s.paused;
+      const time = videoRef.current.currentTime;
+      updateState(props._id, { currentTime: time, paused: paused });
+    }
+  };
+
   // Event handler
   const handleUserKeyPress = useCallback(
     async (evt: KeyboardEvent) => {
       evt.stopPropagation();
       switch (evt.code) {
+        case 'Space': {
+          handlePlay();
+          break;
+        }
         case 'KeyD': {
           // Trigger a download
           if (file) {
@@ -153,12 +172,10 @@ function AppComponent(props: App): JSX.Element {
     if (div) {
       div.addEventListener('keydown', handleUserKeyPress);
       div.addEventListener('mouseleave', () => {
-        console.log('leave')
         // remove focus onto div
         div.blur();
       });
       div.addEventListener('mouseenter', () => {
-        console.log('enter')
         // Focus on the div for keyboard events
         div.focus({ preventScroll: true });
       });
@@ -204,6 +221,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // React State
   const [videoRef, setVideoRef] = useState<HTMLVideoElement>();
   const [file, setFile] = useState<Asset>();
+  const [extras, setExtras] = useState<ExtraVideoType>();
 
   // Local State
   const [sliderTime, setSliderTime] = useState<number | null>(null);
@@ -245,6 +263,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
+      setExtras(myasset.data.derived as ExtraVideoType);
     }
   }, [s.assetid, assets]);
 
@@ -369,103 +388,120 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      {!videoRef ? (
-        <>Loading...</>
-      ) : (
-        <>
-          {/* App State with server */}
-          <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
-            <Tooltip placement="top-start" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
-              <Button onClick={handleRewind} isDisabled={!videoRef}>
-                <MdFastRewind />
-              </Button>
-            </Tooltip>
+      {/* App State with server */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
+          <Button onClick={handleRewind} isDisabled={!videoRef}>
+            <MdFastRewind />
+          </Button>
+        </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={videoRef.paused ? 'Play Video' : 'Pause Video'} openDelay={400}>
-              <Button onClick={handlePlay} isDisabled={!videoRef}>
-                {videoRef.paused ? <MdPlayArrow /> : <MdPause />}
-              </Button>
-            </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={videoRef?.paused ? 'Play Video' : 'Pause Video'} openDelay={400}>
+          <Button onClick={handlePlay} isDisabled={!videoRef}>
+            {videoRef?.paused ? <MdPlayArrow /> : <MdPause />}
+          </Button>
+        </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
-              <Button onClick={handleForward} isDisabled={!videoRef}>
-                <MdFastForward />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
+        <Tooltip placement="top-start" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
+          <Button onClick={handleForward} isDisabled={!videoRef}>
+            <MdFastForward />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-            <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
-              <Button onClick={handleLoop} isDisabled={!videoRef}>
-                {videoRef.loop ? <MdLoop /> : <MdArrowRightAlt />}
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
-              <Button onClick={handleSyncOnMe} isDisabled={!videoRef}>
-                <MdAccessTime />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
+          <Button onClick={handleLoop} isDisabled={!videoRef}>
+            {videoRef?.loop ? <MdLoop /> : <MdArrowRightAlt />}
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
+          <Button onClick={handleSyncOnMe} isDisabled={!videoRef}>
+            <MdAccessTime />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
-          <Slider
-            aria-label="slider-ex-4"
-            value={sliderTime ? sliderTime : currentTime}
-            max={videoRef.duration}
-            width="150px"
-            mx={4}
-            onChange={seekChangeHandle}
-            onChangeStart={seekStartHandle}
-            onChangeEnd={seekEndHandle}
-            focusThumbOnChange={false}
-          >
-            <SliderTrack bg={'gray.200'}>
-              <SliderFilledTrack bg={teal} />
-            </SliderTrack>
-            <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
-              {' '}
-              {getDurationString(0)}{' '}
-            </SliderMark>
-            <SliderMark value={videoRef.duration} fontSize="xs" mt="1.5" ml="-5">
-              {getDurationString(videoRef.duration)}
-            </SliderMark>
-            <SliderMark
-              value={sliderTime ? sliderTime : currentTime}
-              textAlign="center"
-              bg={teal}
-              color="white"
-              mt="-9"
-              ml="-5"
-              p="0.5"
-              fontSize="xs"
-              borderRadius="md"
-            >
-              {getDurationString(sliderTime ? sliderTime : currentTime)}
-            </SliderMark>
-            <SliderThumb boxSize={4}>
-              <Box color="teal" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ color: teal }} />
-            </SliderThumb>
-          </Slider>
+      <Slider
+        aria-label="slider-ex-4"
+        value={sliderTime ? sliderTime : currentTime}
+        max={videoRef?.duration}
+        width="150px"
+        mx={4}
+        onChange={seekChangeHandle}
+        onChangeStart={seekStartHandle}
+        onChangeEnd={seekEndHandle}
+        focusThumbOnChange={false}
+      >
+        <SliderTrack bg={'gray.200'}>
+          <SliderFilledTrack bg={teal} />
+        </SliderTrack>
+        <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
+          {' '}
+          {getDurationString(0)}{' '}
+        </SliderMark>
+        <SliderMark value={videoRef?.duration || 0} fontSize="xs" mt="1.5" ml="-5">
+          {getDurationString(videoRef?.duration || 0)}
+        </SliderMark>
+        <SliderMark
+          value={sliderTime ? sliderTime : currentTime}
+          textAlign="center"
+          bg={teal}
+          color="white"
+          mt="-9"
+          ml="-5"
+          p="0.5"
+          fontSize="xs"
+          borderRadius="md"
+        >
+          {getDurationString(sliderTime ? sliderTime : currentTime)}
+        </SliderMark>
+        <SliderThumb boxSize={4}>
+          <Box color="teal" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ color: teal }} />
+        </SliderThumb>
+      </Slider>
 
-          {/* Local State Buttons - Only Changes the video state for the local user */}
-          <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
-            <Tooltip placement="top-start" hasArrow={true} label={videoRef.muted ? 'Unmute' : 'Mute'} openDelay={400}>
-              <Button onClick={handleMute} isDisabled={!videoRef}>
-                {videoRef.muted ? <MdVolumeOff /> : <MdVolumeUp />}
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
-              <Button onClick={handleDownload} isDisabled={!videoRef}>
-                <MdFileDownload />
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Screenshot'} openDelay={400}>
-              <Button onClick={handleScreenshot} isDisabled={!videoRef}>
-                <MdScreenshotMonitor />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-        </>
-      )}
+      {/* Local State Buttons - Only Changes the video state for the local user */}
+      <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={videoRef?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
+          <Button onClick={handleMute} isDisabled={!videoRef}>
+            {videoRef?.muted ? <MdVolumeOff /> : <MdVolumeUp />}
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
+          <Button onClick={handleDownload} isDisabled={!videoRef}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Screenshot'} openDelay={400}>
+          <Button onClick={handleScreenshot} isDisabled={!videoRef}>
+            <MdScreenshotMonitor />
+          </Button>
+        </Tooltip>
+        <Popover placement='top-start' trigger="hover" >
+          <PopoverTrigger>
+            <Button isDisabled={!videoRef}>
+              <MdInfoOutline />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent fontSize={"sm"}>
+            <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>File: {file?.data.originalfilename}</PopoverHeader>
+            <PopoverBody>
+              <UnorderedList>
+                <ListItem>Resolution: {extras?.width} x {extras?.height}</ListItem>
+                <ListItem>Duration: {extras?.duration}</ListItem>
+                <ListItem>Bit Rate: {extras?.birate}</ListItem>
+                <ListItem>Audio: {extras?.audioFormat}</ListItem>
+                <ListItem>Video: {extras?.compressor}</ListItem>
+                <ListItem>Framerate: {extras?.framerate}</ListItem>
+                <ListItem>Rotation: {extras?.rotation}</ListItem>
+              </UnorderedList>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+      </ButtonGroup>
     </>
   );
 }
@@ -482,14 +518,14 @@ async function captureFrame(video: HTMLVideoElement) {
   if (video) {
     // Create a canvas
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = 1280; // video.videoWidth;
+    canvas.height = canvas.width / (video.videoWidth / video.videoHeight);
     const ctx = canvas.getContext("2d");
     if (ctx) {
       // Draw the video into the canvas
-      ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       // Get the image from the canvas
-      const image = await canvas.toDataURL('image/png');
+      const image = await canvas.toDataURL('image/jpg');
       canvas.remove();
       // Return app setup
       const init = { assetid: image };

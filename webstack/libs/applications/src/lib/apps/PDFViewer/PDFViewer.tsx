@@ -59,7 +59,7 @@ function AppComponent(props: App): JSX.Element {
     if (asset) {
       setFile(asset);
       // Update the state of the app
-      if (asset.data.derived && props._updatedBy === user?._id) {
+      if (asset.data.derived) {
         const pages = asset.data.derived as ExtraPDFType;
         if (pages.length !== s.numPages) {
           updateState(props._id, { numPages: pages.length });
@@ -141,6 +141,7 @@ function AppComponent(props: App): JSX.Element {
           result: JSON.stringify(result, null, 4),
         },
         raised: true,
+        dragging: false,
       });
     }
   }, [s.analyzed]);

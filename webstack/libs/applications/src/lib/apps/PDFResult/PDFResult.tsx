@@ -77,6 +77,7 @@ function AppComponent(props: App): JSX.Element {
       type: 'Webview',
       state: { webviewurl: url },
       raised: true,
+      dragging: false,
     });
   };
 

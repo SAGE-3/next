@@ -258,6 +258,7 @@ function ToolbarComponent(props: App): JSX.Element {
         options: {},
       },
       raised: true,
+      dragging: false,
     });
 
     // Add messages
@@ -318,6 +319,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 stationData: [...stationDataTemplate],
               },
               raised: true,
+
+              dragging: false,
             });
             // Add messages
             updateState(props._id, {
@@ -420,6 +423,7 @@ function ToolbarComponent(props: App): JSX.Element {
                 listOfStationNames: listOfStationNames,
               },
               raised: true,
+              dragging: false,
             });
           }
           break;
@@ -475,6 +479,7 @@ function ToolbarComponent(props: App): JSX.Element {
                   listOfStationNames: ['001HI', '002HI', '001HI', '009HI'],
                 },
                 raised: true,
+                dragging: false,
               });
             }}
             colorScheme="teal"

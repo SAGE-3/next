@@ -91,6 +91,7 @@ export function Apps() {
           .sort((a, b) => b._updatedAt - a._updatedAt)
           .forEach((el) => {
             if (found) return;
+            if (el.data.dragging) return;
             const x1 = el.data.position.x;
             const y1 = el.data.position.y;
             const x2 = x1 + el.data.size.width;

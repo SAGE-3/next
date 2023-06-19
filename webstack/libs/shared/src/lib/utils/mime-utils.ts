@@ -80,7 +80,8 @@ export function isPDF(mimeType: string): boolean {
  */
 export function isVideo(mimeType: string): boolean {
   // return mimeType.startsWith('video/');
-  return mimeType === 'video/mp4' || mimeType === 'video/webm' || mimeType === 'video/ogg';
+  // video/quicktime is for .mov files, hoping it contains an mp4 video track
+  return mimeType === 'video/mp4' || mimeType === 'video/webm' || mimeType === 'video/ogg' || mimeType === 'video/quicktime';
 }
 /**
  * Test if a given mime type is an audio file

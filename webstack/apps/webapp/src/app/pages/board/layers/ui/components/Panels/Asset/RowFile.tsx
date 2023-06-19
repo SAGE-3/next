@@ -171,6 +171,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       case 'jpeg':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
       case 'mp4':
+      case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'json':
         return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;

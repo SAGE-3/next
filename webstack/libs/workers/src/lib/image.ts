@@ -73,6 +73,7 @@ async function sharpProcessing(job: any) {
       fs.createReadStream(pathname).pipe(sharpStream);
 
       sharpStream
+        .rotate() // take into account EXIF orientation
         .metadata()
         .then((metadata) => {
           const ww = metadata.width || 100;
