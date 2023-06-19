@@ -20,6 +20,7 @@ import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { SAGE3Ability } from '@sage3/shared';
 
 interface MessageState {
   messages: Message[];
@@ -47,12 +48,14 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       set({ error: null });
     },
     create: async (newMsg: MessageSchema) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'message')) return;
       const res = await SocketAPI.sendRESTMessage(`/message/`, 'POST', newMsg);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'message')) return;
       const res = await SocketAPI.sendRESTMessage(`/message/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -68,6 +71,7 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       }
     },
     subscribe: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'message')) return;
       set({ ...get(), messages: [] });
 
       const msg = await APIHttp.GET<Message>('/message');

@@ -18,6 +18,7 @@ import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { SAGE3Ability } from '@sage3/shared';
 
 interface PresenceState {
   presences: Presence[];
@@ -44,12 +45,14 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       set({ error: null });
     },
     update: async (id: string, updates: Partial<PresenceSchema>) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'presence')) return;
       const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     subscribe: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'presence')) return;
       set({ presences: [] });
       const reponse = await APIHttp.GET<Presence>('/presence');
       if (reponse.success) {

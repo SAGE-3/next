@@ -20,6 +20,7 @@ import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+import { SAGE3Ability } from '@sage3/shared';
 
 interface PluginState {
   plugins: Plugin[];
@@ -43,9 +44,11 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       set({ error: null });
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'plugin')) return;
       const res = await APIHttp.DELETE('/plugins/remove/' + id);
     },
     upload: async (file: File, name: string, description: string) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'plugin')) return;
       // Uploaded with a Form object
       const fd = new FormData();
       fd.append('plugin', file);
@@ -59,6 +62,7 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       return resJson;
     },
     subscribeToPlugins: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'plugin')) return;
       set({ ...get(), plugins: [], fetched: false });
 
       const plugins = await APIHttp.GET<Plugin>('/plugins');

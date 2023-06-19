@@ -13,11 +13,12 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { User, UserSchema } from '@sage3/shared/types';
+import { User } from '@sage3/shared/types';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { APIHttp, SocketAPI } from '../api';
+import { SAGE3Ability } from '@sage3/shared';
 
 interface UserState {
   users: User[];
@@ -40,6 +41,7 @@ const UsersStore = createVanilla<UserState>((set, get) => {
       set({ error: null });
     },
     get: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'user')) return null;
       const user = get().users.find((user) => user._id === id);
       if (user) {
         return user;
@@ -57,6 +59,7 @@ const UsersStore = createVanilla<UserState>((set, get) => {
     },
 
     subscribeToUsers: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'user')) return;
       const response = await APIHttp.GET<User>('/users');
       if (response.success) {
         set({ users: response.data });
