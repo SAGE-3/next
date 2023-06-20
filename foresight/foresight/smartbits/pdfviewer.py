@@ -16,7 +16,7 @@ import os
 # Starting a process
 import subprocess
 # Get the URL to thew webserver
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 
 class PDFViewerState(TrackedBaseModel):
     assetid: str

@@ -45,12 +45,12 @@ class SmartBitFactory:
         except: #  issue with doc not compatible with current sb class. maybe too old.
             try:
                 if smartbit_class is not None and smartbit_type != "GenericSmartBit":
-                    cls_path = "smartbits.genericsmartbit"
+                    cls_path = "foresight.smartbits.genericsmartbit"
                     smartbit_type = "GenericSmartBit"
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
                 else:
-                    logger.erorr(f"Couldn't convert following doc to actual smartbit: {doc}")
+                    logger.error(f"Couldn't convert following doc to actual smartbit: {doc}")
                     # raise Exception("Couldn't conver doc to actual smartbit")
             except Exception as e:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")
