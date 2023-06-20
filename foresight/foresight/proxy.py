@@ -28,7 +28,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 
 
 def setup_logger():
