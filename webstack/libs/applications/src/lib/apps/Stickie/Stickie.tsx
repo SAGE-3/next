@@ -46,7 +46,7 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const selectedApp = useUIStore(state => state.selectedAppId)
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
@@ -137,6 +137,7 @@ function AppComponent(props: App): JSX.Element {
           // keep the same color, like a clone operation except for the text
           state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
           raised: true,
+          dragging: false,
         });
       }
     }
@@ -172,6 +173,10 @@ function AppComponent(props: App): JSX.Element {
           readOnly={locked} // Only the creator can edit
           zIndex={1}
           name={'stickie' + props._id}
+          css={{
+            // Balance the text, improve text layouts
+            textWrap: "balance"
+          }}
         />
         {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>

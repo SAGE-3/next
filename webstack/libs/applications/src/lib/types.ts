@@ -10,6 +10,7 @@ import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DataTableState, name as DataTableName } from './apps/DataTable';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { state as EChartsViewerState, name as EChartsViewerName } from './apps/EChartsViewer';
 import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
 import { state as HCDPState, name as HCDPName } from './apps/HCDP';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
@@ -46,6 +47,7 @@ export type AppState =
   | CounterState
   | DataTableState
   | DeepZoomImageState
+  | EChartsViewerState
   | GLTFViewerState
   | HCDPState
   | ImageViewerState
@@ -81,6 +83,7 @@ export type AppName =
   | typeof CounterName
   | typeof DataTableName
   | typeof DeepZoomImageName
+  | typeof EChartsViewerName
   | typeof GLTFViewerName
   | typeof HCDPName
   | typeof ImageViewerName

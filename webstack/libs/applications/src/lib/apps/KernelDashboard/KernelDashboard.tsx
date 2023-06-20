@@ -175,6 +175,7 @@ function AppComponent(props: App): JSX.Element {
         executeInfo: { executeFunc: '', params: {} },
       },
       raised: true,
+      dragging: false,
     });
   };
 
@@ -290,10 +291,10 @@ function AppComponent(props: App): JSX.Element {
                         kernel.value.kernel_name === 'ir'
                           ? 'R'
                           : kernel.value.kernel_name === 'python3'
-                          ? 'Python'
-                          : kernel.value.kernel_name === 'julia-1.8'
-                          ? 'Julia'
-                          : kernel.value.kernel_name
+                            ? 'Python'
+                            : kernel.value.kernel_name === 'julia-1.8'
+                              ? 'Julia'
+                              : kernel.value.kernel_name
                       }
                     </Text>
                   </Box>

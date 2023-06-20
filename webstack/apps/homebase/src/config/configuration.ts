@@ -36,7 +36,7 @@ async function loadConfig(): Promise<ServerConfiguration> {
     production = true;
   }
   // HOT FIX, NX bug in 16.1
-  if (!process.env.NODE_ENV) production = true;
+  // if (!process.env.NODE_ENV) production = true;
   console.log('Mode>', production ? 'Production' : 'Development');
 
   // Pick the correct filename

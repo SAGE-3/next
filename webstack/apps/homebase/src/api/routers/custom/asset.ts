@@ -34,7 +34,7 @@ import { uploadMiddleware } from '../../../connectors/upload-connector';
 import { AssetsCollection, AppsCollection, MessageCollection, UsersCollection } from '../../collections';
 
 // Lib Imports
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
 import {
   isCSV,
@@ -165,6 +165,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                   type: 'ImageViewer',
                   state: { ...initialValues['ImageViewer'], assetid: `/api/assets/static/${elt.filename}` },
                   raised: false,
+                  dragging: false,
                 },
                 user.id
               );
@@ -186,6 +187,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                   type: 'ImageViewer',
                   state: { ...initialValues['ImageViewer'], assetid: newAsset._id },
                   raised: false,
+                  dragging: false,
                 },
                 user.id
               );
@@ -209,6 +211,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'PDFViewer',
                 state: { ...initialValues['PDFViewer'], assetid: newAsset._id },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -227,12 +230,13 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'CSVViewer',
                 state: { ...initialValues['CSVViewer'], assetid: newAsset._id },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
             posx += width + 10;
           } else if (isVideo(elt.mimetype)) {
-            const derived = newdata.derived as ExtraImageType;
+            const derived = newdata.derived as ExtraVideoType;
             let width = tw || 800;
             let height = th || 450;
             if (derived.aspectRatio) {
@@ -253,6 +257,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'VideoViewer',
                 state: { ...initialValues['VideoViewer'], assetid: newAsset._id },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -271,6 +276,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'DeepZoomImage',
                 state: { assetid: newAsset._id, zoomCenter: [0.5, 0.5], zoomLevel: 1 },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -289,6 +295,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'GLTFViewer',
                 state: { assetid: newAsset._id },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -307,6 +314,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'LeafLet',
                 state: { assetid: newAsset._id, zoom: 13, location: [21.3, -157.8], baseLayer: 'OpenStreetMap', overlay: true },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -333,6 +341,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                   executeInfo: { executeFunc: '', params: {} },
                 },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -355,6 +364,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                   code: text.toString(),
                 },
                 raised: false,
+                dragging: false,
               },
               user.id
             );
@@ -412,6 +422,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                         notebook: elt.originalname,
                       },
                       raised: false,
+                      dragging: false,
                     },
                     user.id
                   );
@@ -437,6 +448,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
                 type: 'VegaLite',
                 state: { ...initialValues['VegaLite'], spec: text.toString() },
                 raised: false,
+                dragging: false,
               },
               user.id
             );

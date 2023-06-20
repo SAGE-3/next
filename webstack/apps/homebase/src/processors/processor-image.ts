@@ -117,6 +117,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
       fs.createReadStream(pathname).pipe(sharpStream);
 
       sharpStream
+        .rotate() // take into account EXIF orientation
         .metadata()
         .then((metadata) => {
           const ww = metadata.width || 100;

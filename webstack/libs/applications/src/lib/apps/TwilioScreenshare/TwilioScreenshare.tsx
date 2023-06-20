@@ -77,11 +77,12 @@ function AppComponent(props: App): JSX.Element {
   const red = useHexColor('red');
   const teal = useHexColor('teal');
   const fitApps = useUIStore((state) => state.fitApps);
+  const boardLocked = useUIStore((state) => state.boardLocked);
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
-  const [currentDisplay, setCurrentDisplay] = useState<string | null>(null);
+  // const [currentDisplay, setCurrentDisplay] = useState<string | null>(null);
 
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -165,10 +166,10 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
-          window.electron.on('current-display', (display: number) => {
-            setCurrentDisplay(display.toString());
-          });
-          window.electron.send('request-current-display');
+          // window.electron.on('current-display', (display: number) => {
+          //   setCurrentDisplay(display.toString());
+          // });
+          // window.electron.send('request-current-display');
 
           // Get sources from the main process
           window.electron.on('set-source', async (sources: any) => {
@@ -238,10 +239,12 @@ function AppComponent(props: App): JSX.Element {
   }, [stopStreamId]);
 
   const goToScreenshare = () => {
-    // Close the popups
-    toast.closeAll();
-    // Zoom in
-    fitApps([props]);
+    if (!boardLocked) {
+      // Close the popups
+      toast.closeAll();
+      // Zoom in
+      fitApps([props]);
+    }
   };
 
   useEffect(() => {
@@ -258,17 +261,6 @@ function AppComponent(props: App): JSX.Element {
           duration: 5000,
           isClosable: true,
         });
-        // toast({
-        //   title: 'Screensharing started for ' + props.data.title,
-        //   description: (
-        //     <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
-        //       Zoom to Window
-        //     </Button>
-        //   ),
-        //   status: 'success',
-        //   duration: 12000,
-        //   isClosable: true,
-        // });
       }
     });
   }, [tracks, s.videoId]);
@@ -334,18 +326,6 @@ function AppComponent(props: App): JSX.Element {
         duration: 3000,
         isClosable: true,
       });
-
-      // toast({
-      //   title: 'Your screensharing started, ' + props.data.title,
-      //   description: (
-      //     <Button variant="solid" colorScheme="blue" size="sm" onClick={goToScreenshare}>
-      //       Zoom to Window
-      //     </Button>
-      //   ),
-      //   status: 'success',
-      //   duration: 12000,
-      //   isClosable: true,
-      // });
     }
   };
 

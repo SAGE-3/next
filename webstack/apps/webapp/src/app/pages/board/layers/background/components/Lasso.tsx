@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 // SAGE Imports
 import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useUIStore } from '@sage3/frontend';
 import { Position, Rotation, Size } from '@sage3/shared/types';
+import { App } from '@sage3/applications/schema';
 
 type LassoProps = {
   boardId: string;
@@ -31,7 +32,7 @@ export function Lasso(props: LassoProps) {
 
   // Lasso mode apps & Selected apps
   const lassoMode = useUIStore((state) => state.lassoMode);
-  const selectedApps = useUIStore((state) => state.selectedApps);
+  const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 
   // Mouse Positions
@@ -142,7 +143,8 @@ const DrawBox = (props: BoxProps) => {
   // UI store
   const scale = useUIStore((state) => state.scale);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const setSelectedApps = useUIStore((state) => state.setSelectedApps);
+  const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
+
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 

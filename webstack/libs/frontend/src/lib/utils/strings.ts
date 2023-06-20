@@ -134,6 +134,35 @@ export function processContentURL(view_url: string): string {
     if (twitch_id) {
       view_url = 'https://player.twitch.tv/?!autoplay&video=v' + twitch_id;
     }
+  } else if (
+    // TLDraw regex
+    // eslint-disable-next-line no-useless-escape
+    view_url.match(/https:\/\/([\w\.-]+\.)?figma.com\/(file|proto)\/([0-9a-zA-Z]{22,128})(?:\/.*)?$/) &&
+    !view_url.includes('figma.com/embed')
+  ) {
+    view_url = `https://www.figma.com/embed?embed_host=share&url=${view_url}`;
+  } else if (view_url.includes('docs.google.')) {
+    // slides in presentation mode when published
+    const urlObj = new URL(view_url);
+    if (urlObj?.pathname.match(/^\/presentation/) && urlObj?.pathname.match(/\/pub\/?$/)) {
+      urlObj.pathname = urlObj.pathname.replace(/\/pub$/, '/embed');
+      const keys = Array.from(urlObj.searchParams.keys());
+      for (const key of keys) {
+        urlObj.searchParams.delete(key);
+      }
+      view_url = urlObj.href;
+    }
+  } else if (view_url.includes('observablehq.com')) {
+    const urlObj = new URL(view_url);
+    if (urlObj && urlObj.pathname.match(/^\/@([^/]+)\/([^/]+)\/?$/)) {
+      view_url = `${urlObj.origin}/embed${urlObj.pathname}?cell=*`;
+    }
+    if (urlObj && urlObj.pathname.match(/^\/d\/([^/]+)\/?$/)) {
+      const pathName = urlObj.pathname.replace(/^\/d/, '');
+      view_url = `${urlObj.origin}/embed${pathName}?cell=*`;
+    }
+  } else if (view_url.includes('twitter.com/')) {
+    view_url = `https://oembed.link/${view_url}`;
   }
   return view_url;
 }
@@ -160,6 +189,7 @@ export function isValidURL(value: string): string | undefined {
   }
 
   // check for illegal characters
+  // eslint-disable-next-line no-useless-escape
   if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\ʻ\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value)) return;
 
   // check for hex escapes that aren't complete
@@ -194,6 +224,7 @@ export function isValidURL(value: string): string | undefined {
   }
 
   // scheme must begin with a letter, then consist of letters, digits, +, ., or -
+  // eslint-disable-next-line no-useless-escape
   if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
 
   // Disable some protocols: chrome sage3
@@ -226,6 +257,7 @@ export function isValidURL(value: string): string | undefined {
  * @returns RegExpMatchArray
  */
 function splitUri(uri: string) {
+  // eslint-disable-next-line no-useless-escape
   const splitted = uri.match(/(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/);
   return splitted;
 }

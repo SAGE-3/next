@@ -1,0 +1,6 @@
+{
+  "cli": "nx",
+  "id": "regen",
+  "type": "object",
+  "properties": { }
+}

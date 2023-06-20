@@ -47,6 +47,7 @@ export async function setupAppForFile(
       type: 'ImageViewer',
       state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
       raised: true,
+      dragging: false,
     };
   } else if (isImage(file.type)) {
     // Look for the file in the asset store
@@ -61,6 +62,7 @@ export async function setupAppForFile(
       type: 'ImageViewer',
       state: { ...initialValues['ImageViewer'], assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isVideo(file.type)) {
     const extras = file.derived as ExtraImageType;
@@ -82,6 +84,7 @@ export async function setupAppForFile(
       type: 'VideoViewer',
       state: { ...(initialValues['VideoViewer'] as AppState), assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isCSV(file.type)) {
     return {
@@ -94,6 +97,7 @@ export async function setupAppForFile(
       type: 'CSVViewer',
       state: { ...initialValues['CSVViewer'], assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isGLTF(file.type)) {
     return {
@@ -106,6 +110,7 @@ export async function setupAppForFile(
       type: 'GLTFViewer',
       state: { ...initialValues['GLTFViewer'], assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isDZI(file.type)) {
     return {
@@ -118,6 +123,7 @@ export async function setupAppForFile(
       type: 'DeepZoomImage',
       state: { ...(initialValues['DeepZoomImage'] as AppState), assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isGeoJSON(file.type)) {
     return {
@@ -131,6 +137,7 @@ export async function setupAppForFile(
       // type: 'LeafLet',
       state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
       raised: true,
+      dragging: false,
     };
   } else if (isMD(file.type)) {
     // Look for the file in the asset store
@@ -154,6 +161,7 @@ export async function setupAppForFile(
       type: 'Stickie',
       state: { ...(initialValues['Stickie'] as AppState), text: text },
       raised: true,
+      dragging: false,
     };
   } else if (isPython(file.type)) {
     // Look for the file in the asset store
@@ -176,6 +184,7 @@ export async function setupAppForFile(
       type: 'SageCell',
       state: { ...(initialValues['SageCell'] as AppState), code: text },
       raised: true,
+      dragging: false,
     };
   } else if (isJSON(file.type)) {
     // Look for the file in the asset store
@@ -199,6 +208,7 @@ export async function setupAppForFile(
       type: 'VegaLite',
       state: { ...initialValues['VegaLite'], spec: JSON.stringify(spec, null, 2) },
       raised: true,
+      dragging: false,
     };
   } else if (isPythonNotebook(file.type)) {
     // Look for the file in the asset store
@@ -245,6 +255,7 @@ export async function setupAppForFile(
         type: 'JupyterLab',
         state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
         raised: true,
+        dragging: false,
       };
     }
   } else if (isPDF(file.type)) {
@@ -267,6 +278,7 @@ export async function setupAppForFile(
       type: 'PDFViewer',
       state: { ...initialValues['PDFViewer'], assetid: file.id },
       raised: true,
+      dragging: false,
     };
   }
   return null;
