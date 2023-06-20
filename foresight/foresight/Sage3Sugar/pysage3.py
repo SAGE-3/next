@@ -23,8 +23,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
-
-from alignment_strategies import *
+from foresight.alignment_strategies import *
 
 class PySage3:
 
