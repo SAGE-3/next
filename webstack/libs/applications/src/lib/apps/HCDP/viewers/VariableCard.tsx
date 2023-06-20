@@ -302,15 +302,29 @@ const Content = (props: {
       border="solid white 6px"
       borderRadius={'24px'}
       style={{ background: 'white' }}
+      // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
       display="flex"
       margin="1rem"
       flexDirection="column"
       justifyContent={'center'}
       alignContent="center"
     >
+      {/* {props.size ? null : (
+        <Box>
+          <Text color="gray.700" justifyContent={'center'} alignContent="center" textAlign={'center'} fontSize={20} fontWeight="bold">
+            Note: These values are not real. They are just placeholders for the real values.
+          </Text>
+        </Box>
+      )} */}
+
       <Box>
         <Text color="black" textAlign={'center'} fontSize={30}>
           {props.variable.stationName}
+        </Text>
+      </Box>
+      <Box>
+        <Text color="black" textAlign={'center'} fontSize={35} fontWeight="bold">
+          {variableName.join(' ')}
         </Text>
       </Box>
 
@@ -345,6 +359,9 @@ const Content = (props: {
               <span style={{ color: 'gray', verticalAlign: 'text-bottom', marginTop: '12px', marginLeft: '3px', fontSize: 20 }}>
                 {props.variable.unit}
               </span>
+              {/* <Text color="black" textAlign={'center'} fontSize={15}>
+                {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
+              </Text> */}
             </Text>
 
             <Text

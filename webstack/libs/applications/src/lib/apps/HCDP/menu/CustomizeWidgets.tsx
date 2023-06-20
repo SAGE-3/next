@@ -156,7 +156,7 @@ const CustomizeWidgets = React.memo((props: App) => {
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
   // TODO used for ChatGPT
-  const [, setPrompt] = useState<string>('');
+  const [prompt, setPrompt] = useState<string>('');
 
   // Fetches all station data given a startDate
   const fetchData = async (startDate: string) => {
@@ -292,7 +292,8 @@ const CustomizeWidgets = React.memo((props: App) => {
 
   // TODO send prompt to ChatGPT
   const sendToChatGPT = async () => {
-    // const message = await NLPHTTPRequest(prompt);
+    const message = await NLPHTTPRequest(prompt);
+    console.log(message);
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -32,25 +32,25 @@ export function NLPRouter(): express.Router {
     //   },
     // ];
 
-    const completion = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'user',
-          content: message,
-        },
-      ],
-    });
+    // const completion = await openai.createChatCompletion({
+    //   model: 'gpt-3.5-turbo',
+    //   messages: [
+    //     {
+    //       role: 'user',
+    //       content: message,
+    //     },
+    //   ],
+    // });
 
-    if (completion) {
-      success = true;
-    }
+    // if (completion) {
+    //   success = true;
+    // }
 
-    // const responseMessage = await SAGEnlp.classifiedMessage(message);
-    // if (responseMessage) success = true;
-    console.log(completion.data.choices[0]);
+    const responseMessage = await SAGEnlp.classifiedMessage(message);
+    if (responseMessage) success = true;
 
-    if (success) res.status(200).send({ success: true, message: completion.data.choices[0].message?.content });
+    // if (success) res.status(200).send({ success: true, message: completion.data.choices[0].message?.content });
+    if (success) res.status(200).send({ success: true, message: responseMessage });
     else res.status(500).send({ success: false, message: 'Failed to process the nlp request.' });
   });
 

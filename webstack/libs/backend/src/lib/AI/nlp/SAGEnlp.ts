@@ -9,7 +9,7 @@
 const { NlpManager } = require('node-nlp');
 
 // Training Data File
-import { traindata } from './traindata';
+import { modifiedData } from './modifiedData';
 
 class SAGEnlpClass {
   private _manager: any | null = null;
@@ -17,10 +17,10 @@ class SAGEnlpClass {
 
   public async init(): Promise<boolean> {
     this._manager = new NlpManager({ languages: ['en'], forceNER: true, nlu: { log: false } });
-    traindata.forEach((el: any) => {
-      this._manager.addDocument('en', el.query, el.VisualizationTask);
+    modifiedData.forEach((el: any) => {
+      this._manager.addDocument('en', el.utterance, el.primary);
     });
-    let answers = ['extremum', 'distribution', 'cluster', 'anomoly', 'correlation', 'value', 'trend'];
+    const answers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
 
     for (let i = 0; i < answers.length; i++) {
       this._manager.addAnswer('en', answers[i], answers[i]);
