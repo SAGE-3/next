@@ -6,7 +6,7 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from utils.generic_utils import import_cls
+from foresight.utils.generic_utils import import_cls
 
 import logging
 logger = logging.getLogger(__name__)

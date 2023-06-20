@@ -16,13 +16,13 @@
 # TODO prevent apps updates on fields that were touched?
 import uuid
 import json
-from board import Board
-from room import Room
-from smartbitfactory import SmartBitFactory
-from utils.sage_communication import SageCommunication
-from smartbits.genericsmartbit import GenericSmartBit
-from utils.sage_websocket import SageWebsocket
-from json_templates.templates import create_app_template
+from foresight.board import Board
+from foresight.room import Room
+from foresight.smartbitfactory import SmartBitFactory
+from foresight.utils.sage_communication import SageCommunication
+from foresight.smartbits.genericsmartbit import GenericSmartBit
+from foresight.utils.sage_websocket import SageWebsocket
+from foresight.json_templates.templates import create_app_template
 
 from alignment_strategies import *
 

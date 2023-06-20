@@ -6,7 +6,7 @@
 # if we call on each individual message, we need to make sure TypeScript  accumulates the results.
 
 
-from utils.generic_utils import create_kernel_message
+from foresight.utils.generic_utils import create_kernel_message
 
 import json
 import uuid

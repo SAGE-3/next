@@ -1,4 +1,4 @@
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 import uuid
 from threading import Thread, Lock
 from queue import Queue

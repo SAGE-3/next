@@ -6,8 +6,8 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from smartbitcollection import SmartBitsCollection
-from utils.layout import Layout
+# from smartbitcollection import SmartBitsCollection
+# from utils.layout import Layout
 
 
 class Room():

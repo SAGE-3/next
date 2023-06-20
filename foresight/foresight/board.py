@@ -7,10 +7,10 @@
 # -----------------------------------------------------------------------------
 import json
 
-from smartbitcollection import SmartBitsCollection
-from utils.layout import Layout
-from celery_tasks import CeleryTaskQueue
-from alignment_strategies import *
+from foresight.smartbitcollection import SmartBitsCollection
+from foresight.utils.layout import Layout
+from foresight.celery_tasks import CeleryTaskQueue
+from foresight.alignment_strategies import *
 
 BOARD_COLORS = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink']
 

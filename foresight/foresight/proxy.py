@@ -21,12 +21,12 @@ from typing import Callable
 from pydantic import BaseModel
 import json
 import logging
-from board import Board
-from room import Room
-from smartbitfactory import SmartBitFactory
-from utils.sage_communication import SageCommunication
-from smartbits.genericsmartbit import GenericSmartBit
-from utils.sage_websocket import SageWebsocket
+from foresight.board import Board
+from foresight.room import Room
+from foresight.smartbitfactory import SmartBitFactory
+from foresight.utils.sage_communication import SageCommunication
+from foresight.smartbits.genericsmartbit import GenericSmartBit
+from foresight.utils.sage_websocket import SageWebsocket
 
 from config import config as conf, prod_type
 

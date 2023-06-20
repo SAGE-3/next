@@ -14,7 +14,7 @@ import json
 from ws4py.client import WebSocketBaseClient
 from ws4py.manager import WebSocketManager
 from ws4py import format_addresses
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 
 import logging
 logger = logging.getLogger(__name__)
