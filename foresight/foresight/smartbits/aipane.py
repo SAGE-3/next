@@ -11,13 +11,13 @@ from enum import Enum
 
 from pydantic import PrivateAttr
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
+from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import TrackedBaseModel
 from typing import Optional, TypeVar
-from config import ai_models, ai_supported, funcx as funcx_config
-from config import config as conf, prod_type
-from ai.ai_client import AIClient
-from task_scheduler import TaskScheduler
+from foresight.config import ai_models, ai_supported, funcx as funcx_config
+from foresight.config import config as conf, prod_type
+from foresight.ai.ai_client import AIClient
+# from foresight.task_scheduler import TaskScheduler
 
 if prod_type == "development":
     import os

@@ -7,12 +7,12 @@
 #-----------------------------------------------------------------------------
 
 import pytest
-from proxy import SAGEProxy
-from utils.sage_communication import SageCommunication
-from config import config as conf, prod_type
-from smartbits.tests.sample_sb_docs import counter_doc, stickie_doc
-from smartbits.counter import Counter
-from smartbits.stickie import Stickie
+from foresight.proxy import SAGEProxy
+from foresight.utils.sage_communication import SageCommunication
+from foresight.config import config as conf, prod_type
+from foresight.smartbits.tests.sample_sb_docs import counter_doc, stickie_doc
+from foresight.smartbits.counter import Counter
+from foresight.smartbits.stickie import Stickie
 
 
 @ pytest.fixture()

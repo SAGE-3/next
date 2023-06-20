@@ -9,11 +9,11 @@ import time
 
 import requests
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
+from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import TrackedBaseModel
 from pydantic import PrivateAttr
-from jupyterkernelproxy import JupyterKernelProxy
-from config import config as conf, prod_type
+from foresight.jupyterkernelproxy import JupyterKernelProxy
+from foresight.config import config as conf, prod_type
 
 
 import httpx

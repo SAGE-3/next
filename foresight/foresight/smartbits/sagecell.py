@@ -8,9 +8,9 @@
 
 from pydantic import PrivateAttr
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
-from jupyterkernelproxy import JupyterKernelProxy
+from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import TrackedBaseModel
+from foresight.jupyterkernelproxy import JupyterKernelProxy
 
 import logging
 

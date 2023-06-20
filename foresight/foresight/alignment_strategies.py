@@ -1,4 +1,4 @@
-from smartbits.smartbit import SmartBit
+from foresight.smartbits.smartbit import SmartBit
 from typing import List
 
 

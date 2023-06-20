@@ -14,9 +14,9 @@ from abc import abstractmethod
 
 
 # from utils.generic_utils import create_dict
-from utils.sage_communication import SageCommunication
+from foresight.utils.sage_communication import SageCommunication
 from operator import attrgetter
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 
 
 class TrackedBaseModel(BaseModel):

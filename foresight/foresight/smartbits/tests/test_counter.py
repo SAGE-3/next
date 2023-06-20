@@ -6,9 +6,9 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-from smartbits.counter import Counter
+from foresight.smartbits.counter import Counter
 import pytest
-from smartbits.tests.sample_sb_docs import counter_doc
+from foresight.smartbits.tests.sample_sb_docs import counter_doc
 
 
 @pytest.fixture()

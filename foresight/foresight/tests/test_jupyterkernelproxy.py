@@ -6,12 +6,12 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-import jupyterkernelproxy
+import foresight.jupyterkernelproxy
 import uuid
 import pytest
 import time
 import requests
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 
 # TODO: add a test to check if a kernel exist and report an appropriate error otherwise
 # perhaps maybe not even run the remaining tests

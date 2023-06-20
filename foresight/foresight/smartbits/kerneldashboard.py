@@ -6,13 +6,13 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-from smartbits.smartbit import SmartBit, ExecuteInfo
-from smartbits.smartbit import TrackedBaseModel
+from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import TrackedBaseModel
 from pydantic import PrivateAttr
-from config import config as conf, prod_type
+from foresight.config import config as conf, prod_type
 import requests
-from jupyterkernelproxy import JupyterKernelProxy
-from task_scheduler import TaskScheduler
+from foresight.jupyterkernelproxy import JupyterKernelProxy
+from foresight.task_scheduler import TaskScheduler
 
 class KernelDashboardState(TrackedBaseModel):
     """

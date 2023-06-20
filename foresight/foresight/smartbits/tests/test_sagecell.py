@@ -8,8 +8,8 @@
 
 import pytest
 
-from smartbits.sagecell import SageCell
-from smartbits.tests.sample_sb_docs import sagecell_doc
+from foresight.smartbits.sagecell import SageCell
+from foresight.smartbits.tests.sample_sb_docs import sagecell_doc
 
 
 @pytest.fixture()

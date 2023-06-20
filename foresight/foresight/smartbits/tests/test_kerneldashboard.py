@@ -10,8 +10,8 @@
 import uuid
 
 import pytest
-from smartbits.kerneldashboard import KernelDashboard
-from smartbits.tests.sample_sb_docs import kernel_dashboard_doc
+from foresight.smartbits.kerneldashboard import KernelDashboard
+from foresight.smartbits.tests.sample_sb_docs import kernel_dashboard_doc
 import time
 
 @pytest.fixture()

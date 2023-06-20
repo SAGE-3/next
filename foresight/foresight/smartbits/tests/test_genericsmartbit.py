@@ -7,7 +7,7 @@
 #-----------------------------------------------------------------------------
 
 import pytest
-from smartbits.genericsmartbit import GenericSmartBit
+from foresight.smartbits.genericsmartbit import GenericSmartBit
 from sample_sb_docs import generic_smartbit_doc
 
 

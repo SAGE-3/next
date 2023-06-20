@@ -6,9 +6,9 @@
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
 
-from smartbits.aipane import AIPane
+from foresight.smartbits.aipane import AIPane
 import pytest
-from smartbits.tests.sample_sb_docs import aipane_doc
+from foresight.smartbits.tests.sample_sb_docs import aipane_doc
 
 
 @pytest.fixture()
