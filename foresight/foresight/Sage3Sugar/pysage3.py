@@ -24,6 +24,7 @@ from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
 from foresight.alignment_strategies import *
+from pydantic import BaseModel, Field
 
 class PySage3:
 
@@ -207,7 +208,7 @@ class PySage3:
 
     def update_rotation(self, app, x=None, y=None, z=None):
         if not isinstance(app, SmartBit):
-            print(f"apps should be a smartbit. Found {type(app)}")
+            print(f"Apps should be a smartbit. Found {type(app)}")
             return
         if x is None and y is None and z is None:
             print("At last one of the parameters is required")
@@ -387,3 +388,11 @@ class PySage3:
             for board_id in self.rooms[room_id].boards.keys():
                 for app_info in self.rooms[room_id].boards[board_id].smartbits:
                     app_info[1].clean_up()
+
+
+
+class RoomBoardInputs(BaseModel):
+    """Input for Stock price check."""
+
+    stockticker: str = Field(..., description="Asset")
+
