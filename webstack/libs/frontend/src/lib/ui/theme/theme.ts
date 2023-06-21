@@ -29,5 +29,20 @@ const styles = {
   }),
 };
 
+const components = {
+  Drawer: {
+    variants: {
+      alwaysOpen: {
+        dialog: {
+          pointerEvents: 'auto',
+        },
+        dialogContainer: {
+          pointerEvents: 'none',
+        },
+      },
+    },
+  },
+};
+
 // Extend the theme
-export const theme = extendTheme({ config, colors, styles });
+export const theme = extendTheme({ config, colors, styles, components });

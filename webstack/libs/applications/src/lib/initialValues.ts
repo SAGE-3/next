@@ -10,6 +10,7 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
@@ -44,6 +45,7 @@ export const initialValues = {
   [CounterName]: defaultCounter,
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
   [ImageViewerName]: defaultImageViewer,

@@ -100,7 +100,7 @@ export function BoardCard(props: App): JSX.Element {
     }, 1000);
   }
 
-  // Update time sincel ast update ui every 30 secs
+  // Update time since last update ui every 30 secs
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
       if (lastUpdate > 0) {
@@ -126,7 +126,6 @@ export function BoardCard(props: App): JSX.Element {
 
   return (
     <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
-
       {/* Mini map */}
       <Box
         width="400px"

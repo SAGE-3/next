@@ -7,14 +7,12 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue, propNames, Box } from '@chakra-ui/react';
 
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
-import { App, AppSchema } from '../../schema';
+import { App } from '../../schema';
 
 import { state as AppState } from './index';
-import { AppWindow } from '../../components';
 
 // Leaflet plus React
 import * as Leaflet from 'leaflet';
@@ -143,7 +141,7 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       // what?
       setTimeout(() => {
         if (props.map) {
-          props.map.invalidateSize();
+          // props.map.invalidateSize();
           if (props.map.getCenter().lat !== s.location[0] || props.map.getCenter().lng !== s.location[1]) {
             const loc = new Leaflet.LatLng(props.map.getCenter().lat, props.map.getCenter().lng);
             props.map.setView(loc);
@@ -256,7 +254,6 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
   // + and - keyboard keys for zooming
   useHotkeys('=', incZoom, { dependencies: [selected, s.zoom] });
   useHotkeys('-', decZoom, { dependencies: [selected, s.zoom] });
-
   return (
     <MapContainer
       center={[s.location[0], s.location[1]]}

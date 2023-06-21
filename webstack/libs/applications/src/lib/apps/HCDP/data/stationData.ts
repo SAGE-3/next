@@ -18,10 +18,11 @@ export type SensorTypes = {
   windSpeed: number;
   solarRadiation: number;
   windDirection: number;
+  selected: boolean;
 };
 
 // For now, this is hard-coded. Will change when HCDP is ready.
-export const stationData: SensorTypes[] = [
+export const stationDataTemplate: SensorTypes[] = [
   {
     lat: 20.8415,
     lon: -156.2948,
@@ -33,6 +34,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 20.7067,
@@ -45,6 +47,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 20.7579,
@@ -57,6 +60,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 20.7598,
@@ -69,6 +73,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 20.7382,
@@ -81,6 +86,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 20.7104,
@@ -93,6 +99,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.6974,
@@ -105,6 +112,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.964,
@@ -117,6 +125,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.932,
@@ -129,6 +138,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.748,
@@ -141,6 +151,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.803,
@@ -153,6 +164,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 19.73,
@@ -165,6 +177,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 21.333,
@@ -177,6 +190,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 21.3391,
@@ -189,6 +203,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 22.2026,
@@ -201,6 +216,7 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
   {
     lat: 22.1975,
@@ -213,5 +229,6 @@ export const stationData: SensorTypes[] = [
     windSpeed: 0,
     solarRadiation: 0,
     windDirection: 0,
+    selected: false,
   },
 ];
