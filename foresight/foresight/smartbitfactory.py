@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class SmartBitFactory:
     # TODO: move this to configure file since it's also used in wall
-    cls_root = "smartbits"
+    cls_root = "foresight.smartbits"
 
     # TODO: read these names from some conf file; not hardcoded here
     class_names = {"AIPane": "ai_pane", "Counter": "counter", "Note": "note", "Stickie": "stickie",
@@ -33,7 +33,7 @@ class SmartBitFactory:
             if smartbit_type in cls.class_names:
                 cls_path = ".".join([cls.cls_root, smartbit_type.lower()])
             else:
-                cls_path = "smartbits.genericsmartbit"
+                cls_path = "foresight.smartbits.genericsmartbit"
                 smartbit_type = "GenericSmartBit"
 
             smartbit_class = import_cls(cls_path, smartbit_type)
@@ -45,7 +45,7 @@ class SmartBitFactory:
         except: #  issue with doc not compatible with current sb class. maybe too old.
             try:
                 if smartbit_class is not None and smartbit_type != "GenericSmartBit":
-                    cls_path = "foresight.smartbits.genericsmartbit"
+                    cls_path = ".".join([cls.cls_root, "genericsmartbit"])
                     smartbit_type = "GenericSmartBit"
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
