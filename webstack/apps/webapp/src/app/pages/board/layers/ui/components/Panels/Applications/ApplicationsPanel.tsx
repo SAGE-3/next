@@ -79,6 +79,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
+    } else if (appName === 'Seer') {
+      w = 800;
+      h = 550;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

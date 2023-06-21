@@ -19,8 +19,6 @@ Thumbs.db
 # Idea
 .idea/
 *.pem
-foresight/config.json
-webstack/package-lock.json
 *.deb
 
 # AI
@@ -28,6 +26,12 @@ webstack/package-lock.json
 
 # logs
 *.log
+
+# temp
+foresight/config.json
+webstack/package-lock.json
+foresight/SeerProxy.py
+foresight/_env.sh
 webstack/keys/token.json
-webstack/keys/package-lock.json
 webstack/keys/yarn.lock
+./webstack/keys/*

@@ -18,7 +18,7 @@ services:
     ports:
       - "80:8888"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=${ENVIRONMENT}
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
