@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { Box, ButtonGroup, HStack, IconButton, Spacer, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
+import { ButtonGroup, HStack, IconButton, Spinner, Tooltip, useColorMode, useToast } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 import { v4 as getUUID } from 'uuid';
@@ -197,11 +197,10 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
     folding: false,
     lineDecorationsWidth: 10,
     lineNumbersMinChars: 3,
-    readOnlyMessage: 'You do not have access to this kernel',
     readOnly: !access,
-    renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
+    renderLineHighlight: 'all',
     scrollbar: {
-      vertical: 'auto', // 'scroll' | 'hidden' | 'visible' | 'auto'
+      vertical: 'auto',
       horizontal: 'scroll',
       verticalScrollbarSize: 10,
       horizontalScrollbarSize: 10,
