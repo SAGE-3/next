@@ -382,7 +382,7 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
     <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef}
       blockScrollOnMount={false} scrollBehavior={"inside"}>
       <ModalOverlay />
-      <ModalContent maxH={300}>
+      <ModalContent maxH={"30vh"} top={"4rem"}>
         <HStack>
           {/* Search box */}
           <InputGroup>
