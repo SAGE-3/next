@@ -15,7 +15,7 @@ import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 // Icons
-import { MdFileDownload } from 'react-icons/md';
+import { MdFileDownload, MdOpenInNew } from 'react-icons/md';
 
 import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
@@ -253,13 +253,12 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // const updateState = useAppStore((state) => state.updateState);
 
   // Board store
   const boards = useBoardStore((state) => state.boards);
 
   // Room and board
-  const { boardId } = useParams();
+  const { boardId, roomId } = useParams();
 
   // Download the notebook for this board
   function downloadNotebook() {
@@ -298,6 +297,29 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
+  const handleOpen = () => {
+    if (isElectron()) {
+      GetConfiguration().then((conf) => {
+        if (conf.token) {
+          // Create a new notebook
+          let base: string;
+          if (conf.production) {
+            base = `https://${window.location.hostname}:4443`;
+          } else {
+            base = `http://${window.location.hostname}`;
+          }
+          let j_url: string;
+          if (s.notebook) {
+            j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
+          } else {
+            j_url = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
+          }
+          window.electron.send('open-external-url', { url: j_url });
+        }
+      });
+    }
+  };
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -305,6 +327,9 @@ function ToolbarComponent(props: App): JSX.Element {
           <Button onClick={downloadNotebook}>
             <MdFileDownload />
           </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={handleOpen}><MdOpenInNew /></Button>
         </Tooltip>
       </ButtonGroup>
     </>
