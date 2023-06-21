@@ -13,6 +13,7 @@ import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
+import variableUnits from '../data/VariableUnits';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -81,9 +82,9 @@ type VariableProps = {
   unit: string;
   startDate: string;
   endDate: string;
-  color: string;
   stationSTIDName: string;
   images: string[];
+  color: string;
 };
 
 export default function VariableCard(
@@ -120,22 +121,16 @@ export default function VariableCard(
       if (!sensorValues) return;
       let unit = '';
       let images: string[] = [];
+      let color = '#ffffff';
       for (let i = 0; i < VariableUnits.length; i++) {
         if (s.widget.yAxisNames[0].includes(VariableUnits[i].variable)) {
           unit = VariableUnits[i].unit;
           images = VariableUnits[i].images;
+          color = variableUnits[i].color;
         }
       }
       const stationIndex = stationColors.findIndex((station) => station.stationName === props.stationMetadata[i].NAME);
-      let color = '';
-      if (stationIndex === -1) {
-        color = getColor(stationColors.length % 9);
-        stationColors.push({ stationName: props.stationMetadata[i].NAME, color });
-      } else {
-        // color = stationColors[stationIndex].color;
-        color = getColor(stationIndex % 9);
-      }
-      console.log(color);
+
       if (sensorValues.length !== 0) {
         values.push({
           stationName: props.stationMetadata[i].NAME,
@@ -145,11 +140,11 @@ export default function VariableCard(
           high: Math.max(...sensorValues),
           low: Math.min(...sensorValues),
           unit: unit,
-          color: color,
           stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
           endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
           images: images,
+          color: color,
         });
       } else {
         values.push({
@@ -160,11 +155,11 @@ export default function VariableCard(
           high: 0,
           low: 0,
           unit: unit,
-          color: color,
           stationSTIDName: props.stationMetadata[i].STID,
           startDate: props.startDate,
           endDate: '2022-04-25T19:55:00Z',
           images: images,
+          color: color,
         });
       }
 
@@ -299,7 +294,7 @@ const Content = (props: {
       p="1rem"
       w={550}
       h={350}
-      border="solid white 6px"
+      border={`solid ${props.variable.color} 6px`}
       borderRadius={'24px'}
       style={{ background: 'white' }}
       // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
