@@ -1,10 +1,10 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 counter_doc = {
     '_id': '524c2a78-392c-43cd-936b-2aba6385822f',
@@ -21,6 +21,7 @@ counter_doc = {
         'type': 'Counter',
         'minimized': False,
         'raised': True},
+    "dragging": False,
     'state': {'count': 42, 'executeInfo': {'executeFunc': '', 'params': {}}}
 }
 
@@ -38,7 +39,8 @@ stickie_doc = {
         'rotation': {'x': 0, 'y': 0, 'z': 0},
         'type': 'Stickie',
         'minimized': False,
-        'raised': True
+        'raised': True,
+        "dragging": False,
     },
     'state': {
         'text': 'stickie note',
@@ -64,7 +66,8 @@ kernel_dashboard_doc = {
         'rotation': {'x': 0, 'y': 0, 'z': 0},
         'type': 'KernelDashboard',
         'minimized': False,
-        'raised': True
+        'raised': True,
+        "dragging": False,
     },
     'state': {
         'kernelSpecs': [],
@@ -89,7 +92,8 @@ generic_smartbit_doc = {
         'rotation': {'x': 0, 'y': 0, 'z': 0},
         'type': 'GenericSmartBit',
         'minimized': False,
-        'raised': True
+        'raised': True,
+        "dragging": False,
     },
     'state': {
     }
@@ -109,7 +113,8 @@ sagecell_doc = {
         'rotation': {'x': 0, 'y': 0, 'z': 0},
         'type': 'SageCell',
         'minimized': False,
-        'raised': True
+        'raised': True,
+        "dragging": False,
     },
     'state': {
         'code': '',
@@ -134,6 +139,7 @@ aipane_doc = {
              'rotation': {'x': 0, 'y': 0, 'z': 0},
              'type': 'AIPane',
              'raised': True},
+    "dragging": False,
     'state': {'executeInfo': {'executeFunc': '', 'params': {}},
               'hostedApps': {},
               'runStatus': False,
