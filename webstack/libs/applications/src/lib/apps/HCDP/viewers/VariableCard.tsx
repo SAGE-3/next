@@ -297,8 +297,8 @@ const Content = (props: {
       }}
       boxShadow={'lg'}
       p="1rem"
-      w={500}
-      h={300}
+      w={550}
+      h={350}
       border="solid white 6px"
       borderRadius={'24px'}
       style={{ background: 'white' }}
@@ -323,12 +323,12 @@ const Content = (props: {
         </Text>
       </Box>
       <Box>
-        <Text color="black" textAlign={'center'} fontSize={35} fontWeight="bold">
+        <Text color="black" textAlign={'center'} fontSize={40} fontWeight="bold">
           {variableName.join(' ')}
         </Text>
       </Box>
 
-      <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
+      {/* <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
         {props.variable.images ? (
           <Image
             boxSize={'120px'}
@@ -338,8 +338,8 @@ const Content = (props: {
         ) : (
           'No Image Available'
         )}
-      </Box>
-      <Box mt={2}>
+      </Box> */}
+      <Box>
         {props.isLoaded ? (
           <>
             <Text
@@ -348,7 +348,7 @@ const Content = (props: {
               alignItems="center"
               overflow="hidden"
               color="black"
-              fontSize={35}
+              fontSize={40}
               fontWeight="bold"
             >
               {isNaN(props.variable.value)
@@ -356,9 +356,7 @@ const Content = (props: {
                 : props.variable.value % 1
                 ? Number(props.variable.value).toFixed(2)
                 : props.variable.value}
-              <span style={{ color: 'gray', verticalAlign: 'text-bottom', marginTop: '12px', marginLeft: '3px', fontSize: 20 }}>
-                {props.variable.unit}
-              </span>
+              <span style={{ marginLeft: '3px', fontSize: 30 }}>{props.variable.unit}</span>
               {/* <Text color="black" textAlign={'center'} fontSize={15}>
                 {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
               </Text> */}
@@ -372,34 +370,56 @@ const Content = (props: {
               color="gray.700"
               fontSize={20}
               fontWeight="semibold"
+              lineHeight={'48px'}
             >
               <>{props.timeSinceLastUpdate}</>
             </Text>
-            <br />
             {isNaN(props.variable.value) ? null : (
               <>
-                <Text
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  overflow="hidden"
-                  color="black"
-                  fontSize={25}
-                  fontWeight="bold"
-                >
-                  Average: {props.variable.average.toFixed(2)} - Std Dev: {props.variable.stdDev.toFixed(2)}
-                </Text>
-                <Text
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  overflow="hidden"
-                  color="black"
-                  fontSize={25}
-                  fontWeight="bold"
-                >
-                  High: {props.variable.high.toFixed(2)} - Low: {props.variable.low.toFixed(2)}
-                </Text>
+                <Box display="flex" justifyContent={'space-evenly'} alignItems={'center'} flexDir="row">
+                  <Text
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    overflow="hidden"
+                    color="gray.700"
+                    fontSize={25}
+                    fontWeight="bold"
+                    textAlign={'center'}
+                  >
+                    Low <br />
+                    {props.variable.low.toFixed(2)}
+                    {props.variable.unit}
+                  </Text>
+                  <Text
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    overflow="hidden"
+                    color="gray.700"
+                    fontSize={25}
+                    fontWeight="bold"
+                    textAlign={'center'}
+                  >
+                    Average <br />
+                    {props.variable.average.toFixed(2)}
+                    {props.variable.unit}
+                  </Text>
+                  <Text
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    overflow="hidden"
+                    color="gray.700"
+                    fontSize={25}
+                    fontWeight="bold"
+                    textAlign={'center'}
+                  >
+                    High <br />
+                    {props.variable.high.toFixed(2)}
+                    {props.variable.unit}
+                  </Text>
+                </Box>
               </>
             )}
             <Text
@@ -409,7 +429,8 @@ const Content = (props: {
               overflow="hidden"
               color="gray.700"
               fontSize={20}
-              fontWeight="bold"
+              fontWeight="semibold"
+              lineHeight={'48px'}
             >
               <>Last 24 hours</>
             </Text>
