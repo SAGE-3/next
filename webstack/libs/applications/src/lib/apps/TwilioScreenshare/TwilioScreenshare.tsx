@@ -57,8 +57,8 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
 
   // Current User
-  const { user } = useUser();
-  const yours = user?._id === props._createdBy;
+  const { user, accessId } = useUser();
+  const yours = user?._id === props._createdBy && accessId === s.accessId;
 
   // Twilio Store
   const room = useTwilioStore((state) => state.room);

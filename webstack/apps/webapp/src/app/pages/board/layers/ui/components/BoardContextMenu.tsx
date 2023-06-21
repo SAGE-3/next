@@ -21,7 +21,7 @@ import {
   useConfigStore,
   GetConfiguration,
 } from '@sage3/frontend';
-import { AppName } from '@sage3/applications/schema';
+import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
 
 // Development or production
@@ -45,7 +45,7 @@ export function BoardContextMenu(props: ContextProps) {
   const [appsList, setAppsList] = useState<string[]>([]);
 
   // User information
-  const { user } = useUser();
+  const { user, accessId } = useUser();
 
   const { toHome } = useRouteNav();
   // Redirect the user back to the homepage
@@ -120,6 +120,7 @@ export function BoardContextMenu(props: ContextProps) {
   const newApplication = (appName: AppName, title?: string) => {
     if (!user) return;
     // features disabled
+    let state = {} as AppState;
     if (appName === 'JupyterLab' && appsList.includes('jupyter')) return;
     if (appName === 'SageCell' && appsList.includes('cell')) return;
     if (appName === 'Screenshare' && appsList.includes('twilio')) return;
@@ -131,6 +132,7 @@ export function BoardContextMenu(props: ContextProps) {
     if (appName === 'Screenshare') {
       width = 1280;
       height = 720;
+      state.accessId = accessId;
     }
     if (appName === 'Webview') {
       height = 650;
@@ -145,7 +147,7 @@ export function BoardContextMenu(props: ContextProps) {
       size: { width, height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
-      state: { ...(initialValues[appName] as any) },
+      state: { ...(initialValues[appName] as any), ...state },
       raised: true,
       dragging: false,
     });

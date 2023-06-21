@@ -113,7 +113,8 @@ async function startServer() {
       res.status(403).send();
     }
     const room = req.query.room as string;
-    const token = twilio.generateVideoToken(authId, room);
+    const identity = req.query.identity as string;
+    const token = twilio.generateVideoToken(identity, room);
     res.send({ token });
   });
 

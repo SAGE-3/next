@@ -8,8 +8,18 @@
 
 import { useEffect, useRef } from 'react';
 import {
-  Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure,
-  ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+  Box,
+  useColorModeValue,
+  useToast,
+  ToastId,
+  Modal,
+  useDisclosure,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
 } from '@chakra-ui/react';
 
 import { isValidURL, setupApp } from '@sage3/frontend';
@@ -57,7 +67,7 @@ export function Background(props: BackgroundProps) {
   const createBatch = useAppStore((state) => state.createBatch);
 
   // User
-  const { user } = useUser();
+  const { user, accessId } = useUser();
   const { auth } = useAuth();
   const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
 
@@ -122,7 +132,7 @@ export function Background(props: BackgroundProps) {
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
     } else {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId));
     }
@@ -151,13 +161,15 @@ export function Background(props: BackgroundProps) {
         return;
       }
       // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer).then((files) => {
-        // do the actual upload
-        uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
-      }).catch((err) => {
-        console.log('Error> uploading files', err);
-        lotsOnOpen();
-      });
+      collectFiles(event.dataTransfer)
+        .then((files) => {
+          // do the actual upload
+          uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+        })
+        .catch((err) => {
+          console.log('Error> uploading files', err);
+          lotsOnOpen();
+        });
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
@@ -330,8 +342,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'50px 50px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -366,7 +379,6 @@ export function Background(props: BackgroundProps) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </Box>
   );
 }
