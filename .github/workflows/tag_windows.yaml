@@ -32,7 +32,7 @@ jobs:
         run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite
       - name: Build3
         run: node build_win.js
-      - uses: Rename
+      - name: Rename
         run: copy windows-installer/SAGE3-Installer.exe auto-update-sage3-win32-x64.exe
       - name: Release
         uses: softprops/action-gh-release@v1
