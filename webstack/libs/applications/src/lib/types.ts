@@ -19,6 +19,7 @@ import { state as KernelDashboardState, name as KernelDashboardName } from './ap
 import { state as KernelsState, name as KernelsName } from './apps/Kernels';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
+import { state as MapGLState, name as MapGLName } from './apps/MapGL';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
@@ -55,6 +56,7 @@ export type AppState =
   | KernelsState
   | LeafLetState
   | LinkerState
+  | MapGLState
   | NotepadState
   | PDFResultState
   | PDFViewerState
@@ -90,6 +92,7 @@ export type AppName =
   | typeof KernelsName
   | typeof LeafLetName
   | typeof LinkerName
+  | typeof MapGLName
   | typeof NotepadName
   | typeof PDFResultName
   | typeof PDFViewerName
