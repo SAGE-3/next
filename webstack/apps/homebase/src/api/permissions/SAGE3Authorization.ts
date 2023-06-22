@@ -13,9 +13,9 @@ type PermissionConfig = {
   access: Access[];
 };
 
-const appResource: Resource = { name: 'apps', collection: AppsCollection };
-const boardResource: Resource = { name: 'boards', collection: BoardsCollection };
-const roomResource: Resource = { name: 'rooms', collection: RoomsCollection };
+const appResource: Resource = { name: 'app', collection: AppsCollection };
+const boardResource: Resource = { name: 'board', collection: BoardsCollection };
+const roomResource: Resource = { name: 'room', collection: RoomsCollection };
 
 const Perm: PermissionConfig = {
   resources: [appResource, boardResource, roomResource],
