@@ -42,6 +42,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
+
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
 

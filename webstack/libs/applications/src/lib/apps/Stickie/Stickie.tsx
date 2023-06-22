@@ -46,7 +46,7 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const selectedApp = useUIStore(state => state.selectedAppId)
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 

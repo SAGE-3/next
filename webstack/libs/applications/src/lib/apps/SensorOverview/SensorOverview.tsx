@@ -6,55 +6,164 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore } from '@sage3/frontend';
-import { Box, Button, Container, Select, Spinner } from '@chakra-ui/react';
+// Sage Imports
+import { useAppStore, useHexColor } from '@sage3/frontend';
 import { App } from '../../schema';
-
-import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+
+// React Imports
+import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
 
 // Styling
 import './styling.css';
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+// Visualization imports
+import VariableCard from '../HCDP/viewers/VariableCard';
+import EChartsViewer from '../HCDP/viewers/EChartsViewer';
+import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
+
+function convertToFormattedDateTime(date: Date) {
+  const now = new Date(date);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
+
+function formatDuration(ms: number) {
+  if (ms < 0) ms = -ms;
+  const mins = Math.floor(ms / 60000) % 60;
+  if (mins > 0) {
+    return `${mins} minutes ago`;
+  } else {
+    return `less than a minute ago`;
+  }
+}
+
+function getFormattedDateTime24HoursBefore() {
+  const now = new Date();
+  now.setHours(now.getHours() - 24);
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+
+  return `${year}${month}${day}${hours}${minutes}`;
+}
 
 /* App component for Sensor Overview */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
-  const [singularSensorData, setSingularSensorData] = useState({} as any);
+  const [stationMetadata, setStationMetadata] = useState([]);
+
+  // Color Variables
+  const bgColor = useColorModeValue('gray.100', 'gray.900');
+  const textColor = useColorModeValue('gray.700', 'gray.100');
+
+  // Time Variables
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
 
   useEffect(() => {
-    // Fetch from the Mesonet website. Will change to HCDP database when website is ready
-    fetch(
-      `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationName}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-    ).then((response) => {
-      response.json().then(async (sensor) => {
-        const sensorData = sensor['STATION'][0];
-        console.log(sensorData);
-        setSingularSensorData(sensorData);
-      });
+    const updateTimesinceLastUpdate = () => {
+      if (lastUpdate > 0) {
+        const delta = Date.now() - lastUpdate;
+        setTimeSinceLastUpdate(formatDuration(delta));
+      }
+    };
+    updateTimesinceLastUpdate();
+    const interval = setInterval(() => {
+      updateTimesinceLastUpdate();
+    }, 1000 * 30); // 30 seconds
+    return () => clearInterval(interval);
+  }, [lastUpdate]);
+
+  useEffect(() => {
+    const fetchStationData = async () => {
+      setIsLoaded(false);
+      let tmpStationMetadata: any = [];
+      let url = '';
+      if (props.data.state.widget.visualizationType === 'variableCard') {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+          s.stationNames
+        )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+          new Date()
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      } else {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+          props.data.state.widget.startDate
+        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      }
+
+      const response = await fetch(url);
+      const sensor = await response.json();
+      if (sensor) {
+        const sensorData = sensor['STATION'];
+        tmpStationMetadata = sensorData;
+      }
+
+      setStationMetadata(tmpStationMetadata);
+      setIsLoaded(true);
+    };
+    fetchStationData().catch((err) => {
+      fetchStationData();
+      console.log(err);
     });
-  }, [s.stationName]);
+
+    const interval = setInterval(
+      () => {
+        fetchStationData();
+        setLastUpdate(Date.now());
+      },
+      60 * 10000
+      //10 minutes
+    );
+    return () => clearInterval(interval);
+  }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
   return (
     <AppWindow app={props}>
-      <Box p={'1rem'} w="100%" bg="white" color="black" h="100%">
-        {Object.keys(singularSensorData).length > 0 ? (
-          Object.keys(singularSensorData).map((sensor) => {
-            if (typeof singularSensorData[sensor] !== 'object') {
-              return (
-                <div>
-                  <h2>
-                    <strong>{sensor}:</strong> {singularSensorData[sensor]}
-                  </h2>
-                </div>
-              );
-            } else {
-              return null;
-            }
-          })
+      <Box overflowY="auto" bg={bgColor} h="100%">
+        {stationMetadata.length > 0 ? (
+          <Box bgColor={bgColor} color={textColor} fontSize="lg">
+            <CustomizeWidgets {...props} />
+            <HStack>
+              <Box>
+                {s.widget.visualizationType === 'variableCard' ? (
+                  <VariableCard
+                    size={props.data.size}
+                    variableName={s.widget.yAxisNames[0]}
+                    state={props.data.state}
+                    stationNames={s.stationNames}
+                    startDate={s.widget.startDate}
+                    stationMetadata={stationMetadata}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
+                    isLoaded={true}
+                  />
+                ) : (
+                  <EChartsViewer
+                    stationNames={s.stationNames}
+                    isLoaded={isLoaded}
+                    startDate={props.data.state.widget.startDate}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
+                    widget={s.widget}
+                    size={props.data.size}
+                    stationMetadata={stationMetadata}
+                  />
+                )}
+              </Box>
+            </HStack>
+          </Box>
         ) : (
           <Spinner
             w={Math.min(props.data.size.height / 2, props.data.size.width / 2)}
@@ -73,265 +182,27 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+
   const updateState = useAppStore((state) => state.updateState);
 
-  const [stations, setStations] = useState<any[]>([]);
-
-  const handleChangeSensor = (e: ChangeEvent<HTMLSelectElement>) => {
-    updateState(props._id, { stationName: e.target.value });
+  const handleOpenWidget = () => {
+    updateState(props._id, { isWidgetOpen: true });
   };
-
-  useEffect(() => {
-    for (let i = 0; i < stationData.length; i++) {
-      console.log(stationData[i].name, s.stationName);
-      fetch(
-        `https://api.mesowest.net/v2/stations/timeseries?STID=${stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-      ).then((response) => {
-        response.json().then(async (sensor) => {
-          console.log(sensor);
-          const sensorData = sensor['STATION'][0];
-          setStations((stations) => [...stations, sensorData]);
-          console.log(sensorData);
-        });
-      });
-    }
-  }, []);
 
   return (
     <>
-      <Select
-        borderWidth="1px"
-        borderRadius="lg"
-        size="xs"
-        mx="1rem"
-        w="10rem"
-        borderColor={'gray.400'}
-        backgroundColor={'white'}
-        color="black"
-        name="yAxis"
-        placeholder={'Choose Sensor'}
-        onChange={handleChangeSensor}
-      >
-        {stations.map((station: any, index: number) => {
-          return (
-            <option key={index} value={station.STID}>
-              {station.NAME}
-            </option>
-          );
-        })}
-      </Select>
+      {' '}
+      <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
+        Edit Visualization
+      </Button>
+      {s.widget.visualizationType === 'variableCard' ? (
+        <ButtonGroup size="sm" isAttached variant="outline">
+          {/* <Button >Celcius</Button>
+  <Button >Fahrenheit</Button> */}
+        </ButtonGroup>
+      ) : null}
     </>
   );
 }
 
 export default { AppComponent, ToolbarComponent };
-
-type SensorTypes = {
-  lat: number;
-  lon: number;
-  name: string;
-  temperatureC: number;
-  temperatureF: number;
-
-  soilMoisture: number;
-  relativeHumidity: number;
-  windSpeed: number;
-  solarRadiation: number;
-  windDirection: number;
-};
-
-// For now, this is hard-coded. Will change when HCDP is ready.
-const stationData: SensorTypes[] = [
-  {
-    lat: 20.8415,
-    lon: -156.2948,
-    name: '017HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7067,
-    lon: -156.3554,
-    name: '016HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7579,
-    lon: -156.32,
-    name: '001HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7598,
-    lon: -156.2482,
-    name: '002HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7382,
-    lon: -156.2458,
-    name: '013HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 20.7104,
-    lon: -156.2567,
-    name: '003HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.6974,
-    lon: -155.0954,
-    name: '005HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.964,
-    lon: -155.25,
-    name: '006HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.932,
-    lon: -155.291,
-    name: '007HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.748,
-    lon: -155.996,
-    name: '008HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.803,
-    lon: -155.851,
-    name: '009HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 19.73,
-    lon: -155.87,
-    name: '010HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    temperatureC: 0,
-    temperatureF: 0,
-    soilMoisture: 0,
-    relativeHumidity: 0,
-    windSpeed: 0,
-    solarRadiation: 0,
-    windDirection: 0,
-  },
-];
