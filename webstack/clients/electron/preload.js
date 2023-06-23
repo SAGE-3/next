@@ -26,6 +26,7 @@ const validChannels = [
   'show-main-window',
   'request-current-display',
   'current-display',
+  'open-external-url',
 ];
 
 contextBridge.exposeInMainWorld('electron', {
