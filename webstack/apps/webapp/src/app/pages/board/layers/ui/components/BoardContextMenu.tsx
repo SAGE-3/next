@@ -78,7 +78,9 @@ export function BoardContextMenu(props: ContextProps) {
   const flipUI = useUIStore((state) => state.flipUI);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
   const showAppTitle = useUIStore((state) => state.showAppTitle);
+  const showPresence = useUIStore((state) => state.showPresence);
   const toggleTitle = useUIStore((state) => state.toggleTitle);
+  const togglePresence = useUIStore((state) => state.togglePresence);
   const { uiToBoard } = useCursorBoardPosition();
 
   // UI Menu position setters
@@ -393,6 +395,17 @@ export function BoardContextMenu(props: ContextProps) {
             onChange={onUIChange}
           >
             Show Interface
+          </Checkbox>
+          <Checkbox
+            w={'100%'}
+            size={'sm'}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            isChecked={showPresence}
+            onChange={togglePresence}
+          >
+            Show Presence
           </Checkbox>
           <Checkbox
             w={'100%'}
