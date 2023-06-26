@@ -36,6 +36,7 @@ import { useAppStore } from '@sage3/frontend';
 import VariableCard from '../viewers/VariableCard';
 import EChartsViewer from '../viewers/EChartsViewer';
 import { getColor } from '../../EChartsViewer/ChartManager';
+import CurrentConditions from '../viewers/CurrentConditions';
 
 type NLPRequestResponse = {
   success: boolean;
@@ -495,7 +496,12 @@ const CustomizeWidgets = React.memo((props: App) => {
                         value={convertToChakraDateTime(props.data.state.widget.startDate)}
                         placeholder="Select Date and Time"
                         type="datetime-local"
-                        disabled={props.data.state.widget.visualizationType === 'variableCard' ? true : false}
+                        disabled={
+                          props.data.state.widget.visualizationType === 'variableCard' ||
+                          props.data.state.widget.visualizationType === 'allVariables'
+                            ? true
+                            : false
+                        }
                       />
                     </Tooltip>
                   </Box>
@@ -514,6 +520,7 @@ const CustomizeWidgets = React.memo((props: App) => {
                       onChange={handleVisualizationTypeChange}
                     >
                       <option value="variableCard">Current Value</option>
+                      <option value="allVariables">Current Conditions</option>
                       <option value="line">Line Chart</option>
                       <option value="bar">Bar Chart</option>
                       <option value="scatter">Scatter Chart</option>
@@ -626,16 +633,20 @@ const CustomizeWidgets = React.memo((props: App) => {
                   {props.data.state.widget.visualizationType === 'variableCard' ? (
                     <>
                       <VariableCard
-                        variableName={props.data.state.widget.yAxisNames[0]}
                         state={props.data.state}
                         stationNames={props.data.state.stationNames}
                         stationMetadata={stationMetadata}
                         isLoaded={isLoaded}
                         startDate={startDate}
                         timeSinceLastUpdate={timeSinceLastUpdate}
+                        generateAllVariables={props.data.state.widget.visualizationType === 'allVariables'}
                       />
                     </>
-                  ) : (
+                  ) : null}
+
+                  {props.data.state.widget.visualizationType === 'line' ||
+                  props.data.state.widget.visualizationType === 'bar' ||
+                  props.data.state.widget.visualizationType === 'scatter' ? (
                     <EChartsViewer
                       stationNames={props.data.state.stationNames}
                       stationMetadata={stationMetadata}
@@ -643,7 +654,19 @@ const CustomizeWidgets = React.memo((props: App) => {
                       startDate={startDate}
                       widget={props.data.state.widget}
                     />
-                  )}
+                  ) : null}
+                  {props.data.state.widget.visualizationType === 'allVariables' ? (
+                    <>
+                      <CurrentConditions
+                        state={props.data.state}
+                        stationNames={props.data.state.stationNames}
+                        startDate={startDate}
+                        stationMetadata={stationMetadata}
+                        timeSinceLastUpdate={timeSinceLastUpdate}
+                        isLoaded={true}
+                      />
+                    </>
+                  ) : null}
                 </Box>
               </Box>
             </Box>

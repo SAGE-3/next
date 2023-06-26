@@ -22,6 +22,7 @@ import { useEffect, useState } from 'react';
 // Visualization imports
 import VariableCard from '../HCDP/viewers/VariableCard';
 import EChartsViewer from '../HCDP/viewers/EChartsViewer';
+import CurrentConditions from '../HCDP/viewers/CurrentConditions';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
 
 function convertToFormattedDateTime(date: Date) {
@@ -39,9 +40,9 @@ function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
   if (mins > 0) {
-    return `${mins} minutes ago`;
+    return `Refreshed ${mins} minutes ago`;
   } else {
-    return `less than a minute ago`;
+    return `Refreshed less than a minute ago`;
   }
 }
 
@@ -142,15 +143,18 @@ function AppComponent(props: App): JSX.Element {
                 {s.widget.visualizationType === 'variableCard' ? (
                   <VariableCard
                     size={props.data.size}
-                    variableName={s.widget.yAxisNames[0]}
                     state={props.data.state}
                     stationNames={s.stationNames}
                     startDate={s.widget.startDate}
                     stationMetadata={stationMetadata}
                     timeSinceLastUpdate={timeSinceLastUpdate}
+                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
                     isLoaded={true}
                   />
-                ) : (
+                ) : null}
+                {props.data.state.widget.visualizationType === 'line' ||
+                props.data.state.widget.visualizationType === 'bar' ||
+                props.data.state.widget.visualizationType === 'scatter' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
                     isLoaded={isLoaded}
@@ -160,7 +164,20 @@ function AppComponent(props: App): JSX.Element {
                     size={props.data.size}
                     stationMetadata={stationMetadata}
                   />
-                )}
+                ) : null}
+                {props.data.state.widget.visualizationType === 'allVariables' ? (
+                  <>
+                    <CurrentConditions
+                      size={props.data.size}
+                      state={props.data.state}
+                      stationNames={s.stationNames}
+                      startDate={s.widget.startDate}
+                      stationMetadata={stationMetadata}
+                      timeSinceLastUpdate={timeSinceLastUpdate}
+                      isLoaded={true}
+                    />
+                  </>
+                ) : null}
               </Box>
             </HStack>
           </Box>

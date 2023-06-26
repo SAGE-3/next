@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image } from '@chakra-ui/react';
+import { Box, Spinner, Text, Image, Divider, AbsoluteCenter } from '@chakra-ui/react';
 import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
@@ -73,6 +73,7 @@ function lightenColor(hexColor: string) {
 }
 
 type VariableProps = {
+  variableName: string;
   stationName: string;
   value: number;
   average: number;
@@ -89,89 +90,95 @@ type VariableProps = {
 
 export default function VariableCard(
   props: {
-    variableName: string;
     isLoaded: boolean;
     stationNames: string[];
     stationMetadata: any;
     startDate: string;
     timeSinceLastUpdate: string;
     size?: { width: number; height: number; depth: number };
+    generateAllVariables?: boolean;
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
   const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
   const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
-
+  let previousStationName: string | null = null;
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
-    if (s.widget.yAxisNames.length === 0) return;
+    if (s.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
     for (let i = 0; i < props.stationMetadata.length; i++) {
       props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
       props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
       props.stationMetadata[i].OBSERVATIONS['longitude'] = [props.stationMetadata[i].LONGITUDE];
-      props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
+      // props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
       props.stationMetadata[i].OBSERVATIONS['current temperature'] = [
         props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'][props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'].length - 1],
       ];
     }
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
-      const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[0]];
-      if (!sensorValues) return;
-      let unit = '';
-      let images: string[] = [];
-      let color = '#ffffff';
-      for (let i = 0; i < VariableUnits.length; i++) {
-        if (s.widget.yAxisNames[0].includes(VariableUnits[i].variable)) {
-          unit = VariableUnits[i].unit;
-          images = VariableUnits[i].images;
-          color = variableUnits[i].color;
+      // Check here if generating all the variable names for a station
+      if (props.generateAllVariables) {
+        s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
+      }
+      for (let j = 0; j < s.widget.yAxisNames.length; j++) {
+        const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
+        if (sensorValues) {
+          let unit = '';
+          let images: string[] = [];
+          let color = '#ffffff';
+          for (let i = 0; i < VariableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
+              unit = VariableUnits[i].unit;
+              images = VariableUnits[i].images;
+              color = variableUnits[i].color;
+            }
+          }
+          if (sensorValues.length !== 0) {
+            values.push({
+              variableName: s.widget.yAxisNames[j],
+              stationName: props.stationMetadata[i].NAME,
+              value: sensorValues[sensorValues.length - 1],
+              average: calculateMean(sensorValues),
+              stdDev: calculateStdDev(sensorValues),
+              high: Math.max(...sensorValues),
+              low: Math.min(...sensorValues),
+              unit: unit,
+              stationSTIDName: props.stationMetadata[i].STID,
+              startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
+              endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
+              images: images,
+              color: color,
+            });
+          } else {
+            values.push({
+              variableName: s.widget.yAxisNames[j],
+              stationName: props.stationMetadata[i].NAME,
+              value: 0,
+              average: 0,
+              stdDev: 0,
+              high: 0,
+              low: 0,
+              unit: unit,
+              stationSTIDName: props.stationMetadata[i].STID,
+              startDate: props.startDate,
+              endDate: '2022-04-25T19:55:00Z',
+              images: images,
+              color: color,
+            });
+          }
+
+          // Air Temperature has Celius and Fahrenheit to display as "secondary"
+          if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
+            secondaryValues = celsiusToFahrenheit(sensorValues);
+            setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
+          }
         }
-      }
-      const stationIndex = stationColors.findIndex((station) => station.stationName === props.stationMetadata[i].NAME);
-
-      if (sensorValues.length !== 0) {
-        values.push({
-          stationName: props.stationMetadata[i].NAME,
-          value: sensorValues[sensorValues.length - 1],
-          average: calculateMean(sensorValues),
-          stdDev: calculateStdDev(sensorValues),
-          high: Math.max(...sensorValues),
-          low: Math.min(...sensorValues),
-          unit: unit,
-          stationSTIDName: props.stationMetadata[i].STID,
-          startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
-          endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-          images: images,
-          color: color,
-        });
-      } else {
-        values.push({
-          stationName: props.stationMetadata[i].NAME,
-          value: 0,
-          average: 0,
-          stdDev: 0,
-          high: 0,
-          low: 0,
-          unit: unit,
-          stationSTIDName: props.stationMetadata[i].STID,
-          startDate: props.startDate,
-          endDate: '2022-04-25T19:55:00Z',
-          images: images,
-          color: color,
-        });
-      }
-
-      // Air Temperature has Celius and Fahrenheit to display as "secondary"
-      if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
-        secondaryValues = celsiusToFahrenheit(sensorValues);
-        setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
       }
     }
     setVariablesToDisplay(values);
-  }, [props.stationMetadata, JSON.stringify(props.state.widget)]);
-
+  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.state.widget)]);
   return (
     <>
       {props.size ? (
@@ -192,7 +199,6 @@ export default function VariableCard(
                       size={props.size}
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      variableName={s.widget.yAxisNames[0]}
                       stationNames={props.stationNames}
                       variableToDisplayLength={variablesToDisplay.length}
                       s={s}
@@ -204,12 +210,24 @@ export default function VariableCard(
                 );
               })
             : variablesToDisplay.map((variable: VariableProps, index: number) => {
+                const currentStationName = variable.stationName;
+                const isNewStation = currentStationName !== previousStationName;
+
+                previousStationName = currentStationName;
                 return (
                   <React.Fragment key={index}>
+                    {props.generateAllVariables ? (
+                      isNewStation ? (
+                        <>
+                          <Divider orientation="horizontal" />
+                          <Box h="20px" width="100%" bgColor="gray.200" />
+                        </>
+                      ) : null
+                    ) : null}
+
                     <Content
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      variableName={s.widget.yAxisNames[0]}
                       stationNames={props.stationNames}
                       variableToDisplayLength={variablesToDisplay.length}
                       s={s}
@@ -227,13 +245,13 @@ export default function VariableCard(
             isLoaded={props.isLoaded}
             stationNames={props.stationNames}
             variableToDisplayLength={0}
-            variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
             s={s}
             timeSinceLastUpdate={props.timeSinceLastUpdate}
             variable={
               variablesToDisplay[0]
                 ? variablesToDisplay[0]
                 : {
+                    variableName: 'air_temperature_set_1',
                     stationName: 'Station Name',
                     value: 42.01,
                     average: 38.42,
@@ -259,22 +277,20 @@ const Content = (props: {
   isLoaded: boolean;
   s: AppState;
   stationNames: string[];
-  variableName: string;
   size?: { width: number; height: number; depth: number };
   variableToDisplayLength: number;
   timeSinceLastUpdate: string;
   secondaryValuesToDisplay?: number;
   variable: VariableProps;
 }) => {
-  const variableName = props.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
-  delete variableName[variableName.length - 1];
+  const variableName = props.variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+  // delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
   const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
   return (
     <Box
       draggable={true}
       onDragStart={(e) => {
-        console.log(props.s);
         e.dataTransfer.clearData();
         e.dataTransfer.setData(
           'text/plain',
@@ -292,11 +308,12 @@ const Content = (props: {
       }}
       boxShadow={'lg'}
       p="1rem"
-      w={550}
-      h={350}
-      border={`solid ${props.variable.color} 6px`}
+      w={600}
+      h={400}
+      border={`solid ${props.variable.color} 15px`}
+      // bgColor={`${props.variable.color}`}
       borderRadius={'24px'}
-      style={{ background: 'white' }}
+      style={{ backgroundColor: 'white' }}
       // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
       display="flex"
       margin="1rem"
@@ -436,4 +453,8 @@ const Content = (props: {
       </Box>
     </Box>
   );
+};
+
+VariableCard.defaultProps = {
+  generateAllVariables: false,
 };
