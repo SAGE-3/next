@@ -24,28 +24,44 @@
   // Redis Database Config
   "redis": {
     // The Redis Database URL
-    "url": "redis://localhost:6379"
+    "url": "redis://redis-server:6379"
   },
   
- // External Services
- "services": {
-    twilio: {
+  // Fluentd log configuration
+  "fluentd": {
+    "server": "fluentd-server",
+    "port": 24224,
+    "level": "info" // debug, info, warn, error
+  },
+
+  // External Services
+  "services": {
+    "twilio": {
       // Your Account SID from www.twilio.com/console
-      accountSid: "", 
+      "accountSid": "",
       // API Key
-      apiKey: "", 
+      "apiKey": "",
       // API Secret
-      apiSecret: "" 
+      "apiSecret": ""
     }
-  }, 
+  },
 
   // Enable/disable some features for safety
   "features": {
     // Enable Plugins
-    plugins: true, 
+    "plugins": true,
     // Which Apps to enable.  Available Apps: 
     // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["ChartMaker", "MapGL", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview"],
+    "apps": [
+      "ChartMaker",
+      "MapGL",
+      "Notepad",
+      "SageCell",
+      "KernelDashboard",
+      "Stickie",
+      "Screenshare",
+      "Webview"
+    ]
   },
 
   // Auth Configuration
