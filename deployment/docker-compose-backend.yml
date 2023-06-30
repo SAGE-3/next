@@ -10,7 +10,7 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
   fluent-server:
-    image: "fluent/fluentd"
+    image: "fluent/fluentd:edge-debian"
     ports:
       - "127.0.0.1:24224:24224"
       - "127.0.0.1:24224:24224/udp"
