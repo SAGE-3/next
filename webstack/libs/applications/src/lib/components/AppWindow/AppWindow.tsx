@@ -56,12 +56,10 @@ export function AppWindow(props: WindowProps) {
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const isGrouped = selectedApps.includes(props.app._id);
-  const selectedAppsSnapshot = useUIStore((state) => state.selectedAppsSnapshot);
   const [groupedAppsStart, setGroupedAppsStart] = useState<{ [id: string]: Position }>({});
 
   const lassoMode = useUIStore((state) => state.lassoMode);
@@ -97,17 +95,6 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
 
-  // Group Delta Change
-  useEffect(() => {
-    if (isGrouped) {
-      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
-        const x = selectedAppsSnapshot[props.app._id].x + deltaPosition.p.x;
-        const y = selectedAppsSnapshot[props.app._id].y + deltaPosition.p.y;
-        setPos({ x, y });
-      }
-    }
-  }, [deltaPosition.p.x, deltaPosition.p.y, deltaPosition.id, selectedAppsSnapshot]);
-
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
@@ -128,11 +115,18 @@ export function AppWindow(props: WindowProps) {
 
   // If size or position change, update the local state.
   useEffect(() => {
-    if (!selectedApps.includes(props.app._id) && !selected) {
+    if (!selectedApps.includes(props.app._id) && !appDragging) {
       setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
       setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
     }
-  }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y, selectedApps]);
+  }, [
+    props.app.data.size.width,
+    props.app.data.size.height,
+    props.app.data.position.x,
+    props.app.data.position.y,
+    selectedApps,
+    appDragging,
+  ]);
 
   // Throttle the position update
   const throttlePositionUpdate = throttle(UpdateRate, (x: number, y: number) => {
@@ -140,7 +134,7 @@ export function AppWindow(props: WindowProps) {
   });
   const updatePositionFunc = useCallback(throttlePositionUpdate, []);
 
-  // Update the position of the grouped windows
+  // Throttle the update the position of the grouped windows
   const throttleGroupPositionUpdate = throttle(UpdateRate, (dx: number, dy: number) => {
     const updates = [] as { id: string; updates: Partial<AppSchema> }[];
     for (const appId of selectedApps) {
@@ -180,7 +174,6 @@ export function AppWindow(props: WindowProps) {
           groupedAppsStart[appId] = { x: app.data.position.x, y: app.data.position.y, z: app.data.position.z };
         }
         setGroupedAppsStart(groupedAppsStart);
-        setSelectedAppsSnapshot(groupedAppsStart);
         updateBatch(updates);
       }
     } else {
@@ -334,7 +327,7 @@ export function AppWindow(props: WindowProps) {
       if (selectedApp === props.app._id) {
         setSelectedApp('');
       }
-    }
+    };
   }, [selectedApp]);
 
   return (

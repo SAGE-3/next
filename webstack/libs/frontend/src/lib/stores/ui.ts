@@ -44,11 +44,9 @@ interface UIState {
 
   // Selected Apps
   selectedAppsIds: string[];
-  selectedAppsSnapshot: { [id: string]: Position };
   deltaPos: { p: Position; id: string };
   setDeltaPostion: (position: Position, id: string) => void;
   setSelectedAppsIds: (appId: string[]) => void;
-  setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
   removeSelectedApp: (appId: string) => void;
   clearSelectedApps: () => void;
@@ -120,7 +118,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   boardDragging: false,
   appDragging: false,
   selectedAppsIds: [],
-  selectedAppsSnapshot: {},
   lassoMode: false,
   lassoColor: 'red',
   clearLassos: false,
@@ -211,10 +208,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
   setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
   setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds })),
-  setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
-    snapshot = structuredClone(snapshot);
-    set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
-  },
   addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedAppsIds, appId] })),
   removeSelectedApp: (appId: string) =>
     set((state) => {
