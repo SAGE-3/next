@@ -135,38 +135,37 @@ export function Apps() {
   );
 
   // Used for dragging individual stations from SensorOverview app
-  useEffect(() => {
-    // Handle the drop event
-    const handleDrop = (event: any) => {
-      event.preventDefault();
-      const { x, y } = userCursor.uiToBoard(event.pageX, event.pageY);
-      const state = JSON.parse(event.dataTransfer.getData('text'));
+  // TODO: Conflicts with dragging an asset from the asset panel
 
-      // On drop, create new SensorOverview app with single station
-      createApp({
-        title: 'SensorOverview',
-        roomId: roomId!,
-        boardId: boardId!,
-        position: { x: x, y: y, z: 0 },
-        size: { width: 1000, height: 1000, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'SensorOverview',
-        state: state,
-        raised: true,
-        dragging: false,
-      });
-    };
-    // Remove existing event listeners
-    const cleanup = () => {
-      document.removeEventListener('drop', handleDrop);
-    };
-
-    // Add event listener
-    document.addEventListener('drop', handleDrop);
-
-    // Cleanup function
-    return cleanup;
-  }, []);
+  // useEffect(() => {
+  //   // Handle the drop event
+  //   const handleDrop = (event: any) => {
+  //     event.preventDefault();
+  //     const { x, y } = userCursor.uiToBoard(event.pageX, event.pageY);
+  //     const state = JSON.parse(event.dataTransfer.getData('text'));
+  //     // On drop, create new SensorOverview app with single station
+  //     createApp({
+  //       title: 'SensorOverview',
+  //       roomId: roomId!,
+  //       boardId: boardId!,
+  //       position: { x: x, y: y, z: 0 },
+  //       size: { width: 1000, height: 1000, depth: 0 },
+  //       rotation: { x: 0, y: 0, z: 0 },
+  //       type: 'SensorOverview',
+  //       state: state,
+  //       raised: true,
+  //       dragging: false,
+  //     });
+  //   };
+  //   // Remove existing event listeners
+  //   const cleanup = () => {
+  //     document.removeEventListener('drop', handleDrop);
+  //   };
+  //   // Add event listener
+  //   document.addEventListener('drop', handleDrop);
+  //   // Cleanup function
+  //   return cleanup;
+  // }, []);
 
   // Update the cursor position
   useEffect(() => {
