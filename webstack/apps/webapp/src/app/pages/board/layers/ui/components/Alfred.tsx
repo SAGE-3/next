@@ -439,46 +439,16 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
               <PopoverBody>
                 <UnorderedList>
                   <ListItem>Select an asset to open it (click/enter)</ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>app</b> [name]: Create an application
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>w</b> [url]: Open URL in a webview
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>g</b> [term]: Google search
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>s</b> [text]: Stickie with text
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>c</b> : Create a SageCell
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>showui</b> : Show the panels
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>hideui</b> : Hide the panels
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>light</b> : Switch to light mode
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>dark</b> : Switch to dark mode
-                  </ListItem>
-                  <ListItem>
-                    {' '}
-                    <b>clear</b> : Close all applications
-                  </ListItem>
+                  <ListItem><b>app</b> [name]: Create an application</ListItem>
+                  <ListItem><b>w</b> [url]: Open URL in a webview</ListItem>
+                  <ListItem><b>g</b> [term]: Google search</ListItem>
+                  <ListItem><b>s</b> [text]: Stickie with text</ListItem>
+                  <ListItem><b>c</b> : Create a SageCell</ListItem>
+                  <ListItem><b>showui</b> : Show the panels</ListItem>
+                  <ListItem><b>hideui</b> : Hide the panels</ListItem>
+                  <ListItem><b>light</b> : Switch to light mode</ListItem>
+                  <ListItem><b>dark</b> : Switch to dark mode</ListItem>
+                  <ListItem><b>clear</b> : Close all applications</ListItem>
                 </UnorderedList>
               </PopoverBody>
             </PopoverContent>
