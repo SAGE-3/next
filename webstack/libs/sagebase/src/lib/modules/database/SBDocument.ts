@@ -269,6 +269,9 @@ function generateWriteResult<Type extends SBJSON>(success: boolean, doc?: SBDocu
     writetime: Date.now(),
     doc,
   } as SBDocWriteResult<Type>;
+  if (success) {
+    logger.log('node-server-write-success', result);
+  }
   return result;
 }
 
@@ -287,3 +290,25 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: 
   } as SBDocument<Type>;
   return doc;
 }
+
+import { FluentClient } from '@fluent-org/logger';
+
+// A Logger to send logs to Fluentd
+class SAGELogger {
+  private _logger: FluentClient;
+  constructor(host = 'localhost', port = 24224, timeout = 3000) {
+    this._logger = new FluentClient('tag_prefix', {
+      socket: {
+        host,
+        port,
+        timeout,
+      },
+    });
+  }
+
+  public log(tag: string, data: any) {
+    this._logger.emit(tag, data);
+  }
+}
+
+const logger = new SAGELogger();
