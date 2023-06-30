@@ -31,11 +31,11 @@
  "services": {
     twilio: {
       // Your Account SID from www.twilio.com/console
-      accountSid: "", 
+      "accountSid": "",
       // API Key
-      apiKey: "", 
+      "apiKey": "",
       // API Secret
-      apiSecret: "" 
+      "apiSecret": ""
     }
   }, 
 
