@@ -15,14 +15,14 @@ import { ResizeDirection } from 're-resizable';
 // Slowdown the events
 import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useUser } from '@sage3/frontend';
 import { App, AppSchema } from '../../schema';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
 
 // Time in ms to send updates to the server
-const UpdateRate = 1000 / 3;
+const UpdateRate = 1000 / 20;
 
 type WindowProps = {
   app: App;
@@ -35,6 +35,9 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // User
+  const { user } = useUser();
+
   // App Store
   const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
@@ -115,7 +118,7 @@ export function AppWindow(props: WindowProps) {
 
   // If size or position change, update the local state.
   useEffect(() => {
-    if (!selectedApps.includes(props.app._id) && !appDragging) {
+    if (!selectedApps.includes(props.app._id) && !appDragging && props.app._updatedBy !== user?._id) {
       setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
       setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
     }
