@@ -10,3 +10,4 @@ export * from './database/SBDatabase';
 export * from './pubsub/SBPubSub';
 export * from './auth/SBAuth';
 export * from './auth/SBAuthDatabase';
+export * from './logger/SBLogger';

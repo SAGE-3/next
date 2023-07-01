@@ -9,6 +9,7 @@
 import { RedisClientType } from 'redis';
 import { v4 } from 'uuid';
 import { PathValue, DotNestedKeys } from './Util';
+import { SBLogger } from '../logger/SBLogger';
 
 // The Supported primitives and types in the Database
 export type SBJSON = { [prop: string]: SBPrimitive };
@@ -270,7 +271,7 @@ function generateWriteResult<Type extends SBJSON>(success: boolean, doc?: SBDocu
     doc,
   } as SBDocWriteResult<Type>;
   if (success) {
-    logger.log('node-server-write-success', result);
+    SBLogger.log('node-server-write-success', result);
   }
   return result;
 }
@@ -290,25 +291,3 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: 
   } as SBDocument<Type>;
   return doc;
 }
-
-import { FluentClient } from '@fluent-org/logger';
-
-// A Logger to send logs to Fluentd
-class SAGELogger {
-  private _logger: FluentClient;
-  constructor(host = 'localhost', port = 24224, timeout = 3000) {
-    this._logger = new FluentClient('tag_prefix', {
-      socket: {
-        host,
-        port,
-        timeout,
-      },
-    });
-  }
-
-  public log(tag: string, data: any) {
-    this._logger.emit(tag, data);
-  }
-}
-
-const logger = new SAGELogger();

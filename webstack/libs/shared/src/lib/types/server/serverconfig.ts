@@ -34,6 +34,13 @@ export interface ServerConfiguration {
   // Redis
   redis: { url: string };
 
+  // Fluentd log configuration
+  fluentd: {
+    server: string;
+    port: number;
+    level: 'info' | 'debug' | 'info' | 'warn' | 'error' | 'none';
+  };
+
   // External Services
   services: {
     twilio: TwilioConfiguration;

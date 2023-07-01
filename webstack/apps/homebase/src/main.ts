@@ -95,6 +95,9 @@ async function startServer() {
     authConfig: {
       ...config.auth,
     },
+    logConfig: {
+      ...config.fluentd,
+    },
   };
   await SAGEBase.init(sbConfig, app);
 

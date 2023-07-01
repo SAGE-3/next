@@ -31,7 +31,7 @@
   "fluentd": {
     "server": "localhost",
     "port": 24224,
-    "level": "info" // debug, info, warn, error
+    "level": "info" // debug, info, warn, error, none
   },
 
   // External Services
