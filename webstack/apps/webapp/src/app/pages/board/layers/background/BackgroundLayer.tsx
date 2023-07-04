@@ -11,7 +11,7 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 
 import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
 

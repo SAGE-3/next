@@ -19,6 +19,7 @@ import { name as KernelDashboardName, init as defaultKernelDashboard } from './a
 import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
+import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -54,6 +55,7 @@ export const initialValues = {
   [KernelsName]: defaultKernels,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
+  [MapGLName]: defaultMapGL,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,

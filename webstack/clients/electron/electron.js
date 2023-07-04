@@ -792,6 +792,11 @@ function createWindow() {
     mainWindow.webContents.send('current-display', whichScreen.id);
   });
 
+  // Open external links in the default browser
+  ipcMain.on('open-external-url', (event, arg) => {
+    if (arg && arg.url) shell.openExternal(arg.url);
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     takeScreenshot(mainWindow);

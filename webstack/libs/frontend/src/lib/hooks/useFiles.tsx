@@ -253,7 +253,7 @@ export function useFiles(): UseFiles {
     } else if (isGLTF(fileType)) {
       return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
     } else if (isGeoJSON(fileType)) {
-      return setupApp('', 'LeafLet', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+      return setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
     } else if (isMD(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
