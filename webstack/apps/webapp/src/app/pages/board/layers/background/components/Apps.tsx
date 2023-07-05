@@ -27,9 +27,9 @@ export function Apps() {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false });
 
-  const userCursor = useCursorBoardPosition();
-  const cursorPositionRef = useRef(userCursor);
-  const { roomId, boardId } = useParams();
+  // const userCursor = useCursorBoardPosition();
+  // const cursorPositionRef = useRef(userCursor);
+  // const { roomId, boardId } = useParams();
 
   const { position } = useCursorBoardPosition();
   const createApp = useAppStore((state) => state.create);
@@ -168,9 +168,9 @@ export function Apps() {
   // }, []);
 
   // Update the cursor position
-  useEffect(() => {
-    cursorPositionRef.current = userCursor;
-  }, [userCursor]);
+  // useEffect(() => {
+  //   cursorPositionRef.current = userCursor;
+  // }, [userCursor]);
 
   return (
     <>
