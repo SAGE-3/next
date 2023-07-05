@@ -98,7 +98,8 @@ function UserCursor(props: UserCursorProps) {
         position: 'absolute',
         left: props.position.x + 'px',
         top: props.position.y + 'px',
-        transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        // commented out: slow down the update
+        // transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',
