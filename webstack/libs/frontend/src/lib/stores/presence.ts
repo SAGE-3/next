@@ -44,7 +44,8 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       set({ error: null });
     },
     update: async (id: string, updates: Partial<PresenceSchema>) => {
-      const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', updates);
+      // const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', updates);
+      const res = await SocketAPI.sendRESTMessage('/presence/' + id, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
@@ -79,7 +80,8 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
             docs.forEach((doc) => {
               const idx = presences.findIndex((el) => el._id === doc._id);
               if (idx > -1) {
-                presences[idx] = doc;
+                // merge the update with current value
+                presences[idx] = { ...presences[idx], ...doc };
               }
             });
             set({ presences });
