@@ -72,13 +72,13 @@
     // Google configuration
     "googleConfig": {
       // Client ID from the Google Developer Console
-      "clientID": "773749598438-sgbn6mj326jj6ggsa8n3avrc3jue0ikv.apps.googleusercontent.com",
+      "clientID": "773749598438-3gkevj61dnb114nlqbr5m731negntkoh.apps.googleusercontent.com",
       // Client Secret from the Google Developer Console
-      "clientSecret": "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",
+      "clientSecret": "yAi0dPhg0oM_rH7badg7ChCh",
       // Endpoint for the google login
       "routeEndpoint": "/auth/google",
       // Callback URL for the google login
-      "callbackURL": "/auth/google/redirect"
+      "callbackURL": "https://traoumad.evl.uic.edu/sage3/auth/google/redirect"
     },
     // JWT configuration
     "jwtConfig": {

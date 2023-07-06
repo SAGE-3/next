@@ -63,7 +63,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
     // Update local state
     setSubmitStatus('submitted');
     // Fetch board from the server
-    const response = await fetch(`/api/boards/${boardId}`);
+    const response = await fetch(`api/boards/${boardId}`);
     const results = await response.json() as { success: boolean; data: Board[] };
     // Check the data we got back
     if (results.success) {

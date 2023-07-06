@@ -21,7 +21,8 @@ import { SBAuthSchema } from '@sage3/sagebase';
  */
 function googleLogin(): void {
   // return to host with the same protocol (http/https)
-  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/google`);
+  const loginurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}auth/google`;
+  window.location.replace(loginurl);
 }
 
 /**
@@ -29,7 +30,8 @@ function googleLogin(): void {
  */
 function ciLogin(): void {
   // return to host with the same protocol (http/https)
-  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/cilogon`);
+  const loginurl = `${window.location.protocol}//${window.location.host}${window.location.pathname}auth/cilogon`;
+  window.location.replace(loginurl);
 }
 
 /**
@@ -44,7 +46,7 @@ function appleLogin(): void {
  * Endpoint to login with Guest
  */
 async function guestLogin(): Promise<void> {
-  const res = await fetch('/auth/guest', {
+  const res = await fetch('auth/guest', {
     method: 'POST',
     headers: {
       Accept: 'application/json',
@@ -61,7 +63,7 @@ async function guestLogin(): Promise<void> {
  * Logout the user out of the current session and user
  */
 async function logout(): Promise<void> {
-  const res = await fetch('/auth/logout', {
+  const res = await fetch('auth/logout', {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -71,7 +73,7 @@ async function logout(): Promise<void> {
   });
   if (res.status === 200) {
     // return to homepage
-    window.location.replace('/');
+    window.location.replace(`${window.location.pathname}`);
   }
 }
 
@@ -80,7 +82,7 @@ async function logout(): Promise<void> {
  * @returns {boolean} returns true if the user if authenticated
  */
 async function verify(): Promise<{ success: boolean; authentication: boolean; expire: number; auth: SBAuthSchema | null }> {
-  const res = await fetch('/auth/verify', {
+  const res = await fetch('auth/verify', {
     method: 'GET',
     credentials: 'include',
     headers: {

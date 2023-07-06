@@ -87,8 +87,6 @@ export function Background(props: BackgroundProps) {
   // For Lasso
   const isShiftPressed = useKeyPress('Shift');
 
-  // Perform the actual upload
-
   // Subscribe to messages
   useEffect(() => {
     subMessage();

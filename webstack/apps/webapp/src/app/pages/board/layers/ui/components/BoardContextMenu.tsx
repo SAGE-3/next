@@ -123,9 +123,11 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
     // features disabled
     let state = {} as AppState;
+
     if (appName === 'JupyterLab' && appsList.includes('jupyter')) return;
-    if (appName === 'SageCell' && appsList.includes('cell')) return;
-    if (appName === 'Screenshare' && appsList.includes('twilio')) return;
+    if (appName === 'SageCell' && appsList.includes('SageCell')) return;
+    if (appName === 'Screenshare' && appsList.includes('Screenshare')) return;
+
     let width = 400;
     let height = 420;
     if (appName === 'SageCell') {

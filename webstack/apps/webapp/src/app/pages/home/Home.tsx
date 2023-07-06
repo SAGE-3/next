@@ -54,7 +54,7 @@ export function HomePage() {
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const imageUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
   // Subscribe to user updates
   useEffect(() => {

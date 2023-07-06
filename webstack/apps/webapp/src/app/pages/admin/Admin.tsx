@@ -23,7 +23,7 @@ import { APIHttp } from '@sage3/frontend';
 
 export function AdminPage() {
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const imageUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
   // Configuration information
   const config = useConfigStore((state) => state.config);

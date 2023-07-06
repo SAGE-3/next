@@ -189,7 +189,7 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
 export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const { user, loading } = useUser();
   const { auth } = useAuth();
-  const data = useData('/api/configuration');
+  const data = useData('api/configuration');
 
   if (!user || loading || !data) {
     return <div>Loading...</div>;

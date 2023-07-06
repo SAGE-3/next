@@ -34,7 +34,7 @@ type DELResponse = {
 
 async function POST<T extends CollectionDocs>(url: string, body: T['data'] | T['data'][]): Promise<POSTResponse<T>> {
   try {
-    const response = await fetch('/api' + url, {
+    const response = await fetch('api' + url, {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -58,7 +58,7 @@ async function POST<T extends CollectionDocs>(url: string, body: T['data'] | T['
 
 async function GET<T extends CollectionDocs>(url: string, body?: string[]): Promise<GETResponse<T>> {
   try {
-    const response = await fetch('/api' + url, {
+    const response = await fetch('api' + url, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -82,7 +82,7 @@ async function GET<T extends CollectionDocs>(url: string, body?: string[]): Prom
 async function QUERY<T extends CollectionDocs>(url: string, query: Partial<T['data']>): Promise<GETResponse<T>> {
   url = url + '?' + new URLSearchParams(query as any);
   try {
-    const response = await fetch('/api' + url, {
+    const response = await fetch('api' + url, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -107,7 +107,7 @@ async function PUT<T extends CollectionDocs>(
   body: Partial<T['data']> | { id: string; updates: Partial<T['data']> }[]
 ): Promise<PUTResponse<T>> {
   try {
-    const response = await fetch('/api' + url, {
+    const response = await fetch('api' + url, {
       method: 'PUT',
       credentials: 'include',
       headers: {
@@ -130,7 +130,7 @@ async function PUT<T extends CollectionDocs>(
 
 async function DELETE(url: string, body?: string[]): Promise<DELResponse> {
   try {
-    const response = await fetch('/api' + url, {
+    const response = await fetch('api' + url, {
       method: 'DELETE',
       credentials: 'include',
       headers: {

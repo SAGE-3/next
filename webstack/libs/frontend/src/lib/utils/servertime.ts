@@ -7,7 +7,7 @@
  */
 
 export async function serverTime(): Promise<{ epoch: number }> {
-  const response = await fetch('/api/time');
+  const response = await fetch('api/time');
   const time = await response.json();
   return time;
 }

@@ -89,7 +89,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     const checkHeartBeat = setInterval(async () => {
-      const response = await fetch('/api/time');
+      const response = await fetch('api/time');
       const time = await response.json();
       const delta = Math.round(Math.abs(time.epoch - s.lastHeartBeat) / 1000);
       if (delta > heartBeatTimeCheck && s.online) {

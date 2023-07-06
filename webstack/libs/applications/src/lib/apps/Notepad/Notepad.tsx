@@ -81,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
       // WS Provider
 
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
+      provider = new WebsocketProvider(`${protocol}://${window.location.host}${window.location.pathname}yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
       const ytext = ydoc.getText('quill');
