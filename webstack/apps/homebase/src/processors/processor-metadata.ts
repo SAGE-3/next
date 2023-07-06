@@ -31,22 +31,27 @@ export class MetadataProcessor {
   private queue: SBQueue;
   private output: string;
 
-  constructor(redisUrl: string, folder: string) {
+  constructor(redisUrl: string, folder: string, worker = true) {
     this.queue = new SBQueue(redisUrl, 'metadata-queue');
     this.output = folder;
 
-    this.queue.addProcessor(async (job) => {
-      const data = await exiftoolFile(path.join(this.output, job.data.file));
-      const fn = `${job.data.file}.json`;
-      const metadataFilename = path.join(this.output, fn);
-      fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
-      return Promise.resolve({
-        file: job.data.file,
-        id: job.data.id,
-        data: data,
-        result: fn,
+    // Add a function to extract metadata
+    if (worker) {
+      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/metadata.js');
+    } else {
+      this.queue.addProcessor(async (job) => {
+        const data = await exiftoolFile(path.join(this.output, job.data.file));
+        const fn = `${job.data.file}.json`;
+        const metadataFilename = path.join(this.output, fn);
+        fs.writeFileSync(metadataFilename, JSON.stringify(data, null, 2));
+        return Promise.resolve({
+          file: job.data.file,
+          id: job.data.id,
+          data: data,
+          result: fn,
+        });
       });
-    });
+    }
   }
 
   /**
@@ -69,11 +74,9 @@ export class MetadataProcessor {
    *
    * @memberOf TaskManager
    */
-  addFile(id: string, file: string): Promise<any> {
-    return this.queue.addTask({ id, file }).then((job) => {
-      // returns the promise for the job completion
-      return job.finished();
-    });
+  async addFile(id: string, file: string) {
+    const job = await this.queue.addTask({ id, file, output: this.output });
+    return job;
   }
 }
 
@@ -85,8 +88,13 @@ export class MetadataProcessor {
  */
 async function exiftoolFile(filename: string): Promise<ExifDataType> {
   return new Promise((resolve, reject) => {
+    let speed = '-fast1';
+    // Big JSON files are slow to process
+    if (filename.endsWith('json')) {
+      speed = '-fast3';
+    }
     exiftool
-      .read(filename, ['-fast2', '--b']) // fast and ignore binary data
+      .read(filename, [speed, '--b']) // fast and ignore binary data
       .then((tags: Tags) => {
         if (tags.errors && tags.errors.length > 0) {
           reject('EXIF> Error parsing JSON ' + tags.errors);

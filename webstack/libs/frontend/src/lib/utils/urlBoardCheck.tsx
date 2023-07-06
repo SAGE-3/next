@@ -6,10 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useToast } from '@chakra-ui/react';
-import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import { useDisclosure, useToast } from '@chakra-ui/react';
+
+import { Board } from '@sage3/shared/types';
+
 import { useRouteNav } from '../hooks';
 import { EnterBoardModal } from '../ui';
 
@@ -37,12 +39,19 @@ export const CheckUrlForBoardId = () => {
  * @returns
  */
 export function JoinBoardCheck() {
+  // Routing
+  const { toHome } = useRouteNav();
   // To handle the user entering a url containing the boardId
   const boardId = localStorage.getItem('boardId');
   localStorage.removeItem('boardId');
-  const [boardByUrl, setBoardByUrl] = useState<Board>();
+
+  // Board to enter and modal
+  const [boardByUrl, setBoardByUrl] = useState<Board | null>(null);
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
+
+  // Toast for information feedback
   const toast = useToast();
+
   // Enter a board if the url contains it
   useEffect(() => {
     async function joinBoard() {
@@ -55,11 +64,12 @@ export function JoinBoardCheck() {
       } else {
         toast({
           title: 'Board not found',
-          description: `Sorry, we couldn't find a board with the id "${boardId}"`,
-          duration: 3000,
+          description: `Sorry, we could not find a board with the id "${boardId}"`,
+          duration: 5000,
           isClosable: true,
           status: 'error',
         });
+        toHome();
       }
     }
     if (boardId) {
@@ -67,11 +77,8 @@ export function JoinBoardCheck() {
     }
   }, []);
 
-  return (
-    <>
-      {boardByUrl !== undefined ? (
-        <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
-      ) : null}
-    </>
-  );
+  if (boardByUrl) {
+    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>;
+  }
+  return null;
 }

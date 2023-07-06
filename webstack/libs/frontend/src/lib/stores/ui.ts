@@ -13,7 +13,7 @@ import create from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
-import { Position } from '@sage3/shared/types';
+import { Position, Size } from '@sage3/shared/types';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -31,17 +31,24 @@ interface UIState {
   zIndex: number;
   showUI: boolean;
   showAppTitle: boolean;
+  showPresence: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // The user's local viewport.
+  viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
+
   // Selected Apps
-  selectedApps: string[];
+  selectedAppsIds: string[];
+  selectedAppsSnapshot: { [id: string]: Position };
   deltaPos: { p: Position; id: string };
   setDeltaPostion: (position: Position, id: string) => void;
-  setSelectedApps: (appId: string[]) => void;
+  setSelectedAppsIds: (appId: string[]) => void;
+  setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
   removeSelectedApp: (appId: string) => void;
   clearSelectedApps: () => void;
@@ -50,10 +57,12 @@ interface UIState {
   whiteboardMode: boolean; // marker mode enabled
   clearMarkers: boolean;
   clearAllMarkers: boolean;
+  undoLastMarker: boolean;
   markerColor: SAGEColors;
   setMarkerColor: (color: SAGEColors) => void;
   setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
+  setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
 
   // lasso
@@ -79,6 +88,7 @@ interface UIState {
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
   toggleTitle: () => void;
+  togglePresence: () => void;
   displayUI: () => void;
   hideUI: () => void;
   incZ: () => void;
@@ -106,9 +116,11 @@ export const useUIStore = create<UIState>((set, get) => ({
   zIndex: 1,
   showUI: true,
   showAppTitle: false,
+  showPresence: true,
   boardDragging: false,
   appDragging: false,
-  selectedApps: [],
+  selectedAppsIds: [],
+  selectedAppsSnapshot: {},
   lassoMode: false,
   lassoColor: 'red',
   clearLassos: false,
@@ -117,10 +129,13 @@ export const useUIStore = create<UIState>((set, get) => ({
   markerColor: 'red',
   clearMarkers: false,
   clearAllMarkers: false,
+  undoLastMarker: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
@@ -183,6 +198,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
+  togglePresence: () => set((state) => ({ ...state, showPresence: !state.showPresence })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
@@ -194,21 +210,26 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
   setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
-  setSelectedApps: (appIds: string[]) => set((state) => ({ ...state, selectedApps: appIds })),
-  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedApps, appId] })),
+  setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds })),
+  setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
+    snapshot = structuredClone(snapshot);
+    set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
+  },
+  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedAppsIds, appId] })),
   removeSelectedApp: (appId: string) =>
     set((state) => {
-      const newArray = state.selectedApps;
-      const index = state.selectedApps.indexOf(appId);
+      const newArray = state.selectedAppsIds;
+      const index = state.selectedAppsIds.indexOf(appId);
       newArray.splice(index, 1);
       return { ...state, selectedApps: newArray };
     }),
-  clearSelectedApps: () => set((state) => ({ ...state, selectedApps: [] })),
+  clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
 
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+  setUndoLastMarker: (undo: boolean) => set((state) => ({ ...state, undoLastMarker: undo })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));

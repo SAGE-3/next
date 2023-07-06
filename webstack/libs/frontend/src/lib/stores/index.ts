@@ -17,3 +17,4 @@ export * from './twilio';
 export * from './ui';
 export * from './message';
 export * from './plugin';
+export * from './config';

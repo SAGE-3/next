@@ -11,9 +11,12 @@ import * as passport from 'passport';
 import { Express, NextFunction, Request, Response } from 'express';
 
 // eslint-disable-next-line
-const session = require('express-session');
+// const session = require('express-session');
 // eslint-disable-next-line
-const connectRedis = require('connect-redis');
+// const connectRedis = require('connect-redis');
+
+import RedisStore from 'connect-redis';
+import * as session from 'express-session';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
@@ -21,6 +24,8 @@ export type { JWTPayload } from './adapters';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
+  passportAppleSetup,
+  SBAuthAppleConfig,
   passportJWTSetup,
   SBAuthJWTConfig,
   passportGuestSetup,
@@ -32,8 +37,9 @@ import {
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt')[];
   googleConfig?: SBAuthGoogleConfig;
+  appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
@@ -52,16 +58,16 @@ export class SBAuth {
   private _sessionParser!: any;
 
   public async init(redisclient: RedisClientType, prefix: string, config: SBAuthConfig, express: Express): Promise<SBAuth> {
-    this._redisClient = redisclient.duplicate({ legacyMode: true });
+    // Get a REDIS client
+    this._redisClient = redisclient.duplicate();
     await this._redisClient.connect();
 
     this._database = SBAuthDB;
     this._prefix = `${prefix}:AUTH`;
     await this._database.init(this._redisClient, this._prefix);
 
-    // Passport session stuff
-    const RedisStore = connectRedis(session);
-
+    // Setup the session parser
+    // @ts-ignore
     this._sessionParser = session({
       store: new RedisStore({ client: this._redisClient, prefix: this._prefix + ':SESS:', ttl: config.sessionMaxAge / 1000 }),
       secret: config.sessionSecret,
@@ -73,15 +79,17 @@ export class SBAuth {
         maxAge: config.sessionMaxAge, // session max age in miliseconds
       },
     });
+    // Setup the express session parser
     express.use(this._sessionParser);
 
+    // Initialize passport
     express.use(passport.initialize());
     express.use(passport.session());
 
-    /* Passport serialize function in order to support login sessions. */
+    // Passport serialize function in order to support login sessions.
     passport.serializeUser(this.serializeUser);
 
-    /* Passport deserialize function in order to support login sessions. */
+    // Passport deserialize function in order to support login sessions.
     passport.deserializeUser(this.deserializeUser);
 
     if (config.strategies) {
@@ -94,6 +102,14 @@ export class SBAuth {
           );
           // express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
           express.get('/auth/google/redirect', passport.authenticate('google', { successRedirect: '/sage3/', failureRedirect: '/sage3/' }));
+        }
+      }
+
+      // Apple Setup
+      if (config.strategies.includes('apple') && config.appleConfig) {
+        if (passportAppleSetup(config.appleConfig)) {
+          express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
+          express.post(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
@@ -134,7 +150,9 @@ export class SBAuth {
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
       const user = req.user as SBAuthSchema;
-      res.status(200).send({ success: true, authentication: true, auth: user });
+      // Get the expiration date from the session cookie
+      const exp = req.session.cookie.expires || new Date();
+      res.status(200).send({ success: true, authentication: true, auth: user, expire: exp.getTime() });
     });
 
     return this;

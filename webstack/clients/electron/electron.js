@@ -18,6 +18,7 @@
 
 // Node modules
 const path = require('path');
+const dns = require('node:dns');
 
 // Get platform and hostname
 var os = require('os');
@@ -47,7 +48,7 @@ const { buildMenu } = require('./src/menuBuilder');
 // Store
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const bookmarkStore = require('./src/bookmarkStore');
+const bookmarkStore = require('./src/bookmarkstore');
 
 // Analytics
 var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
@@ -72,10 +73,57 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
-const Menu = electron.Menu;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
+const autoUpdater = electron.autoUpdater;
+
+// Restore the network order
+dns.setDefaultResultOrder('ipv4first');
+
+/////////////////////////////////////////////////////////////////
+// Auto updater
+/////////////////////////////////////////////////////////////////
+console.log('APP Updater> curretn version', app.getVersion());
+
+// autoUpdater.on('error', (error) => {
+//   console.log('APP Updater> error', error);
+// });
+// autoUpdater.on('checking-for-update', (e) => {
+//   console.log('APP Updater> checking-for-update', e);
+// });
+// autoUpdater.on('update-available', (e) => {
+//   console.log('APP Updater> update-available', e);
+// });
+// autoUpdater.on('update-not-available', (e) => {
+//   console.log('APP Updater> update-not-available', e);
+// });
+// autoUpdater.on('before-quit-for-update', (e) => {
+//   console.log('APP Updater> before-quit-for-update', e);
+// });
+// autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+//   const dialogOpts = {
+//     type: 'info',
+//     buttons: ['Restart', 'Later'],
+//     title: 'Application Update',
+//     message: process.platform === 'win32' ? releaseNotes : releaseName,
+//     detail: 'A new version has been downloaded. Restart the application to apply the updates.',
+//   };
+//   dialog.showMessageBox(dialogOpts).then((returnValue) => {
+//     if (returnValue.response === 0) autoUpdater.quitAndInstall();
+//   });
+// });
+
+// autoUpdater.setFeedURL({
+//   url: 'https://update.electronjs.org/SAGE-3/next/darwin-arm64/client-1.0.0-beta.31',
+//   requestHeaders: { 'User-Agent': 'update-electron-app/2.0.1 (darwin: arm64)' },
+// });
+// autoUpdater.checkForUpdates();
+
+// Auto update
+require('update-electron-app')({ repo: 'SAGE-3/next' });
+
+/////////////////////////////////////////////////////////////////
 
 // Registering a custom protocol sage3://
 if (process.defaultApp) {
@@ -220,6 +268,23 @@ app.setAboutPanelOptions({
  */
 var mainWindow;
 
+function showHidingWindow() {
+  const res = electron.dialog.showMessageBoxSync(mainWindow, {
+    title: 'Notification from SAGE3',
+    message: 'Do you want to hide the SAGE3 window ?',
+    detail: 'SAGE3 will keep running in the menu bar during screen sharing.',
+    type: 'question',
+    defaultId: 0,
+    cancelId: 1,
+    // icon: path.join(__dirname, 'images/s3.png'),
+    buttons: ['OK', 'Cancel'],
+  });
+  if (!res) {
+    // Hide the window
+    mainWindow.blur();
+  }
+}
+
 /**
  * Opens a window.
  *
@@ -291,8 +356,15 @@ const saveState = async () => {
     Object.assign(state, getCurrentPosition());
   }
   state.fullscreen = mainWindow.isFullScreen();
-  state.server = mainWindow.webContents.getURL();
+
+  // Save the board URL in a format that can be used to re-enter the board
+  var boardURL = mainWindow.webContents.getURL();
+  boardURL = boardURL.replace('/board/', '/enter/');
+  state.server = boardURL;
+
+  // Save the state
   windowStore.setWindow(state);
+
   if (commander.clear) {
     console.log('Preferences> clear all');
     windowStore.clear();
@@ -414,7 +486,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(mainWindow, commander);
 
   // Analytics on start
   if (!commander.server.includes('localhost') && analytics_enabled) {
@@ -469,8 +541,8 @@ function createWindow() {
       if (state === 'completed') {
         // Send a message to the renderer process to show a notification
         mainWindow.webContents.send('download', {
-          filename: evt.sender.getFilename(),
-          bytes: evt.sender.getTotalBytes(),
+          filename: item.getFilename(),
+          bytes: item.getTotalBytes(),
           completed: true,
         });
       } else {
@@ -516,6 +588,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
+  // mainWindow.on('blur', function () {
+  //   console.log('Electron>	Window blurred');
+  // });
+  // mainWindow.on('focus', function () {
+  //   console.log('Electron>	Window show');
+  // });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {
@@ -527,7 +605,7 @@ function createWindow() {
     if (firstRun) {
       const currentURL = mainWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
-      updater.checkForUpdates(parsedURL.origin, false);
+      // updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
@@ -604,11 +682,21 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
-  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
-      contents.on('new-window', function (newWindowEvent, url) {
-        newWindowEvent.preventDefault();
+      // OLD API
+      // contents.on('new-window', function (newWindowEvent, url) {
+      //   console.log('Webview> New window', url);
+      //   newWindowEvent.preventDefault();
+      // });
+
+      // NEW API
+      contents.on('dom-ready', () => {
+        // Block creating new windows from webviews
+        // TODO: tell the renderer to create another webview
+        contents.setWindowOpenHandler((details) => {
+          return { action: 'deny' };
+        });
       });
 
       // Block automatic download from webviews
@@ -691,6 +779,24 @@ function createWindow() {
     mainWindow.loadFile('./html/landing.html');
   });
 
+  // Request from the renderer process
+  ipcMain.on('hide-main-window', () => {
+    showHidingWindow();
+  });
+  ipcMain.on('show-main-window', () => {
+    mainWindow.show();
+  });
+  ipcMain.on('request-current-display', () => {
+    const winBounds = mainWindow.getBounds();
+    const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
+    mainWindow.webContents.send('current-display', whichScreen.id);
+  });
+
+  // Open external links in the default browser
+  ipcMain.on('open-external-url', (event, arg) => {
+    if (arg && arg.url) shell.openExternal(arg.url);
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     takeScreenshot(mainWindow);
@@ -708,7 +814,7 @@ function createWindow() {
   ipcMain.on('client-update-check', () => {
     const currentURL = mainWindow.webContents.getURL();
     const parsedURL = new URL(currentURL);
-    updater.checkForUpdates(parsedURL.origin, true);
+    // updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process

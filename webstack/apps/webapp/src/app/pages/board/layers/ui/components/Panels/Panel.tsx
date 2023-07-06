@@ -72,12 +72,13 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
         <IconButton
           borderRadius="md"
           h="auto"
-          p={0} m={0}
+          p={0}
+          m={0}
           fontSize="4xl"
           justifyContent="flex-center"
           aria-label={props.description}
           icon={props.icon}
-          background={"transparent"}
+          background={'transparent'}
           color={props.isActive ? iconHoverColor : iconColor}
           transition={'all 0.2s'}
           variant="ghost"
@@ -113,11 +114,11 @@ export function Panel(props: PanelProps) {
   if (!panel) return null;
   const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
-  const zIndex = panels.findIndex(el => el.name == panel.name);
+  const zIndex = panels.findIndex((el) => el.name == panel.name);
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
-  const [w,] = useState(props.width);
+  const [w] = useState(props.width);
 
   // Window size tracking
   const [winWidth, setWidth] = useState(window.innerWidth);
@@ -205,7 +206,7 @@ export function Panel(props: PanelProps) {
 
   const handleCloseClick = (e: any) => {
     e.stopPropagation();
-    update({ show: false })
+    update({ show: false });
   };
 
   const handleMinimizeClick = (e: any) => {
@@ -216,11 +217,7 @@ export function Panel(props: PanelProps) {
   // Handle a drag start of the panel
   const handleDragStart = () => {
     bringPanelForward(props.name);
-    // Trying to optimize performance
-    if (ref.current) {
-      // ref.current.style.willChange = 'transform';
-    }
-  }
+  };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
@@ -261,11 +258,6 @@ export function Panel(props: PanelProps) {
       } else {
         update({ stuck: StuckTypes.None });
       }
-
-      // Trying to optimize performance
-      if (ref.current) {
-        // ref.current.style.willChange = 'auto';
-      }
     }
   };
 
@@ -286,7 +278,10 @@ export function Panel(props: PanelProps) {
           display="flex"
           transition="all .2s "
           bg={panelBackground}
-          pt={1} pr={2} pb={2} pl={1}
+          pt={1}
+          pr={2}
+          pb={2}
+          pl={1}
           borderRadius={'md'}
           ref={ref}
           width="100%"

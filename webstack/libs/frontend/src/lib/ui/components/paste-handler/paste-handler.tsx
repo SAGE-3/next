@@ -13,7 +13,7 @@
 import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
-import { useUser, useAuth, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { processContentURL, isValidURL } from '@sage3/frontend';
 
 type PasteProps = {
@@ -35,14 +35,17 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const { position: cursorPosition } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
+  // UI Store
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   useEffect(() => {
     if (!user) return;
 
     const pasteHandlerReachingDocumentBody = (event: ClipboardEvent) => {
       // get the target element and make sure it is the background board
-      const elt = event.target as HTMLElement;
-      if (elt.id !== 'board') return;
+      // const elt = event.target as HTMLElement;
+      // if (elt.id !== 'board') return;
+      if (selectedApp) return;
 
       // Block guests from uploading assets
       if (auth?.provider === 'guest') {
@@ -101,6 +104,21 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'Webview',
             state: { webviewurl: final_url },
             raised: true,
+            dragging: false,
+          });
+        } else if (pastedText.startsWith('sage3://')) {
+          // Create a board link app
+          createApp({
+            title: user.data.name,
+            roomId: props.roomId,
+            boardId: props.boardId,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 375, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'BoardLink',
+            state: { url: pastedText },
+            raised: true,
+            dragging: false,
           });
         } else {
           // Create a new stickie
@@ -114,6 +132,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'Stickie',
             state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
+            dragging: false,
           });
         }
       }
@@ -126,7 +145,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
 
   return <></>;
 };

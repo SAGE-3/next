@@ -1,5 +1,6 @@
 [
   "AIPane",
+  "BoardLink",
   "CSVViewer",
   "ChartGenerator",
   "ChartMaker",
@@ -8,6 +9,7 @@
   "Counter",
   "DataTable",
   "DeepZoomImage",
+  "EChartsViewer",
   "GLTFViewer",
   "HCDP",
   "ImageViewer",
@@ -16,6 +18,7 @@
   "Kernels",
   "LeafLet",
   "Linker",
+  "MapGL",
   "Notepad",
   "PDFResult",
   "PDFViewer",

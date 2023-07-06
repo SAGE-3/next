@@ -175,6 +175,7 @@ function AppComponent(props: App): JSX.Element {
         executeInfo: { executeFunc: '', params: {} },
       },
       raised: true,
+      dragging: false,
     });
   };
 

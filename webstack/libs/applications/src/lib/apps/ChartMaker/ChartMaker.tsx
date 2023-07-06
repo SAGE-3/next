@@ -7,7 +7,20 @@
  */
 
 import { serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
-import { Box, Button, Text, Input, Menu, MenuButton, MenuItem, MenuList, useColorModeValue, Progress, FormControl } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Text,
+  Input,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  useColorModeValue,
+  Progress,
+  FormControl,
+  list,
+} from '@chakra-ui/react';
 import { App } from '../../schema';
 
 import { state as AppState } from './index';
@@ -22,6 +35,7 @@ import { useParams } from 'react-router';
 import { Asset } from '@sage3/shared/types';
 import { genId } from '@sage3/shared';
 import createPropertyList from './components/createPropertyList';
+import { SensorTypes, stationDataTemplate } from '../HCDP/data/stationData';
 
 type NLPRequestResponse = {
   success: boolean;
@@ -52,8 +66,20 @@ export interface CreateChartProps {
   headers: string[];
 }
 
+const AIDialogue = [
+  { text: 'Hi, would you like to access the Hawaii Climate Data Portal? Use the app toolbar to respond.' },
+  {
+    text: 'Excellent. I’ve created a map for you to select the stations that you are interested in. To select a station, click on the orange markers in the map. A selected station will turn into a blue marker.',
+  },
+  { text: 'Great, You have selected the stations' },
+  {
+    text: 'Great! Now we can start making some charts. I’ve created a list of weather data that these stations are measuring. Please select the data that you are interested in. Alternatively, you can tell me what you are interested in and I can select them for you.',
+  },
+];
+
 function AppComponent(props: App): JSX.Element {
   const state = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
 
   const user = useUser();
 
@@ -184,6 +210,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Create Vega-Lite Viewer app
   const createApp = useAppStore((state) => state.create);
+  const deleteApp = useAppStore((state) => state.delete);
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
   const { user } = useUser();
 
   // Input text for query
@@ -191,77 +219,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // BoardInfo
   const { boardId, roomId } = useParams();
-  const [selectedFile, setSelectedFile] = useState<Asset | null>(null);
 
   // Processing
   const [processing, setProcessing] = useState(false);
+  const [selectedStations, setSelectedStations] = useState<SensorTypes[]>([]);
 
-  // Handler for changing dataset to make charts for
-  const handleChangeFile = (value: Asset) => {
-    setSelectedFile(value);
-  };
-
-  useEffect(() => {
-    if (selectedFile) {
-      const localurl = '/api/assets/static/' + selectedFile.data.file;
-      if (localurl) {
-        // Fetch dataset from asset store
-        fetch(localurl, {
-          headers: {
-            'Content-Type': 'text/csv',
-            Accept: 'text/csv',
-          },
-        })
-          .then(function (response) {
-            return response.text();
-          })
-          .then(async function (text) {
-            // Convert the csv to an array
-            const arr = await csvToArray(text);
-            const firstRow = arr[0];
-            // extract the headers and save them
-            const headers = Object.keys(arr[0]);
-
-            // Only generate unique filter values to store in database
-            // Note: I am NOT storing the entire CSV in database
-            const propertyList = createPropertyList(arr, headers);
-            const time = await serverTime();
-            let listOfHeaders = '';
-            for (let i = 0; i < propertyList.length; i++) {
-              if (i === propertyList.length - 1) {
-                listOfHeaders += ', and ' + propertyList[i].header;
-              } else if (i === 0) {
-                listOfHeaders += propertyList[i].header;
-              } else {
-                listOfHeaders += ', ' + propertyList[i].header;
-              }
-            }
-            update(props._id, { title: selectedFile?.data.originalfilename });
-            updateState(props._id, {
-              ...state,
-              fileName: selectedFile?.data.originalfilename,
-              fileReference: selectedFile?.data.file,
-              headers: headers,
-              dataRow: firstRow,
-              propertyList: propertyList,
-              messages: [
-                ...state.messages,
-                {
-                  id: genId(),
-                  userId: user?._id,
-                  creationId: '',
-                  creationDate: time.epoch,
-                  userName: user?.data.name,
-                  query: `*Load Dataset*`,
-                  response: `The dataset: ${selectedFile?.data.originalfilename} has been loaded.
-                  The attribute headers are ${listOfHeaders}. I created a CSV Viewer for more details.`,
-                },
-              ],
-            });
-          });
-      }
-    }
-  }, [selectedFile]);
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
@@ -270,98 +232,221 @@ function ToolbarComponent(props: App): JSX.Element {
   const generateChart = async (e?: FormEvent<HTMLInputElement> | MouseEvent<HTMLButtonElement>) => {
     if (e) e.preventDefault();
 
-    // To slow down UI
+    // // To slow down UI
     setProcessing(true);
     await timeout(1000);
 
     // get servertime
     const time = await serverTime();
-    if (!state.fileName) return;
-    try {
-      // Create array vega-lite Specifications
-      const specifications = await createCharts(input, state.dataRow, state.headers, state.fileReference, state.propertyList);
-      if (!user) return;
 
-      for (let i = 0; i < specifications.length; i++) {
-        // Create App for each specification
-        const app = await createApp({
-          title: 'VegaLiteViewer',
-          roomId: roomId!,
-          boardId: boardId!,
-          position: { x: props.data.position.x + props.data.size.width * (i + 1) + 20, y: props.data.position.y, z: 0 },
-          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'VegaLiteViewer',
-          state: {
-            spec: JSON.stringify(specifications[i]),
-          },
-          raised: true,
-        });
+    if (!user) return;
+    // Create App for each specification
+    const app = await createApp({
+      title: 'EChartsViewer',
+      roomId: roomId!,
+      boardId: boardId!,
+      position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+      size: { width: 1000, height: 1000, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'EChartsViewer',
+      state: {
+        stationName: ['017HI'],
+        chartType: 'line',
+        yAxisAttributes: ['soil_moisture_set_1'],
+        xAxisAttributes: ['date_time'],
+        transform: [],
+        options: {},
+      },
+      raised: true,
+      dragging: false,
+    });
 
-        // Add messages
-        updateState(props._id, {
-          ...state,
-          messages: [
-            ...state.messages,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: app.data._id,
-              creationDate: time.epoch,
-              userName: user?.data.name,
-              query: input,
-              response: 'I made a ' + specifications[i].title,
-            },
-          ],
-        });
-      }
-      setProcessing(false);
-      console.log(specifications);
-    } catch (e) {
-      // For now, throwing errors to help with responses.
-      // TODO: need to change to send errmessages instead
-      updateState(props._id, {
-        ...state,
-        messages: [
-          ...state.messages,
+    // Add messages
+    updateState(props._id, {
+      ...state,
+      messages: [
+        ...state.messages,
+        {
+          id: genId(),
+          userId: user._id,
+          creationId: app.data._id,
+          creationDate: time.epoch,
+          userName: user?.data.name,
+          query: input,
+          response: 'I made a chart for you!',
+        },
+      ],
+    });
+
+    setProcessing(false);
+  };
+  const handleStory = async () => {
+    // // To slow down UI
+    setProcessing(true);
+    await timeout(1000);
+
+    // get servertime
+    const time = await serverTime();
+    let currentStoryIndex = state.storyIndex;
+
+    if (!user) return;
+
+    if (input == 'yes') {
+      currentStoryIndex++;
+      let listOfSelectedStationsAsString = '';
+      switch (currentStoryIndex) {
+        case 0:
+          break;
+        case 1:
           {
-            id: genId(),
-            userId: user?._id,
-            creationId: null,
-            creationDate: time.epoch,
-            userName: user?.data.name,
-            query: input,
-            response: e,
-          },
-        ],
-      });
-      setProcessing(false);
+            // Create App for each specification
+            const app = await createApp({
+              title: 'Hawaii Mesonet',
+              roomId: roomId!,
+              boardId: boardId!,
+              position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+              size: { width: 1000, height: 1000, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Hawaii Mesonet',
+              state: {
+                location: [21.297, -157.816],
+                zoom: 8,
+                baseLayer: 'OpenStreetMap',
+                overlay: true,
+                appIdsICreated: [],
+                fontSizeMultiplier: 15,
+                variableToDisplay: 'temperatureC',
+                stationData: [...stationDataTemplate],
+              },
+              raised: true,
+
+              dragging: false,
+            });
+            // Add messages
+            updateState(props._id, {
+              ...state,
+              storyIndex: state.storyIndex + 1,
+              currentAppCreated: app,
+              messages: [
+                ...state.messages,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: time.epoch,
+                  userName: user?.data.name,
+                  query: input,
+                  response: AIDialogue[currentStoryIndex].text,
+                },
+              ],
+            });
+          }
+          break;
+        case 2:
+          {
+            const apps = await fetchBoardApps(props.data.boardId);
+            let tmpApp;
+            if (apps)
+              for (let i = 0; i < apps.length; i++) {
+                if (apps[i]._id == state.currentAppCreated.data._id) {
+                  tmpApp = apps[i];
+                }
+              }
+            if (tmpApp) {
+              const stationData = tmpApp.data.state.stationData;
+              const tmpSelectedStations = [];
+              for (let i = 0; i < stationData.length; i++) {
+                if (stationData[i].selected) {
+                  tmpSelectedStations.push(stationData[i]);
+                  listOfSelectedStationsAsString += ' ' + stationData[i].name;
+                }
+              }
+              setSelectedStations(tmpSelectedStations);
+              deleteApp(state.currentAppCreated.data._id);
+              // Add messages
+              updateState(props._id, {
+                ...state,
+                storyIndex: state.storyIndex + 1,
+                currentAppCreated: null,
+                messages: [
+                  ...state.messages,
+
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: time.epoch,
+                    userName: user?.data.name,
+                    query: input,
+                    response:
+                      AIDialogue[currentStoryIndex].text +
+                      listOfSelectedStationsAsString +
+                      '. Is this correct? or would you like to select more stations?',
+                  },
+                ],
+              });
+            }
+          }
+          break;
+        case 3:
+          {
+            const listOfStationNames = [];
+            for (let i = 0; i < selectedStations.length; i++) {
+              listOfStationNames.push(selectedStations[i].name);
+            }
+            updateState(props._id, {
+              ...state,
+              storyIndex: state.storyIndex + 1,
+              currentAppCreated: null,
+              messages: [
+                ...state.messages,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: time.epoch,
+                  userName: user?.data.name,
+                  query: input,
+                  response: AIDialogue[currentStoryIndex].text,
+                },
+              ],
+            });
+            createApp({
+              title: 'SensorOverview',
+              roomId: roomId!,
+              boardId: boardId!,
+              position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+              size: { width: 1000, height: 1000, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'SensorOverview',
+              state: {
+                listOfStationNames: listOfStationNames,
+              },
+              raised: true,
+              dragging: false,
+            });
+          }
+          break;
+        case 4:
+          break;
+        default:
+          break;
+      }
     }
+
+    setProcessing(false);
   };
 
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
-      generateChart();
+      handleStory();
+      // generateChart();
     }
   };
 
   return (
     <>
-      <Menu>
-        <MenuButton size="xs" as={Button} mr="1">
-          {state.fileName ? state.fileName : 'Select a Dataset'}
-        </MenuButton>
-        <MenuList>
-          {datasets.map((dataset, index) => {
-            return (
-              <MenuItem onClick={() => handleChangeFile(dataset)} key={index} value={dataset.data.file}>
-                {dataset.data.originalfilename}
-              </MenuItem>
-            );
-          })}
-        </MenuList>
-      </Menu>
       {processing ? (
         <Progress hasStripe isIndeterminate width="450px" mx="2" borderRadius="md" />
       ) : (
@@ -378,6 +463,41 @@ function ToolbarComponent(props: App): JSX.Element {
           />
           <Button size="xs" onClick={generateChart} colorScheme="teal" mx={1} disabled={state.fileName.length === 0}>
             Generate
+          </Button>
+          <Button
+            size="xs"
+            onClick={() => {
+              createApp({
+                title: 'SensorOverview',
+                roomId: roomId!,
+                boardId: boardId!,
+                position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
+                size: { width: 1000, height: 1000, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'SensorOverview',
+                state: {
+                  listOfStationNames: ['001HI', '002HI', '001HI', '009HI'],
+                },
+                raised: true,
+                dragging: false,
+              });
+            }}
+            colorScheme="teal"
+            mx={1}
+            disabled={state.fileName.length === 0}
+          >
+            Test
+          </Button>
+          <Button
+            size="xs"
+            onClick={() => {
+              updateState('523207b0-12b2-449b-ad29-0299da0d51ca', { listOfStationNames: ['003HI'] });
+            }}
+            colorScheme="teal"
+            mx={1}
+            disabled={state.fileName.length === 0}
+          >
+            Test2
           </Button>
         </>
       )}

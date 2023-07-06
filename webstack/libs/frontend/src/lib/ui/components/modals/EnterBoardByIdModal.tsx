@@ -25,7 +25,7 @@ import {
 } from '@chakra-ui/react';
 
 import { Board } from '@sage3/shared/types';
-import { isUUIDv4, useData, timeout } from '@sage3/frontend';
+import { isUUIDv4, useData } from '@sage3/frontend';
 import { EnterBoardModal } from './EnterBoardModal';
 
 // Props
@@ -45,8 +45,6 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   const [boardId, setBoardId] = useState('');
   // Status of the request
   const [submitStatus, setSubmitStatus] = useState<'pending' | 'submitted' | 'success'>('pending');
-  // Fetch board from the server
-  const results = useData(`api/boards/${boardId}`) as { success: boolean; data: Board[] };
 
   // Chakra Toast
   const toast = useToast();
@@ -64,6 +62,9 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   const handleSubmit = async () => {
     // Update local state
     setSubmitStatus('submitted');
+    // Fetch board from the server
+    const response = await fetch(`api/boards/${boardId}`);
+    const results = await response.json() as { success: boolean; data: Board[] };
     // Check the data we got back
     if (results.success) {
       // Update local state

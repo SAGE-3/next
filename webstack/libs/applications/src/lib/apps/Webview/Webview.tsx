@@ -8,7 +8,6 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
-
 import {
   MdArrowBack,
   MdArrowForward,
@@ -18,11 +17,14 @@ import {
   MdVolumeOff,
   MdOutlineSubdirectoryArrowLeft,
   MdVolumeUp,
+  MdOpenInNew,
 } from 'react-icons/md';
 
-import { App } from '../../schema';
+import { useParams } from 'react-router';
+import create from 'zustand';
 
 import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
+import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
@@ -30,9 +32,6 @@ import { isElectron } from './util';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-
-import create from 'zustand';
-import { useParams } from 'react-router';
 
 export const useStore = create((set: any) => ({
   title: {} as { [key: string]: string },
@@ -175,13 +174,13 @@ function AppComponent(props: App): JSX.Element {
           webviewNode.current
             .loadURL(url)
             .then(() => {
-              console.log('Loaded URL:', url);
+              console.log('Webview> Loaded URL:', url);
             })
             .catch((err: any) => {
               console.log('Webview> Error loading URL:', url, err);
             });
         } catch (e) {
-          console.log(e);
+          console.log('Webview> error', e);
         }
       }
     }
@@ -232,12 +231,12 @@ function AppComponent(props: App): JSX.Element {
         type: 'Webview',
         state: { webviewurl: processContentURL(url) },
         raised: true,
+        dragging: false,
       });
     };
 
     // When the webview tries to open a new window
     const newWindow = (event: any) => {
-      // console.log('new-window', event);
       if (event.url.includes(window.location.hostname)) {
         // Allow jupyter to stay within the same window
         setUrl(event.url);
@@ -284,6 +283,12 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [props.data.position, domReady]);
 
+  const handleOpen = () => {
+    if (isElectron()) {
+      window.electron.send('open-external-url', { url: s.webviewurl });
+    }
+  };
+
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
@@ -294,7 +299,14 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       {isElectron() ? (
-        <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+        <div>
+          {/* button */}
+          <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+            <Button colorScheme="teal" variant="ghost" top={0} right={0} position={"absolute"} size={"lg"} onClick={handleOpen}><MdOpenInNew /></Button>
+          </Tooltip>
+          {/* Webview */}
+          <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+        </div>
       ) : (
         <ElectronRequired
           appName={props.data.type}
@@ -369,6 +381,12 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: v.zoomFactor });
   };
 
+  const handleOpen = () => {
+    if (isElectron()) {
+      window.electron.send('open-external-url', { url: s.webviewurl });
+    }
+  };
+
   return (
     <HStack>
       {isElectron() && (
@@ -428,6 +446,10 @@ function ToolbarComponent(props: App): JSX.Element {
 
             <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
               <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+            </Tooltip>
+
+            <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+              <Button onClick={handleOpen}><MdOpenInNew /></Button>
             </Tooltip>
           </ButtonGroup>
         </>

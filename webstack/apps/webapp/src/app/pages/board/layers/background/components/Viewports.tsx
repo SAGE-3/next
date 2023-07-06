@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
@@ -22,6 +22,7 @@ export function Viewports(props: ViewportsProps) {
 
   // Presence Information
   const presences = usePresenceStore((state) => state.presences);
+  const showPresence = useUIStore((state) => state.showPresence);
 
   // UI Scale
   const scale = useUIStore((state) => state.scale);
@@ -30,7 +31,7 @@ export function Viewports(props: ViewportsProps) {
   return (
     <>
       {/* Draw the  viewports: filter by board and not myself */}
-      {presences
+      {showPresence && presences
         .filter((el) => el.data.boardId === props.boardId)
         .filter((el) => el.data.userId !== user?._id)
         .map((presence) => {
@@ -57,12 +58,19 @@ type UserViewportProps = {
 function UserViewport(props: UserViewportProps) {
   // If this is not a wall usertype, then we don't render the viewport
   if (!props.isWall) return null;
+
+  // UI settings
   const color = useHexColor(props.color);
-  const titleBarHeight = 30;
+  const titleBarHeight = 28 / props.scale;
+  const fontSize = 18 / props.scale;
+  const borderRadius = 6 / props.scale;
+  const borderWidth = 3 / props.scale;
+  const textColor = useColorModeValue('white', 'black');
+
   return (
     <Box
       borderStyle="solid"
-      borderWidth={3 / props.scale}
+      borderWidth={borderWidth}
       borderColor={color}
       borderTop={'none'}
       position="absolute"
@@ -71,13 +79,17 @@ function UserViewport(props: UserViewportProps) {
       top={props.viewport.position.y - titleBarHeight + 'px'}
       width={props.viewport.size.width + 'px'}
       height={props.viewport.size.height + titleBarHeight + 'px'}
-      opacity={0.5}
-      borderRadius="8px 8px 8px 8px"
-      transition="all 0.5s"
+      opacity={0.65}
+      borderRadius={borderRadius}
+      transitionProperty="left, top, width, height"
+      transitionTimingFunction={'ease-in-out'}
+      transitionDuration={'0.5s'}
+      transitionDelay={'0s'}
       color="white"
-      fontSize="xl"
+      fontSize={fontSize + 'px'}
       pl="2"
       background={`linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`}
+      textColor={textColor}
     >
       Viewport for {props.name}
     </Box>

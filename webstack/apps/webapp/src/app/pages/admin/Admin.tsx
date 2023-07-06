@@ -9,38 +9,24 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
 
-import { JoinBoardCheck, useData, MainButton, Clock } from '@sage3/frontend';
+import { JoinBoardCheck, useConfigStore, MainButton, Clock } from '@sage3/frontend';
 
 import { Link } from 'react-router-dom';
 
 import './adminStyle.css';
 
-// Application specific schema
-import {
-  Board,
-  BoardSchema,
-  Asset,
-  AssetSchema,
-  User,
-  Room,
-  UserSchema,
-  RoomSchema,
-  Message,
-  Presence,
-  MessageSchema,
-  PresenceSchema,
-  OpenConfiguration,
-} from '@sage3/shared/types';
+// Collection specific schemas
+import { App } from '@sage3/applications/schema';
+import { Board, Asset, User, Room, Message, Presence } from '@sage3/shared/types';
 
 import { APIHttp } from '@sage3/frontend';
-import { App, AppSchema } from '@sage3/applications/schema';
 
 export function AdminPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('assets/SAGE3LightMode.png', 'assets/SAGE3DarkMode.png');
 
-  // Config File
-  const config = useData('api/configuration') as OpenConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);
@@ -52,39 +38,39 @@ export function AdminPage() {
   const [presences, setPresences] = useState<Presence[]>([]);
 
   const fetchApps = () => {
-    APIHttp.GET<AppSchema, App>('/apps').then((bb) => {
+    APIHttp.GET<App>('/apps').then((bb) => {
       if (bb.success && bb.data) setApps(bb.data);
     });
   };
 
   const fetchBoards = () => {
-    APIHttp.GET<BoardSchema, Board>('/boards').then((bb) => {
+    APIHttp.GET<Board>('/boards').then((bb) => {
       if (bb.success && bb.data) setBoards(bb.data);
     });
   };
   const fetchAssets = () => {
-    APIHttp.GET<AssetSchema, Asset>('/assets').then((bb) => {
+    APIHttp.GET<Asset>('/assets').then((bb) => {
       if (bb.success && bb.data) setAssets(bb.data);
     });
   };
   const fetchUsers = () => {
-    APIHttp.GET<UserSchema, User>('/users').then((bb) => {
+    APIHttp.GET<User>('/users').then((bb) => {
       if (bb.success && bb.data) setUsers(bb.data);
     });
   };
   const fetchRooms = () => {
-    APIHttp.GET<RoomSchema, Room>('/rooms').then((bb) => {
+    APIHttp.GET<Room>('/rooms').then((bb) => {
       if (bb.success && bb.data) setRooms(bb.data);
     });
   };
 
   const fetchMessages = () => {
-    APIHttp.GET<MessageSchema, Message>('/message').then((bb) => {
+    APIHttp.GET<Message>('/message').then((bb) => {
       if (bb.success && bb.data) setMessages(bb.data);
     });
   };
   const fetchPresences = () => {
-    APIHttp.GET<PresenceSchema, Presence>('/presence').then((bb) => {
+    APIHttp.GET<Presence>('/presence').then((bb) => {
       if (bb.success && bb.data) setPresences(bb.data);
     });
   };
@@ -102,6 +88,9 @@ export function AdminPage() {
   const toast = useToast();
 
   useEffect(() => {
+    // Update the document title
+    document.title = 'SAGE3 - Admin';
+
     fetchAll();
   }, []);
 

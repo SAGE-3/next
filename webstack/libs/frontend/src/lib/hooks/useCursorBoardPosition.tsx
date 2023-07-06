@@ -18,6 +18,7 @@ import { throttle } from 'throttle-debounce';
 export function useCursorBoardPosition(): {
   position: { x: number; y: number };
   uiToBoard: (x: number, y: number) => { x: number; y: number };
+  mouseToBoard: () => { x: number; y: number };
   mouse: { x: number; y: number };
 } {
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -37,11 +38,14 @@ export function useCursorBoardPosition(): {
   // Keep the throttlefunc reference
   const throttleUpdateFunc = useCallback(throttleUpdate, []);
 
-  const uiToBoard = useCallback(
-    (x: number, y: number) => {
-      return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
-    },
-    [boardPosition.x, boardPosition.y, scale]
+  const uiToBoard = useCallback((x: number, y: number) => {
+    return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
+  }, [boardPosition.x, boardPosition.y, scale]
+  );
+
+  const mouseToBoard = useCallback(() => {
+    return { x: Math.floor(mouse.x / scale - boardPosition.x), y: Math.floor(mouse.y / scale - boardPosition.y) };
+  }, [boardPosition.x, boardPosition.y, scale, mouse.x, mouse.y]
   );
 
   // Oberver for window resize
@@ -55,5 +59,5 @@ export function useCursorBoardPosition(): {
     return () => window.removeEventListener('mousemove', updateCursorPosition);
   }, [boardPosition.x, boardPosition.y, scale, throttleUpdateFunc]);
 
-  return { position, uiToBoard, mouse };
+  return { position, uiToBoard, mouseToBoard, mouse };
 }

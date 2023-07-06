@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 
 export type FileEntry = {
   id: string;
@@ -21,5 +21,5 @@ export type FileEntry = {
   type: string;
   selected: boolean;
   metadata?: string;
-  derived?: ExtraImageType | ExtraPDFType;
+  derived?: ExtraImageType | ExtraPDFType | ExtraVideoType;
 };

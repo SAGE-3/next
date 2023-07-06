@@ -29,6 +29,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
@@ -36,9 +37,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
+
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
-  const divRef = useRef<HTMLDivElement>(null);
 
   // Position board when entering board
   useEffect(() => {
@@ -54,10 +55,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Drag start of the board
   function handleDragBoardStart() {
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'transform';
-    }
     setBoardDragging(true);
+    if (selectedApp) {
+      setSelectedApp('');
+    }
   }
 
   // Handle Dragging
@@ -69,9 +70,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // On a drag stop of the board. Set the board position locally.
   function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    if (divRef.current) {
-      // divRef.current.style.willChange = 'auto';
-    }
     const x = data.x;
     const y = data.y;
     setBoardPosition({ x, y });
@@ -86,7 +84,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }
 
   return (
-    <div ref={divRef} style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd

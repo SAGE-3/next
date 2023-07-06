@@ -44,16 +44,16 @@
     // Enable Plugins
     plugins: true, 
     // Which Apps to enable.  Available Apps: 
-    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["ChartMaker", "LeafLet", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
+    // ChartMaker, MapGL, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    apps: ["ChartMaker", "MapGL", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
   },
 
   // Auth Configuration
   "auth": {
     // Secret HASH for the sessions. Change this to something unique.
     "sessionSecret": "SUPERSECRET!!$$",
-    // Max age for a session per user. In milliseconds. 7 days
-    "sessionMaxAge": 604800000,
+    // Max age for a session per user. In milliseconds. 8 days
+    "sessionMaxAge": 691200000,
     // Which login strategies to enable for the server. 
     // If you enbable them ensure you add the relevant config information below.
     "strategies": [
@@ -103,6 +103,6 @@
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-  // Namespace for signing uuid v5 keys. Change to a unique value.
-  "namespace": "XXX"
+  // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
+  "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }

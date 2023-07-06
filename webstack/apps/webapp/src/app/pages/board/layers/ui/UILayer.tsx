@@ -19,9 +19,10 @@ import {
   useUIStore,
   useBoardStore,
   MainButton,
+  FunctionButtons,
   useRouteNav,
-  useData,
   useRoomStore,
+  useConfigStore,
   Clock,
 } from '@sage3/frontend';
 
@@ -40,33 +41,27 @@ import {
   AnnotationsPanel,
   PluginsPanel,
 } from './components';
-import { OpenConfiguration } from '@sage3/shared/types';
 
 type UILayerProps = {
   boardId: string;
   roomId: string;
-  config: OpenConfiguration;
 };
 
 export function UILayer(props: UILayerProps) {
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-
-  // Configuration
-  const config = useData('api/configuration') as OpenConfiguration;
-
+  const showUI = useUIStore((state) => state.showUI);
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
-
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === props.boardId);
-
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
-
   // Apps
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
@@ -93,7 +88,9 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    apps.forEach((a) => deleteApp(a._id));
+    // apps.forEach((a) => deleteApp(a._id));
+    const ids = apps.map((a) => a._id);
+    deleteApp(ids);
     setClearAllMarkers(true);
     // close the modal
     clearOnClose();
@@ -167,20 +164,30 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* The clock Top Right */}
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
+      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px', display: showUI ? 'flex' : 'none' }} opacity={0.7} />
 
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101}>
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
         <MainButton
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
-          boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
+          boardInfo={{
+            boardId: props.boardId,
+            roomId: props.roomId,
+            boardName: board ? board?.data.name : '',
+            roomName: room ? room?.data.name : '',
+          }}
           config={config}
         />
       </Box>
 
+      {/* Buttons Middle Bottom */}
+      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
+        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
+      </Box> */}
+
       {/* ServerName Top Left */}
-      <HStack position="absolute" left="2">
+      <HStack position="absolute" left="2" display={showUI ? 'flex' : 'none'}>
         <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
         <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
           {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}

@@ -25,10 +25,9 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Room, RoomSchema, Board, OpenConfiguration } from '@sage3/shared/types';
-import { useRoomStore, useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
+import { Room, RoomSchema, Board } from '@sage3/shared/types';
+import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { useData } from 'libs/frontend/src/lib/hooks';
 import { ColorPicker } from '../general';
 
 interface EditRoomModalProps {
@@ -40,8 +39,8 @@ interface EditRoomModalProps {
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('api/configuration') as OpenConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
   const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);

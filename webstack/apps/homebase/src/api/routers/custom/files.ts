@@ -39,7 +39,7 @@ export function FilesRouter(): express.Router {
     const key = uuidv5(params.id, config.namespace);
     // if it matches the passed token, send the file
     if (data && key === params.token) {
-      res.status(200).sendFile(path.resolve(data.data.path), data.data.originalfilename);
+      res.status(200).download(path.resolve(data.data.path), data.data.originalfilename);
     } else {
       res.status(500).send({ success: false });
     }
