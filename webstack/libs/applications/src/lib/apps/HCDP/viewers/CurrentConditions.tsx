@@ -66,7 +66,6 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
       if (index !== -1) {
         s.widget.yAxisNames.splice(index, 1);
       }
-      console.log(s.widget.yAxisNames);
       const tmpValuesForSingleStation = [];
 
       for (let j = 0; j < s.widget.yAxisNames.length; j++) {

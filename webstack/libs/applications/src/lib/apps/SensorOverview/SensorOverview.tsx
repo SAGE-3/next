@@ -120,7 +120,7 @@ function AppComponent(props: App): JSX.Element {
       fetchStationData();
       console.log(err);
     });
-
+    console.log(s);
     const interval = setInterval(
       () => {
         fetchStationData();
