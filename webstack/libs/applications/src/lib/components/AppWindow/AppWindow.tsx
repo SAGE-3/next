@@ -22,7 +22,7 @@ import { App, AppSchema } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
 
 // Time in ms to send updates to the server
-const UpdateRate = 1000 / 3;
+const UpdateRate = 1000 / 5;
 
 type WindowProps = {
   app: App;

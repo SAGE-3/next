@@ -12,7 +12,7 @@ import { useColorModeValue, VStack } from '@chakra-ui/react';
 import { useAppStore, useUIStore, useUser, GetConfiguration } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppName } from '@sage3/applications/schema';
+import { AppName, AppState } from '@sage3/applications/schema';
 
 import { ButtonPanel, Panel } from '../Panel';
 
@@ -59,11 +59,12 @@ export function ApplicationsPanel(props: ApplicationProps) {
   // Theme
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   // User
-  const { user } = useUser();
+  const { user, accessId } = useUser();
 
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
+    const state = {} as AppState;
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
 
@@ -79,6 +80,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
+      state.accessId = accessId;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross
@@ -90,7 +92,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
-      state: { ...(initialValues[appName] as any) },
+      state: { ...(initialValues[appName] as any), ...state },
       raised: true,
       dragging: false,
     });
