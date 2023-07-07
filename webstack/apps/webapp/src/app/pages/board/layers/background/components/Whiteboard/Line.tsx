@@ -18,13 +18,11 @@ export interface LineProps {
 }
 
 export const Line = memo(function Line({ line, scale }: LineProps) {
-  const { points, color, isComplete } = useLine(line);
-
+  const { points, color, isComplete, alpha, size } = useLine(line);
   const c = useHexColor(color ? color : 'red');
-
   const pathData = getSvgPathFromStroke(
     getStroke(points, {
-      size: 12,
+      size: size,
       thinning: 0.5,
       streamline: 0.6,
       smoothing: 0.7,
@@ -32,11 +30,7 @@ export const Line = memo(function Line({ line, scale }: LineProps) {
     })
   );
 
-  return (
-    <g fill={color}>
-      <path className="canvas-line" d={pathData} fill={c} />
-    </g>
-  );
+  return (<g fill={color}> <path className="canvas-line" d={pathData} fill={c} fillOpacity={alpha} /> </g>);
 });
 
 export function getSvgPathFromStroke(stroke: number[][]) {
@@ -59,6 +53,8 @@ export function useLine(line: Y.Map<any>) {
   const [isComplete, setIsComplete] = useState<boolean>();
   const [color, setColor] = useState<string>();
   const [pts, setPts] = useState<number[][]>([]);
+  const [alpha, setAlpha] = useState<number>(0.6);
+  const [size, setSize] = useState<number>(5);
 
   // Subscribe to changes to the line itself and sync
   // them into React state.
@@ -67,6 +63,8 @@ export function useLine(line: Y.Map<any>) {
       const current = line.toJSON();
       setIsComplete(current.isComplete);
       setColor(current.userColor);
+      setAlpha(current.alpha);
+      setSize(current.size);
     }
 
     handleChange();
@@ -105,7 +103,7 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  return { points: pts, color, isComplete };
+  return { points: pts, color, isComplete, alpha, size };
 }
 
 export function toPairs<T>(arr: T[]): T[][] {

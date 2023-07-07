@@ -59,11 +59,15 @@ interface UIState {
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
   markerColor: SAGEColors;
+  markerSize: number;
+  markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
   setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
+  setMarkerSize: (size: number) => void;
+  setMarkerOpacity: (opacity: number) => void;
 
   // lasso
   lassoMode: boolean; // marker mode enabled
@@ -127,6 +131,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   clearAllLassos: false,
   whiteboardMode: false,
   markerColor: 'red',
+  markerSize: 5,
+  markerOpacity: 0.6,
   clearMarkers: false,
   clearAllMarkers: false,
   undoLastMarker: false,
@@ -230,6 +236,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   setUndoLastMarker: (undo: boolean) => set((state) => ({ ...state, undoLastMarker: undo })),
+  setMarkerSize: (size: number) => set((state) => ({ ...state, markerSize: size })),
+  setMarkerOpacity: (opacity: number) => set((state) => ({ ...state, markerOpacity: opacity })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));
