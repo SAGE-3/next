@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 
@@ -16,6 +16,7 @@ import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
 import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore, useUser } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
+import { throttle } from 'throttle-debounce';
 
 // Renders all the apps
 export function Apps() {
@@ -87,57 +88,60 @@ export function Apps() {
   );
 
   // Select all apps
-  useHotkeys('ctrl+a,cmd+a', () => {
-    if (apps.length > 0) {
-      setSelectedApps(apps.map((el) => el._id));
-    }
-  }, { dependencies: [JSON.stringify(apps)] }
+  useHotkeys(
+    'ctrl+a,cmd+a',
+    () => {
+      if (apps.length > 0) {
+        setSelectedApps(apps.map((el) => el._id));
+      }
+    },
+    { dependencies: [JSON.stringify(apps)] }
   );
 
   // Copy an application into the clipboard
-  useHotkeys('c', (evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
+  useHotkeys(
+    'c',
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
 
-    if (position && apps.length > 0) {
-      const cx = position.x;
-      const cy = position.y;
-      let found = false;
-      // Sort the apps by the last time they were updated to order them correctly
-      apps
-        .slice()
-        .sort((a, b) => b._updatedAt - a._updatedAt)
-        .forEach((el) => {
-          if (found) return;
-          const x1 = el.data.position.x;
-          const y1 = el.data.position.y;
-          const x2 = x1 + el.data.size.width;
-          const y2 = y1 + el.data.size.height;
-          // If the cursor is inside the app, delete it. Only delete the top one
-          if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-            found = true;
-            // Put the app data into the clipboard
-            navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
-            // Notify the user
-            toast({
-              title: 'Success',
-              description: `Application Copied to Clipboard`,
-              duration: 2000,
-              isClosable: true,
-              status: 'success',
-            });
-          }
-        });
-    }
-  }, { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+      if (position && apps.length > 0) {
+        const cx = position.x;
+        const cy = position.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, delete it. Only delete the top one
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              found = true;
+              // Put the app data into the clipboard
+              navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
+              // Notify the user
+              toast({
+                title: 'Success',
+                description: `Application Copied to Clipboard`,
+                duration: 2000,
+                isClosable: true,
+                status: 'success',
+              });
+            }
+          });
+      }
+    },
+    { dependencies: [position.x, position.y, JSON.stringify(apps)] }
   );
 
-  // Create a new app from the clipboard
-  useHotkeys('v', (evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-
-    if (position && apps.length > 0) {
+  // Throttle the paste function
+  const pasteAppThrottle = throttle(500, (position: { x: number; y: number }) => {
+    if (position) {
       const cx = position.x;
       const cy = position.y;
 
@@ -171,48 +175,64 @@ export function Apps() {
         }
       });
     }
-  }, { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+  });
+
+  // Keep the throttlefunc reference
+  const pasteApp = useCallback(pasteAppThrottle, []);
+
+  // Create a new app from the clipboard
+  useHotkeys(
+    'v',
+    (evt) => {
+      console.log('Pastev');
+      evt.preventDefault();
+      evt.stopPropagation();
+      pasteApp(position);
+    },
+    { dependencies: [position.x, position.y] }
   );
 
   // Zoom to app when pressing z over an app
-  useHotkeys('z', (evt) => {
-    if (position && apps.length > 0) {
-      const cx = position.x;
-      const cy = position.y;
-      let found = false;
-      // Sort the apps by the last time they were updated to order them correctly
-      apps
-        .slice()
-        .sort((a, b) => b._updatedAt - a._updatedAt)
-        .forEach((el) => {
-          if (found) return;
-          if (el.data.dragging) return;
-          const x1 = el.data.position.x;
-          const y1 = el.data.position.y;
-          const x2 = x1 + el.data.size.width;
-          const y2 = y1 + el.data.size.height;
-          // If the cursor is inside the app, delete it. Only delete the top one
-          if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-            if (previousLocation.set) {
-              setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
-              setScale(previousLocation.s);
-              setPreviousLocation((prev) => ({ ...prev, set: false }));
-            } else {
-              setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true }));
-              found = true;
-              fitApps([el]);
+  useHotkeys(
+    'z',
+    (evt) => {
+      if (position && apps.length > 0) {
+        const cx = position.x;
+        const cy = position.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            if (el.data.dragging) return;
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, delete it. Only delete the top one
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              if (previousLocation.set) {
+                setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+                setScale(previousLocation.s);
+                setPreviousLocation((prev) => ({ ...prev, set: false }));
+              } else {
+                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true }));
+                found = true;
+                fitApps([el]);
+              }
             }
+          });
+        if (!found) {
+          if (previousLocation.set) {
+            setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+            setScale(previousLocation.s);
+            setPreviousLocation((prev) => ({ ...prev, set: false }));
           }
-        });
-      if (!found) {
-        if (previousLocation.set) {
-          setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
-          setScale(previousLocation.s);
-          setPreviousLocation((prev) => ({ ...prev, set: false }));
         }
       }
-    }
-  },
+    },
     { dependencies: [previousLocation.set, position.x, position.y, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)] }
   );
 
