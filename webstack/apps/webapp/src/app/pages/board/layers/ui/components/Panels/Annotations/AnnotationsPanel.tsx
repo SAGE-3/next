@@ -8,15 +8,24 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Box, Button, useToast, Tooltip, HStack, VStack,
-  Slider, SliderFilledTrack, SliderThumb, SliderTrack, Text,
+  Box,
+  Button,
+  useToast,
+  Tooltip,
+  HStack,
+  VStack,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+  Text,
 } from '@chakra-ui/react';
 
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 import { MdGraphicEq } from 'react-icons/md';
 
-import { useUIStore, useAppStore, usePanelStore, useUser, isElectron } from '@sage3/frontend';
+import { useUIStore, useAppStore, usePanelStore, useUser, isElectron, useHexColor } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
@@ -54,6 +63,11 @@ export function AnnotationsPanel() {
   const [showTooltip1, setShowTooltip1] = useState(false);
   const [sliderValue2, setSliderValue2] = useState(markerSize);
   const [showTooltip2, setShowTooltip2] = useState(false);
+
+  // Slider Colors
+  const thumbColor = useHexColor(`${markerColor}.600`);
+  const sliderBackground = useHexColor(`${markerColor}.100`);
+  const sliderColor = useHexColor(markerColor);
 
   // Set user's color to the pen color
   useEffect(() => {
@@ -100,7 +114,7 @@ export function AnnotationsPanel() {
     <Panel title="Annotations" name="annotations" width={600} showClose={false}>
       <Box alignItems="center" pb="1" width="100%" display="flex">
         <VStack width="100%" alignItems="left" spacing="0">
-          <HStack m={0} p={0} spacing={"inherit"}>
+          <HStack m={0} p={0} spacing={'inherit'}>
             <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
               <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
                 <BsPencilFill />
@@ -133,36 +147,48 @@ export function AnnotationsPanel() {
               </Button>
             </Tooltip>
           </HStack>
-          <HStack mt={4} mb={0} p={0} pr={2} spacing={"4"} w={'100%'}>
+          <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
             <Text>Alpha </Text>
-            <Slider defaultValue={markerOpacity} min={0.1} max={1} step={0.1} size={"md"}
+            <Slider
+              defaultValue={markerOpacity}
+              min={0.1}
+              max={1}
+              step={0.1}
+              size={'md'}
               onChangeEnd={(v) => setMarkerOpacity(v)}
               onChange={(v) => setSliderValue1(v)}
               onMouseEnter={() => setShowTooltip1(true)}
-              onMouseLeave={() => setShowTooltip1(false)}>
-              <SliderTrack bg='red.100'>
-                <Box position='relative' right={10} />
-                <SliderFilledTrack bg='tomato' />
+              onMouseLeave={() => setShowTooltip1(false)}
+            >
+              <SliderTrack bg={sliderBackground}>
+                <Box position="relative" right={10} />
+                <SliderFilledTrack bg={sliderColor} />
               </SliderTrack>
-              <Tooltip hasArrow bg='teal.500' color='white' placement='bottom' isOpen={showTooltip1} label={`${sliderValue1}`}>
+              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
                 <SliderThumb boxSize={4}>
-                  <Box color='tomato' as={MdGraphicEq} />
+                  <Box color={thumbColor} as={MdGraphicEq} />
                 </SliderThumb>
               </Tooltip>
             </Slider>
             <Text> Width</Text>
-            <Slider defaultValue={markerSize} min={1} max={20} step={1} size={"md"}
+            <Slider
+              defaultValue={markerSize}
+              min={1}
+              max={20}
+              step={1}
+              size={'md'}
               onChangeEnd={(v) => setMarkerSize(v)}
               onChange={(v) => setSliderValue2(v)}
               onMouseEnter={() => setShowTooltip2(true)}
-              onMouseLeave={() => setShowTooltip2(false)}>
-              <SliderTrack bg='red.100'>
-                <Box position='relative' right={10} />
-                <SliderFilledTrack bg='tomato' />
+              onMouseLeave={() => setShowTooltip2(false)}
+            >
+              <SliderTrack bg={sliderBackground}>
+                <Box position="relative" right={10} />
+                <SliderFilledTrack bg={sliderColor} />
               </SliderTrack>
-              <Tooltip hasArrow bg='teal.500' color='white' placement='bottom' isOpen={showTooltip2} label={`${sliderValue2}`}>
+              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
                 <SliderThumb boxSize={4}>
-                  <Box color='tomato' as={MdGraphicEq} />
+                  <Box color={thumbColor} as={MdGraphicEq} />
                 </SliderThumb>
               </Tooltip>
             </Slider>
