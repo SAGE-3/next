@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, ButtonGroup } from '@chakra-ui/react';
 
 import { SAGEColors, colors } from '@sage3/shared';
-import { useHexColor } from '../../../hooks';
+import { useHexColor as getColor } from '../../../hooks';
 
 type ColorPickerProps = {
   selectedColor: SAGEColors;
@@ -22,6 +22,11 @@ type ColorPickerProps = {
 export function ColorPicker(props: ColorPickerProps) {
   const [selectedColor, setSelectedColor] = useState<SAGEColors>(props.selectedColor);
 
+  // update the color if the selected color changes
+  useEffect(() => {
+    setSelectedColor(props.selectedColor);
+  }, [props.selectedColor]);
+
   const handleChange = (color: SAGEColors) => {
     setSelectedColor(color);
     props.onChange(color);
@@ -30,7 +35,7 @@ export function ColorPicker(props: ColorPickerProps) {
   return (
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       {colors.map((color) => {
-        const c = useHexColor(color);
+        const c = getColor(color);
         return (
           <Button
             key={c}
