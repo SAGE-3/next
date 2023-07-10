@@ -181,15 +181,11 @@ export function Apps() {
   const pasteApp = useCallback(pasteAppThrottle, []);
 
   // Create a new app from the clipboard
-  useHotkeys(
-    'v',
-    (evt) => {
-      console.log('Pastev');
-      evt.preventDefault();
-      evt.stopPropagation();
-      pasteApp(position);
-    },
-    { dependencies: [position.x, position.y] }
+  useHotkeys('v', (evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    pasteApp(position);
+  }, { dependencies: [position.x, position.y] }
   );
 
   // Zoom to app when pressing z over an app
