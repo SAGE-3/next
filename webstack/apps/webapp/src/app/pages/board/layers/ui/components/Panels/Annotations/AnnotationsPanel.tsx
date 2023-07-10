@@ -148,7 +148,7 @@ export function AnnotationsPanel() {
             </Tooltip>
           </HStack>
           <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
-            <Text>Alpha </Text>
+            <Text>Opacity</Text>
             <Slider
               defaultValue={markerOpacity}
               min={0.1}
@@ -174,7 +174,7 @@ export function AnnotationsPanel() {
             <Slider
               defaultValue={markerSize}
               min={1}
-              max={20}
+              max={80}
               step={1}
               size={'md'}
               onChangeEnd={(v) => setMarkerSize(v)}

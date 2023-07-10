@@ -131,7 +131,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   clearAllLassos: false,
   whiteboardMode: false,
   markerColor: 'red',
-  markerSize: 5,
+  markerSize: 8,
   markerOpacity: 0.6,
   clearMarkers: false,
   clearAllMarkers: false,
