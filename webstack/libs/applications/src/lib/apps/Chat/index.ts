@@ -36,7 +36,7 @@ export const init: Partial<state> = {
       creationDate: Date.now(),
       userName: '',
       query: '',
-      response: `Hi I am Geppetto! Would you like to chat with me?`,
+      response: `Hi I am Geppetto! Ask me anything when starting with @G?`,
       userId: '',
     },
   ],

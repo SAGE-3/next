@@ -6,10 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, Fragment } from 'react';
-import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { useRef, useState, Fragment, useEffect } from 'react';
+import { Box, Text, Flex, useColorModeValue, Input, Tooltip } from '@chakra-ui/react';
 
-import { useAppStore, useHexColor, useUser } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
+import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -18,107 +19,196 @@ import { AppWindow } from '../../components';
 // Styling
 import './styling.css';
 
+const acknowledgments = [
+  "Thank you for your question!",
+  "Great question!",
+  "That's an interesting question!",
+  "I appreciate your curiosity!",
+  "Thanks for asking!",
+  "You've got my attention!",
+  "Wonderful question!",
+  "I'm glad you asked that!",
+  "Good question!",
+  "I love your inquisitiveness!"
+];
+
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
 
   // Colors for Dark theme and light theme
-  const myColor = useHexColor('blue');
+  const myColor = useHexColor(user?.data.color || 'blue');
   const geppettoColor = useHexColor('purple');
   const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.100', 'gray.900');
+  const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
 
-  const user = useUser();
+  // Input text for query
+  const [input, setInput] = useState<string>('');
+  // Processing
+  const [processing, setProcessing] = useState(false);
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
   const chatBox = useRef<null | HTMLDivElement>(null);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+  };
+  const onSubmit = (e: React.KeyboardEvent) => {
+    // Keyboard instead of pressing the button
+    if (e.key === 'Enter') {
+      newMessage();
+      setInput('');
+    }
+  };
+  const newMessage = async () => {
+    if (!user) return;
+    setProcessing(true);
+    // Get server time
+    const now = await serverTime();
+    // Is it a question to Geppetto?
+    const isQuestion = input.startsWith('@G');
+    // Add messages
+    updateState(props._id, {
+      ...s,
+      messages: [
+        ...s.messages,
+        {
+          id: genId(),
+          userId: user._id,
+          creationId: '',
+          creationDate: now.epoch,
+          userName: user?.data.name,
+          query: input,
+          response: isQuestion ? acknowledgments[Math.floor(Math.random() * acknowledgments.length)] : '',
+        },
+      ],
+    });
+    setProcessing(false);
+  };
+
+  useEffect(() => {
+    // Scroll to bottom of chat box
+    chatBox.current?.scrollTo({
+      top: chatBox.current?.scrollHeight, behavior: "instant",
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!processing) {
+      // Scroll to bottom of chat box
+      chatBox.current?.scrollTo({
+        top: chatBox.current?.scrollHeight, behavior: "smooth",
+      });
+    }
+  }, [s.messages]);
+
   return (
     <AppWindow app={props}>
-      {/* Display Messages */}
-      <Box
-        h="100%"
-        w="100%"
-        bg={bgColor}
-        overflowY="scroll"
-        ref={chatBox}
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '12px',
-          },
-          '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: `${scrollColor}`,
-            borderRadius: '6px',
-            outline: `3px solid ${bgColor}`,
-          },
-        }}
-      >
-        {sortedMessages.map((message, index) => {
-          const isMe = user.user?._id == message.userId;
-          const time = getDateString(message.creationDate);
-          return (
-            <Fragment key={index}>
-              {/* Start of User Messages */}
-              {message.query.length ? (
-                <Box position="relative" my={10}>
-                  <Box top="-30px" right={'15px'} position={'absolute'} textAlign="right">
-                    <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="sm">
-                      {message.userName}
-                    </Text>
-                    <Text whiteSpace={'nowrap'} textOverflow="ellipsis" color={textColor} fontSize="xs">
-                      {time}
-                    </Text>
-                  </Box>
+      <Flex gap={2} p={2} minHeight={"max-content"} direction={"column"} h="100%" w="100%">
+        {/* Display Messages */}
+        <Box
+          flex={1}
+          bg={bgColor}
+          borderRadius={'md'}
+          overflowY="scroll"
+          ref={chatBox}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '12px',
+            },
+            '&::-webkit-scrollbar-track': {
+              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: `${scrollColor}`,
+              borderRadius: '6px',
+              outline: `3px solid ${bgColor}`,
+            },
+          }}
+        >
+          {sortedMessages.map((message, index) => {
+            const isMe = user?._id == message.userId;
+            const time = getDateString(message.creationDate);
+            return (
+              <Fragment key={index}>
+                {/* Start of User Messages */}
+                {message.query.length ? (
+                  <Box position="relative" my={1}>
+                    {isMe ?
+                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={"right"}>
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          Me
+                        </Text>
+                      </Box>
+                      :
+                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={"right"}>
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          {message.userName}
+                        </Text>
+                      </Box>
+                    }
 
-                  <Box display={'flex'} justifyContent="right">
-                    <Box
-                      color="white"
-                      rounded={'md'}
-                      boxShadow="md"
-                      textAlign={'right'}
-                      bg={isMe ? myColor : otherUserColor}
-                      p={2}
-                      m={3}
-                      fontFamily="arial"
-                      maxWidth="70%"
-                    >
-                      {message.query}
+                    <Box display={'flex'} justifyContent={isMe ? "right" : "left"}>
+                      <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
+                        placement="top" hasArrow={true} label={time} openDelay={400}>
+                        <Box
+                          color="white"
+                          rounded={'md'}
+                          boxShadow="md"
+                          textAlign={isMe ? "right" : "left"}
+                          bg={isMe ? myColor : otherUserColor}
+                          p={2}
+                          m={3}
+                          fontFamily="arial"
+                          maxWidth="70%"
+                        >
+                          {message.query}
+                        </Box>
+                      </Tooltip>
                     </Box>
                   </Box>
-                </Box>
-              ) : null}
+                ) : null}
 
-              {/* Start of Geppetto Messages */}
-              <Box position="relative" my={10} maxWidth={'70%'}>
-                <Box top="-30px" left={'15px'} position={'absolute'} textAlign="left">
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="sm">
-                    Geppetto
-                  </Text>
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" color={textColor} fontSize="xs">
-                    {time}
-                  </Text>
-                </Box>
+                {/* Start of Geppetto Messages */}
+                {message.response.length ?
+                  <Box position="relative" my={1} maxWidth={'70%'}>
+                    <Box top="-15px" left={'15px'} position={'absolute'} textAlign="left">
+                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                        Geppetto
+                      </Text>
+                    </Box>
 
-                <Box display={'flex'} justifyContent="left">
-                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={2} m={3} fontFamily="arial">
-                    {message.response}
+                    <Box display={'flex'} justifyContent="left">
+                      <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
+                        placement="top" hasArrow={true} label={time} openDelay={400}>
+                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={2} m={3} fontFamily="arial">
+                          {message.response}
+                        </Box>
+                      </Tooltip>
+                    </Box>
                   </Box>
-                </Box>
-              </Box>
-            </Fragment>
-          );
-        })}
-      </Box>
+                  : null}
+              </Fragment>
+            );
+          })}
+        </Box>
+        <Box bg={"blackAlpha.100"}>
+          <Input placeholder='Chat or @G Ask me anyting' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
+            onChange={handleChange}
+            onKeyDown={onSubmit}
+            value={input}
+          />
+        </Box>
+      </Flex>
     </AppWindow>
   );
 }
