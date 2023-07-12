@@ -7,6 +7,7 @@
  */
 
 export * from './database/SBDatabase';
+export * from './database/SBSet';
 export * from './pubsub/SBPubSub';
 export * from './auth/SBAuth';
 export * from './auth/SBAuthDatabase';
