@@ -33,6 +33,7 @@ import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from 
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
+import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
@@ -69,6 +70,7 @@ export const initialValues = {
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
+  [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
 };
 
