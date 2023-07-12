@@ -400,7 +400,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <MdFileDownload />
         </Button>
       </Tooltip>
-      <Tooltip placement="top" hasArrow={true} label={'Refresh the Editor'} openDelay={400}>
+      <Tooltip placement="top" hasArrow={true} label={'Attempt to reconnect the Notepad'} openDelay={400}>
         <Button onClick={() => setReinit(props._id, !reinit)} size="xs" colorScheme="teal" mx="1">
           <MdRefresh />
         </Button>
