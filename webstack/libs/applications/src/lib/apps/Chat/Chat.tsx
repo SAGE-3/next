@@ -7,10 +7,12 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
-import { Box, Text, Flex, useColorModeValue, Input, Tooltip } from '@chakra-ui/react';
+import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement } from '@chakra-ui/react';
+import { MdSend, MdExpandCircleDown } from 'react-icons/md';
 
 import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
+
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -50,25 +52,37 @@ function AppComponent(props: App): JSX.Element {
 
   // Input text for query
   const [input, setInput] = useState<string>('');
+  // Element to set the focus to when opening the dialog
+  const inputRef = useRef<HTMLInputElement>(null);
   // Processing
   const [processing, setProcessing] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [newMessages, setNewMessages] = useState(false);
+
+  const chatBox = useRef<null | HTMLDivElement>(null);
+  // Display some notifications
+  const toast = useToast();
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
-  const chatBox = useRef<null | HTMLDivElement>(null);
-
+  // Input text for query
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
   };
+
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
-      newMessage();
-      setInput('');
+      send();
     }
   };
+  const send = () => {
+    newMessage();
+    setInput('');
+  };
+
   const newMessage = async () => {
     if (!user) return;
     setProcessing(true);
@@ -92,23 +106,48 @@ function AppComponent(props: App): JSX.Element {
         },
       ],
     });
+    setTimeout(() => {
+      // Scroll to bottom of chat box smoothly
+      goToBottom();
+    }, 100);
     setProcessing(false);
   };
 
+  const goToBottom = () => {
+    // Scroll to bottom of chat box smoothly
+    chatBox.current?.scrollTo({
+      top: chatBox.current?.scrollHeight, behavior: "smooth",
+    });
+  };
+
   useEffect(() => {
-    // Scroll to bottom of chat box
+    // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "instant",
     });
+    chatBox.current?.addEventListener('scrollend', (e) => {
+      if (chatBox.current && chatBox.current.scrollTop) {
+        const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
+        if (test === 0) {
+          setScrolled(false);
+          setNewMessages(false);
+        } else {
+          setScrolled(true);
+        }
+      }
+    });
+    // inputRef.current?.addEventListener('focus', (e) => {
+    //   // Scroll to bottom of chat box smoothly
+    //   goToBottom();
+    // });
   }, []);
 
   useEffect(() => {
-    if (!processing) {
-      // Scroll to bottom of chat box
-      chatBox.current?.scrollTo({
-        top: chatBox.current?.scrollHeight, behavior: "smooth",
-      });
+    if (!processing && !scrolled) {
+      // Scroll to bottom of chat box smoothly
+      goToBottom();
     }
+    if (scrolled) setNewMessages(true);
   }, [s.messages]);
 
   return (
@@ -164,12 +203,25 @@ function AppComponent(props: App): JSX.Element {
                           color="white"
                           rounded={'md'}
                           boxShadow="md"
+                          fontFamily="arial"
                           textAlign={isMe ? "right" : "left"}
                           bg={isMe ? myColor : otherUserColor}
-                          p={2}
-                          m={3}
-                          fontFamily="arial"
+                          p={1} m={3}
                           maxWidth="70%"
+                          userSelect={"none"}
+                          onDoubleClick={() => {
+                            // Copy into clipboard
+                            navigator.clipboard.writeText(message.query);
+                            // Notify the user
+                            toast({
+                              title: 'Success',
+                              description: `Content Copied to Clipboard`,
+                              duration: 3000,
+                              isClosable: true,
+                              status: 'success',
+                            });
+
+                          }}
                         >
                           {message.query}
                         </Box>
@@ -181,16 +233,16 @@ function AppComponent(props: App): JSX.Element {
                 {/* Start of Geppetto Messages */}
                 {message.response.length ?
                   <Box position="relative" my={1} maxWidth={'70%'}>
-                    <Box top="-15px" left={'15px'} position={'absolute'} textAlign="left">
+                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
                         Geppetto
                       </Text>
                     </Box>
 
-                    <Box display={'flex'} justifyContent="left">
+                    <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
                       <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
                         placement="top" hasArrow={true} label={time} openDelay={400}>
-                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={2} m={3} fontFamily="arial">
+                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={1} m={3} fontFamily="arial">
                           {message.response}
                         </Box>
                       </Tooltip>
@@ -201,15 +253,28 @@ function AppComponent(props: App): JSX.Element {
             );
           })}
         </Box>
-        <Box bg={"blackAlpha.100"}>
+        <Tooltip fontSize={"xs"}
+          placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
+          <IconButton aria-label='Messages' size={"xs"}
+            p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
+            icon={<MdExpandCircleDown size={"xs"} />}
+            isDisabled={!newMessages}
+            onClick={goToBottom}
+          />
+        </Tooltip>
+        <InputGroup bg={"blackAlpha.100"}>
           <Input placeholder='Chat or @G Ask me anyting' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
             onChange={handleChange}
             onKeyDown={onSubmit}
             value={input}
+            ref={inputRef}
           />
-        </Box>
+          <InputRightElement onClick={send}>
+            <MdSend color='green.500' />
+          </InputRightElement>
+        </InputGroup>
       </Flex>
-    </AppWindow>
+    </AppWindow >
   );
 }
 
