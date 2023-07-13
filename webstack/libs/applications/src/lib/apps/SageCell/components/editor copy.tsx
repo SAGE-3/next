@@ -16,20 +16,14 @@ import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
+// // Debounce updates to the editor
+// import { debounce } from 'throttle-debounce';
+
 type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
   editorHeight?: number;
 };
-
-interface Kernel {
-  id: string;
-  data: {
-    board: string;
-    is_private: boolean;
-    owner_uuid: string;
-  };
-}
 
 /**
  *
@@ -49,19 +43,45 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
   const toast = useToast();
   // Handle to the Monoco API
   const monaco = useMonaco();
-  const [myKernels, setMyKernels] = useState<Kernel[]>([]);
+  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
   const [access, setAccess] = useState<boolean>(false);
   const [kernel, setKernel] = useState(s.kernel);
   const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
 
+  // Saving the text after 1sec of inactivity
+  const debounceSave = useRef(
+    debounce(500, (val) => {
+      updateState(props.app._id, { code: val });
+    })
+  );
+
+  const debounceIsTyping = useRef(
+    debounce(1000, () => {
+      updateState(props.app._id, { isTyping: false });
+    })
+  );
+
   const handleCodeChange = (value: string | undefined) => {
     if (value != undefined) {
       setCode(value);
       // Update the text when not typing
-      // debounceSave.current(value);
+      debounceSave.current(value);
     }
   };
+
+  // set isTyping to true if anyone begins typing, and false after 1 second of inactivity
+  const handleIsTyping = () => {
+    if (s.isTyping) return;
+    updateState(props.app._id, { isTyping: true });
+    debounceIsTyping.current();
+  };
+
+  useEffect(() => {
+    if (code !== s.code) {
+      handleIsTyping();
+    }
+  }, [code]);
 
   useEffect(() => {
     if (s.code !== code) {
@@ -71,12 +91,12 @@ export const CodeEditor = (props: CodeEditorProps): JSX.Element => {
 
   useEffect(() => {
     // Get all kernels that I'm available to see
-    const kernels: Kernel[] = [];
+    const kernels: any[] = [];
     s.availableKernels
       // filter kernels to show this board kernels only
       .filter((kernel) => kernel.value.board === boardId)
       // filter kernels to show pulic or private kernels that I own
-      .forEach((kernel: Kernel) => {
+      .forEach((kernel) => {
         if (kernel.value.is_private) {
           if (kernel.value.owner_uuid == user?._id) {
             kernels.push(kernel);
