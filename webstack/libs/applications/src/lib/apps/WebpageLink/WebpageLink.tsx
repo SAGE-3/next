@@ -8,10 +8,10 @@
 
 import { Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast, Icon } from '@chakra-ui/react';
 
-import { isElectron } from '@sage3/frontend';
+import { isElectron, useAppStore } from '@sage3/frontend';
 
 import { state as AppState } from './index';
-import { App } from '../../schema';
+import { App, AppSchema } from '../../schema';
 import { AppWindow } from '../../components';
 import { MdWeb } from 'react-icons/md';
 
@@ -70,7 +70,7 @@ function AppComponent(props: App): JSX.Element {
             borderColor={dividerColor}
             background={linearBGColor}
           >
-            <Box display="flex" flexDir={'column'} height="150px">
+            <Box display="flex" flexDir={'column'} height="150px" overflow={'hidden'} textOverflow="ellipsis">
               <Box>
                 <Heading size="lg" textOverflow="ellipsis" overflow="hidden">
                   {title}
@@ -96,6 +96,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const toast = useToast();
 
+  const createApp = useAppStore((state) => state.create);
+
   const openUrl = () => {
     if (!s.url) return;
     if (isElectron()) {
@@ -115,13 +117,47 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   };
 
+  const openInSAGE3 = async () => {
+    const newApp = {
+      type: 'Webview',
+      state: {
+        webviewurl: s.url,
+        zoom: 1.0,
+      },
+      title: 'Webview',
+      roomId: props.data.roomId,
+      boardId: props.data.boardId,
+      position: {
+        x: props.data.position.x + props.data.size.width + 50,
+        y: props.data.position.y,
+        z: props.data.position.z,
+      },
+      size: { width: 800, height: 600 },
+      rotation: { x: 0, y: 0, z: 0 },
+      raised: false,
+      dragging: false,
+    } as AppSchema;
+
+    const res = await createApp(newApp);
+    if (!res.success) {
+      toast({
+        title: res.message ? res.message : 'Error creating app',
+        description: res.error,
+        status: 'error',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <>
-      <Button colorScheme="teal" size="xs" px="6" onClick={openUrl} mr="2">
-        Open
+      <Button colorScheme="teal" size="xs" onClick={openInSAGE3} mr="2">
+        Open in SAGE3
       </Button>
-
-      <Button colorScheme="teal" size="xs" px="6" onClick={copyUrl}>
+      <Button colorScheme="teal" size="xs" onClick={openUrl} mr="2">
+        Open in Desktop
+      </Button>
+      <Button colorScheme="teal" size="xs" onClick={copyUrl}>
         Copy
       </Button>
     </>
