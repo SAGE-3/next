@@ -10,7 +10,7 @@ Download the client at: [SAGE3](https://sage3.sagecommons.org/) (https://sage3.s
 
 ## Documentation
 
-- Quick start guide: https://sage-3.github.io/docs/Quick-Start-Guide
+- Quick start guide: <a href="https://sage-3.github.io/docs/Quick-Start-Guide" target="_blank"> https://sage-3.github.io/docs/Quick-Start-Guide </a>
 - Features: https://sage-3.github.io/docs/SAGE3-Features
 - Architecture: https://sage-3.github.io/docs/Architecture
 - Server Deployment: https://sage-3.github.io/docs/Server-Deployment
