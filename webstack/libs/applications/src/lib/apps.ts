@@ -5,6 +5,7 @@ import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChartMakerName } from './apps/ChartMaker';
+import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CounterName } from './apps/Counter';
@@ -42,6 +43,7 @@ import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import ChartMaker from './apps/ChartMaker/ChartMaker';
+import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import Counter from './apps/Counter/Counter';
@@ -81,6 +83,7 @@ export const Applications = {
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent },
   [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
+  [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
