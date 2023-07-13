@@ -6,7 +6,7 @@
 
 ## Client
 
-Download the client at: [SAGE3](https://sage3.sagecommons.org/) (https://sage3.sagecommons.org/) 
+Download the client at: [SAGE3](https://sage3.sagecommons.org/) (https://sage3.sagecommons.org/) and start using the public servers in Chicago and Honolulu.
 
 ## Documentation
 
