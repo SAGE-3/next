@@ -182,9 +182,9 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* Buttons Middle Bottom */}
-      <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
+      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
         <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
-      </Box>
+      </Box> */}
 
       {/* ServerName Top Left */}
       <HStack position="absolute" left="2" display={showUI ? 'flex' : 'none'}>
