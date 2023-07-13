@@ -23,6 +23,7 @@ export function Cursors(props: CursorProps) {
   // Users
   const { user } = useUser();
   const users = useUsersStore((state) => state.users);
+  const showPresence = useUIStore((state) => state.showPresence);
 
   // Presences
   const presences = usePresenceStore((state) => state.presences);
@@ -34,7 +35,7 @@ export function Cursors(props: CursorProps) {
   return (
     <>
       {/* Draw the cursors and viewports: filter by board and not myself */}
-      {presences
+      {showPresence && presences
         .filter((el) => el.data.boardId === props.boardId)
         .filter((el) => el.data.userId !== user?._id)
         .map((presence) => {
@@ -97,7 +98,8 @@ function UserCursor(props: UserCursorProps) {
         position: 'absolute',
         left: props.position.x + 'px',
         top: props.position.y + 'px',
-        transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        // commented out: slow down the update
+        // transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',

@@ -68,7 +68,7 @@ export function Background(props: BackgroundProps) {
   const createBatch = useAppStore((state) => state.createBatch);
 
   // User
-  const { user } = useUser();
+  const { user, accessId } = useUser();
   const { auth } = useAuth();
   const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
 
@@ -136,7 +136,7 @@ export function Background(props: BackgroundProps) {
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
     } else {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId));
     }
@@ -257,13 +257,8 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-
+      // Open the help panel
       helpOnOpen();
-
-      // show image or open doc
-      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-      // window.open(doc, '_blank');
-
       // Returning false stops the event and prevents default browser events
       return false;
     },

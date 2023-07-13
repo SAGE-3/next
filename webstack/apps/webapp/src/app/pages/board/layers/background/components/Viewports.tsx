@@ -22,6 +22,7 @@ export function Viewports(props: ViewportsProps) {
 
   // Presence Information
   const presences = usePresenceStore((state) => state.presences);
+  const showPresence = useUIStore((state) => state.showPresence);
 
   // UI Scale
   const scale = useUIStore((state) => state.scale);
@@ -30,7 +31,7 @@ export function Viewports(props: ViewportsProps) {
   return (
     <>
       {/* Draw the  viewports: filter by board and not myself */}
-      {presences
+      {showPresence && presences
         .filter((el) => el.data.boardId === props.boardId)
         .filter((el) => el.data.userId !== user?._id)
         .map((presence) => {

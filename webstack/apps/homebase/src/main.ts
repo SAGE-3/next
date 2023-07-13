@@ -105,7 +105,7 @@ async function startServer() {
   await loadCollections();
 
   // Twilio Setup
-  const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+  const screenShareTimeLimit = 60 * 60 * 2000; // 1 hour
   const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
@@ -113,7 +113,8 @@ async function startServer() {
       res.status(403).send();
     }
     const room = req.query.room as string;
-    const token = twilio.generateVideoToken(authId, room);
+    const identity = req.query.identity as string;
+    const token = twilio.generateVideoToken(identity, room);
     res.send({ token });
   });
 

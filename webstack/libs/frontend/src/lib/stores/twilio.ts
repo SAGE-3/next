@@ -31,7 +31,7 @@ interface TwilioState {
   participants: Participant[];
   tracks: RemoteVideoTrack[];
   stopStreamId: string;
-  joinRoom: (userId: string, roomName: string) => Promise<boolean>;
+  joinRoom: (userId: string, accessId: string, roomName: string) => Promise<boolean>;
   leaveRoom: () => void;
   setStopStream: (streamId: string) => void;
 }
@@ -48,7 +48,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
   tracks: [],
   stopStreamId: '',
   setStopStream: (streamId: string) => set((state) => ({ ...state, stopStreamId: streamId })),
-  joinRoom: async (userId: string, roomName: string) => {
+  joinRoom: async (userId: string, accessId: string, roomName: string) => {
     console.log('Twilio> Joining room');
 
     if (get().room?.name === roomName) {
@@ -56,7 +56,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
       return true;
     }
     // Get the token from the SAGE3 server
-    const token = await fetchToken(userId, roomName);
+    const token = await fetchToken(`${userId}--${accessId}`, roomName);
 
     // Reset the state of the store
     get().leaveRoom();

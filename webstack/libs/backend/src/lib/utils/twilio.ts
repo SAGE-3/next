@@ -91,10 +91,10 @@ export class SAGETwilio {
             return;
           }
           // User still on the board?
-          if (user.data.boardId !== screenshare.data.boardId) {
-            appCollection.delete(screenshare._id);
-            return;
-          }
+          // if (user.data.boardId !== screenshare.data.boardId) {
+          //   appCollection.delete(screenshare._id);
+          //   return;
+          // }
         });
       }
     }, interval);

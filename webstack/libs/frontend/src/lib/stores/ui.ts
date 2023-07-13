@@ -31,6 +31,7 @@ interface UIState {
   zIndex: number;
   showUI: boolean;
   showAppTitle: boolean;
+  showPresence: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
@@ -58,11 +59,15 @@ interface UIState {
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
   markerColor: SAGEColors;
+  markerSize: number;
+  markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
   setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
+  setMarkerSize: (size: number) => void;
+  setMarkerOpacity: (opacity: number) => void;
 
   // lasso
   lassoMode: boolean; // marker mode enabled
@@ -87,6 +92,7 @@ interface UIState {
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
   toggleTitle: () => void;
+  togglePresence: () => void;
   displayUI: () => void;
   hideUI: () => void;
   incZ: () => void;
@@ -114,6 +120,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   zIndex: 1,
   showUI: true,
   showAppTitle: false,
+  showPresence: true,
   boardDragging: false,
   appDragging: false,
   selectedAppsIds: [],
@@ -124,6 +131,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   clearAllLassos: false,
   whiteboardMode: false,
   markerColor: 'red',
+  markerSize: 8,
+  markerOpacity: 0.6,
   clearMarkers: false,
   clearAllMarkers: false,
   undoLastMarker: false,
@@ -195,6 +204,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
+  togglePresence: () => set((state) => ({ ...state, showPresence: !state.showPresence })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
@@ -226,6 +236,8 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   setUndoLastMarker: (undo: boolean) => set((state) => ({ ...state, undoLastMarker: undo })),
+  setMarkerSize: (size: number) => set((state) => ({ ...state, markerSize: size })),
+  setMarkerOpacity: (opacity: number) => set((state) => ({ ...state, markerOpacity: opacity })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));

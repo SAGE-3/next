@@ -82,7 +82,8 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
             docs.forEach((doc) => {
               const idx = presences.findIndex((el) => el._id === doc._id);
               if (idx > -1) {
-                presences[idx] = doc;
+                // merge the update with current value
+                presences[idx] = { ...presences[idx], ...doc };
               }
             });
             set({ presences });

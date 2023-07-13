@@ -18,11 +18,13 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { APIHttp } from '../api';
 import { useAuth } from './useAuth';
 import { SAGE3Ability } from '@sage3/shared';
+import { genId } from '@sage3/shared';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
   exists: false,
+  accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
 });
@@ -40,6 +42,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [exists, setExists] = useState(false);
+  const [accessId, setAccessId] = useState(genId());
 
   const fetchUser = useCallback(async () => {
     if (auth) {
@@ -101,5 +104,5 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, exists, update, create }}>{props.children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ user, loading, exists, update, create, accessId }}>{props.children}</UserContext.Provider>;
 }

@@ -16,12 +16,14 @@ import { z } from 'zod';
 export const schema = z.object({
   videoId: z.string(),
   aspectRatio: z.number(),
+  accessId: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   videoId: '',
   aspectRatio: 1,
+  accessId: '',
 };
 
 export const name = 'Screenshare';
