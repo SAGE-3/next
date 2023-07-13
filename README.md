@@ -16,3 +16,12 @@ Download the client at: [SAGE3](https://sage3.sagecommons.org/) (https://sage3.s
 - Server Deployment: https://sage-3.github.io/docs/Server-Deployment
 
 ![teaser](https://github.com/SAGE-3/next/assets/5595452/65ff84ae-f2c0-4b8d-86c0-5b359082ce62)
+
+## Funding
+
+SAGE3 is funded by the following National Science Foundation awards: 2004014 | 2003800 | 2003387
+
+## License
+
+SAGE3 is open-source and free to use, but we require a license for commercial use of the software, or derivative works based thereon. The Software is intellectual property owned by University of Illinois at Chicago’s Computer Science Department, the Board of Trustees of the University of Hawai’i and the Board of Trustees of Virginia Polytechnic Institute and State University.
+
