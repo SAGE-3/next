@@ -204,10 +204,11 @@ export function Background(props: BackgroundProps) {
                 w = 1280;
                 h = 720;
               } else {
-                w = 800;
-                h = 800;
+                // webpage link size
+                w = 450;
+                h = 300;
               }
-              createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
+              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { url: final_url }));
             }
           }
         }

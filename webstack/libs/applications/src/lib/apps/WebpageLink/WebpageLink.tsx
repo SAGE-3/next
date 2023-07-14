@@ -132,7 +132,7 @@ function ToolbarComponent(props: App): JSX.Element {
         y: props.data.position.y,
         z: props.data.position.z,
       },
-      size: { width: 800, height: 600 },
+      size: { width: 800, height: 800 },
       rotation: { x: 0, y: 0, z: 0 },
       raised: false,
       dragging: false,
