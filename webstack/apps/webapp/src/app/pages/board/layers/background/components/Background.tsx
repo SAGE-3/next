@@ -196,7 +196,7 @@ export function Background(props: BackgroundProps) {
             const valid = isValidURL(pastedText);
             if (valid) {
               // Create a link app
-              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w: 450, h: 300 }, { url: pastedText }));
+              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w: 400, h: 400 }, { url: pastedText }));
             }
           }
         }

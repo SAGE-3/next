@@ -18,7 +18,6 @@ import {
   MdOutlineSubdirectoryArrowLeft,
   MdVolumeUp,
   MdOpenInNew,
-  MdClose,
   MdCopyAll,
 } from 'react-icons/md';
 
@@ -342,7 +341,6 @@ function ToolbarComponent(props: App): JSX.Element {
 
   useEffect(() => {
     setViewURL(localURL);
-    console.log(localURL);
   }, [localURL]);
 
   // Is Electron
