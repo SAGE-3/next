@@ -8,7 +8,7 @@
 
 import { Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast, Icon } from '@chakra-ui/react';
 
-import { isElectron, useAppStore } from '@sage3/frontend';
+import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
@@ -118,10 +118,19 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const openInSAGE3 = async () => {
+    // process url to be embeddable
+    const final_url = processContentURL(s.url);
+    let w = 800;
+    let h = 800;
+    if (final_url !== s.url) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     const newApp = {
       type: 'Webview',
       state: {
-        webviewurl: s.url,
+        webviewurl: final_url,
         zoom: 1.0,
       },
       title: 'Webview',
@@ -132,7 +141,7 @@ function ToolbarComponent(props: App): JSX.Element {
         y: props.data.position.y,
         z: props.data.position.z,
       },
-      size: { width: 800, height: 800 },
+      size: { width: w, height: h },
       rotation: { x: 0, y: 0, z: 0 },
       raised: false,
       dragging: false,
