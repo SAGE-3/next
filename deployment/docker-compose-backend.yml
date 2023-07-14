@@ -20,9 +20,10 @@ services:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
   jupyter:
-    image: "jupyter/datascience-notebook"
+    image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
       - ./configurations/jupyter/conf:/conf
+      - ./configurations/jupyter/init:/home/jovyan/.jupyter
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
