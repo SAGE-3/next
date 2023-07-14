@@ -51,7 +51,6 @@ export const ChartManager = async (
   let options: EChartsOption = {};
   let data = [];
   const stationReadableNames = [];
-
   // If higher component already has data, use that date
   // Otherwise, it is undefined, so fetch the data
   if (stationMetadata === undefined) {
@@ -106,6 +105,9 @@ export const ChartManager = async (
     case 'scatter':
       createScatterPlot(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       break;
+    // case 'radar':
+    //   createRadarChart(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData)
+    //   break;
   }
 
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
@@ -263,14 +265,14 @@ function createLineChart(
     {
       show: true,
       realtime: true,
-      start: 65,
-      end: 85,
+      start: 0,
+      end: xAxisData.length - 1,
     },
     {
       type: 'inside',
       realtime: true,
-      start: 65,
-      end: 85,
+      start: 0,
+      end: xAxisData.length - 1,
     },
   ];
 }
@@ -306,7 +308,6 @@ function createScatterPlot(
     xAxisData.push({ value: data[i].OBSERVATIONS[xAxisAttributes[0]], name: data[i].NAME });
     yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
   }
-
   options.series = [];
 
   // options.legend = {
@@ -394,10 +395,9 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
         xAxisData[i] = date.toDateString();
       }
     } else {
-      // for (let i = 0; i < xAxisAttributes.length; i++) {
-      //   console.log(data[0].OBSERVATIONS[xAxisAttributes[i]], xAxisAttributes[i]);
-      //   xAxisData.push(data[0].OBSERVATIONS[xAxisAttributes[i]]);
-      // }
+      for (let i = 0; i < xAxisAttributes.length; i++) {
+        xAxisData.push(data[0].OBSERVATIONS[xAxisAttributes[i]]);
+      }
     }
   }
 

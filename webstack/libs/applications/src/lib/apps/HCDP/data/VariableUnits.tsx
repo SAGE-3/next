@@ -6,13 +6,13 @@ import neutralTemp from './neutral.png';
 const variableUnits: { variable: string; unit: string; images: string[]; color: string }[] = [
   {
     variable: 'air_temp',
-    unit: 'C\u00B0',
+    unit: '\u00B0C',
     images: [coldTemp, neutralTemp, hotTemp],
     color: '#E95A41',
   },
   {
     variable: 'dew_point_temperature',
-    unit: 'C\u00B0',
+    unit: '\u00B0C',
     images: [coldTemp, neutralTemp, hotTemp],
     color: '#E95A41',
   },
@@ -84,7 +84,7 @@ const variableUnits: { variable: string; unit: string; images: string[]; color: 
   },
   {
     variable: 'soil_temp',
-    unit: 'C\u00B0',
+    unit: '\u00B0C',
     images: [coldTemp, neutralTemp, hotTemp],
     color: '#D9FFF8',
   },

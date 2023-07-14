@@ -8,12 +8,13 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter } from '@chakra-ui/react';
+import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
 import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
+import { MdOutlineArrowUpward } from 'react-icons/md';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -103,6 +104,7 @@ export default function VariableCard(
   const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
   const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
   let previousStationName: string | null = null;
+
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
@@ -196,7 +198,7 @@ export default function VariableCard(
                 return (
                   <React.Fragment key={index}>
                     <Content
-                      size={props.size}
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
                       stationNames={props.stationNames}
@@ -228,6 +230,7 @@ export default function VariableCard(
                     <Content
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
                       stationNames={props.stationNames}
                       variableToDisplayLength={variablesToDisplay.length}
                       s={s}
@@ -246,6 +249,7 @@ export default function VariableCard(
             stationNames={props.stationNames}
             variableToDisplayLength={0}
             s={s}
+            size={{ width: 800, height: 590, depth: 0 }}
             timeSinceLastUpdate={props.timeSinceLastUpdate}
             variable={
               variablesToDisplay[0]
@@ -277,7 +281,7 @@ const Content = (props: {
   isLoaded: boolean;
   s: AppState;
   stationNames: string[];
-  size?: { width: number; height: number; depth: number };
+  size: { width: number; height: number; depth: number };
   variableToDisplayLength: number;
   timeSinceLastUpdate: string;
   secondaryValuesToDisplay?: number;
@@ -287,60 +291,63 @@ const Content = (props: {
   // delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
   const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+  const [scaleToFontSize, setScaleToFontSize] = useState(100);
+  const { colorMode } = useColorMode();
+
+  useEffect(() => {
+    console.log(props.variable.stationName);
+    if (props.size.width < props.size.height) {
+      setScaleToFontSize(props.size.width);
+    } else {
+      setScaleToFontSize(props.size.height);
+    }
+  }, [JSON.stringify(props.size)]);
   return (
-    <Box
-      draggable={true}
-      onDragStart={(e) => {
-        e.dataTransfer.clearData();
-        e.dataTransfer.setData(
-          'text/plain',
-          JSON.stringify({
-            sensorData: {},
-            stationNames: [props.variable.stationSTIDName],
-            listOfStationNames: props.variable.stationSTIDName,
-            location: props.s.location,
-            zoom: props.s.zoom,
-            baseLayer: props.s.baseLayer,
-            overlay: props.s.overlay,
-            widget: props.s.widget,
-          })
-        );
-      }}
-      boxShadow={'lg'}
-      p="1rem"
-      w={600}
-      h={400}
-      border={`solid ${props.variable.color} 15px`}
-      // bgColor={`${props.variable.color}`}
-      borderRadius={'24px'}
-      style={{ backgroundColor: 'white' }}
-      // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
-      display="flex"
-      margin="1rem"
-      flexDirection="column"
-      justifyContent={'center'}
-      alignContent="center"
-    >
-      {/* {props.size ? null : (
-        <Box>
-          <Text color="gray.700" justifyContent={'center'} alignContent="center" textAlign={'center'} fontSize={20} fontWeight="bold">
-            Note: These values are not real. They are just placeholders for the real values.
+    <>
+      <Box
+        draggable={true}
+        onDragStart={(e) => {
+          e.dataTransfer.clearData();
+          e.dataTransfer.setData(
+            'text/plain',
+            JSON.stringify({
+              sensorData: {},
+              stationNames: [props.variable.stationSTIDName],
+              listOfStationNames: props.variable.stationSTIDName,
+              location: props.s.location,
+              zoom: props.s.zoom,
+              baseLayer: props.s.baseLayer,
+              overlay: props.s.overlay,
+              widget: props.s.widget,
+            })
+          );
+        }}
+        position="relative"
+        boxShadow={'lg'}
+        p="1rem"
+        w={props.size.width}
+        h={props.size.height}
+        // border={`solid ${props.variable.color} 15px`}
+        // bgColor={`${props.variable.color}`}
+        style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
+        // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
+        display="flex"
+        flexDirection="column"
+        justifyContent={'center'}
+        alignContent="center"
+      >
+        <Box position="absolute" top="1rem" left="2rem">
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 12}>
+            {props.variable.stationName}
           </Text>
         </Box>
-      )} */}
+        <Box>
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 10} fontWeight="bold">
+            {variableName.join(' ')}
+          </Text>
+        </Box>
 
-      <Box>
-        <Text color="black" textAlign={'center'} fontSize={30}>
-          {props.variable.stationName}
-        </Text>
-      </Box>
-      <Box>
-        <Text color="black" textAlign={'center'} fontSize={40} fontWeight="bold">
-          {variableName.join(' ')}
-        </Text>
-      </Box>
-
-      {/* <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
+        {/* <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
         {props.variable.images ? (
           <Image
             boxSize={'120px'}
@@ -351,107 +358,119 @@ const Content = (props: {
           'No Image Available'
         )}
       </Box> */}
-      <Box>
-        {props.isLoaded ? (
-          <>
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="black"
-              fontSize={40}
-              fontWeight="bold"
-            >
-              {isNaN(props.variable.value)
-                ? props.variable.value
-                : props.variable.value % 1
-                ? Number(props.variable.value).toFixed(2)
-                : props.variable.value}
-              <span style={{ marginLeft: '3px', fontSize: 30 }}>{props.variable.unit}</span>
-              {/* <Text color="black" textAlign={'center'} fontSize={15}>
+        <Box>
+          {props.isLoaded ? (
+            <>
+              <Box display="flex" justifyContent={'center'}>
+                {' '}
+                {props.variable.variableName === 'wind_direction_set_1' ? (
+                  <Icon fontSize={200} as={MdOutlineArrowUpward} transform={`rotate(${props.variable.value}deg)`} />
+                ) : null}
+              </Box>
+
+              <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                overflow="hidden"
+                fontSize={scaleToFontSize / 10}
+                fontWeight="bold"
+              >
+                {isNaN(props.variable.value)
+                  ? props.variable.value
+                  : props.variable.value % 1
+                  ? Number(props.variable.value).toFixed(2)
+                  : props.variable.value}
+                <span>&nbsp;{props.variable.unit}</span>
+                {/* <Text color="black" textAlign={'center'} fontSize={15}>
                 {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
               </Text> */}
-            </Text>
+              </Text>
 
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="gray.700"
-              fontSize={20}
-              fontWeight="semibold"
-              lineHeight={'48px'}
-            >
-              <>{props.timeSinceLastUpdate}</>
-            </Text>
-            {isNaN(props.variable.value) ? null : (
-              <>
-                <Box display="flex" justifyContent={'space-evenly'} alignItems={'center'} flexDir="row">
-                  <Text
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    overflow="hidden"
-                    color="gray.700"
-                    fontSize={25}
-                    fontWeight="bold"
-                    textAlign={'center'}
-                  >
-                    Low <br />
-                    {props.variable.low.toFixed(2)}
-                    {props.variable.unit}
-                  </Text>
-                  <Text
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    overflow="hidden"
-                    color="gray.700"
-                    fontSize={25}
-                    fontWeight="bold"
-                    textAlign={'center'}
-                  >
-                    Average <br />
-                    {props.variable.average.toFixed(2)}
-                    {props.variable.unit}
-                  </Text>
-                  <Text
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    overflow="hidden"
-                    color="gray.700"
-                    fontSize={25}
-                    fontWeight="bold"
-                    textAlign={'center'}
-                  >
-                    High <br />
-                    {props.variable.high.toFixed(2)}
-                    {props.variable.unit}
-                  </Text>
-                </Box>
-              </>
-            )}
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="gray.700"
-              fontSize={20}
-              fontWeight="semibold"
-              lineHeight={'48px'}
-            >
-              <>Last 24 hours</>
-            </Text>
-          </>
-        ) : (
-          <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
-        )}
+              {/* {isNaN(props.variable.value) ? null : (
+                <>
+                  <Box display="flex" justifyContent={'space-evenly'} alignItems={'center'} flexDir="row">
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      Low <br />
+                      {props.variable.low.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      Average <br />
+                      {props.variable.average.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      High <br />
+                      {props.variable.high.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                  </Box>
+                </>
+              )} */}
+              {/* <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                overflow="hidden"
+                color="gray.700"
+                fontSize={20}
+                fontWeight="semibold"
+                lineHeight={'48px'}
+              >
+                <>Last 24 hours</>
+              </Text> */}
+            </>
+          ) : (
+            <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
+          )}
+
+          <Text
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            overflow="hidden"
+            color="gray.400"
+            float={'right'}
+            position={'absolute'}
+            bottom={'1rem'}
+            right={'2rem'}
+            fontSize={scaleToFontSize / 16}
+            fontWeight="semibold"
+            // lineHeight={'48px'}
+          >
+            <>{props.timeSinceLastUpdate}</>
+          </Text>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

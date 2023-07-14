@@ -72,9 +72,31 @@ const EChartsViewer = (props: {
 
   return (
     <>
+      {/* if (colorMode === 'dark') {
+    options.backgroundColor = '#222';
+    options.textStyle = { color: '#ffffff' };
+    options.axisLine = { lineStyle: { color: '#eee' } };
+    options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
+  } else if (colorMode === 'light') {
+    options.backgroundColor = '#fff';
+    options.textStyle = { color: '#333' };
+    options.axisLine = { lineStyle: { color: '#999' } };
+    options.tooltip = { backgroundColor: '#fff', textStyle: { color: '#333' } };
+  } else {
+    throw new Error('Invalid color mode');
+  } */}
       <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
         {props.timeSinceLastUpdate ? (
-          <Box bg="#222" p="5px" w="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} fontSize={'25px'}>
+          <Box
+            bg={colorMode === 'light' ? '#fff' : '#222'}
+            p="5px"
+            w="100%"
+            display="flex"
+            flexDir="column"
+            alignItems="center"
+            justifyContent={'center'}
+            fontSize={'25px'}
+          >
             {props.timeSinceLastUpdate}
           </Box>
         ) : null}
