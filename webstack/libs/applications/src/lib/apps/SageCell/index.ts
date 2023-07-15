@@ -16,36 +16,43 @@ const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.any(),
 });
+
 const availableKernelsSchema = z.array(
   z.object({
     key: z.string(),
-    value: z.any(),
+    value: z.object({
+      board: z.string(),
+      kernel: z.string(),
+      kernel_alias: z.string(),
+      is_private: z.boolean(),
+      owner_uuid: z.string(),
+    }),
+  })
+);
+
+const privateMessageSchema = z.array(
+  z.object({
+    userId: z.string(),
+    message: z.string(),
   })
 );
 
 export const schema = z.object({
   code: z.string(),
+  output: z.string(),
   language: z.string(),
   isTyping: z.boolean(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  privateMessage: z.array(
-    z.object({
-      userId: z.string(),
-      message: z.string(),
-    })
-  ),
+  privateMessage: privateMessageSchema,
   availableKernels: availableKernelsSchema,
-  output: z.string(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
+  executeInfo: executeInfoSchema,
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type availableKernelsType = z.infer<typeof availableKernelsSchema>;
+export type privateMessageType = z.infer<typeof privateMessageSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
@@ -53,7 +60,7 @@ export const init: Partial<state> = {
   language: 'python',
   isTyping: false,
   fontSize: 16,
-  theme: 'xcode',
+  theme: 'vs-dark',
   kernel: '',
   output: '',
   privateMessage: [],
