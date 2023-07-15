@@ -76,6 +76,7 @@ export const schema = z.object({
   stationNames: z.any(),
   isWidgetOpen: z.boolean(),
   stationColor: z.string(),
+  getDataFrom: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -92,6 +93,7 @@ export const init: Partial<state> = {
   widget: widget,
   isWidgetOpen: false,
   stationColor: '',
+  getDataFrom: 'mesonet',
 };
 
 export const name = 'Hawaii Mesonet';

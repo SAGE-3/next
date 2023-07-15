@@ -134,7 +134,7 @@ function formatDuration(ms: number) {
   }
 }
 
-const CustomizeWidgets = React.memo((props: App) => {
+const CustomizeWidgetsHCDP = React.memo((props: App) => {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
@@ -173,44 +173,60 @@ const CustomizeWidgets = React.memo((props: App) => {
     const tmpVariableNames: any = [];
     let response: Response | null = null;
     let stationData = null;
+    //   {
+    //     "uuid": "3989160470763344366-242ac11f-0001-012",
+    //     "owner": "mcleanj",
+    //     "schemaId": null,
+    //     "internalUsername": null,
+    //     "associationIds": [],
+    //     "lastUpdated": "2023-06-15T20:00:41.941-05:00",
+    //     "name": "hcdp_station_metadata",
+    //     "value": {
+    //         "station_group": "hawaii_climate_primary",
+    //         "id_field": "skn",
+    //         "skn": "598.2",
+    //         "name": "Honolimaloo 0412",
+    //         "observer": "HIMesonet",
+    //         "network": "HIMesonet",
+    //         "island": "MO",
+    //         "elevation_m": "402",
+    //         "lat": "21.131411",
+    //         "lon": "-156.758626",
+    //         "nws_id": "031HI"
+    //     },
+    //     "created": "2023-06-15T20:00:41.941-05:00",
+    //     "_links": {
+    //         "self": {
+    //             "href": "https://agaveauth.its.hawaii.edu/meta/v2/data/3989160470763344366-242ac11f-0001-012"
+    //         },
+    //         "permissions": {
+    //             "href": "https://agaveauth.its.hawaii.edu/meta/v2/data/3989160470763344366-242ac11f-0001-012/pems"
+    //         },
+    //         "owner": {
+    //             "href": "https://agaveauth.its.hawaii.edu/profiles/v2/mcleanj"
+    //         },
+    //         "associationIds": []
+    //     }
+    // }
+    const queryObject = {
+      name: 'hcdp_station_value',
+      'value.date': '2023-03-08',
+      'value.period': 'day',
+      'value.fill': 'raw',
+      'value.datatype': 'temperature',
+      'value.aggregation': 'max',
+    };
+
+    const docLimitAndOffset = '&limit=10000&offset=0';
+
     // Fetch all station data
-    response = await fetch(
-      `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        props.data.state.stationNames
-      )}&showemptystations=1&start=${startDate}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-    );
-    if (response) {
-      stationData = await response.json();
-      if (stationData) {
-        for (let i = 0; i < stationData['STATION'].length; i++) {
-          const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][i]['OBSERVATIONS']);
-          tmpVariableNames.push(sensorObservationVariableNames);
-        }
-
-        tmpSensorMetadata = stationData['STATION'];
-      }
-    }
-
-    // StationData
-    setStationMetadata(tmpSensorMetadata);
-
-    // Variable names used to display on the Select Dropdown
-    const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
-
-    //Limiting variable names for the axes
-    if (props.data.state.widget.visualizationType === 'line' || props.data.state.widget.visualizationType === 'bar') {
-      setXAxisVariableNames(['date_time']);
-      setYAxisVariableNames(filteredVariableNames);
-    }
-    if (props.data.state.widget.visualizationType === 'scatter') {
-      setXAxisVariableNames(['elevation', 'latitude', 'longitude', 'name', 'current temperature']);
-      setYAxisVariableNames(['elevation', 'latitude', 'longitude', 'name', 'current temperature']);
-    }
-
-    setVariableNames(filteredVariableNames);
-
+    response = await fetch('https://api.hcdp.ikewai.org/stations?q=' + encodeURI(JSON.stringify(queryObject)) + docLimitAndOffset, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log(await response.json());
     setIsLoaded(true);
   };
 
@@ -404,7 +420,7 @@ const CustomizeWidgets = React.memo((props: App) => {
 
   return (
     <>
-      <Drawer
+      {/* <Drawer
         blockScrollOnMount={false}
         trapFocus={false}
         placement={'bottom'}
@@ -846,12 +862,12 @@ const CustomizeWidgets = React.memo((props: App) => {
             </Box>
           </DrawerBody>
         </DrawerContent>
-      </Drawer>
+      </Drawer> */}
     </>
   );
 });
 
-export default CustomizeWidgets;
+export default CustomizeWidgetsHCDP;
 
 // For now, this is hard-coded. Will change when HCDP is ready.
 export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
