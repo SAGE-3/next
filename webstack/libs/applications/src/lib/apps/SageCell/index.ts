@@ -17,18 +17,19 @@ const executeInfoSchema = z.object({
   params: z.any(),
 });
 
-const availableKernelsSchema = z.array(
-  z.object({
-    key: z.string(),
-    value: z.object({
-      board: z.string(),
-      kernel: z.string(),
-      kernel_alias: z.string(),
-      is_private: z.boolean(),
-      owner_uuid: z.string(),
-    }),
-  })
-);
+const KernelSchema = z.object({
+  key: z.string(),
+  value: z.object({
+    board: z.string(),
+    kernel: z.string(),
+    kernel_name: z.string(),
+    kernel_alias: z.string(),
+    is_private: z.boolean(),
+    owner_uuid: z.string(),
+  }),
+});
+
+const availableKernelsSchema = z.array(KernelSchema);
 
 const privateMessageSchema = z.array(
   z.object({
@@ -53,12 +54,12 @@ export const schema = z.object({
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type availableKernelsType = z.infer<typeof availableKernelsSchema>;
 export type privateMessageType = z.infer<typeof privateMessageSchema>;
+export type KernelType = z.infer<typeof KernelSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
   language: 'python',
-  isTyping: false,
   fontSize: 16,
   theme: 'vs-dark',
   kernel: '',

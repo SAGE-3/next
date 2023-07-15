@@ -14,8 +14,9 @@ import dateFormat from 'date-fns/format';
 
 import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../../schema';
-import { state as AppState } from '../index';
+import { state as AppState, KernelType } from '../index';
 import { HelpModal } from './help';
+import { User } from '@sage3/shared/types';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -32,7 +33,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const boardId = props.data.boardId;
-  const [myKernels, setMyKernels] = useState<{ value: Record<string, any>; key: string }[]>([]);
+  const [myKernels, setMyKernels] = useState<KernelType[]>([]);
   // set to global kernel if it exists
   const [selected, setSelected] = useState<string>(s.kernel);
   const [ownerId, setOwnerId] = useState<string>('');
@@ -86,13 +87,13 @@ export function ToolbarComponent(props: App): JSX.Element {
       const publicKernels = b.filter((el) => !el.value.is_private);
       const privateKernels = b.filter((el) => el.value.is_private);
       const ownedKernels = privateKernels.filter((el) => el.value.owner_uuid === user?._id);
-      const myList: any[] = [...publicKernels, ...ownedKernels];
+      const myList: KernelType[] = [...publicKernels, ...ownedKernels];
       setMyKernels(myList);
       // get the selected kernel from the global state
       const selectedKernel = kernels.find((el) => el.key === s.kernel);
       // check if the selected kernel is in the list of kernels for this board
       const ownerId = selectedKernel?.value.owner_uuid;
-      const ownerName = users.find((u: any) => u._id === ownerId)?.data.name;
+      const ownerName = users.find((u: User) => u._id === ownerId)?.data.name;
       const isPrivate = selectedKernel?.value.is_private;
       const inBoard = b.find((el) => el.key === selectedKernel?.key);
       // if the selected kernel is not in the list of kernels for this board then
@@ -107,7 +108,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       // const inMyList = myList.find((el) => el.key === s.kernel);
       if (selectedKernel) {
         setSelected(selectedKernel.key);
-        setOwnerId(ownerId);
+        setOwnerId(ownerId ? ownerId : '');
         setOwnerName(ownerName ? ownerName : '');
         setIsPrivate(isPrivate ? isPrivate : false);
       }
@@ -124,6 +125,9 @@ export function ToolbarComponent(props: App): JSX.Element {
     if (!user) return;
     getKernels();
     setStates();
+    return () => {
+      // cleanup
+    };
   }, []);
 
   /**
@@ -133,6 +137,9 @@ export function ToolbarComponent(props: App): JSX.Element {
     // rebuild the state to reflect any changes affected
     // by the global state change
     setStates();
+    return () => {
+      // cleanup
+    };
   }, [s.kernel, JSON.stringify(s.availableKernels)]);
 
   /**
