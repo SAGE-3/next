@@ -33,7 +33,8 @@ export function Whiteboard(props: WhiteboardProps) {
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
   const undoLastMaker = useUIStore((state) => state.undoLastMarker);
   const setUndoLastMaker = useUIStore((state) => state.setUndoLastMarker);
-
+  const markerOpacity = useUIStore((state) => state.markerOpacity);
+  const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
@@ -93,6 +94,8 @@ export function Whiteboard(props: WhiteboardProps) {
                 yLine.set('id', line.id);
                 yLine.set('points', yPoints);
                 yLine.set('userColor', line.userColor);
+                yLine.set('alpha', line.alpha);
+                yLine.set('size', line.size);
                 yLine.set('isComplete', true);
                 yLine.set('userId', line.userId);
               });
@@ -133,6 +136,8 @@ export function Whiteboard(props: WhiteboardProps) {
           yLine.set('id', id);
           yLine.set('points', yPoints);
           yLine.set('userColor', color);
+          yLine.set('alpha', markerOpacity);
+          yLine.set('size', markerSize);
           yLine.set('isComplete', false);
           yLine.set('userId', user?._id);
         });
@@ -141,7 +146,7 @@ export function Whiteboard(props: WhiteboardProps) {
         yLines.push([yLine]);
       }
     },
-    [yDoc, yLines, user, color]
+    [yDoc, yLines, user, color, markerOpacity, markerSize]
   );
 
   useEffect(() => {
@@ -243,40 +248,33 @@ export function Whiteboard(props: WhiteboardProps) {
   });
 
   // Deselect all apps
-  useHotkeys(
-    'shift+w',
-    () => {
-      setWhiteboardMode(!whiteboardMode);
-    },
-    { dependencies: [whiteboardMode] }
+  useHotkeys('shift+w', () => {
+    setWhiteboardMode(!whiteboardMode);
+  }, { dependencies: [whiteboardMode] }
   );
 
-  return (
-    <>
-      <div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
-        <svg
-          className="canvas-layer"
-          style={{
-            position: 'absolute',
-            width: boardWidth + 'px',
-            height: boardHeight + 'px',
-            left: 0,
-            top: 0,
-            zIndex: 200,
-            cursor: 'crosshair',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-        >
-          <g>
-            {/* Lines */}
-            {lines.map((line, i) => (
-              <Line key={i} line={line} scale={scale} />
-            ))}
-          </g>
-        </svg>
-      </div>
-    </>
-  );
+  return (<div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
+    <svg
+      className="canvas-layer"
+      style={{
+        position: 'absolute',
+        width: boardWidth + 'px',
+        height: boardHeight + 'px',
+        left: 0,
+        top: 0,
+        zIndex: 200,
+        cursor: 'crosshair',
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+    >
+      <g>
+        {/* Lines */}
+        {lines.map((line, i) => (
+          <Line key={i} line={line} scale={scale} />
+        ))}
+      </g>
+    </svg>
+  </div>);
 }

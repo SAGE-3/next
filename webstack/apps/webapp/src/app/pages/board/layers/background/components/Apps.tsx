@@ -6,12 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { useParams } from 'react-router';
+
+import { useToast } from '@chakra-ui/react';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
-import { useParams } from 'react-router';
+import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore, useUser } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppName, AppState } from '@sage3/applications/schema';
+import { throttle } from 'throttle-debounce';
 
 // Renders all the apps
 export function Apps() {
@@ -26,10 +31,15 @@ export function Apps() {
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false });
+  const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
+  // User information
+  const { user } = useUser();
 
   // const userCursor = useCursorBoardPosition();
   // const cursorPositionRef = useRef(userCursor);
-  // const { roomId, boardId } = useParams();
+  const { roomId, boardId } = useParams();
+  // Display some notifications
+  const toast = useToast();
 
   const { position } = useCursorBoardPosition();
   const createApp = useAppStore((state) => state.create);
@@ -50,7 +60,7 @@ export function Apps() {
   // This still doesnt work properly
   // But a start
   useHotkeys(
-    'ctrl+d',
+    'ctrl+d,cmd+d',
     () => {
       if (position && apps.length > 0) {
         const cx = position.x;
@@ -77,10 +87,111 @@ export function Apps() {
     { dependencies: [position.x, position.y, JSON.stringify(apps)] }
   );
 
+  // Select all apps
+  useHotkeys(
+    'ctrl+a,cmd+a',
+    () => {
+      if (apps.length > 0) {
+        setSelectedApps(apps.map((el) => el._id));
+      }
+    },
+    { dependencies: [JSON.stringify(apps)] }
+  );
+
+  // Copy an application into the clipboard
+  useHotkeys(
+    'c',
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+
+      if (position && apps.length > 0) {
+        const cx = position.x;
+        const cy = position.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, delete it. Only delete the top one
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              found = true;
+              // Put the app data into the clipboard
+              navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
+              // Notify the user
+              toast({
+                title: 'Success',
+                description: `Application Copied to Clipboard`,
+                duration: 2000,
+                isClosable: true,
+                status: 'success',
+              });
+            }
+          });
+      }
+    },
+    { dependencies: [position.x, position.y, JSON.stringify(apps)] }
+  );
+
+  // Throttle the paste function
+  const pasteAppThrottle = throttle(500, (position: { x: number; y: number }) => {
+    if (position) {
+      const cx = position.x;
+      const cy = position.y;
+
+      navigator.clipboard.readText().then((data) => {
+        try {
+          const parsed = JSON.parse(data);
+          // Test if sage3 JSON data
+          if (parsed.sage3) {
+            // Create a new duplicate app
+            const type = parsed.sage3.data.type as AppName;
+            const size = parsed.sage3.data.size;
+            const state = parsed.sage3.data.state;
+            // Create the app
+            createApp({
+              title: type,
+              roomId: roomId!,
+              boardId: boardId!,
+              position: { x: cx, y: cy, z: 0 },
+              size: size,
+              rotation: { x: 0, y: 0, z: 0 },
+              type: type,
+              state: { ...(initialValues[type] as AppState), ...state },
+              raised: true,
+              dragging: false,
+            });
+          } else {
+            console.log('Paste> JSON is not a SAGE3 app');
+          }
+        } catch (error) {
+          console.log('Paste> Error, Not valid json');
+        }
+      });
+    }
+  });
+
+  // Keep the throttlefunc reference
+  const pasteApp = useCallback(pasteAppThrottle, []);
+
+  // Create a new app from the clipboard
+  useHotkeys('v', (evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    pasteApp(position);
+  }, { dependencies: [position.x, position.y] }
+  );
+
   // Zoom to app when pressing z over an app
   useHotkeys(
     'z',
-    () => {
+    (evt) => {
       if (position && apps.length > 0) {
         const cx = position.x;
         const cy = position.y;
