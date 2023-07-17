@@ -29,7 +29,6 @@ import {
   useUser,
   useHexColor,
   useMessageStore,
-  processContentURL,
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
@@ -196,21 +195,11 @@ export function Background(props: BackgroundProps) {
             // it's a base64 image
             createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
           } else {
-            // is it a valid URL
+            // Is it a valid URL
             const valid = isValidURL(pastedText);
             if (valid) {
-              // process url to be embeddable
-              const final_url = processContentURL(pastedText);
-              let w, h;
-              if (final_url !== pastedText) {
-                // it must be a video
-                w = 1280;
-                h = 720;
-              } else {
-                w = 800;
-                h = 800;
-              }
-              createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
+              // Create a link app
+              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w: 400, h: 400 }, { url: pastedText }));
             }
           }
         }

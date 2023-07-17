@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -78,6 +79,19 @@ export async function loadCollections(): Promise<void> {
           }
         }
       }
+    }
+  });
+
+  // Listen for apps changes
+  AppsCollection.subscribeAll((message) => {
+    if (message.type === 'CREATE') {
+      message.doc.forEach((doc) => {
+        if (doc.data.type === 'WebpageLink') {
+          URLMetadata(doc.data.state.url).then((metadata) => {
+            AppsCollection.update(doc._id, 'NODE_SERVER', { state: { ...doc.data.state, meta: metadata } });
+          });
+        }
+      });
     }
   });
 }
