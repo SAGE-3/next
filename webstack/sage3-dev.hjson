@@ -29,9 +29,9 @@
 
   // Fluentd log configuration
   "fluentd": {
-    "server": "localhost",
+    "server": "fluentd-server",
     "port": 24224,
-    "level": "info" // debug, info, warn, error, none
+    "databaseLevel": "partial" // 'all' | 'partial' | 'none
   },
 
   // External Services

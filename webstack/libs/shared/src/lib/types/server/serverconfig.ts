@@ -38,7 +38,11 @@ export interface ServerConfiguration {
   fluentd: {
     server: string;
     port: number;
-    level: 'info' | 'debug' | 'info' | 'warn' | 'error' | 'none';
+    // dbLevel controls the level of logs sent to fluentd from the database
+    // all : all logs are sent to fluentd
+    // partial (default): all collections except user stuff (user, presence)
+    // none: no logs are sent to fluentd
+    databaseLevel: 'all' | 'partial' | 'none';
   };
 
   // External Services

@@ -32,6 +32,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+  fluentd-server:
+    image: "fluent/fluentd:edge-debian"
+    ports:
+      - "127.0.0.1:24224:24224"
+      - "127.0.0.1:24224:24224/udp"
+      - "127.0.0.1:24220:24220"
+      - "127.0.0.1:9880:9880"
+    volumes:
+      - ./configurations/fluentd/log:/fluentd/log
+      - ./configurations/fluentd/conf:/fluentd/etc
   python:
     image: "sage3/foresight:amd64"
     environment:

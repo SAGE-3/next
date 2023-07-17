@@ -88,6 +88,24 @@ async function startServer() {
     // Create and start the HTTP web server
     server = listenApp(app, config.port);
   }
+
+  // Log Level
+  // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))
+  const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'MESSAGE', 'PLUGINS', 'ROOMS'];
+  // all: all logs are sent to fluentd
+  config.fluentd.databaseLevel === 'all' ? logCollections.push('USERS', 'PRESENCE') : null;
+  // none: no logs are sent to fluentd
+  config.fluentd.databaseLevel === 'none' ? (logCollections.length = 0) : null;
+  const sbLogConfig = {
+    server: config.fluentd.server,
+    port: config.fluentd.port,
+    collections: logCollections,
+  };
+  console.log(
+    `Server> Database Loggger set to ${config.fluentd.databaseLevel.toUpperCase()}, logging collections:`,
+    sbLogConfig.collections
+  );
+
   // Initialization of SAGEBase
   const sbConfig: SAGEBaseConfig = {
     projectName: 'SAGE3',
@@ -95,9 +113,7 @@ async function startServer() {
     authConfig: {
       ...config.auth,
     },
-    logConfig: {
-      ...config.fluentd,
-    },
+    logConfig: sbLogConfig,
   };
   await SAGEBase.init(sbConfig, app);
 

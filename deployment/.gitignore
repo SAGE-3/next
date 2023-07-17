@@ -15,5 +15,6 @@ foresight/smartbits
 foresight/task_queue
 
 configurations/fluentd/log/*.log
+configurations/fluentd/log/data.*
 
 .ipynb_checkpoints

@@ -3,7 +3,7 @@ import { FluentClient } from '@fluent-org/logger';
 export type SBLogConfig = {
   server: string;
   port: number;
-  level: 'debug' | 'info' | 'warn' | 'error' | 'none';
+  collections: string[];
 };
 
 // A Logger to send logs to Fluentd
@@ -13,6 +13,7 @@ class Logger {
 
   public init(config: SBLogConfig) {
     this._config = config;
+    this._config.collections = this._config.collections.map((c) => c.toLowerCase());
     this._logger = new FluentClient('tag_prefix', {
       socket: {
         host: config.server,
@@ -21,11 +22,10 @@ class Logger {
     });
   }
 
-  public log(tag: string, data: any) {
+  public log(collection: string, tag: string, data: any) {
     if (!this._logger) return;
-    if (this._config.level !== 'none') {
-      this._logger.emit(tag, data);
-    }
+    if (!this._config.collections.includes(collection.toLowerCase())) return;
+    this._logger.emit(tag, data);
   }
 }
 
