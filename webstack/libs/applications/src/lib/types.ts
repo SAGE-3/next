@@ -80,6 +80,7 @@ export type AppName =
   | typeof AIPaneName
   | typeof BoardLinkName
   | typeof CSVViewerName
+  | typeof ChatName
   | typeof ChartGeneratorName
   | typeof ChartMakerName
   | typeof ClockName
