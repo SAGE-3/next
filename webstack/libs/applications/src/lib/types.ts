@@ -34,8 +34,8 @@ import { state as TwilioScreenshareState, name as TwilioScreenshareName } from '
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
+import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-
 
 export type AppState =
   | {}
@@ -73,7 +73,43 @@ export type AppState =
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
+  | WebpageLinkState
   | WebviewState;
 
-
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChartMakerName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DataTableName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof ImageViewerName | typeof JupyterLabName | typeof KernelDashboardName | typeof KernelsName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebviewName;
+export type AppName =
+  | typeof AIPaneName
+  | typeof BoardLinkName
+  | typeof CSVViewerName
+  | typeof ChatName
+  | typeof ChartGeneratorName
+  | typeof ChartMakerName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CounterName
+  | typeof DataTableName
+  | typeof DeepZoomImageName
+  | typeof EChartsViewerName
+  | typeof GLTFViewerName
+  | typeof HCDPName
+  | typeof ImageViewerName
+  | typeof JupyterLabName
+  | typeof KernelDashboardName
+  | typeof KernelsName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof MapGLName
+  | typeof NotepadName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof PluginAppName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof SeerName
+  | typeof SensorOverviewName
+  | typeof StickieName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebpageLinkName
+  | typeof WebviewName;
