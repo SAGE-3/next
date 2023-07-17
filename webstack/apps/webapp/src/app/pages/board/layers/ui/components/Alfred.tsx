@@ -154,10 +154,10 @@ export function Alfred(props: props) {
             roomId: props.roomId,
             boardId: props.boardId,
             position: pos,
-            size: { width, height, depth: 0 },
+            size: { width: 450, height: 300, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'Webview',
-            state: { webviewurl: processContentURL(loc) },
+            type: 'WebpageLink',
+            state: { ...initialValues['WebpageLink'], url: processContentURL(loc) },
             raised: true,
             dragging: false,
           });
@@ -170,10 +170,10 @@ export function Alfred(props: props) {
           roomId: props.roomId,
           boardId: props.boardId,
           position: pos,
-          size: { width, height, depth: 0 },
+          size: { width: 450, height: 300, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'Webview',
-          state: { webviewurl: processContentURL(searchURL) },
+          type: 'WebpageLink',
+          state: { ...initialValues['WebpageLink'], url: processContentURL(searchURL) },
           raised: true,
           dragging: false,
         });
@@ -439,16 +439,36 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
               <PopoverBody>
                 <UnorderedList>
                   <ListItem>Select an asset to open it (click/enter)</ListItem>
-                  <ListItem><b>app</b> [name]: Create an application</ListItem>
-                  <ListItem><b>w</b> [url]: Open URL in a webview</ListItem>
-                  <ListItem><b>g</b> [term]: Google search</ListItem>
-                  <ListItem><b>s</b> [text]: Stickie with text</ListItem>
-                  <ListItem><b>c</b> : Create a SageCell</ListItem>
-                  <ListItem><b>showui</b> : Show the panels</ListItem>
-                  <ListItem><b>hideui</b> : Hide the panels</ListItem>
-                  <ListItem><b>light</b> : Switch to light mode</ListItem>
-                  <ListItem><b>dark</b> : Switch to dark mode</ListItem>
-                  <ListItem><b>clear</b> : Close all applications</ListItem>
+                  <ListItem>
+                    <b>app</b> [name]: Create an application
+                  </ListItem>
+                  <ListItem>
+                    <b>w</b> [url]: Open URL in a webview
+                  </ListItem>
+                  <ListItem>
+                    <b>g</b> [term]: Google search
+                  </ListItem>
+                  <ListItem>
+                    <b>s</b> [text]: Stickie with text
+                  </ListItem>
+                  <ListItem>
+                    <b>c</b> : Create a SageCell
+                  </ListItem>
+                  <ListItem>
+                    <b>showui</b> : Show the panels
+                  </ListItem>
+                  <ListItem>
+                    <b>hideui</b> : Hide the panels
+                  </ListItem>
+                  <ListItem>
+                    <b>light</b> : Switch to light mode
+                  </ListItem>
+                  <ListItem>
+                    <b>dark</b> : Switch to dark mode
+                  </ListItem>
+                  <ListItem>
+                    <b>clear</b> : Close all applications
+                  </ListItem>
                 </UnorderedList>
               </PopoverBody>
             </PopoverContent>
