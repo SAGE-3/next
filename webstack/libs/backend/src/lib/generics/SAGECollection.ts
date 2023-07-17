@@ -9,7 +9,16 @@
 import { Router } from 'express';
 import { WebSocket } from 'ws';
 
-import { SAGEBase, SBCollectionRef, SBDocumentMessage, SBDocument, SBJSON, SBDocumentUpdate, SBAuthSchema } from '@sage3/sagebase';
+import {
+  SAGEBase,
+  SBCollectionRef,
+  SBDocumentMessage,
+  SBDocument,
+  SBJSON,
+  SBDocumentUpdate,
+  SBAuthSchema,
+  SBDocumentRef,
+} from '@sage3/sagebase';
 import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils';
@@ -101,6 +110,21 @@ export class SAGE3Collection<T extends SBJSON> {
   public async get(id: string): Promise<SBDocument<T> | undefined> {
     try {
       const doc = await this._collection.docRef(id).read();
+      return doc;
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get the document reference for an item by id from the collection
+   * @param id The id of the item to get
+   * @returns The item if successful. Otherwise undefined
+   */
+  public getRef(id: string): SBDocumentRef<T> | undefined {
+    try {
+      const doc = this._collection.docRef(id);
       return doc;
     } catch (error) {
       this.printError(error);

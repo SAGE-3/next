@@ -9,6 +9,18 @@
 import { z } from 'zod';
 import { SBDoc } from './SBSchema';
 
+// Room Roles
+const RoomRoles = z.enum(['owner', 'moderator', 'collaborator', 'viewer']);
+export type RoomRoles = z.infer<typeof RoomRoles>;
+
+// Room Members
+const RoomMember = z.object({
+  userId: z.string(),
+  role: RoomRoles,
+});
+// Create the Typescript type
+export type RoomMember = z.infer<typeof RoomMember>;
+
 const schema = z.object({
   // Name of the Room
   name: z.string(),
@@ -24,7 +36,7 @@ const schema = z.object({
   // Is the board listed publicly?
   isListed: z.boolean(),
   // Members of the room
-  members: z.array(z.string()),
+  members: z.array(RoomMember),
 });
 
 export type RoomSchema = z.infer<typeof schema>;

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { URLMetadata } from '@sage3/backend';
+import { URLMetadata, membersFieldAdded } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -81,6 +81,10 @@ export async function loadCollections(): Promise<void> {
       }
     }
   });
+
+  // RoomCollection Memebers update
+  // date 2023 - 07 - 17
+  await membersFieldAdded(RoomsCollection, UsersCollection);
 
   // Listen for apps changes
   AppsCollection.subscribeAll((message) => {
