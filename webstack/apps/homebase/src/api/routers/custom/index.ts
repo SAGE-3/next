@@ -4,3 +4,4 @@ export * from './files';
 export * from './time';
 export * from './nlp';
 export * from './subscription';
+export * from './logs';

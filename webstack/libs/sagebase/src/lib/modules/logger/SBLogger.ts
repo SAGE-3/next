@@ -14,7 +14,7 @@ class Logger {
   public init(config: SBLogConfig) {
     this._config = config;
     this._config.collections = this._config.collections.map((c) => c.toLowerCase());
-    this._logger = new FluentClient('tag_prefix', {
+    this._logger = new FluentClient('sagebase', {
       socket: {
         host: config.server,
         port: config.port,
