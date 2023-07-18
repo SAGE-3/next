@@ -1,1 +1,1 @@
-export * from './SAGE3Ability';
+export * from './SAGEAbility';

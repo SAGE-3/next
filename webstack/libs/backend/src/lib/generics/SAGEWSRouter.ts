@@ -13,7 +13,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
-import { checkPermissionsWS, AuthSubject } from './permissions';
+import { checkPermissionsWS, AuthSubject } from './SAGEAuthorization';
 
 import { URL } from 'node:url';
 

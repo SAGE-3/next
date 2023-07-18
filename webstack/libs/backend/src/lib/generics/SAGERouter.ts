@@ -11,7 +11,7 @@ import * as express from 'express';
 import { SBAuthSchema, SBJSON } from '@sage3/sagebase';
 import { SAGE3Collection } from './SAGECollection';
 
-import { checkPermissionsREST, AuthSubject } from './permissions';
+import { checkPermissionsREST, AuthSubject } from './SAGEAuthorization';
 
 export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): express.Router {
   const router = express.Router();
