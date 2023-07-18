@@ -5,7 +5,7 @@
 # for now in a file
 
 # generate a pseudo-random token
-token=$(openssl rand -hex 16)
+token=$(openssl rand -hex 8)
 echo "Token: $token"
 # Save it into a file
 echo "{ \"token\": \"$token\" }" >/conf/info.json
@@ -18,11 +18,9 @@ python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
 pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
-pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly
-pip3 install jupyterlab-lsp pyright python-language-server python-lsp-server[all] jupyter_collaboration
-# Getting All the NodeJS-based Language Servers
-jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
+pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly jupyter_collaboration
 # extras
+#pip3 install python-magic rq dill opencv-python Pillow
 
 # 2D extension
 jupyter nbextension install /conf/2D-Jupyter --user
@@ -30,7 +28,7 @@ jupyter nbextension enable 2D-Jupyter/2D-Jupyter --user
 
 # Start jupyter: production mode equals SSL (docker will export the port)
 if [ "$ENVIRONMENT" = production ]; then
-  jupyter lab --collaborative --no-browser --IdentityProvider.token="$token" --ServerApp.port=8888 \
+  jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
     --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
     --ServerApp.keyfile=/conf/keys/private-key.key --ServerApp.certfile=/conf/keys/certificate.crt \
     --notebook-dir="notebooks"
