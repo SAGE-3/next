@@ -6,32 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import {
-  Box,
-  Button,
-  IconButton,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Text,
-  Tooltip,
-  useColorModeValue,
-  useDisclosure,
-} from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 
-import { MdLock, MdLockOpen, MdPeople, MdSettings } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 
-import { Board, Room, User } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 import { useHexColor, useUser } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { BoardList } from '../lists/BoardList';
-import { useUsersStore } from '@sage3/frontend';
 
 export type RoomCardProps = {
   room: Room;
@@ -59,20 +43,6 @@ export function RoomCard(props: RoomCardProps) {
   useEffect(() => {
     setYours(user?._id === props.room.data.ownerId);
   }, [props.room.data.ownerId, user?._id]);
-
-  // Members
-  const users = useUsersStore((state) => state.users);
-  const [members, setMembers] = useState<User[]>([]);
-  useEffect(() => {
-    setMembers(users.filter((u) => props.room.data.members.find((m) => m.userId === u._id)));
-  }, [props.room.data.members, users]);
-
-  // Members modal disclouse
-  const { isOpen: isOpenMembers, onOpen: onOpenMembers, onClose: onCloseMembers } = useDisclosure();
-  const handleOnOpenMembers = (e: any) => {
-    e.stopPropagation();
-    onOpenMembers();
-  };
 
   // Can I list the boards: is it mine or not private?
   const [canList, setCanList] = useState(!props.room.data.isPrivate || yours);
@@ -123,7 +93,6 @@ export function RoomCard(props: RoomCardProps) {
         onEnter={handleOnEnter}
       />
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} boards={props.boards} />
-      <RoomMembersModal members={members} isOpen={isOpenMembers} onClose={onCloseMembers} />
       <Box
         boxShadow={'md'}
         borderRadius="md"
@@ -153,12 +122,6 @@ export function RoomCard(props: RoomCardProps) {
               <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
                 <Text fontSize="22px" mr="2" transform="translateY(1px)">
                   {props.userCount}
-                </Text>
-              </Tooltip>
-
-              <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
-                <Text fontSize="28px" mr="2" transform="translateY(1px)" onClick={handleOnOpenMembers}>
-                  <MdPeople />
                 </Text>
               </Tooltip>
 
@@ -195,39 +158,5 @@ export function RoomCard(props: RoomCardProps) {
         </Box>
       </Box>
     </>
-  );
-}
-
-type RoomMembersModalProps = {
-  members: User[];
-  isOpen: boolean;
-  onClose: () => void;
-};
-
-function RoomMembersModal(props: RoomMembersModalProps) {
-  const initialRef = useRef(null);
-
-  return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>RoomMembers</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          {props.members.map((m) => (
-            <p>{m.data.name}</p>
-          ))}
-        </ModalBody>
-
-        <ModalFooter>
-          <Button colorScheme="gray" mr={3} ref={initialRef} onClick={props.onClose}>
-            Create Join Room Link
-          </Button>
-          <Button colorScheme="gray" mr={3} ref={initialRef} onClick={props.onClose}>
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
   );
 }

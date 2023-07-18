@@ -28,7 +28,6 @@ import {
   UsersCollection,
   MessageCollection,
   PluginsCollection,
-  RoomMembersRoute,
 } from '../collections';
 
 // SAGEBase Imports
@@ -68,9 +67,6 @@ export function expressAPIRouter(): express.Router {
   router.use('/rooms', RoomsCollection.router());
   router.use('/presence', PresenceCollection.router());
   router.use('/message', MessageCollection.router());
-
-  // Room Members
-  router.use('/members/rooms', RoomMembersRoute());
 
   // Check to see if plugins module is enabled.
   if (config.features.plugins) {
