@@ -13,9 +13,10 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
-import { checkPermissionsWS, AuthSubject } from './SAGEAuthorization';
 
 import { URL } from 'node:url';
+
+import { SAGEAuth } from '../permissions/SAGEAuthorization';
 
 export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
@@ -27,12 +28,6 @@ export async function sageWSRouter<T extends SBJSON>(
   // path to the current collection
   const path = '/api/' + collection.name.toLowerCase();
 
-  //  Check permissions on collections
-  if (!checkPermissionsWS(user, message.method, collection.name as AuthSubject)) {
-    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
-    return;
-  }
-
   // Create a URL object to parse the route:
   // second argument required because the route is a relative URL but otherwise meaningless
   const socket_url = new URL(message.route, 'ws://localhost');
@@ -40,6 +35,13 @@ export async function sageWSRouter<T extends SBJSON>(
   // get all the parameters and their values into an array, instead of a Map
   const params = Array.from(socket_url.searchParams);
   const numParams = params.length;
+
+  // Authorize
+  const authorized = await SAGEAuth.authorizeWS(socket, message, user, collection.name);
+  if (!authorized) {
+    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Unauthorized' }));
+    return;
+  }
 
   switch (message.method) {
     case 'POST': {

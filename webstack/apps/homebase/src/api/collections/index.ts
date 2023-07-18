@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { URLMetadata } from '@sage3/backend';
+import { SAGEAuth, URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -31,6 +31,7 @@ export * from './plugins';
  * Load the various models at startup.
  */
 export async function loadCollections(): Promise<void> {
+  // Collection Initialization
   await AppsCollection.initialize();
   await BoardsCollection.initialize();
   await RoomsCollection.initialize();
@@ -39,6 +40,9 @@ export async function loadCollections(): Promise<void> {
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
   await PluginsCollection.initialize();
+
+  // Authorization Initialization
+  await SAGEAuth.initialize();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {

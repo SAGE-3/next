@@ -6,73 +6,61 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// NPM imports
-import * as express from 'express';
+import { SAGEBase, SBAuthSchema, SBCollectionRef } from '@sage3/sagebase';
+import { APIClientWSMessage } from '@sage3/shared/types';
+import { NextFunction, Request, Response } from 'express';
+import { WebSocket } from 'ws';
 
-// SAGEBase Imports
-import { SBAuthSchema } from '@sage3/sagebase';
+const methodActionMap = {
+  POST: 'CREATE',
+  GET: 'READ',
+  PUT: 'UPDATE',
+  DELETE: 'DELETE',
+  SUB: 'READ',
+  UNSUB: 'READ',
+};
 
-import { Ability, AbilityBuilder } from '@casl/ability';
+type RoomMembersScheme = {
+  roomId: string;
+  members: [];
+};
 
-export type AuthAction = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
-export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE' | 'PLUGINS';
-type AppAbility = Ability<[AuthAction, AuthSubject]>;
+class SAGEAuthorization {
+  private _roomMembersCollection!: SBCollectionRef<RoomMembersScheme>;
 
-type Middleware = (req: express.Request, res: express.Response, next: express.NextFunction) => void;
-export type AuthMiddleware = (act: AuthAction, subj: AuthSubject) => Middleware;
-
-/**
- * Middleware to check if the user has permission to access the route.
- *
- * @export
- * @param {...string[]} permittedRoles
- * @returns
- */
-export function checkPermissionsREST(subj: AuthSubject): Middleware {
-  // return a middleware
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // user is already logged in
-    const user = req.user as SBAuthSchema;
-    // could get more data from user collection
-    // UsersCollection.get(user.id)...
-    const act = req.method as AuthAction;
-    if (defineAbilityFor(user).can(act, subj)) {
-      // role is allowed, so continue on the next middleware
-      next();
-    } else {
-      // user is forbidden
-      res.status(403).json({ message: 'Forbidden user' });
-    }
-  };
-}
-
-export function checkPermissionsWS(user: SBAuthSchema, act: AuthAction, subj: AuthSubject): boolean {
-  //  Check permissions for ws
-  const perm = defineAbilityFor(user).can(act, subj);
-  return perm;
-}
-
-export function defineAbilityFor(user: SBAuthSchema) {
-  const { can, build } = new AbilityBuilder<AppAbility>(Ability);
-
-  // Limit the guest accounts
-  if (user.provider === 'guest') {
-    can(['GET', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE', 'PLUGINS']);
-    // login and update presence
-    can(['POST', 'PUT'], ['USERS', 'PRESENCE']);
-    // apps
-    // can(['POST', 'PUT', 'DELETE'], ['APPS']);
-    // modify apps, not create or delete
-    can(['PUT'], ['APPS']);
-  } else {
-    // everybody else can do anything
-    can(['GET', 'POST', 'PUT', 'DELETE', 'SUB', 'UNSUB'], ['USERS', 'ASSETS', 'APPS', 'BOARDS', 'ROOMS', 'PRESENCE', 'MESSAGE', 'PLUGINS']);
+  public async initialize() {
+    this._roomMembersCollection = await SAGEBase.Database.collection<RoomMembersScheme>('ROOMMEMBERS', { roomId: '' });
   }
 
-  return build();
+  public async authorizeREST(req: Request, res: Response, next: NextFunction, collection: string) {
+    const auth = req.user as SBAuthSchema;
+    const userId = auth?.id;
+    if (!userId) this.sendUnauthorized(res);
+    const collectionName = collection;
+    const method = req.method as keyof typeof methodActionMap;
+    const action = methodActionMap[method];
+    console.log('authorizeREST', { userId, collectionName, method, action });
+    next();
+  }
+
+  public async authorizeWS(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, collection: string): Promise<boolean> {
+    const userId = user.id;
+    if (!userId) {
+      return false;
+    }
+    const collectionName = collection;
+    const action = methodActionMap[message.method];
+    console.log('authorizeWS', { userId, collectionName, action });
+    return true;
+  }
+
+  private sendUnauthorized(res: Response) {
+    res.status(401).send({ success: false, message: 'Unauthorized' });
+  }
 }
 
-//////////////
+export const SAGEAuth = new SAGEAuthorization();
+
 // import { SAGE3Collection } from '@sage3/backend';
 // import { AppsCollection, BoardsCollection, RoomsCollection } from '../collections';
 
