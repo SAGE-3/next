@@ -24,14 +24,17 @@ import {
 } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 
+import { v4 } from 'uuid';
+
 // Ansi library
 import Ansi from 'ansi-to-react';
 // Markdown library
 import { Markdown } from './markdown';
 // Plotly library
-import Plot from 'react-plotly.js';
+import Plot, { PlotParams } from 'react-plotly.js';
+// import { Data, PlotlyDataLayoutConfig } from 'plotly.js';
 // Vega library
-import { Vega } from 'react-vega';
+import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
 // PdfViewer
@@ -42,7 +45,7 @@ import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 
-export interface Result {
+interface Result {
   request_id: string;
   execute_result?: ExecuteResult;
   display_data?: DisplayData;
@@ -50,19 +53,24 @@ export interface Result {
   error?: Error;
 }
 
-export interface ExecuteResult {
-  data?: Record<string, unknown>;
+interface ExecuteResult {
+  data?: Record<
+    string,
+    {
+      [key: string]: unknown;
+    }
+  >;
   metadata?: Metadata;
   execution_count: number;
 }
 
-export interface DisplayData {
+interface DisplayData {
   data?: Record<string, unknown>;
   metadata?: Metadata;
   transient?: unknown;
 }
 
-export interface Metadata {
+interface Metadata {
   metadata?: Record<string, unknown>;
 }
 
@@ -89,7 +97,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   // Application state
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
-  const [data, setData] = useState<Record<string, any>>(); // execute_result.data or display_data.data is unknown type
+  const [data, setData] = useState<Record<string, unknown>>();
   const [executionCount, setExecutionCount] = useState<number>();
   const [error, setError] = useState<Error>();
   const [stream, setStream] = useState<Stream>();
@@ -138,6 +146,13 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       console.log('SAGECell> unknown output', p);
     }
     setMsgId(requestId);
+    return () => {
+      // Cleanup
+      setData(undefined);
+      setExecutionCount(undefined);
+      setError(undefined);
+      setStream(undefined);
+    };
   }, [props.output]);
 
   // Get the color of the kernel owner
@@ -148,100 +163,119 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
       const ownerColor = users.find((el) => el._id === owner)?.data.color;
       setOwnerColor(ownerColor || '#000000');
     }
+    return () => {
+      // Cleanup
+      setOwnerColor('#000000');
+    };
   }, [s.kernel, users]);
 
   return (
     <Box
-      // Interactive styling
+      borderLeft={`.4rem solid ${useHexColor(ownerColor)}`}
+      p={1}
       className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}
-      background={useColorModeValue(`#f4f4f4`, `#1b1b1b`)}
-      borderLeft={`0.2em solid ${useHexColor(ownerColor)}`}
-      fontSize={s.fontSize + 'px'}
     >
-      {!executionCount ? null : (
-        <Text color="red" fontSize={s.fontSize + 'px'}>
-          {`Out[${executionCount}]:`}
-        </Text>
-      )}
+      {!executionCount ? null : <Text fontSize={'.8rem'} color="red">{`[${executionCount}]:`}</Text>}
       {!stream ? null : <Ansi>{stream.text}</Ansi>}
       {!data
         ? null
         : Object.keys(data).map((key, i) => {
-          const value = data[key];
-          switch (key) {
-            case 'text/html':
-              if (!data[key]) return null; // hides other outputs if html is present
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-            case 'text/plain':
-              if (data['text/html']) return null;
-              return <Ansi key={i}>{value}</Ansi>;
-            case 'image/png':
-              return <Image key={i} src={`data:image/png;base64,${value}`} />;
-            case 'image/jpeg':
-              return <Image key={i} src={`data:image/jpeg;base64,${value}`} />;
-            case 'image/svg+xml':
-              return <Box key={i} dangerouslySetInnerHTML={{ __html: value }} />;
-            case 'text/markdown':
-              return <Markdown key={i} data={value} openInWebview={openInWebview} />;
-            case 'application/vnd.vegalite.v4+json':
-            case 'application/vnd.vegalite.v3+json':
-            case 'application/vnd.vegalite.v2+json':
-              return <VegaLite key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.vega.v5+json':
-            case 'application/vnd.vega.v4+json':
-            case 'application/vnd.vega.v3+json':
-            case 'application/vnd.vega.v2+json':
-            case 'application/vnd.vega.v1+json':
-              return <Vega key={i} spec={value} actions={false} renderer="svg" />;
-            case 'application/vnd.plotly.v1+json': {
-              // Configure plotly
-              const config = value.config || {};
-              const layout = value.layout || {};
-              config.displaylogo = false;
-              config.displayModeBar = false;
-              config.scrollZoom = true;
-              layout.dragmode = 'pan';
-              layout.hovermode = 'closest';
-              layout.font = { size: s.fontSize };
-              layout.hoverlabel = {
-                font: { size: s.fontSize },
-                bgcolor: '#ffffff',
-                bordercolor: '#000000',
-                fontFamily: 'sans-serif',
-              };
-              layout.width = 'auto';
-              layout.height = 'auto';
-              // Rebuild the plotly plot
-              return <Plot key={i} data={value.data} layout={layout} config={config} />;
+            const value = data[key];
+            // console.log(key);
+            switch (key) {
+              case 'text/html':
+                if (!value) return null; // hides other outputs if html is present
+                return <Box key={key} dangerouslySetInnerHTML={{ __html: value as TrustedHTML }} />;
+              case 'text/plain':
+                if (data['text/html']) return null;
+                return <Ansi key={key}>{value as string}</Ansi>;
+              case 'image/png':
+                return <Image key={key} src={`data:image/png;base64,${value as string}`} />;
+              case 'image/jpeg':
+                return <Image key={key} src={`data:image/jpeg;base64,${value as string}`} />;
+              case 'image/svg+xml':
+                return <Box key={key} dangerouslySetInnerHTML={{ __html: value as TrustedHTML }} />;
+              case 'text/markdown':
+                return <Markdown key={key} data={value} openInWebview={openInWebview} />;
+              case 'application/vnd.vegalite.v4+json':
+              case 'application/vnd.vegalite.v3+json':
+              case 'application/vnd.vegalite.v2+json':
+                return <VegaLite key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+              case 'application/vnd.vega.v5+json':
+              case 'application/vnd.vega.v4+json':
+              case 'application/vnd.vega.v3+json':
+              case 'application/vnd.vega.v2+json':
+              case 'application/vnd.vega.v1+json':
+                return <Vega key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+              case 'application/vnd.plotly.v1+json': {
+                // Configure plotly
+                const value = data[key] as PlotParams;
+                const config = value.config || {};
+                const layout = value.layout || {};
+                config.displaylogo = false;
+                config.displayModeBar = false;
+                config.scrollZoom = false;
+                config.showTips = false;
+                config.showLink = false;
+                config.linkText = 'Edit in Chart Studio';
+                config.plotlyServerURL = `https://chart-studio.plotly.com`;
+                config.responsive = true;
+                config.autosizable = true;
+                layout.dragmode = 'pan';
+                layout.hovermode = 'closest';
+                layout.showlegend = true;
+                layout.font = { size: s.fontSize };
+                layout.hoverlabel = {
+                  font: { size: s.fontSize },
+                };
+                layout.xaxis = {
+                  title: { font: { size: s.fontSize } },
+                  tickfont: { size: s.fontSize },
+                };
+                layout.yaxis = {
+                  title: { font: { size: s.fontSize } },
+                  tickfont: { size: s.fontSize },
+                };
+                layout.legend ? (layout.legend.font = { size: s.fontSize }) : (layout.legend = { font: { size: s.fontSize } });
+                layout.margin = { l: 2, r: 2, b: 2, t: 2, pad: 2 };
+                layout.paper_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+                layout.plot_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+                layout.height = window.innerHeight * 0.5;
+                layout.width = window.innerWidth * 0.5;
+                return (
+                  <>
+                    <Plot key={i} data={value.data} layout={layout} config={config} />
+                  </>
+                );
+              }
+              case 'application/pdf':
+                // Open a iframe with the pdf
+                return <PdfViewer key={i} data={value as string} />;
+              case 'application/json':
+                // Render the json as string into a PRE tag
+                return <pre key={key}>{JSON.stringify(value as string, null, 2)}</pre>;
+              default:
+                return (
+                  <Box key={key}>
+                    <Accordion allowToggle>
+                      <AccordionItem>
+                        <AccordionButton>
+                          <Box flex="1" textAlign="left">
+                            <Text color="red" fontSize={s.fontSize}>
+                              Error: {key} is not supported in this version of SAGECell.
+                            </Text>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                        <AccordionPanel pb={4}>
+                          <pre>{JSON.stringify(value as string, null, 2)}</pre>
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  </Box>
+                );
             }
-            case 'application/pdf':
-              // Open a iframe with the pdf
-              return <PdfViewer key={i} data={value} />;
-            case 'application/json':
-              // Render the json as string into a PRE tag
-              return <pre key={i}>{JSON.stringify(value, null, 2)}</pre>;
-            default:
-              return (
-                <Box>
-                  <Accordion allowToggle>
-                    <AccordionItem>
-                      <AccordionButton>
-                        <Box flex="1" textAlign="left">
-                          <Text color="red" fontSize={s.fontSize}>
-                            Error: {key} is not supported in this version of SAGECell.
-                          </Text>
-                        </Box>
-                        <AccordionIcon />
-                      </AccordionButton>
-                      <AccordionPanel pb={4}>
-                        <pre>{JSON.stringify(value, null, 2)}</pre>
-                      </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion>
-                </Box>
-              );
-          }
-        })}
+          })}
       {!error ? null : (
         <>
           <Alert status="error">
@@ -261,7 +295,7 @@ export function Outputs(props: OutputBoxProps): JSX.Element {
             </Code>
           </Alert>
           {Object(error.traceback).map((line: string) => (
-            <Ansi>{line}</Ansi>
+            <Ansi key={line}>{line}</Ansi>
           ))}
         </>
       )}
