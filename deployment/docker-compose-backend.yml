@@ -9,6 +9,13 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+  fluentd-server:
+    image: "fluent/fluentd:edge-debian"
+    ports:
+      - "127.0.0.1:24224:24224"
+    volumes:
+      - ./configurations/fluentd/log:/fluentd/log
+      - ./configurations/fluentd/conf:/fluentd/etc
   jupyter:
     image: "jupyter/datascience-notebook"
     volumes:
