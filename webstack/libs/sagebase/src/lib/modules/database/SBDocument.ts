@@ -281,7 +281,7 @@ function generateWriteResult<Type extends SBJSON>(
     doc,
   } as SBDocWriteResult<Type>;
   if (success) {
-    const tag = `${collection}-${action}`;
+    const tag = `${collection}.${action}`;
     SBLogger.log(collection, tag, result);
   }
   return result;
