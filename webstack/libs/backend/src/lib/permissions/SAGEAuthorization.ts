@@ -25,32 +25,75 @@ type RoomMembersScheme = {
   members: [];
 };
 
+type AuthorizationConfig = {
+  protectedCollections: string[];
+};
+
+const config = {
+  protectedCollections: ['ROOMS', 'APPS', 'BOARDS'],
+};
+
 class SAGEAuthorization {
   private _roomMembersCollection!: SBCollectionRef<RoomMembersScheme>;
+  private _config: AuthorizationConfig;
+  constructor(config: AuthorizationConfig) {
+    this._config = config;
+  }
 
   public async initialize() {
     this._roomMembersCollection = await SAGEBase.Database.collection<RoomMembersScheme>('ROOMMEMBERS', { roomId: '' });
   }
 
   public async authorizeREST(req: Request, res: Response, next: NextFunction, collection: string) {
+    // Check for user
     const auth = req.user as SBAuthSchema;
     const userId = auth?.id;
     if (!userId) this.sendUnauthorized(res);
+
+    // Check if the collection is protected
     const collectionName = collection;
+    if (!this._config.protectedCollections.includes(collectionName)) {
+      next();
+      return;
+    }
+
+    // Map the method to an action
     const method = req.method as keyof typeof methodActionMap;
     const action = methodActionMap[method];
-    console.log('authorizeREST', { userId, collectionName, method, action });
+
+    // Check if the user is authorized
+    const authorized = await this.authorize(userId, collectionName, action);
+
+    // Respond with an error if not authorized
+    if (!authorized) this.sendUnauthorized(res);
     next();
+    return;
   }
 
   public async authorizeWS(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, collection: string): Promise<boolean> {
+    // Check for user
     const userId = user.id;
     if (!userId) {
       return false;
     }
+
+    // Check if the collection is protected
     const collectionName = collection;
+    if (!this._config.protectedCollections.includes(collectionName)) return true;
+
+    // Map the method to an action
     const action = methodActionMap[message.method];
-    console.log('authorizeWS', { userId, collectionName, action });
+
+    // Check if the user is authorized
+    const authorized = await this.authorize(userId, collectionName, action);
+
+    // Respond with an error if not authorized
+    if (!authorized) return false;
+    return true;
+  }
+
+  private async authorize(userId: string, collectionName: string, action: string): Promise<boolean> {
+    console.log('authorize', { userId, collectionName, action });
     return true;
   }
 
@@ -59,7 +102,7 @@ class SAGEAuthorization {
   }
 }
 
-export const SAGEAuth = new SAGEAuthorization();
+export const SAGEAuth = new SAGEAuthorization(config);
 
 // import { SAGE3Collection } from '@sage3/backend';
 // import { AppsCollection, BoardsCollection, RoomsCollection } from '../collections';
