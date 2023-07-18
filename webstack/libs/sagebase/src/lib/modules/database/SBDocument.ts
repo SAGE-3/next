@@ -272,7 +272,7 @@ function generateWriteResult<Type extends SBJSON>(collection: string, success: b
     doc,
   } as SBDocWriteResult<Type>;
   if (success) {
-    SBLogger.log(collection, 'node-server-write-success', result);
+    SBLogger.log(collection, 'node-write-' + collection, result);
   }
   return result;
 }

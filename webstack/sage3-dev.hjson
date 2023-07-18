@@ -31,7 +31,7 @@
   "fluentd": {
     "server": "localhost",
     "port": 24224,
-    "databaseLevel": "partial" // 'all' | 'partial' | 'none
+    "databaseLevel": "partial" // all | partial | none
   },
 
   // External Services

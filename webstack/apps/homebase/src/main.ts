@@ -25,6 +25,7 @@ import * as dns from 'node:dns';
 // Websocket
 import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
+import { setupWsforLogs } from './api/routers/custom';
 
 // YJS
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -93,9 +94,9 @@ async function startServer() {
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))
   const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'MESSAGE', 'PLUGINS', 'ROOMS'];
   // all: all logs are sent to fluentd
-  config.fluentd.databaseLevel === 'all' ? logCollections.push('USERS', 'PRESENCE') : null;
+  if (config.fluentd.databaseLevel === 'all') logCollections.push('USERS', 'PRESENCE');
   // none: no logs are sent to fluentd
-  config.fluentd.databaseLevel === 'none' ? (logCollections.length = 0) : null;
+  if (config.fluentd.databaseLevel === 'none') logCollections.length = 0;
   const sbLogConfig = {
     server: config.fluentd.server,
     port: config.fluentd.port,
@@ -124,7 +125,7 @@ async function startServer() {
   await loadCollections();
 
   // Twilio Setup
-  const screenShareTimeLimit = 60 * 60 * 2000; // 1 hour
+  const screenShareTimeLimit = 3600 * 2 * 1000; // 2 hour
   const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
@@ -144,6 +145,11 @@ async function startServer() {
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
   const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
   const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
+  const logsServer = new WebSocket.Server({ noServer: true });
+
+  logsServer.on('connection', (socket: WebSocket) => {
+    setupWsforLogs(socket);
+  });
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
@@ -261,6 +267,13 @@ async function startServer() {
       });
       return;
     }
+    // Logs socket - noauth for now
+    if (wsPath === 'logs') {
+      logsServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
+        logsServer.emit('connection', ws, req);
+      });
+      return;
+    }
 
     SAGEBase.Auth.sessionParser(request, {}, () => {
       let token = request.headers.authorization;
@@ -327,16 +340,18 @@ async function startServer() {
     });
   });
 
-  // Serves the static react files from webapp folder
+  // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
+  // Serve the plugins folder
   app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
 
   // Handle termination
   function exitHandler() {
-    console.log('in exit handler, disconnect sockets');
+    console.log('ExitHandler> disconnect sockets');
     apiWebSocketServer.close();
     yjsWebSocketServer.close();
     rtcWebSocketServer.close();
+    logsServer.close();
     process.exit(2);
   }
 

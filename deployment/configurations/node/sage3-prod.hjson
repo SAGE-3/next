@@ -27,11 +27,11 @@
     "url": "redis://redis-server:6379"
   },
 
-// Fluentd log configuration
+  // Fluentd log configuration
   "fluentd": {
     "server": "fluentd-server",
     "port": 24224,
-    "databaseLevel": "partial" // 'all' | 'partial' | 'none
+    "databaseLevel": "partial" // all | partial | none
   },
 
  // External Services
