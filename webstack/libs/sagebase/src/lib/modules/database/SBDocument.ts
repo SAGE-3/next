@@ -119,14 +119,16 @@ export class SBDocumentRef<Type extends SBJSON> {
         this._redisClient.expire(this.path, ttl);
       }
       const response =
-        redisRes == 'OK' ? generateWriteResult<Type>(this._colName, true, doc) : generateWriteResult<Type>(this._colName, false);
+        redisRes == 'OK'
+          ? generateWriteResult<Type>('create', this._colName, true, doc)
+          : generateWriteResult<Type>('create', this._colName, false);
       if (publish) {
         await this.publishCreateAction(doc);
       }
       return response;
     } catch (error) {
       this.ERRORLOG(error);
-      return generateWriteResult(this._colName, false);
+      return generateWriteResult('create', this._colName, false);
     }
   }
 
@@ -136,13 +138,13 @@ export class SBDocumentRef<Type extends SBJSON> {
    * @returns
    */
   public async update(update: SBDocumentUpdate<Type>, by: string, publish = true): Promise<SBDocWriteResult<Type>> {
-    if (update === undefined) return generateWriteResult(this._colName, false);
+    if (update === undefined) return generateWriteResult('update', this._colName, false);
     const pub = publish === undefined ? true : publish;
     // Check if Doc exists
     const exists = await this._redisClient.exists(`${this.path}`);
     if (exists === 0) {
       this.ERRORLOG(`Doc does not exists.`);
-      return generateWriteResult(this._colName, false);
+      return generateWriteResult('update', this._colName, false);
     }
     try {
       // Check if a property on the document was updated
@@ -171,14 +173,14 @@ export class SBDocumentRef<Type extends SBJSON> {
           await this.publishUpdateAction(newValue, update);
         }
         // Generate the response and return it
-        return generateWriteResult<Type>(this._colName, true, newValue);
+        return generateWriteResult<Type>('update', this._colName, true, newValue);
       } else {
         // The document wasn't updated
-        return generateWriteResult<Type>(this._colName, false);
+        return generateWriteResult<Type>('update', this._colName, false);
       }
     } catch (error) {
       this.ERRORLOG(error);
-      return generateWriteResult<Type>(this._colName, false);
+      return generateWriteResult<Type>('update', this._colName, false);
     }
   }
 
@@ -200,17 +202,17 @@ export class SBDocumentRef<Type extends SBJSON> {
     try {
       const oldValue = await this.read();
       if (oldValue == undefined) {
-        return generateWriteResult(this._colName, false);
+        return generateWriteResult('delete', this._colName, false);
       }
       const redisRes = await this._redisClient.json.del(`${this.path}`);
       const res = redisRes === undefined || redisRes === 0 ? false : true;
       if (res === true && publish) {
         await this.publishDeleteAction(oldValue);
       }
-      return generateWriteResult(this._colName, res, oldValue);
+      return generateWriteResult('delete', this._colName, res, oldValue);
     } catch (error) {
       this.ERRORLOG(error);
-      return generateWriteResult(this._colName, false);
+      return generateWriteResult('delete', this._colName, false);
     }
   }
 
@@ -265,14 +267,22 @@ export class SBDocumentRef<Type extends SBJSON> {
   }
 }
 
-function generateWriteResult<Type extends SBJSON>(collection: string, success: boolean, doc?: SBDocument<Type>): SBDocWriteResult<Type> {
+type WriteResultAction = 'create' | 'update' | 'delete';
+
+function generateWriteResult<Type extends SBJSON>(
+  action: WriteResultAction,
+  collection: string,
+  success: boolean,
+  doc?: SBDocument<Type>
+): SBDocWriteResult<Type> {
   const result = {
     success,
     writetime: Date.now(),
     doc,
   } as SBDocWriteResult<Type>;
   if (success) {
-    SBLogger.log(collection, 'node-write-' + collection, result);
+    const tag = `sagebase-${collection}-${action}`;
+    SBLogger.log(collection, tag, result);
   }
   return result;
 }
