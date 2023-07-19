@@ -36,8 +36,15 @@ export async function sageWSRouter<T extends SBJSON>(
   const params = Array.from(socket_url.searchParams);
   const numParams = params.length;
 
+  // Get the method
+  const method = message.method;
+  if (!method) {
+    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method' }));
+    return;
+  }
+
   // Authorize
-  const authorized = await SAGEAuth.authorizeWS(socket, message, user, collection.name);
+  const authorized = await SAGEAuth.authorize(method, user, collection.name);
   if (!authorized) {
     socket.send(JSON.stringify({ id: message.id, success: false, message: 'Unauthorized' }));
     return;

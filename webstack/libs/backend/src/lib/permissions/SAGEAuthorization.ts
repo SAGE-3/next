@@ -6,18 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { SAGEBase, SBAuthSchema, SBCollectionRef } from '@sage3/sagebase';
-import { APIClientWSMessage } from '@sage3/shared/types';
-import { NextFunction, Request, Response } from 'express';
-import { WebSocket } from 'ws';
+import { SAGEBase, SBAuthSchema, SBCollectionRef, SBJSON } from '@sage3/sagebase';
+import { SAGE3Collection } from '../generics';
+
+type Method = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
+
+type Action = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE';
 
 const methodActionMap = {
-  POST: 'CREATE',
-  GET: 'READ',
-  PUT: 'UPDATE',
-  DELETE: 'DELETE',
-  SUB: 'READ',
-  UNSUB: 'READ',
+  POST: 'CREATE' as Action,
+  GET: 'READ' as Action,
+  PUT: 'UPDATE' as Action,
+  DELETE: 'DELETE' as Action,
+  SUB: 'READ' as Action,
+  UNSUB: 'READ' as Action,
 };
 
 type RoomMembersScheme = {
@@ -25,185 +27,106 @@ type RoomMembersScheme = {
   members: [];
 };
 
-type AuthorizationConfig = {
-  protectedCollections: string[];
+type ProtectedCollection = {
+  name: string;
+  collection: SAGE3Collection<any>;
+  rules: CollectionRule[];
 };
 
-const config = {
-  protectedCollections: ['ROOMS', 'APPS', 'BOARDS'],
+// Used to check if the requesting user satisfies a condition on a document
+type CollectionRuleByUserID = {
+  ruleType: 'userId';
+  property: string;
+  condition: '=' | '!=' | 'includes';
+  refCollection: SAGE3Collection<any>;
+
+  allowedActions: Action[];
 };
 
+// Used to check if a property on a document is true or false
+// e.g. if the document has a property 'isPublic' and it is true
+type CollectionRuleByProperty = {
+  ruleType: 'field';
+  property: string;
+  refCollection: SAGE3Collection<any>;
+  allowedActions: Action[];
+};
+
+export type CollectionRule = CollectionRuleByUserID | CollectionRuleByProperty;
+
+/**
+ * SAGE Authorization
+ * This class handles authorization for the SAGE3 backend
+ * It is used to authorize users to perform actions on routes in the SAGERouter and SAGEWSRouter
+ * Located in webstack/libs/backend/src/lib/generics
+ */
 class SAGEAuthorization {
   private _roomMembersCollection!: SBCollectionRef<RoomMembersScheme>;
-  private _config: AuthorizationConfig;
-  constructor(config: AuthorizationConfig) {
-    this._config = config;
-  }
+
+  private _protectedCollections: ProtectedCollection[] = [];
 
   public async initialize() {
     this._roomMembersCollection = await SAGEBase.Database.collection<RoomMembersScheme>('ROOMMEMBERS', { roomId: '' });
   }
 
-  public async authorizeREST(req: Request, res: Response, next: NextFunction, collection: string) {
-    // Check for user
-    const auth = req.user as SBAuthSchema;
-    const userId = auth?.id;
-    if (!userId) this.sendUnauthorized(res);
-
-    // Check if the collection is protected
-    const collectionName = collection;
-    if (!this._config.protectedCollections.includes(collectionName)) {
-      next();
-      return;
+  public addProtectedCollection<T extends SBJSON>(collection: SAGE3Collection<T>, rules: CollectionRule[]) {
+    const success = this._protectedCollections.push({ name: collection.name, collection, rules });
+    if (success) {
+      this.printMessage(`Added protected collection: ${collection.name}`);
+    } else {
+      this.printMessage(`Failed to add protected collection: ${collection.name}`);
     }
-
-    // Map the method to an action
-    const method = req.method as keyof typeof methodActionMap;
-    const action = methodActionMap[method];
-
-    // Check if the user is authorized
-    const authorized = await this.authorize(userId, collectionName, action);
-
-    // Respond with an error if not authorized
-    if (!authorized) this.sendUnauthorized(res);
-    next();
-    return;
   }
 
-  public async authorizeWS(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, collection: string): Promise<boolean> {
+  private getCollection(name: string): ProtectedCollection | undefined {
+    return this._protectedCollections.find((collection) => collection.name === name);
+  }
+
+  public async authorize(method: Method, user: SBAuthSchema, collectionName: string): Promise<boolean> {
+    // Check if the collection is protected
+    const collection = this.getCollection(collectionName);
+    if (!collection) {
+      return true;
+    }
+
     // Check for user
     const userId = user.id;
     if (!userId) {
       return false;
     }
 
-    // Check if the collection is protected
-    const collectionName = collection;
-    if (!this._config.protectedCollections.includes(collectionName)) return true;
-
     // Map the method to an action
-    const action = methodActionMap[message.method];
+    const action = methodActionMap[method];
 
     // Check if the user is authorized
-    const authorized = await this.authorize(userId, collectionName, action);
+    const allowedActions = await this.validateAllRules(collection.rules, userId);
 
-    // Respond with an error if not authorized
-    if (!authorized) return false;
-    return true;
+    // If allowedActions contains the action then allow
+    const allowed = allowedActions.includes(action);
+    this.printMessage(`User ${userId} is ${allowed ? 'authorized' : 'unauthorized'} to ${action} ${collectionName}`);
+    return allowedActions.includes(action);
   }
 
-  private async authorize(userId: string, collectionName: string, action: string): Promise<boolean> {
-    console.log('authorize', { userId, collectionName, action });
-    return true;
+  private async validateAllRules(rules: CollectionRule[], userId: string): Promise<Action[]> {
+    const actions = await Promise.all(rules.map((rule) => this.validateRule(rule, userId)));
+    return actions.flat();
   }
 
-  private sendUnauthorized(res: Response) {
-    res.status(401).send({ success: false, message: 'Unauthorized' });
+  private async validateRule(rule: CollectionRule, userId: string): Promise<Action[]> {
+    let allowed = false;
+    if (rule.ruleType === 'userId') {
+      allowed = true;
+    } else if (rule.ruleType === 'field') {
+      allowed = true;
+    } else {
+      allowed = false;
+    }
+    return allowed ? rule.allowedActions : [];
+  }
+
+  private printMessage(message: string) {
+    console.log(`SAGEAuthorization> ${message}`);
   }
 }
 
-export const SAGEAuth = new SAGEAuthorization(config);
-
-// import { SAGE3Collection } from '@sage3/backend';
-// import { AppsCollection, BoardsCollection, RoomsCollection } from '../collections';
-
-// import { SAGE3Ability, ResourceArg, Action, ActionArg, RoleArg } from '@sage3/shared';
-
-// type Resource = { name: ResourceArg; collection: SAGE3Collection<any> };
-
-// type Rule = { resource: Resource; field: string; condition: '=' | 'includes'; ref_prop?: string };
-// type Access = { resource: Resource; action: Action[]; rules: Rule[]; allRules: boolean };
-
-// type PermissionConfig = {
-//   resources: Resource[];
-//   access: Access[];
-// };
-
-// const appResource: Resource = { name: 'app', collection: AppsCollection };
-// const boardResource: Resource = { name: 'board', collection: BoardsCollection };
-// const roomResource: Resource = { name: 'room', collection: RoomsCollection };
-
-// const Perm: PermissionConfig = {
-//   resources: [appResource, boardResource, roomResource],
-//   access: [
-//     {
-//       resource: boardResource,
-//       action: ['create'],
-//       allRules: false,
-//       rules: [
-//         { resource: roomResource, field: 'members', condition: 'includes' },
-//         { resource: roomResource, field: 'ownerId', condition: '=' },
-//       ],
-//     },
-//     {
-//       resource: boardResource,
-//       action: ['update'],
-//       allRules: true,
-//       rules: [{ resource: roomResource, field: 'ownerId', condition: '=' }],
-//     },
-//   ],
-// };
-
-// class SAGEPermission {
-//   private _config: PermissionConfig;
-//   constructor(config: PermissionConfig) {
-//     this._config = config;
-//   }
-
-//   // Check if the user is authorized to perform the action on the specified resource
-//   // Resource_id is the id of the resource
-//   // Check_value is the value to check against
-//   public async allowed(role: RoleArg, action: ActionArg, resource: Resource['name'], resource_id: string, check_value: string | number) {
-//     // Check if they can first
-//     const can = SAGE3Ability.can(role, action, resource);
-//     if (!can) {
-//       return false;
-//     }
-//     // Filter the access for the resource
-//     const access = this._config.access.filter((acc) => acc.resource.name === resource);
-//     // If there are no access rules then allow
-//     if (access.length === 0) {
-//       return true;
-//     }
-//     // Check if the user is authorized
-//     await Promise.all(
-//       access.map(async (acc) => {
-//         // Get the rules for the access
-//         const rules = acc.rules;
-//         // Check if the user is authorized for all the rules
-//         const authorized = await Promise.all(
-//           rules.map(async (rule) => {
-//             // Get the value of the field
-//             const doc = await acc.resource.collection.get(resource_id);
-//             // If no document then reject
-//             if (!doc) {
-//               return false;
-//             }
-//             // Get the value of the field
-//             const value = doc.data[rule.field];
-//             // If no value then reject
-//             if (!value) {
-//               return false;
-//             }
-//             // Check if the value matches the rule
-//             if (rule.condition === '=') {
-//               return value === check_value;
-//             } else if (Array.isArray(value) && rule.condition === 'includes') {
-//               return value.includes(check_value);
-//             } else {
-//               return false;
-//             }
-//           })
-//         );
-//         // If the user is authorized for all the rules then allow
-//         if (acc.allRules) {
-//           return authorized.every((auth) => auth);
-//         } else {
-//           return authorized.some((auth) => auth);
-//         }
-//       })
-//     );
-//   }
-// }
-
-// export const SAGEPermissionInstance = new SAGEPermission(Perm);
+export const SAGEAuth = new SAGEAuthorization();

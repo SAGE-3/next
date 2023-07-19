@@ -17,7 +17,16 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   const router = express.Router();
 
   //  Check permissions on collections
-  router.use((req, res, next) => SAGEAuth.authorizeREST(req, res, next, collection.name));
+  router.use(async (req, res, next) => {
+    const auth = req.user as SBAuthSchema;
+    const method = req.method as 'POST' | 'GET' | 'PUT' | 'DELETE';
+    const authorized = await SAGEAuth.authorize(method, auth, collection.name);
+    if (!authorized) {
+      res.status(500).send({ success: false, message: 'Unauthorized', data: undefined });
+    } else {
+      next();
+    }
+  });
 
   // POST: Add new document or multiple docs with a batch request
   router.post('/', async ({ body, user }, res) => {
