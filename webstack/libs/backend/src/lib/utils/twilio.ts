@@ -72,22 +72,22 @@ export class SAGETwilio {
     expiration: number
   ) {
     setInterval(async () => {
-      const apps = await appCollection.getAll(); // NOT IDEAL
-      const pres = await presCollection.getAll();
+      const apps = await appCollection.getAll('NODE_SERVER'); // NOT IDEAL
+      const pres = await presCollection.getAll('NODE_SERVER');
       if (apps && pres) {
         const screenshareApps = apps.filter((app) => app.data.type === 'Screenshare');
         const now = Date.now();
         screenshareApps.forEach((screenshare) => {
           // If it has expired, deleted it.
           if (now - screenshare._createdAt > expiration) {
-            appCollection.delete(screenshare._id);
+            appCollection.delete(screenshare._id, 'NODE_SERVER');
             return;
           }
           // If the user is no longer on this board or connected to server. Delete it.
           // Is user still connected to sage 3
           const user = pres.find((p) => p._id === screenshare._createdBy);
           if (!user) {
-            appCollection.delete(screenshare._id);
+            appCollection.delete(screenshare._id, 'NODE_SERVER');
             return;
           }
           // User still on the board?

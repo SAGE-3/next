@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { URLMetadata } from '@sage3/backend';
+import { SAGEAuth, URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -16,8 +16,8 @@ import {
   PresenceCollection,
   MessageCollection,
   PluginsCollection,
+  RoomMembersCollection,
 } from '../collections';
-import { InitalizeAuthorization } from './permissions/collectionPermissions';
 
 export * from './apps';
 export * from './boards';
@@ -27,6 +27,7 @@ export * from './assets';
 export * from './presence';
 export * from './message';
 export * from './plugins';
+export * from './roomMembers';
 
 /**
  * Load the various models at startup.
@@ -41,12 +42,14 @@ export async function loadCollections(): Promise<void> {
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
   await PluginsCollection.initialize();
+  // Authoriztion Collections
+  await RoomMembersCollection.initialize();
 
-  // Initalize Authorization
-  InitalizeAuthorization();
+  // Initialize Authorization with UsersCollection
+  SAGEAuth.initialize(UsersCollection, RoomMembersCollection);
 
   // Setup default room and board
-  RoomsCollection.getAll().then(async (rooms) => {
+  RoomsCollection.getAll('NODE_SERVER').then(async (rooms) => {
     if (rooms) {
       if (rooms.length > 0) {
         console.log(`Rooms> Loaded ${rooms.length} room(s) from store`);
@@ -97,5 +100,5 @@ export async function loadCollections(): Promise<void> {
         }
       });
     }
-  });
+  }, 'NODE_SERVER');
 }

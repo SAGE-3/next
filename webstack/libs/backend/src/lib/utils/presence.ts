@@ -79,13 +79,13 @@ export class SAGEPresence {
 
   // Check if the user's presence already exists
   private async checkPresence(): Promise<boolean> {
-    const check = await this._collection.get(this._userId);
+    const check = await this._collection.get(this._userId, 'NODE_SERVER');
     return check !== null;
   }
 
   // Remove the doc from the presence collection when the user goes offline
   private async removePresence(): Promise<boolean> {
-    const res = await this._collection.delete(this._userId);
+    const res = await this._collection.delete(this._userId, 'NODE_SERVER');
     return res !== undefined;
   }
 }

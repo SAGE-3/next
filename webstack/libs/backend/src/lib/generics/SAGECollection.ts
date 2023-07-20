@@ -23,6 +23,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils';
 import { sageWSRouter } from './SAGEWSRouter';
+import { SAGEAuthorization } from '../permissions';
 
 ///////////////////////////////////////////////////////////////////////////////
 // SAGE3 Collection collection
@@ -35,9 +36,12 @@ export class SAGE3Collection<T extends SBJSON> {
 
   private _httpRouter!: Router;
 
-  constructor(name: string, queryableAttributes: Partial<T>) {
+  protected _authorization: SAGEAuthorization | null;
+
+  constructor(name: string, queryableAttributes: Partial<T>, authorization?: SAGEAuthorization) {
     this._name = name;
     this._queryableAttributes = queryableAttributes;
+    this._authorization = authorization ? authorization : null;
   }
 
   protected get collection(): SBCollectionRef<T> {
@@ -56,7 +60,7 @@ export class SAGE3Collection<T extends SBJSON> {
     this._collection = await SAGEBase.Database.collection<T>(this.name, this._queryableAttributes, ttl);
     // Clear the collection at initialization
     if (clear) {
-      this.deleteAll();
+      this.deleteAll('NODE_SERVER');
     }
   }
 
@@ -107,7 +111,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param id The id of the item to get
    * @returns The item if successful. Otherwise undefined
    */
-  public async get(id: string): Promise<SBDocument<T> | undefined> {
+  public async get(id: string, by: string): Promise<SBDocument<T> | undefined> {
     try {
       const doc = await this._collection.docRef(id).read();
       return doc;
@@ -122,7 +126,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param id The id of the item to get
    * @returns The item if successful. Otherwise undefined
    */
-  public getRef(id: string): SBDocumentRef<T> | undefined {
+  public getRef(id: string, by: string): SBDocumentRef<T> | undefined {
     try {
       const doc = this._collection.docRef(id);
       return doc;
@@ -137,7 +141,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param ids The ids of the items to get
    * @returns The items if successful. Otherwise undefined
    */
-  public async getBatch(ids: string[]): Promise<SBDocument<T>[] | undefined> {
+  public async getBatch(ids: string[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await Promise.all(ids.map((id) => this._collection.docRef(id).read()));
       return docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
@@ -151,7 +155,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * Get all documents from the collection
    * @returns All documents if successful. Otherwise undefined
    */
-  public async getAll(): Promise<SBDocument<T>[] | undefined> {
+  public async getAll(by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.getAllDocs();
       return docs;
@@ -167,7 +171,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param query The value to query
    * @returns The documents that match the query if successful. Otherwise undefined
    */
-  public async query(field: keyof T, query: string | number): Promise<SBDocument<T>[] | undefined> {
+  public async query(field: keyof T, query: string | number, by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.query(field, query);
       return docs;
@@ -186,6 +190,10 @@ export class SAGE3Collection<T extends SBJSON> {
    */
   public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
+      if (this._authorization) {
+        const authorized = await this._authorization?.authorize('read', by, this._name, id);
+        if (!authorized) return undefined;
+      }
       const response = await this._collection.docRef(id).update(update, by);
       return response.doc;
     } catch (error) {
@@ -204,7 +212,7 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async delete(id: string): Promise<string | undefined> {
+  public async delete(id: string, by: string): Promise<string | undefined> {
     try {
       const response = await this._collection.docRef(id).delete();
       if (response.success && response.doc) {
@@ -218,7 +226,7 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async deleteBatch(ids: string[]): Promise<string[] | undefined> {
+  public async deleteBatch(ids: string[], by: string): Promise<string[] | undefined> {
     try {
       // Wait for all promises to resolve
       const responses = await this.collection.deleteDocs(ids);
@@ -243,14 +251,18 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async deleteAll(): Promise<void> {
+  public async deleteAll(by: string): Promise<void> {
     const refs = await this._collection.getAllDocRefs();
     for (const ref of refs) {
       await ref.delete();
     }
   }
 
-  public async subscribe(id: string, callback: (message: SBDocumentMessage<T>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribe(
+    id: string,
+    callback: (message: SBDocumentMessage<T>) => void,
+    by: string
+  ): Promise<(() => Promise<void>) | undefined> {
     try {
       const app = this._collection.docRef(id);
       const unsubscribe = await app.subscribe(callback);
@@ -261,7 +273,7 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
-  public async subscribeAll(callback: (message: SBDocumentMessage<T>) => void): Promise<(() => Promise<void>) | undefined> {
+  public async subscribeAll(callback: (message: SBDocumentMessage<T>) => void, by: string): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribe(callback);
       return unsubscribe;
@@ -274,7 +286,8 @@ export class SAGE3Collection<T extends SBJSON> {
   public async subscribeByQuery(
     field: keyof T,
     value: string,
-    callback: (message: SBDocumentMessage<T>) => void
+    callback: (message: SBDocumentMessage<T>) => void,
+    by: string
   ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribeToQuery(field, value, callback);

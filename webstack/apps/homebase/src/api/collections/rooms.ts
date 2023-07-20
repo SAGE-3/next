@@ -7,7 +7,7 @@
  */
 
 import { RoomSchema } from '@sage3/shared/types';
-import { SAGE3Collection, sageRouter } from '@sage3/backend';
+import { CollectionRule, SAGE3Collection, SAGEAuth, sageRouter } from '@sage3/backend';
 
 class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
   constructor() {
@@ -18,6 +18,22 @@ class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
 
     const router = sageRouter<RoomSchema>(this);
     this.httpRouter = router;
+
+    const RoomsCollectionRules = [
+      {
+        refId_By_DocPropName: 'roomId',
+        collection: 'ROOM_MEMBERS',
+        roles: ['owner'],
+        availableActions: ['update', 'read', 'delete'],
+      },
+      {
+        refId_By_DocPropName: 'roomId',
+        collection: 'ROOM_MEMBERS',
+        roles: ['owner', 'admin', 'member'],
+        availableActions: ['read'],
+      },
+    ] as CollectionRule[];
+    SAGEAuth.addProtectedCollection(this, RoomsCollectionRules);
   }
 }
 

@@ -77,14 +77,14 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
    * Checking up the asset DB at startup.
    */
   public async check() {
-    const all = await AssetsCollection.getAll();
+    const all = await AssetsCollection.getAll('NODE_SERVER');
     console.log('Assets> count', all?.length);
     if (all) {
       for (const asset of all) {
         const exists = fs.existsSync(asset.data.path);
         if (!exists) {
           console.log('Assets> not present, deleting from DB', asset._id, asset.data.originalfilename);
-          await AssetsCollection.delete(asset._id);
+          await AssetsCollection.delete(asset._id, 'NODE_SERVER');
         }
       }
     }

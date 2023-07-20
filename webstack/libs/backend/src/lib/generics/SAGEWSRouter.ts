@@ -16,8 +16,6 @@ import { SAGE3Collection } from './SAGECollection';
 
 import { URL } from 'node:url';
 
-import { SAGEAuth } from '../permissions/SAGEAuthorization';
-
 export async function sageWSRouter<T extends SBJSON>(
   collection: SAGE3Collection<T>,
   socket: WebSocket,
@@ -40,13 +38,6 @@ export async function sageWSRouter<T extends SBJSON>(
   const method = message.method;
   if (!method) {
     socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method' }));
-    return;
-  }
-
-  // Authorize
-  const authorized = await SAGEAuth.authorize(method, user, collection.name);
-  if (!authorized) {
-    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Unauthorized' }));
     return;
   }
 
@@ -78,13 +69,13 @@ export async function sageWSRouter<T extends SBJSON>(
       const body = message.body;
       if (body && body.batch) {
         const ids = body.batch as string[];
-        const docs = await collection.getBatch(ids);
+        const docs = await collection.getBatch(ids, user.id);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
       }
       // GET: Get all the docs.
       else if (route === path) {
-        const docs = await collection.getAll();
+        const docs = await collection.getAll(user.id);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
       }
@@ -95,7 +86,7 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const doc = await collection.get(id);
+        const doc = await collection.get(id, user.id);
         if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get doc.' }));
       }
@@ -140,7 +131,7 @@ export async function sageWSRouter<T extends SBJSON>(
       const body = message.body;
       if (body && body.batch) {
         const batch = body.batch as string[];
-        const docs = await collection.deleteBatch(batch);
+        const docs = await collection.deleteBatch(batch, user.id);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete docs.' }));
       } else {
@@ -149,7 +140,7 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const del = await collection.delete(id);
+        const del = await collection.delete(id, user.id);
         if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
       }
@@ -161,7 +152,7 @@ export async function sageWSRouter<T extends SBJSON>(
         const sub = await collection.subscribeAll((doc) => {
           const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
-        });
+        }, user.id);
         if (sub) cache.add(message.id, [sub]);
       } else if (numParams > 0) {
         if (numParams != 1) {
@@ -170,10 +161,15 @@ export async function sageWSRouter<T extends SBJSON>(
         } else {
           const prop = params[0][0]; // first key
           const query = params[0][1]; // first value
-          const sub = await collection.subscribeByQuery(prop, query, (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          });
+          const sub = await collection.subscribeByQuery(
+            prop,
+            query,
+            (doc) => {
+              const msg = { id: message.id, event: doc };
+              socket.send(JSON.stringify(msg));
+            },
+            user.id
+          );
           if (sub) cache.add(message.id, [sub]);
         }
       }
@@ -184,10 +180,14 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const sub = await collection.subscribe(id, (doc) => {
-          const msg = { id: message.id, event: doc };
-          socket.send(JSON.stringify(msg));
-        });
+        const sub = await collection.subscribe(
+          id,
+          (doc) => {
+            const msg = { id: message.id, event: doc };
+            socket.send(JSON.stringify(msg));
+          },
+          user.id
+        );
         if (sub) cache.add(message.id, [sub]);
       }
       break;

@@ -17,6 +17,7 @@ import * as path from 'path';
 
 import * as jszip from 'jszip';
 import { isZip } from '@sage3/shared';
+import { SBAuthSchema } from '@sage3/sagebase';
 
 // Plugin Paths
 const pluginPath = path.join('dist', 'apps', 'homebase', 'plugins');
@@ -40,6 +41,10 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
 
     // Upload a new Plugin App
     router.post('/upload', upload.single('plugin'), async (req, res) => {
+      // Get the user information
+      const auth = req.user as SBAuthSchema;
+      const userId = auth?.id || '-';
+
       // Check for file.
       const file = req.file;
       if (file == undefined) {
@@ -115,10 +120,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             }
           });
           // Update the database
-          this.add(
-            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },
-            req.user.id
-          );
+          this.add({ name: pluginName, description, ownerId: userId, ownerName: username, dateCreated: Date.now().toString() }, userId);
           removeUploadedFile();
           res.status(200).send({ success: true, message: 'Plugin Uploaded' });
         });
@@ -129,7 +131,9 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     });
 
     // REMOVE: Remove the plugin db reference and the files locally.
-    router.delete('/remove/:id', async ({ params }, res) => {
+    router.delete('/remove/:id', async ({ params, user }, res) => {
+      const auth = user as SBAuthSchema;
+      const userId = auth?.id || '-';
       const docRef = this.collection.docRef(params.id);
       const doc = await docRef.read();
       if (doc === undefined) {
@@ -141,8 +145,8 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const name = doc.data.name;
       fs.rmSync(path.join(appsPath, name), { recursive: true, force: true });
 
-      // TODO Delete the document and the files
-      const del = await this.delete(params.id);
+      // Delete the document and the files
+      const del = await this.delete(params.id, userId);
       if (del) res.status(200).send({ success: true });
       else res.status(500).send({ success: false, message: 'Failed to delete document.' });
     });

@@ -6,24 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { SBAuthSchema, SBJSON } from '@sage3/sagebase';
+import { SBJSON } from '@sage3/sagebase';
 import { SAGE3Collection } from '../generics';
 import { RoomMembersSchema, User, UserSchema } from '@sage3/shared/types';
 
 import { ResourceArg, SAGE3Ability } from '@sage3/shared';
 
-type Method = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
-
 type Action = 'create' | 'read' | 'update' | 'delete';
-
-const methodActionMap = {
-  POST: 'create' as Action,
-  GET: 'read' as Action,
-  PUT: 'update' as Action,
-  DELETE: 'delete' as Action,
-  SUB: 'read' as Action,
-  UNSUB: 'read' as Action,
-};
 
 type ProtectedCollection = {
   name: string;
@@ -32,11 +21,47 @@ type ProtectedCollection = {
 };
 
 export type CollectionRule = {
-  refId_By_DocPropName: string;
-  collection: string;
-  roles: ('owner' | 'admin' | 'member')[];
-  checkActions: Action[];
+  refId_By_DocPropName: string; // Primary Key Reference
+  collection: string; // Collection To Reference with the Primary KEy
+  roles: ('owner' | 'admin' | 'member')[]; // What roles
+  availableActions: Action[]; // What actions
 };
+
+/**
+ *
+ * RULE
+ * {
+ *   refId_By_DocPropName: 'roomId', // Primary Key Reference
+ *   collection: 'ROOM_MEMBERS', // Collection To Reference with the Primary Key
+ *   roles: ['owner', 'admin'], // What roles
+ *   checkActions: ['create', 'read', 'update', 'delete'], // What actions
+ * }
+ *
+ *
+ * APPS
+ * {
+ *  name: 'APP1',
+ *  ...
+ *  roomId: 'ROOM1', // refId_By_DocPropName
+ * }
+ *
+ * ROOM_MEMBERS // COLLECTION
+ * ROOM_C
+ * {
+ *  roomId: 'ROOM1', // Primary Key Reference
+ *  members: [
+ *    {
+ *     userId: 'USER1',
+ *     role: 'owner' // ROLES TO CHECK
+ *    }
+ *  ]
+ *
+ *  Still working on but struggling with
+ *  ATTRIBUTE Checks
+ *  If the ROOM is private then different rules apply
+ */
+
+const backendServicesNames = ['NODE_SERVER', 'PYTON_SERVER', 'SEER_SERVER'];
 
 // export type CollectionRule = CollectionRuleUserId | CollectionRuleUserRole;
 
@@ -46,7 +71,7 @@ export type CollectionRule = {
  * It is used to authorize users to perform actions on routes in the SAGERouter and SAGEWSRouter
  * Located in webstack/libs/backend/src/lib/generics
  */
-class SAGEAuthorization {
+export class SAGEAuthorization {
   private _protectedCollections: ProtectedCollection[] = [];
 
   private _usersCollection!: SAGE3Collection<UserSchema>;
@@ -73,7 +98,7 @@ class SAGEAuthorization {
     return this._protectedCollections.find((collection) => collection.name === name);
   }
 
-  public async authorize(method: Method, user: SBAuthSchema, collectionName: string, docId: string): Promise<boolean> {
+  public async authorize(action: Action, userId: string, collectionName: string, docId: string): Promise<boolean> {
     // Check if the collection is protected
     const collection = this.getCollection(collectionName);
     if (!collection) {
@@ -81,19 +106,21 @@ class SAGEAuthorization {
     }
 
     // Check for user
-    const userId = user.id;
     if (!userId) {
       return false;
     }
+
+    // Check if this is a backend service
+    if (backendServicesNames.includes(userId)) {
+      return true;
+    }
+
     // Check for userinfo
     // Need check for SERVER or PYTHON performing action
     const userInfo = await this.getUserInfo(userId);
     if (!userInfo) {
       return false;
     }
-
-    // Map the method to an action
-    const action = methodActionMap[method];
 
     // Ability Check
     const resource = collection.name.toLowerCase() as ResourceArg;
@@ -129,7 +156,7 @@ class SAGEAuthorization {
   }
 
   private async getUserInfo(id: string): Promise<User | undefined> {
-    const user = await this._usersCollection.get(id);
+    const user = await this._usersCollection.get(id, 'NODE_SERVER');
     return user;
   }
 

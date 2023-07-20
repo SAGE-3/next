@@ -323,7 +323,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
             const text = fs.readFileSync(elt.path);
             const width = tw || 400;
             const height = th || 420;
-            const u = await UsersCollection.get(req.user.id);
+            const u = await UsersCollection.get(req.user.id, 'NODE_SERVER');
             await AppsCollection.add(
               {
                 title: u ? u.data.name : 'Unknown',
