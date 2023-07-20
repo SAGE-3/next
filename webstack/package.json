@@ -29,6 +29,7 @@
     "@chakra-ui/react": "^2.7.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@fluent-org/logger": "^1.0.10",
     "@monaco-editor/react": "^4.5.1",
     "@react-three/fiber": "^8.8.7",
     "@tanstack/react-table": "^0.0.1-alpha.0",

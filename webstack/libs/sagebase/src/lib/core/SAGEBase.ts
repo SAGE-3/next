@@ -10,13 +10,14 @@ import { createClient, RedisClientType } from 'redis';
 import { Express } from 'express';
 
 // SAGEBase Module Imports
-import { SBDatabase, SBPubSub } from '../modules';
+import { SBDatabase, SBLogConfig, SBLogger, SBPubSub } from '../modules';
 import { SBAuth, SBAuthConfig } from '../modules/auth/SBAuth';
 
 export type SAGEBaseConfig = {
   redisUrl?: string;
   projectName: string;
   authConfig?: SBAuthConfig;
+  logConfig?: SBLogConfig;
 };
 
 // The core SAGEBase class that allows access to the various modules. (Database, PubSub, Auth...etc)
@@ -57,6 +58,10 @@ class SAGEBaseCore {
     if (config.authConfig && express) {
       this._auth = new SBAuth();
       await this._auth.init(this._client, this._redisPrefix, config.authConfig, express);
+    }
+    // Init the SBLogger
+    if (config.logConfig) {
+      SBLogger.init(config.logConfig);
     }
   }
 

@@ -130,24 +130,27 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (yLines && yDoc && canAnnotate) {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        const id = Date.now().toString();
-        const yPoints = new Y.Array<number>();
+        // if primary pointing device and left button
+        if (e.isPrimary && e.button === 0) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const id = Date.now().toString();
+          const yPoints = new Y.Array<number>();
 
-        const yLine = new Y.Map();
+          const yLine = new Y.Map();
 
-        yDoc.transact(() => {
-          yLine.set('id', id);
-          yLine.set('points', yPoints);
-          yLine.set('userColor', color);
-          yLine.set('alpha', markerOpacity);
-          yLine.set('size', markerSize);
-          yLine.set('isComplete', false);
-          yLine.set('userId', user?._id);
-        });
+          yDoc.transact(() => {
+            yLine.set('id', id);
+            yLine.set('points', yPoints);
+            yLine.set('userColor', color);
+            yLine.set('alpha', markerOpacity);
+            yLine.set('size', markerSize);
+            yLine.set('isComplete', false);
+            yLine.set('userId', user?._id);
+          });
 
-        rCurrentLine.current = yLine;
-        yLines.push([yLine]);
+          rCurrentLine.current = yLine;
+          yLines.push([yLine]);
+        }
       }
     },
     [yDoc, yLines, user, color, markerOpacity, markerSize]
