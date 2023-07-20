@@ -9,6 +9,7 @@
 import { useRef, useState, Fragment, useEffect } from 'react';
 import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown } from 'react-icons/md';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
@@ -21,18 +22,18 @@ import { AppWindow } from '../../components';
 // Styling
 import './styling.css';
 
-const acknowledgments = [
-  "Thank you for your question!",
-  "Great question!",
-  "That's an interesting question!",
-  "I appreciate your curiosity!",
-  "Thanks for asking!",
-  "You've got my attention!",
-  "Wonderful question!",
-  "I'm glad you asked that!",
-  "Good question!",
-  "I love your inquisitiveness!"
-];
+// const acknowledgments = [
+//   "Thank you for your question!",
+//   "Great question!",
+//   "That's an interesting question!",
+//   "I appreciate your curiosity!",
+//   "Thanks for asking!",
+//   "You've got my attention!",
+//   "Wonderful question!",
+//   "I'm glad you asked that!",
+//   "Good question!",
+//   "I love your inquisitiveness!"
+// ];
 
 /* App component for Chat */
 
@@ -44,6 +45,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
   const geppettoColor = useHexColor('purple');
+  const geppettoTypingColor = useHexColor('orange');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
@@ -52,6 +54,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Input text for query
   const [input, setInput] = useState<string>('');
+  const [streamText, setStreamText] = useState<string>('');
   // Element to set the focus to when opening the dialog
   const inputRef = useRef<HTMLInputElement>(null);
   // Processing
@@ -91,21 +94,109 @@ function AppComponent(props: App): JSX.Element {
     // Is it a question to Geppetto?
     const isQuestion = input.startsWith('@G');
     // Add messages
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: user?.data.name,
+      query: input,
+      response: isQuestion ? 'Working on it...' : '',
+    };
     updateState(props._id, {
-      ...s,
-      messages: [
-        ...s.messages,
-        {
-          id: genId(),
-          userId: user._id,
-          creationId: '',
-          creationDate: now.epoch,
-          userName: user?.data.name,
-          query: input,
-          response: isQuestion ? acknowledgments[Math.floor(Math.random() * acknowledgments.length)] : '',
-        },
-      ],
+      ...s, messages: [...s.messages, initialAnswer],
     });
+    if (isQuestion) {
+      // Remove the @G
+      const request = input.slice(2);
+      const ctrl = new AbortController();
+      let tempText = '';
+      setStreamText(tempText);
+      // API: https://huggingface.github.io/text-generation-inference/
+      fetchEventSource('http://131.193.183.239:3000/generate_stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputs: request,
+          parameters: { "max_new_tokens": 300 },
+        }),
+        signal: ctrl.signal,
+        onmessage(msg) {
+          // if the server emits an error message, throw an exception
+          // so it gets handled by the onerror callback below:
+          if (msg.event === 'FatalError') {
+            console.log('Error>', msg.data);
+            setStreamText('');
+          } else {
+            const message = JSON.parse(msg.data);
+            if (message.generated_text) {
+              console.log('LLama2> Complete:', message.generated_text);
+              // Clear the stream text
+              setStreamText('');
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                messages: [
+                  ...s.messages, initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'Geppetto',
+                    query: '',
+                    response: message.generated_text,
+                  },
+                ],
+              });
+            } else {
+              if (message.token.text) {
+                console.log('Llama2>', message.token.text);
+                tempText += message.token.text;
+                setStreamText(tempText);
+                goToBottom();
+              }
+            }
+          }
+        },
+      });
+
+
+      // fetch('http://131.193.183.239:3000/generate', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     inputs: request,
+      //     parameters: { "max_new_tokens": 300 },
+      //   }),
+      // }).then((response) => response.json())
+      //   .then((data) => {
+      //     console.log('Llama2> response:', data);
+
+      //     // Add messages
+      //     updateState(props._id, {
+      //       ...s,
+      //       messages: [
+      //         ...s.messages, initialAnswer,
+      //         {
+      //           id: genId(),
+      //           userId: user._id,
+      //           creationId: '',
+      //           creationDate: now.epoch + 1,
+      //           userName: 'Geppetto',
+      //           query: '',
+      //           response: data.generated_text,
+      //         },
+      //       ],
+      //     });
+      //   });
+    }
+
+
     setTimeout(() => {
       // Scroll to bottom of chat box smoothly
       goToBottom();
@@ -252,6 +343,24 @@ function AppComponent(props: App): JSX.Element {
               </Fragment>
             );
           })}
+
+          {/* In progress Geppetto Messages */}
+          {streamText &&
+            <Box position="relative" my={1} maxWidth={'70%'}>
+              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                  Geppetto is typing...
+                </Text>
+              </Box>
+
+              <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoTypingColor} p={1} m={3} fontFamily="arial">
+                  {streamText}
+                </Box>
+              </Box>
+            </Box>
+          }
+
         </Box>
         <Tooltip fontSize={"xs"}
           placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
