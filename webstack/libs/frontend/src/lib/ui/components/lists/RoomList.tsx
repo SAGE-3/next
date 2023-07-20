@@ -43,7 +43,7 @@ export function RoomList(props: RoomListProps) {
   const { user } = useUser();
 
   // Abilities
-  const canCreateRoom = SAGE3Ability.can(user?.data.userRole, 'create', 'room');
+  const canCreateRoom = SAGE3Ability.can(user?.data.userRole, 'create', 'rooms');
 
   // Data stores
   const storeError = useRoomStore((state) => state.error);

@@ -29,8 +29,8 @@ export function Controller(props: ControllerProps) {
 
   // Can Annotate
   const { user } = useUser();
-  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'board');
-  const canCreateApps = SAGE3Ability.can(user?.data.userRole, 'create', 'app');
+  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'boards');
+  const canCreateApps = SAGE3Ability.can(user?.data.userRole, 'create', 'apps');
   const canDownload = SAGE3Ability.can(user?.data.userRole, 'download', 'assets');
 
   // Panel Store

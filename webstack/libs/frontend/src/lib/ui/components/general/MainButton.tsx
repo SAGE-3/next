@@ -75,8 +75,8 @@ export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
 
   // Abilties
-  const canCreatePlugins = SAGE3Ability.can(user?.data.userRole, 'create', 'plugin');
-  const canUpdateAccount = SAGE3Ability.can(user?.data.userRole, 'update', 'user');
+  const canCreatePlugins = SAGE3Ability.can(user?.data.userRole, 'create', 'plugins');
+  const canUpdateAccount = SAGE3Ability.can(user?.data.userRole, 'update', 'users');
 
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();

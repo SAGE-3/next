@@ -52,7 +52,7 @@ type UILayerProps = {
 export function UILayer(props: UILayerProps) {
   // Abilities
   const { user } = useUser();
-  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'app');
+  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'apps');
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);

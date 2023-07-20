@@ -56,7 +56,7 @@ export function BoardList(props: BoardListProps) {
 
   // Abilities
   const { user } = useUser();
-  const canCreateBoards = SAGE3Ability.can(user?.data.userRole, 'create', 'board');
+  const canCreateBoards = SAGE3Ability.can(user?.data.userRole, 'create', 'boards');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');

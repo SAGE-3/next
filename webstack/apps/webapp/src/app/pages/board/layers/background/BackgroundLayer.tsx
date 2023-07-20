@@ -24,7 +24,7 @@ type BackgroundLayerProps = {
 export function BackgroundLayer(props: BackgroundLayerProps) {
   // Abilities
   const { user } = useUser();
-  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'app');
+  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'apps');
 
   // Apps Store
   const apps = useAppStore((state) => state.apps);

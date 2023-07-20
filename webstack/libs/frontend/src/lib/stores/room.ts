@@ -46,21 +46,21 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       set({ error: null });
     },
     create: async (newRoom: RoomSchema) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'room')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
-      if (!SAGE3Ability.canCurrentUser('update', 'room')) return;
+      if (!SAGE3Ability.canCurrentUser('update', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
-      if (!SAGE3Ability.canCurrentUser('delete', 'room')) return;
+      if (!SAGE3Ability.canCurrentUser('delete', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -68,7 +68,7 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // TO DO Delete all boards belonging to the room
     },
     subscribeToAllRooms: async () => {
-      if (!SAGE3Ability.canCurrentUser('read', 'room')) return;
+      if (!SAGE3Ability.canCurrentUser('read', 'rooms')) return;
       set({ ...get(), rooms: [], fetched: false });
 
       const rooms = await APIHttp.GET<Room>('/rooms');

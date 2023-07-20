@@ -33,8 +33,8 @@ export function AppWindow(props: WindowProps) {
   const { user } = useUser();
 
   // Can update
-  const canMove = SAGE3Ability.can(user?.data.userRole, 'move', 'app');
-  const canResize = SAGE3Ability.can(user?.data.userRole, 'resize', 'app');
+  const canMove = SAGE3Ability.can(user?.data.userRole, 'move', 'apps');
+  const canResize = SAGE3Ability.can(user?.data.userRole, 'resize', 'apps');
 
   // App Store
   const apps = useAppStore((state) => state.apps);

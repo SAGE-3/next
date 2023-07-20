@@ -47,8 +47,8 @@ export function NavigationPanel(props: NavProps) {
   const { user } = useUser();
 
   // Abilities
-  const canOrganize = SAGE3Ability.can(user?.data.userRole, 'update', 'app');
-  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
+  const canOrganize = SAGE3Ability.can(user?.data.userRole, 'update', 'apps');
+  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'apps');
 
   // user's viewport
   const usersPresence = presences.find((el) => el.data.userId === user?._id);

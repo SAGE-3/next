@@ -32,7 +32,7 @@ interface Applications {
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<any>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
-  update: (id: string, updates: Partial<AppSchema>) => Promise<void>;
+  update: (id: string, updates: Partial<AppSchema>) => Promise<boolean>;
   updateBatch: (updates: { id: string; updates: Partial<AppSchema> }[]) => Promise<void>;
   updateState: (id: string, state: Partial<AppState>) => Promise<void>;
   updateStateBatch: (updates: { id: string; updates: Partial<AppState> }[]) => Promise<void>;
@@ -57,7 +57,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       set({ error: null });
     },
     create: async (newApp: AppSchema) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
       const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
       if (!app.success) {
         set({ error: { msg: app.message } });
@@ -65,21 +65,23 @@ const AppStore = createVanilla<Applications>((set, get) => {
       return app;
     },
     createBatch: async (newApps: AppSchema[]) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
       const res = await SocketAPI.sendRESTMessage('/apps', 'POST', { batch: newApps });
       if (!res.success) {
         set({ error: { msg: res.message } });
       }
     },
     update: async (id: string, updates: Partial<AppSchema>) => {
-      if (!SAGE3Ability.canCurrentUser('update', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('update', 'apps')) return false;
       const res = await SocketAPI.sendRESTMessage('/apps/' + id, 'PUT', updates);
       if (!res.success) {
         set({ error: { id, msg: res.message } });
+        return false;
       }
+      return true;
     },
     updateBatch: async (updates: { id: string; updates: Partial<AppSchema> }[]) => {
-      if (!SAGE3Ability.canCurrentUser('update', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('update', 'apps')) return;
       const res = await SocketAPI.sendRESTMessage('/apps', 'PUT', { batch: updates });
       if (!res.success) {
         set({ error: { id: updates[0].id, msg: res.message } });
@@ -88,7 +90,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     updateState: async (id: string, state: Partial<AppState>) => {
       // HOT FIX: This is a hack to make the app state update work.
       // Not really type safe and I need to figure out a way to do nested props properly.
-      if (!SAGE3Ability.canCurrentUser('update', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('update', 'apps')) return;
       const update = {} as any;
       for (const key in state) {
         update[`state.${key}`] = (state as any)[key];
@@ -101,7 +103,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
     updateStateBatch: async (updates: { id: string; updates: Partial<AppState> }[]) => {
       // HOT FIX: This is a hack to make the app state update work.
       // Not really type safe and I need to figure out a way to do nested props properly.
-      if (!SAGE3Ability.canCurrentUser('update', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('update', 'apps')) return;
       updates.forEach((u) => {
         const revisedUpdates = {} as any;
         for (const key in u.updates) {
@@ -115,7 +117,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
     },
     delete: async (id: string | string[]) => {
-      if (!SAGE3Ability.canCurrentUser('delete', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('delete', 'apps')) return;
       if (Array.isArray(id)) {
         const res = await SocketAPI.sendRESTMessage('/apps', 'DELETE', { batch: id });
         if (!res.success) {
@@ -141,7 +143,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       set({ apps: [] });
     },
     duplicateApps: async (appIds: string[], board?: Board) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
       // Get the current apps
       const apps = get().apps;
       // Find the apps to copy
@@ -242,7 +244,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       }
     },
     subToBoard: async (boardId: AppSchema['boardId']) => {
-      if (!SAGE3Ability.canCurrentUser('read', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('read', 'apps')) return;
       set({ apps: [], fetched: false });
       const apps = await APIHttp.QUERY<App>('/apps', { boardId });
       if (apps.success) {
@@ -292,7 +294,7 @@ const AppStore = createVanilla<Applications>((set, get) => {
       });
     },
     async fetchBoardApps(boardId: AppSchema['boardId']) {
-      if (!SAGE3Ability.canCurrentUser('read', 'app')) return;
+      if (!SAGE3Ability.canCurrentUser('read', 'apps')) return;
       const apps = await APIHttp.QUERY<App>('/apps', { boardId });
       if (apps.success) {
         return apps.data;

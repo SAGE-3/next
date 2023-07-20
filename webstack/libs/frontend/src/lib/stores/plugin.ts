@@ -44,14 +44,14 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       set({ error: null });
     },
     delete: async (id: string) => {
-      if (!SAGE3Ability.canCurrentUser('delete', 'plugin')) return;
+      if (!SAGE3Ability.canCurrentUser('delete', 'plugins')) return;
       const res = await APIHttp.DELETE('/plugins/remove/' + id);
     },
     upload: async (file: File, name: string, description: string) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'plugin')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'plugins')) return;
       // Uploaded with a Form object
       const fd = new FormData();
-      fd.append('plugin', file);
+      fd.append('plugins', file);
       fd.append('description', description);
       fd.append('name', name);
       const res = await fetch('/api/plugins/upload', {
@@ -62,7 +62,7 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       return resJson;
     },
     subscribeToPlugins: async () => {
-      if (!SAGE3Ability.canCurrentUser('read', 'plugin')) return;
+      if (!SAGE3Ability.canCurrentUser('read', 'plugins')) return;
       set({ ...get(), plugins: [], fetched: false });
 
       const plugins = await APIHttp.GET<Plugin>('/plugins');

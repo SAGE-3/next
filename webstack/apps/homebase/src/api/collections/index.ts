@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { CollectionRule, SAGEAuth, URLMetadata } from '@sage3/backend';
+import { URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -17,6 +17,7 @@ import {
   MessageCollection,
   PluginsCollection,
 } from '../collections';
+import { InitalizeAuthorization } from './permissions/collectionPermissions';
 
 export * from './apps';
 export * from './boards';
@@ -41,40 +42,8 @@ export async function loadCollections(): Promise<void> {
   await PresenceCollection.initialize(true);
   await PluginsCollection.initialize();
 
-  // Authorization Initialization
-  await SAGEAuth.initialize();
-  const RoomsCollectionRules = [
-    {
-      ruleType: 'userId',
-      property: 'ownerId',
-      condition: '=',
-      refCollection: RoomsCollection,
-      allowedActions: ['CREATE', 'READ', 'UPDATE', 'DELETE'],
-    },
-  ] as CollectionRule[];
-  SAGEAuth.addProtectedCollection(RoomsCollection, RoomsCollectionRules);
-
-  const BoardsCollectionRules = [
-    {
-      ruleType: 'userId',
-      property: 'ownerId',
-      condition: '=',
-      refCollection: RoomsCollection,
-      allowedActions: ['CREATE', 'READ', 'UPDATE', 'DELETE'],
-    },
-  ] as CollectionRule[];
-  SAGEAuth.addProtectedCollection(BoardsCollection, BoardsCollectionRules);
-
-  const AppsCollectionRules = [
-    {
-      ruleType: 'userId',
-      property: 'ownerId',
-      condition: '=',
-      refCollection: RoomsCollection,
-      allowedActions: ['CREATE', 'READ', 'UPDATE', 'DELETE'],
-    },
-  ] as CollectionRule[];
-  SAGEAuth.addProtectedCollection(AppsCollection, AppsCollectionRules);
+  // Initalize Authorization
+  InitalizeAuthorization();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {

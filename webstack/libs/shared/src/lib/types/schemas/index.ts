@@ -14,3 +14,4 @@ export * from './presence';
 export * from './message';
 export * from './SBSchema';
 export * from './plugin';
+export * from './roomMembers';

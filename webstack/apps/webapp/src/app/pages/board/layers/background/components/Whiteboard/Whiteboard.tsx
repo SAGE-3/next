@@ -25,7 +25,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
   // Can annotate
-  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'board');
+  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'boards');
 
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);

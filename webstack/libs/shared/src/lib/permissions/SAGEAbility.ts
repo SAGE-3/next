@@ -18,7 +18,7 @@ export type RoleArg = UserSchema['userRole'];
 
 // Resources
 export type Resource = ResourceArg | 'all';
-export type ResourceArg = 'assets' | 'app' | 'board' | 'message' | 'plugin' | 'presence' | 'room' | 'user';
+export type ResourceArg = 'assets' | 'apps' | 'boards' | 'message' | 'plugins' | 'presence' | 'rooms' | 'users';
 
 // Abliity
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -31,11 +31,11 @@ const config: AbilityConfig = {
   abilites: [
     { role: ['admin'], resource: ['all'], action: ['all'] },
     { role: ['user'], resource: ['all'], action: ['all'] },
-    { role: ['guest'], resource: ['app', 'presence', 'user'], action: ['create', 'read', 'update'] },
-    { role: ['guest'], resource: ['app'], action: ['resize', 'move', 'lasso'] },
-    { role: ['guest'], resource: ['assets', 'board', 'message', 'plugin', 'room'], action: ['read'] },
+    { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update'] },
+    { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
+    { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugins', 'rooms'], action: ['read'] },
     { role: ['guest'], resource: ['assets'], action: ['upload', 'download'] },
-    { role: ['spectator'], resource: ['assets', 'app', 'board', 'message', 'plugin', 'presence', 'room', 'user'], action: ['read'] },
+    { role: ['spectator'], resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users'], action: ['read'] },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },
   ],
 };

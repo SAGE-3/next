@@ -64,8 +64,8 @@ export function AppToolbar(props: AppToolbarProps) {
 
   //Abilities
   const { user } = useUser();
-  const canDeleteApp = SAGE3Ability.can(user?.data.userRole, 'delete', 'app');
-  const canDuplicateApp = SAGE3Ability.can(user?.data.userRole, 'create', 'app');
+  const canDeleteApp = SAGE3Ability.can(user?.data.userRole, 'delete', 'apps');
+  const canDuplicateApp = SAGE3Ability.can(user?.data.userRole, 'create', 'apps');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
