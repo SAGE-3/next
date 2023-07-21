@@ -191,7 +191,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
       if (this._authorization) {
-        const authorized = await this._authorization?.authorize('read', by, this._name, id);
+        const authorized = await this._authorization?.authorize('update', by, this._name, id);
         if (!authorized) return undefined;
       }
       const response = await this._collection.docRef(id).update(update, by);
