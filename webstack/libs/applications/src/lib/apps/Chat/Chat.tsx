@@ -7,8 +7,8 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
-import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown } from 'react-icons/md';
+import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement, HStack } from '@chakra-ui/react';
+import { MdSend, MdExpandCircleDown, MdStopCircle } from 'react-icons/md';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
@@ -63,6 +63,8 @@ function AppComponent(props: App): JSX.Element {
   const [newMessages, setNewMessages] = useState(false);
 
   const chatBox = useRef<null | HTMLDivElement>(null);
+  const ctrlRef = useRef<null | AbortController>(null);
+
   // Display some notifications
   const toast = useToast();
 
@@ -110,6 +112,8 @@ function AppComponent(props: App): JSX.Element {
       // Remove the @G
       const request = input.slice(2);
       const ctrl = new AbortController();
+      // Save the controller for later use
+      ctrlRef.current = ctrl;
       let tempText = '';
       setStreamText(tempText);
       // API: https://huggingface.github.io/text-generation-inference/
@@ -129,12 +133,13 @@ function AppComponent(props: App): JSX.Element {
           if (msg.event === 'FatalError') {
             console.log('Error>', msg.data);
             setStreamText('');
+            ctrlRef.current = null;
           } else {
             const message = JSON.parse(msg.data);
             if (message.generated_text) {
-              console.log('LLama2> Complete:', message.generated_text);
               // Clear the stream text
               setStreamText('');
+              ctrlRef.current = null;
               // Add messages
               updateState(props._id, {
                 ...s,
@@ -153,7 +158,6 @@ function AppComponent(props: App): JSX.Element {
               });
             } else {
               if (message.token.text) {
-                console.log('Llama2>', message.token.text);
                 tempText += message.token.text;
                 setStreamText(tempText);
                 goToBottom();
@@ -162,38 +166,6 @@ function AppComponent(props: App): JSX.Element {
           }
         },
       });
-
-
-      // fetch('http://131.193.183.239:3000/generate', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     inputs: request,
-      //     parameters: { "max_new_tokens": 300 },
-      //   }),
-      // }).then((response) => response.json())
-      //   .then((data) => {
-      //     console.log('Llama2> response:', data);
-
-      //     // Add messages
-      //     updateState(props._id, {
-      //       ...s,
-      //       messages: [
-      //         ...s.messages, initialAnswer,
-      //         {
-      //           id: genId(),
-      //           userId: user._id,
-      //           creationId: '',
-      //           creationDate: now.epoch + 1,
-      //           userName: 'Geppetto',
-      //           query: '',
-      //           response: data.generated_text,
-      //         },
-      //       ],
-      //     });
-      //   });
     }
 
 
@@ -209,6 +181,35 @@ function AppComponent(props: App): JSX.Element {
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "smooth",
     });
+  };
+
+  const stopGepetto = async () => {
+    if (ctrlRef.current && user) {
+      console.log('Geppetto> stopping');
+      ctrlRef.current.abort();
+      ctrlRef.current = null;
+      if (streamText) {
+        // Get server time
+        const now = await serverTime();
+        // Add the current text as a message
+        updateState(props._id, {
+          ...s,
+          messages: [
+            ...s.messages,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch,
+              userName: 'Geppetto',
+              query: '',
+              response: streamText + '...(interrupted)',
+            },
+          ],
+        });
+      }
+      setStreamText('');
+    }
   };
 
   useEffect(() => {
@@ -227,10 +228,6 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     });
-    // inputRef.current?.addEventListener('focus', (e) => {
-    //   // Scroll to bottom of chat box smoothly
-    //   goToBottom();
-    // });
   }, []);
 
   useEffect(() => {
@@ -362,15 +359,27 @@ function AppComponent(props: App): JSX.Element {
           }
 
         </Box>
-        <Tooltip fontSize={"xs"}
-          placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
-          <IconButton aria-label='Messages' size={"xs"}
-            p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
-            icon={<MdExpandCircleDown size={"xs"} />}
-            isDisabled={!newMessages}
-            onClick={goToBottom}
-          />
-        </Tooltip>
+        <HStack>
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
+            <IconButton aria-label='Messages' size={"xs"}
+              p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
+              icon={<MdExpandCircleDown size={"xs"} />}
+              isDisabled={!newMessages}
+              onClick={goToBottom}
+              width="50%"
+            />
+          </Tooltip>
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={"Stop Geppetto"} openDelay={400}>
+            <IconButton aria-label='Messages' size={"xs"}
+              p={0} m={0} colorScheme={"blue"} variant='ghost'
+              icon={<MdStopCircle size={"xs"} />}
+              onClick={stopGepetto}
+              width="50%"
+            />
+          </Tooltip>
+        </HStack>
         <InputGroup bg={"blackAlpha.100"}>
           <Input placeholder='Chat or @G Ask me anyting' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
             onChange={handleChange}
