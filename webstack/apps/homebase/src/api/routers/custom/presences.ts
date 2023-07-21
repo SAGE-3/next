@@ -3,19 +3,20 @@
 import { Presence } from '@sage3/shared/types';
 import { PresenceCollection } from '../../collections';
 import { WebSocket } from 'ws';
+import { throttle } from 'throttle-debounce';
 
 // Default tick rate is 15 times per second
 const defaultTickRate = 1000 / 15;
 
 class PresenceThrottleClass {
-  private _clients: Map<string, WebSocket>;
+  private _subscriptions: Map<string, WebSocket>;
   private _tickRate: number;
   private _initialized: boolean;
 
   private _presences: Presence[];
 
   constructor(tickRate = defaultTickRate) {
-    this._clients = new Map();
+    this._subscriptions = new Map();
     this._tickRate = tickRate;
     this._presences = [];
     this._initialized = false;
@@ -26,6 +27,10 @@ class PresenceThrottleClass {
     if (p) {
       this._presences = p;
     }
+    // Throttle Function
+    const throttleUpdate = throttle(this._tickRate, () => this.sendUpdates());
+
+    // Subscribe to Presence Collection
     await PresenceCollection.subscribeAll((message) => {
       switch (message.type) {
         case 'CREATE': {
@@ -54,29 +59,41 @@ class PresenceThrottleClass {
           this._presences = remainingPresences;
         }
       }
+      // Send the updates
+      throttleUpdate();
     });
+
+    // Init is done
     this._initialized = true;
-    setInterval(() => this.sendUpdates(), this._tickRate);
     return;
   }
 
-  addClient(id: string, socket: WebSocket) {
-    this._clients.set(id, socket);
+  /**
+   * Add a subscription
+   * @param id Id of the subscription
+   * @param socket The websocket that is subscribed
+   */
+  addSubscription(id: string, socket: WebSocket) {
+    this._subscriptions.set(id, socket);
     // On Disconnect remove from client list
     socket.on('close', () => {
       this.removeClient(id);
     });
   }
 
+  /**
+   * Remove a  subscription
+   * @param id Id of the subscription
+   */
   removeClient(id: string) {
-    this._clients.delete(id);
+    this._subscriptions.delete(id);
   }
 
   sendUpdates() {
     if (!this._initialized) return;
-    this._clients.forEach((client, key) => {
+    this._subscriptions.forEach((socket, key) => {
       const msg = { id: key, event: { doc: this._presences } };
-      client.send(JSON.stringify(msg));
+      socket.send(JSON.stringify(msg));
     });
   }
 }

@@ -90,8 +90,11 @@ export async function subscriptionWSRouter(
         if (boardSub) subs.push(boardSub);
         if (appsSub) subs.push(appsSub);
         if (subs) cache.add(message.id, subs);
-      } else if (message.route.startsWith('/api/subscription/presence/')) {
-        PresenceThrottle.addClient(message.id, socket);
+      }
+      // Subscribe to the presence collection
+      // Presence collection is unique in that it is throttled
+      else if (message.route === '/api/subscription/presence') {
+        PresenceThrottle.addSubscription(message.id, socket);
       }
       break;
     }

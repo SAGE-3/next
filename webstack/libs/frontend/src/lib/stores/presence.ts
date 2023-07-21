@@ -78,7 +78,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = `/subscription/presence/`;
+      const route = `/subscription/presence`;
       presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
         console.log('prence update');
         const presences = message.doc as Presence[];
