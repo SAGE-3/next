@@ -1,25 +1,5 @@
 #!/bin/bash
 
-# URL
-#server="traoumad.evl.uic.edu"
-server="127.0.0.1:3333"
-
-# runtime in sec
-length=120
-
-# which board
-room="7c49fabf-74f2-40e1-88e4-5728f55770f0"
-board="dedcf4b9-374e-4ceb-b47d-54026bca407d"
-
-# how many pointers
-pointers=10
-
-for i in $(seq 1 ${pointers})
-do
-	node pointer.js -r 10 -s $server -b $board -m $room -t $length &
-done
-
-
 # Usage: pointer [options]
 #
 # Options:
@@ -28,5 +8,23 @@ done
 # -t, --timeout <n>  runtime in sec (number) (default: 10)
 # -r, --rate <n>     framerate (number) (default: 10)
 # -s, --server <s>   Server URL (string) (default: "http://localhost:3333")
+# -e, --sensitivity <n>  sensitivity (number) (default: 5)
 # -h, --help         display help for command
 
+# URL
+#server="traoumad.evl.uic.edu"
+server="127.0.0.1:3333"
+
+# runtime in sec
+length=120
+
+# which board
+room="c809cd21-32fe-4b94-a487-5582b69ab364"
+board="29577580-b326-4aff-836c-d2f65250ee97"
+
+# how many pointers
+pointers=5
+
+for i in $(seq 1 ${pointers}); do
+  node pointer.js -r 20 -s $server -b $board -m $room -t $length -e 10 &
+done

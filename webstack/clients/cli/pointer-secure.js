@@ -69,7 +69,7 @@ const colors = ['green', 'blue', 'gray', 'orange', 'purple', 'yellow', 'red', 'c
 
 async function start() {
   // Login through HTTP
-  const cookies = await loginGuestUser('http://' + params.server);
+  const cookies = await loginGuestUser('https://' + params.server);
   console.log('CLI> Logged in');
 
   // Build a user
@@ -85,7 +85,7 @@ async function start() {
     userType: 'client',
   };
 
-  const me = await loginCreateUser('http://' + params.server, userData);
+  const me = await loginCreateUser('https://' + params.server, userData);
   myID = me._id;
 
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
@@ -101,7 +101,7 @@ async function start() {
   console.log('CLI> rooms', roomData);
 
   // Create a websocket with the auth cookies
-  const socket = socketConnection('ws://' + params.server + '/api', cookies);
+  const socket = socketConnection('wss://' + params.server + '/api', cookies);
 
   // When socket connected
   socket.on('open', () => {
