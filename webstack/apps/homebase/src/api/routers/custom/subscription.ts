@@ -28,6 +28,7 @@ import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collect
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
+import { PresenceThrottle } from './presences';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
@@ -89,6 +90,8 @@ export async function subscriptionWSRouter(
         if (boardSub) subs.push(boardSub);
         if (appsSub) subs.push(appsSub);
         if (subs) cache.add(message.id, subs);
+      } else if (message.route.startsWith('/api/subscription/presence/')) {
+        PresenceThrottle.addClient(message.id, socket);
       }
       break;
     }

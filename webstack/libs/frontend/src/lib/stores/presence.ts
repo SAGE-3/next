@@ -22,7 +22,6 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 interface PresenceState {
   presences: Presence[];
   partialPrescences: PresencePartial[];
-  // presencesReduced: Partial<Presence>[];
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<PresenceSchema>) => void;
@@ -79,42 +78,12 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = `/presence`;
+      const route = `/subscription/presence/`;
       presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
-        switch (message.type) {
-          case 'CREATE': {
-            const docs = message.doc as Presence[];
-            set({ presences: [...get().presences, ...docs] });
-            get().setPartialPresence([...get().presences]);
-            break;
-          }
-          case 'UPDATE': {
-            const docs = message.doc as Presence[];
-            const presences = [...get().presences];
-            docs.forEach((doc) => {
-              const idx = presences.findIndex((el) => el._id === doc._id);
-              if (idx > -1) {
-                // merge the update with current value
-                presences[idx] = { ...presences[idx], ...doc };
-              }
-            });
-            set({ presences });
-            const updateKeys = Object.keys(message.updates[0].updates);
-            const checkKeys = ['status', 'userId', 'roomId', 'boardId', 'following'];
-            if (updateKeys.some((el) => checkKeys.includes(el))) {
-              get().setPartialPresence(presences);
-            }
-            break;
-          }
-          case 'DELETE': {
-            const docs = message.doc as Presence[];
-            const ids = docs.map((d) => d._id);
-            const presences = [...get().presences];
-            const remainingPresences = presences.filter((a) => !ids.includes(a._id));
-            set({ presences: remainingPresences });
-            get().setPartialPresence(remainingPresences);
-          }
-        }
+        console.log('prence update');
+        const presences = message.doc as Presence[];
+        set({ presences });
+        get().setPartialPresence(presences);
       });
     },
   };

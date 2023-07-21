@@ -5,3 +5,4 @@ export * from './time';
 export * from './nlp';
 export * from './subscription';
 export * from './logs';
+export * from './presences';
