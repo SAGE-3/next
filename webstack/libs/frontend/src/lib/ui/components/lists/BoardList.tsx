@@ -45,7 +45,7 @@ export function BoardList(props: BoardListProps) {
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
 
   // Create board dialog
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -144,7 +144,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='create a board' borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create a board" borderRadius="md" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>

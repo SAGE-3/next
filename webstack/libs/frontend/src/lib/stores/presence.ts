@@ -13,7 +13,7 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { Presence, PresenceSchema } from '@sage3/shared/types';
+import { Presence, PresencePartial, PresenceSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
@@ -21,10 +21,13 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface PresenceState {
   presences: Presence[];
+  partialPrescences: PresencePartial[];
+  // presencesReduced: Partial<Presence>[];
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<PresenceSchema>) => void;
   subscribe: () => Promise<void>;
+  setPartialPresence: (presences: Presence[]) => void;
 }
 
 /**
@@ -39,7 +42,16 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   let presenceSub: (() => void) | null = null;
   return {
     presences: [],
+    partialPrescences: [],
     error: null,
+    setPartialPresence: (presences: Presence[]) => {
+      const partialPrescences = presences.map((p) => {
+        // Neat trick to remove cursor and viewport from the data
+        const { cursor, viewport, ...partial } = p.data;
+        return { ...p, data: partial } as PresencePartial;
+      });
+      set({ partialPrescences });
+    },
     clearError: () => {
       set({ error: null });
     },
@@ -51,10 +63,11 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       }
     },
     subscribe: async () => {
-      set({ presences: [] });
+      set({ presences: [], partialPrescences: [] });
       const reponse = await APIHttp.GET<Presence>('/presence');
       if (reponse.success) {
         set({ presences: reponse.data });
+        get().setPartialPresence(reponse.data as Presence[]);
       } else {
         set({ error: reponse.message });
         return;
@@ -72,6 +85,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
           case 'CREATE': {
             const docs = message.doc as Presence[];
             set({ presences: [...get().presences, ...docs] });
+            get().setPartialPresence([...get().presences]);
             break;
           }
           case 'UPDATE': {
@@ -85,6 +99,11 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
               }
             });
             set({ presences });
+            const updateKeys = Object.keys(message.updates[0].updates);
+            const checkKeys = ['status', 'userId', 'roomId', 'boardId', 'following'];
+            if (updateKeys.some((el) => checkKeys.includes(el))) {
+              get().setPartialPresence(presences);
+            }
             break;
           }
           case 'DELETE': {
@@ -93,6 +112,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
             const presences = [...get().presences];
             const remainingPresences = presences.filter((a) => !ids.includes(a._id));
             set({ presences: remainingPresences });
+            get().setPartialPresence(remainingPresences);
           }
         }
       });

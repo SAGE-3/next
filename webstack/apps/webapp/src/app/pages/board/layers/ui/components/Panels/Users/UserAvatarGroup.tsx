@@ -18,14 +18,13 @@ import { MdRemoveRedEye } from 'react-icons/md';
 
 // Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
-import { Presence, User } from '@sage3/shared/types';
-
+import { PresencePartial, User } from '@sage3/shared/types';
 
 type AvatarGroupProps = {
   boardId: string;
 };
 
-type UserAndPresence = { presence: Presence; user: User };
+type UserAndPresence = { presence: PresencePartial; user: User };
 export function UserAvatarGroup(props: AvatarGroupProps) {
   // Get current user
   const { user } = useUser();
@@ -45,7 +44,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
   // Get all users
   const users = useUsersStore((state) => state.users);
   // Get presences of users
-  let presences = usePresenceStore((state) => state.presences);
+  let presences = usePresenceStore((state) => state.partialPrescences);
 
   // Filter out the users who are not present on the board and is not the current user
   presences = presences.filter((el) => el.data.boardId === props.boardId && el._id !== user?._id);
@@ -87,40 +86,36 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     const aType = a?.user.data.userType === 'wall' ? 0 : 1;
     const bType = b?.user.data.userType === 'wall' ? 0 : 1;
     return aType - bType;
-  })
+  });
 
   // Go to the user's cursor
   function goToCursor(user: UserAndPresence) {
     if (user) {
-      const cx = -user.presence.data.cursor.x;
-      const cy = -user.presence.data.cursor.y;
-      const wx = window.innerWidth / scale / 2;
-      const wy = window.innerHeight / scale / 2;
-
-      setBoardPosition({ x: cx + wx, y: cy + wy });
+      // const cx = -user.presence.data.cursor.x;
+      // const cy = -user.presence.data.cursor.y;
+      // const wx = window.innerWidth / scale / 2;
+      // const wy = window.innerHeight / scale / 2;
+      // setBoardPosition({ x: cx + wx, y: cy + wy });
     }
   }
 
   // Go to the user's viewport
   function goToViewport(user: UserAndPresence) {
     if (user) {
-      const type = user.user.data.userType;
-      const vx = -user.presence.data.viewport.position.x;
-      const vy = -user.presence.data.viewport.position.y;
-      const vw = -user.presence.data.viewport.size.width;
-      const vh = -user.presence.data.viewport.size.height;
-      const vcx = vx + vw / 2;
-      const vcy = vy + vh / 2;
-
-      const ww = window.innerWidth;
-      const wh = window.innerHeight;
-
-      const s = Math.min(ww / -vw, wh / -vh);
-      const cx = vcx + ww / s / 2;
-      const cy = vcy + wh / s / 2;
-
-      setScale(s);
-      setBoardPosition({ x: cx, y: cy });
+      // const type = user.user.data.userType;
+      // const vx = -user.presence.data.viewport.position.x;
+      // const vy = -user.presence.data.viewport.position.y;
+      // const vw = -user.presence.data.viewport.size.width;
+      // const vh = -user.presence.data.viewport.size.height;
+      // const vcx = vx + vw / 2;
+      // const vcy = vy + vh / 2;
+      // const ww = window.innerWidth;
+      // const wh = window.innerHeight;
+      // const s = Math.min(ww / -vw, wh / -vh);
+      // const cx = vcx + ww / s / 2;
+      // const cy = vcy + wh / s / 2;
+      // setScale(s);
+      // setBoardPosition({ x: cx, y: cy });
     }
   }
 
