@@ -59,12 +59,12 @@ export function PresenceComponent(props: PresenceProps) {
   const { mouseToBoard } = useCursorBoardPosition();
 
   // Throttle the Update
-  const throttleCursorUpdate = throttle(FastUpdateRate, (cx: number, cy: number) => {
+  const throttleCursorUpdate = throttle(MediumUpdateRate, (cx: number, cy: number) => {
     if (user && cx && cy) {
       updatePresence(user?._id, { cursor: { x: cx, y: cy, z: 0 } });
     }
   });
-  const throttleViewportUpdate = throttle(FastUpdateRate, (vx: number, vy: number, vw: number, vh: number) => {
+  const throttleViewportUpdate = throttle(MediumUpdateRate, (vx: number, vy: number, vw: number, vh: number) => {
     if (user) {
       const viewport = { position: { x: vx, y: vy, z: 0 }, size: { width: vw, height: vh, depth: 0 } };
       updatePresence(user?._id, { viewport });
@@ -101,9 +101,9 @@ export function PresenceComponent(props: PresenceProps) {
       {showPresence && (
         <>
           {/* User Cursors */}
-          <Cursors users={awareness} />
+          <Cursors users={awareness} rate={MediumUpdateRate} />
           {/* User Viewports */}
-          <Viewports users={awareness} />
+          <Viewports users={awareness} rate={MediumUpdateRate} />
         </>
       )}
     </>

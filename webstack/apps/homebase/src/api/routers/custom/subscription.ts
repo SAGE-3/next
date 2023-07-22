@@ -28,7 +28,7 @@ import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collect
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import { PresenceThrottle } from './presences';
+import { PresenceThrottle } from './presencethrottle';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS

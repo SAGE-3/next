@@ -17,6 +17,7 @@ import { Awareness } from './PresenceComponent';
 
 type CursorProps = {
   users: Awareness[];
+  rate: number;
 };
 
 // Render the User Cursors that belong to the board
@@ -33,7 +34,7 @@ export function Cursors(props: CursorProps) {
         const name = u.user.data.name;
         const color = u.user.data.color;
         const cursor = u.presence.data.cursor;
-        return <UserCursorMemo key={'cursor-' + u.user._id} color={color} position={cursor} name={name} scale={scale} />;
+        return <UserCursorMemo key={'cursor-' + u.user._id} color={color} position={cursor} name={name} scale={scale} rate={props.rate} />;
       })}
     </>
   );
@@ -47,6 +48,7 @@ type UserCursorProps = {
   color: string;
   position: PresenceSchema['cursor'];
   scale: number;
+  rate: number;
 };
 
 /**
@@ -87,8 +89,9 @@ function UserCursor(props: UserCursorProps) {
         position: 'absolute',
         left: props.position.x + 'px',
         top: props.position.y + 'px',
-        // commented out: slow down the update
-        // transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        // Testing if we can transition using the rate. Smooths out the transition
+        transitionDuration: `${props.rate / 1000}s`,
+        transitionProperty: 'left, top',
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',

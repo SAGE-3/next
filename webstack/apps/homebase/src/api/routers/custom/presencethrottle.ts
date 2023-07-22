@@ -1,4 +1,10 @@
-// Custom Subscription for Presence to throttle the updates to the clients
+/**
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
 
 import { Presence } from '@sage3/shared/types';
 import { PresenceCollection } from '../../collections';
@@ -8,11 +14,17 @@ import { throttle } from 'throttle-debounce';
 // Default tick rate is 15 times per second
 const defaultTickRate = 1000 / 15;
 
+/**
+ * Presence Throttle Class
+ * This class is responsible for throttling the presence updates to the clients
+ * It will subscribe to the Presence Collection and send updates to all subscribed clients
+ * It will also throttle the updates to the clients to a certain tick rate
+ * This is to prevent the clients from being overloaded with updates
+ */
 class PresenceThrottleClass {
   private _subscriptions: Map<string, WebSocket>;
   private _tickRate: number;
   private _initialized: boolean;
-
   private _presences: Presence[];
 
   constructor(tickRate = defaultTickRate) {
@@ -22,6 +34,9 @@ class PresenceThrottleClass {
     this._initialized = false;
   }
 
+  /**
+   * Initialize the Presence Throttle
+   */
   async init() {
     const p = await PresenceCollection.getAll();
     if (p) {
@@ -89,7 +104,10 @@ class PresenceThrottleClass {
     this._subscriptions.delete(id);
   }
 
-  sendUpdates() {
+  /**
+   * Send updates to all subscribed clients
+   */
+  sendUpdates(): void {
     if (!this._initialized) return;
     this._subscriptions.forEach((socket, key) => {
       const msg = { id: key, event: { doc: this._presences } };

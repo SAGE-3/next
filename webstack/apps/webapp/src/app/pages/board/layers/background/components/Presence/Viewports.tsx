@@ -14,6 +14,7 @@ import { Awareness } from './PresenceComponent';
 
 type ViewportProps = {
   users: Awareness[];
+  rate: number;
 };
 
 export function Viewports(props: ViewportProps) {
@@ -30,7 +31,15 @@ export function Viewports(props: ViewportProps) {
         const viewport = u.presence.data.viewport;
         const isWall = u.user.data.userType === 'wall';
         return (
-          <UserViewportMemo key={'viewport-' + u.user._id} isWall={isWall} name={name} color={color} viewport={viewport} scale={scale} />
+          <UserViewportMemo
+            key={'viewport-' + u.user._id}
+            isWall={isWall}
+            name={name}
+            color={color}
+            viewport={viewport}
+            scale={scale}
+            rate={props.rate}
+          />
         );
       })}
     </>
@@ -43,6 +52,7 @@ type UserViewportProps = {
   viewport: PresenceSchema['viewport'];
   scale: number;
   isWall: boolean;
+  rate: number;
 };
 
 function UserViewport(props: UserViewportProps) {
@@ -73,7 +83,7 @@ function UserViewport(props: UserViewportProps) {
       borderRadius={borderRadius}
       transitionProperty="left, top, width, height"
       transitionTimingFunction={'ease-in-out'}
-      transitionDuration={'0.5s'}
+      transitionDuration={props.rate / 1000 + 's'}
       transitionDelay={'0s'}
       color="white"
       fontSize={fontSize + 'px'}

@@ -49,6 +49,9 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
         const { cursor, viewport, ...partial } = p.data;
         return { ...p, data: partial } as PresencePartial;
       });
+      // Check if an elements in the array changed
+      // If it did, then update the state
+
       set({ partialPrescences });
     },
     clearError: () => {
@@ -80,7 +83,6 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       // Socket Subscribe Message
       const route = `/subscription/presence`;
       presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
-        console.log('prence update');
         const presences = message.doc as Presence[];
         set({ presences });
         get().setPartialPresence(presences);
