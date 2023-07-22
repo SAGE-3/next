@@ -11,16 +11,7 @@ import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, Butto
 
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
 
-import {
-  ConfirmModal,
-  useAppStore,
-  useBoardStore,
-  useHexColor,
-  usePresenceStore,
-  useUIStore,
-  useUser,
-  useUsersStore,
-} from '@sage3/frontend';
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
@@ -40,13 +31,9 @@ export function NavigationPanel(props: NavProps) {
   // UI Store
   const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom, scale } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
-  // Users and Presecnes for cursors
-  const presences = usePresenceStore((state) => state.presences);
-  const users = useUsersStore((state) => state.users);
-  const { user } = useUser();
 
   // user's viewport
-  const usersPresence = presences.find((el) => el.data.userId === user?._id);
+  const { user } = useUser();
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
   const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
   const userViewport = useUIStore((state) => state.viewport);
@@ -122,14 +109,14 @@ export function NavigationPanel(props: NavProps) {
   // Organize board using python function
   function organizeApps() {
     // get presence of current user for its viewport
-    const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === user?._id)[0];
+
     // Trigger the smart function
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'reorganize_layout',
         params: {
-          viewport_position: presence.data.viewport.position,
-          viewport_size: presence.data.viewport.size,
+          viewport_position: userViewport.position,
+          viewport_size: userViewport.size,
           by: 'app_type',
           mode: 'tiles',
         },
@@ -197,18 +184,8 @@ export function NavigationPanel(props: NavProps) {
                     </Tooltip>
                   );
                 })}
-              {/* Draw the cursors: filter by board and not myself */}
-              {presences
-                .filter((el) => el.data.boardId === props.boardId)
-                .map((presence) => {
-                  const u = users.find((el) => el._id === presence.data.userId);
-                  if (!u) return null;
-                  return (
-                    <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
-                  );
-                })}
               {/* View of the User's Viewport */}
-              {usersPresence && (
+              {userViewport && (
                 <Box
                   backgroundColor={userViewportBGColor}
                   position="absolute"
