@@ -96,6 +96,7 @@ export function PresenceComponent(props: PresenceProps) {
       throttleCursorUpdateFunc(x, y);
     }
   }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight, boardDragging, mouseToBoard]);
+
   return (
     <>
       {showPresence && (
