@@ -37,7 +37,7 @@ class SmartBitFactory:
                 smartbit_type = "GenericSmartBit"
 
             smartbit_class = import_cls(cls_path, smartbit_type)
-        except Exception as e: # eror in the import
+        except Exception as e: # error in the import
             logger.error(f"Couldn't not import {smartbit_type} from {cls_path} {e}")
 
         try:
@@ -50,8 +50,8 @@ class SmartBitFactory:
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
                 else:
-                    logger.erorr(f"Couldn't convert following doc to actual smartbit: {doc}")
-                    # raise Exception("Couldn't conver doc to actual smartbit")
+                    logger.error(f"Couldn't convert following doc to actual smartbit: {doc}")
+                    # raise Exception("Couldn't convert doc to actual smartbit")
             except Exception as e:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")
 
