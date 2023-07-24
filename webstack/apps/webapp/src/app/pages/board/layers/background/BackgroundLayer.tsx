@@ -13,7 +13,7 @@ import { DraggableData, Rnd } from 'react-rnd';
 
 import { useAppStore, useUIStore } from '@sage3/frontend';
 
-import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -110,12 +110,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Lasso boardId={props.boardId} />
         {/* The board's apps */}
         <Apps />
-        {/* User Cursors */}
-        <Cursors boardId={props.boardId} />
-        {/* User Viewports */}
-        <Viewports boardId={props.boardId} />
-        {/* This user updating prensence */}
-        <UserPresenceUpdate />
+        {/* Presence of the users */}
+        <PresenceComponent boardId={props.boardId} />
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />

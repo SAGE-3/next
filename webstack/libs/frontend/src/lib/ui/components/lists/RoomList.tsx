@@ -53,7 +53,7 @@ export function RoomList(props: RoomListProps) {
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
@@ -140,12 +140,12 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='create room' borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create room" borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
               <Tooltip label="Enter Board by ID" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label='enter board' borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
+                <Button aria-label="enter board" borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
                   <MdExitToApp />
                 </Button>
               </Tooltip>
