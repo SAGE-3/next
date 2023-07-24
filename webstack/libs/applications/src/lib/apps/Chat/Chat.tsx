@@ -6,12 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect, useCallback } from 'react';
+import { useRef, useState, Fragment, useEffect } from 'react';
 import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement, HStack, useFocusEffect } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle } from 'react-icons/md';
 
 // Server Sent Event library
 import { fetchEventSource } from '@microsoft/fetch-event-source';
+
+import Markdown from 'markdown-to-jsx';
 
 import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
@@ -133,6 +135,11 @@ function AppComponent(props: App): JSX.Element {
           <s>[INST] {{ user_msg_2 }} [/INST]
         */
         complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+      } else {
+        // Test to tweak the system prompt
+        complete_request = `<s>[INST] <<SYS>>You are a helpful and honest assistant that answer questions in Markdown format. ` +
+          `Always answer as helpfully as possible, while being safe. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. ` +
+          `If you don't know the answer to a question, please don't share false information.<</SYS>> ${request} [/INST]`;
       }
       // API: https://huggingface.github.io/text-generation-inference/
       fetchEventSource('http://131.193.183.239:3000/generate_stream', {
@@ -365,7 +372,11 @@ function AppComponent(props: App): JSX.Element {
                               status: 'success',
                             });
                           }}>
-                          {message.response}
+                          <Box pl={3}>
+                            <Markdown style={{ marginLeft: "15px", textIndent: "4px" }}>
+                              {message.response}
+                            </Markdown>
+                          </Box>
                         </Box>
                       </Tooltip>
                     </Box>
