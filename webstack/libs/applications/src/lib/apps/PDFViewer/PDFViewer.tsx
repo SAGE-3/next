@@ -397,6 +397,21 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
+          <Button onClick={() => {
+            if (file) {
+              const url = file?.data.file;
+              const filename = file?.data.originalfilename;
+              downloadFile('api/assets/static/' + url, filename);
+            }
+          }}
+          >
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
@@ -405,18 +420,6 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px">
-            <MenuItem
-              icon={<MdFileDownload />}
-              onClick={() => {
-                if (file) {
-                  const url = file?.data.file;
-                  const filename = file?.data.originalfilename;
-                  downloadFile('api/assets/static/' + url, filename);
-                }
-              }}
-            >
-              Download
-            </MenuItem>
             <MenuItem
               icon={<MdFileDownload />}
               onClick={() => {
