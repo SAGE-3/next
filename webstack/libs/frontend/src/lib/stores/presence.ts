@@ -13,7 +13,7 @@ import createVanilla from 'zustand/vanilla';
 import createReact from 'zustand';
 
 // Application specific schema
-import { Presence, PresenceSchema } from '@sage3/shared/types';
+import { Presence, PresencePartial, PresenceSchema } from '@sage3/shared/types';
 import { APIHttp, SocketAPI } from '../api';
 
 // Dev Tools
@@ -22,10 +22,12 @@ import { SAGE3Ability } from '@sage3/shared';
 
 interface PresenceState {
   presences: Presence[];
+  partialPrescences: PresencePartial[];
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<PresenceSchema>) => void;
   subscribe: () => Promise<void>;
+  setPartialPresence: (presences: Presence[]) => void;
 }
 
 /**
@@ -40,7 +42,19 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   let presenceSub: (() => void) | null = null;
   return {
     presences: [],
+    partialPrescences: [],
     error: null,
+    setPartialPresence: (presences: Presence[]) => {
+      const partialPrescences = presences.map((p) => {
+        // Neat trick to remove cursor and viewport from the data
+        const { cursor, viewport, ...partial } = p.data;
+        return { ...p, data: partial } as PresencePartial;
+      });
+      // Check if an elements in the array changed
+      // If it did, then update the state
+
+      set({ partialPrescences });
+    },
     clearError: () => {
       set({ error: null });
     },
@@ -53,10 +67,11 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
     },
     subscribe: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'presence')) return;
-      set({ presences: [] });
+      set({ presences: [], partialPrescences: [] });
       const reponse = await APIHttp.GET<Presence>('/presence');
       if (reponse.success) {
         set({ presences: reponse.data });
+        get().setPartialPresence(reponse.data as Presence[]);
       } else {
         set({ error: reponse.message });
         return;
@@ -68,35 +83,11 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = `/presence`;
+      const route = `/subscription/presence`;
       presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
-        switch (message.type) {
-          case 'CREATE': {
-            const docs = message.doc as Presence[];
-            set({ presences: [...get().presences, ...docs] });
-            break;
-          }
-          case 'UPDATE': {
-            const docs = message.doc as Presence[];
-            const presences = [...get().presences];
-            docs.forEach((doc) => {
-              const idx = presences.findIndex((el) => el._id === doc._id);
-              if (idx > -1) {
-                // merge the update with current value
-                presences[idx] = { ...presences[idx], ...doc };
-              }
-            });
-            set({ presences });
-            break;
-          }
-          case 'DELETE': {
-            const docs = message.doc as Presence[];
-            const ids = docs.map((d) => d._id);
-            const presences = [...get().presences];
-            const remainingPresences = presences.filter((a) => !ids.includes(a._id));
-            set({ presences: remainingPresences });
-          }
-        }
+        const presences = message.doc as Presence[];
+        set({ presences });
+        get().setPartialPresence(presences);
       });
     },
   };

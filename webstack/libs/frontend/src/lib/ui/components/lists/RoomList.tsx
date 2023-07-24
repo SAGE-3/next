@@ -49,7 +49,7 @@ export function RoomList(props: RoomListProps) {
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');

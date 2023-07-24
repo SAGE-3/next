@@ -46,7 +46,7 @@ export function BoardList(props: BoardListProps) {
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
 
   // Create board dialog
   const { isOpen, onOpen, onClose } = useDisclosure();

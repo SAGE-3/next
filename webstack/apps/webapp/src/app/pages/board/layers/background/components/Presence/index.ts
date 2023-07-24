@@ -6,4 +6,4 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-/* CSS definitions for the app Chat */
+export * from './PresenceComponent';
