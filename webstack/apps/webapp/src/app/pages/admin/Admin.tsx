@@ -6,20 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
-
-import { JoinBoardCheck, useConfigStore, MainButton, Clock } from '@sage3/frontend';
-
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-
-import './adminStyle.css';
+import { Code, Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabList, TabPanel, TabPanels, Tabs, useToast } from '@chakra-ui/react';
 
 // Collection specific schemas
 import { App } from '@sage3/applications/schema';
+import { JoinBoardCheck, useConfigStore, MainButton, Clock, APIHttp } from '@sage3/frontend';
 import { Board, Asset, User, Room, Message, Presence } from '@sage3/shared/types';
 
-import { APIHttp } from '@sage3/frontend';
+// Styles
+import './adminStyle.css';
+
 
 export function AdminPage() {
   // SAGE3 Image
@@ -37,12 +35,14 @@ export function AdminPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [presences, setPresences] = useState<Presence[]>([]);
 
+  // Pre element for displaying messages
+  const preRef = useRef<HTMLPreElement>(null);
+
   const fetchApps = () => {
     APIHttp.GET<App>('/apps').then((bb) => {
       if (bb.success && bb.data) setApps(bb.data);
     });
   };
-
   const fetchBoards = () => {
     APIHttp.GET<Board>('/boards').then((bb) => {
       if (bb.success && bb.data) setBoards(bb.data);
@@ -63,7 +63,6 @@ export function AdminPage() {
       if (bb.success && bb.data) setRooms(bb.data);
     });
   };
-
   const fetchMessages = () => {
     APIHttp.GET<Message>('/message').then((bb) => {
       if (bb.success && bb.data) setMessages(bb.data);
@@ -75,6 +74,7 @@ export function AdminPage() {
     });
   };
 
+  // Get all collections
   const fetchAll = () => {
     fetchApps();
     fetchBoards();
@@ -87,11 +87,47 @@ export function AdminPage() {
 
   const toast = useToast();
 
+  // Add log messages to the output log
+  const processLogMessage = (ev: MessageEvent<any>) => {
+    const data = JSON.parse(ev.data);
+    if (data.type === 'log') {
+      const entries = data.data as any[];
+      entries.forEach((entry) => {
+        if (preRef.current) {
+          preRef.current.innerHTML += `<b>${entry.tag}</b> ${JSON.stringify(entry.doc.data, null, 0)}<br>`;
+          preRef.current.scrollTop = preRef.current.scrollHeight;
+        }
+      });
+    }
+  };
+
+  // Clear the ouput log
+  const delLogs = () => {
+    if (preRef.current) {
+      preRef.current.innerHTML = "";
+      preRef.current.scrollTop = 0;
+    }
+  };
+
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Admin';
 
     fetchAll();
+
+    // Open websocket connection to the server
+    const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socketUrl = `${socketType}//${window.location.host}/logs`;
+    const sock = new WebSocket(socketUrl);
+    waitForOpenSocket(sock).then(() => {
+      sock.addEventListener('message', processLogMessage);
+      sock.addEventListener('close', () => {
+        if (sock) sock.removeEventListener('message', processLogMessage);
+      });
+      sock.addEventListener('error', (ev) => {
+        if (sock) sock.removeEventListener('message', processLogMessage);
+      });
+    });
   }, []);
 
   const delAsset = (id: string) => {
@@ -199,6 +235,7 @@ export function AdminPage() {
             <Tab>Users</Tab>
             <Tab>Presences</Tab>
             <Tab>Messages</Tab>
+            <Tab>Logs</Tab>
           </TabList>
 
           <TabPanels>
@@ -369,9 +406,9 @@ export function AdminPage() {
                 })}
               </table>
             </TabPanel>
+
             <TabPanel>
               <Heading>Messages</Heading>
-
               <table>
                 <tr>
                   <th>id</th>
@@ -396,6 +433,15 @@ export function AdminPage() {
                 })}
               </table>
             </TabPanel>
+
+            <TabPanel>
+              <Heading>Logs</Heading>
+              <Code ref={preRef} width={"100%"} height={"700px"} fontSize={"xs"} m={1} p={1} overflowY="scroll" overflowX="hidden"></Code>
+              <Button mx={3} colorScheme="green" size="xs" onClick={() => delLogs()}>
+                Clear Logs
+              </Button>
+            </TabPanel>
+
           </TabPanels>
         </Tabs>
       </Box>
@@ -416,4 +462,22 @@ export function AdminPage() {
       </Box>
     </Box>
   );
+}
+
+/*
+ * Wait for socket to be open
+ *
+ * @param {WebSocket} socket
+ * @returns {Promise<void>}
+ * */
+async function waitForOpenSocket(socket: WebSocket): Promise<void> {
+  return new Promise((resolve) => {
+    if (socket.readyState !== socket.OPEN) {
+      socket.addEventListener('open', () => {
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
 }

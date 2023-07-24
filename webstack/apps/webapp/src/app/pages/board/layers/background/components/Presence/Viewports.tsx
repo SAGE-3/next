@@ -10,19 +10,14 @@ import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
+import { Awareness } from './PresenceComponent';
 
-type ViewportsProps = {
-  boardId: string;
+type ViewportProps = {
+  users: Awareness[];
+  rate: number;
 };
 
-export function Viewports(props: ViewportsProps) {
-  // Users and Presence Store
-  const { user } = useUser();
-  const users = useUsersStore((state) => state.users);
-
-  // Presence Information
-  const presences = usePresenceStore((state) => state.presences);
-
+export function Viewports(props: ViewportProps) {
   // UI Scale
   const scale = useUIStore((state) => state.scale);
 
@@ -30,18 +25,23 @@ export function Viewports(props: ViewportsProps) {
   return (
     <>
       {/* Draw the  viewports: filter by board and not myself */}
-      {presences
-        .filter((el) => el.data.boardId === props.boardId)
-        .filter((el) => el.data.userId !== user?._id)
-        .map((presence) => {
-          const u = users.find((el) => el._id === presence.data.userId);
-          if (!u) return null;
-          const name = u.data.name;
-          const color = u.data.color;
-          const viewport = presence.data.viewport;
-          const isWall = u.data.userType === 'wall';
-          return <UserViewportMemo key={'viewport-' + u._id} isWall={isWall} name={name} color={color} viewport={viewport} scale={scale} />;
-        })}
+      {props.users.map((u) => {
+        const name = u.user.data.name;
+        const color = u.user.data.color;
+        const viewport = u.presence.data.viewport;
+        const isWall = u.user.data.userType === 'wall';
+        return (
+          <UserViewportMemo
+            key={'viewport-' + u.user._id}
+            isWall={isWall}
+            name={name}
+            color={color}
+            viewport={viewport}
+            scale={scale}
+            rate={props.rate}
+          />
+        );
+      })}
     </>
   );
 }
@@ -52,6 +52,7 @@ type UserViewportProps = {
   viewport: PresenceSchema['viewport'];
   scale: number;
   isWall: boolean;
+  rate: number;
 };
 
 function UserViewport(props: UserViewportProps) {
@@ -82,7 +83,7 @@ function UserViewport(props: UserViewportProps) {
       borderRadius={borderRadius}
       transitionProperty="left, top, width, height"
       transitionTimingFunction={'ease-in-out'}
-      transitionDuration={'0.5s'}
+      transitionDuration={props.rate / 1000 + 's'}
       transitionDelay={'0s'}
       color="white"
       fontSize={fontSize + 'px'}

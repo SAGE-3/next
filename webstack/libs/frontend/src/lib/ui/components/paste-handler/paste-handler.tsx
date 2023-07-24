@@ -16,6 +16,9 @@ import { useToast } from '@chakra-ui/react';
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { processContentURL, isValidURL } from '@sage3/frontend';
 
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppState } from '@sage3/applications/schema';
+
 type PasteProps = {
   boardId: string;
   roomId: string;
@@ -58,26 +61,68 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         return;
       }
 
+      // Get the user cursor position
+      const xDrop = cursorPosition.x;
+      const yDrop = cursorPosition.y;
+
       // Open webview if url, otherwise, open a sticky
       if (event.clipboardData?.files) {
         if (event.clipboardData.files.length > 0) {
-          toast({
-            title: 'Copy/Paste Handler',
-            description: 'Pasting file not supported yet',
-            status: 'error',
-            duration: 2 * 1000,
-            isClosable: true,
+          // Iterate over all pasted files.
+          Array.from(event.clipboardData.files).forEach(async (file) => {
+            if (file.type.startsWith('image/')) {
+              // For images, create an image and append it to the `body`.
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onloadend = function () {
+                const base64data = reader.result;
+                // it's a base64 image
+                createApp({
+                  title: file.name,
+                  roomId: props.roomId,
+                  boardId: props.boardId,
+                  position: { x: xDrop, y: yDrop, z: 0 },
+                  size: { width: 800, height: 600, depth: 0 },
+                  rotation: { x: 0, y: 0, z: 0 },
+                  type: 'ImageViewer',
+                  state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
+                  raised: true,
+                  dragging: false,
+                });
+              };
+            } else if (file.type.startsWith('text/')) {
+              // Read the text
+              const textcontent = await file.text();
+              // Create a new stickie with the text
+              createApp({
+                title: user.data.name,
+                roomId: props.roomId,
+                boardId: props.boardId,
+                position: { x: xDrop, y: yDrop, z: 0 },
+                size: { width: 400, height: 400, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'Stickie',
+                state: { text: textcontent, fontSize: 42, color: user.data.color || 'yellow' },
+                raised: true,
+                dragging: false,
+              });
+            } else {
+              // Not supported file format
+              toast({
+                title: 'Copy/Paste Handler',
+                description: 'File format not supported yet',
+                status: 'error',
+                duration: 2 * 1000,
+                isClosable: true,
+              });
+              // return;
+            }
           });
-          return;
         }
       }
 
       // Get content of clipboard
       const pastedText = event.clipboardData?.getData('Text');
-
-      // Get the user cursor position
-      const xDrop = cursorPosition.x;
-      const yDrop = cursorPosition.y;
 
       // if there's content
       if (pastedText) {
@@ -99,10 +144,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: w, height: h, depth: 0 },
+            size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'Webview',
-            state: { webviewurl: final_url },
+            type: 'WebpageLink',
+            state: { ...initialValues['WebpageLink'], url: processContentURL(final_url) },
             raised: true,
             dragging: false,
           });

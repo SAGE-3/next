@@ -84,7 +84,7 @@ dns.setDefaultResultOrder('ipv4first');
 /////////////////////////////////////////////////////////////////
 // Auto updater
 /////////////////////////////////////////////////////////////////
-console.log('APP Updater> curretn version', app.getVersion());
+console.log('APP Updater> current version', app.getVersion());
 
 // autoUpdater.on('error', (error) => {
 //   console.log('APP Updater> error', error);
@@ -151,7 +151,7 @@ program
   .option('-f, --fullscreen', 'Fullscreen (boolean)', windowState.fullscreen)
   .option('-m, --monitor <n>', 'Select a monitor (int)', myParseInt, null)
   .option('-n, --no_decoration', 'Remove window decoration (boolean)', false)
-  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'https://sage3.app')
+  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'file://html/landing.html')
   .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
   .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
@@ -790,6 +790,11 @@ function createWindow() {
     const winBounds = mainWindow.getBounds();
     const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
     mainWindow.webContents.send('current-display', whichScreen.id);
+  });
+
+  // Open external links in the default browser
+  ipcMain.on('open-external-url', (event, arg) => {
+    if (arg && arg.url) shell.openExternal(arg.url);
   });
 
   // Request for a screenshot from the web client

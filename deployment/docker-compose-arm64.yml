@@ -18,6 +18,7 @@ services:
       - "443:443"
     depends_on:
       - "redis-server"
+      - "fluentd-server"
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -32,6 +33,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+  fluentd-server:
+    image: "fluent/fluentd:edge-debian"
+    ports:
+      - "127.0.0.1:24224:24224"
+    volumes:
+      - ./configurations/fluentd/log:/fluentd/log
+      - ./configurations/fluentd/conf:/fluentd/etc
   python:
     image: "sage3/foresight:arm64"
     environment:
@@ -49,7 +57,7 @@ services:
       jupyter:
         condition: service_healthy
   jupyter:
-    image: "jupyter/datascience-notebook"
+    image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks

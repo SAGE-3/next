@@ -8,8 +8,18 @@
 
 import { useEffect, useRef } from 'react';
 import {
-  Box, useColorModeValue, useToast, ToastId, Modal, useDisclosure,
-  ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Button,
+  Box,
+  useColorModeValue,
+  useToast,
+  ToastId,
+  Modal,
+  useDisclosure,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
 } from '@chakra-ui/react';
 
 import { isValidURL, setupApp } from '@sage3/frontend';
@@ -19,7 +29,6 @@ import {
   useUser,
   useHexColor,
   useMessageStore,
-  processContentURL,
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
@@ -57,7 +66,7 @@ export function Background(props: BackgroundProps) {
   const createBatch = useAppStore((state) => state.createBatch);
 
   // User
-  const { user } = useUser();
+  const { user, accessId } = useUser();
   const { auth } = useAuth();
   const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
 
@@ -122,7 +131,7 @@ export function Background(props: BackgroundProps) {
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
     } else {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId));
     }
@@ -151,13 +160,15 @@ export function Background(props: BackgroundProps) {
         return;
       }
       // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer).then((files) => {
-        // do the actual upload
-        uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
-      }).catch((err) => {
-        console.log('Error> uploading files', err);
-        lotsOnOpen();
-      });
+      collectFiles(event.dataTransfer)
+        .then((files) => {
+          // do the actual upload
+          uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+        })
+        .catch((err) => {
+          console.log('Error> uploading files', err);
+          lotsOnOpen();
+        });
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
@@ -181,21 +192,11 @@ export function Background(props: BackgroundProps) {
             // it's a base64 image
             createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
           } else {
-            // is it a valid URL
+            // Is it a valid URL
             const valid = isValidURL(pastedText);
             if (valid) {
-              // process url to be embeddable
-              const final_url = processContentURL(pastedText);
-              let w, h;
-              if (final_url !== pastedText) {
-                // it must be a video
-                w = 1280;
-                h = 720;
-              } else {
-                w = 800;
-                h = 800;
-              }
-              createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
+              // Create a link app
+              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w: 400, h: 400 }, { url: pastedText }));
             }
           }
         }
@@ -242,13 +243,8 @@ export function Background(props: BackgroundProps) {
       if (!user) return;
       const x = cursorPosition.x;
       const y = cursorPosition.y;
-
+      // Open the help panel
       helpOnOpen();
-
-      // show image or open doc
-      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-      // window.open(doc, '_blank');
-
       // Returning false stops the event and prevents default browser events
       return false;
     },
@@ -366,7 +362,6 @@ export function Background(props: BackgroundProps) {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </Box>
   );
 }

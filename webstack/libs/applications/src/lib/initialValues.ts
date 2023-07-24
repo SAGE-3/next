@@ -5,6 +5,7 @@ import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLin
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
+import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
@@ -19,6 +20,7 @@ import { name as KernelDashboardName, init as defaultKernelDashboard } from './a
 import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
+import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -32,6 +34,7 @@ import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from 
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
+import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
@@ -40,6 +43,7 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChartMakerName]: defaultChartMaker,
+  [ChatName]: defaultChat,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [CounterName]: defaultCounter,
@@ -54,6 +58,7 @@ export const initialValues = {
   [KernelsName]: defaultKernels,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
+  [MapGLName]: defaultMapGL,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
@@ -67,6 +72,7 @@ export const initialValues = {
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
+  [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
 };
 

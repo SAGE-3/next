@@ -4,6 +4,7 @@
   "CSVViewer",
   "ChartGenerator",
   "ChartMaker",
+  "Chat",
   "Clock",
   "Cobrowse",
   "Counter",
@@ -18,6 +19,7 @@
   "Kernels",
   "LeafLet",
   "Linker",
+  "MapGL",
   "Notepad",
   "PDFResult",
   "PDFViewer",
@@ -31,5 +33,6 @@
   "VegaLite",
   "VegaLiteViewer",
   "VideoViewer",
+  "WebpageLink",
   "Webview"
 ]

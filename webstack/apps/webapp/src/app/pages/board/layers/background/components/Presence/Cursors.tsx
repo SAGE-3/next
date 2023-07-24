@@ -8,43 +8,34 @@
 
 import React from 'react';
 import { Tag } from '@chakra-ui/react';
-import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
 import { useEffect } from 'react';
 import { GiArrowCursor } from 'react-icons/gi';
+import { Awareness } from './PresenceComponent';
 
 type CursorProps = {
-  boardId: string;
+  users: Awareness[];
+  rate: number;
 };
 
 // Render the User Cursors that belong to the board
 export function Cursors(props: CursorProps) {
-  // Users
-  const { user } = useUser();
-  const users = useUsersStore((state) => state.users);
-
-  // Presences
-  const presences = usePresenceStore((state) => state.presences);
-
   // UI Scale
   const scale = useUIStore((state) => state.scale);
 
   // Render the cursors
   return (
     <>
-      {/* Draw the cursors and viewports: filter by board and not myself */}
-      {presences
-        .filter((el) => el.data.boardId === props.boardId)
-        .filter((el) => el.data.userId !== user?._id)
-        .map((presence) => {
-          const u = users.find((el) => el._id === presence.data.userId);
-          if (!u) return null;
-          const name = u.data.name;
-          const color = u.data.color;
-          const cursor = presence.data.cursor;
-          return <UserCursorMemo key={'cursor-' + u._id} color={color} position={cursor} name={name} scale={scale} />;
-        })}
+      {/* Draw the cursors */}
+      {props.users.map((u) => {
+        if (!u) return null;
+        const name = u.user.data.name;
+        const color = u.user.data.color;
+        const cursor = u.presence.data.cursor;
+        return <UserCursorMemo key={'cursor-' + u.user._id} color={color} position={cursor} name={name} scale={scale} rate={props.rate} />;
+      })}
     </>
   );
 }
@@ -57,6 +48,7 @@ type UserCursorProps = {
   color: string;
   position: PresenceSchema['cursor'];
   scale: number;
+  rate: number;
 };
 
 /**
@@ -97,7 +89,9 @@ function UserCursor(props: UserCursorProps) {
         position: 'absolute',
         left: props.position.x + 'px',
         top: props.position.y + 'px',
-        transition: 'left 0.5s ease-in-out, top 0.5s ease-in-out',
+        // Testing if we can transition using the rate. Smooths out the transition
+        transitionDuration: `${props.rate / 1000}s`,
+        transitionProperty: 'left, top',
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',
