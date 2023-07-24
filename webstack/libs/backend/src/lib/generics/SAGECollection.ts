@@ -36,9 +36,9 @@ export class SAGE3Collection<T extends SBJSON> {
 
   private _httpRouter!: Router;
 
-  protected _authorization: SAGEAuthorization | null;
+  protected _authorization: typeof SAGEAuthorization | null;
 
-  constructor(name: string, queryableAttributes: Partial<T>, authorization?: SAGEAuthorization) {
+  constructor(name: string, queryableAttributes: Partial<T>, authorization?: typeof SAGEAuthorization) {
     this._name = name;
     this._queryableAttributes = queryableAttributes;
     this._authorization = authorization ? authorization : null;
@@ -73,6 +73,10 @@ export class SAGE3Collection<T extends SBJSON> {
    */
   public async add(item: T, by: string, id?: string): Promise<SBDocument<T> | undefined> {
     try {
+      if (this._authorization) {
+        const authorized = await this._authorization.authorize('create', by, this._name, item);
+        if (!authorized) return undefined;
+      }
       const docRef = await this._collection.addDoc(item, by, id);
       if (docRef) {
         const doc = await docRef.read();
@@ -113,6 +117,10 @@ export class SAGE3Collection<T extends SBJSON> {
    */
   public async get(id: string, by: string): Promise<SBDocument<T> | undefined> {
     try {
+      if (this._authorization) {
+        const authorized = await this._authorization.authorize('read', by, this._name, id);
+        if (!authorized) return undefined;
+      }
       const doc = await this._collection.docRef(id).read();
       return doc;
     } catch (error) {
@@ -191,7 +199,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
       if (this._authorization) {
-        const authorized = await this._authorization?.authorize('update', by, this._name, id);
+        const authorized = await this._authorization.authorize('update', by, this._name, id);
         if (!authorized) return undefined;
       }
       const response = await this._collection.docRef(id).update(update, by);

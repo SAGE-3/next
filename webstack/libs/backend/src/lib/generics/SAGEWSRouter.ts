@@ -120,7 +120,7 @@ export async function sageWSRouter<T extends SBJSON>(
           const body = message.body as SBDocumentUpdate<T>;
           const doc = await collection.update(id, user.id, body);
           if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
-          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc.' }));
         }
       }
       break;

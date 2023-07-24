@@ -7,7 +7,8 @@
  */
 
 import { AppSchema } from '@sage3/applications/schema';
-import { CollectionRule, SAGE3Collection, SAGEAuth, sageRouter } from '@sage3/backend';
+import { CollectionRule, SAGE3Collection, SAGEAuthorization, sageRouter } from '@sage3/backend';
+import { defineScript } from 'redis';
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
   constructor() {
@@ -21,14 +22,26 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
 
     const AppsCollectionRules = [
       {
-        refId_By_DocPropName: 'roomId',
-        collection: 'ROOM_MEMBERS',
+        refPropName: 'roomId',
+        membershipCollection: 'ROOM_MEMBERS',
         roles: ['owner', 'admin', 'member'],
-        availableActions: ['create', 'read', 'update', 'delete'],
+        availableActions: ['read', 'update', 'delete'],
       },
     ] as CollectionRule[];
-    SAGEAuth.addProtectedCollection(this, AppsCollectionRules);
-    this._authorization = SAGEAuth;
+
+    //
+    /**
+     *
+     *
+     *  {
+     * name
+     * description
+     * roomId: string
+     * }
+     *
+     */
+    SAGEAuthorization.addProtectedCollection(this, AppsCollectionRules);
+    this._authorization = SAGEAuthorization;
   }
 }
 

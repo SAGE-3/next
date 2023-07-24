@@ -33,12 +33,14 @@ export function NavigationPanel(props: NavProps) {
   const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom, scale } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
 
+  // User viewport
+  const { user } = useUser();
+
   // Abilities
   const canOrganize = SAGE3Ability.can(user?.data.userRole, 'update', 'apps');
   const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'apps');
 
-  // user's viewport
-  const { user } = useUser();
+  // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
   const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
   const userViewport = useUIStore((state) => state.viewport);
