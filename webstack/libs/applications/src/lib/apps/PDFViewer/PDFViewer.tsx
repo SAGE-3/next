@@ -412,6 +412,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
+      {/* Extra Actions */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
@@ -419,7 +420,7 @@ function ToolbarComponent(props: App): JSX.Element {
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px">
+          <MenuList minWidth="150px" fontSize={"sm"}>
             <MenuItem
               icon={<MdFileDownload />}
               onClick={() => {
@@ -451,7 +452,7 @@ function ToolbarComponent(props: App): JSX.Element {
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px">
+          <MenuList minWidth="150px" fontSize={"sm"}>
             <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
               Analyze
             </MenuItem>
