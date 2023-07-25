@@ -91,7 +91,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   }
 
   /**
-   * Process a file for metadata, and pdf/image processing
+   * Process a file for metadata
    */
   public async metadataFile(id: string, file: string, fileType: string) {
     // extract metadata

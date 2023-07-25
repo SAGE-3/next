@@ -71,25 +71,39 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           // Iterate over all pasted files.
           Array.from(event.clipboardData.files).forEach(async (file) => {
             if (file.type.startsWith('image/')) {
+              // Images not supported yet
+              toast({
+                title: 'Copy/Paste Handler',
+                description: 'Image clipboard not supported yet',
+                status: 'error',
+                duration: 2 * 1000,
+                isClosable: true,
+              });
+
+              // Works but slow
               // For images, create an image and append it to the `body`.
-              const reader = new FileReader();
-              reader.readAsDataURL(file);
-              reader.onloadend = function () {
-                const base64data = reader.result;
-                // it's a base64 image
-                createApp({
-                  title: file.name,
-                  roomId: props.roomId,
-                  boardId: props.boardId,
-                  position: { x: xDrop, y: yDrop, z: 0 },
-                  size: { width: 800, height: 600, depth: 0 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  type: 'ImageViewer',
-                  state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
-                  raised: true,
-                  dragging: false,
-                });
-              };
+              // const reader = new FileReader();
+              // reader.readAsDataURL(file);
+              // reader.onloadend = function () {
+              //   const base64data = reader.result;
+              //   if (base64data && typeof base64data === 'string') {
+              //     if (base64data.length < 100000) {
+              //       // it's a base64 image
+              //       createApp({
+              //         title: file.name,
+              //         roomId: props.roomId,
+              //         boardId: props.boardId,
+              //         position: { x: xDrop, y: yDrop, z: 0 },
+              //         size: { width: 800, height: 600, depth: 0 },
+              //         rotation: { x: 0, y: 0, z: 0 },
+              //         type: 'ImageViewer',
+              //         state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
+              //         raised: true,
+              //         dragging: false,
+              //       });
+              //     }
+              //   }
+              // };
             } else if (file.type.startsWith('text/')) {
               // Read the text
               const textcontent = await file.text();
@@ -115,7 +129,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 duration: 2 * 1000,
                 isClosable: true,
               });
-              // return;
             }
           });
         }
