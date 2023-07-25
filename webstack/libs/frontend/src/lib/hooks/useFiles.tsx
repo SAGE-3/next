@@ -160,6 +160,7 @@ export function useFiles(): UseFiles {
           }
         },
       }).then((response: AxiosResponse) => {
+        console.log('Upload> Response: ', response.status, response.data);
         if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
             title: 'Upload',

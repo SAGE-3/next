@@ -93,19 +93,10 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   /**
    * Process a file for metadata, and pdf/image processing
    */
-  public async processFile(id: string, file: string, fileType: string) {
+  public async metadataFile(id: string, file: string, fileType: string) {
     // extract metadata
     const t1 = await this.metaQ.addFile(id, file);
-    let t2;
-    // convert image to multiple sizes
-    if (isImage(fileType) && !isGIF(fileType)) {
-      t2 = await this.imgQ.addFile(id, file);
-    } else if (isPDF(fileType)) {
-      // convert PDF to images
-      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
-        return Promise.reject(err);
-      });
-    }
+
     const exif = t1.data;
     // Find a creation date from all the exif dates
     let realDate = new Date();
@@ -123,7 +114,6 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       return {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
-        derived: t2.result,
       };
     } else if (isVideo(fileType)) {
       // get the dimensions of the video from the medata
@@ -136,7 +126,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
         imgWidth = imgHeight;
         imgHeight = tmp;
       }
-      const extras: ExtraVideoType = {
+      const derived: ExtraVideoType = {
         filename: file,
         url: '/' + getStaticAssetUrl(file),
         // video size
@@ -155,7 +145,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       return {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
-        derived: extras,
+        derived: derived,
       };
     } else {
       // everything else
@@ -163,6 +153,28 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
       };
+    }
+  }
+
+  /**
+   * Process a file for conversion: pdf/image processing
+   */
+  public async processFile(id: string, file: string, fileType: string) {
+    let t2;
+    // convert image to multiple sizes
+    if (isImage(fileType) && !isGIF(fileType)) {
+      t2 = await this.imgQ.addFile(id, file);
+    } else if (isPDF(fileType)) {
+      // convert PDF to images
+      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
+        return Promise.reject(err);
+      });
+    }
+    if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
+      // image or pdf processed
+      return t2.result;
+    } else {
+      return null;
     }
   }
 }
