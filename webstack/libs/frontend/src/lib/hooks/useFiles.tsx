@@ -94,8 +94,10 @@ export function useFiles(): UseFiles {
   const createBatch = useAppStore((state) => state.createBatch);
   // Upload success
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
+  // Save the drop position
   const [configDrop, setConfigDrop] = useState({ xDrop: 0, yDrop: 0, roomId: '', boardId: '' });
 
+  // When uplaod is done, open the apps
   useEffect(() => {
     async function openApps() {
       if (uploadSuccess.length > 0) {
@@ -167,6 +169,9 @@ export function useFiles(): UseFiles {
         isClosable: true,
       });
 
+      // Save the drop position
+      setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+
       // Upload with a POST request
       const response = await axios({
         method: 'post',
@@ -205,8 +210,9 @@ export function useFiles(): UseFiles {
         }
       });
       if (response) {
+        // Save the list of uploaded files
         setUploadSuccess(response.data.map((a: any) => a.id));
-        setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+        // Show a success message
         if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
             title: 'Upload',
