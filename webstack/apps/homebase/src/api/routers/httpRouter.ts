@@ -34,7 +34,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter } from './custom';
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, PresenceThrottle } from './custom';
 
 import { config } from '../../config';
 
@@ -51,6 +51,7 @@ export function expressAPIRouter(): express.Router {
   // Before auth, so can be accessed by anyone
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
+  router.use('/logs', LogsRouter());
 
   // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token
@@ -78,6 +79,9 @@ export function expressAPIRouter(): express.Router {
 
   // Experimental NLP route
   router.use('/nlp', NLPRouter());
+
+  // Initialize Custom Presence Throttle
+  PresenceThrottle.init();
 
   return router;
 }

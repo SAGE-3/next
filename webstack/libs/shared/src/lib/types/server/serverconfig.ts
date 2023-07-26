@@ -34,6 +34,17 @@ export interface ServerConfiguration {
   // Redis
   redis: { url: string };
 
+  // Fluentd log configuration
+  fluentd: {
+    server: string;
+    port: number;
+    // dbLevel controls the level of logs sent to fluentd from the database
+    // all : all logs are sent to fluentd
+    // partial (default): all collections except user stuff (user, presence)
+    // none: no logs are sent to fluentd
+    databaseLevel: 'all' | 'partial' | 'none';
+  };
+
   // External Services
   services: {
     twilio: TwilioConfiguration;

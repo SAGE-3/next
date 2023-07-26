@@ -89,7 +89,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                   raised: true,
                   dragging: false,
                 });
-              }
+              };
             } else if (file.type.startsWith('text/')) {
               // Read the text
               const textcontent = await file.text();
@@ -144,10 +144,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: w, height: h, depth: 0 },
+            size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'Webview',
-            state: { webviewurl: final_url },
+            type: 'WebpageLink',
+            state: { ...initialValues['WebpageLink'], url: processContentURL(final_url) },
             raised: true,
             dragging: false,
           });

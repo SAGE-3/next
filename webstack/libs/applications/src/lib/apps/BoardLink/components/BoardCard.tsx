@@ -27,7 +27,7 @@ export function BoardCard(props: App): JSX.Element {
   const logoUrl = useColorModeValue('/assets/background-boardlink-dark.png', '/assets/background-boardlink.png');
 
   // Get presences of users
-  let presences = usePresenceStore((state) => state.presences);
+  let presences = usePresenceStore((state) => state.partialPrescences);
   presences = presences.filter((el) => el.data.boardId === boardId);
 
   // UI Stuff

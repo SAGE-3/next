@@ -193,6 +193,7 @@ export function AnnotationsPanel() {
               </Tooltip>
             </Slider>
           </HStack>
+          <Text fontSize={"xs"} alignSelf={"center"} mt={"3px"}>While drawing, use the arrow keys or spacebar+mouse to navigate</Text>
         </VStack>
       </Box>
     </Panel>

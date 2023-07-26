@@ -19,6 +19,9 @@ import * as fsModule from 'fs';
 // Declare fs with Promises
 const fs = fsModule.promises;
 
+import * as dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
+
 // parsing command-line arguments
 import * as commander from 'commander';
 
@@ -48,7 +51,8 @@ commander.program
   .option('-m, --room <s>', 'room id (string))')
   .option('-t, --timeout <n>', 'runtime in sec (number)', 10)
   .option('-r, --rate <n>', 'framerate (number)', 20)
-  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333');
+  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333')
+  .option('-e, --sensitivity <n>', 'sensitivity (number)', 5);
 
 // Parse the arguments
 commander.program.parse(args);
@@ -116,7 +120,7 @@ async function start() {
     var py = randomNumber(1500000, 1501000);
     var incx = randomNumber(1, 2) % 2 ? 1 : -1;
     var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    var sensitivity = 2;
+    var sensitivity = params.sensitivity;
 
     // intial position
     sendCursor(socket, myID, px, py);
