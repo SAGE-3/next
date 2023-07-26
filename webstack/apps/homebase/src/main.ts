@@ -44,7 +44,6 @@ import * as jwt from 'jsonwebtoken';
  * SAGE3 Libs
  */
 import { loadConfig } from './config';
-// import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';

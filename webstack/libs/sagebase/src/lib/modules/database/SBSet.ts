@@ -8,25 +8,175 @@
 
 import { RedisClientType } from 'redis';
 import { v4 } from 'uuid';
-import { PathValue, DotNestedKeys } from './Util';
 
-export type SBSetType = null | number | string;
+export type SBSetType = Array<string>;
 
 // The Format of the actual SAGEBase Document
 // .data has the actual USER set data
-export type SBSet<Type extends SBJSON> = {
+export type SBSet = {
   _id: string;
   _createdAt: number;
   _createdBy: string;
   _updatedAt: number;
   _updatedBy: string;
-  data: Type;
+  _key: string;
 };
+
+export type SBSetWriteResult = {
+  success: boolean;
+  writetime: number;
+  doc: SBSetType | undefined;
+};
+
+export type SBSetCreateMessage = {
+  type: 'CREATE';
+  col: string;
+  doc: SBSetType;
+};
+
+export type SBSetDeleteMessage = {
+  type: 'DELETE';
+  col: string;
+  doc: SBSetType;
+};
+
+export type SBSetUpdateMessage = {
+  type: 'UPDATE';
+  col: string;
+  doc: SBSet;
+  updates: SBSetType;
+};
+
+export type SBSetMessage = SBSetCreateMessage | SBSetDeleteMessage;
+
+/**
+ * Collections for Sets
+ */
+export class SBCollectionSetRef {
+  private _name;
+  private _path: string;
+  private _redisClient: RedisClientType;
+
+  /**
+   *
+   * @param name The name of the collection
+   * @param path The "collections" path in the database
+   * @param redisClient The redis client
+   */
+  constructor(name: string, path: string, redisClient: RedisClientType) {
+    this._name = name;
+    this._path = path;
+    this._redisClient = redisClient;
+  }
+
+  /**
+   * Create a new SBDocument from the provided 'data' and add it to the collection.
+   * @param data The data of the document
+   * @returns {SBDocumentRef<Type> | undefined} A SBDocumentRef that points to the newly added document. Undefined if the operation was unsuccessful
+   */
+  public async addDoc(data: SBSetType, by: string): Promise<SBSetRef | undefined> {
+    try {
+      const setPath = `${this._path}:set`;
+      const doc = generateSBSetTemplate(setPath, by);
+      const docPath = `${this._path}:${doc._id}`;
+      const docRef = new SBSetRef(doc._id, this._name, docPath, this._redisClient);
+      const redisRes = await docRef.set(data, by);
+      if (redisRes.success) {
+        return docRef;
+      } else {
+        return undefined;
+      }
+    } catch (error) {
+      this.ERRORLOG(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Get a document refernce from the collection by id.
+   * @param {string} id The id of the document within the collection
+   * @returns {SBDocumentRef<Type>} A SBDocumentRef that points to the newly added document
+   */
+  public docRef(id: string): SBSetRef {
+    const docPath = `${this._path}:${id}`;
+    const docRef = new SBSetRef(id, this._name, docPath, this._redisClient);
+    return docRef;
+  }
+
+  /**
+   * Get all the SBSet in the collection.
+   * @returns {Promise<SBSet<Type>[]>} An array of SBSet.
+   */
+  public async getAllDocs(): Promise<SBSet[]> {
+    const docRefs = await this.getAllDocRefs();
+    const promises = docRefs.map((docRef) => docRef.read());
+    const docs = await Promise.all(promises);
+    if (docs) {
+      const returnList = [] as SBSet[];
+      docs.forEach((doc) => {
+        if (doc !== undefined) returnList.push(doc);
+      });
+      return returnList;
+    } else {
+      return [];
+    }
+  }
+
+  /**
+   * Get all the SBSetsRefs in the collection
+   * @returns { Promise<SBSetRef[]>} An array of SBSetRef
+   */
+  public async getAllDocRefs(): Promise<SBSetRef[]> {
+    try {
+      const redisRes = await this._redisClient.keys(`${this._path}:*`);
+      const docRefList = [] as SBSetRef[];
+      redisRes.forEach((key) => {
+        // skip the actual sets
+        if (!key.endsWith('_set')) {
+          const id = key.split(':')[key.split(':').length - 1];
+          const docRef = new SBSetRef(id, this._name, key, this._redisClient);
+          docRefList.push(docRef);
+        }
+      });
+      return docRefList;
+    } catch (error) {
+      this.ERRORLOG(error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete an array of documents from the collection.
+   * Send only one publish event for all the documents.
+   */
+  public async deleteDocs(ids: string[]): Promise<SBSetWriteResult[]> {
+    const docRefs = ids.map((id) => this.docRef(id));
+    const promises = docRefs.map((docRef) => docRef.delete(false));
+    const res = await Promise.all(promises);
+    return res;
+  }
+
+  /**
+   * Prints errors related to SBCollection
+   * @param {unknown} error
+   */
+  private ERRORLOG(error: unknown) {
+    console.log('SAGEBase SBCollectionSet ERROR: ', error);
+  }
+
+  /**
+   * Prints info related to SBCollection
+   * @param {unknown} error
+   */
+  private INFOLOG(error: unknown) {
+    console.log('SAGEBase SBCollectionSet INFO: ', error);
+  }
+}
 
 /**
  * A database reference to the SAGEBase Document.
  */
-export class SBDocumentRef<Type extends SBSetType> {
+export class SBSetRef {
   private _id: string;
   private _path: string;
   private _redisClient: RedisClientType;
@@ -58,10 +208,23 @@ export class SBDocumentRef<Type extends SBSetType> {
    * Read the document from the database
    * @returns {Type} This document
    */
-  public async read(): Promise<SBDocument<Type> | undefined> {
+  public async read(): Promise<SBSet | undefined> {
     try {
       const redisRes = await this.redis.json.get(`${this._path}`);
-      return redisRes as SBDocument<Type>;
+      return redisRes as SBSet;
+    } catch (error) {
+      this.ERRORLOG(error);
+      return undefined;
+    }
+  }
+  /**
+   * Read the document from the database
+   * @returns {Type} This document
+   */
+  public async readSet(): Promise<SBSetType | undefined> {
+    try {
+      const redisRes = await this.redis.sMembers(`${this._path}_set`);
+      return redisRes as SBSetType;
     } catch (error) {
       this.ERRORLOG(error);
       return undefined;
@@ -73,19 +236,14 @@ export class SBDocumentRef<Type extends SBSetType> {
    * @param data The data
    * @returns
    */
-  public async set(data: Type, by: string, ttl: number, publish = true): Promise<SBDocWriteResult<Type>> {
+  public async set(data: SBSetType, by: string): Promise<SBSetWriteResult> {
     try {
-      const doc = generateSBDocumentTemplate<Type>(data, by);
+      const doc = generateSBSetTemplate(this.path + '_set', by);
       doc._id = this.id;
-      const redisRes = await this._redisClient.json.set(this.path, '.', doc);
-      if (ttl > -1) {
-        // Set the Time to Live, in sec.
-        this._redisClient.expire(this.path, ttl);
-      }
-      const response = redisRes == 'OK' ? generateWriteResult<Type>(true, doc) : generateWriteResult<Type>(false);
-      if (publish) {
-        await this.publishCreateAction(doc);
-      }
+      const redisRes1 = await this._redisClient.json.set(this.path, '.', doc);
+      await this._redisClient.del(`${this.path}_set`);
+      await this._redisClient.sAdd(`${this.path}_set`, data);
+      const response = redisRes1 == 'OK' ? generateWriteResult(true, data) : generateWriteResult(false);
       return response;
     } catch (error) {
       this.ERRORLOG(error);
@@ -98,50 +256,31 @@ export class SBDocumentRef<Type extends SBSetType> {
    * @param update
    * @returns
    */
-  public async update(update: SBDocumentUpdate<Type>, by: string, publish = true): Promise<SBDocWriteResult<Type>> {
+  public async add(update: SBSetType, by: string): Promise<SBSetWriteResult> {
     if (update === undefined) return generateWriteResult(false);
-    const pub = publish === undefined ? true : publish;
     // Check if Doc exists
-    const exists = await this._redisClient.exists(`${this.path}`);
+    const exists = await this._redisClient.exists(`${this.path}_set`);
     if (exists === 0) {
       this.ERRORLOG(`Doc does not exists.`);
       return generateWriteResult(false);
     }
     try {
-      // Check if a property on the document was updated
-      let updated = false;
-      // Update all the properties
-      const updatePromises = Object.keys(update).map(async (key) => {
-        const value = update[key] as Type[string];
-        // XX - only set the key if it already exists
-        // const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value, { XX: true });
-        const redisRes = await this._redisClient.json.set(`${this.path}`, `.data.${key}`, value);
-        // If one of the properties was updated, then the document was updated
-        const res = redisRes === 'OK' ? true : false;
-        if (res === true) {
-          updated = true;
-        }
-      });
-      await Promise.all(updatePromises);
-      // The document was updated
-      if (updated) {
+      const redisRes = await this._redisClient.sAdd(`${this.path}_set`, update);
+      const res = redisRes === update.length ? true : false;
+      if (res) {
         // Refresh the updatedAt and updatedBy
         await this.refreshUpdate(by);
         // Get the new document value
-        const newValue = await this.read();
-        // Publish the new document value
-        if (newValue && pub) {
-          await this.publishUpdateAction(newValue, update);
-        }
+        const newValue = await this.readSet();
         // Generate the response and return it
-        return generateWriteResult<Type>(true, newValue);
+        return generateWriteResult(true, newValue);
       } else {
         // The document wasn't updated
-        return generateWriteResult<Type>(false);
+        return generateWriteResult(false);
       }
     } catch (error) {
       this.ERRORLOG(error);
-      return generateWriteResult<Type>(false);
+      return generateWriteResult(false);
     }
   }
 
@@ -159,13 +298,14 @@ export class SBDocumentRef<Type extends SBSetType> {
     }
   }
 
-  public async delete(publish = true): Promise<SBDocWriteResult<Type>> {
+  public async delete(publish = true): Promise<SBSetWriteResult> {
     try {
-      const oldValue = await this.read();
+      const oldValue = await this.readSet();
       if (oldValue == undefined) {
         return generateWriteResult(false);
       }
-      const redisRes = await this._redisClient.json.del(`${this.path}`);
+      const redisRes = await this._redisClient.del(`${this.path}`);
+      await this._redisClient.del(`${this.path}_set`);
       const res = redisRes === undefined || redisRes === 0 ? false : true;
       if (res === true && publish) {
         await this.publishDeleteAction(oldValue);
@@ -177,48 +317,49 @@ export class SBDocumentRef<Type extends SBSetType> {
     }
   }
 
-  public async subscribe(callback: (message: SBDocumentMessage<Type>) => void) {
-    const subscriber = this._redisClient.duplicate();
-    await subscriber.connect();
+  // public async subscribe(callback: (message: SBSetMessage<Type>) => void) {
+  //   const subscriber = this._redisClient.duplicate();
+  //   await subscriber.connect();
 
-    await subscriber.subscribe(`${this.path}`, (message: string) => {
-      const parsedMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      parsedMsg.col = this._colName;
-      callback(parsedMsg);
-    });
+  //   await subscriber.subscribe(`${this.path}`, (message: string) => {
+  //     const parsedMsg = JSON.parse(message) as SBSetMessage SBSetRef<Type>;
+  //     parsedMsg.col = this._colName;
+  //     callback(parsedMsg);
+  //   });
 
-    return async () => {
-      await subscriber.unsubscribe(`${this.path}`);
-      await subscriber.disconnect();
-    };
-  }
+  //   return async () => {
+  //     await subscriber.unsubscribe(`${this.path}`);
+  //     await subscriber.disconnect();
+  //   };
+  // }
 
-  private async publishCreateAction(doc: SBDocument<Type>): Promise<void> {
+  private async publishCreateAction(doc: SBSetType): Promise<void> {
     const action = {
       type: 'CREATE',
       col: this._colName,
-      doc: [doc],
-    } as SBDocumentCreateMessage<Type>;
+      doc: doc,
+    } as SBSetCreateMessage;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
 
-  private async publishUpdateAction(doc: SBDocument<Type>, updates: Partial<Type>): Promise<void> {
+  private async publishUpdateAction(doc: SBSet, updates: SBSetType): Promise<void> {
     const action = {
       type: 'UPDATE',
       col: this._colName,
-      doc: [doc],
-      updates: [{ id: doc._id, updates }],
-    } as SBDocumentUpdateMessage<Type>;
+      doc: doc,
+      updates: updates,
+    } as SBSetUpdateMessage;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
-  private async publishDeleteAction(doc: SBDocument<Type>): Promise<void> {
+
+  private async publishDeleteAction(doc: SBSetType): Promise<void> {
     const action = {
       type: 'DELETE',
       col: this._colName,
-      doc: [doc],
-    } as SBDocumentDeleteMessage<Type>;
+      doc: doc,
+    } as SBSetDeleteMessage;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
@@ -228,27 +369,26 @@ export class SBDocumentRef<Type extends SBSetType> {
   }
 }
 
-function generateWriteResult<Type extends SBJSON>(success: boolean, doc?: SBDocument<Type>): SBDocWriteResult<Type> {
+function generateWriteResult(success: boolean, doc?: SBSetType): SBSetWriteResult {
   const result = {
     success,
     writetime: Date.now(),
     doc,
-  } as SBDocWriteResult<Type>;
+  } as SBSetWriteResult;
   return result;
 }
 
-export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: string): SBDocument<Type> {
+export function generateSBSetTemplate(key: string, by: string): SBSet {
   const id = v4();
   const createdAt = Date.now();
   const updatedAt = createdAt;
-  const dataCopy = JSON.parse(JSON.stringify(data)) as Type;
   const doc = {
     _id: id,
     _createdAt: createdAt,
     _createdBy: by,
     _updatedAt: updatedAt,
     _updatedBy: by,
-    data: { ...dataCopy },
-  } as SBDocument<Type>;
+    _key: key,
+  } as SBSet;
   return doc;
 }

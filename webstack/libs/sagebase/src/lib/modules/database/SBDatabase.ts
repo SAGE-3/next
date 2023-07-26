@@ -14,6 +14,8 @@ import { SBJSON } from './SBDocument';
 import { SBLogConfig } from '../logger/SBLogger';
 export type { SBDocumentRef, SBDocument, SBJSON, SBPrimitive, SBDocumentUpdate, SBDocumentMessage } from './SBDocument';
 
+import { SBCollectionSetRef } from './SBSet';
+
 /**
  * The SBDatabase instance.
  */
@@ -43,6 +45,12 @@ export class SBDatabase {
       await collection.createQueryIndex(queryProps);
     }
     return collection;
+  }
+
+  public async set(collectionName: string): Promise<SBCollectionSetRef> {
+    const path = `${this.prefix}:${collectionName}`;
+    const set = new SBCollectionSetRef(collectionName, path, this._redisClient);
+    return set;
   }
 
   private ERRORLOG(error: unknown) {
