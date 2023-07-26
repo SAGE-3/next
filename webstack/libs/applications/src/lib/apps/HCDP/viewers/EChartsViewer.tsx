@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Spinner, useColorMode } from '@chakra-ui/react';
+import { Box, Spinner, useColorMode, Text } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 import { ChartManager } from '../../EChartsViewer/ChartManager';
 import '../styling.css';
@@ -27,11 +27,25 @@ const EChartsViewer = (props: {
   const chartRef = useRef<any>(null);
   const outboxRef = useRef<any>(null);
 
+  const [stationNames, setStationNames] = useState<string>('');
+
   // Echart options
   const [chartOptions, setChartOptions] = useState<echarts.EChartsCoreOption | null>(null);
 
   // Users SAGE 3 color mode
   const { colorMode } = useColorMode();
+
+  useEffect(() => {
+    let namesOfStations = '';
+    for (let i = 0; i < props.stationMetadata.length; i++) {
+      if (i === props.stationMetadata.length - 1) {
+        namesOfStations += props.stationMetadata[i].NAME;
+      } else {
+        namesOfStations += props.stationMetadata[i].NAME + ', ';
+      }
+    }
+    setStationNames(namesOfStations);
+  }, [JSON.stringify(props.stationMetadata)]);
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {
@@ -44,7 +58,10 @@ const EChartsViewer = (props: {
     const chartInstance = echarts.init(chartRef.current, colorMode);
     const width = outboxRef.current.getBoundingClientRect().width;
     const height = outboxRef.current.getBoundingClientRect().height;
-    chartInstance.resize({ width: props.size ? props.size.width - 20 : width, height: props.size ? props.size.height - 40 : height });
+    chartInstance.resize({
+      width: props.size ? props.size.width - 20 : width,
+      height: props.size ? props.size.height - 170 : height - 120,
+    });
 
     chartInstance.setOption(chartOptions);
   }, [chartRef.current, outboxRef.current, colorMode, chartOptions, JSON.stringify(props.size)]);
@@ -72,12 +89,36 @@ const EChartsViewer = (props: {
 
   return (
     <>
-      <Box w="100%" h="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} ref={outboxRef}>
-        {props.timeSinceLastUpdate ? (
-          <Box bg="#222" p="5px" w="100%" display="flex" flexDir="column" alignItems="center" justifyContent={'center'} fontSize={'25px'}>
-            {props.timeSinceLastUpdate}
-          </Box>
-        ) : null}
+      {/* if (colorMode === 'dark') {
+    options.backgroundColor = '#222';
+    options.textStyle = { color: '#ffffff' };
+    options.axisLine = { lineStyle: { color: '#eee' } };
+    options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
+  } else if (colorMode === 'light') {
+    options.backgroundColor = '#fff';
+    options.textStyle = { color: '#333' };
+    options.axisLine = { lineStyle: { color: '#999' } };
+    options.tooltip = { backgroundColor: '#fff', textStyle: { color: '#333' } };
+  } else {
+    throw new Error('Invalid color mode');
+  } */}
+
+      <Box
+        bg={colorMode === 'light' ? '#fff' : '#222'}
+        pt="2rem"
+        w="100%"
+        h="100%"
+        display="flex"
+        flexDir="column"
+        alignItems="center"
+        justifyContent={'center'}
+        ref={outboxRef}
+      >
+        <Box pb="1rem" mt="-1rem">
+          <Text textAlign={'center'} fontSize={'50px'}>
+            {props.stationMetadata ? stationNames : 'No Station Selected'}
+          </Text>
+        </Box>
         {props.isLoaded ? (
           <>
             <div ref={chartRef} />
@@ -87,6 +128,21 @@ const EChartsViewer = (props: {
             <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" size="xl" />
           </Box>
         )}
+
+        {props.timeSinceLastUpdate ? (
+          <Box
+            bg={colorMode === 'light' ? '#fff' : '#222'}
+            w="100%"
+            display="flex"
+            flexDir="column"
+            alignItems="center"
+            justifyContent={'center'}
+            fontSize={'25px'}
+            pb={'2rem'}
+          >
+            {props.timeSinceLastUpdate}
+          </Box>
+        ) : null}
       </Box>
     </>
   );

@@ -89,7 +89,7 @@ type VariableProps = {
   color: string;
 };
 
-export default function VariableCard(
+export default function FriendlyVariableCard(
   props: {
     isLoaded: boolean;
     stationNames: string[];
@@ -329,7 +329,6 @@ const Content = (props: {
         }}
         position="relative"
         boxShadow={'lg'}
-        p="1rem"
         w={props.size.width}
         h={props.size.height}
         // bgColor={`${props.variable.color}`}
@@ -338,54 +337,36 @@ const Content = (props: {
         // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
         display="flex"
         flexDirection="column"
-        justifyContent={'center'}
+        // justifyContent={'center'}
         alignContent="center"
+        textAlign={'center'}
       >
-        {!props.isCustomizeWidgetMenu ? (
-          <Box position="fixed" left="50%" top="4rem" transform="translate(-50%, 0%)" margin="0 auto">
-            <Text fontWeight="bold" textAlign={'center'} fontSize={scaleToFontSize / 12}>
-              {props.variable.stationName}
-            </Text>
-          </Box>
-        ) : (
-          <Text textAlign={'center'} fontSize={scaleToFontSize / 12}>
-            {props.variable.stationName}
-          </Text>
-        )}
+        <Box bg="#2A98D5">
+          <Text fontSize={scaleToFontSize / 12}>{variableName.join(' ')}</Text>
+        </Box>
 
         <Box>
-          <Text textAlign={'center'} fontSize={scaleToFontSize / 14}>
-            {variableName.join(' ')}
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 6}>
+            {props.variable.stationName}
           </Text>
         </Box>
 
-        {/* <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
-        {props.variable.images ? (
-          <Image
-            boxSize={'120px'}
-            src={props.variable.images[compareWithStandardDeviation(props.variable.average, props.variable.stdDev, props.variable.value)]}
-            alt="image"
-          />
-        ) : (
-          'No Image Available'
-        )}
-      </Box> */}
         <Box>
           {props.isLoaded ? (
             <>
-              <Box display="flex" justifyContent={'center'}>
+              {/* <Box display="flex" justifyContent={'center'}>
                 {' '}
                 {props.variable.variableName === 'wind_direction_set_1' ? (
                   <Icon fontSize={200} as={MdOutlineArrowUpward} transform={`rotate(${props.variable.value}deg)`} />
                 ) : null}
-              </Box>
+              </Box> */}
 
               <Text
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
                 overflow="hidden"
-                fontSize={scaleToFontSize / 6}
+                fontSize={scaleToFontSize / 4}
                 fontWeight="bold"
               >
                 {isNaN(props.variable.value)
@@ -394,110 +375,28 @@ const Content = (props: {
                   ? Number(props.variable.value).toFixed(1)
                   : props.variable.value}
                 <span>&nbsp;{props.variable.unit}</span>
-                {/* <Text color="black" textAlign={'center'} fontSize={15}>
-                {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
-              </Text> */}
               </Text>
-
-              {/* {isNaN(props.variable.value) ? null : (
-                <>
-                  <Box display="flex" justifyContent={'space-evenly'} alignItems={'center'} flexDir="row">
-                    <Text
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                      overflow="hidden"
-                      color="gray.700"
-                      fontSize={25}
-                      fontWeight="bold"
-                      textAlign={'center'}
-                    >
-                      Low <br />
-                      {props.variable.low.toFixed(2)}
-                      {props.variable.unit}
-                    </Text>
-                    <Text
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                      overflow="hidden"
-                      color="gray.700"
-                      fontSize={25}
-                      fontWeight="bold"
-                      textAlign={'center'}
-                    >
-                      Average <br />
-                      {props.variable.average.toFixed(2)}
-                      {props.variable.unit}
-                    </Text>
-                    <Text
-                      display="flex"
-                      justifyContent="center"
-                      alignItems="center"
-                      overflow="hidden"
-                      color="gray.700"
-                      fontSize={25}
-                      fontWeight="bold"
-                      textAlign={'center'}
-                    >
-                      High <br />
-                      {props.variable.high.toFixed(2)}
-                      {props.variable.unit}
-                    </Text>
-                  </Box>
-                </>
-              )} */}
-              {/* <Text
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                overflow="hidden"
-                color="gray.700"
-                fontSize={20}
-                fontWeight="semibold"
-                lineHeight={'48px'}
-              >
-                <>Last 24 hours</>
-              </Text> */}
             </>
           ) : (
             <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
           )}
-          {props.isCustomizeWidgetMenu ? (
-            <Text
-              textAlign={'center'}
-              bottom="1rem"
-              margin="0 auto"
-              overflow="hidden"
-              color="gray.400"
-              fontSize={scaleToFontSize / 25}
-              fontWeight="semibold"
-              // lineHeight={'48px'}
-            >
-              <>{props.timeSinceLastUpdate}</>
-            </Text>
-          ) : (
-            <Text
-              position="fixed"
-              left="50%"
-              bottom="4rem"
-              transform="translate(-50%, -50%)"
-              margin="0 auto"
-              overflow="hidden"
-              color="gray.400"
-              fontSize={scaleToFontSize / 25}
-              fontWeight="semibold"
-              // lineHeight={'48px'}
-            >
-              <>{props.timeSinceLastUpdate}</>
-            </Text>
-          )}
+
+          <Text
+            overflow="hidden"
+            color="gray.400"
+            transform={'translateY(70px)'}
+            fontSize={scaleToFontSize / 20}
+            fontWeight="semibold"
+            // lineHeight={'48px'}
+          >
+            <>{props.timeSinceLastUpdate}</>
+          </Text>
         </Box>
       </Box>
     </>
   );
 };
 
-VariableCard.defaultProps = {
+FriendlyVariableCard.defaultProps = {
   generateAllVariables: false,
 };

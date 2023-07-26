@@ -151,7 +151,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!res.success) {
       toast({
         title: res.message ? res.message : 'Error creating app',
-        description: res.error,
+        description: res.message,
         status: 'error',
         duration: 3000,
       });
