@@ -75,20 +75,3 @@
     opacity: 0;
   }
 }
-
-.alignSpan {
-  vertical-align: center;
-}
-ul {
-  list-style: none;
-  display: table;
-}
-
-li {
-  display: table-row;
-}
-
-b {
-  display: table-cell;
-  padding-right: 1em;
-}
