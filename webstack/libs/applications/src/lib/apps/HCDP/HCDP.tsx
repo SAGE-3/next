@@ -56,10 +56,7 @@ function AppComponent(props: App): JSX.Element {
   const [map, setMap] = useState<any>();
   const [, setStationMetadata] = useState([]);
 
-  useEffect(() => {
-    console.log(hcdpStationData);
-    console.log(s.stationData);
-  }, []);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -114,47 +111,47 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <LeafletWrapper map={map} setMap={setMap} {...props}>
         {s.getDataFrom === 'mesonet' ? <CustomizeWidgets {...props} /> : <CustomizeWidgetsHCDP {...props} />}
-
         <Box
           w="20rem"
-          h="24rem"
-          bg="gray.300"
+          h="21.5rem"
           position="absolute"
+          bg="white"
           zIndex="999"
-          color={'black'}
-          top="2px"
-          left="2px"
-          border="10px"
+          top="1rem"
+          left="1rem"
+          border="3px solid gray"
           rounded={10}
+          boxShadow={'0 0 10px 5px rgba(0, 0, 0, 0.2)'}
           // margin="auto"
-          padding="0 20px"
+          color="black"
+          padding="1rem"
           fontWeight={'bold'}
           fontSize="xl"
         >
-          <br />
           <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
             <Stack direction="column">
-              <Radio colorScheme="orange" value="temperatureC">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureC">
                 <p style={{ fontSize: 30 }}>Temperature C</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="temperatureF">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureF">
                 <p style={{ fontSize: 30 }}>Temperature F</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="soilMoisture">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="soilMoisture">
                 <p style={{ fontSize: 30 }}>Soil Moisture</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="windSpeed">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="windSpeed">
                 <p style={{ fontSize: 30 }}>Wind Speed</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="relativeHumidity">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="relativeHumidity">
                 <p style={{ fontSize: 30 }}>Relative Humidity</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="solarRadiation">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="solarRadiation">
                 <p style={{ fontSize: 30 }}>Solar Radiation</p>
               </Radio>
             </Stack>
           </RadioGroup>
         </Box>
+
         <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -195,12 +192,14 @@ function AppComponent(props: App): JSX.Element {
                 );
               })
             : hcdpStationData.map((station: any, index: number) => {
+                if (station.value.island !== 'OA') return null;
+                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
                 return (
                   <div key={index}>
                     <SVGOverlay
                       bounds={[
-                        [Number(station.value.lat) - 0.17, Number(station.value.lon) - 0.05],
-                        [Number(station.value.lat) + 0.15, Number(station.value.lon) + 0.05],
+                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
+                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
                       ]}
                       eventHandlers={{
                         click: () => {
@@ -346,12 +345,14 @@ function ToolbarComponent(props: App): JSX.Element {
           );
         })}
       </ButtonGroup>
-      <Button size="xs" onClick={handleChangeToMesonetData} colorScheme={'yellow'}>
+
+      {/**TODO uncomment this when showing the HCDP datasets */}
+      {/* <Button size="xs" onClick={handleChangeToMesonetData} colorScheme={'yellow'}>
         Mesonet
-      </Button>
-      <Button size="xs" onClick={handleChangeToHcdpData} colorScheme={'yellow'}>
+      </Button> */}
+      {/* <Button size="xs" onClick={handleChangeToHcdpData} colorScheme={'yellow'}>
         hcdp
-      </Button>
+      </Button> */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>

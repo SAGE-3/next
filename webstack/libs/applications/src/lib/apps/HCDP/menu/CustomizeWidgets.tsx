@@ -35,6 +35,7 @@ import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletT
 
 import { useAppStore } from '@sage3/frontend';
 import VariableCard from '../viewers/VariableCard';
+import FriendlyVariableCard from '../viewers/FriendlyVariableCard';
 import EChartsViewer from '../viewers/EChartsViewer';
 import { getColor } from '../../EChartsViewer/ChartManager';
 import CurrentConditions from '../viewers/CurrentConditions';
@@ -160,7 +161,6 @@ const CustomizeWidgets = React.memo((props: App) => {
   const drawerBackgroundColor: string = useColorModeValue('gray.50', 'gray.700');
   const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
-
   const [stationType, setStationType] = useState('hcdp');
 
   // TODO used for ChatGPT
@@ -169,6 +169,8 @@ const CustomizeWidgets = React.memo((props: App) => {
   // Fetches all station data given a startDate
   const fetchData = async (startDate: string) => {
     setIsLoaded(false);
+    if (props.data.state.stationNames.length === 0) return;
+
     let tmpSensorMetadata: any = [];
     const tmpVariableNames: any = [];
     let response: Response | null = null;
@@ -183,6 +185,7 @@ const CustomizeWidgets = React.memo((props: App) => {
     );
     if (response) {
       stationData = await response.json();
+
       if (stationData) {
         for (let i = 0; i < stationData['STATION'].length; i++) {
           const sensorObservationVariableNames = Object.getOwnPropertyNames(stationData['STATION'][i]['OBSERVATIONS']);
@@ -198,6 +201,12 @@ const CustomizeWidgets = React.memo((props: App) => {
 
     // Variable names used to display on the Select Dropdown
     const filteredVariableNames = findDuplicateElements(...tmpVariableNames);
+    filteredVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+    filteredVariableNames.push('Elevation & Current Temperature');
+
+    const tmpOptions = filteredVariableNames.map((name: string) => {
+      return { label: name, value: name };
+    });
 
     //Limiting variable names for the axes
     if (props.data.state.widget.visualizationType === 'line' || props.data.state.widget.visualizationType === 'bar') {
@@ -247,7 +256,6 @@ const CustomizeWidgets = React.memo((props: App) => {
   const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
     const tmpArray: string[] = [...props.data.state.stationNames];
     const stationName = station.name;
-    console.log(stationName);
     setVariableNames([]);
     if (tmpArray.find((station: string) => station === stationName)) {
       tmpArray.splice(tmpArray.indexOf(stationName), 1);
@@ -263,15 +271,24 @@ const CustomizeWidgets = React.memo((props: App) => {
   // Select Dropdown handler
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-    const tmpYAxisNames = value === 'allVariables' ? variableNames : [];
-    updateState(props._id, { widget: { ...props.data.state.widget, visualizationType: value, yAxisNames: tmpYAxisNames } });
+    if (value === 'line' || value === 'bar') {
+      updateState(props._id, { widget: { ...props.data.state.widget, visualizationType: value, xAxisNames: ['date_time'] } });
+    } else {
+      updateState(props._id, { widget: { ...props.data.state.widget, visualizationType: value } });
+    }
   };
 
   // Select Dropdown handler
   const handleYAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-
-    updateState(props._id, { widget: { ...props.data.state.widget, yAxisNames: [value] } });
+    if (value === 'Elevation & Current Temperature') {
+      console.log('here');
+      updateState(props._id, {
+        widget: { ...props.data.state.widget, yAxisNames: ['Elevation & Current Temperature'] },
+      });
+    } else {
+      updateState(props._id, { widget: { ...props.data.state.widget, yAxisNames: [value], xAxisNames: ['date_time'] } });
+    }
   };
   // Select Dropdown handler
   const handleXAxisChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -281,13 +298,15 @@ const CustomizeWidgets = React.memo((props: App) => {
 
   const handleChangeStationType = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-    setStationType(value);
+    updateState(props._id, { getDataFrom: value, stationNames: [] });
   };
 
   const generateWidget = async () => {
+    const visualizationType = props.data.state.widget.visualizationType;
+    const isBarChart = visualizationType === 'bar';
     const isVariableCardOrCurrentConditions =
-      props.data.state.widget.visualizationType === 'variableCard' || props.data.state.widget.visualizationType === 'allVariables';
-    const isStationMetadata = props.data.state.widget.visualizationType === 'stationMetadata';
+      visualizationType === 'variableCard' || visualizationType === 'allVariables' || visualizationType === 'friendlyVariableCard';
+    const isStationMetadata = visualizationType === 'stationMetadata';
     if (isVariableCardOrCurrentConditions) {
       let row = 0;
       for (let i = 0; i < props.data.state.stationNames.length; i++) {
@@ -352,6 +371,39 @@ const CustomizeWidgets = React.memo((props: App) => {
           dragging: false,
         });
       }
+    } else if (isBarChart) {
+      let row = -1;
+
+      for (let i = 0; i < props.data.state.stationNames.length; i++) {
+        if (i % 3 === 0) row++;
+        const stationName = props.data.state.stationNames[i];
+        const app = await createApp({
+          title: 'SensorOverview',
+          roomId: props.data.roomId!,
+          boardId: props.data.boardId!,
+          //TODO get middle of the screen space
+          position: {
+            x: props.data.position.x + 2000 * (i % 3),
+            y: props.data.position.y + (props.data.size.height + 800 * row),
+            z: 0,
+          },
+          size: { width: 2000, height: 800, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'SensorOverview',
+          state: {
+            sensorData: {},
+            stationNames: [stationName],
+            listOfStationNames: '016HI',
+            location: [21.297, -157.816],
+            zoom: 8,
+            baseLayer: 'OpenStreetMap',
+            overlay: true,
+            widget: props.data.state.widget,
+          },
+          raised: true,
+          dragging: false,
+        });
+      }
     } else {
       const app = await createApp({
         title: 'SensorOverview',
@@ -400,6 +452,34 @@ const CustomizeWidgets = React.memo((props: App) => {
     const startDate = convertToFormattedDateTime(date);
     updateState(props._id, { widget: { ...props.data.state.widget, startDate: startDate } });
     setStartDate(startDate);
+  };
+
+  const checkAvailableVisualizations = (variable: string) => {
+    const availableVisualizations: { value: string; name: string }[] = [];
+    console.log(variable);
+    switch (variable) {
+      case 'Elevation, Longitude, Latitude, Name, Time':
+        availableVisualizations.push({ value: 'stationMetadata', name: 'Station Metadata' });
+        break;
+      case 'Elevation & Current Temperature':
+        availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
+        break;
+      default:
+        availableVisualizations.push({ value: 'variableCard', name: 'Current Value' });
+        availableVisualizations.push({ value: 'friendlyVariableCard', name: 'Friendly Variable Card' });
+        // availableVisualizations.push({value: 'allVariables', name: 'Current Conditions'});
+        availableVisualizations.push({ value: 'line', name: 'Line Chart' });
+        availableVisualizations.push({ value: 'bar', name: 'Bar Chart' });
+        // availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
+        break;
+    }
+    return availableVisualizations.map((visualization, index) => {
+      return (
+        <option key={index} value={visualization.value}>
+          {visualization.name}
+        </option>
+      );
+    });
   };
 
   return (
@@ -608,73 +688,90 @@ const CustomizeWidgets = React.memo((props: App) => {
                     Options
                   </Heading>
                 </Box>
-                <Box display="flex" flexDir={'column'} alignItems={'center'}>
-                  <Text>Station Type:</Text>
-                  <Tooltip label={'Choose from HCDP or Mesonet datasets'} aria-label="A tooltip">
-                    <Select w="15rem" placeholder={'Select Station Type'} value={stationType} onChange={handleChangeStationType}>
+                <Box mt="1rem" display="flex" flexDir={'row'} alignItems={'center'}>
+                  <Text mx="1rem" w="10rem" textOverflow={'ellipsis'}>
+                    Station Type:
+                  </Text>
+                  {/**TODO Uncomment this when using the HCDP datasets. */}
+                  {/* <Tooltip label={'Choose from HCDP or Mesonet datasets'} aria-label="A tooltip">
+                    <Select
+                      w="15rem"
+                      placeholder={'Select Station Type'}
+                      value={props.data.state.getDataFrom}
+                      onChange={handleChangeStationType}
+                    >
                       <option value="hcdp">Hawaii Climate Data Portal (HCDP)</option>
                       <option value="mesonet">Mesonet</option>
                     </Select>
+                  </Tooltip> */}
+                </Box>
+                <Box mt="1rem" display="flex" flexDir={'row'} alignItems={'center'}>
+                  <Text mx="1rem" w="10rem" textOverflow={'ellipsis'} whiteSpace={'nowrap'} overflow="hidden">
+                    Choose Start Date:
+                  </Text>
+                  <Tooltip
+                    label={
+                      props.data.state.widget.visualizationType
+                        ? 'Date is only available at a 24 hour interval'
+                        : 'Select the date and time for the visualization'
+                    }
+                    aria-label="A tooltip"
+                  >
+                    <Input
+                      w="240px"
+                      mr="1rem"
+                      onChange={handleDateChange}
+                      value={convertToChakraDateTime(props.data.state.widget.startDate)}
+                      placeholder="Select Date and Time"
+                      type="datetime-local"
+                      disabled={
+                        props.data.state.widget.visualizationType === 'variableCard' ||
+                        props.data.state.widget.visualizationType === 'friendlyVariableCard'
+                          ? true
+                          : false
+                      }
+                    />
                   </Tooltip>
                 </Box>
-                <Box py="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
-                  <Box
-                    transform="translate(-8px, 0px)"
-                    display="flex"
-                    flexDirection="column"
-                    justifyContent={'center'}
-                    alignContent="center"
-                  >
-                    <Text>Choose Date:</Text>
-                    <Tooltip
-                      label={
-                        props.data.state.widget.visualizationType
-                          ? 'Date is only available at a 24 hour interval'
-                          : 'Select the date and time for the visualization'
-                      }
-                      aria-label="A tooltip"
-                    >
-                      <Input
-                        w="240px"
-                        mr="1rem"
-                        onChange={handleDateChange}
-                        value={convertToChakraDateTime(props.data.state.widget.startDate)}
-                        placeholder="Select Date and Time"
-                        type="datetime-local"
-                        disabled={
-                          props.data.state.widget.visualizationType === 'variableCard' ||
-                          props.data.state.widget.visualizationType === 'allVariables'
-                            ? true
-                            : false
-                        }
-                      />
-                    </Tooltip>
-                  </Box>
-                  <Box
-                    transform="translate(-8px, 0px)"
-                    display="flex"
-                    flexDirection="column"
-                    justifyContent={'center'}
-                    alignContent="center"
-                  >
-                    <Text>Visualization Type: </Text>
+                <Box mt="1rem" display="flex" flexDir={'row'} alignItems={'center'}>
+                  <Text mx="1rem" w="10rem" textOverflow={'ellipsis'}>
+                    Variable(s):
+                  </Text>
+                  <Tooltip label={'Choose the variable that you would like to visualize'} aria-label="A tooltip">
                     <Select
                       w="15rem"
-                      placeholder={'Select Visualization Type'}
-                      value={props.data.state.widget.visualizationType}
-                      onChange={handleVisualizationTypeChange}
+                      placeholder={'Select Variable'}
+                      value={props.data.state.widget.yAxisNames[0]}
+                      onChange={handleYAxisChange}
                     >
-                      <option value="variableCard">Current Value</option>
-                      <option value="allVariables">Current Conditions</option>
-                      <option value="stationMetadata">Station Details</option>
-                      <option value="line">Line Chart</option>
-                      <option value="bar">Bar Chart</option>
-                      <option value="scatter">Scatter Chart</option>
+                      {variableNames.map((name: string, index: number) => {
+                        return (
+                          <option key={index} value={name}>
+                            {name}
+                          </option>
+                        );
+                      })}
                     </Select>
-                  </Box>
+                  </Tooltip>
                 </Box>
 
-                {props.data.state.widget.visualizationType === 'variableCard' ? (
+                <Box mt="1rem" display="flex" flexDir={'row'} alignItems={'center'}>
+                  <Text mx="1rem" w="10rem" textOverflow={'ellipsis'} whiteSpace={'nowrap'} overflow="hidden">
+                    Visualization Type:
+                  </Text>
+
+                  <Select
+                    w="15rem"
+                    placeholder={'Select Visualization Type'}
+                    value={props.data.state.widget.visualizationType}
+                    onChange={handleVisualizationTypeChange}
+                    // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+                  >
+                    {checkAvailableVisualizations(props.data.state.widget.yAxisNames[0])}
+                  </Select>
+                </Box>
+
+                {/* {props.data.state.widget.visualizationType === 'variableCard' ? (
                   <Box p="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                     <Box display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                       <Text>Current Attribute: </Text>
@@ -697,8 +794,8 @@ const CustomizeWidgets = React.memo((props: App) => {
                       </Select>
                     </Box>
                   </Box>
-                ) : null}
-                {props.data.state.widget.visualizationType === 'line' ||
+                ) : null} */}
+                {/* {props.data.state.widget.visualizationType === 'line' ||
                 props.data.state.widget.visualizationType === 'bar' ||
                 props.data.state.widget.visualizationType === 'scatter' ? (
                   <Box p="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
@@ -742,8 +839,9 @@ const CustomizeWidgets = React.memo((props: App) => {
                       </Select>
                     </Box>
                   </Box>
-                ) : null}
-                <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
+                ) : null} */}
+                <Box mt="2rem" display="flex" flexDir={'row'} alignItems={'center'}>
+                  <Text w="15rem"></Text>
                   <Tooltip
                     placement="top"
                     label={
@@ -761,19 +859,20 @@ const CustomizeWidgets = React.memo((props: App) => {
                       size="sm"
                       colorScheme={'green'}
                       onClick={generateWidget}
+                      width={'8rem'}
                     >
                       Generate
                     </Button>
                   </Tooltip>
                 </Box>
-                <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
+                {/* <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                   <Input type={'text'} onChange={handlePromptChange}></Input>
                 </Box>
                 <Box p="1rem" display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                   <Button size="sm" colorScheme={'green'} onClick={sendToChatGPT}>
                     Create Chart
                   </Button>
-                </Box>
+                </Box> */}
               </Box>
               <Box
                 border="3px solid"
@@ -804,6 +903,21 @@ const CustomizeWidgets = React.memo((props: App) => {
                         startDate={startDate}
                         timeSinceLastUpdate={timeSinceLastUpdate}
                         generateAllVariables={props.data.state.widget.visualizationType === 'allVariables'}
+                        isCustomizeWidgetMenu={true}
+                      />
+                    </>
+                  ) : null}
+                  {props.data.state.widget.visualizationType === 'friendlyVariableCard' ? (
+                    <>
+                      <FriendlyVariableCard
+                        state={props.data.state}
+                        stationNames={props.data.state.stationNames}
+                        stationMetadata={stationMetadata}
+                        isLoaded={isLoaded}
+                        startDate={startDate}
+                        timeSinceLastUpdate={timeSinceLastUpdate}
+                        generateAllVariables={props.data.state.widget.visualizationType === 'allVariables'}
+                        isCustomizeWidgetMenu={true}
                       />
                     </>
                   ) : null}
@@ -817,6 +931,7 @@ const CustomizeWidgets = React.memo((props: App) => {
                       isLoaded={isLoaded}
                       startDate={startDate}
                       widget={props.data.state.widget}
+                      // size={{ width: 700, height: 400,}}
                     />
                   ) : null}
                   {props.data.state.widget.visualizationType === 'allVariables' ? (

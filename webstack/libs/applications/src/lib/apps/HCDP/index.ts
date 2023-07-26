@@ -88,7 +88,7 @@ export const init: Partial<state> = {
   appIdsICreated: [],
   fontSizeMultiplier: 15,
   variableToDisplay: 'temperatureC',
-  stationNames: ['012HI'],
+  stationNames: [],
   stationData: [...stationDataTemplate],
   widget: widget,
   isWidgetOpen: false,

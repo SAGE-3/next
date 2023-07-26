@@ -41,6 +41,8 @@ import CurrentConditions from '../viewers/CurrentConditions';
 import StationMetadata from '../viewers/StationMetadata';
 import { MdDelete } from 'react-icons/md';
 
+import { hcdpStationData } from '../data/hcdpStationData_legacy';
+
 type NLPRequestResponse = {
   success: boolean;
   message: string;
@@ -161,8 +163,6 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
   const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
-  const [stationType, setStationType] = useState('hcdp');
-
   // TODO used for ChatGPT
   const [prompt, setPrompt] = useState<string>('');
 
@@ -209,12 +209,18 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
     //     }
     // }
     const queryObject = {
-      name: 'hcdp_station_value',
-      'value.date': '2023-03-08',
-      'value.period': 'day',
-      'value.fill': 'raw',
-      'value.datatype': 'temperature',
-      'value.aggregation': 'max',
+      $and: [
+        {
+          name: 'hcdp_station_value',
+          'value.station_id': '1094.2',
+          'value.period': 'month',
+          'value.fill': 'partial',
+          'value.datatype': 'rainfall',
+          'value.production': 'new',
+        },
+        { 'value.date': { $gte: '1994-01' } },
+        { 'value.date': { $lt: '1995-01' } },
+      ],
     };
 
     const docLimitAndOffset = '&limit=10000&offset=0';
@@ -224,9 +230,9 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: 'Bearer 71c5efcd8cfe303f2795e51f01d19c6',
       },
     });
-    console.log(await response.json());
     setIsLoaded(true);
   };
 
@@ -260,20 +266,19 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
     return () => clearInterval(interval);
   }, [lastUpdate]);
 
-  const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
+  const handleRemoveSelectedStation = (station: any) => {
     const tmpArray: string[] = [...props.data.state.stationNames];
-    const stationName = station.name;
-    console.log(stationName);
+    const skn = station.value.skn;
     setVariableNames([]);
-    if (tmpArray.find((station: string) => station === stationName)) {
-      tmpArray.splice(tmpArray.indexOf(stationName), 1);
-      updateState(props._id, { stationNames: [...tmpArray] });
+    if (tmpArray.find((station: string) => station === skn)) {
+      tmpArray.splice(tmpArray.indexOf(skn), 1);
+      updateState(props._id, { skn: [...tmpArray] });
     }
   };
 
-  const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
+  const handleAddSelectedStation = (station: any) => {
     setVariableNames([]);
-    updateState(props._id, { stationNames: [...props.data.state.stationNames, station.name] });
+    updateState(props._id, { stationNames: [...props.data.state.stationNames, station.value.skn] });
   };
 
   // Select Dropdown handler
@@ -297,7 +302,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
 
   const handleChangeStationType = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-    setStationType(value);
+    updateState(props._id, { getDataFrom: value, stationNames: [] });
   };
 
   const generateWidget = async () => {
@@ -420,7 +425,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
 
   return (
     <>
-      {/* <Drawer
+      <Drawer
         blockScrollOnMount={false}
         trapFocus={false}
         placement={'bottom'}
@@ -459,68 +464,60 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                   </Heading>
                 </Box>
                 <Accordion allowMultiple overflowY="scroll" height="35rem">
-                  {!isLoaded
-                    ? props.data.state.stationNames.map((stationName: string, index: number) => {
-                        return (
-                          <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                            Loading Station...
-                          </Box>
-                        );
-                      })
-                    : stationMetadata.map((station: any, index: number) => {
-                        return (
-                          <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                            <AccordionItem>
-                              <AccordionButton>
-                                <Box
-                                  as="span"
-                                  flex="1"
-                                  textAlign="left"
-                                  ml={'15px'}
-                                  width="5rem"
-                                  whiteSpace="nowrap"
-                                  overflow="hidden"
-                                  textOverflow="ellipsis"
-                                >
-                                  {station.NAME}
-                                </Box>
+                  {props.data.state.stationNames.map((station: any, index: number) => {
+                    return (
+                      <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                        <AccordionItem>
+                          <AccordionButton>
+                            <Box
+                              as="span"
+                              flex="1"
+                              textAlign="left"
+                              ml={'15px'}
+                              width="5rem"
+                              whiteSpace="nowrap"
+                              overflow="hidden"
+                              textOverflow="ellipsis"
+                            >
+                              {station}
+                            </Box>
 
-                                <AccordionIcon />
-                                <Tooltip
-                                  key={index}
-                                  placement="top"
-                                  label={
-                                    props.data.state.stationNames.length < 2
-                                      ? 'You must have at least one station selected'
-                                      : 'Remove station from list'
-                                  }
-                                  openDelay={300}
-                                  aria-label="A tooltip"
-                                >
-                                  <IconButton
-                                    icon={<MdDelete />}
-                                    aria-label="Delete Station"
-                                    ml="1rem"
-                                    colorScheme="red"
-                                    size="xs"
-                                    isDisabled={props.data.state.stationNames.length < 2}
-                                    fontWeight="bold"
-                                    onClick={() => {
-                                      if (props.data.state.stationNames.length >= 2)
-                                        handleRemoveSelectedStation({
-                                          lat: station.lat as number,
-                                          lon: station.lon as number,
-                                          name: station.STID as string,
-                                          selected: true,
-                                        });
-                                    }}
-                                  >
-                                    X
-                                  </IconButton>
-                                </Tooltip>
-                              </AccordionButton>
+                            <AccordionIcon />
+                            <Tooltip
+                              key={index}
+                              placement="top"
+                              label={
+                                props.data.state.stationNames.length < 2
+                                  ? 'You must have at least one station selected'
+                                  : 'Remove station from list'
+                              }
+                              openDelay={300}
+                              aria-label="A tooltip"
+                            >
+                              <IconButton
+                                icon={<MdDelete />}
+                                aria-label="Delete Station"
+                                ml="1rem"
+                                colorScheme="red"
+                                size="xs"
+                                isDisabled={props.data.state.stationNames.length < 2}
+                                fontWeight="bold"
+                                onClick={() => {
+                                  if (props.data.state.stationNames.length >= 2)
+                                    handleRemoveSelectedStation({
+                                      lat: station.lat as number,
+                                      lon: station.lon as number,
+                                      name: station.STID as string,
+                                      selected: true,
+                                    });
+                                }}
+                              >
+                                X
+                              </IconButton>
+                            </Tooltip>
+                          </AccordionButton>
 
-                              <AccordionPanel pb={4}>
+                          {/* <AccordionPanel pb={4}>
                                 <UnorderedList>
                                   {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
                                     return (
@@ -530,11 +527,11 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                                     );
                                   })}
                                 </UnorderedList>
-                              </AccordionPanel>
-                            </AccordionItem>
-                          </Box>
-                        );
-                      })}
+                              </AccordionPanel> */}
+                        </AccordionItem>
+                      </Box>
+                    );
+                  })}
                 </Accordion>
               </Box>
               <Box border="3px solid" borderColor={accentColor} boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="40rem">
@@ -550,23 +547,25 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                     />
-                    {stationData.map((station: { lat: number; lon: number; name: string; selected: boolean }, index: number) => {
-                      if (props.data.state.stationNames.includes(station.name)) {
+
+                    {hcdpStationData.map((station: any, index) => {
+                      if (props.data.state.stationNames.includes(station.value.skn)) {
                         station.selected = true;
                       } else {
                         station.selected = false;
                       }
                       return (
-                        <div key={index}>
+                        <>
                           <CircleMarker
                             key={index}
-                            center={{ lat: station.lat - 0.01, lng: station.lon }}
+                            center={{ lat: station.value.lat, lng: station.value.lon }}
                             fillColor={station.selected ? 'blue' : 'red'}
                             stroke={false}
-                            radius={20}
+                            radius={5}
                             fillOpacity={0}
                             eventHandlers={{
                               click: (e) => {
+                                console.log(station);
                                 if (station.selected) {
                                   if (props.data.state.stationNames.length >= 2) {
                                     handleRemoveSelectedStation(station);
@@ -586,8 +585,8 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
 
                           <SVGOverlay
                             bounds={[
-                              [station.lat - 0.17, station.lon - 0.05],
-                              [station.lat + 0.15, station.lon + 0.05],
+                              [Number(station.value.lat) - 0.17, Number(station.value.lon) - 0.05],
+                              [Number(station.value.lat) + 0.15, Number(station.value.lon) + 0.05],
                             ]}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
@@ -595,7 +594,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                                 <circle
                                   cx="100"
                                   cy="100"
-                                  r="20"
+                                  r="5"
                                   fill={station.selected ? '#2e3f8f' : '#E1BB78'}
                                   stroke={'black'}
                                   strokeWidth="3"
@@ -603,7 +602,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                               </g>
                             </svg>
                           </SVGOverlay>
-                        </div>
+                        </>
                       );
                     })}
                   </LayersControl.BaseLayer>
@@ -627,7 +626,12 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                 <Box display="flex" flexDir={'column'} alignItems={'center'}>
                   <Text>Station Type:</Text>
                   <Tooltip label={'Choose from HCDP or Mesonet datasets'} aria-label="A tooltip">
-                    <Select w="15rem" placeholder={'Select Station Type'} value={stationType} onChange={handleChangeStationType}>
+                    <Select
+                      w="15rem"
+                      placeholder={'Select Station Type'}
+                      value={props.data.state.getDataFrom}
+                      onChange={handleChangeStationType}
+                    >
                       <option value="hcdp">Hawaii Climate Data Portal (HCDP)</option>
                       <option value="mesonet">Mesonet</option>
                     </Select>
@@ -820,11 +824,12 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                         startDate={startDate}
                         timeSinceLastUpdate={timeSinceLastUpdate}
                         generateAllVariables={props.data.state.widget.visualizationType === 'allVariables'}
+                        isCustomizeWidgetMenu={true}
                       />
                     </>
                   ) : null}
 
-                  {props.data.state.widget.visualizationType === 'line' ||
+                  {/* {props.data.state.widget.visualizationType === 'line' ||
                   props.data.state.widget.visualizationType === 'bar' ||
                   props.data.state.widget.visualizationType === 'scatter' ? (
                     <EChartsViewer
@@ -856,13 +861,13 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                         isLoaded={isLoaded}
                       />
                     </>
-                  ) : null}
+                  ) : null} */}
                 </Box>
               </Box>
             </Box>
           </DrawerBody>
         </DrawerContent>
-      </Drawer> */}
+      </Drawer>
     </>
   );
 });

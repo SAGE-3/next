@@ -25,6 +25,7 @@ import EChartsViewer from '../HCDP/viewers/EChartsViewer';
 import CurrentConditions from '../HCDP/viewers/CurrentConditions';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
 import StationMetadata from '../HCDP/viewers/StationMetadata';
+import FriendlyVariableCard from '../HCDP/viewers/FriendlyVariableCard';
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -41,9 +42,9 @@ function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
   if (mins > 0) {
-    return `Refreshed ${mins} minutes ago`;
+    return `${mins} minutes ago`;
   } else {
-    return `Refreshed less than a minute ago`;
+    return `less than a minute ago`;
   }
 }
 
@@ -133,8 +134,8 @@ function AppComponent(props: App): JSX.Element {
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
   return (
-    <AppWindow app={props}>
-      <Box overflowY="auto" bg={bgColor} h="100%">
+    <AppWindow app={props} lockAspectRatio={s.widget.visualizationType === 'variableCard' ? 1 : false}>
+      <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
             <CustomizeWidgets {...props} />
@@ -142,7 +143,7 @@ function AppComponent(props: App): JSX.Element {
               <Box>
                 {s.widget.visualizationType === 'variableCard' ? (
                   <VariableCard
-                    size={props.data.size}
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     state={props.data.state}
                     stationNames={s.stationNames}
                     startDate={s.widget.startDate}
@@ -150,6 +151,20 @@ function AppComponent(props: App): JSX.Element {
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     generateAllVariables={s.widget.visualizationType === 'allVariables'}
                     isLoaded={true}
+                    isCustomizeWidgetMenu={false}
+                  />
+                ) : null}
+                {s.widget.visualizationType === 'friendlyVariableCard' ? (
+                  <FriendlyVariableCard
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
+                    state={props.data.state}
+                    stationNames={s.stationNames}
+                    startDate={s.widget.startDate}
+                    stationMetadata={stationMetadata}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
+                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
+                    isLoaded={true}
+                    isCustomizeWidgetMenu={false}
                   />
                 ) : null}
                 {props.data.state.widget.visualizationType === 'line' ||
@@ -161,7 +176,7 @@ function AppComponent(props: App): JSX.Element {
                     startDate={props.data.state.widget.startDate}
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     widget={s.widget}
-                    size={props.data.size}
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     stationMetadata={stationMetadata}
                   />
                 ) : null}
@@ -181,7 +196,7 @@ function AppComponent(props: App): JSX.Element {
                 {props.data.state.widget.visualizationType === 'stationMetadata' ? (
                   <>
                     <StationMetadata
-                      size={props.data.size}
+                      size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                       state={props.data.state}
                       stationNames={s.stationNames}
                       stationMetadata={stationMetadata}
@@ -258,7 +273,6 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const handleVisualizeAllVariables = async () => {
-    console.log(s.stationNames);
     let url = '';
     if (props.data.state.widget.visualizationType === 'variableCard') {
       url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
@@ -276,8 +290,11 @@ function ToolbarComponent(props: App): JSX.Element {
     const sensor = await response.json();
     if (sensor) {
       const observations = sensor['STATION'][0]['OBSERVATIONS'];
-      const properties = Object.getOwnPropertyNames(observations);
+      let properties = Object.getOwnPropertyNames(observations);
       let row = 0;
+      const largestSize = props.data.size.width > props.data.size.height ? props.data.size.width : props.data.size.height;
+      properties = properties.filter((property) => property !== 'date_time');
+      properties = properties.filter((property) => property !== 'wind_cardinal_direction_1d');
       for (let i = 0; i < properties.length; i++) {
         if (i % 3 === 0) row++;
 
@@ -289,13 +306,13 @@ function ToolbarComponent(props: App): JSX.Element {
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
           position: {
-            x: props.data.position.x + props.data.size.width * (i % 3),
-            y: props.data.position.y + props.data.size.height * row,
+            x: props.data.position.x + largestSize * (i % 3),
+            y: props.data.position.y + largestSize * row,
             z: 0,
           },
           size: {
-            width: props.data.size.width,
-            height: props.data.size.height,
+            width: largestSize,
+            height: largestSize,
             depth: 0,
           },
           rotation: { x: 0, y: 0, z: 0 },
