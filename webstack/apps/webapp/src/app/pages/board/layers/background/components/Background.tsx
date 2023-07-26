@@ -35,7 +35,9 @@ import {
   useAuth,
   useFiles,
 } from '@sage3/frontend';
-import { AppName, AppSchema } from '@sage3/applications/schema';
+import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
+
 import { HelpModal } from './HelpModal';
 
 type BackgroundProps = {
@@ -204,7 +206,26 @@ export function Background(props: BackgroundProps) {
         // if no files were dropped, create an application
         const appName = event.dataTransfer.getData('app') as AppName;
         if (appName) {
-          newApp(appName, xdrop, ydrop);
+          // if a specific app was setup, create it
+          const appstatestr = event.dataTransfer.getData('app_state');
+          if (appstatestr) {
+            const appstate = JSON.parse(appstatestr);
+            const newState = {
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xdrop, y: ydrop, z: 0 },
+              size: { width: 600, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: appName,
+              state: { ...(initialValues[appName] as AppState), ...appstate },
+              raised: true,
+              dragging: false,
+            };
+            createApp(newState);
+          } else {
+            newApp(appName, xdrop, ydrop);
+          }
         } else {
           // Get information from the drop
           const ids = event.dataTransfer.getData('file');

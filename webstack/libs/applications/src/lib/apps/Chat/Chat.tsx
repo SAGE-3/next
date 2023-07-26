@@ -7,7 +7,7 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
-import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement, HStack, useFocusEffect } from '@chakra-ui/react';
+import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement, HStack } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle } from 'react-icons/md';
 
 // Server Sent Event library
@@ -84,11 +84,12 @@ function AppComponent(props: App): JSX.Element {
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
+      e.preventDefault();
       send();
     }
   };
   const send = async () => {
-    await newMessage(input);
+    await newMessage(input.trim());
     setInput('');
   };
 
@@ -339,6 +340,12 @@ function AppComponent(props: App): JSX.Element {
                               status: 'success',
                             });
                           }}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            e.dataTransfer.clearData();
+                            e.dataTransfer.setData('app', 'Stickie');
+                            e.dataTransfer.setData('app_state', JSON.stringify({ color: user?.data.color, text: message.response }));
+                          }}
                         >
                           {message.query}
                         </Box>
@@ -372,8 +379,15 @@ function AppComponent(props: App): JSX.Element {
                               status: 'success',
                             });
                           }}>
-                          <Box pl={3}>
-                            <Markdown style={{ marginLeft: "15px", textIndent: "4px" }}>
+                          <Box pl={3}
+                            draggable={true}
+                            onDragStart={(e) => {
+                              e.dataTransfer.clearData();
+                              e.dataTransfer.setData('app', 'Stickie');
+                              e.dataTransfer.setData('app_state', JSON.stringify({ color: geppettoColor, text: message.response }));
+                            }}>
+                            <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}
+                              onDragStart={() => { console.log('dragging') }}>
                               {message.response}
                             </Markdown>
                           </Box>
