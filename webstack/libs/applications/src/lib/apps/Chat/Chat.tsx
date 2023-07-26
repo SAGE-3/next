@@ -344,7 +344,7 @@ function AppComponent(props: App): JSX.Element {
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
                             e.dataTransfer.setData('app', 'Stickie');
-                            e.dataTransfer.setData('app_state', JSON.stringify({ color: user?.data.color, text: message.response }));
+                            e.dataTransfer.setData('app_state', JSON.stringify({ color: user?.data.color, text: message.query }));
                           }}
                         >
                           {message.query}
