@@ -98,8 +98,8 @@ export function uploadHandler(req: express.Request, res: express.Response) {
             size: elt.size,
             mimetype: elt.mimetype,
             dateAdded: now,
-            dateCreated: now,
             derived: pdata || {},
+            ...mdata,
           },
           user.id
         );

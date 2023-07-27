@@ -194,7 +194,6 @@ function AppComponent(props: App): JSX.Element {
             style={nodeStyle}
             allowpopups={'true' as any}
           >
-            {' '}
           </webview>
         ) : (
           <img id={'image' + props._id}></img>
@@ -211,10 +210,7 @@ function AppComponent(props: App): JSX.Element {
               <br />
               <Center>
                 <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL{' '}
-                  <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank">
-                    {s.sharedurl}{' '}
-                  </a>
+                  Current URL <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank"> {s.sharedurl}</a>
                 </Box>
               </Center>
             </Box>

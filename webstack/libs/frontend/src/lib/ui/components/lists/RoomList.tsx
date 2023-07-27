@@ -161,7 +161,7 @@ export function RoomList(props: RoomListProps) {
                   _placeholder={{ opacity: 1 }}
                   name="findRoom"
                 />
-                <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />{' '}
+                <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
               </InputGroup>
             </Box>
           </Box>

@@ -8,7 +8,7 @@
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, ButtonGroup, HStack, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip } from '@chakra-ui/react';
 
 import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -25,7 +25,7 @@ import dateFormat from 'date-fns/format';
 
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu, MdOutlineFastForward, MdOutlineFastRewind, MdTipsAndUpdates } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 import { useParams } from 'react-router';
 import { SAGEColors } from '@sage3/shared';
 
