@@ -100,7 +100,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async addBatch(items: T[], by: string): Promise<SBDocument<T>[] | undefined> {
     try {
       // Add a batch of items to the collection
-      // This will partially add if some are 'adds' are not successful
+      // This will partially add if some 'adds' are not successful
       const docs = await this.collection.addDocs(items, by);
       // Return docs
       return docs;
