@@ -7,15 +7,21 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
-import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement, HStack } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle } from 'react-icons/md';
+import {
+  ButtonGroup, Button, useToast, IconButton, Box, Text, Flex, useColorModeValue,
+  Input, Tooltip, InputGroup, InputRightElement, HStack, Divider, Center, AbsoluteCenter
+} from '@chakra-ui/react';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 
 // Server Sent Event library
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-
+// Date management
+import { formatDistance } from 'date-fns';
+import dateFormat from 'date-fns/format';
+// Markdown
 import Markdown from 'markdown-to-jsx';
 
-import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 
@@ -23,18 +29,12 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-// const acknowledgments = [
-//   "Thank you for your question!",
-//   "Great question!",
-//   "That's an interesting question!",
-//   "I appreciate your curiosity!",
-//   "Thanks for asking!",
-//   "You've got my attention!",
-//   "Wonderful question!",
-//   "I'm glad you asked that!",
-//   "Good question!",
-//   "I love your inquisitiveness!"
-// ];
+// API: https://huggingface.github.io/text-generation-inference/
+const LLAMA2_SERVER = 'http://131.193.183.239:3000';
+const LLAMA2_ENDPOINT = '/generate_stream';
+const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
+const LLAMA2_TOKENS = 300;
+const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
 /* App component for Chat */
 
@@ -122,12 +122,14 @@ function AppComponent(props: App): JSX.Element {
     if (isQuestion) {
       // Remove the @G
       const request = new_input.slice(2);
-      let complete_request = '';
+      // Object to stop the request and the stream of events
       const ctrl = new AbortController();
       // Save the controller for later use
       ctrlRef.current = ctrl;
+      // Build the request
       let tempText = '';
       setStreamText(tempText);
+      let complete_request = '';
       if (previousQuestion && previousAnswer) {
         /*
           schema for follow up questions:
@@ -138,17 +140,15 @@ function AppComponent(props: App): JSX.Element {
         complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
       } else {
         // Test to tweak the system prompt
-        complete_request = `<s>[INST] <<SYS>>You are a helpful and honest assistant that answer questions in Markdown format. ` +
-          `Always answer as helpfully as possible, while being safe. If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. ` +
-          `If you don't know the answer to a question, please don't share false information.<</SYS>> ${request} [/INST]`;
+        complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
       }
-      // API: https://huggingface.github.io/text-generation-inference/
-      fetchEventSource('http://131.193.183.239:3000/generate_stream', {
+      // Post the request and handle server-sent events
+      fetchEventSource(LLAMA2_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           inputs: complete_request || request,
-          parameters: { "max_new_tokens": 300 },
+          parameters: { "max_new_tokens": LLAMA2_TOKENS },
         }),
         signal: ctrl.signal,
         onmessage(msg) {
@@ -237,12 +237,14 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Reset the chat: clear previous question and answer, and all the messages
   const resetGepetto = () => {
     setPreviousQuestion('');
     setPreviousAnswer('');
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
 
+  // Control the scrolling of the chat box
   useEffect(() => {
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
@@ -261,6 +263,7 @@ function AppComponent(props: App): JSX.Element {
     });
   }, []);
 
+  // Wait for new messages to scroll to the bottom
   useEffect(() => {
     if (!processing && !scrolled) {
       // Scroll to bottom of chat box smoothly
@@ -296,6 +299,12 @@ function AppComponent(props: App): JSX.Element {
           {sortedMessages.map((message, index) => {
             const isMe = user?._id == message.userId;
             const time = getDateString(message.creationDate);
+            const previousTime = message.creationDate;
+            const now = Date.now();
+            const diff = (now - previousTime) - (30 * 60 * 1000); // minus 30 minutes
+            const when = (diff > 0) ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+            const last = index === sortedMessages.length - 1;
+
             return (
               <Fragment key={index}>
                 {/* Start of User Messages */}
@@ -341,6 +350,7 @@ function AppComponent(props: App): JSX.Element {
                             });
                           }}
                           draggable={true}
+                          // Store the query into the drag/drop events to create stickies
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
                             e.dataTransfer.setData('app', 'Stickie');
@@ -382,12 +392,12 @@ function AppComponent(props: App): JSX.Element {
                           <Box pl={3}
                             draggable={true}
                             onDragStart={(e) => {
+                              // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
                               e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData('app_state', JSON.stringify({ color: geppettoColor, text: message.response }));
+                              e.dataTransfer.setData('app_state', JSON.stringify({ color: "purple", text: message.response }));
                             }}>
-                            <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}
-                              onDragStart={() => { console.log('dragging') }}>
+                            <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
                               {message.response}
                             </Markdown>
                           </Box>
@@ -396,6 +406,16 @@ function AppComponent(props: App): JSX.Element {
                     </Box>
                   </Box>
                   : null}
+
+                {when && !last ? <Box position='relative' padding='4'>
+                  <Center>
+                    <Divider width={"80%"} borderColor={"ActiveBorder"} />
+                    <AbsoluteCenter bg={bgColor} px='4'>
+                      {when}
+                    </AbsoluteCenter>
+                  </Center>
+                </Box> : null}
+
               </Fragment>
             );
           })}
@@ -468,12 +488,50 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
+  // Sort messages by creation date to display in order
+  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  // Download the stickie as a text file
+  const downloadTxt = () => {
+    // Rebuid the content as text
+    let content = '';
+    sortedMessages.map((message) => {
+      const isMe = user?._id == message.userId;
+      if (message.query.length) {
+        if (isMe) {
+          content += `Me> ${message.query}\n`;
+        } else {
+          content += `${message.userName}> ${message.query} \n`;
+        }
+      }
+      if (message.response.length) {
+        if (message.response !== 'Working on it...') {
+          content += `Geppetto> ${message.response} \n`;
+        }
+      }
+    });
+
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with date
+    const filename = 'geppetto-' + dt + '.txt';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
 
   return (
     <>
-    </>
-  );
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Transcript'} openDelay={400}>
+          <Button onClick={downloadTxt}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>);
 }
 
 
