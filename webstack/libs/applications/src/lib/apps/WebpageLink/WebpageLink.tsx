@@ -5,15 +5,22 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-
-import { Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast, Icon } from '@chakra-ui/react';
+import { useRef, useCallback, useState } from 'react';
+import {
+  ButtonGroup, Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast,
+  useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, DrawerFooter,
+} from '@chakra-ui/react';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
 import { AppWindow } from '../../components';
-import { MdWeb } from 'react-icons/md';
+
+// Electron and Browser components
+// @ts-ignore
+import { WebviewTag } from 'electron';
 
 /* App component for BoardLink */
 
@@ -93,10 +100,51 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
-  const toast = useToast();
-
+  // Stores
   const createApp = useAppStore((state) => state.create);
+  // UI elements
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const webviewNode = useRef<WebviewTag>();
+  // Tracking the dom-ready and did-load events
+  const [domReady, setDomReady] = useState(false);
+  const [attached, setAttached] = useState(false);
+  const [title, setTitle] = useState('Webview');
+
+  // Init the webview
+  const setWebviewRef = useCallback((node: WebviewTag) => {
+    // event did-attach callback
+    const didAttachCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('did-attach', didAttachCallback);
+      setAttached(true);
+    };
+
+    // event dom-ready callback
+    const domReadyCallback = (evt: any) => {
+      webviewNode.current.removeEventListener('dom-ready', domReadyCallback);
+      setDomReady(true);
+    };
+
+    if (node) {
+      webviewNode.current = node;
+      const webview = webviewNode.current;
+
+      // Callback when the webview is ready
+      webview.addEventListener('dom-ready', domReadyCallback);
+      webview.addEventListener('did-attach', didAttachCallback);
+
+      const titleUpdated = (event: any) => {
+        // Update the app title
+        setTitle(event.title);
+      };
+      webview.addEventListener('page-title-updated', titleUpdated);
+
+      // After the partition has been set, you can navigate
+      console.log('Setting webview url', s.url)
+      webview.src = s.url;
+    }
+  }, []);
 
   const openUrl = () => {
     if (!s.url) return;
@@ -158,17 +206,56 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const openSidebar = () => {
+    onOpen();
+  };
+
   return (
     <>
-      <Button colorScheme="teal" size="xs" onClick={openInSAGE3} mr="2">
-        Open in SAGE3
-      </Button>
-      <Button colorScheme="teal" size="xs" onClick={openUrl} mr="2">
-        Open in Desktop
-      </Button>
-      <Button colorScheme="teal" size="xs" onClick={copyUrl}>
-        Copy
-      </Button>
+      <Drawer placement='right' size='xl' variant="fifty" finalFocusRef={btnRef}
+        isOpen={isOpen} onClose={onClose}>
+        <DrawerOverlay />
+        <DrawerContent p={0} m={0}>
+          <DrawerCloseButton />
+          <DrawerHeader>{title}</DrawerHeader>
+
+          <DrawerBody p={0} m={0}>
+            <webview ref={setWebviewRef} allowpopups={'true' as any} style={{ width: "50vw", height: "100%" }}></webview>
+          </DrawerBody>
+
+          {/* <DrawerFooter>
+            <Button colorScheme='blue' size="xs" onClick={onClose}>Done</Button>
+          </DrawerFooter> */}
+        </DrawerContent>
+      </Drawer>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in SAGE3'} openDelay={400}>
+          <Button onClick={openInSAGE3}>
+            <MdWeb />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Sidebar'} openDelay={400}>
+          <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron()}>
+            <MdViewSidebar />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={openUrl}>
+            <MdDesktopMac />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Copy URL to Clipboard'} openDelay={400}>
+          <Button onClick={copyUrl}>
+            <MdCopyAll />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }

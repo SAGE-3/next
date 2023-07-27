@@ -20,6 +20,7 @@ import {
   MdOpenInNew,
   MdCopyAll,
 } from 'react-icons/md';
+import { FaEyeSlash } from 'react-icons/fa';
 
 import { useParams } from 'react-router';
 import create from 'zustand';
@@ -33,7 +34,6 @@ import { isElectron } from './util';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-import { FaEyeSlash } from 'react-icons/fa';
 
 export const useStore = create((set: any) => ({
   title: {} as { [key: string]: string },
