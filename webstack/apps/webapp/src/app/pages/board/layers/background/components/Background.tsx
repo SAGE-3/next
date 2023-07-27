@@ -163,7 +163,7 @@ export function Background(props: BackgroundProps) {
       }
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
-        .then((files) => {
+        .then(async (files) => {
           // do the actual upload
           uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
         })

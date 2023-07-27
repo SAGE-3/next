@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
 
 // File information
@@ -28,9 +28,9 @@ import {
 } from '@sage3/shared';
 
 // Upload with axios and progress event
-import axios, { AxiosProgressEvent, AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 
-import { useAssetStore } from '../stores';
+import { useAssetStore, useAppStore } from '../stores';
 import { useUser } from './useUser';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -90,8 +90,38 @@ export function useFiles(): UseFiles {
   const { user } = useUser();
   // Assets store
   const assets = useAssetStore((state) => state.assets);
+  // App store
+  const createBatch = useAppStore((state) => state.createBatch);
+  // Upload success
+  const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
+  // Save the drop position
+  const [configDrop, setConfigDrop] = useState({ xDrop: 0, yDrop: 0, roomId: '', boardId: '' });
 
-  const uploadFiles = (input: File[], dx: number, dy: number, roomId: string, boardId: string) => {
+  // When uplaod is done, open the apps
+  useEffect(() => {
+    async function openApps() {
+      if (uploadSuccess.length > 0) {
+        const batch: AppSchema[] = [];
+        let xpos = configDrop.xDrop;
+        for await (const up of uploadSuccess) {
+          for (const a of assets) {
+            if (a._id === up) {
+              const res = await openAppForFile(a._id, a.data.mimetype, xpos, configDrop.yDrop, configDrop.roomId, configDrop.boardId);
+              if (res) {
+                batch.push(res);
+                xpos += res.size.width + 10;
+              }
+            }
+          }
+        }
+        createBatch(batch);
+        setUploadSuccess([])
+      }
+    }
+    openApps();
+  }, [uploadSuccess, assets, configDrop]);
+
+  async function uploadFiles(input: File[], dx: number, dy: number, roomId: string, boardId: string) {
     if (input) {
       let filenames = '';
       // Uploaded with a Form object
@@ -129,11 +159,6 @@ export function useFiles(): UseFiles {
 
       // Add fields to the upload form
       fd.append('room', roomId);
-      fd.append('board', boardId);
-
-      // Position to open the asset
-      fd.append('targetX', dx.toString());
-      fd.append('targetY', dy.toString());
 
       toastIdRef.current = toast({
         title: 'Upload',
@@ -144,8 +169,11 @@ export function useFiles(): UseFiles {
         isClosable: true,
       });
 
+      // Save the drop position
+      setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+
       // Upload with a POST request
-      axios({
+      const response = await axios({
         method: 'post',
         url: '/api/assets/upload',
         data: fd,
@@ -159,15 +187,6 @@ export function useFiles(): UseFiles {
             });
           }
         },
-      }).then((response: AxiosResponse) => {
-        if (toastIdRef.current) {
-          toast.update(toastIdRef.current, {
-            title: 'Upload',
-            description: 'Upload complete',
-            duration: 4000,
-            isClosable: true,
-          });
-        }
       }).finally(() => {
         // Some errors with the files
         if (!filenames) {
@@ -190,8 +209,21 @@ export function useFiles(): UseFiles {
           });
         }
       });
+      if (response) {
+        // Save the list of uploaded files
+        setUploadSuccess(response.data.map((a: any) => a.id));
+        // Show a success message
+        if (toastIdRef.current) {
+          toast.update(toastIdRef.current, {
+            title: 'Upload',
+            description: 'Upload complete',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      }
     }
-  };
+  }
 
   // Create an app for a file
   async function openAppForFile(fileID: string, fileType: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
