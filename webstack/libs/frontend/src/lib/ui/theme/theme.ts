@@ -32,6 +32,11 @@ const styles = {
 const components = {
   Drawer: {
     variants: {
+      fifty: {
+        dialog: {
+          maxW: '50vw',
+        },
+      },
       alwaysOpen: {
         dialog: {
           pointerEvents: 'auto',
