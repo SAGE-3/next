@@ -321,12 +321,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </form>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
           <Button isDisabled={s.zoom <= minZoom} onClick={decZoom}>
             <MdRemove fontSize="16px" />
           </Button>
@@ -334,13 +334,13 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Street Map'} openDelay={400}>
           <Button onClick={changeToStreetMap}>
             <MdMap fontSize="20px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Satellite Map'} openDelay={400}>
           <Button onClick={changeToSatellite}>
             <MdTerrain fontSize="20px" />
           </Button>
