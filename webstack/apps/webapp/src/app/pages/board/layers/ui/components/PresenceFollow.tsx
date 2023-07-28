@@ -34,8 +34,9 @@ export function PresenceFollow() {
   function startFollowing(userId: string) {
     setFollowing(userId);
     const userName = users.find((el) => el._id === userId)?.data.name;
+    followingToast.closeAll();
     followingToast({
-      status: 'success',
+      status: 'info',
       description: (
         <p>
           You are following {userName}.
@@ -46,6 +47,7 @@ export function PresenceFollow() {
       ),
       duration: null,
       isClosable: false,
+      position: 'bottom',
     });
   }
 

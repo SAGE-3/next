@@ -10,7 +10,20 @@
 import { useCallback, useEffect, useState } from 'react';
 
 // Theme and icons
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast, Button } from '@chakra-ui/react';
+import {
+  Avatar,
+  Tooltip,
+  GridItem,
+  Grid,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuGroup,
+  useToast,
+  Button,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import { GiArrowCursor } from 'react-icons/gi';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
@@ -81,7 +94,6 @@ function usePresenceViewport() {
       const target = presences.find((el) => el._id === userId);
       const myId = user?._id;
       if (target && myId) {
-        console.log(target);
         const vx = -target.data.viewport.position.x;
         const vy = -target.data.viewport.position.y;
         const vw = -target.data.viewport.size.width;
@@ -133,18 +145,10 @@ function usePresenceFollow() {
         // If you are already following this user, unfollow them
         setFollowing('');
         updatePresence(myId, { following: '' });
-      } else if (target.data.following === myId) {
-        // If the other user is following you, you can't follow them
-        infoToast({
-          status: 'error',
-          description: `This user is already following you.`,
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
       } else {
         // If you are not following this user, follow them
         setFollowing(target._id);
+        updatePresence(target._id, { following: '' });
         updatePresence(myId, { following: target._id });
       }
     },
@@ -152,25 +156,51 @@ function usePresenceFollow() {
   );
 
   // Have everyone follow me
-  const followMe = useCallback(() => {
-    const myId = user?._id;
-    const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
-    if (!myId) return;
-    thisBoardsUsers.forEach((el) => {
-      if (el._id === myId) updatePresence(el._id, { following: '' });
-      else updatePresence(el._id, { following: myId });
-    });
-  }, [presences, user, updatePresence]);
+  const followMe = useCallback(
+    (id?: string) => {
+      const myId = user?._id;
+      const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
+      if (!myId) return;
+      if (id) {
+        // If id is provided, just one target user
+        const target = thisBoardsUsers.find((el) => el._id === id);
+        if (!target) return;
+        updatePresence(target._id, { following: myId });
+        updatePresence(myId, { following: '' });
+      } else {
+        // If id is not provided, all users on this board
+        thisBoardsUsers.forEach((el) => {
+          if (el._id === myId) {
+            // If me set I am following no one now
+            updatePresence(el._id, { following: '' });
+          } else {
+            updatePresence(el._id, { following: myId });
+          }
+        });
+      }
+    },
+    [presences, user, updatePresence]
+  );
 
   // Have everyone stop following me
-  const followMeStop = useCallback(() => {
-    const myId = user?._id;
-    const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
-    if (!myId) return;
-    thisBoardsUsers.forEach((el) => {
-      if (el.data.following === myId) updatePresence(el._id, { following: '' });
-    });
-  }, [presences, user, updatePresence]);
+  const followMeStop = useCallback(
+    (id?: string) => {
+      const myId = user?._id;
+      const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
+      if (!myId) return;
+      if (id) {
+        // If id is provided, just one target user
+        const target = thisBoardsUsers.find((el) => el._id === id);
+        if (!target) return;
+        updatePresence(target._id, { following: '' });
+      } else {
+        thisBoardsUsers.forEach((el) => {
+          if (el.data.following === myId) updatePresence(el._id, { following: '' });
+        });
+      }
+    },
+    [presences, user, updatePresence]
+  );
 
   return { followUser, followMe, followMeStop, following };
 }
@@ -183,6 +213,7 @@ type UserAndPresence = { presence: PresencePartial; user: User };
 export function UserAvatarGroup(props: AvatarGroupProps) {
   // Get current user
   const { user } = useUser();
+  const myColor = useHexColor(user?.data.color ? user.data.color : 'orange');
 
   // Presence Functionality
   const { goToCursor } = usePresenceCursor();
@@ -193,6 +224,8 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
   const handleGoToCursor = (userId: string, userName: string) => goToCursor(userId, userName);
   const handleGoToViewport = (userId: string, userName: string) => goToViewport(userId, userName);
   const handleFollowUser = (userId: string) => followUser(userId);
+  const handleFollowMe = (userId?: string) => followMe(userId);
+  const handleFollowMeStop = (userId?: string) => followMeStop(userId);
 
   // Get all users
   const users = useUsersStore((state) => state.users);
@@ -222,47 +255,50 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
     <>
       <Grid templateColumns="repeat(10, 0fr)" gap={2}>
         <GridItem w="100%" h="10" key={'userpanel-' + user?._id}>
-          <Tooltip aria-label="username" hasArrow={true} placement="top" label={'You'} shouldWrapChildren={true}>
-            <Menu>
-              <MenuButton
-                as={Avatar}
-                name={' '}
-                backgroundColor={user?.data.color}
-                size="sm"
-                color="white"
-                showBorder={true}
-                borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
-                borderColor="white"
-                cursor="pointer"
-                textAlign="center"
-                fontWeight="bold"
-                fontSize="14px"
-              >
-                <MdPerson
-                  style={{
-                    fontSize: '18px',
-                    transform: 'translateX(4px)',
-                  }}
-                />
-              </MenuButton>
-              <MenuList>
-                <MenuGroup mt={0} mb={1} p={0} fontSize="md">
-                  <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => followMe()}>
-                    Everyone Follow Me
+          <Menu>
+            <MenuButton
+              as={Avatar}
+              name={' '}
+              backgroundColor={myColor}
+              size="sm"
+              color="white"
+              showBorder={true}
+              borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
+              borderColor="transparent"
+              cursor="pointer"
+              textAlign="center"
+              fontWeight="bold"
+              fontSize="14px"
+            >
+              <MdPerson
+                style={{
+                  fontSize: '22px',
+                  transform: 'translateX(3px)',
+                }}
+              />
+            </MenuButton>
+            <MenuList>
+              <MenuGroup title={'You'} mt={0} mb={1} p={0} fontSize="md">
+                <Tooltip label={'Force everyone to follow you.'} placement="top" openDelay={750} hasArrow>
+                  <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => handleFollowMe()}>
+                    Follow Me
                   </MenuItem>
-                  <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => followMeStop()}>
-                    Everyone Stop Following Me
+                </Tooltip>
+                <Tooltip label={'Force everyone to stop following you.'} placement="top" openDelay={750} hasArrow>
+                  <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => handleFollowMeStop()}>
+                    Stop Following Me
                   </MenuItem>
-                </MenuGroup>
-              </MenuList>
-            </Menu>
-          </Tooltip>
+                </Tooltip>
+              </MenuGroup>
+            </MenuList>
+          </Menu>
         </GridItem>
         {userPresence.map((el) => {
           if (el == null) return;
           const color = useHexColor(el.user.data.color);
           const isWall = el.user.data.userType === 'wall';
-          const followingThisUser = following === el.user._id;
+          const followingYou = el.presence.data.following === user?._id;
+          const yourFollowing = following === el.user._id;
           return (
             <GridItem w="100%" h="10" key={'userpanel-' + el.user._id}>
               <Tooltip
@@ -282,14 +318,22 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                     color="white"
                     showBorder={true}
                     borderRadius={isWall ? '0%' : '100%'}
-                    borderColor="transparent"
+                    borderWidth={'3px'}
+                    borderColor={'transparent'}
                     cursor="pointer"
                     textAlign="center"
                     fontWeight="bold"
                     fontSize="14px"
                   >
-                    {followingThisUser ? (
-                      <MdRemoveRedEye
+                    {followingYou ? (
+                      <HiOutlineChevronDoubleLeft
+                        style={{
+                          fontSize: '18px',
+                          transform: 'translateX(4px)',
+                        }}
+                      />
+                    ) : yourFollowing ? (
+                      <HiOutlineChevronDoubleRight
                         style={{
                           fontSize: '18px',
                           transform: 'translateX(4px)',
@@ -301,6 +345,28 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                   </MenuButton>
                   <MenuList>
                     <MenuGroup title={el.user.data.name} mt={0} mb={1} p={0} fontSize="md">
+                      <MenuItem
+                        fontSize="sm"
+                        height="2em"
+                        icon={<HiOutlineChevronDoubleRight />}
+                        onClick={() => handleFollowUser(el.user._id)}
+                      >
+                        {yourFollowing ? 'Unfollow' : 'Follow'}
+                      </MenuItem>
+                      {followingYou ? (
+                        <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => handleFollowMeStop(el.user._id)}>
+                          Stop Following Me
+                        </MenuItem>
+                      ) : (
+                        <MenuItem
+                          fontSize="sm"
+                          height="2em"
+                          icon={<HiOutlineChevronDoubleLeft />}
+                          onClick={() => handleFollowMe(el.user._id)}
+                        >
+                          Follow Me
+                        </MenuItem>
+                      )}
                       <MenuItem
                         fontSize="sm"
                         height="2em"
@@ -316,14 +382,6 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                         onClick={() => handleGoToViewport(el.user._id, el.user.data.name)}
                       >
                         Show View
-                      </MenuItem>
-                      <MenuItem
-                        fontSize="sm"
-                        height="2em"
-                        icon={<HiOutlineChevronDoubleRight />}
-                        onClick={() => handleFollowUser(el.user._id)}
-                      >
-                        {followingThisUser ? 'Unfollow' : 'Follow'}
                       </MenuItem>
                     </MenuGroup>
                   </MenuList>
