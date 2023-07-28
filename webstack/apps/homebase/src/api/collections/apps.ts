@@ -8,7 +8,6 @@
 
 import { AppSchema } from '@sage3/applications/schema';
 import { CollectionRule, SAGE3Collection, SAGEAuthorization, sageRouter } from '@sage3/backend';
-import { defineScript } from 'redis';
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
   constructor() {
@@ -29,17 +28,6 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
       },
     ] as CollectionRule[];
 
-    //
-    /**
-     *
-     *
-     *  {
-     * name
-     * description
-     * roomId: string
-     * }
-     *
-     */
     SAGEAuthorization.addProtectedCollection(this, AppsCollectionRules);
     this._authorization = SAGEAuthorization;
   }

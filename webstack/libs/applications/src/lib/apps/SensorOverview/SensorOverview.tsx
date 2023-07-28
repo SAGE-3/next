@@ -7,7 +7,7 @@
  */
 
 // Sage Imports
-import { useAppStore, useHexColor } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -22,7 +22,10 @@ import { useEffect, useState } from 'react';
 // Visualization imports
 import VariableCard from '../HCDP/viewers/VariableCard';
 import EChartsViewer from '../HCDP/viewers/EChartsViewer';
+import CurrentConditions from '../HCDP/viewers/CurrentConditions';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
+import StationMetadata from '../HCDP/viewers/StationMetadata';
+import FriendlyVariableCard from '../HCDP/viewers/FriendlyVariableCard';
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -119,7 +122,6 @@ function AppComponent(props: App): JSX.Element {
       fetchStationData();
       console.log(err);
     });
-
     const interval = setInterval(
       () => {
         fetchStationData();
@@ -132,8 +134,8 @@ function AppComponent(props: App): JSX.Element {
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
   return (
-    <AppWindow app={props}>
-      <Box overflowY="auto" bg={bgColor} h="100%">
+    <AppWindow app={props} lockAspectRatio={s.widget.visualizationType === 'variableCard' ? 1 : false}>
+      <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
             <CustomizeWidgets {...props} />
@@ -141,26 +143,67 @@ function AppComponent(props: App): JSX.Element {
               <Box>
                 {s.widget.visualizationType === 'variableCard' ? (
                   <VariableCard
-                    size={props.data.size}
-                    variableName={s.widget.yAxisNames[0]}
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     state={props.data.state}
                     stationNames={s.stationNames}
                     startDate={s.widget.startDate}
                     stationMetadata={stationMetadata}
                     timeSinceLastUpdate={timeSinceLastUpdate}
+                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
                     isLoaded={true}
+                    isCustomizeWidgetMenu={false}
                   />
-                ) : (
+                ) : null}
+                {s.widget.visualizationType === 'friendlyVariableCard' ? (
+                  <FriendlyVariableCard
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
+                    state={props.data.state}
+                    stationNames={s.stationNames}
+                    startDate={s.widget.startDate}
+                    stationMetadata={stationMetadata}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
+                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
+                    isLoaded={true}
+                    isCustomizeWidgetMenu={false}
+                  />
+                ) : null}
+                {props.data.state.widget.visualizationType === 'line' ||
+                props.data.state.widget.visualizationType === 'bar' ||
+                props.data.state.widget.visualizationType === 'scatter' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
                     isLoaded={isLoaded}
                     startDate={props.data.state.widget.startDate}
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     widget={s.widget}
-                    size={props.data.size}
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     stationMetadata={stationMetadata}
                   />
-                )}
+                ) : null}
+                {props.data.state.widget.visualizationType === 'allVariables' ? (
+                  <>
+                    <CurrentConditions
+                      size={props.data.size}
+                      state={props.data.state}
+                      stationNames={s.stationNames}
+                      startDate={s.widget.startDate}
+                      stationMetadata={stationMetadata}
+                      timeSinceLastUpdate={timeSinceLastUpdate}
+                      isLoaded={true}
+                    />
+                  </>
+                ) : null}
+                {props.data.state.widget.visualizationType === 'stationMetadata' ? (
+                  <>
+                    <StationMetadata
+                      size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
+                      state={props.data.state}
+                      stationNames={s.stationNames}
+                      stationMetadata={stationMetadata}
+                      isLoaded={isLoaded}
+                    />
+                  </>
+                ) : null}
               </Box>
             </HStack>
           </Box>
@@ -182,19 +225,131 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const createApp = useAppStore((state) => state.create);
 
   const updateState = useAppStore((state) => state.updateState);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   const handleOpenWidget = () => {
     updateState(props._id, { isWidgetOpen: true });
   };
 
+  const handleOpenAndEditWidget = async () => {
+    updateState(props._id, { isWidgetOpen: false });
+
+    const app = await createApp({
+      title: 'SensorOverview',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      //TODO get middle of the screen space
+      position: {
+        x: props.data.position.x + props.data.size.width,
+        y: props.data.position.y,
+        z: 0,
+      },
+      size: {
+        width: props.data.size.width,
+        height: props.data.size.height,
+        depth: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'SensorOverview',
+      state: {
+        sensorData: {},
+        stationNames: props.data.state.stationNames,
+        listOfStationNames: s.stationNames[0],
+        location: [21.297, -157.816],
+        zoom: 8,
+        baseLayer: 'OpenStreetMap',
+        overlay: true,
+        widget: props.data.state.widget,
+        isWidgetOpen: true,
+      },
+      raised: true,
+      dragging: false,
+    });
+    // console.log(app);
+    fitApps([app.data]);
+  };
+
+  const handleVisualizeAllVariables = async () => {
+    let url = '';
+    if (props.data.state.widget.visualizationType === 'variableCard') {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+        s.stationNames
+      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+        new Date()
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    } else {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+        props.data.state.widget.startDate
+      }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    }
+
+    const response = await fetch(url);
+    const sensor = await response.json();
+    if (sensor) {
+      const observations = sensor['STATION'][0]['OBSERVATIONS'];
+      let properties = Object.getOwnPropertyNames(observations);
+      let row = 0;
+      const largestSize = props.data.size.width > props.data.size.height ? props.data.size.width : props.data.size.height;
+      properties = properties.filter((property) => property !== 'date_time');
+      properties = properties.filter((property) => property !== 'wind_cardinal_direction_1d');
+      for (let i = 0; i < properties.length; i++) {
+        if (i % 3 === 0) row++;
+
+        const widget = props.data.state.widget;
+        widget.yAxisNames[0] = properties[i];
+        const app = await createApp({
+          title: 'SensorOverview',
+          roomId: props.data.roomId!,
+          boardId: props.data.boardId!,
+          //TODO get middle of the screen space
+          position: {
+            x: props.data.position.x + largestSize * (i % 3),
+            y: props.data.position.y + largestSize * row,
+            z: 0,
+          },
+          size: {
+            width: largestSize,
+            height: largestSize,
+            depth: 0,
+          },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'SensorOverview',
+          state: {
+            sensorData: {},
+            stationNames: props.data.state.stationNames,
+            listOfStationNames: s.stationNames[0],
+            location: [21.297, -157.816],
+            zoom: 8,
+            baseLayer: 'OpenStreetMap',
+            overlay: true,
+            widget: widget,
+            isWidgetOpen: false,
+          },
+          raised: true,
+          dragging: false,
+        });
+      }
+    }
+  };
+
   return (
     <>
-      {' '}
-      <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
-        Edit Visualization
-      </Button>
+      <ButtonGroup>
+        <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
+          Edit visualization
+        </Button>
+        {props.data.state.widget.visualizationType === 'variableCard' ? (
+          <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
+            Visualize for all other variables
+          </Button>
+        ) : null}
+        <Button size="xs" colorScheme="orange" onClick={handleOpenAndEditWidget}>
+          Duplicate and Edit
+        </Button>
+      </ButtonGroup>
       {s.widget.visualizationType === 'variableCard' ? (
         <ButtonGroup size="sm" isAttached variant="outline">
           {/* <Button >Celcius</Button>

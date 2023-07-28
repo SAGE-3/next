@@ -42,6 +42,22 @@ const components = {
       },
     },
   },
+  Radio: {
+    variants: {
+      primary: ({ colorScheme = 'primary' }) => ({
+        color: `${colorScheme}.500`,
+        control: {
+          _checked: {
+            color: 'secondary.500',
+          },
+        },
+      }),
+    },
+    defaultProps: {
+      variant: 'primary',
+      colorScheme: 'primary',
+    },
+  },
 };
 
 // Extend the theme

@@ -437,8 +437,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <SliderFilledTrack bg={teal} />
         </SliderTrack>
         <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
-          {' '}
-          {getDurationString(0)}{' '}
+          {getDurationString(0)}
         </SliderMark>
         <SliderMark value={videoRef?.duration || 0} fontSize="xs" mt="1.5" ml="-5">
           {getDurationString(videoRef?.duration || 0)}

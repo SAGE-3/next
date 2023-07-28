@@ -24,6 +24,8 @@ import LeafletWrapper from './LeafletWrapper';
 
 import { SensorTypes } from './data/stationData';
 
+import { hcdpStationData } from './data/hcdpStationData';
+
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
@@ -31,6 +33,7 @@ import 'leaflet/dist/leaflet.css';
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 import { useParams } from 'react-router';
 import CustomizeWidgets from './menu/CustomizeWidgets';
+import CustomizeWidgetsHCDP from './menu/CustomizeWidgetsHCDP';
 import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
@@ -52,6 +55,8 @@ function AppComponent(props: App): JSX.Element {
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
   const [, setStationMetadata] = useState([]);
+
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -105,106 +110,120 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <LeafletWrapper map={map} setMap={setMap} {...props}>
-        <CustomizeWidgets {...props} />
-
+        {s.getDataFrom === 'mesonet' ? <CustomizeWidgets {...props} /> : <CustomizeWidgetsHCDP {...props} />}
         <Box
           w="20rem"
-          h="24rem"
-          bg="gray.300"
+          h="21.5rem"
           position="absolute"
+          bg="white"
           zIndex="999"
-          color={'black'}
-          top="2px"
-          left="2px"
-          border="10px"
+          top="1rem"
+          left="1rem"
+          border="3px solid gray"
           rounded={10}
+          boxShadow={'0 0 10px 5px rgba(0, 0, 0, 0.2)'}
           // margin="auto"
-          padding="0 20px"
+          color="black"
+          padding="1rem"
           fontWeight={'bold'}
           fontSize="xl"
         >
-          <br />
           <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
             <Stack direction="column">
-              <Radio colorScheme="orange" value="temperatureC">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureC">
                 <p style={{ fontSize: 30 }}>Temperature C</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="temperatureF">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureF">
                 <p style={{ fontSize: 30 }}>Temperature F</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="soilMoisture">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="soilMoisture">
                 <p style={{ fontSize: 30 }}>Soil Moisture</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="windSpeed">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="windSpeed">
                 <p style={{ fontSize: 30 }}>Wind Speed</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="relativeHumidity">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="relativeHumidity">
                 <p style={{ fontSize: 30 }}>Relative Humidity</p>
               </Radio>
-              <Radio size="lg" colorScheme="orange" value="solarRadiation">
+              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="solarRadiation">
                 <p style={{ fontSize: 30 }}>Solar Radiation</p>
               </Radio>
             </Stack>
           </RadioGroup>
         </Box>
+
         <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+          {s.getDataFrom === 'mesonet'
+            ? s.stationData.map((data: SensorTypes, index: number) => {
+                return (
+                  <div key={index}>
+                    <SVGOverlay
+                      bounds={[
+                        [data.lat - 0.17, data.lon - 0.05],
+                        [data.lat + 0.15, data.lon + 0.05],
+                      ]}
+                    >
+                      {s.variableToDisplay === 'windSpeed' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
-          {s.stationData.map((data: SensorTypes, index: number) => {
-            return (
-              <div key={index}>
-                <CircleMarker
-                  key={index}
-                  center={{ lat: data.lat - 0.01, lng: data.lon }}
-                  fillColor={'rgb(244, 187, 68)'}
-                  stroke={false}
-                  fillOpacity={0}
-                  radius={(5 / s.zoom) * 50 + 15}
-                  eventHandlers={
-                    {
-                      // mouseover: (e) => {
-                      //   e.target.openPopup();
-                      // },
-                      // click: (e) => {
-                      //   handleAddSelectedStation(data);
-                      // },
-                    }
-                  }
-                ></CircleMarker>
-
-                <SVGOverlay
-                  bounds={[
-                    [data.lat - 0.17, data.lon - 0.05],
-                    [data.lat + 0.15, data.lon + 0.05],
-                  ]}
-                >
-                  {s.variableToDisplay === 'windSpeed' ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                      <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
-                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-
-                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                          {data[s.variableToDisplay]}
-                        </text>
-                      </g>
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                      <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
-                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                          {data[s.variableToDisplay]}
-                        </text>
-                      </g>
-                    </svg>
-                  )}
-                </SVGOverlay>
-              </div>
-            );
-          })}
+                            <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                              {data[s.variableToDisplay]}
+                            </text>
+                          </g>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                            <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                              {data[s.variableToDisplay]}
+                            </text>
+                          </g>
+                        </svg>
+                      )}
+                    </SVGOverlay>
+                  </div>
+                );
+              })
+            : hcdpStationData.map((station: any, index: number) => {
+                if (station.value.island !== 'OA') return null;
+                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
+                return (
+                  <div key={index}>
+                    <SVGOverlay
+                      bounds={[
+                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
+                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
+                      ]}
+                      eventHandlers={{
+                        click: () => {
+                          console.log(station);
+                        },
+                      }}
+                    >
+                      {s.variableToDisplay === 'windSpeed' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                          </g>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                          </g>
+                        </svg>
+                      )}
+                    </SVGOverlay>
+                  </div>
+                );
+              })}
         </LayersControl.BaseLayer>
       </LeafletWrapper>
     </AppWindow>
@@ -305,6 +324,14 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { isWidgetOpen: true });
   };
 
+  const handleChangeToMesonetData = () => {
+    updateState(props._id, { getDataFrom: 'mesonet' });
+  };
+
+  const handleChangeToHcdpData = () => {
+    updateState(props._id, { getDataFrom: 'hcdp' });
+  };
+
   return (
     <HStack>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -318,6 +345,14 @@ function ToolbarComponent(props: App): JSX.Element {
           );
         })}
       </ButtonGroup>
+
+      {/**TODO uncomment this when showing the HCDP datasets */}
+      {/* <Button size="xs" onClick={handleChangeToMesonetData} colorScheme={'yellow'}>
+        Mesonet
+      </Button> */}
+      {/* <Button size="xs" onClick={handleChangeToHcdpData} colorScheme={'yellow'}>
+        hcdp
+      </Button> */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>

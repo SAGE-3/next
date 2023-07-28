@@ -30,7 +30,7 @@ interface Applications {
   error: { id?: string; msg: string } | null;
   fetched: boolean;
   clearError: () => void;
-  create: (newApp: AppSchema) => Promise<any>;
+  create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
   update: (id: string, updates: Partial<AppSchema>) => Promise<boolean>;
   updateBatch: (updates: { id: string; updates: Partial<AppSchema> }[]) => Promise<void>;

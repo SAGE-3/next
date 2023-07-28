@@ -125,20 +125,14 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
                   </Radio>
                 ))}
               </Stack>
-            </RadioGroup>{' '}
+            </RadioGroup>
           </FormControl>
 
           <Text mt={5} fontSize={'md'}>
-            Authentication:{' '}
-            <em>
-              {auth?.provider} {!isGuest && <>- {auth?.email}</>}
-            </em>
+            Authentication: <em>{auth?.provider} {!isGuest && <>- {auth?.email}</>}</em>
           </Text>
           <Text fontSize={'md'}>
-            Login expiration:{' '}
-            <em>
-              {formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}
-            </em>
+            Login expiration: <em>{formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}</em>
           </Text>
           {isGuest && (
             <Text mt={1} fontSize={'md'}>
