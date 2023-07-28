@@ -21,7 +21,7 @@ import dateFormat from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 
@@ -52,6 +52,8 @@ function AppComponent(props: App): JSX.Element {
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
+  // Get presences of users
+  const users = useUsersStore((state) => state.users);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -353,8 +355,12 @@ function AppComponent(props: App): JSX.Element {
                           // Store the query into the drag/drop events to create stickies
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
+                            // Will create a new sticky
                             e.dataTransfer.setData('app', 'Stickie');
-                            e.dataTransfer.setData('app_state', JSON.stringify({ color: user?.data.color, text: message.query }));
+                            // Get the color of the user
+                            const colorMessage = isMe ? user?.data.color : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                            // Put the state of the app into the drag/drop events
+                            e.dataTransfer.setData('app_state', JSON.stringify({ color: colorMessage, text: message.query }));
                           }}
                         >
                           {message.query}
