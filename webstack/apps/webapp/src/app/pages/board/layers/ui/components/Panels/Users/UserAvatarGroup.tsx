@@ -7,27 +7,13 @@
  */
 
 // React
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 
 // Theme and icons
-import {
-  Avatar,
-  Tooltip,
-  GridItem,
-  Grid,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  MenuGroup,
-  useToast,
-  Button,
-  useColorModeValue,
-} from '@chakra-ui/react';
-import { GiArrowCursor } from 'react-icons/gi';
+import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
-import { MdPerson, MdRemoveRedEye, MdStop } from 'react-icons/md';
+import { MdPerson, MdStop } from 'react-icons/md';
 
 // Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
@@ -46,7 +32,7 @@ function usePresenceCursor() {
   const updatePresence = usePresenceStore((state) => state.update);
 
   // Toast Info
-  const infoToast = useToast();
+  const infoToast = useToast({ id: 'infoToast-cursor' });
 
   // Go to a user's cursor
   const goToCursor = useCallback(
@@ -60,9 +46,10 @@ function usePresenceCursor() {
         const wy = window.innerHeight / scale / 2;
         setBoardPosition({ x: cx + wx, y: cy + wy });
         updatePresence(myId, { following: '' });
+        infoToast.close('infoToast-cursor');
         infoToast({
           status: 'info',
-          description: `Moved to the cursor of ${userName}.`,
+          description: `Moved to ${userName}'s viewport.`,
           duration: 3000,
           isClosable: true,
         });
@@ -86,7 +73,7 @@ function usePresenceViewport() {
   const { presences, update: updatePresence } = usePresenceStore((state) => state);
 
   // Toast Info
-  const infoToast = useToast();
+  const infoToast = useToast({ id: 'infoToast-viewport' });
 
   // Go to a user's viewport
   const goToViewport = useCallback(
@@ -108,9 +95,10 @@ function usePresenceViewport() {
         setScale(s);
         setBoardPosition({ x: cx, y: cy });
         updatePresence(user._id, { following: '' });
+        infoToast.close('infoToast-viewport');
         infoToast({
           status: 'info',
-          description: `Moved to the viewport of ${userName}.`,
+          description: `Moved to ${userName}'s view.`,
           duration: 3000,
           isClosable: true,
         });
@@ -131,9 +119,6 @@ function usePresenceFollow() {
 
   // Presences
   const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
-
-  // Toast Info
-  const infoToast = useToast();
 
   // Follow a user
   const followUser = useCallback(
@@ -256,37 +241,40 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
       <Grid templateColumns="repeat(10, 0fr)" gap={2}>
         <GridItem w="100%" h="10" key={'userpanel-' + user?._id}>
           <Menu>
-            <MenuButton
-              as={Avatar}
-              name={' '}
-              backgroundColor={myColor}
-              size="sm"
-              color="white"
-              showBorder={true}
-              borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
-              borderColor="transparent"
-              cursor="pointer"
-              textAlign="center"
-              fontWeight="bold"
-              fontSize="14px"
-            >
-              <MdPerson
-                style={{
-                  fontSize: '22px',
-                  transform: 'translateX(3px)',
-                }}
-              />
-            </MenuButton>
+            <Tooltip label={'You'} placement="top" hasArrow shouldWrapChildren={true}>
+              <MenuButton
+                as={Avatar}
+                name={' '}
+                backgroundColor={myColor}
+                size="sm"
+                color="white"
+                showBorder={true}
+                borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
+                borderColor="transparent"
+                cursor="pointer"
+                textAlign="center"
+                fontWeight="bold"
+                fontSize="14px"
+              >
+                <MdPerson
+                  style={{
+                    fontSize: '22px',
+                    transform: 'translateX(3px)',
+                  }}
+                />
+              </MenuButton>{' '}
+            </Tooltip>
+
             <MenuList>
               <MenuGroup title={'You'} mt={0} mb={1} p={0} fontSize="md">
-                <Tooltip label={'Force everyone to follow you.'} placement="top" openDelay={750} hasArrow>
+                <Tooltip label={'Force everyone to follow you'} placement="top" openDelay={400} hasArrow>
                   <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => handleFollowMe()}>
                     Follow Me
                   </MenuItem>
                 </Tooltip>
-                <Tooltip label={'Force everyone to stop following you.'} placement="top" openDelay={750} hasArrow>
+                <Tooltip label={'Force everyone to unfollow you'} placement="top" openDelay={400} hasArrow>
                   <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => handleFollowMeStop()}>
-                    Stop Following Me
+                    Unfollow Me
                   </MenuItem>
                 </Tooltip>
               </MenuGroup>
@@ -301,15 +289,15 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
           const yourFollowing = following === el.user._id;
           return (
             <GridItem w="100%" h="10" key={'userpanel-' + el.user._id}>
-              <Tooltip
-                key={el.presence.data.userId}
-                aria-label="username"
-                hasArrow={true}
-                placement="top"
-                label={el.user.data.name}
-                shouldWrapChildren={true}
-              >
-                <Menu>
+              <Menu>
+                <Tooltip
+                  key={el.presence.data.userId}
+                  aria-label="username"
+                  hasArrow={true}
+                  placement="top"
+                  label={el.user.data.name}
+                  shouldWrapChildren={true}
+                >
                   <MenuButton
                     as={Avatar}
                     name={' '}
@@ -323,7 +311,8 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                     cursor="pointer"
                     textAlign="center"
                     fontWeight="bold"
-                    fontSize="14px"
+                    fontSize="13px"
+                    whiteSpace="nowrap"
                   >
                     {followingYou ? (
                       <HiOutlineChevronDoubleLeft
@@ -343,21 +332,32 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                       initials(el.user.data.name)
                     )}
                   </MenuButton>
-                  <MenuList>
-                    <MenuGroup title={el.user.data.name} mt={0} mb={1} p={0} fontSize="md">
+                </Tooltip>
+                <MenuList>
+                  <MenuGroup title={el.user.data.name} mt={0} mb={1} p={0} fontSize="md">
+                    <Tooltip
+                      hasArrow={true}
+                      placement="top"
+                      label={`${yourFollowing ? 'Unfollow' : 'Follow'} ${el.user.data.name}`}
+                      openDelay={400}
+                    >
                       <MenuItem
                         fontSize="sm"
                         height="2em"
-                        icon={<HiOutlineChevronDoubleRight />}
+                        icon={yourFollowing ? <MdStop /> : <HiOutlineChevronDoubleRight />}
                         onClick={() => handleFollowUser(el.user._id)}
                       >
                         {yourFollowing ? 'Unfollow' : 'Follow'}
                       </MenuItem>
-                      {followingYou ? (
+                    </Tooltip>
+                    {followingYou ? (
+                      <Tooltip hasArrow={true} placement="top" label={`Force ${el.user.data.name} to unfollow`} openDelay={400}>
                         <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => handleFollowMeStop(el.user._id)}>
-                          Stop Following Me
+                          Unfollow Me
                         </MenuItem>
-                      ) : (
+                      </Tooltip>
+                    ) : (
+                      <Tooltip hasArrow={true} placement="top" label={`Force ${el.user.data.name} to follow`} openDelay={400}>
                         <MenuItem
                           fontSize="sm"
                           height="2em"
@@ -366,27 +366,29 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                         >
                           Follow Me
                         </MenuItem>
-                      )}
-                      <MenuItem
-                        fontSize="sm"
-                        height="2em"
-                        icon={<GiArrowCursor />}
-                        onClick={() => handleGoToCursor(el.user._id, el.user.data.name)}
-                      >
-                        Show Cursor
-                      </MenuItem>
+                      </Tooltip>
+                    )}
+                    {/* <MenuItem
+                      fontSize="sm"
+                      height="2em"
+                      icon={<GiArrowCursor />}
+                      onClick={() => handleGoToCursor(el.user._id, el.user.data.name)}
+                    >
+                      Go to Cursor
+                    </MenuItem> */}
+                    <Tooltip hasArrow={true} placement="top" label={`Match ${el.user.data.name}'s view`} openDelay={400}>
                       <MenuItem
                         fontSize="sm"
                         height="2em"
                         icon={<IoMdSquareOutline />}
                         onClick={() => handleGoToViewport(el.user._id, el.user.data.name)}
                       >
-                        Show View
+                        Match View
                       </MenuItem>
-                    </MenuGroup>
-                  </MenuList>
-                </Menu>
-              </Tooltip>
+                    </Tooltip>
+                  </MenuGroup>
+                </MenuList>
+              </Menu>
             </GridItem>
           );
         })}

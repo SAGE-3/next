@@ -29,12 +29,12 @@ export function PresenceFollow() {
   const users = useUsersStore((state) => state.users);
 
   // Toast Info
-  const followingToast = useToast();
+  const followingToast = useToast({ id: 'followingToast' });
 
   function startFollowing(userId: string) {
     setFollowing(userId);
     const userName = users.find((el) => el._id === userId)?.data.name;
-    followingToast.closeAll();
+    followingToast.close('followingToast');
     followingToast({
       status: 'info',
       description: (
@@ -55,7 +55,7 @@ export function PresenceFollow() {
     if (!user) return;
     setFollowing('');
     updatePresence(user?._id, { following: '' });
-    followingToast.closeAll();
+    followingToast.close('followingToast');
   }
 
   // Check if I am following someone
@@ -68,7 +68,7 @@ export function PresenceFollow() {
     const target = myPresence.data.following;
     if (!target) {
       setFollowing('');
-      followingToast.closeAll();
+      followingToast.close('followingToast');
       return;
     }
     // Check if that person is still connected
