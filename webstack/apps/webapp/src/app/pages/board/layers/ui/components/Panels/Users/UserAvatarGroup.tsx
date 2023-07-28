@@ -7,122 +7,191 @@
  */
 
 // React
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Theme and icons
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
+import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast, Button } from '@chakra-ui/react';
 import { GiArrowCursor } from 'react-icons/gi';
 import { IoMdSquareOutline } from 'react-icons/io';
-import { HiOutlineChevronDoubleRight } from 'react-icons/hi';
-import { MdRemoveRedEye } from 'react-icons/md';
+import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
+import { MdPerson, MdRemoveRedEye, MdStop } from 'react-icons/md';
 
 // Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
 import { PresencePartial, User } from '@sage3/shared/types';
 import { useParams } from 'react-router';
 
-function usePresenceGoTo() {
-  // BoardId
-  const { boardId } = useParams();
+// Hook to change your view to another user's cursor position
+function usePresenceCursor() {
+  // Me and my current state
   const { user } = useUser();
-  const presences = usePresenceStore((state) => state.presences);
-  const updatePresence = usePresenceStore((state) => state.update);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
   const scale = useUIStore((state) => state.scale);
 
-  // User you are currently following
-  const [following, setFollowing] = useState<string | null>(null);
+  // Presences
+  const presences = usePresenceStore((state) => state.presences);
+  const updatePresence = usePresenceStore((state) => state.update);
 
-  const toast = useToast();
-  // Go to the user's cursor
-  function goToCursor(userId: string) {
-    const user = presences.find((el) => el._id === userId);
-    if (user) {
-      const cx = -user.data.cursor.x;
-      const cy = -user.data.cursor.y;
-      const wx = window.innerWidth / scale / 2;
-      const wy = window.innerHeight / scale / 2;
-      setBoardPosition({ x: cx + wx, y: cy + wy });
-    }
-  }
+  // Toast Info
+  const infoToast = useToast();
 
-  // Go to the user's viewport
-  function goToViewport(userId: string) {
-    const user = presences.find((el) => el._id === userId);
-    if (user) {
-      const vx = -user.data.viewport.position.x;
-      const vy = -user.data.viewport.position.y;
-      const vw = -user.data.viewport.size.width;
-      const vh = -user.data.viewport.size.height;
-      const vcx = vx + vw / 2;
-      const vcy = vy + vh / 2;
-      const ww = window.innerWidth;
-      const wh = window.innerHeight;
-      const s = Math.min(ww / -vw, wh / -vh);
-      const cx = vcx + ww / s / 2;
-      const cy = vcy + wh / s / 2;
-      setScale(s);
-      setBoardPosition({ x: cx, y: cy });
-    }
-  }
+  // Go to a user's cursor
+  const goToCursor = useCallback(
+    (userId: string, userName: string) => {
+      const target = presences.find((el) => el._id === userId);
+      const myId = user?._id;
+      if (target && myId) {
+        const cx = -target.data.cursor.x;
+        const cy = -target.data.cursor.y;
+        const wx = window.innerWidth / scale / 2;
+        const wy = window.innerHeight / scale / 2;
+        setBoardPosition({ x: cx + wx, y: cy + wy });
+        updatePresence(myId, { following: '' });
+        infoToast({
+          status: 'info',
+          description: `Moved to the cursor of ${userName}.`,
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    },
+    [presences, scale, setBoardPosition, user]
+  );
+
+  return { goToCursor };
+}
+
+// Hook to change your view to another user's viewport
+function usePresenceViewport() {
+  // Me and my current state
+  const { user } = useUser();
+
+  // UI Store
+  const { setBoardPosition, setScale, scale } = useUIStore((state) => state);
+
+  // Presences
+  const { presences, update: updatePresence } = usePresenceStore((state) => state);
+
+  // Toast Info
+  const infoToast = useToast();
+
+  // Go to a user's viewport
+  const goToViewport = useCallback(
+    (userId: string, userName: string) => {
+      const target = presences.find((el) => el._id === userId);
+      const myId = user?._id;
+      if (target && myId) {
+        console.log(target);
+        const vx = -target.data.viewport.position.x;
+        const vy = -target.data.viewport.position.y;
+        const vw = -target.data.viewport.size.width;
+        const vh = -target.data.viewport.size.height;
+        const vcx = vx + vw / 2;
+        const vcy = vy + vh / 2;
+        const ww = window.innerWidth;
+        const wh = window.innerHeight;
+        const s = Math.min(ww / -vw, wh / -vh);
+        const cx = vcx + ww / s / 2;
+        const cy = vcy + wh / s / 2;
+        setScale(s);
+        setBoardPosition({ x: cx, y: cy });
+        updatePresence(user._id, { following: '' });
+        infoToast({
+          status: 'info',
+          description: `Moved to the viewport of ${userName}.`,
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    },
+    [presences, setBoardPosition, setScale, user]
+  );
+
+  return { goToViewport };
+}
+
+function usePresenceFollow() {
+  // BoardId
+  const { boardId } = useParams();
+
+  // Me and my current state
+  const { user } = useUser();
+
+  // Presences
+  const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
+
+  // Toast Info
+  const infoToast = useToast();
 
   // Follow a user
-  function followUser(userId: string) {
-    const target = presences.find((el) => el._id === userId);
-    if (!target || !user) return;
-    // If you are already following this user, unfollow them
-    if (target._id === user._id || target._id === following) {
-      setFollowing(null);
-      updatePresence(user._id, { following: '' });
-    } else {
-      // If the other user is following you, you can't follow them
-      if (target.data.following === user._id) {
-        toast({
+  const followUser = useCallback(
+    (userId: string) => {
+      const target = presences.find((el) => el._id === userId);
+      const myId = user?._id;
+      if (!target || !myId) return;
+      if (target._id === myId || target._id === following) {
+        // If you are already following this user, unfollow them
+        setFollowing('');
+        updatePresence(myId, { following: '' });
+      } else if (target.data.following === myId) {
+        // If the other user is following you, you can't follow them
+        infoToast({
           status: 'error',
           description: `This user is already following you.`,
           duration: 3000,
           isClosable: true,
         });
         return;
+      } else {
+        // If you are not following this user, follow them
+        setFollowing(target._id);
+        updatePresence(myId, { following: target._id });
       }
-      setFollowing(target._id);
-      updatePresence(user._id, { following: target._id });
-    }
-  }
+    },
+    [presences, user, following, updatePresence]
+  );
 
-  useEffect(() => {
-    // If not following anyone, exit
-    if (!following) return;
-    const u = presences.find((el) => el._id === following);
-    // Check if the you are following is still on this board
-    if (!u || u.data.boardId !== boardId) {
-      user && updatePresence(user?._id, { following: '' });
-      setFollowing(null);
-    } else {
-      // Set you position to their current position
-      goToViewport(following);
-    }
-  }, [presences, following, user]);
+  // Have everyone follow me
+  const followMe = useCallback(() => {
+    const myId = user?._id;
+    const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
+    if (!myId) return;
+    thisBoardsUsers.forEach((el) => {
+      if (el._id === myId) updatePresence(el._id, { following: '' });
+      else updatePresence(el._id, { following: myId });
+    });
+  }, [presences, user, updatePresence]);
 
-  return { goToCursor, goToViewport, followUser, following };
+  // Have everyone stop following me
+  const followMeStop = useCallback(() => {
+    const myId = user?._id;
+    const thisBoardsUsers = presences.filter((el) => el.data.boardId === boardId);
+    if (!myId) return;
+    thisBoardsUsers.forEach((el) => {
+      if (el.data.following === myId) updatePresence(el._id, { following: '' });
+    });
+  }, [presences, user, updatePresence]);
+
+  return { followUser, followMe, followMeStop, following };
 }
 
 type AvatarGroupProps = {
   boardId: string;
 };
-
 type UserAndPresence = { presence: PresencePartial; user: User };
+
 export function UserAvatarGroup(props: AvatarGroupProps) {
   // Get current user
   const { user } = useUser();
 
-  // UI Stuff
-  const { goToCursor, goToViewport, followUser, following } = usePresenceGoTo();
+  // Presence Functionality
+  const { goToCursor } = usePresenceCursor();
+  const { goToViewport } = usePresenceViewport();
+  const { followUser, followMe, followMeStop, following } = usePresenceFollow();
 
   // Handlers
-  const handleGoToCursor = (userId: string) => goToCursor(userId);
-  const handleGoToViewport = (userId: string) => goToViewport(userId);
+  const handleGoToCursor = (userId: string, userName: string) => goToCursor(userId, userName);
+  const handleGoToViewport = (userId: string, userName: string) => goToViewport(userId, userName);
   const handleFollowUser = (userId: string) => followUser(userId);
 
   // Get all users
@@ -152,6 +221,43 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
   return (
     <>
       <Grid templateColumns="repeat(10, 0fr)" gap={2}>
+        <GridItem w="100%" h="10" key={'userpanel-' + user?._id}>
+          <Tooltip aria-label="username" hasArrow={true} placement="top" label={'You'} shouldWrapChildren={true}>
+            <Menu>
+              <MenuButton
+                as={Avatar}
+                name={' '}
+                backgroundColor={user?.data.color}
+                size="sm"
+                color="white"
+                showBorder={true}
+                borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
+                borderColor="white"
+                cursor="pointer"
+                textAlign="center"
+                fontWeight="bold"
+                fontSize="14px"
+              >
+                <MdPerson
+                  style={{
+                    fontSize: '18px',
+                    transform: 'translateX(4px)',
+                  }}
+                />
+              </MenuButton>
+              <MenuList>
+                <MenuGroup mt={0} mb={1} p={0} fontSize="md">
+                  <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => followMe()}>
+                    Everyone Follow Me
+                  </MenuItem>
+                  <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => followMeStop()}>
+                    Everyone Stop Following Me
+                  </MenuItem>
+                </MenuGroup>
+              </MenuList>
+            </Menu>
+          </Tooltip>
+        </GridItem>
         {userPresence.map((el) => {
           if (el == null) return;
           const color = useHexColor(el.user.data.color);
@@ -195,10 +301,20 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                   </MenuButton>
                   <MenuList>
                     <MenuGroup title={el.user.data.name} mt={0} mb={1} p={0} fontSize="md">
-                      <MenuItem fontSize="sm" height="2em" icon={<GiArrowCursor />} onClick={() => handleGoToCursor(el.user._id)}>
+                      <MenuItem
+                        fontSize="sm"
+                        height="2em"
+                        icon={<GiArrowCursor />}
+                        onClick={() => handleGoToCursor(el.user._id, el.user.data.name)}
+                      >
                         Show Cursor
                       </MenuItem>
-                      <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => handleGoToViewport(el.user._id)}>
+                      <MenuItem
+                        fontSize="sm"
+                        height="2em"
+                        icon={<IoMdSquareOutline />}
+                        onClick={() => handleGoToViewport(el.user._id, el.user.data.name)}
+                      >
                         Show View
                       </MenuItem>
                       <MenuItem
