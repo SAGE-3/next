@@ -105,7 +105,6 @@ function AppComponent(props: App): JSX.Element {
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
-    setProcessing(true);
     // Get server time
     const now = await serverTime();
     // Is it a question to Geppetto?
@@ -122,6 +121,7 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
+      setProcessing(true);
       // Remove the @G
       const request = new_input.slice(2);
       // Object to stop the request and the stream of events
@@ -163,6 +163,7 @@ function AppComponent(props: App): JSX.Element {
           } else {
             const message = JSON.parse(msg.data);
             if (message.generated_text) {
+              setProcessing(false);
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
@@ -189,7 +190,7 @@ function AppComponent(props: App): JSX.Element {
               if (message.token.text) {
                 tempText += message.token.text;
                 setStreamText(tempText);
-                goToBottom();
+                goToBottom("auto");
               }
             }
           }
@@ -201,17 +202,17 @@ function AppComponent(props: App): JSX.Element {
       // Scroll to bottom of chat box smoothly
       goToBottom();
     }, 100);
-    setProcessing(false);
   };
 
-  const goToBottom = () => {
+  const goToBottom = (mode: ScrollBehavior = "smooth") => {
     // Scroll to bottom of chat box smoothly
     chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight, behavior: "smooth",
+      top: chatBox.current?.scrollHeight, behavior: mode,
     });
   };
 
   const stopGepetto = async () => {
+    setProcessing(false);
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -252,7 +253,7 @@ function AppComponent(props: App): JSX.Element {
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "instant",
     });
-    chatBox.current?.addEventListener('scrollend', (e) => {
+    chatBox.current?.addEventListener('scrollend', () => {
       if (chatBox.current && chatBox.current.scrollTop) {
         const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
         if (test === 0) {
@@ -451,7 +452,8 @@ function AppComponent(props: App): JSX.Element {
               p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
               icon={<MdExpandCircleDown size="1.5rem" />}
               isDisabled={!newMessages}
-              onClick={goToBottom}
+              isLoading={processing}
+              onClick={() => goToBottom("instant")}
               width="33%"
             />
           </Tooltip>
