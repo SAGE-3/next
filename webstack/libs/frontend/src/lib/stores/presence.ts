@@ -21,9 +21,11 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface PresenceState {
   presences: Presence[];
+  following: string;
   partialPrescences: PresencePartial[];
   error: string | null;
   clearError: () => void;
+  setFollowing: (id: string) => void;
   update: (id: string, updates: Partial<PresenceSchema>) => void;
   subscribe: () => Promise<void>;
   setPartialPresence: (presences: Presence[]) => void;
@@ -42,7 +44,11 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   return {
     presences: [],
     partialPrescences: [],
+    following: '',
     error: null,
+    setFollowing: (id: string) => {
+      set({ following: id });
+    },
     setPartialPresence: (presences: Presence[]) => {
       const partialPrescences = presences.map((p) => {
         // Neat trick to remove cursor and viewport from the data

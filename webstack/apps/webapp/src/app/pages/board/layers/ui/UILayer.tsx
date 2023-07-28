@@ -40,6 +40,7 @@ import {
   UsersPanel,
   AnnotationsPanel,
   PluginsPanel,
+  PresenceFollow,
 } from './components';
 
 type UILayerProps = {
@@ -232,6 +233,9 @@ export function UILayer(props: UILayerProps) {
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
+
+      {/* Presence Follow Component. Doesnt Render Anything */}
+      <PresenceFollow />
     </>
   );
 }
