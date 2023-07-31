@@ -67,7 +67,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   function createAccount() {
     if (name) {
       const newUser = {
-        name,
+        name: name.trim(),
         email: auth?.email ? auth.email : '',
         color: color,
         userRole: auth?.provider === 'guest' ? 'guest' : 'user',
@@ -137,7 +137,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name}>
+          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name.trim()}>
             Create Account
           </Button>
         </ModalFooter>

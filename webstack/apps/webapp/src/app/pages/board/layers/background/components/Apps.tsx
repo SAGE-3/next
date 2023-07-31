@@ -30,7 +30,7 @@ export function Apps() {
   // Save the previous location and scale when zoming to an application
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false });
+  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
   // User information
   const { user } = useUser();
@@ -209,14 +209,15 @@ export function Apps() {
             const y2 = y1 + el.data.size.height;
             // If the cursor is inside the app, delete it. Only delete the top one
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-              if (previousLocation.set) {
+              if (previousLocation.set && previousLocation.app === el._id) {
+                // if action is pressed again on the same app, zoom out
                 setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
                 setScale(previousLocation.s);
-                setPreviousLocation((prev) => ({ ...prev, set: false }));
+                setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
               } else {
-                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true }));
                 found = true;
                 fitApps([el]);
+                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, app: el._id }));
               }
             }
           });
@@ -224,64 +225,16 @@ export function Apps() {
           if (previousLocation.set) {
             setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
             setScale(previousLocation.s);
-            setPreviousLocation((prev) => ({ ...prev, set: false }));
+            setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
+          } else {
+            // zoom out to show all apps
+            fitApps(apps);
           }
         }
       }
     },
     { dependencies: [previousLocation.set, position.x, position.y, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)] }
   );
-
-  // Un-Zoom with shift+z
-  useHotkeys(
-    'shift+z',
-    () => {
-      if (previousLocation.set) {
-        setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
-        setScale(previousLocation.s);
-        setPreviousLocation((prev) => ({ ...prev, set: false }));
-      }
-    },
-    { dependencies: [previousLocation.set] }
-  );
-
-  // Used for dragging individual stations from SensorOverview app
-  // TODO: Conflicts with dragging an asset from the asset panel
-
-  // useEffect(() => {
-  //   // Handle the drop event
-  //   const handleDrop = (event: any) => {
-  //     event.preventDefault();
-  //     const { x, y } = userCursor.uiToBoard(event.pageX, event.pageY);
-  //     const state = JSON.parse(event.dataTransfer.getData('text'));
-  //     // On drop, create new SensorOverview app with single station
-  //     createApp({
-  //       title: 'SensorOverview',
-  //       roomId: roomId!,
-  //       boardId: boardId!,
-  //       position: { x: x, y: y, z: 0 },
-  //       size: { width: 1000, height: 1000, depth: 0 },
-  //       rotation: { x: 0, y: 0, z: 0 },
-  //       type: 'SensorOverview',
-  //       state: state,
-  //       raised: true,
-  //       dragging: false,
-  //     });
-  //   };
-  //   // Remove existing event listeners
-  //   const cleanup = () => {
-  //     document.removeEventListener('drop', handleDrop);
-  //   };
-  //   // Add event listener
-  //   document.addEventListener('drop', handleDrop);
-  //   // Cleanup function
-  //   return cleanup;
-  // }, []);
-
-  // Update the cursor position
-  // useEffect(() => {
-  //   cursorPositionRef.current = userCursor;
-  // }, [userCursor]);
 
   return (
     <>

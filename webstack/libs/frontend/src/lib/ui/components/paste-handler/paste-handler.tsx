@@ -17,7 +17,6 @@ import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } fro
 import { processContentURL, isValidURL } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppState } from '@sage3/applications/schema';
 
 type PasteProps = {
   boardId: string;
@@ -44,10 +43,12 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   useEffect(() => {
     if (!user) return;
 
-    const pasteHandlerReachingDocumentBody = (event: ClipboardEvent) => {
+    const pasteHandlerBoard = (event: ClipboardEvent) => {
       // get the target element and make sure it is the background board
-      // const elt = event.target as HTMLElement;
-      // if (elt.id !== 'board') return;
+      const elt = event.target as HTMLElement;
+      if (elt.tagName === 'INPUT' || elt.tagName === 'TEXTAREA') return;
+
+      // Not on a selected app
       if (selectedApp) return;
 
       // Block guests from uploading assets
@@ -197,11 +198,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     };
 
     // Add the handler to the whole page
-    document.addEventListener('paste', pasteHandlerReachingDocumentBody);
+    document.addEventListener('paste', pasteHandlerBoard);
 
     return () => {
       // Remove function during cleanup to prevent multiple additions
-      document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
+      document.removeEventListener('paste', pasteHandlerBoard);
     };
   }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
 
