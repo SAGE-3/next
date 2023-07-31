@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useAppStore, useUser, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
+import { useUser, useHexColor } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
