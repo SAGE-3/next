@@ -208,20 +208,20 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
               border-right: 1px solid ${state.user.color} !important;
             }
 
-            .yRemoteSelection-${clientId}::before {
-              content: '${truncateWithEllipsis(state.user.name, 6)}';
-              position: absolute;
-              top: -${s.fontSize}px;
-              left: 0;
-              padding: 0 0.25rem;
-              font-size: 0.75rem;
-              line-height: 0.9rem;
-              color: ${state.user.color};
-              background-color: ${white};
-              border-radius: 4px;
-              border: 1px solid ${state.user.color};
-              pointer-events: none;
-            }
+            // .yRemoteSelection-${clientId}::before {
+            //   content: '${truncateWithEllipsis(state.user.name, 6)}';
+            //   position: absolute;
+            //   top: -${s.fontSize}px;
+            //   left: 0;
+            //   padding: 0 0.25rem;
+            //   font-size: 0.75rem;
+            //   line-height: 0.9rem;
+            //   color: ${state.user.color};
+            //   background-color: ${white};
+            //   border-radius: 4px;
+            //   border: 1px solid ${state.user.color};
+            //   pointer-events: none;
+            // }
 
             .monaco-editor-overlaymessage {
               transform: scale(0.8);
@@ -241,7 +241,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
       if (provider.awareness.getStates().size !== numClients) {
         const uniqueClients = new Set(states.keys());
-        const activeUsers = Array.from(uniqueClients).map((id) => states.get(id)?.user.id);
+        // const activeUsers = Array.from(uniqueClients).map((id) => states.get(id)?.user.id);
         // console.log('activeUsers', activeUsers);
         setNumClients(provider.awareness.getStates().size);
       }
