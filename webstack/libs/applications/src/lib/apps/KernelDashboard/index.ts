@@ -13,14 +13,21 @@ import { z } from 'zod';
  * created by: SAGE3 Team
  */
 
+export const kernelInfo = z.object({
+  kernel_id: z.string(),
+  room: z.string(),
+  board: z.string(),
+  name: z.string(),
+  alias: z.string(),
+  is_private: z.boolean(),
+  owner: z.string(),
+});
+
+export type KernelInfo = z.infer<typeof kernelInfo>;
+
 export const schema = z.object({
   kernelSpecs: z.array(z.string()),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.any(),
-    })
-  ),
+  kernels: z.array(kernelInfo),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.any(),
@@ -32,8 +39,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  kernelSpecs: [],
-  availableKernels: [],
+  kernelSpecs: ['python3'],
+  kernels: [],
   executeInfo: { executeFunc: '', params: {} },
   online: false,
   lastHeartBeat: 0,

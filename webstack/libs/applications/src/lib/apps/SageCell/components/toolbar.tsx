@@ -7,16 +7,17 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
+import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
 import { downloadFile, useAppStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../../schema';
-import { state as AppState, KernelType } from '../index';
+import { state as AppState } from '../index';
 import { HelpModal } from './help';
 import { User } from '@sage3/shared/types';
+import { KernelInfo } from '../../KernelDashboard';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -33,27 +34,35 @@ export function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const boardId = props.data.boardId;
-  const [myKernels, setMyKernels] = useState<KernelType[]>([]);
-  // set to global kernel if it exists
+  const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
   const [selected, setSelected] = useState<string>(s.kernel);
   const [ownerId, setOwnerId] = useState<string>('');
   const [ownerName, setOwnerName] = useState<string>('');
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  const baseURL = 'http://localhost:81';
 
   /**
    * This function gets the kernels for the board
    * @returns
    * @memberof ToolbarComponent
    */
-  function getKernels() {
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'get_available_kernels',
-        params: {},
-      },
-    });
-  }
+  const getKernelCollection = async () => {
+    try {
+      const response = await fetch(`${baseURL}/collection`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      updateState(props._id, {
+        kernels: data,
+      });
+    } catch (error) {
+      if (error instanceof TypeError) {
+        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+      }
+    }
+  };
 
   /**
    * This function sets the state of the toolbar based on the kernels
@@ -62,8 +71,8 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   function setStates() {
     // get all the kernels in the wild
-    const kernels = s.availableKernels;
-    const b = kernels.filter((el) => el.value.board === boardId);
+    const kernels = s.kernels;
+    const b = kernels.filter((el) => el.board === boardId);
     // if there are no kernels for the board, or at all, reset the local state
     if (!kernels || kernels.length === 0 || b.length === 0) {
       // reset the local state
@@ -84,18 +93,18 @@ export function ToolbarComponent(props: App): JSX.Element {
     if (b.length > 0) {
       // if there are kernels for this board then
       // get the public kernels and the kernels owned by the user
-      const publicKernels = b.filter((el) => !el.value.is_private);
-      const privateKernels = b.filter((el) => el.value.is_private);
-      const ownedKernels = privateKernels.filter((el) => el.value.owner_uuid === user?._id);
-      const myList: KernelType[] = [...publicKernels, ...ownedKernels];
+      const publicKernels = b.filter((el) => !el.is_private);
+      const privateKernels = b.filter((el) => el.is_private);
+      const ownedKernels = privateKernels.filter((el) => el.owner === user?._id);
+      const myList: KernelInfo[] = [...publicKernels, ...ownedKernels];
       setMyKernels(myList);
       // get the selected kernel from the global state
-      const selectedKernel = kernels.find((el) => el.key === s.kernel);
+      const selectedKernel = kernels.find((el) => el.kernel_id === s.kernel);
       // check if the selected kernel is in the list of kernels for this board
-      const ownerId = selectedKernel?.value.owner_uuid;
+      const ownerId = selectedKernel?.owner;
       const ownerName = users.find((u: User) => u._id === ownerId)?.data.name;
-      const isPrivate = selectedKernel?.value.is_private;
-      const inBoard = b.find((el) => el.key === selectedKernel?.key);
+      const isPrivate = selectedKernel?.is_private;
+      const inBoard = b.find((el) => el.kernel_id === selectedKernel?.kernel_id);
       // if the selected kernel is not in the list of kernels for this board then
       // there is a problem so we should reset the state to the default
       if (!inBoard) {
@@ -107,7 +116,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       }
       // const inMyList = myList.find((el) => el.key === s.kernel);
       if (selectedKernel) {
-        setSelected(selectedKernel.key);
+        setSelected(selectedKernel.kernel_id);
         setOwnerId(ownerId ? ownerId : '');
         setOwnerName(ownerName ? ownerName : '');
         setIsPrivate(isPrivate ? isPrivate : false);
@@ -123,7 +132,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   useEffect(() => {
     if (!user) return;
-    getKernels();
+    getKernelCollection();
     setStates();
     return () => {
       // cleanup
@@ -140,7 +149,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     return () => {
       // cleanup
     };
-  }, [s.kernel, JSON.stringify(s.availableKernels)]);
+  }, [s.kernel, JSON.stringify(s.kernels)]);
 
   /**
    * This is called when the user selects a kernel from the dropdown
@@ -182,14 +191,14 @@ export function ToolbarComponent(props: App): JSX.Element {
       <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
       {
         <>
-          {/* check if there are kernels avaible. if none show offline, if available but no access show online with no kernels,
+          {/* check if there are kernels available. if none show offline, if available but no access show online with no kernels,
            if available and access show online with kernels
           */}
-          {s.availableKernels.length === 0 ? (
+          {s.kernels.length === 0 ? (
             <Badge colorScheme="red" rounded="sm" size="lg">
               Offline
             </Badge>
-          ) : s.availableKernels.length > 0 && !selected ? (
+          ) : s.kernels.length > 0 && !selected ? (
             <Badge colorScheme="yellow" rounded="sm" size="lg">
               Online
             </Badge>
@@ -232,17 +241,17 @@ export function ToolbarComponent(props: App): JSX.Element {
             {
               //filter only Python kernels at this time
               myKernels
-                .filter((el) => el.value.kernel_name === 'python3')
+                .filter((el) => el.name === 'python3')
                 .map((el) => (
-                  <option value={el.key} key={el.key}>
-                    {el.value.kernel_alias} ({el.value.kernel_name === 'python3' ? 'Python' : el.value.kernel_name === 'r' ? 'R' : 'Julia'})
+                  <option value={el.kernel_id} key={el.kernel_id}>
+                    {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
                   </option>
                 ))
             }
           </Select>
 
           <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
+            <Button onClick={getKernelCollection} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
               <MdRefresh />
             </Button>
           </Tooltip>

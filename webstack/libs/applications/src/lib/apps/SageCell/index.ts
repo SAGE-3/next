@@ -11,61 +11,81 @@
  * created by: SAGE3 team
  */
 import { z } from 'zod';
+import { kernelInfo, KernelInfo } from '../KernelDashboard';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.any(),
 });
 
-const KernelSchema = z.object({
-  key: z.string(),
-  value: z.object({
-    board: z.string(),
-    kernel: z.string(),
-    kernel_name: z.string(),
-    kernel_alias: z.string(),
-    is_private: z.boolean(),
-    owner_uuid: z.string(),
-  }),
-});
-
-const availableKernelsSchema = z.array(KernelSchema);
-
-const privateMessageSchema = z.array(
-  z.object({
-    userId: z.string(),
-    message: z.string(),
+const ContentItemSchema = z
+  .object({
+    stdout: z.string().optional(),
+    stderr: z.string().optional(),
+    traceback: z.array(z.string()).optional(),
+    ename: z.string().optional(),
+    evalue: z.string().optional(),
+    'text/plain': z.string().optional(),
+    'application/javascript': z.string().optional(),
+    'text/html': z.string().optional(),
+    'text/latex': z.string().optional(),
+    'image/jpeg': z.string().optional(),
+    'text/markdown': z.string().optional(),
+    'image/png': z.string().optional(),
+    'image/svg+xml': z.string().optional(),
+    'application/vnd.jupyter.widget-view+json': z.string().optional(),
+    'application/vnd.vega.v5+json': z.string().optional(),
+    'application/vnd.vegalite.v4+json': z.string().optional(),
+    'application/vnd.vega.v4+json': z.string().optional(),
+    'application/vnd.vegalite.v3+json': z.string().optional(),
+    'application/vnd.vega.v3+json': z.string().optional(),
+    'application/vnd.vegalite.v2+json': z.string().optional(),
+    'application/vnd.vega.v2+json': z.string().optional(),
+    'application/vnd.vegalite.v1+json': z.string().optional(),
+    'application/vnd.vega.v1+json': z.string().optional(),
+    'application/vnd.dataresource+json': z.string().optional(),
+    'application/vdom.v1+json': z.string().optional(),
+    'application/x-nteract-model-debug+json': z.string().optional(),
+    'application/x-nteract-model-description+json': z.string().optional(),
+    'application/x-ipynb+json': z.string().optional(),
+    'application/x-python-function+json': z.string().optional(),
+    'application/x-python-code+json': z.string().optional(),
   })
-);
+  .catchall(z.string());
+
+const ResultsSchema = z.object({
+  msgId: z.string(),
+  executionCount: z.number(),
+  content: z.array(ContentItemSchema),
+});
 
 export const schema = z.object({
   code: z.string(),
-  output: z.string(),
+  msgId: z.string(),
+  streaming: z.boolean(),
   language: z.string(),
-  isTyping: z.boolean(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
-  privateMessage: privateMessageSchema,
-  availableKernels: availableKernelsSchema,
+  session: z.string(),
+  kernels: z.array(kernelInfo),
   executeInfo: executeInfoSchema,
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
-export type availableKernelsType = z.infer<typeof availableKernelsSchema>;
-export type privateMessageType = z.infer<typeof privateMessageSchema>;
-export type KernelType = z.infer<typeof KernelSchema>;
+export type ContentItemType = z.infer<typeof ContentItemSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
+  msgId: '',
+  streaming: false,
   language: 'python',
   fontSize: 16,
   theme: 'vs-dark',
   kernel: '',
-  output: '',
-  privateMessage: [],
-  availableKernels: [],
+  session: '',
+  kernels: [] as KernelInfo[],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
