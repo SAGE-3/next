@@ -193,8 +193,7 @@ function AppComponent(props: App): JSX.Element {
           videoRef.current.play();
           const videoId = genId();
           const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
-
-          room.localParticipant.publishTrack(screenTrack);
+          room.localParticipant.publishTrack(screenTrack, { priority: 'high' });
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
 
@@ -308,7 +307,7 @@ function AppComponent(props: App): JSX.Element {
       videoRef.current.play();
       const videoId = genId();
       const screenTrack = new LocalVideoTrack(stream.getTracks()[0], { name: videoId, logLevel: 'off' });
-      room.localParticipant.publishTrack(screenTrack);
+      room.localParticipant.publishTrack(screenTrack, { priority: 'high' });
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();

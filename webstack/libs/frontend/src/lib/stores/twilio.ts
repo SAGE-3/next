@@ -63,7 +63,17 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
 
     try {
       // Connect to the room with the token
-      const room = await connect(token, { audio: false } as ConnectOptions);
+      const room = await connect(token, {
+        audio: false,
+        // video: { width: 1280, height: 720, frameRate: 24 },
+        bandwidthProfile: {
+          video: {
+            mode: 'presentation',
+          },
+        },
+        preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
+        networkQuality: { local: 1, remote: 1 },
+      } as ConnectOptions);
       set((state) => ({ ...state, room }));
 
       console.log('Twilio> Connected to room: ', room.name);
