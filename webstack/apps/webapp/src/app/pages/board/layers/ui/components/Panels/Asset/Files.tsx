@@ -114,7 +114,7 @@ export function Files(props: FilesProps): JSX.Element {
   );
   headerSize = (
     <Flex>
-      <Spacer /> <Box>Size</Box> <Spacer /> <Box w="1rem"></Box>{' '}
+      <Spacer /> <Box>Size</Box> <Spacer /> <Box w="1rem"></Box>
     </Flex>
   );
   switch (sorted.order) {

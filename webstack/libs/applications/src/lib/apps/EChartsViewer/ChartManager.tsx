@@ -51,7 +51,12 @@ export const ChartManager = async (
   let options: EChartsOption = {};
   let data = [];
   const stationReadableNames = [];
-
+  console.log(yAxisAttributes, xAxisAttributes);
+  //
+  if (yAxisAttributes[0] === 'Elevation & Current Temperature') {
+    yAxisAttributes[0] = 'elevation';
+    xAxisAttributes[0] = 'current temperature';
+  }
   // If higher component already has data, use that date
   // Otherwise, it is undefined, so fetch the data
   if (stationMetadata === undefined) {
@@ -91,7 +96,6 @@ export const ChartManager = async (
 
   // This generates the data for charts, NOT the chart itself
   const { xAxisData, yAxisData } = createAxisData(data, yAxisAttributes, xAxisAttributes);
-
   switch (chartType) {
     case 'line':
       if (data.length > 1) {
@@ -106,6 +110,9 @@ export const ChartManager = async (
     case 'scatter':
       createScatterPlot(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData);
       break;
+    // case 'radar':
+    //   createRadarChart(options, data, yAxisAttributes, xAxisAttributes, yAxisData, xAxisData)
+    //   break;
   }
 
   createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
@@ -124,9 +131,9 @@ const createGrid = (options: EChartsOption) => {
   options.grid = {
     left: '5%',
     right: '5%',
-    bottom: '20%',
+    bottom: '12%',
     // Leave enough space at the top for the title and legend
-    top: 100,
+    top: '15%',
     containLabel: true,
   };
 };
@@ -205,7 +212,7 @@ function createMultiLineChart(
       type: 'line',
 
       lineStyle: {
-        width: 7, // Set the thickness of the line to 3
+        width: 3,
       },
       data: data[i].OBSERVATIONS[yAxisAttributes[0]],
     });
@@ -239,40 +246,40 @@ function createLineChart(
       data: yAxisData[i],
       name: yAxisAttributes[0],
       lineStyle: {
-        width: 7, // Set the thickness of the line to 3
+        width: 3,
       },
-      markArea: {
-        silent: true,
-        itemStyle: {
-          opacity: 0.3,
-        },
-        data: [
-          [
-            {
-              xAxis: xAxisData[xAxisData.length / 2],
-            },
-            {
-              xAxis: xAxisData[xAxisData.length - 1],
-            },
-          ],
-        ],
-      },
+      // markArea: {
+      //   silent: true,
+      //   itemStyle: {
+      //     opacity: 0.3,
+      //   },
+      //   data: [
+      //     [
+      //       {
+      //         xAxis: xAxisData[xAxisData.length / 2],
+      //       },
+      //       {
+      //         xAxis: xAxisData[xAxisData.length - 1],
+      //       },
+      //     ],
+      //   ],
+      // },
     });
   }
-  options.dataZoom = [
-    {
-      show: true,
-      realtime: true,
-      start: 65,
-      end: 85,
-    },
-    {
-      type: 'inside',
-      realtime: true,
-      start: 65,
-      end: 85,
-    },
-  ];
+  // options.dataZoom = [
+  //   {
+  //     show: true,
+  //     realtime: true,
+  //     start: 0,
+  //     end: xAxisData.length - 1,
+  //   },
+  //   {
+  //     type: 'inside',
+  //     realtime: true,
+  //     start: 0,
+  //     end: xAxisData.length - 1,
+  //   },
+  // ];
 }
 
 function createBarChart(
@@ -288,8 +295,8 @@ function createBarChart(
     options.series.push({
       type: 'bar',
       data: yAxisData[i],
-      colorBy: 'data',
-      label: { show: true, fontSize: 20 },
+      // colorBy: 'data',
+      // label: { show: true, fontSize: 20 },
     });
   }
 }
@@ -306,7 +313,6 @@ function createScatterPlot(
     xAxisData.push({ value: data[i].OBSERVATIONS[xAxisAttributes[0]], name: data[i].NAME });
     yAxisData.push(data[i].OBSERVATIONS[yAxisAttributes[0]]);
   }
-
   options.series = [];
 
   // options.legend = {
@@ -317,9 +323,9 @@ function createScatterPlot(
     options.series.push({
       type: 'scatter',
       name: xAxisData[i].name ? xAxisData[i].name : 'unknown',
-      symbolSize: 20,
+      symbolSize: 30,
       data: [[xAxisData[i].value, yAxisData[i]]],
-      label: { show: true, fontSize: 20, position: 'right', color: 'white', formatter: xAxisData[i].name ? xAxisData[i].name : 'unknown' },
+      label: { show: true, fontSize: 30, position: 'right', color: 'white', formatter: xAxisData[i].name ? xAxisData[i].name : 'unknown' },
     });
     // options.legend.data?.push(xAxisData[i].name ? xAxisData[i].name : 'unknown');
   }
@@ -340,7 +346,7 @@ function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAtt
 
   for (let i = 0; i < yAxisAttributes.length; i++) {
     options.title = {
-      text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${stationName}`,
+      text: `${finalVariableName} versus ${xAxisAttributes[0]}`,
       textStyle: {
         fontSize: 40,
       },
@@ -394,10 +400,9 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
         xAxisData[i] = date.toDateString();
       }
     } else {
-      // for (let i = 0; i < xAxisAttributes.length; i++) {
-      //   console.log(data[0].OBSERVATIONS[xAxisAttributes[i]], xAxisAttributes[i]);
-      //   xAxisData.push(data[0].OBSERVATIONS[xAxisAttributes[i]]);
-      // }
+      for (let i = 0; i < xAxisAttributes.length; i++) {
+        xAxisData.push(data[0].OBSERVATIONS[xAxisAttributes[i]]);
+      }
     }
   }
 

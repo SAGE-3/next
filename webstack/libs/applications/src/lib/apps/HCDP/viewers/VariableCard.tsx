@@ -8,11 +8,13 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image } from '@chakra-ui/react';
+import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
 import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
+import variableUnits from '../data/VariableUnits';
+import { MdOutlineArrowUpward } from 'react-icons/md';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -72,6 +74,7 @@ function lightenColor(hexColor: string) {
 }
 
 type VariableProps = {
+  variableName: string;
   stationName: string;
   value: number;
   average: number;
@@ -81,102 +84,104 @@ type VariableProps = {
   unit: string;
   startDate: string;
   endDate: string;
-  color: string;
   stationSTIDName: string;
   images: string[];
+  color: string;
 };
 
 export default function VariableCard(
   props: {
-    variableName: string;
     isLoaded: boolean;
     stationNames: string[];
     stationMetadata: any;
     startDate: string;
     timeSinceLastUpdate: string;
     size?: { width: number; height: number; depth: number };
+    generateAllVariables?: boolean;
+    isCustomizeWidgetMenu: boolean;
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
   const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
   const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  let previousStationName: string | null = null;
 
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
-    if (s.widget.yAxisNames.length === 0) return;
+    if (s.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
     for (let i = 0; i < props.stationMetadata.length; i++) {
       props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
       props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
       props.stationMetadata[i].OBSERVATIONS['longitude'] = [props.stationMetadata[i].LONGITUDE];
-      props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
+      // props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
       props.stationMetadata[i].OBSERVATIONS['current temperature'] = [
         props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'][props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'].length - 1],
       ];
     }
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
-      const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[0]];
-      if (!sensorValues) return;
-      let unit = '';
-      let images: string[] = [];
-      for (let i = 0; i < VariableUnits.length; i++) {
-        if (s.widget.yAxisNames[0].includes(VariableUnits[i].variable)) {
-          unit = VariableUnits[i].unit;
-          images = VariableUnits[i].images;
-        }
+      // Check here if generating all the variable names for a station
+      if (props.generateAllVariables) {
+        s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
       }
-      const stationIndex = stationColors.findIndex((station) => station.stationName === props.stationMetadata[i].NAME);
-      let color = '';
-      if (stationIndex === -1) {
-        color = getColor(stationColors.length % 9);
-        stationColors.push({ stationName: props.stationMetadata[i].NAME, color });
-      } else {
-        // color = stationColors[stationIndex].color;
-        color = getColor(stationIndex % 9);
-      }
-      console.log(color);
-      if (sensorValues.length !== 0) {
-        values.push({
-          stationName: props.stationMetadata[i].NAME,
-          value: sensorValues[sensorValues.length - 1],
-          average: calculateMean(sensorValues),
-          stdDev: calculateStdDev(sensorValues),
-          high: Math.max(...sensorValues),
-          low: Math.min(...sensorValues),
-          unit: unit,
-          color: color,
-          stationSTIDName: props.stationMetadata[i].STID,
-          startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
-          endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-          images: images,
-        });
-      } else {
-        values.push({
-          stationName: props.stationMetadata[i].NAME,
-          value: 0,
-          average: 0,
-          stdDev: 0,
-          high: 0,
-          low: 0,
-          unit: unit,
-          color: color,
-          stationSTIDName: props.stationMetadata[i].STID,
-          startDate: props.startDate,
-          endDate: '2022-04-25T19:55:00Z',
-          images: images,
-        });
-      }
+      for (let j = 0; j < s.widget.yAxisNames.length; j++) {
+        const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
+        if (sensorValues) {
+          let unit = '';
+          let images: string[] = [];
+          let color = '#ffffff';
+          for (let i = 0; i < VariableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
+              unit = VariableUnits[i].unit;
+              images = VariableUnits[i].images;
+              color = variableUnits[i].color;
+            }
+          }
+          if (sensorValues.length !== 0) {
+            values.push({
+              variableName: s.widget.yAxisNames[j],
+              stationName: props.stationMetadata[i].NAME,
+              value: sensorValues[sensorValues.length - 1],
+              average: calculateMean(sensorValues),
+              stdDev: calculateStdDev(sensorValues),
+              high: Math.max(...sensorValues),
+              low: Math.min(...sensorValues),
+              unit: unit,
+              stationSTIDName: props.stationMetadata[i].STID,
+              startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
+              endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
+              images: images,
+              color: color,
+            });
+          } else {
+            values.push({
+              variableName: s.widget.yAxisNames[j],
+              stationName: props.stationMetadata[i].NAME,
+              value: 0,
+              average: 0,
+              stdDev: 0,
+              high: 0,
+              low: 0,
+              unit: unit,
+              stationSTIDName: props.stationMetadata[i].STID,
+              startDate: props.startDate,
+              endDate: '2022-04-25T19:55:00Z',
+              images: images,
+              color: color,
+            });
+          }
 
-      // Air Temperature has Celius and Fahrenheit to display as "secondary"
-      if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
-        secondaryValues = celsiusToFahrenheit(sensorValues);
-        setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
+          // Air Temperature has Celius and Fahrenheit to display as "secondary"
+          if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
+            secondaryValues = celsiusToFahrenheit(sensorValues);
+            setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
+          }
+        }
       }
     }
     setVariablesToDisplay(values);
-  }, [props.stationMetadata, JSON.stringify(props.state.widget)]);
-
+  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.state.widget)]);
   return (
     <>
       {props.size ? (
@@ -194,33 +199,47 @@ export default function VariableCard(
                 return (
                   <React.Fragment key={index}>
                     <Content
-                      size={props.size}
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      variableName={s.widget.yAxisNames[0]}
                       stationNames={props.stationNames}
                       variableToDisplayLength={variablesToDisplay.length}
                       s={s}
                       timeSinceLastUpdate={props.timeSinceLastUpdate}
                       key={index}
                       variable={variable}
+                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
                     />
                   </React.Fragment>
                 );
               })
             : variablesToDisplay.map((variable: VariableProps, index: number) => {
+                const currentStationName = variable.stationName;
+                const isNewStation = currentStationName !== previousStationName;
+
+                previousStationName = currentStationName;
                 return (
                   <React.Fragment key={index}>
+                    {props.generateAllVariables ? (
+                      isNewStation ? (
+                        <>
+                          <Divider orientation="horizontal" />
+                          <Box h="20px" width="100%" bgColor="gray.200" />
+                        </>
+                      ) : null
+                    ) : null}
+
                     <Content
                       isLoaded={props.isLoaded}
                       secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      variableName={s.widget.yAxisNames[0]}
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
                       stationNames={props.stationNames}
                       variableToDisplayLength={variablesToDisplay.length}
                       s={s}
                       timeSinceLastUpdate={props.timeSinceLastUpdate}
                       key={index}
                       variable={variable}
+                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
                     />
                   </React.Fragment>
                 );
@@ -230,15 +249,17 @@ export default function VariableCard(
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
           <Content
             isLoaded={props.isLoaded}
+            isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
             stationNames={props.stationNames}
             variableToDisplayLength={0}
-            variableName={s.widget.yAxisNames.length ? s.widget.yAxisNames[0] : 'variable_Name_set_1'}
             s={s}
+            size={{ width: 800, height: 590, depth: 0 }}
             timeSinceLastUpdate={props.timeSinceLastUpdate}
             variable={
               variablesToDisplay[0]
                 ? variablesToDisplay[0]
                 : {
+                    variableName: 'air_temperature_set_1',
                     stationName: 'Station Name',
                     value: 42.01,
                     average: 38.42,
@@ -264,57 +285,81 @@ const Content = (props: {
   isLoaded: boolean;
   s: AppState;
   stationNames: string[];
-  variableName: string;
-  size?: { width: number; height: number; depth: number };
+  size: { width: number; height: number; depth: number };
   variableToDisplayLength: number;
   timeSinceLastUpdate: string;
   secondaryValuesToDisplay?: number;
   variable: VariableProps;
+  isCustomizeWidgetMenu: boolean;
 }) => {
-  const variableName = props.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
-  delete variableName[variableName.length - 1];
+  const variableName = props.variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
+  // delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
   const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-  return (
-    <Box
-      draggable={true}
-      onDragStart={(e) => {
-        console.log(props.s);
-        e.dataTransfer.clearData();
-        e.dataTransfer.setData(
-          'text/plain',
-          JSON.stringify({
-            sensorData: {},
-            stationNames: [props.variable.stationSTIDName],
-            listOfStationNames: props.variable.stationSTIDName,
-            location: props.s.location,
-            zoom: props.s.zoom,
-            baseLayer: props.s.baseLayer,
-            overlay: props.s.overlay,
-            widget: props.s.widget,
-          })
-        );
-      }}
-      boxShadow={'lg'}
-      p="1rem"
-      w={500}
-      h={300}
-      border="solid white 6px"
-      borderRadius={'24px'}
-      style={{ background: 'white' }}
-      display="flex"
-      margin="1rem"
-      flexDirection="column"
-      justifyContent={'center'}
-      alignContent="center"
-    >
-      <Box>
-        <Text color="black" textAlign={'center'} fontSize={30}>
-          {props.variable.stationName}
-        </Text>
-      </Box>
+  const [scaleToFontSize, setScaleToFontSize] = useState(100);
+  const { colorMode } = useColorMode();
 
-      <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
+  useEffect(() => {
+    console.log(props.variable.stationName);
+    if (props.size.width < props.size.height) {
+      setScaleToFontSize(props.size.width);
+    } else {
+      setScaleToFontSize(props.size.height);
+    }
+  }, [JSON.stringify(props.size)]);
+  return (
+    <>
+      <Box
+        draggable={true}
+        onDragStart={(e) => {
+          e.dataTransfer.clearData();
+          e.dataTransfer.setData(
+            'text/plain',
+            JSON.stringify({
+              sensorData: {},
+              stationNames: [props.variable.stationSTIDName],
+              listOfStationNames: props.variable.stationSTIDName,
+              location: props.s.location,
+              zoom: props.s.zoom,
+              baseLayer: props.s.baseLayer,
+              overlay: props.s.overlay,
+              widget: props.s.widget,
+            })
+          );
+        }}
+        position="relative"
+        boxShadow={'lg'}
+        p="1rem"
+        w={props.size.width}
+        h={props.size.height}
+        // bgColor={`${props.variable.color}`}
+
+        style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
+        // style={{ background: `linear-gradient(180deg, ${lightenColor(props.variable.color)}, ${props.variable.color})` }}
+        display="flex"
+        flexDirection="column"
+        justifyContent={'center'}
+        alignContent="center"
+      >
+        {!props.isCustomizeWidgetMenu ? (
+          <Box position="fixed" left="50%" top="4rem" transform="translate(-50%, 0%)" margin="0 auto">
+            <Text fontWeight="bold" textAlign={'center'} fontSize={scaleToFontSize / 12}>
+              {props.variable.stationName}
+            </Text>
+          </Box>
+        ) : (
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 12}>
+            {props.variable.stationName}
+          </Text>
+        )}
+
+        <Box>
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 14}>
+            {variableName.join(' ')}
+          </Text>
+        </Box>
+
+        {/* <Box overflow="hidden" display="flex" justifyContent="center" alignItems="center">
         {props.variable.images ? (
           <Image
             boxSize={'120px'}
@@ -324,83 +369,135 @@ const Content = (props: {
         ) : (
           'No Image Available'
         )}
-      </Box>
-      <Box mt={2}>
-        {props.isLoaded ? (
-          <>
-            <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              overflow="hidden"
-              color="black"
-              fontSize={35}
-              fontWeight="bold"
-            >
-              {isNaN(props.variable.value)
-                ? props.variable.value
-                : props.variable.value % 1
-                ? Number(props.variable.value).toFixed(2)
-                : props.variable.value}
-              <span style={{ color: 'gray', verticalAlign: 'text-bottom', marginTop: '12px', marginLeft: '3px', fontSize: 20 }}>
-                {props.variable.unit}
-              </span>
-            </Text>
+      </Box> */}
+        <Box>
+          {props.isLoaded ? (
+            <>
+              <Box display="flex" justifyContent={'center'}>
+                {' '}
+                {props.variable.variableName === 'wind_direction_set_1' ? (
+                  <Icon fontSize={200} as={MdOutlineArrowUpward} transform={`rotate(${props.variable.value}deg)`} />
+                ) : null}
+              </Box>
 
+              <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                overflow="hidden"
+                fontSize={scaleToFontSize / 6}
+                fontWeight="bold"
+              >
+                {isNaN(props.variable.value)
+                  ? props.variable.value
+                  : props.variable.value % 1
+                  ? Number(props.variable.value).toFixed(1)
+                  : props.variable.value}
+                <span>&nbsp;{props.variable.unit}</span>
+                {/* <Text color="black" textAlign={'center'} fontSize={15}>
+                {props.secondaryValuesToDisplay ? props.secondaryValuesToDisplay.toFixed(2) : null}
+              </Text> */}
+              </Text>
+
+              {/* {isNaN(props.variable.value) ? null : (
+                <>
+                  <Box display="flex" justifyContent={'space-evenly'} alignItems={'center'} flexDir="row">
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      Low <br />
+                      {props.variable.low.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      Average <br />
+                      {props.variable.average.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                    <Text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      overflow="hidden"
+                      color="gray.700"
+                      fontSize={25}
+                      fontWeight="bold"
+                      textAlign={'center'}
+                    >
+                      High <br />
+                      {props.variable.high.toFixed(2)}
+                      {props.variable.unit}
+                    </Text>
+                  </Box>
+                </>
+              )} */}
+              {/* <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                overflow="hidden"
+                color="gray.700"
+                fontSize={20}
+                fontWeight="semibold"
+                lineHeight={'48px'}
+              >
+                <>Last 24 hours</>
+              </Text> */}
+            </>
+          ) : (
+            <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
+          )}
+          {props.isCustomizeWidgetMenu ? (
             <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
+              textAlign={'center'}
+              bottom="1rem"
+              margin="0 auto"
               overflow="hidden"
-              color="gray.700"
-              fontSize={20}
+              color="gray.400"
+              fontSize={scaleToFontSize / 25}
               fontWeight="semibold"
+              // lineHeight={'48px'}
             >
               <>{props.timeSinceLastUpdate}</>
             </Text>
-            <br />
-            {isNaN(props.variable.value) ? null : (
-              <>
-                <Text
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  overflow="hidden"
-                  color="black"
-                  fontSize={25}
-                  fontWeight="bold"
-                >
-                  Average: {props.variable.average.toFixed(2)} - Std Dev: {props.variable.stdDev.toFixed(2)}
-                </Text>
-                <Text
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  overflow="hidden"
-                  color="black"
-                  fontSize={25}
-                  fontWeight="bold"
-                >
-                  High: {props.variable.high.toFixed(2)} - Low: {props.variable.low.toFixed(2)}
-                </Text>
-              </>
-            )}
+          ) : (
             <Text
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
+              position="fixed"
+              left="50%"
+              bottom="4rem"
+              transform="translate(-50%, -50%)"
+              margin="0 auto"
               overflow="hidden"
-              color="gray.700"
-              fontSize={20}
-              fontWeight="bold"
+              color="gray.400"
+              fontSize={scaleToFontSize / 25}
+              fontWeight="semibold"
+              // lineHeight={'48px'}
             >
-              <>Last 24 hours</>
+              <>{props.timeSinceLastUpdate}</>
             </Text>
-          </>
-        ) : (
-          <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
-        )}
+          )}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
+};
+
+VariableCard.defaultProps = {
+  generateAllVariables: false,
 };

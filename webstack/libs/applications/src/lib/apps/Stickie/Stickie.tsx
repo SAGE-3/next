@@ -8,7 +8,7 @@
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip } from '@chakra-ui/react';
 
 import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -25,7 +25,7 @@ import dateFormat from 'date-fns/format';
 
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 import { useParams } from 'react-router';
 import { SAGEColors } from '@sage3/shared';
 
@@ -254,44 +254,70 @@ function ToolbarComponent(props: App): JSX.Element {
   const lockUnlock = () => {
     updateState(props._id, { lock: !locked });
   };
+
   return (
     <>
-      <HStack>
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
-              <MdAdd />
-            </Button>
-          </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
 
-          <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-            <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
-              <MdRemove />
-            </Button>
-          </Tooltip>
-        </ButtonGroup>
-        {yours && (
-          <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-            <Button onClick={lockUnlock} colorScheme="teal" size="xs">
-              {locked ? <MdLock /> : <MdLockOpen />}
-            </Button>
-          </Tooltip>
-        )}
-        <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      {yours && (
+        <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
+          <Button onClick={lockUnlock} colorScheme="teal" size="xs" mx={1}>
+            {locked ? <MdLock /> : <MdLockOpen />}
+          </Button>
+        </Tooltip>
+      )}
+      <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt}>
-              <MdFileDownload />
-            </Button>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
+          <Button onClick={downloadTxt}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      {/* Extra Actions */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
           </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button onClick={downloadMd} colorScheme="pink">
-              <MdFileDownload />
-            </Button>
+          <MenuList minWidth="150px" fontSize={"sm"}>
+            <MenuItem icon={<MdFileDownload />} onClick={downloadMd}>
+              Download as Markdown
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
+      {/* Remote Action in Python */}
+      {/* <ButtonGroup isAttached size="xs" colorScheme="orange" mr={0}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
           </Tooltip>
-        </ButtonGroup>
-      </HStack>
+          <MenuList minWidth="150px" fontSize={"sm"}>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={summarizeText}>
+              Summary
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup> */}
     </>
   );
 }

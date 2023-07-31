@@ -46,7 +46,7 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
   // Users & Presences
   const { user } = useUser();
   const users = useUsersStore((state) => state.users);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
 
   // Local search results
   const [userResults, setUserResults] = useState<User[]>([]);
@@ -76,9 +76,7 @@ export function UserSearchModal(props: UserSearchProps): JSX.Element {
     if (term.length > 0) {
       const sortedUsers = sortAndFilterUsers();
       const results = sortedUsers.filter(
-        (user) =>
-          user.data.name.toLowerCase().includes(term.toLowerCase()) ||
-          user.data.email.toLowerCase().includes(term.toLowerCase())
+        (user) => user.data.name.toLowerCase().includes(term.toLowerCase()) || user.data.email.toLowerCase().includes(term.toLowerCase())
       );
       setUserResults(results);
     } else {
@@ -155,7 +153,7 @@ function UserCard(props: UserCardProps) {
   const hoverBackground = useColorModeValue('#fffefe', 'gray.500');
 
   // Current Presences
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = usePresenceStore((state) => state.partialPrescences);
   const presence = presences.find((presence) => presence._id === props.user._id);
 
   // Display information

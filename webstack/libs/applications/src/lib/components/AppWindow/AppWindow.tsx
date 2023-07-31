@@ -31,7 +31,7 @@ export function AppWindow(props: WindowProps) {
   // App Store
   const apps = useAppStore((state) => state.apps);
   const update = useAppStore((state) => state.update);
-  const updateBatch = useAppStore((state) => state.updateBatch);
+  // const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Error Display Handling
   const storeError = useAppStore((state) => state.error);
@@ -49,7 +49,7 @@ export function AppWindow(props: WindowProps) {
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
+  // const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);

@@ -7,32 +7,34 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
-import { useToast, IconButton, Box, Text, Flex, useColorModeValue, Input, Tooltip, InputGroup, InputRightElement } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown } from 'react-icons/md';
+import {
+  ButtonGroup, Button, useToast, IconButton, Box, Text, Flex, useColorModeValue,
+  Input, Tooltip, InputGroup, InputRightElement, HStack, Divider, Center, AbsoluteCenter
+} from '@chakra-ui/react';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUser, serverTime } from '@sage3/frontend';
+// Server Sent Event library
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+// Date management
+import { formatDistance } from 'date-fns';
+import dateFormat from 'date-fns/format';
+// Markdown
+import Markdown from 'markdown-to-jsx';
+
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 
 import { App } from '../../schema';
-import { state as AppState } from './index';
+import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-// Styling
-import './styling.css';
-
-const acknowledgments = [
-  "Thank you for your question!",
-  "Great question!",
-  "That's an interesting question!",
-  "I appreciate your curiosity!",
-  "Thanks for asking!",
-  "You've got my attention!",
-  "Wonderful question!",
-  "I'm glad you asked that!",
-  "Good question!",
-  "I love your inquisitiveness!"
-];
+// API: https://huggingface.github.io/text-generation-inference/
+const LLAMA2_SERVER = 'http://131.193.183.239:3000';
+const LLAMA2_ENDPOINT = '/generate_stream';
+const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
+const LLAMA2_TOKENS = 300;
+const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
 /* App component for Chat */
 
@@ -44,14 +46,18 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
   const geppettoColor = useHexColor('purple');
+  const geppettoTypingColor = useHexColor('orange');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
+  // Get presences of users
+  const users = useUsersStore((state) => state.users);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
+  const [streamText, setStreamText] = useState<string>('');
   // Element to set the focus to when opening the dialog
   const inputRef = useRef<HTMLInputElement>(null);
   // Processing
@@ -59,7 +65,12 @@ function AppComponent(props: App): JSX.Element {
   const [scrolled, setScrolled] = useState(false);
   const [newMessages, setNewMessages] = useState(false);
 
+  const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
+  const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
+
   const chatBox = useRef<null | HTMLDivElement>(null);
+  const ctrlRef = useRef<null | AbortController>(null);
+
   // Display some notifications
   const toast = useToast();
 
@@ -75,57 +86,174 @@ function AppComponent(props: App): JSX.Element {
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
+      e.preventDefault();
       send();
     }
   };
-  const send = () => {
-    newMessage();
+  const send = async () => {
+    await newMessage(input.trim());
     setInput('');
   };
 
-  const newMessage = async () => {
+  // Update from server
+  useEffect(() => {
+    setPreviousQuestion(s.previousQ);
+  }, [s.previousQ]);
+  useEffect(() => {
+    setPreviousAnswer(s.previousA);
+  }, [s.previousA]);
+
+  const newMessage = async (new_input: string) => {
     if (!user) return;
-    setProcessing(true);
     // Get server time
     const now = await serverTime();
     // Is it a question to Geppetto?
-    const isQuestion = input.startsWith('@G');
+    const isQuestion = new_input.startsWith('@G');
     // Add messages
-    updateState(props._id, {
-      ...s,
-      messages: [
-        ...s.messages,
-        {
-          id: genId(),
-          userId: user._id,
-          creationId: '',
-          creationDate: now.epoch,
-          userName: user?.data.name,
-          query: input,
-          response: isQuestion ? acknowledgments[Math.floor(Math.random() * acknowledgments.length)] : '',
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: user?.data.name,
+      query: new_input,
+      response: isQuestion ? 'Working on it...' : '',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+    if (isQuestion) {
+      setProcessing(true);
+      // Remove the @G
+      const request = new_input.slice(2);
+      // Object to stop the request and the stream of events
+      const ctrl = new AbortController();
+      // Save the controller for later use
+      ctrlRef.current = ctrl;
+      // Build the request
+      let tempText = '';
+      setStreamText(tempText);
+      let complete_request = '';
+      if (previousQuestion && previousAnswer) {
+        /*
+          schema for follow up questions:
+          https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+          {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
+          <s>[INST] {{ user_msg_2 }} [/INST]
+        */
+        complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+      } else {
+        // Test to tweak the system prompt
+        complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+      }
+      // Post the request and handle server-sent events
+      fetchEventSource(LLAMA2_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inputs: complete_request || request,
+          parameters: { "max_new_tokens": LLAMA2_TOKENS },
+        }),
+        signal: ctrl.signal,
+        onmessage(msg) {
+          // if the server emits an error message, throw an exception
+          // so it gets handled by the onerror callback below:
+          if (msg.event === 'FatalError') {
+            console.log('Llama2> Error', msg.data);
+            setStreamText('');
+            ctrlRef.current = null;
+          } else {
+            const message = JSON.parse(msg.data);
+            if (message.generated_text) {
+              setProcessing(false);
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(message.generated_text);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: request,
+                previousA: message.generated_text,
+                messages: [
+                  ...s.messages, initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'Geppetto',
+                    query: '',
+                    response: message.generated_text,
+                  },
+                ],
+              });
+            } else {
+              if (message.token.text) {
+                tempText += message.token.text;
+                setStreamText(tempText);
+                goToBottom("auto");
+              }
+            }
+          }
         },
-      ],
-    });
+      });
+    }
+
     setTimeout(() => {
       // Scroll to bottom of chat box smoothly
       goToBottom();
     }, 100);
-    setProcessing(false);
   };
 
-  const goToBottom = () => {
+  const goToBottom = (mode: ScrollBehavior = "smooth") => {
     // Scroll to bottom of chat box smoothly
     chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight, behavior: "smooth",
+      top: chatBox.current?.scrollHeight, behavior: mode,
     });
   };
 
+  const stopGepetto = async () => {
+    setProcessing(false);
+    if (ctrlRef.current && user) {
+      ctrlRef.current.abort();
+      ctrlRef.current = null;
+      if (streamText) {
+        // Get server time
+        const now = await serverTime();
+        // Add the current text as a message
+        updateState(props._id, {
+          ...s,
+          messages: [
+            ...s.messages,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch,
+              userName: 'Geppetto',
+              query: '',
+              response: streamText + '...(interrupted)',
+            },
+          ],
+        });
+      }
+      setStreamText('');
+    }
+  };
+
+  // Reset the chat: clear previous question and answer, and all the messages
+  const resetGepetto = () => {
+    setPreviousQuestion('');
+    setPreviousAnswer('');
+    updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
+  };
+
+  // Control the scrolling of the chat box
   useEffect(() => {
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "instant",
     });
-    chatBox.current?.addEventListener('scrollend', (e) => {
+    chatBox.current?.addEventListener('scrollend', () => {
       if (chatBox.current && chatBox.current.scrollTop) {
         const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
         if (test === 0) {
@@ -136,12 +264,9 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     });
-    // inputRef.current?.addEventListener('focus', (e) => {
-    //   // Scroll to bottom of chat box smoothly
-    //   goToBottom();
-    // });
   }, []);
 
+  // Wait for new messages to scroll to the bottom
   useEffect(() => {
     if (!processing && !scrolled) {
       // Scroll to bottom of chat box smoothly
@@ -177,6 +302,12 @@ function AppComponent(props: App): JSX.Element {
           {sortedMessages.map((message, index) => {
             const isMe = user?._id == message.userId;
             const time = getDateString(message.creationDate);
+            const previousTime = message.creationDate;
+            const now = Date.now();
+            const diff = (now - previousTime) - (30 * 60 * 1000); // minus 30 minutes
+            const when = (diff > 0) ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+            const last = index === sortedMessages.length - 1;
+
             return (
               <Fragment key={index}>
                 {/* Start of User Messages */}
@@ -220,7 +351,17 @@ function AppComponent(props: App): JSX.Element {
                               isClosable: true,
                               status: 'success',
                             });
-
+                          }}
+                          draggable={true}
+                          // Store the query into the drag/drop events to create stickies
+                          onDragStart={(e) => {
+                            e.dataTransfer.clearData();
+                            // Will create a new sticky
+                            e.dataTransfer.setData('app', 'Stickie');
+                            // Get the color of the user
+                            const colorMessage = isMe ? user?.data.color : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                            // Put the state of the app into the drag/drop events
+                            e.dataTransfer.setData('app_state', JSON.stringify({ color: colorMessage, text: message.query }));
                           }}
                         >
                           {message.query}
@@ -242,26 +383,99 @@ function AppComponent(props: App): JSX.Element {
                     <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
                       <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
                         placement="top" hasArrow={true} label={time} openDelay={400}>
-                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={1} m={3} fontFamily="arial">
-                          {message.response}
+                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={1} m={3} fontFamily="arial"
+                          onDoubleClick={() => {
+                            // Copy into clipboard
+                            navigator.clipboard.writeText(message.response);
+                            // Notify the user
+                            toast({
+                              title: 'Success',
+                              description: `Content Copied to Clipboard`,
+                              duration: 3000,
+                              isClosable: true,
+                              status: 'success',
+                            });
+                          }}>
+                          <Box pl={3}
+                            draggable={true}
+                            onDragStart={(e) => {
+                              // Store the response into the drag/drop events to create stickies
+                              e.dataTransfer.clearData();
+                              e.dataTransfer.setData('app', 'Stickie');
+                              e.dataTransfer.setData('app_state', JSON.stringify({ color: "purple", text: message.response }));
+                            }}>
+                            <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
+                              {message.response}
+                            </Markdown>
+                          </Box>
                         </Box>
                       </Tooltip>
                     </Box>
                   </Box>
                   : null}
+
+                {when && !last ? <Box position='relative' padding='4'>
+                  <Center>
+                    <Divider width={"80%"} borderColor={"ActiveBorder"} />
+                    <AbsoluteCenter bg={bgColor} px='4'>
+                      {when}
+                    </AbsoluteCenter>
+                  </Center>
+                </Box> : null}
+
               </Fragment>
             );
           })}
+
+          {/* In progress Geppetto Messages */}
+          {streamText &&
+            <Box position="relative" my={1} maxWidth={'70%'}>
+              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                  Geppetto is typing...
+                </Text>
+              </Box>
+
+              <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoTypingColor} p={1} m={3} fontFamily="arial">
+                  {streamText}
+                </Box>
+              </Box>
+            </Box>
+          }
+
         </Box>
-        <Tooltip fontSize={"xs"}
-          placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
-          <IconButton aria-label='Messages' size={"xs"}
-            p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
-            icon={<MdExpandCircleDown size={"xs"} />}
-            isDisabled={!newMessages}
-            onClick={goToBottom}
-          />
-        </Tooltip>
+        <HStack>
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
+            <IconButton aria-label='Messages' size={"xs"}
+              p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
+              icon={<MdExpandCircleDown size="1.5rem" />}
+              isDisabled={!newMessages}
+              isLoading={processing}
+              onClick={() => goToBottom("instant")}
+              width="33%"
+            />
+          </Tooltip>
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={"Stop Geppetto"} openDelay={400}>
+            <IconButton aria-label='stop' size={"xs"}
+              p={0} m={0} colorScheme={"blue"} variant='ghost'
+              icon={<MdStopCircle size="1.5rem" />}
+              onClick={stopGepetto}
+              width="34%"
+            />
+          </Tooltip>
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={"Reset Chat"} openDelay={400}>
+            <IconButton aria-label='reset' size={"xs"}
+              p={0} m={0} colorScheme={"blue"} variant='ghost'
+              icon={<MdChangeCircle size="1.5rem" />}
+              onClick={resetGepetto}
+              width="33%"
+            />
+          </Tooltip>
+        </HStack>
         <InputGroup bg={"blackAlpha.100"}>
           <Input placeholder='Chat or @G Ask me anyting' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
             onChange={handleChange}
@@ -282,12 +496,50 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
+  // Sort messages by creation date to display in order
+  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  // Download the stickie as a text file
+  const downloadTxt = () => {
+    // Rebuid the content as text
+    let content = '';
+    sortedMessages.map((message) => {
+      const isMe = user?._id == message.userId;
+      if (message.query.length) {
+        if (isMe) {
+          content += `Me> ${message.query}\n`;
+        } else {
+          content += `${message.userName}> ${message.query} \n`;
+        }
+      }
+      if (message.response.length) {
+        if (message.response !== 'Working on it...') {
+          content += `Geppetto> ${message.response} \n`;
+        }
+      }
+    });
+
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with date
+    const filename = 'geppetto-' + dt + '.txt';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
 
   return (
     <>
-    </>
-  );
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Transcript'} openDelay={400}>
+          <Button onClick={downloadTxt}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>);
 }
 
 

@@ -39,3 +39,4 @@ const schema = z.object({
 export type PresenceSchema = z.infer<typeof schema>;
 
 export type Presence = SBDoc & { data: PresenceSchema };
+export type PresencePartial = SBDoc & { data: Omit<PresenceSchema, 'cursor' | 'viewport'> };

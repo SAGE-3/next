@@ -263,7 +263,8 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       zoom={s.zoom}
       keyboard={false}
       preferCanvas={true}
-      style={{ height: `91%`, width: `100%`, zIndex: 0 }}
+      zoomControl={false}
+      style={{ height: `100%`, width: `100%`, zIndex: 0 }}
       ref={props.setMap}
       attributionControl={false}
     >
