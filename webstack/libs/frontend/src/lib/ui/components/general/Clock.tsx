@@ -8,17 +8,24 @@
 
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { useHexColor } from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
   opacity?: number;
+  isBoard?: boolean;
 };
 
 // A digital Clock
 export function Clock(props: ClockProps) {
+  const isBoard = props.isBoard ? props.isBoard : false;
+
   // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-  const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  // Colors
+  const textColor = useColorModeValue('gray.800', 'gray.50');
+  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
 
   // Update the time on an interval every 30secs
   useEffect(() => {
@@ -29,10 +36,30 @@ export function Clock(props: ClockProps) {
   }, []);
 
   return (
-    <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
-      <Text fontSize={'xl'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
-        {time}
-      </Text>
-    </Box>
+    // eslint-disable-next-line react/jsx-no-useless-fragment
+    <>
+      {isBoard ? (
+        <Box
+          borderRadius="md"
+          backgroundColor={backgroundColor}
+          whiteSpace={'nowrap'}
+          width="100%"
+          display="flex"
+          px={2}
+          justifyContent="left"
+          alignItems={'center'}
+        >
+          <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+            {time}
+          </Text>
+        </Box>
+      ) : (
+        <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
+          <Text fontSize={'xl'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+            {time}
+          </Text>
+        </Box>
+      )}
+    </>
   );
 }
