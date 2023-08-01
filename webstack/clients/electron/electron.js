@@ -650,15 +650,22 @@ function createWindow() {
     // params.nodeIntegration = true;
 
     ipcMain.on('streamview', (e, args) => {
-      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
       // console.log('Webview>    message', channel, args);
+      // console.log('Webview> IPC Message', args.id, args.width, args.height);
+
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
+
+      viewContent.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: args.width, height: args.height },
+      });
+
       viewContent.beginFrameSubscription(true, (image, dirty) => {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
-        const quality = 50;
+        const quality = 15;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
