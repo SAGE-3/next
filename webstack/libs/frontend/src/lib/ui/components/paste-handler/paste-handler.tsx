@@ -146,7 +146,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         if (isValid) {
           // Create a webpagelink app
           createApp({
-            title: user.data.name,
+            title: 'WebpageLink',
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },

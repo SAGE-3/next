@@ -188,7 +188,9 @@ function ToolbarComponent(props: App): JSX.Element {
     // save the dimensions of the sidebar
     setDimensions({ width, height });
     // Send the pixels to the server
-    sock.send(JSON.stringify({ type: 'pixels', params: { room: props._id, pixels: data, width, height } }));
+    if (sock.readyState === sock.OPEN) {
+      sock.send(JSON.stringify({ type: 'pixels', params: { room: props._id, pixels: data, width, height } }));
+    }
   });
   // Keep the throttlefunc reference
   const throttleFunc = useCallback(throttleUpdate, []);
