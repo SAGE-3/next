@@ -8,12 +8,13 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   ButtonGroup, Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast,
-  useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, DrawerFooter,
+  useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody,
 } from '@chakra-ui/react';
 import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
+import create from 'zustand';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
@@ -22,6 +23,11 @@ import { AppWindow } from '../../components';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
+
+export const useStore = create((set: any) => ({
+  sock: {} as { [key: string]: WebSocket },
+  setSock: (id: string, sock: WebSocket) => set((state: any) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
+}));
 
 /* App component for BoardLink */
 
@@ -37,6 +43,11 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const [streaming, setStreaming] = useState(s.streaming);
+  const [connected, setConnected] = useState(false);
+  // Websocket to communicate with the server
+  const rtcSock = useRef<WebSocket>();
+  const setSock = useStore((state: any) => state.setSock);
+
   const url = s.url;
   const title = s.meta.title ? s.meta.title : 'No Title';
   const description = s.meta.description ? s.meta.description : 'No Description';
@@ -50,13 +61,52 @@ function AppComponent(props: App): JSX.Element {
     setStreaming(s.streaming);
   }, [s.streaming]);
 
-  useEffect(() => {
-    const imgid = 'image' + props._id;
-    const img = document.getElementById(imgid) as HTMLImageElement;
-    if (img) {
-      img.src = 'data:image/jpeg;charset=utf-8;base64,' + s.pixels;
+  function handleStop() {
+    if (rtcSock.current && rtcSock.current.readyState === WebSocket.OPEN) {
+      rtcSock.current.close();
+      setConnected(false);
     }
-  }, [s.pixels]);
+  }
+
+  useEffect(() => {
+    // Open websocket connection to the server
+    const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socketUrl = `${socketType}//${window.location.host}/rtc/`;
+    console.log('RTC> Connecting to', socketUrl);
+    rtcSock.current = new WebSocket(socketUrl);
+    rtcSock.current.addEventListener('open', () => {
+      setConnected(true);
+      if (rtcSock.current) {
+
+        const processRTCMessage = (ev: MessageEvent<any>) => {
+          const msg = JSON.parse(ev.data);
+          if (msg.type === 'data' && msg.params.room === props._id) {
+            const imgid = 'image' + props._id;
+            const img = document.getElementById(imgid) as HTMLImageElement;
+            if (img) {
+              img.src = 'data:image/jpeg;charset=utf-8;base64,' + msg.params.pixels;
+            }
+          }
+        };
+
+        rtcSock.current.addEventListener('message', processRTCMessage);
+        rtcSock.current.addEventListener('close', () => {
+          if (rtcSock.current) rtcSock.current.removeEventListener('message', processRTCMessage);
+        });
+
+        waitForOpenSocket(rtcSock.current).then(() => {
+          if (rtcSock.current) {
+            setSock(props._id, rtcSock.current);
+            rtcSock.current.send(JSON.stringify({ type: 'join', params: { room: props._id } }));
+          }
+        });
+      }
+    });
+
+    return () => {
+      handleStop();
+    };
+  }, []);
 
   return (
     <AppWindow app={props} disableResize={!streaming}>
@@ -106,7 +156,7 @@ function AppComponent(props: App): JSX.Element {
             </Box>
           </Box>
         </Tooltip>) :
-        <img id={'image' + props._id}></img>
+        <Image id={'image' + props._id} w={"100%"} h={"auto"} alt={"webview streaming"} />
       }
     </AppWindow>
   );
@@ -118,6 +168,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Stores
   const createApp = useAppStore((state) => state.create);
+  const sock = useStore((state: any) => state.sock[props._id]);
   // UI elements
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -127,13 +178,17 @@ function ToolbarComponent(props: App): JSX.Element {
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
   const [title, setTitle] = useState('Webview');
+  const [dimensions, setDimensions] = useState({ width: 400, height: 400 });
 
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 
   // Throttle Function
-  const throttleUpdate = throttle(200, (data: any) => {
-    updateState(props._id, { pixels: data });
+  const throttleUpdate = throttle(50, (data: any, width: number, height: number) => {
+    // save the dimensions of the sidebar
+    setDimensions({ width, height });
+    // Send the pixels to the server
+    sock.send(JSON.stringify({ type: 'pixels', params: { room: props._id, pixels: data, width, height } }));
   });
   // Keep the throttlefunc reference
   const throttleFunc = useCallback(throttleUpdate, []);
@@ -165,12 +220,14 @@ function ToolbarComponent(props: App): JSX.Element {
         const id = webview.getWebContentsId();
         // Load electron and the IPCRender
         window.electron.on('paint', (arg: any) => {
-          throttleFunc(arg.buf);
-          // sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
+          throttleFunc(arg.buf, arg.dirty.width, arg.dirty.height);
         });
         // Get the webview dimensions for mobile emulation
         const width = webview.offsetWidth;
         const height = webview.offsetHeight;
+        // save the dimensions of the sidebar
+        setDimensions({ width, height });
+        // Send the streamview event to electron
         window.electron.send('streamview', { url: s.url, id, width, height });
 
         // Update the app title
@@ -249,7 +306,7 @@ function ToolbarComponent(props: App): JSX.Element {
     update(props._id, {
       size: {
         width: props.data.size.width,
-        height: props.data.size.width * 1.3497191,
+        height: props.data.size.width * (dimensions.height / dimensions.width),
         depth: props.data.size.depth,
       },
     });
@@ -262,6 +319,18 @@ function ToolbarComponent(props: App): JSX.Element {
     update(props._id, { size: { width: 400, height: 400, depth: props.data.size.depth, } });
     onClose();
   };
+
+  // Update the size of the app when the sidebar is resized
+  useEffect(() => {
+    update(props._id, {
+      size: {
+        width: props.data.size.width,
+        height: props.data.size.width * (dimensions.height / dimensions.width),
+        depth: props.data.size.depth,
+      },
+    });
+  }, [dimensions.width, dimensions.height]);
+
   return (
     <>
       <Drawer placement='right' size='xl' variant="fifty" finalFocusRef={btnRef}
@@ -270,7 +339,6 @@ function ToolbarComponent(props: App): JSX.Element {
         <DrawerContent p={0} m={0}>
           <DrawerCloseButton />
           <DrawerHeader>{title}</DrawerHeader>
-
           <DrawerBody p={0} m={0}>
             <webview ref={setWebviewRef} allowpopups={'true' as any} style={{ width: "50vw", height: "100%" }}></webview>
           </DrawerBody>
@@ -307,5 +375,24 @@ function ToolbarComponent(props: App): JSX.Element {
     </>
   );
 }
+
+/*
+ * Wait for socket to be open
+ *
+ * @param {WebSocket} socket
+ * @returns {Promise<void>}
+ * */
+async function waitForOpenSocket(socket: WebSocket): Promise<void> {
+  return new Promise((resolve) => {
+    if (socket.readyState !== socket.OPEN) {
+      socket.addEventListener('open', () => {
+        resolve();
+      });
+    } else {
+      resolve();
+    }
+  });
+}
+
 
 export default { AppComponent, ToolbarComponent };
