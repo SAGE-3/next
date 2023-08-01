@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue } from '@chakra-ui/react';
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -18,7 +18,6 @@ import {
   useUIStore,
   useBoardStore,
   MainButton,
-  FunctionButtons,
   useRouteNav,
   useRoomStore,
   useConfigStore,
@@ -183,14 +182,14 @@ export function UILayer(props: UILayerProps) {
       </Box> */}
 
       {/* ServerName Top Left */}
-      <HStack position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
-      </HStack>
+      </Box>
 
       {/* The clock Top Right */}
-      <HStack position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
         <Clock isBoard={true} />
-      </HStack>
+      </Box>
 
       <AppToolbar></AppToolbar>
 

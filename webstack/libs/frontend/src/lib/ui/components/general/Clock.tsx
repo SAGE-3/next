@@ -5,10 +5,8 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor } from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -35,31 +33,29 @@ export function Clock(props: ClockProps) {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    // eslint-disable-next-line react/jsx-no-useless-fragment
-    <>
-      {isBoard ? (
-        <Box
-          borderRadius="md"
-          backgroundColor={backgroundColor}
-          whiteSpace={'nowrap'}
-          width="100%"
-          display="flex"
-          px={2}
-          justifyContent="left"
-          alignItems={'center'}
-        >
-          <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
-            {time}
-          </Text>
-        </Box>
-      ) : (
-        <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
-          <Text fontSize={'xl'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
-            {time}
-          </Text>
-        </Box>
-      )}
-    </>
-  );
+  if (isBoard) {
+    return (
+      <Box
+        borderRadius="md"
+        backgroundColor={backgroundColor}
+        whiteSpace={'nowrap'}
+        width="100%"
+        display="flex"
+        px={2}
+        justifyContent="left"
+        alignItems={'center'}>
+        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {time}
+        </Text>
+      </Box>
+    );
+  } else {
+    return (
+      <Box display="flex" style={props.style} alignItems="center" justifyContent="center">
+        <Text fontSize={'xl'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {time}
+        </Text>
+      </Box>
+    );
+  }
 }
