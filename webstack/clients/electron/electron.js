@@ -665,7 +665,7 @@ function createWindow() {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
-        const quality = 75;
+        const quality = 60;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
