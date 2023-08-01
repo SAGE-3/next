@@ -14,7 +14,7 @@ import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { processContentURL, isValidURL } from '@sage3/frontend';
+import { isValidURL } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 
@@ -144,24 +144,16 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
-          let w = 800;
-          let h = 800;
-          const final_url = processContentURL(isValid);
-          if (isValid !== final_url) {
-            // it has been changed, it must be a video
-            w = 1280;
-            h = 720;
-          }
-          // Create a webview
+          // Create a webpagelink app
           createApp({
-            title: final_url,
+            title: user.data.name,
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'WebpageLink',
-            state: { ...initialValues['WebpageLink'], url: processContentURL(final_url) },
+            state: { ...initialValues['WebpageLink'], url: isValid },
             raised: true,
             dragging: false,
           });
@@ -175,7 +167,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'BoardLink',
-            state: { url: pastedText },
+            state: { url: pastedText.trim() },
             raised: true,
             dragging: false,
           });
