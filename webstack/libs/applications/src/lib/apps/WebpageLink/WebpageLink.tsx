@@ -237,7 +237,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
       // After the partition has been set, you can navigate
       console.log('Setting webview url', s.url)
-      webview.src = s.url;
+      // process url to be embeddable
+      const final_url = processContentURL(s.url);
+      webview.src = final_url;
     }
   }, []);
 
