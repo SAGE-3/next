@@ -41,6 +41,7 @@ import {
   UsersPanel,
   AnnotationsPanel,
   PluginsPanel,
+  PresenceFollow,
 } from './components';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -238,6 +239,9 @@ export function UILayer(props: UILayerProps) {
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />
+
+      {/* Presence Follow Component. Doesnt Render Anything */}
+      <PresenceFollow />
     </>
   );
 }
