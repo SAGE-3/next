@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useEffect } from 'react';
 import {
   ButtonGroup, Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast,
   useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody, DrawerFooter,
@@ -13,6 +13,7 @@ import {
 import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
+import { throttle } from 'throttle-debounce';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
@@ -26,16 +27,6 @@ import { WebviewTag } from 'electron';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const url = s.url;
-
-  const title = s.meta.title ? s.meta.title : 'No Title';
-  const description = s.meta.description ? s.meta.description : 'No Description';
-  const imageUrl = s.meta.image;
-
-  const aspect = 1200 / 630;
-  const imageHeight = 250;
-  const imageWidth = imageHeight * aspect;
-
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('gray.100', 'gray.800');
@@ -45,53 +36,78 @@ function AppComponent(props: App): JSX.Element {
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  return (
-    <AppWindow app={props} disableResize={true}>
-      <Tooltip label={url} placement="top" openDelay={1000}>
-        <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
-          {/* Preview Image */}
-          <Box
-            width={imageWidth}
-            height={imageHeight}
-            backgroundSize="contain"
-            backgroundColor={backgroundColor}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            textAlign={'center'}
-            flexDir={'column'}
-          >
-            {imageUrl ? <Image src={imageUrl} /> : <MdWeb size={256} />}
-          </Box>
+  const [streaming, setStreaming] = useState(s.streaming);
+  const url = s.url;
+  const title = s.meta.title ? s.meta.title : 'No Title';
+  const description = s.meta.description ? s.meta.description : 'No Description';
+  const imageUrl = s.meta.image;
 
-          {/* Info Sections */}
-          <Box
-            display="flex"
-            flexDir={'column'}
-            justifyContent={'space-between'}
-            height={400 - imageHeight}
-            width="100%"
-            p="3"
-            pt="1"
-            borderTop="solid 4px"
-            borderColor={dividerColor}
-            background={linearBGColor}
-          >
-            <Box display="flex" flexDir={'column'} height="150px" overflow={'hidden'} textOverflow="ellipsis">
-              <Box>
-                <Heading size="lg" textOverflow="ellipsis" overflow="hidden">
-                  {title}
-                </Heading>
-              </Box>
-              <Box>
-                <Text overflow="hidden" textOverflow={'ellipsis'}>
-                  {description}
-                </Text>
+  const aspect = 1200 / 630;
+  const imageHeight = 250;
+  const imageWidth = imageHeight * aspect;
+
+  useEffect(() => {
+    setStreaming(s.streaming);
+  }, [s.streaming]);
+
+  useEffect(() => {
+    const imgid = 'image' + props._id;
+    const img = document.getElementById(imgid) as HTMLImageElement;
+    if (img) {
+      img.src = 'data:image/jpeg;charset=utf-8;base64,' + s.pixels;
+    }
+  }, [s.pixels]);
+
+  return (
+    <AppWindow app={props} disableResize={!streaming}>
+      {!streaming ? (
+        <Tooltip label={url} placement="top" openDelay={1000}>
+          <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
+            {/* Preview Image */}
+            <Box
+              width={imageWidth}
+              height={imageHeight}
+              backgroundSize="contain"
+              backgroundColor={backgroundColor}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              textAlign={'center'}
+              flexDir={'column'}
+            >
+              {imageUrl ? <Image src={imageUrl} /> : <MdWeb size={256} />}
+            </Box>
+
+            {/* Info Sections */}
+            <Box
+              display="flex"
+              flexDir={'column'}
+              justifyContent={'space-between'}
+              height={400 - imageHeight}
+              width="100%"
+              p="3"
+              pt="1"
+              borderTop="solid 4px"
+              borderColor={dividerColor}
+              background={linearBGColor}
+            >
+              <Box display="flex" flexDir={'column'} height="150px" overflow={'hidden'} textOverflow="ellipsis">
+                <Box>
+                  <Heading size="lg" textOverflow="ellipsis" overflow="hidden">
+                    {title}
+                  </Heading>
+                </Box>
+                <Box>
+                  <Text overflow="hidden" textOverflow={'ellipsis'}>
+                    {description}
+                  </Text>
+                </Box>
               </Box>
             </Box>
           </Box>
-        </Box>
-      </Tooltip>
+        </Tooltip>) :
+        <img id={'image' + props._id}></img>
+      }
     </AppWindow>
   );
 }
@@ -111,6 +127,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
   const [title, setTitle] = useState('Webview');
+
+  const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
+
+  // Throttle Function
+  const throttleUpdate = throttle(200, (data: any) => {
+    updateState(props._id, { pixels: data });
+  });
+  // Keep the throttlefunc reference
+  const throttleFunc = useCallback(throttleUpdate, []);
 
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
@@ -135,6 +161,18 @@ function ToolbarComponent(props: App): JSX.Element {
       webview.addEventListener('did-attach', didAttachCallback);
 
       const titleUpdated = (event: any) => {
+        // Get the webview id for electron to grab pixels
+        const id = webview.getWebContentsId();
+        // Load electron and the IPCRender
+        window.electron.on('paint', (arg: any) => {
+          throttleFunc(arg.buf);
+          // sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
+        });
+        // Get the webview dimensions for mobile emulation
+        const width = webview.offsetWidth;
+        const height = webview.offsetHeight;
+        window.electron.send('streamview', { url: s.url, id, width, height });
+
         // Update the app title
         setTitle(event.title);
       };
@@ -207,13 +245,27 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const openSidebar = () => {
+    updateState(props._id, { streaming: true });
+    update(props._id, {
+      size: {
+        width: props.data.size.width,
+        height: props.data.size.width * 1.3497191,
+        depth: props.data.size.depth,
+      },
+    });
+
     onOpen();
   };
 
+  const closing = () => {
+    updateState(props._id, { streaming: false });
+    update(props._id, { size: { width: 400, height: 400, depth: props.data.size.depth, } });
+    onClose();
+  };
   return (
     <>
       <Drawer placement='right' size='xl' variant="fifty" finalFocusRef={btnRef}
-        isOpen={isOpen} onClose={onClose}>
+        isOpen={isOpen} onClose={closing}>
         <DrawerOverlay />
         <DrawerContent p={0} m={0}>
           <DrawerCloseButton />
@@ -222,10 +274,6 @@ function ToolbarComponent(props: App): JSX.Element {
           <DrawerBody p={0} m={0}>
             <webview ref={setWebviewRef} allowpopups={'true' as any} style={{ width: "50vw", height: "100%" }}></webview>
           </DrawerBody>
-
-          {/* <DrawerFooter>
-            <Button colorScheme='blue' size="xs" onClick={onClose}>Done</Button>
-          </DrawerFooter> */}
         </DrawerContent>
       </Drawer>
 
