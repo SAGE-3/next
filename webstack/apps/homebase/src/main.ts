@@ -189,64 +189,45 @@ async function startServer() {
   });
 
   // Websocket API for WebRTC
-  const clients: Record<string, WebSocket> = {};
+  const clients: Map<string, WebSocket[]> = new Map();
 
-  function emitRTC(name: string, socket: WebSocket, data: any) {
-    for (const k in clients) {
-      const sock = clients[k];
-      if (sock !== socket) {
-        sock.send(JSON.stringify({ type: name, data: data }));
-      }
-    }
-  }
-  async function sendRTC(name: string, socket: WebSocket, data: any) {
-    socket.send(JSON.stringify({ type: name, data: data }));
+  // Broadcast to all clients in the room
+  function emitRTC(room: string, type: string, params: any) {
+    const msg = JSON.stringify({ type, params });
+    clients.get(room)?.forEach((ws) => ws.send(msg));
   }
 
   rtcWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
     console.log('WebRTC> connection', request.url);
 
-    if (request.url) {
-      const parts = request.url.split('/');
-      const roomID = parts[parts.length - 1];
-      console.log('WebRTC> roomID', roomID);
-    }
-
     socket.on('message', (data) => {
       const datastr = data.toString();
       const msg = JSON.parse(datastr);
-      if (msg.type === 'join') {
-        clients[msg.user] = socket;
-        emitRTC('join', socket, msg);
-        console.log('WebRTC> connection #', Object.keys(clients).length);
-        sendRTC('clients', socket, Object.keys(clients));
-      } else if (msg.type === 'create') {
-        clients[msg.user] = socket;
-        console.log('WebRTC> new group for', msg.app);
-      } else if (msg.type === 'paint') {
-        emitRTC('paint', socket, msg.data);
+      switch (msg.type) {
+        case 'join':
+          if (!clients.has(msg.params.room)) {
+            clients.set(msg.params.room, []);
+          }
+          clients.get(msg.params.room)?.push(socket);
+          break;
+        case 'pixels':
+          // broadcast to all clients in the room
+          emitRTC(msg.params.room, 'data', msg.params);
+          break;
+        case 'leave':
+          clients.get(msg.params.room)?.splice(clients.get(msg.params.room)?.indexOf(socket) || 0, 1);
+          break;
       }
     });
     socket.on('close', (_msg) => {
-      console.log('WebRTC> close');
-      // Delete the socket from the clients array
-      for (const [key, value] of Object.entries(clients)) {
-        if (value === socket) {
-          delete clients[key];
-          emitRTC('left', socket, key);
-        }
-      }
-      console.log('WebRTC> connection #', Object.keys(clients).length);
+      clients.forEach((sockets) => {
+        sockets.splice(sockets.indexOf(socket) || 0, 1);
+      });
     });
     socket.on('error', (msg) => {
-      console.log('WebRTC> error', msg);
-      // Delete the socket from the clients array
-      for (const [key, value] of Object.entries(clients)) {
-        if (value === socket) {
-          delete clients[key];
-        }
-      }
-      console.log('WebRTC> connection #', Object.keys(clients).length);
+      clients.forEach((sockets) => {
+        sockets.splice(sockets.indexOf(socket) || 0, 1);
+      });
     });
   });
 
