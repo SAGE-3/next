@@ -22,7 +22,6 @@ export type URLMetadata = {
 export const schema = z.object({
   url: z.string(),
   streaming: z.boolean(),
-  pixels: z.string(),
   meta: z.object({} as any),
 });
 export type state = z.infer<typeof schema>;
@@ -30,7 +29,6 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   url: 'http://google.com',
   streaming: false,
-  pixels: '',
   meta: {
     title: '',
     description: '',
