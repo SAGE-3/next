@@ -219,12 +219,14 @@ async function startServer() {
           break;
       }
     });
-    socket.on('close', (_msg) => {
+    socket.on('close', (msg) => {
+      console.log('WebRTC> close', msg);
       clients.forEach((sockets) => {
         sockets.splice(sockets.indexOf(socket) || 0, 1);
       });
     });
     socket.on('error', (msg) => {
+      console.log('WebRTC> error', msg);
       clients.forEach((sockets) => {
         sockets.splice(sockets.indexOf(socket) || 0, 1);
       });
