@@ -13,7 +13,27 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
 // React Imports
-import { Box, HStack, Spinner, useColorModeValue, Button, ButtonGroup } from '@chakra-ui/react';
+import {
+  Box,
+  HStack,
+  Spinner,
+  useColorModeValue,
+  Button,
+  ButtonGroup,
+  Text,
+  Tooltip,
+  Select,
+  Divider,
+  Input,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from '@chakra-ui/react';
 
 // Styling
 import './styling.css';
@@ -26,6 +46,10 @@ import CurrentConditions from '../HCDP/viewers/CurrentConditions';
 import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
 import StationMetadata from '../HCDP/viewers/StationMetadata';
 import FriendlyVariableCard from '../HCDP/viewers/FriendlyVariableCard';
+import StatisticCard from '../HCDP/viewers/StatisticCard';
+
+import { checkAvailableVisualizations } from '../HCDP/menu/CustomizeWidgets';
+import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -48,6 +72,19 @@ function formatDuration(ms: number) {
   }
 }
 
+// Convert the dateTime to Chakra format
+function convertToChakraDateTime(dateTime: string) {
+  const year = dateTime.slice(0, 4);
+  const month = dateTime.slice(4, 6);
+  const day = dateTime.slice(6, 8);
+  const hours = dateTime.slice(8, 10);
+  const minutes = dateTime.slice(10, 12);
+
+  const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+  return formattedDateTime;
+}
+
 function getFormattedDateTime24HoursBefore() {
   const now = new Date();
   now.setHours(now.getHours() - 24);
@@ -67,6 +104,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   const [stationMetadata, setStationMetadata] = useState([]);
+  const updateState = useAppStore((state) => state.updateState);
 
   // Color Variables
   const bgColor = useColorModeValue('gray.100', 'gray.900');
@@ -115,6 +153,7 @@ function AppComponent(props: App): JSX.Element {
         tmpStationMetadata = sensorData;
       }
 
+      updateState(props._id, { availableVariableNames: Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS) });
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
     };
@@ -133,12 +172,26 @@ function AppComponent(props: App): JSX.Element {
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
+  const handleLockAspectRatio = () => {
+    const visualizationType = s.widget.visualizationType;
+    switch (visualizationType) {
+      case 'variableCard':
+        return 1;
+      case 'friendlyVariableCard':
+        return 1;
+      case 'statisticCard':
+        return 1.5;
+      case 'stationMetadata':
+        return 2.5;
+      default:
+        return false;
+    }
+  };
   return (
-    <AppWindow app={props} lockAspectRatio={s.widget.visualizationType === 'variableCard' ? 1 : false}>
+    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
-            <CustomizeWidgets {...props} />
             <HStack>
               <Box>
                 {s.widget.visualizationType === 'variableCard' ? (
@@ -158,6 +211,20 @@ function AppComponent(props: App): JSX.Element {
                   <FriendlyVariableCard
                     size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     state={props.data.state}
+                    stationNames={s.stationNames}
+                    startDate={s.widget.startDate}
+                    stationMetadata={stationMetadata}
+                    timeSinceLastUpdate={timeSinceLastUpdate}
+                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
+                    isLoaded={true}
+                    isCustomizeWidgetMenu={false}
+                  />
+                ) : null}
+                {s.widget.visualizationType === 'statisticCard' ? (
+                  <StatisticCard
+                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
+                    state={props.data.state}
+                    widget={props.data.state.widget}
                     stationNames={s.stationNames}
                     startDate={s.widget.startDate}
                     stationMetadata={stationMetadata}
@@ -230,13 +297,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const fitApps = useUIStore((state) => state.fitApps);
 
-  const handleOpenWidget = () => {
-    updateState(props._id, { isWidgetOpen: true });
-  };
-
   const handleOpenAndEditWidget = async () => {
-    updateState(props._id, { isWidgetOpen: false });
-
     const app = await createApp({
       title: 'SensorOverview',
       roomId: props.data.roomId!,
@@ -263,7 +324,6 @@ function ToolbarComponent(props: App): JSX.Element {
         baseLayer: 'OpenStreetMap',
         overlay: true,
         widget: props.data.state.widget,
-        isWidgetOpen: true,
       },
       raised: true,
       dragging: false,
@@ -326,7 +386,6 @@ function ToolbarComponent(props: App): JSX.Element {
             baseLayer: 'OpenStreetMap',
             overlay: true,
             widget: widget,
-            isWidgetOpen: false,
           },
           raised: true,
           dragging: false,
@@ -335,27 +394,175 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const variable = event.target.value;
+    updateState(props._id, { widget: { ...s.widget, yAxisNames: [variable] } });
+  };
+
+  const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const visualizationType = event.target.value;
+    updateState(props._id, { widget: { ...s.widget, visualizationType: visualizationType } });
+  };
+
+  const removeVisualizationsThatRequireMultipleStations = (availableVisualizations: { value: string; name: string }[]) => {
+    if (s.stationNames.length > 1) {
+      return availableVisualizations.filter((visualization) => {
+        return (
+          visualization.value !== 'variableCard' &&
+          visualization.value !== 'friendlyVariableCard' &&
+          visualization.value !== 'statisticCard'
+        );
+      });
+    } else {
+      return availableVisualizations;
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value;
+    const date = new Date(selectedDate);
+
+    const startDate = convertToFormattedDateTime(date);
+    updateState(props._id, { widget: { ...s.widget, startDate: startDate, timePeriod: 'custom' } });
+  };
+
+  const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const timePeriod = e.target.value;
+    const date = new Date();
+
+    switch (timePeriod) {
+      case 'previous24Hours':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+        break;
+      case 'previous1Week':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+
+        break;
+      case 'previous1Month':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+
+        break;
+      case 'previous1Year':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+
+        break;
+      default:
+        break;
+    }
+  };
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   return (
     <>
-      <ButtonGroup>
-        <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
-          Edit visualization
-        </Button>
-        {props.data.state.widget.visualizationType === 'variableCard' ? (
-          <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
-            Visualize for all other variables
-          </Button>
-        ) : null}
-        <Button size="xs" colorScheme="orange" onClick={handleOpenAndEditWidget}>
-          Duplicate and Edit
-        </Button>
-      </ButtonGroup>
+      <Button mr="1rem" size="xs" onClick={onOpen}>
+        Select Stations
+      </Button>
+
+      <Modal size="xl" isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Modal Title</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>{/* <Lorem count={2} /> */}</ModalBody>
+          <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{ height: `60rem`, width: `100%`, zIndex: 0 }}>
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker position={[51.505, -0.09]}>
+              <Popup>
+                A pretty CSS3 popup. <br /> Easily customizable.
+              </Popup>
+            </Marker>
+          </MapContainer>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={onClose}>
+              Close
+            </Button>
+            <Button variant="ghost">Secondary Action</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
+        <Select size="xs" w="10rem" placeholder={'Select time period'} value={s.widget.timePeriod} onChange={handleSelectDateChange}>
+          <option value={'previous24Hours'}>24 hours</option>
+          <option value={'previous1Week'}>1 week</option>
+          <option value={'previous1Month'}>1 month</option>
+          <option value={'previous1Year'}>1 year</option>
+        </Select>
+      </Tooltip>
+      <Text mx="1rem">OR</Text>
+      <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
+        <Input
+          w="240px"
+          mr="1rem"
+          size="xs"
+          onChange={handleDateChange}
+          value={convertToChakraDateTime(s.widget.startDate)}
+          placeholder="Select Date and Time"
+          type="datetime-local"
+          // isDisabled={
+          //   widget.visualizationType === 'variableCard' || widget.visualizationType === 'friendlyVariableCard' ? true : false
+          // }
+        />
+      </Tooltip>
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+
+      <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
+        <Select
+          size="xs"
+          mx="1rem"
+          w="10rem"
+          placeholder={'Select Variable'}
+          value={s.widget.yAxisNames[0]}
+          onChange={handleChangeVariable}
+        >
+          {s.availableVariableNames.map((name: string, index: number) => {
+            return (
+              <option key={index} value={name}>
+                {name}
+              </option>
+            );
+          })}
+        </Select>
+      </Tooltip>
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+
+      <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip">
+        <Select
+          size="xs"
+          w="10rem"
+          mx="1rem"
+          placeholder={'Select Visualization Type'}
+          value={s.widget.visualizationType}
+          onChange={handleVisualizationTypeChange}
+        >
+          {removeVisualizationsThatRequireMultipleStations(checkAvailableVisualizations(s.widget.yAxisNames[0])).map(
+            (visualization: { value: string; name: string }, index: number) => {
+              return (
+                <option key={index} value={visualization.value}>
+                  {visualization.name}
+                </option>
+              );
+            }
+          )}
+        </Select>
+      </Tooltip>
       {s.widget.visualizationType === 'variableCard' ? (
-        <ButtonGroup size="sm" isAttached variant="outline">
+        <ButtonGroup size="xs" isAttached variant="outline">
           {/* <Button >Celcius</Button>
   <Button >Fahrenheit</Button> */}
         </ButtonGroup>
       ) : null}
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+      <ButtonGroup ml="1rem">
+        <Tooltip label={'Duplicate this chart for all other variables from this station'} aria-label="A tooltip">
+          <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
+            All Variables
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
   );
 }

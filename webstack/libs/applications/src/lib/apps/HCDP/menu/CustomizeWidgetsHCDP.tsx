@@ -430,7 +430,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
         trapFocus={false}
         placement={'bottom'}
         onClose={onClose}
-        isOpen={props.data.state.isWidgetOpen}
+        isOpen={false}
         variant="alwaysOpen"
         onOverlayClick={() => {
           console.log('clicked');

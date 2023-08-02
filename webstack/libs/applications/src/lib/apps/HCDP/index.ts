@@ -50,6 +50,18 @@ function getFormattedDateTime24HoursBefore() {
   return `${year}${month}${day}${hours}${minutes}`;
 }
 
+type WidgetType = {
+  visualizationType: string;
+  yAxisNames: string[];
+  xAxisNames: string[];
+  color: string;
+  layout: { x: number; y: number; w: number; h: number };
+  operation?: string;
+  startDate: string;
+  endDate?: string;
+  sinceInMinutes?: number;
+};
+
 const widget = {
   visualizationType: 'variableCard',
   yAxisNames: [],
@@ -74,9 +86,9 @@ export const schema = z.object({
   stationData: z.any(),
   widget: z.any(),
   stationNames: z.any(),
-  isWidgetOpen: z.boolean(),
   stationColor: z.string(),
   getDataFrom: z.string(),
+  stationScale: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -91,9 +103,9 @@ export const init: Partial<state> = {
   stationNames: [],
   stationData: [...stationDataTemplate],
   widget: widget,
-  isWidgetOpen: false,
   stationColor: '',
   getDataFrom: 'mesonet',
+  stationScale: 1,
 };
 
 export const name = 'Hawaii Mesonet';

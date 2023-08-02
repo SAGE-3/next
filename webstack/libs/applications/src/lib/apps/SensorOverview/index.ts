@@ -54,7 +54,7 @@ export const schema = z.object({
   baseLayer: Baselayer,
   overlay: z.boolean(),
   assetid: z.string().optional(),
-  isWidgetOpen: z.boolean(),
+  availableVariableNames: z.string().array(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -67,7 +67,7 @@ export const init: Partial<state> = {
   baseLayer: 'OpenStreetMap',
   overlay: true,
   widget: widget,
-  isWidgetOpen: false,
+  availableVariableNames: [],
 };
 
 export const name = 'SensorOverview';

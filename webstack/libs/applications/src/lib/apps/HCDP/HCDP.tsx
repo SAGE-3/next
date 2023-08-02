@@ -10,12 +10,13 @@ import { useEffect, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, Box, RadioGroup, Radio, Stack } from '@chakra-ui/react';
+import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
+import { MdAdd, MdMinimize } from 'react-icons/md';
 
 // Leaflet plus React
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
@@ -55,8 +56,6 @@ function AppComponent(props: App): JSX.Element {
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
   const [, setStationMetadata] = useState([]);
-
-  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -110,13 +109,12 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <LeafletWrapper map={map} setMap={setMap} {...props}>
-        {s.getDataFrom === 'mesonet' ? <CustomizeWidgets {...props} /> : <CustomizeWidgetsHCDP {...props} />}
         <Box
-          w="20rem"
+          w="26rem"
           h="21.5rem"
           position="absolute"
           bg="white"
-          zIndex="999"
+          zIndex="500"
           top="1rem"
           left="1rem"
           border="3px solid gray"
@@ -131,22 +129,22 @@ function AppComponent(props: App): JSX.Element {
           <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
             <Stack direction="column">
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureC">
-                <p style={{ fontSize: 30 }}>Temperature C</p>
+                <p style={{ fontSize: 30 }}>Temperature (C)</p>
               </Radio>
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureF">
-                <p style={{ fontSize: 30 }}>Temperature F</p>
+                <p style={{ fontSize: 30 }}>Temperature (F)</p>
               </Radio>
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="soilMoisture">
-                <p style={{ fontSize: 30 }}>Soil Moisture</p>
+                <p style={{ fontSize: 30 }}>Soil Moisture(%)</p>
               </Radio>
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="windSpeed">
-                <p style={{ fontSize: 30 }}>Wind Speed</p>
+                <p style={{ fontSize: 30 }}>Wind Speed (m/s)</p>
               </Radio>
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="relativeHumidity">
-                <p style={{ fontSize: 30 }}>Relative Humidity</p>
+                <p style={{ fontSize: 30 }}>Relative Humidity (%)</p>
               </Radio>
               <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="solarRadiation">
-                <p style={{ fontSize: 30 }}>Solar Radiation</p>
+                <p style={{ fontSize: 30 }}>Solar Radiation {'(W/m\u00B2)'}</p>
               </Radio>
             </Stack>
           </RadioGroup>
@@ -167,9 +165,17 @@ function AppComponent(props: App): JSX.Element {
                         [data.lat + 0.15, data.lon + 0.05],
                       ]}
                     >
-                      {s.variableToDisplay === 'windSpeed' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                        <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
+                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                          <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                            {data[s.variableToDisplay]}
+                          </text>
+                        </g>
+                      </svg>
+                      {/* {s.variableToDisplay === 'windSpeed' ? (
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
+                          <g transform={`translate(100, 100) scale(${(1 / s.zoom) * 150 - 12}) translate(-100, -100)`}>
                             <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
 
                             <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
@@ -178,15 +184,8 @@ function AppComponent(props: App): JSX.Element {
                           </g>
                         </svg>
                       ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(4) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                            <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                              {data[s.variableToDisplay]}
-                            </text>
-                          </g>
-                        </svg>
-                      )}
+null
+                      )} */}
                     </SVGOverlay>
                   </div>
                 );
@@ -264,6 +263,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const { boardId, roomId } = useParams();
   const createApp = useAppStore((state) => state.create);
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   const background = useColorModeValue('gray.50', 'gray.700');
 
   const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
@@ -320,16 +321,20 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   };
 
-  const handleOpenWidget = () => {
-    updateState(props._id, { isWidgetOpen: true });
-  };
-
   const handleChangeToMesonetData = () => {
     updateState(props._id, { getDataFrom: 'mesonet' });
   };
 
   const handleChangeToHcdpData = () => {
     updateState(props._id, { getDataFrom: 'hcdp' });
+  };
+
+  const incremenetStationScale = () => {
+    updateState(props._id, { stationScale: s.stationScale + 1 });
+  };
+
+  const decrementStationScale = () => {
+    updateState(props._id, { stationScale: s.stationScale - 1 });
   };
 
   return (
@@ -365,9 +370,28 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <Button colorScheme={'green'} size="xs" onClick={handleOpenWidget}>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Station Size'} openDelay={400}>
+          <Button isDisabled={s.stationScale > 4} onClick={incremenetStationScale} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdAdd fontSize="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Station Size'} openDelay={400}>
+          <Button isDisabled={s.stationScale <= 1} onClick={decrementStationScale} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MdMinimize fontSize="16px" style={{ transform: 'translate(0px, -5px)' }} />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <Button colorScheme={'green'} size="xs" onClick={onOpen}>
         Create Visualization
       </Button>
+      {s.getDataFrom === 'mesonet' ? (
+        <CustomizeWidgets {...props} isOpen={isOpen} onClose={onClose} />
+      ) : (
+        <CustomizeWidgetsHCDP {...props} />
+      )}
     </HStack>
   );
 }
