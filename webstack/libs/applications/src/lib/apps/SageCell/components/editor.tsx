@@ -68,17 +68,17 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     }
   }, [props.online]);
 
-  function getPositionAt(text: string, offset: number): monaco.IPosition {
-    const lines = text.split('\n');
-    let pos = 0;
-    for (const [i, line] of lines.entries()) {
-      if (offset < pos + line.length + 1) {
-        return new monaco.Position(i + 1, offset - pos + 1);
-      }
-      pos += line.length + 1;
-    }
-    throw new Error(`offset ${offset} out of bounds in text of length ${text.length}`);
-  }
+  // function getPositionAt(text: string, offset: number): monaco.IPosition {
+  //   const lines = text.split('\n');
+  //   let pos = 0;
+  //   for (const [i, line] of lines.entries()) {
+  //     if (offset < pos + line.length + 1) {
+  //       return new monaco.Position(i + 1, offset - pos + 1);
+  //     }
+  //     pos += line.length + 1;
+  //   }
+  //   throw new Error(`offset ${offset} out of bounds in text of length ${text.length}`);
+  // }
 
   const monacoOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },

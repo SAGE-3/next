@@ -19,7 +19,6 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { ToolbarComponent } from './components/toolbar';
 import { KernelInfo } from './index';
-import { use } from 'passport';
 
 /**
  * This is a sample state for testing the UI without a backend
@@ -49,6 +48,7 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
 
+  // This all happens when the app is first loaded
   useEffect(() => {
     getKernelCollection();
   }, []);
