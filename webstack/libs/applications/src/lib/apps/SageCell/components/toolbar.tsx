@@ -78,7 +78,7 @@ export function ToolbarComponent(props: App): JSX.Element {
 
   useEffect(() => {
     checkHeartbeat();
-    console.log('check heartbeat');
+    // console.log('check heartbeat');
   }, []);
 
   /**

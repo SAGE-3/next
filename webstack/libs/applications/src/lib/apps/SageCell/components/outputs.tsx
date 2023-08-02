@@ -55,10 +55,15 @@ interface OutputsProps {
 
 export function Outputs(props: OutputsProps): JSX.Element {
   const s = props.app.data.state as AppState;
+  // Data stores
+  const users = useUsersStore((state) => state.users);
+  const createApp = useAppStore((state) => state.create);
+  // Local state
   const [content, setContent] = useState<ContentItemType[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const [msgType, setMsgType] = useState<string>('');
   const [msgId, setMsgId] = useState<string>();
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
   useEffect(() => {
     if (!s.msgId) {
@@ -71,8 +76,6 @@ export function Outputs(props: OutputsProps): JSX.Element {
     fetchMessageResults(s.msgId);
   }, [s.msgId]);
 
-  // const results = s.output as Results;
-  // if (!results.content) return <></>;
   const updateState = useAppStore((state) => state.updateState);
   const baseURL = 'http://localhost:81';
 
@@ -85,15 +88,13 @@ export function Outputs(props: OutputsProps): JSX.Element {
       // console.log('No message id to get status');
       return;
     }
-    // console.log('Checking message status...');
-    // console.log('msg_id: ', msg_id);
     try {
       const response = await fetch(`${baseURL}/status/${msg_id}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (response.status !== 200) {
-        // console.log(`Error + ${(await response.json()).detail}`);
+      if (!response.ok) {
+        console.log('Error getting status');
         return;
       }
       const result = await response.json();
@@ -111,10 +112,16 @@ export function Outputs(props: OutputsProps): JSX.Element {
         startStream(msg_id);
       }
     } catch (error) {
-      console.log(error);
-      updateState(props.app._id, {
-        streaming: false,
-      });
+      if (error instanceof TypeError) {
+        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+        updateState(props.app._id, {
+          kernel: '',
+          kernelSpecs: ['python3'],
+          kernels: [],
+          online: false,
+          streaming: false,
+        });
+      }
     }
   };
 
@@ -126,12 +133,12 @@ export function Outputs(props: OutputsProps): JSX.Element {
    */
   const startStream = async (msg_id: string) => {
     if (!msg_id) {
-      console.log('No message id to start stream');
+      // console.log('No message id to start stream');
       return;
     }
     const url = `${baseURL}/status/${msg_id}/stream`;
     const eventSource = new EventSource(url);
-    console.log('Starting stream...for msg_id: ', msg_id);
+    // console.log('Starting stream...for msg_id: ', msg_id);
     eventSource.addEventListener('new_message', function (event) {
       const result = JSON.parse(event.data);
       setContent(result.content as ContentItemType[]);
@@ -143,17 +150,9 @@ export function Outputs(props: OutputsProps): JSX.Element {
           streaming: false,
         });
         eventSource.close();
-        console.log('Finished stream execution');
       }
     });
   };
-
-  // Data stores
-  const users = useUsersStore((state) => state.users);
-  const createApp = useAppStore((state) => state.create);
-
-  // Application state
-  const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
   /**
    * This function will create a new webview app
@@ -189,7 +188,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
     };
   }, [s.kernel, users]);
 
-  // Get the error message
+  // Get the error message and put it back together since it streamed in parts
   const error =
     content &&
     content.reduce((acc, item) => {
@@ -209,7 +208,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
     if (!content || msgType === 'error') return null;
     return content.map((item) => {
       return Object.keys(item).map((key) => {
-        console.log(msgType, key);
+        // console.log(msgType, key);
         const value = item[key];
         switch (key) {
           // error messages are handled above
@@ -233,13 +232,6 @@ export function Outputs(props: OutputsProps): JSX.Element {
             return <Image key={key} src={`data:image/jpeg;base64,${value}`} />;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
-          // case 'application/vnd.jupyter.widget-view+json':
-          //   return <Box key={key} dangerouslySetInnerHTML={{ __html: value as TrustedHTML }} />;
-          // case 'application/vnd.jupyter.widget-state+json':
-          //   widgetScript(value as string);
-          //   return null;
-          // case 'application/vdom.v1+json':
-          //   return <Box key={key} dangerouslySetInnerHTML={{ __html: value as TrustedHTML }} />;
           case 'text/markdown':
             return <Markdown key={key} data={value} openInWebview={openInWebview} />;
           case 'application/vnd.vegalite.v4+json':
