@@ -44,42 +44,32 @@ function AppComponent(props: App): JSX.Element {
   const accessDeniedColor = '#EE4B2B';
   const green = useHexColor('green');
   const [online, setOnline] = useState(false);
+  const [kernel, setKernel] = useState<string>(s.kernel);
 
+  /**
+   * Populate the user's kernels and check if the user has access to the kernel
+   */
   useEffect(() => {
+    let kernelId = '';
     if (s.kernels) {
-      const myKernels = s.kernels.reduce((accumulatedKernels, kernel) => {
+      const myKernels = s.kernels.reduce((kernels, kernel) => {
         if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === userId))) {
-          accumulatedKernels.push(kernel);
+          kernels.push(kernel);
         }
-        return accumulatedKernels;
+        return kernels;
       }, [] as KernelInfo[]);
       if (s.kernel) {
         const kernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
         setAccess(kernel ? true : false);
+        kernelId = kernel ? kernel.kernel_id : 'restricted';
       }
+      setKernel(kernelId);
     }
   }, [JSON.stringify(s.kernels), s.kernel]);
 
-  const checkHeartbeat = async () => {
-    const baseURL = 'http://localhost:81';
-    try {
-      const response = await fetch(`${baseURL}/heartbeat`, {
-        method: 'GET',
-      });
-      if (response.ok) {
-        setOnline(true);
-      }
-    } catch (error) {
-      // setOnline(false);
-      if (error instanceof TypeError) {
-        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-      }
-    }
-  };
-
   useEffect(() => {
-    checkHeartbeat();
-  }, []);
+    setOnline(s.online);
+  }, [s.online]);
 
   // handle mouse move event
   const handleMouseMove = (e: MouseEvent) => {
@@ -101,22 +91,13 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
         <Box w={'100%'} borderBottom={`5px solid ${access ? green : accessDeniedColor}`}>
-          <StatusBar kernel={s.kernel} access={access} online={online} />
+          <StatusBar kernel={kernel} access={access} online={online} />
         </Box>
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
           <CodeEditor app={props} access={access} editorHeight={editorHeight} online={online} />
           {/* The grab bar */}
           <Box
-            flex={'1'}
-            my={1}
-            padding={'4px'}
-            background={
-              'url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=)'
-            }
-            backgroundColor={'teal'}
-            backgroundRepeat={'no-repeat'}
-            backgroundPosition={'center'}
-            cursor="row-resize"
+            className="grab-bar"
             onMouseDown={(e) => {
               e.preventDefault();
               document.addEventListener('mousemove', handleMouseMove);

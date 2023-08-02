@@ -32,7 +32,6 @@ export const schema = z.object({
     executeFunc: z.string(),
     params: z.any(),
   }),
-  lastHeartBeat: z.number(),
   online: z.boolean(),
 });
 
@@ -43,7 +42,6 @@ export const init: Partial<state> = {
   kernels: [],
   executeInfo: { executeFunc: '', params: {} },
   online: false,
-  lastHeartBeat: 0,
 };
 
 export const name = 'KernelDashboard';

@@ -15,6 +15,15 @@
   * It is a modified version of the css file from SageCell.
   */
 
+.grab-bar {
+  flex: 1;
+  margin: 1px 0;
+  padding: 4px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=)
+    teal no-repeat center !important;
+  cursor: row-resize;
+}
+
 .yRemoteSelectionHead {
   position: absolute;
   height: 100%;
@@ -142,7 +151,3 @@
   overflow: auto;
   line-height: calc(1em + 0.5rem);
 }
-
-/* .monaco-editor-overlaymessage {
-  transform: scale(0.8);
-} */

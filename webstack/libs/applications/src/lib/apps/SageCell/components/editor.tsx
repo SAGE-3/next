@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip } from '@chakra-ui/react';
+import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
@@ -478,16 +478,11 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
           </ButtonGroup>
         </Box>
       </Flex>
-      {/* {numClients > 1 ? (
-        <Box p={1} fontSize={'2xs'} alignContent={'right'}>
-          {numClients} clients
-        </Box>
-      ) : null}
-      {cursorPosition ? (
-        <Box p={1} fontSize={'2xs'} alignContent={'right'}>
-          {cursorPosition.r}:{cursorPosition.c}
-        </Box>
-      ) : null} */}
+      <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
+        {numClients > 1 ? 'Online:' + numClients : null}
+        <Spacer />
+        {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Line: ${cursorPosition.r} Column: ${cursorPosition.c}` : null}
+      </Flex>
     </>
   );
 }

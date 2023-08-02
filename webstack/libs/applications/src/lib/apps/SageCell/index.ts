@@ -33,7 +33,7 @@ const ContentItemSchema = z
     'text/markdown': z.string().optional(),
     'image/png': z.string().optional(),
     'image/svg+xml': z.string().optional(),
-    'application/vnd.jupyter.widget-view+json': z.string().optional(),
+    'application/vnd.plotly.v1+json': z.string().optional(),
     'application/vnd.vega.v5+json': z.string().optional(),
     'application/vnd.vegalite.v4+json': z.string().optional(),
     'application/vnd.vega.v4+json': z.string().optional(),
@@ -43,31 +43,20 @@ const ContentItemSchema = z
     'application/vnd.vega.v2+json': z.string().optional(),
     'application/vnd.vegalite.v1+json': z.string().optional(),
     'application/vnd.vega.v1+json': z.string().optional(),
-    'application/vnd.dataresource+json': z.string().optional(),
-    'application/vdom.v1+json': z.string().optional(),
-    'application/x-nteract-model-debug+json': z.string().optional(),
-    'application/x-nteract-model-description+json': z.string().optional(),
-    'application/x-ipynb+json': z.string().optional(),
-    'application/x-python-function+json': z.string().optional(),
-    'application/x-python-code+json': z.string().optional(),
   })
   .catchall(z.string());
-
-const ResultsSchema = z.object({
-  msgId: z.string(),
-  executionCount: z.number(),
-  content: z.array(ContentItemSchema),
-});
 
 export const schema = z.object({
   code: z.string(),
   msgId: z.string(),
+  history: z.array(z.string()),
   streaming: z.boolean(),
   language: z.string(),
   fontSize: z.number(),
   theme: z.string(),
   kernel: z.string(),
   session: z.string(),
+  online: z.boolean(),
   kernels: z.array(kernelInfo),
   executeInfo: executeInfoSchema,
 });
@@ -79,12 +68,14 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   code: '',
   msgId: '',
+  history: [],
   streaming: false,
   language: 'python',
   fontSize: 16,
   theme: 'vs-dark',
   kernel: '',
   session: '',
+  online: false,
   kernels: [] as KernelInfo[],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };

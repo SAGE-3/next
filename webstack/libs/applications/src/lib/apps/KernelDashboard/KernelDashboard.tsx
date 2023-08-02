@@ -19,6 +19,7 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { ToolbarComponent } from './components/toolbar';
 import { KernelInfo } from './index';
+import { use } from 'passport';
 
 /**
  * This is a sample state for testing the UI without a backend
@@ -46,40 +47,62 @@ function AppComponent(props: App): JSX.Element {
   const scrollColorFix = useHexColor(tableBackground);
   const teal = useHexColor('teal');
   const toast = useToast();
-
-  const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
+  const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
 
   useEffect(() => {
+    getKernelCollection();
+  }, []);
+
+  useEffect(() => {
+    if (!s.online) {
+      console.log('Kernel Proxy Server offline');
+      getKernelCollection();
+    }
+  }, [s.online]);
+
+  useEffect(() => {
+    // update myKernels when the s.kernels changes
     if (s.kernels) {
-      const updatedKernels = s.kernels.reduce((accumulatedKernels, kernel) => {
+      const myKernels = s.kernels.reduce((kernels, kernel) => {
         if (
           kernel.room === props.data.roomId &&
           kernel.board === props.data.boardId &&
           (!kernel.is_private || (kernel.is_private && kernel.owner === user?._id))
         ) {
-          accumulatedKernels.push(kernel);
+          kernels.push(kernel);
         }
-        return accumulatedKernels;
+        return kernels;
       }, [] as KernelInfo[]);
-      setMyKernels(updatedKernels);
+      setMyKernels(myKernels);
     }
-  }, [JSON.stringify(s.kernels)]); // include all dependencies
+  }, [JSON.stringify(s.kernels)]);
 
   const getKernelCollection = async () => {
-    if (!s.online) return;
     try {
       const response = await fetch(`${baseURL}/collection`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
-      const data = await response.json();
-      // console.log(data);
-      updateState(props._id, {
-        kernels: data,
-      });
+      if (!response.ok) {
+        console.log('Failed to get kernel collection');
+        return;
+      }
+      const kernelCollection = (await response.json()) as KernelInfo[];
+      if (kernelCollection !== s.kernels) {
+        updateState(props._id, {
+          kernels: kernelCollection,
+          online: true,
+        });
+      }
     } catch (error) {
-      console.error('Failed to fetch:', error);
-      // handle error
+      if (error instanceof TypeError) {
+        console.log('Kernel Proxy Server offline: ', error.message);
+        updateState(props._id, {
+          kernels: [],
+          online: false,
+        });
+        setMyKernels([]);
+      }
     }
   };
 
@@ -245,7 +268,7 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             ) : (
               // If there are kernels, display them
-              myKernels.map((kernel, idx) => (
+              myKernels.map((kernel) => (
                 <Box key={kernel.kernel_id} w="100%">
                   <Box minHeight="2px" width="98%" backgroundColor={tableDividerColor} />
                   <Flex w="100%" fontFamily="mono" alignItems="center" justifyContent="center" userSelect={'none'}>

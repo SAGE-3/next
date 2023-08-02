@@ -58,7 +58,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
   const [content, setContent] = useState<ContentItemType[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const [msgType, setMsgType] = useState<string>('');
-  const [msgId, setMsgId] = useState<string>(s.msgId);
+  const [msgId, setMsgId] = useState<string>();
 
   useEffect(() => {
     if (!s.msgId) {
@@ -97,6 +97,8 @@ export function Outputs(props: OutputsProps): JSX.Element {
         return;
       }
       const result = await response.json();
+      // if the message is completed, then we can get the results
+      // and push the id to the set of completed messages
       if (result.completed) {
         updateState(props.app._id, {
           streaming: false,

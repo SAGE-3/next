@@ -40,59 +40,20 @@ export function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
+  // Modal window
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const baseURL = 'http://localhost:81';
   const toast = useToast();
 
   // Checkbox private selection
   const [isPrivate, setIsPrivate] = useState(false);
   const [kernelAlias, setKernelAlias] = useState<string>('');
   const [kernelName, setKernelName] = useState<string>('python3');
-  const [kernelSpecs, setKernelSpecs] = useState<string[]>(s.kernelSpecs); // ['python3', 'julia-1.8', 'ir'
+  const [kernelSpecs, setKernelSpecs] = useState<string[]>(s.kernelSpecs); // ['python3', 'julia-1.8', 'ir', ...]
 
-  // Modal window
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const baseURL = 'http://localhost:81';
-
-  /**
-   * Check if the Jupyter proxy server is online
-   * @returns void
-   * @throws TypeError
-   */
-  const checkHeartbeat = async (): Promise<boolean> => {
-    let online = false;
-    try {
-      const response = await fetch(`${baseURL}/heartbeat`, {
-        method: 'GET',
-      });
-      if (response.ok) {
-        online = true;
-      }
-    } catch (error) {
-      if (error instanceof TypeError) {
-        toast({
-          title: error.name,
-          description: `The Jupyter proxy server appears to be offline. (${error.message})`,
-          status: 'error',
-          duration: 2000,
-          isClosable: true,
-        });
-      }
-    } finally {
-      if (s.online !== online) {
-        updateState(props._id, {
-          online: online,
-        });
-      }
-    }
-    return online;
-  };
-
-  /**
-   * Functions to run when the app is loaded
-   */
+  // This all happens when the app clicked
   useEffect(() => {
-    checkHeartbeat();
     getKernelSpecs();
-    getKernelCollection();
   }, []);
 
   /**
@@ -103,7 +64,6 @@ export function ToolbarComponent(props: App): JSX.Element {
    *
    */
   const getKernelSpecs = async () => {
-    if (!s.online) return;
     try {
       const response = await fetch(`${baseURL}/kernelspecs`, {
         method: 'GET',
@@ -115,7 +75,9 @@ export function ToolbarComponent(props: App): JSX.Element {
       if (data) {
         updateState(props._id, {
           kernelSpecs: Object.keys(data),
+          online: true,
         });
+        getKernelCollection();
       }
     } catch (error) {
       if (error instanceof TypeError) {
@@ -123,6 +85,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         updateState(props._id, {
           kernelSpecs: ['python3'],
           kernels: [],
+          online: false,
         });
       }
     }
