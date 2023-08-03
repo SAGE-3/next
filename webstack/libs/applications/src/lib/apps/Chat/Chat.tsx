@@ -30,7 +30,7 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 // API: https://huggingface.github.io/text-generation-inference/
-const LLAMA2_SERVER = 'http://131.193.183.239:3000';
+const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu/';
 const LLAMA2_ENDPOINT = '/generate_stream';
 const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
 const LLAMA2_TOKENS = 300;
