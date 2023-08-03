@@ -385,7 +385,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in Sidebar'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Stream webview'} openDelay={400}>
           <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron() || streaming}>
             <MdViewSidebar />
           </Button>
