@@ -290,11 +290,58 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-    def get_smartbits(self, room_id: str=None, board_id: str=None) -> dict:
+    def get_nested_attr(self, obj, attr_path):
+        """Recursively fetch a nested attribute of an object."""
+        attrs = attr_path.split('.')
+        for attr in attrs:
+            obj = getattr(obj, attr)
+        return obj
+
+    def filter_apps(self, apps: dict, attrs: dict, attr_type: str) -> dict:
+        """Filter apps based on attributes of given attr_type."""
+        result = {}
+        for app_id, app in apps.items():
+            try:
+                attr_obj = getattr(app, attr_type)
+                if all(self.get_nested_attr(attr_obj, k) == v for k, v in attrs.items()):
+                    result[app_id] = app
+            except:
+                pass
+        return result
+
+    def exclude_apps(self, apps: dict, attrs: dict, attr_type: str) -> dict:
+        """Exclude apps based on attributes of given attr_type."""
+        to_remove = []
+        for app_id, app in apps.items():
+            attr_obj = getattr(app, attr_type)
+            if all(self.get_nested_attr(attr_obj, k) == v for k, v in attrs.items()):
+                to_remove.append(app_id)
+        for app_id in to_remove:
+            apps.pop(app_id)
+        return apps
+
+    def get_smartbits(self, room_id: str = None, board_id: str = None, data_attrs: dict = None,
+                      state_attrs: dict = None) -> dict:
+        # Check if room_id and board_id are provided.
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
-            return
-        smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
+            return {}
+        # Fetch all smartbits from room and board.
+        all_smartbits = dict(self.rooms.get(room_id).boards.get(board_id).smartbits)
+        # If no filtering attributes are provided, return all smartbits.
+        if data_attrs is None and state_attrs is None:
+            return all_smartbits
+        # Filter and exclude smartbits based on provided attributes.
+        smartbits = all_smartbits
+        if state_attrs is not None:
+            smartbits = self.filter_apps(smartbits, state_attrs, 'state')
+        if data_attrs is not None:
+            # If both filtering attributes are provided, data_attrs is used for exclusion.
+            # Otherwise, it's used for filtering.
+            if state_attrs is not None:
+                smartbits = self.exclude_apps(smartbits, data_attrs, 'data')
+            else:
+                smartbits = self.filter_apps(smartbits, data_attrs, 'data')
         return smartbits
 
     # def get_smartbits_by_ids(self, app_ids: list, room_id: str = None, board_id: str = None) -> list:
