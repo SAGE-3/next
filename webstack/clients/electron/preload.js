@@ -19,6 +19,7 @@ const validChannels = [
   'close-connect-page',
   'take-screenshot',
   'streamview',
+  'streamview_stop',
   'paint',
   'load-landing',
   'store-interface',
