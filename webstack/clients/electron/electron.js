@@ -649,6 +649,11 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
+    ipcMain.on('streamview_stop', (e, args) => {
+      // Message for the webview pixel streaming
+      const viewContent = electron.webContents.fromId(args.id);
+      if (viewContent) viewContent.endFrameSubscription();
+    });
     ipcMain.on('streamview', (e, args) => {
       // console.log('Webview>    message', channel, args);
       // console.log('Webview> IPC Message', args.id, args.width, args.height);
@@ -661,7 +666,7 @@ function createWindow() {
         screenSize: { width: args.width, height: args.height },
       });
 
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
+      viewContent.beginFrameSubscription(false, (image, dirty) => {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
@@ -669,7 +674,7 @@ function createWindow() {
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
           dataenc = resizedimage.toJPEG(quality);
         } else {
           dataenc = image.toJPEG(quality);
@@ -677,6 +682,7 @@ function createWindow() {
           newh = dirty.height;
         }
         mainWindow.webContents.send('paint', {
+          id: args.id,
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });

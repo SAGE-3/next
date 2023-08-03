@@ -197,9 +197,8 @@ async function startServer() {
     clients.get(room)?.forEach((ws) => ws.send(msg));
   }
 
-  rtcWebSocketServer.on('connection', (socket: WebSocket, request: IncomingMessage) => {
-    console.log('WebRTC> connection', request.url);
-
+  rtcWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
+    // new message
     socket.on('message', (data) => {
       const datastr = data.toString();
       const msg = JSON.parse(datastr);
@@ -219,12 +218,13 @@ async function startServer() {
           break;
       }
     });
-    socket.on('close', (msg) => {
-      console.log('WebRTC> close', msg);
+    // close handler
+    socket.on('close', () => {
       clients.forEach((sockets) => {
         sockets.splice(sockets.indexOf(socket) || 0, 1);
       });
     });
+    // error handler
     socket.on('error', (msg) => {
       console.log('WebRTC> error', msg);
       clients.forEach((sockets) => {
