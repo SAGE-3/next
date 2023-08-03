@@ -73,14 +73,13 @@ function AppComponent(props: App): JSX.Element {
       // Open websocket connection to the server
       const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const socketUrl = `${socketType}//${window.location.host}/rtc/`;
-      console.log('RTC> Connecting to', socketUrl);
+      // Connection to the server
       rtcSock.current = new WebSocket(socketUrl);
       rtcSock.current.addEventListener('open', () => {
         setConnected(true);
         if (rtcSock.current) {
 
           const processRTCMessage = (ev: MessageEvent<any>) => {
-            console.log('RTC> Received message');
             const msg = JSON.parse(ev.data);
             if (msg.type === 'data' && msg.params.room === props._id) {
               const imgid = 'image' + props._id;
@@ -158,7 +157,7 @@ function AppComponent(props: App): JSX.Element {
             </Box>
           </Box>
         </Tooltip>) :
-        <Image id={'image' + props._id} w={"100%"} h={"auto"} alt={"webview streaming"} />
+        <Image id={'image' + props._id} w={"100%"} h={"auto"} alt={"webview streaming"} background={"white"} />
       }
     </AppWindow>
   );
@@ -187,11 +186,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   // Throttle Function
-  const throttleUpdate = throttle(50, (data: any, width: number, height: number) => {
+  const throttleUpdate = throttle(60, (data: any, width: number, height: number) => {
     // save the dimensions of the sidebar
     setDimensions({ width, height });
     // Send the pixels to the server
-    console.log('Sending pixels to server>', sock ? sock.readyState : 'no sock');
     if (sock && sock.readyState === sock.OPEN) {
       sock.send(JSON.stringify({ type: 'pixels', params: { room: props._id, pixels: data, width, height } }));
     }
@@ -227,8 +225,6 @@ function ToolbarComponent(props: App): JSX.Element {
       };
       webview.addEventListener('page-title-updated', titleUpdated);
 
-      // After the partition has been set, you can navigate
-      console.log('Setting webview url', s.url)
       // process url to be embeddable
       const final_url = processContentURL(s.url);
       webview.src = final_url;
@@ -236,14 +232,12 @@ function ToolbarComponent(props: App): JSX.Element {
   }, []);
 
   useEffect(() => {
-    console.log('STEAMING CHANGED', s.streaming);
-    if (s.streaming) {
-      console.log('STREAMING!!!!')
+    if (s.streaming && sock && sock.readyState === sock.OPEN) {
       // Get the webview id for electron to grab pixels
       const id = webviewNode.current.getWebContentsId();
       // Load electron and the IPCRender
       window.electron.on('paint', (arg: any) => {
-        throttleFunc(arg.buf, arg.dirty.width, arg.dirty.height);
+        if (arg.id === id) throttleFunc(arg.buf, arg.dirty.width, arg.dirty.height);
       });
       // Get the webview dimensions for mobile emulation
       const width = webviewNode.current.offsetWidth;
@@ -252,6 +246,12 @@ function ToolbarComponent(props: App): JSX.Element {
       setDimensions({ width, height });
       // Send the streamview event to electron
       window.electron.send('streamview', { url: s.url, id, width, height });
+    } else {
+      if (webviewNode.current) {
+        // Get the webview id for electron to grab pixels
+        const id = webviewNode.current.getWebContentsId();
+        window.electron.send('streamview_stop', { id });
+      }
     }
   }, [s.streaming, sock]);
 
