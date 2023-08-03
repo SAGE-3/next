@@ -341,7 +341,7 @@ const Content = (props: {
         textAlign={'center'}
       >
         <Box bg="#2D62D2">
-          <Text textAlign={'center'} fontSize={scaleToFontSize / 7}>
+          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 7}>
             {props.variable.stationName}
           </Text>
         </Box>

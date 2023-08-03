@@ -89,60 +89,51 @@ const EChartsViewer = (props: {
 
   return (
     <>
-      {/* if (colorMode === 'dark') {
-    options.backgroundColor = '#222';
-    options.textStyle = { color: '#ffffff' };
-    options.axisLine = { lineStyle: { color: '#eee' } };
-    options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
-  } else if (colorMode === 'light') {
-    options.backgroundColor = '#fff';
-    options.textStyle = { color: '#333' };
-    options.axisLine = { lineStyle: { color: '#999' } };
-    options.tooltip = { backgroundColor: '#fff', textStyle: { color: '#333' } };
-  } else {
-    throw new Error('Invalid color mode');
-  } */}
-
       <Box
         bg={colorMode === 'light' ? '#fff' : '#222'}
         pt="2rem"
-        w="100%"
-        h="100%"
+        w={props.size ? props.size.width : '100%'}
+        h={props.size ? props.size.height : '100%'}
         display="flex"
         flexDir="column"
         alignItems="center"
         justifyContent={'center'}
         ref={outboxRef}
+        position="relative"
       >
-        <Box pb="1rem" mt="-1rem">
-          <Text textAlign={'center'} fontSize={'50px'}>
-            {props.stationMetadata ? stationNames : 'No Station Selected'}
-          </Text>
-        </Box>
         {props.isLoaded ? (
           <>
+            <Box pb="1rem" mt="-1rem">
+              <Text textAlign={'center'} fontSize={'50px'}>
+                {props.stationMetadata ? stationNames : 'No Station Selected'}
+              </Text>
+            </Box>
             <div ref={chartRef} />
+            {props.timeSinceLastUpdate ? (
+              <Box
+                bg={colorMode === 'light' ? '#fff' : '#222'}
+                w="100%"
+                display="flex"
+                flexDir="column"
+                alignItems="center"
+                justifyContent={'center'}
+                fontSize={'25px'}
+                pb={'2rem'}
+              >
+                {props.timeSinceLastUpdate}
+              </Box>
+            ) : null}
           </>
         ) : (
-          <Box transform={`scale(${4 * Math.min(props.size ? props.size.width / 300 : 0, props.size ? props.size.height / 300 : 0)})`}>
+          <Box
+            position="absolute"
+            top="50%"
+            left="50%"
+            transform={`scale(${4 * Math.min(props.size ? props.size.width / 300 : 0, props.size ? props.size.height / 300 : 0)})`}
+          >
             <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" size="xl" />
           </Box>
         )}
-
-        {props.timeSinceLastUpdate ? (
-          <Box
-            bg={colorMode === 'light' ? '#fff' : '#222'}
-            w="100%"
-            display="flex"
-            flexDir="column"
-            alignItems="center"
-            justifyContent={'center'}
-            fontSize={'25px'}
-            pb={'2rem'}
-          >
-            {props.timeSinceLastUpdate}
-          </Box>
-        ) : null}
       </Box>
     </>
   );

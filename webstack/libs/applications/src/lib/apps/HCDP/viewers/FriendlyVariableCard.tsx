@@ -341,7 +341,7 @@ const Content = (props: {
         textAlign={'center'}
       >
         <Box bg="#2D62D2">
-          <Text textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 12}>
+          <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 12}>
             {variableName.join(' ')}
           </Text>
         </Box>

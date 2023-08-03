@@ -43,7 +43,11 @@ import { useEffect, useState } from 'react';
 import VariableCard from '../HCDP/viewers/VariableCard';
 import EChartsViewer from '../HCDP/viewers/EChartsViewer';
 import CurrentConditions from '../HCDP/viewers/CurrentConditions';
-import CustomizeWidgets from '../HCDP/menu/CustomizeWidgets';
+import CustomizeWidgets, {
+  getFormattedDateTime1MonthBefore,
+  getFormattedDateTime1WeekBefore,
+  getFormattedDateTime1YearBefore,
+} from '../HCDP/menu/CustomizeWidgets';
 import StationMetadata from '../HCDP/viewers/StationMetadata';
 import FriendlyVariableCard from '../HCDP/viewers/FriendlyVariableCard';
 import StatisticCard from '../HCDP/viewers/StatisticCard';
@@ -230,7 +234,7 @@ function AppComponent(props: App): JSX.Element {
                     stationMetadata={stationMetadata}
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     generateAllVariables={s.widget.visualizationType === 'allVariables'}
-                    isLoaded={true}
+                    isLoaded={isLoaded}
                     isCustomizeWidgetMenu={false}
                   />
                 ) : null}
@@ -429,21 +433,21 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const timePeriod = e.target.value;
     const date = new Date();
-
+    console.log('updating');
     switch (timePeriod) {
       case 'previous24Hours':
         updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
         break;
       case 'previous1Week':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1WeekBefore(), timePeriod: 'previous1Week' } });
 
         break;
       case 'previous1Month':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: 'previous1Month' } });
 
         break;
       case 'previous1Year':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: 'previous1Year' } });
 
         break;
       default:
@@ -454,7 +458,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Button mr="1rem" size="xs" onClick={onOpen}>
+      {/* <Button mr="1rem" size="xs" onClick={onOpen}>
         Select Stations
       </Button>
 
@@ -463,7 +467,6 @@ function ToolbarComponent(props: App): JSX.Element {
         <ModalContent>
           <ModalHeader>Modal Title</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>{/* <Lorem count={2} /> */}</ModalBody>
           <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{ height: `60rem`, width: `100%`, zIndex: 0 }}>
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -482,7 +485,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <Button variant="ghost">Secondary Action</Button>
           </ModalFooter>
         </ModalContent>
-      </Modal>
+      </Modal> */}
 
       <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
         <Select size="xs" w="10rem" placeholder={'Select time period'} value={s.widget.timePeriod} onChange={handleSelectDateChange}>

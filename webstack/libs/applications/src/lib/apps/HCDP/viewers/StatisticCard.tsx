@@ -373,7 +373,7 @@ const Content = (props: {
           </Text>
         </Box>
 
-        <Box display="flex" flexDir="column" justifyContent="center" alignItems="center" overflow="hidden">
+        <Box display="flex" flexDir="column" justifyContent="center" alignItems="center">
           {props.isLoaded ? (
             <>
               <Text fontSize={scaleToFontSize / 7} fontWeight="bold">
@@ -389,11 +389,15 @@ const Content = (props: {
                 w={props.size.width - 200}
                 p={scaleToFontSize / 30}
                 px={scaleToFontSize / 15}
-                borderRadius={'lg'}
-                color="white"
-                bg="#2A2A2A"
+                // borderRadius={'lg'}
+                borderRadius={'40px'}
+                boxShadow={'lg'}
+                overflow="visible"
+                // color="white"
+                // bg="#2A2A2A"
+                style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
               >
-                <Text color="gray.100">{getFormattedTimePeriod(props.timePeriod)}</Text>
+                <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>
                 <Box mt={scaleToFontSize / 25} display="flex" flexDir="row" justifyContent="space-between">
                   <Box>
                     <Text>Low</Text>
