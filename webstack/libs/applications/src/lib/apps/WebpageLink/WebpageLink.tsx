@@ -170,9 +170,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Stores
   const createApp = useAppStore((state) => state.create);
   const sock = useStore((state) => state.sock[props._id]);
-  // UI elements
-  const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  // Local State
   const btnRef = useRef<HTMLButtonElement>(null);
   const webviewNode = useRef<WebviewTag>();
   // Tracking the dom-ready and did-load events
@@ -180,8 +178,12 @@ function ToolbarComponent(props: App): JSX.Element {
   const [attached, setAttached] = useState(false);
   const [title, setTitle] = useState('Webview');
   const [dimensions, setDimensions] = useState({ width: 400, height: 400 });
-  // const [streaming, setStreaming] = useState(s.streaming);
+  const [streaming, setStreaming] = useState(s.streaming);
 
+  // UI elements
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const isE = isElectron();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 
@@ -204,6 +206,12 @@ function ToolbarComponent(props: App): JSX.Element {
       webviewNode.current.removeEventListener('did-attach', didAttachCallback);
       setAttached(true);
     };
+    // event destroyed callback
+    const didDestroyed = (evt: any) => {
+      webviewNode.current.removeEventListener('destroyed', didDestroyed);
+      setAttached(false);
+      setDomReady(false);
+    };
 
     // event dom-ready callback
     const domReadyCallback = (evt: any) => {
@@ -218,6 +226,7 @@ function ToolbarComponent(props: App): JSX.Element {
       // Callback when the webview is ready
       webview.addEventListener('dom-ready', domReadyCallback);
       webview.addEventListener('did-attach', didAttachCallback);
+      webview.addEventListener('destroy', didDestroyed);
 
       const titleUpdated = (event: any) => {
         // Update the app title
@@ -232,7 +241,11 @@ function ToolbarComponent(props: App): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (s.streaming && sock && sock.readyState === sock.OPEN) {
+    setStreaming(s.streaming);
+  }, [s.streaming]);
+
+  useEffect(() => {
+    if (isE && domReady && attached && webviewNode.current && streaming && sock && sock.readyState === sock.OPEN) {
       // Get the webview id for electron to grab pixels
       const id = webviewNode.current.getWebContentsId();
       // Load electron and the IPCRender
@@ -248,12 +261,14 @@ function ToolbarComponent(props: App): JSX.Element {
       window.electron.send('streamview', { url: s.url, id, width, height });
     } else {
       if (webviewNode.current) {
-        // Get the webview id for electron to grab pixels
-        const id = webviewNode.current.getWebContentsId();
-        window.electron.send('streamview_stop', { id });
+        if (attached && domReady) {
+          // Get the webview id for electron to grab pixels
+          const id = webviewNode.current.getWebContentsId();
+          window.electron.send('streamview_stop', { id });
+        }
       }
     }
-  }, [s.streaming, sock]);
+  }, [streaming, sock, attached, domReady]);
 
 
   const openUrl = () => {
@@ -331,6 +346,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const closing = () => {
     updateState(props._id, { streaming: false });
+    setStreaming(false);
+    setDomReady(false);
+    setAttached(false);
     update(props._id, { size: { width: 400, height: 400, depth: props.data.size.depth, } });
     onClose();
   };
@@ -368,7 +386,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Open in Sidebar'} openDelay={400}>
-          <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron()}>
+          <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron() || streaming}>
             <MdViewSidebar />
           </Button>
         </Tooltip>
