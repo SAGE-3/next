@@ -7,41 +7,80 @@
  */
 
 import { z } from 'zod';
-import { executeInfoType } from '../SageCell';
+import { kernelInfo, KernelInfo } from '../KernelDashboard';
 
 /**
  * SAGE3 application: Seer
  * created by: Mahdi
  */
 
+export const name = 'Seer';
+
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.any(),
 });
-const fieldTypes = z.enum(['code', 'text']);
-export type fieldT = z.infer<typeof fieldTypes>;
+
+const ContentItemSchema = z
+  .object({
+    stdout: z.string().optional(),
+    stderr: z.string().optional(),
+    traceback: z.array(z.string()).optional(),
+    ename: z.string().optional(),
+    evalue: z.string().optional(),
+    'text/plain': z.string().optional(),
+    'application/javascript': z.string().optional(),
+    'text/html': z.string().optional(),
+    'text/latex': z.string().optional(),
+    'image/jpeg': z.string().optional(),
+    'text/markdown': z.string().optional(),
+    'image/png': z.string().optional(),
+    'image/svg+xml': z.string().optional(),
+    'application/vnd.plotly.v1+json': z.string().optional(),
+    'application/vnd.vega.v5+json': z.string().optional(),
+    'application/vnd.vegalite.v4+json': z.string().optional(),
+    'application/vnd.vega.v4+json': z.string().optional(),
+    'application/vnd.vegalite.v3+json': z.string().optional(),
+    'application/vnd.vega.v3+json': z.string().optional(),
+    'application/vnd.vegalite.v2+json': z.string().optional(),
+    'application/vnd.vega.v2+json': z.string().optional(),
+    'application/vnd.vegalite.v1+json': z.string().optional(),
+    'application/vnd.vega.v1+json': z.string().optional(),
+  })
+  .catchall(z.string());
 
 export const schema = z.object({
-  fontSize: z.number(),
-  fieldType: fieldTypes,
-  execCount: z.number(),
   code: z.string(),
-  output: z.string(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
+  msgId: z.string(),
+  history: z.array(z.string()),
+  streaming: z.boolean(),
+  language: z.string(),
+  fontSize: z.number(),
+  theme: z.string(),
+  kernel: z.string(),
+  session: z.string(),
+  online: z.boolean(),
+  prompt: z.string(),
+  kernels: z.array(kernelInfo),
+  executeInfo: executeInfoSchema,
 });
 
-// export type executeInfoType = z.infer<typeof executeInfoSchema>;
+export type executeInfoType = z.infer<typeof executeInfoSchema>;
+export type ContentItemType = z.infer<typeof ContentItemSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  fieldType: 'code',
   code: '',
-  output: '',
+  msgId: '',
+  history: [],
+  streaming: false,
+  language: 'python',
+  fontSize: 16,
+  theme: 'vs-dark',
+  kernel: '',
+  session: '',
+  prompt: '',
+  online: false,
+  kernels: [] as KernelInfo[],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
-  fontSize: 24,
 };
-
-export const name = 'Seer';
