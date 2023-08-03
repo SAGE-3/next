@@ -6,8 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, Text } from '@chakra-ui/react';
-import { MdCloudQueue } from 'react-icons/md';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue } from '@chakra-ui/react';
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -19,7 +18,6 @@ import {
   useUIStore,
   useBoardStore,
   MainButton,
-  FunctionButtons,
   useRouteNav,
   useRoomStore,
   useConfigStore,
@@ -41,6 +39,7 @@ import {
   AnnotationsPanel,
   PluginsPanel,
   PresenceFollow,
+  BoardTitle,
 } from './components';
 
 type UILayerProps = {
@@ -72,8 +71,6 @@ export function UILayer(props: UILayerProps) {
 
   // Navigation
   const { toHome } = useRouteNav();
-
-  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast
   const toast = useToast();
@@ -164,9 +161,6 @@ export function UILayer(props: UILayerProps) {
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
-      {/* The clock Top Right */}
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px', display: showUI ? 'flex' : 'none' }} opacity={0.7} />
-
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
         <MainButton
@@ -188,12 +182,14 @@ export function UILayer(props: UILayerProps) {
       </Box> */}
 
       {/* ServerName Top Left */}
-      <HStack position="absolute" left="2" display={showUI ? 'flex' : 'none'}>
-        <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
-        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
-          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
-        </Text>
-      </HStack>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
+        <BoardTitle room={room} board={board} config={config} />
+      </Box>
+
+      {/* The clock Top Right */}
+      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
+        <Clock isBoard={true} />
+      </Box>
 
       <AppToolbar></AppToolbar>
 
