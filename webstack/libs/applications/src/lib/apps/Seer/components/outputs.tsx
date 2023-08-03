@@ -340,7 +340,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
             </Code>
           </Alert>
         ) : null}
-        {error && error.traceback ? Object(error.traceback).map((line: string) => <Ansi key={line}>{line}</Ansi>) : null}
+        {error && error.traceback ? Object(error.traceback).map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>) : null}
         {processedContent}
       </Box>
     </Box>
