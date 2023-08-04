@@ -57,7 +57,7 @@ services:
       jupyter:
         condition: service_healthy
   fastapi:
-    image: "python:3.9-bookworm"
+    image: "sage3/fastapi:arm64"
     ports:
       - "127.0.0.1:6000:6000"
     environment:
