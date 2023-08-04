@@ -34,15 +34,21 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
+  // Fastapi python server
+  "fastapi": {
+    "url": "http://localhost:6000"
+  },
+
+
   // External Services
   "services": {
     "twilio": {
       // Your Account SID from www.twilio.com/console
-      "accountSid": "",
+      "accountSid": "AC87f8f951df7c1131a8d0d6155de766e0",
       // API Key
-      "apiKey": "",
+      "apiKey": "SK1002a7e4f226fc8de66d0cb86bdd3b53",
       // API Secret
-      "apiSecret": ""
+      "apiSecret": "W0DxIH2LrBPlYgmjjTfWbS4Kr01pYbIT"
     }
   },
 
