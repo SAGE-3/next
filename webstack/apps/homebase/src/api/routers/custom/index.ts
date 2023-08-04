@@ -14,3 +14,4 @@ export * from './nlp';
 export * from './subscription';
 export * from './logs';
 export * from './presencethrottle';
+export * from './fastapi';

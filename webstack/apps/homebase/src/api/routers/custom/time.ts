@@ -14,7 +14,7 @@ import * as express from 'express';
  */
 export function TimeRouter(): express.Router {
   const router = express.Router();
-  router.get('/', async (req, res) => {
+  router.get('/', (req, res) => {
     // Configuration public values
     const configuration = {
       epoch: Date.now(),
