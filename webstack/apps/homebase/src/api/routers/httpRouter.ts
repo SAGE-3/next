@@ -34,7 +34,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, PresenceThrottle } from './custom';
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, FastAPIRouter, PresenceThrottle } from './custom';
 
 import { config } from '../../config';
 
@@ -59,6 +59,9 @@ export function expressAPIRouter(): express.Router {
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
+
+  // FastAPI Routes
+  router.use('/fastapi', FastAPIRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());

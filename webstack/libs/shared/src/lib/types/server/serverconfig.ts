@@ -45,6 +45,9 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
+  // FastAPI
+  fastapi: { url: string };
+
   // External Services
   services: {
     twilio: TwilioConfiguration;
