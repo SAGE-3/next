@@ -30,6 +30,8 @@ import { App } from '../../../schema';
 import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 
+const fastApiRoute = '/api/fastapi';
+
 /**
  * UI toolbar for the KernelDashboard application
  *
@@ -42,7 +44,6 @@ export function ToolbarComponent(props: App): JSX.Element {
   const { user } = useUser();
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const baseURL = 'http://localhost:81';
   const toast = useToast();
 
   // Checkbox private selection
@@ -65,7 +66,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   const getKernelSpecs = async () => {
     try {
-      const response = await fetch(`${baseURL}/kernelspecs`, {
+      const response = await fetch(`${fastApiRoute}/kernelspecs`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -113,7 +114,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const getKernelCollection = async () => {
     if (!s.online) return;
     try {
-      const response = await fetch(`${baseURL}/collection`, {
+      const response = await fetch(`${fastApiRoute}/collection`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -157,7 +158,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       owner: user._id,
     };
     try {
-      const response = await fetch(`${baseURL}/kernels/${kernelName}`, {
+      const response = await fetch(`${fastApiRoute}/${kernelName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...kernelInfo }),
