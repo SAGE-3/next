@@ -30,3 +30,17 @@ services:
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+  fastapi:
+    image: "sage3/fastapi:arm64"
+    ports:
+      - "81:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${HOST}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: python src/main.py --url http://jupyter:80/
+    depends_on:
+      jupyter:
+        condition: service_healthy
