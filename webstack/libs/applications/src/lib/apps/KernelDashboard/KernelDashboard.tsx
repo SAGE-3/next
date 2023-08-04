@@ -25,7 +25,7 @@ import { KernelInfo } from './index';
  */
 
 // URL for the FastAPI backend
-const baseURL = process.env.NODE_ENV === 'production' ? 'n/a' : 'http://localhost:81';
+const fastApiRoute = '/api/fastapi';
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {
@@ -79,7 +79,7 @@ function AppComponent(props: App): JSX.Element {
 
   const getKernelCollection = async () => {
     try {
-      const response = await fetch(`${baseURL}/collection`, {
+      const response = await fetch(`${fastApiRoute}/collection`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -114,7 +114,7 @@ function AppComponent(props: App): JSX.Element {
    */
   const deleteKernel = async (kernelId: string) => {
     if (!s.online) return;
-    const response = await fetch(`${baseURL}/kernels/${kernelId}`, {
+    const response = await fetch(`${fastApiRoute}/kernels/${kernelId}`, {
       method: 'DELETE',
     });
     if (response.ok) {
@@ -145,7 +145,7 @@ function AppComponent(props: App): JSX.Element {
    */
   const restartKernel = async (kernelId: string) => {
     if (!s.online) return;
-    const response = await fetch(`${baseURL}/restart/${kernelId}`, {
+    const response = await fetch(`${fastApiRoute}/restart/${kernelId}`, {
       method: 'POST',
     });
     if (response.ok) {
