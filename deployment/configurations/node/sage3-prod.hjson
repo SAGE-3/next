@@ -34,6 +34,11 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
+  // Fastapi python server
+  "fastapi": {
+    "url": "http://fastapi:6000"
+  },
+
  // External Services
   "services": {
     "twilio": {
@@ -52,7 +57,18 @@
     "plugins": true,
     // Which Apps to enable.  Available Apps: 
     // ChartMaker, MapGL, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["Chat", "ChartMaker", "MapGL", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
+    "apps": [
+      "Chat",
+      "ChartMaker",
+      "MapGL",
+      "Notepad",
+      "SageCell",
+      "KernelDashboard",
+      "Stickie",
+      "Screenshare",
+      "Webview",
+      "Hawaii Mesonet"
+    ]
   },
 
   // Auth Configuration

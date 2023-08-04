@@ -56,6 +56,31 @@ services:
         condition: service_healthy
       jupyter:
         condition: service_healthy
+  fastapi:
+    image: "python:3.9-bookworm"
+    ports:
+      - "127.0.0.1:6000:6000"
+    environment:
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${HOST}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: bash
+    depends_on:
+      node-server:
+        condition: service_healthy
+      jupyter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6000"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   jupyter:
     image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
