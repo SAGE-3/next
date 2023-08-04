@@ -44,11 +44,11 @@
   "services": {
     "twilio": {
       // Your Account SID from www.twilio.com/console
-      "accountSid": "AC87f8f951df7c1131a8d0d6155de766e0",
+      "accountSid": "",
       // API Key
-      "apiKey": "SK1002a7e4f226fc8de66d0cb86bdd3b53",
+      "apiKey": "",
       // API Secret
-      "apiSecret": "W0DxIH2LrBPlYgmjjTfWbS4Kr01pYbIT"
+      "apiSecret": ""
     }
   },
 
