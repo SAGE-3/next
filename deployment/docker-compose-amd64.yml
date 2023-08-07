@@ -44,7 +44,7 @@ services:
     image: "sage3/foresight:amd64"
     environment:
       - ENVIRONMENT=production
-      - SAGE3_SERVER=${HOST}
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
       - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
       - TOKEN=${TOKEN}
@@ -62,7 +62,7 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       - ENVIRONMENT=production
-      - SAGE3_SERVER=${HOST}
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
