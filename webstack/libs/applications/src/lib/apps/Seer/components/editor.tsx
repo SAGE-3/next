@@ -68,10 +68,22 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     }
   }, [props.online]);
 
+  // function getPositionAt(text: string, offset: number): monaco.IPosition {
+  //   const lines = text.split('\n');
+  //   let pos = 0;
+  //   for (const [i, line] of lines.entries()) {
+  //     if (offset < pos + line.length + 1) {
+  //       return new monaco.Position(i + 1, offset - pos + 1);
+  //     }
+  //     pos += line.length + 1;
+  //   }
+  //   throw new Error(`offset ${offset} out of bounds in text of length ${text.length}`);
+  // }
+
   const monacoOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
     glyphMargin: false,
-    automaticLayout: false, // this is needed to make the editor resizeable
+    automaticLayout: true,
     wordWrap: 'off',
     lineNumbers: 'on',
     lineDecorationsWidth: 0,
@@ -103,13 +115,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
 
-    editorRef.current.layout({
-      width: props.app.data.size.width - 60,
-      height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as monaco.editor.IDimension);
-
     editorRef.current.addAction({
       id: 'increase-font-size',
       label: 'Increase Font Size',
@@ -131,7 +136,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     editorRef.current?.addAction({
       id: 'reset-font-size',
       label: 'Reset Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR],
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Numpad0],
       run: () => {
         setFontSize(s.fontSize);
       },
@@ -235,7 +240,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       }
 
       if (provider.awareness.getStates().size !== numClients) {
-        // const uniqueClients = new Set(states.keys());
+        const uniqueClients = new Set(states.keys());
         // const activeUsers = Array.from(uniqueClients).map((id) => states.get(id)?.user.id);
         // console.log('activeUsers', activeUsers);
         setNumClients(provider.awareness.getStates().size);
@@ -283,13 +288,12 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       setCursorPosition({ r: ev.position.lineNumber, c: ev.position.column });
     });
     if (numClients > 1) return;
-    if (event.changes.length > 10) {
+    if (event.changes.length > 0) {
       const text = editorRef.current?.getValue();
       if (text) {
         const updateDelta = Date.now() - props.app._updatedAt;
         // console.log('delta', delta);
-        if (updateDelta > 500) {
-          console.log('saving code ' + updateDelta);
+        if (updateDelta > 1000) {
           // saves code roughly every 1 second
           updateState(props.app._id, { code: text });
         }
@@ -400,7 +404,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     updateState(props.app._id, {
       code: '',
       msgId: '',
-      streaming: false,
       executeInfo: { executeFunc: '', params: {} },
     });
     editorRef.current?.setValue('');
@@ -417,14 +420,10 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         session: user?._id,
       }),
     });
-    updateState(props.app._id, {
-      streaming: false,
-      msgId: '',
-    });
   };
 
   /**
-   * Needs to be reset every time the kernel changes
+   * TRYING TO GET MONACO TO WORK ON SHIFT-ENTER KEYBINDING
    */
   useEffect(() => {
     if (editorRef.current) {
@@ -437,26 +436,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     }
   }, [s.kernel]);
 
-  /**
-   * Resizes the editor when the window is resized
-   * or when the editorHeight changes.
-   *
-   * This is needed because the editor is not responsive
-   * and automaticLayout is set to false to make the editor
-   * resizeable and not trigger a ResizeObserver loop limit
-   * exceeded error.
-   */
-  useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.layout({
-        width: props.app.data.size.width - 60,
-        height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
-        minHeight: 150,
-        minWidth: 150,
-      } as monaco.editor.IDimension);
-    }
-  }, [props.app.data.size.width, props.editorHeight]);
-
   return (
     <>
       <Flex direction={'row'}>
@@ -464,6 +443,8 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
           defaultValue={s.code} // code to initialize the editor with
           language={s.language} // language of the editor
           options={monacoOptions}
+          height={props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150}
+          width={props.app.data.size.width - 60}
           theme={defaultTheme}
           onMount={handleMount}
           onChange={handleChange}

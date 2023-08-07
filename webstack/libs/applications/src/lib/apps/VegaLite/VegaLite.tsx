@@ -14,8 +14,7 @@ import { useParams } from 'react-router';
 import { Button, ButtonGroup, Box } from '@chakra-ui/react';
 
 // Import Monaco Editor
-import Editor, { Monaco, useMonaco } from "@monaco-editor/react";
-
+import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
 
 // Sage3 Imports
 import { useAppStore, useUser } from '@sage3/frontend';
@@ -23,7 +22,6 @@ import { App } from '../../schema';
 import { state as AppState } from '.';
 import { AppWindow } from '../../components';
 import { debounce } from 'throttle-debounce';
-
 
 /* App component for VegaLite */
 
@@ -68,30 +66,31 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box style={{
-        width: '95%',
-        height: '100%',
-        border: 'none',
-        marginTop: 15,
-        marginLeft: 15,
-        marginRight: 0,
-        marginBottom: 10,
-        padding: 0,
-        overflow: 'hidden',
-        borderRadius: '8px',
-      }}
+      <Box
+        style={{
+          width: '95%',
+          height: '100%',
+          border: 'none',
+          marginTop: 15,
+          marginLeft: 15,
+          marginRight: 0,
+          marginBottom: 10,
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: '8px',
+        }}
       >
         <Editor
           defaultValue={spec}
           onChange={handleTextChange}
-          height={"95%"}
+          height={'95%'}
           language={'json'}
           options={{
-            fontSize: '10px',
+            // fontSize: '10px',
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
-            "overviewRulerBorder": false,
-            "overviewRulerLanes": 0,
+            overviewRulerBorder: false,
+            overviewRulerLanes: 0,
           }}
         />
       </Box>

@@ -6,389 +6,433 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useUser } from '@sage3/frontend';
+import { truncateWithEllipsis, useAppStore, useHexColor, useUser } from '@sage3/frontend';
 import {
-  Alert, AlertIcon,
+  Badge,
   Box,
-  Button,
-  Flex,
+  ButtonGroup,
   HStack,
-  IconButton, Image, Input,
-  Spinner, Text,
-  Textarea, Toast,
+  IconButton,
+  Spacer,
+  Spinner,
+  Stack,
+  Textarea,
   Tooltip,
   useColorModeValue,
   useToast,
-  VStack
+  useDisclosure,
+  Code,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
-
-import { state as AppState, fieldT } from './index';
 import { AppWindow } from '../../components';
-
+import { state as AppState } from './index';
 
 // Styling
-import './styling.css';
-import { MdClearAll, MdPlayArrow } from "react-icons/md";
-import { useEffect, useRef, useState } from "react";
+import './styles.css';
+// import { MdClearAll, MdCode, MdCodeOff, MdHelp, MdHideSource, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdClearAll, MdHelp, MdPlayArrow, MdStop } from 'react-icons/md';
+import { useEffect, useState } from 'react';
 
-// import AceEditor from "react-ace";
-import { v4 as getUUID } from "uuid";
-import { User } from "@sage3/shared/types";
-import Ansi from "ansi-to-react";
+import { v4 as getUUID } from 'uuid';
+
+import { ToolbarComponent } from './components/toolbar';
+import { HelpModal } from './components/help';
+import { Outputs } from './components/outputs';
+import { CodeEditor } from './components/editor';
+import { KernelInfo } from '../KernelDashboard';
+// import { BiHide, BiShow } from 'react-icons/bi';
+
+/**
+ * Seer App
+ */
 
 /* App component for Seer */
-const MARGIN = 2;
-
 function AppComponent(props: App): JSX.Element {
-
+  // Make a toast to show errors
+  const toast = useToast();
+  const { user } = useUser();
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const [code, setCode] = useState<string>(s.code);
-  const [fieldType, setFieldType] = useState<fieldT>(s.fieldType);
+  // const update = useAppStore((state) => state.update);
+  const [prompt, setPrompt] = useState<string>(s.prompt);
+  const defaultPlaceHolderValue = 'Tell me what you want to do...';
+  const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
+  const [myKernels, setMyKernels] = useState(s.kernels);
+  const [access, setAccess] = useState<boolean>(false);
+  const boardId = props.data.boardId;
+  // Needed for Div resizing
+  // const [editorHeight, setEditorHeight] = useState(150); // not beign used?
+  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
+  const accessDeniedColor = '#EE4B2B';
+  const green = useHexColor('green');
+  const [online, setOnline] = useState(false);
+  const [kernel, setKernel] = useState<string>(s.kernel);
 
+  /**
+   * Populate the user's kernels and check if the user has access to the kernel
+   */
+  useEffect(() => {
+    let kernelId = '';
+    if (s.kernels) {
+      const myKernels = s.kernels.reduce((kernels, kernel) => {
+        if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === user?._id))) {
+          kernels.push(kernel);
+        }
+        return kernels;
+      }, [] as KernelInfo[]);
+      if (s.kernel) {
+        const kernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
+        setAccess(kernel ? true : false);
+        kernelId = kernel ? kernel.kernel_id : 'restricted';
+      }
+      setKernel(kernelId);
+    }
+  }, [JSON.stringify(s.kernels), s.kernel]);
 
+  useEffect(() => {
+    setOnline(s.online);
+  }, [s.online]);
+
+  // const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
+  // const [showCode, setShowCode] = useState<boolean>(false);
+  // const [showOutput, setShowOutput] = useState<boolean>(false);
+
+  const SPACE = 2;
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+
+  // useEffect(() => {
+  //   if (!s.output) return;
+  //   // set the parsed output if execute_result or display_data is present
+  //   const parsed = JSON.parse(s.output);
+  //   parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
+  //     ? setShowCode(true)
+  //     : setShowCode(false);
+  //   console.log('markdown', isMarkdown);
+  // }, [s.output]);
+
+  // function getKernels() {
+  //   if (!user) return;
+  //   updateState(props._id, {
+  //     executeInfo: {
+  //       executeFunc: 'get_available_kernels',
+  //       params: { _uuid: user._id },
+  //     },
+  //   });
+  // }
+
+  // Set the title on start
+  // useEffect(() => {
+  //   // update the title of the app
+  //   if (props.data.title !== 'Seer') {
+  //     update(props._id, { title: 'Seer' });
+  //   }
+  //   getKernels();
+  // }, []);
+
+  // useEffect(() => {
+  //   // Get all kernels that I'm available to see
+  //   const kernels: { value: Record<string, any>; key: string }[] = [];
+  //   s.availableKernels.forEach((kernel) => {
+  //     if (kernel.value.is_private) {
+  //       if (kernel.value.owner_uuid == user?._id) {
+  //         kernels.push(kernel);
+  //       }
+  //     } else {
+  //       kernels.push(kernel);
+  //     }
+  //   });
+  //   setMyKernels(kernels);
+  // }, [JSON.stringify(s.availableKernels)]);
+
+  // useEffect(() => {
+  //   if (s.kernel == '') {
+  //     setAccess(true); // need to check this...it's weird
+  //   } else {
+  //     const access = myKernels.find((kernel) => kernel.key === s.kernel);
+  //     setAccess(access ? true : false);
+  //     if (access) {
+  //       const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
+  //       // update the title of the app
+  //       update(props._id, { title: 'Seer: kernel [' + name + ']' });
+  //     }
+  //   }
+  // }, [s.kernel, myKernels]);
+
+  const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
+  };
+
+  useEffect(() => {
+    if (s.prompt !== prompt) {
+      setPrompt(s.prompt);
+    }
+  }, [s.prompt]);
+
+  const handleGenerate = (kernel: string) => {
+    if (!kernel) {
+      toast({
+        title: 'No kernel selected',
+        description: 'Please select a kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+      });
+      return;
+    }
+    if (prompt) {
+      updateState(props._id, {
+        prompt: prompt,
+        code: '',
+        output: '',
+        executeInfo: { executeFunc: 'generate', params: { _uuid: getUUID() } },
+      });
+    }
+  };
+  // handle interrupt
+  const handleInterrupt = () => {
+    if (!user) return;
+    updateState(props._id, {
+      executeInfo: { executeFunc: 'interrupt', params: {} },
+    });
+  };
+  const handleClear = () => {
+    updateState(props._id, {
+      prompt: '',
+      output: '',
+      executeInfo: { executeFunc: '', params: {} },
+    });
+  };
 
   return (
     <AppWindow app={props}>
-      <Box
-        id="sc-container"
-        w={'100%'}
-        h={'100%'}
-        bg={bgColor}
-        overflowY={'scroll'}
+      <Box // main container
+        style={{
+          backgroundColor: useColorModeValue('#F0F2F6', '#141414'),
+          color: useColorModeValue('#000000', '#FFFFFF'),
+          fontFamily:
+            "\
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica', 'Arial', \
+          'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',\
+          ",
+          fontSize: s.fontSize + 'px',
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          width: '100%',
+          height: '100%',
+          overflowY: 'auto',
+        }}
         css={{
           '&::-webkit-scrollbar': {
-            width: '.1em',
-          },
-          '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+            width: '.5em',
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: 'teal',
-            outline: '2px solid teal',
+            borderRadius: '10px',
           },
         }}
       >
-        <InputBox app={props}
-          fieldType={fieldType}
-          setFieldType={setFieldType} />
+        <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
+        <Stack m={SPACE} mb={SPACE / 2}>
+          <Stack direction="row" mb={-1} mt={-1}>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Load the file named "test.csv"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Load a file
+            </Badge>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Select the first 10 rows of the dataframe named "working_df"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Query a dataframe
+            </Badge>
+            <Badge
+              variant="outline"
+              colorScheme="green"
+              onMouseOver={() => setPlaceHolderValue('Show me a histogram based on the column "age"')}
+              onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
+            >
+              Create a visualization
+            </Badge>
+            <Spacer />
+            {/* <Tooltip label="Show/Hide Code" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowCode(!showCode)}>
+                {showCode ? 'Show Code' : 'Hide Code'}
+              </Badge>
+            </Tooltip>
+            <Tooltip label="Show/Hide Output" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
+                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
+              </Badge>
+            </Tooltip> */}
+            <Tooltip label="Click for help" placement="top">
+              <IconButton
+                onClick={() => helpOnOpen()}
+                aria-label="Get Help"
+                colorScheme={'green'}
+                icon={<MdHelp size={'18px'} />}
+                variant={'ghost'}
+                _active={{ backgroundColor: 'transparent' }}
+                _focus={{ backgroundColor: 'transparent' }}
+                _hover={{ backgroundColor: 'transparent' }}
+                size={'24px'}
+              />
+            </Tooltip>
+            {!s.kernel && !access ? ( // no kernel selected and no access
+              <Badge variant="outline" colorScheme="red">
+                Offline{' '}
+              </Badge>
+            ) : !s.kernel && access ? ( // no kernel selected but access
+              <Badge variant="outline" colorScheme="red">
+                Error{' '}
+              </Badge>
+            ) : s.kernel && !access ? ( // kernel selected but no access
+              <Badge variant="outline" colorScheme="red">
+                No Access{' '}
+              </Badge>
+            ) : s.kernel && access ? ( // kernel selected and access
+              <Badge variant="outline" colorScheme="green">
+                Online{' '}
+              </Badge>
+            ) : null}
+          </Stack>
 
-
-        {
-          !s.output ?
-            null :
-            <OutputBox output={s.output} app={props} fieldType={fieldType} />
-        }
+          <Box // generation section container
+            style={{
+              height: '100%',
+              backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
+              minHeight: '150px',
+              border: '2px solid',
+              borderColor: '#008080',
+              borderRadius: 'md',
+            }}
+          >
+            <HStack mr={SPACE}>
+              <Textarea
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
+                    handleGenerate(s.kernel);
+                  }
+                }}
+                value={prompt}
+                onChange={handleUpdatePrompt}
+                placeholder={placeHolderValue}
+                _placeholder={{
+                  opacity: 0.5,
+                  color: useColorModeValue('#000000', '#FFFFFF'),
+                }}
+                style={{
+                  backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
+                  width: '100%',
+                  height: '100%',
+                  fontSize: s.fontSize + 'px',
+                  fontFamily: 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace',
+                  minHeight: '150px',
+                }}
+                _focus={{
+                  border: 'transparent',
+                  boxShadow: 'none',
+                }}
+                minH={'150px'}
+                border={'none'}
+                resize={'none'}
+                isDisabled={!access || !s.kernel}
+              />
+              <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+                {access ? (
+                  <Tooltip hasArrow label="Generate" placement="right-start">
+                    <IconButton
+                      onClick={() => handleGenerate(s.kernel)}
+                      aria-label={''}
+                      icon={
+                        s.executeInfo?.executeFunc === 'generate' ? (
+                          <Spinner size="sm" color="teal.500" />
+                        ) : (
+                          <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
+                        )
+                      }
+                      isDisabled={!s.kernel}
+                    />
+                  </Tooltip>
+                ) : null}
+                {access ? (
+                  <Tooltip hasArrow label="Stop" placement="right-start">
+                    <IconButton
+                      onClick={handleInterrupt}
+                      aria-label={''}
+                      isDisabled={!s.kernel || s.executeInfo?.executeFunc !== 'generate'}
+                      icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                    />
+                  </Tooltip>
+                ) : null}
+                {access ? (
+                  <Tooltip hasArrow label="Clear All" placement="right-start">
+                    <IconButton
+                      onClick={handleClear}
+                      aria-label={''}
+                      isDisabled={!s.kernel}
+                      icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
+                    />
+                  </Tooltip>
+                ) : null}
+              </ButtonGroup>
+            </HStack>
+          </Box>
+          <Stack direction="row">
+            <Badge variant="outline" colorScheme="facebook" mb={-1} mt={-1}>
+              Edit and Execute Code (Shift + Enter)
+            </Badge>
+          </Stack>
+          <Box // input section container
+            style={{
+              height: '100%',
+              width: '100%',
+              backgroundColor: useColorModeValue('#FFFFFE', '#111111'),
+              minHeight: '150px',
+              border: '2px solid',
+              borderColor: '#008080',
+              marginBottom: '-4px',
+            }}
+            hidden={false}
+          >
+            <CodeEditor app={props} access={access} editorHeight={150} online={online} />
+          </Box>
+          <Stack direction="row" hidden={false}>
+            <Badge variant="outline" colorScheme="red" mb={-1}>
+              Outputs
+            </Badge>
+            {/* <Tooltip label="Show/Hide Output" placement="top">
+              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
+                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
+              </Badge>
+            </Tooltip> */}
+            {/* <Badge variant="ghost" colorScheme="facebook" onClick={() => setShowOutput(!showOutput)}>
+              {showOutput ? <BiShow aria-label="Show Output Editor" size="16px" /> : <BiHide aria-label="Hide Output" size="16px" />}
+            </Badge> */}
+          </Stack>
+          <Box // output section container
+            style={{
+              backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
+              minHeight: '150px',
+              border: '2px solid',
+              borderColor: '#008080',
+            }}
+            hidden={false}
+          >
+            {!s.msgId ? <></> : <Outputs app={props} online={online} />}
+          </Box>
+        </Stack>
       </Box>
     </AppWindow>
   );
 }
 
-/* App toolbar component for the app Seer */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  return (
-    <>
-      {/*NTS: Ask how to add a space in the ToolbarComponent between the label*/}
-      {/*and the actual buttons. Michael did this in SageCell.*/}
-      <div style={{ marginTop: '4px' }}>
-        <Button colorScheme="green" disabled={true}> <MdPlayArrow size={'1.5em'} color='#808080'></MdPlayArrow> Execute</Button>
-      </div>
-    </>
-  );
-}
-
 export default { AppComponent, ToolbarComponent };
-
-type InputBoxProps = {
-  app: App;
-  fieldType: fieldT;
-  setFieldType: (newVal: fieldT) => void;
-};
-
-
-const InputBox = (props: InputBoxProps): JSX.Element => {
-
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const [code, setCode] = useState<string>(s.code);
-  const { user } = useUser();
-  const [fontSize, setFontSize] = useState(s.fontSize);
-  const toast = useToast();
-  const fieldType = props.fieldType;
-
-  const handleExecute = () => {
-    console.log("handling execute and code is: " + code)
-    if (code) {
-      console.log("Executing the code")
-      updateState(props.app._id, {
-        code: code,
-        output: '',
-        executeInfo: { executeFunc: 'execute', params: { _uuid: getUUID() } },
-      });
-    }
-  };
-
-  const handleClear = () => {
-    console.log("Clear was pressed, current value for code is: " + code)
-    updateState(props.app._id, {
-      code: '',
-      output: '',
-      executeInfo: { executeFunc: '', params: {} },
-    });
-    setCode("")
-    console.log("New value aftere clearn is: " + code)
-  };
-
-
-  const updateCode = (e: any) => {
-    console.log("code updated");
-    setCode(e.target.value);
-    if (e.target.value.length > 4) {
-      console.log("flipping the property");
-      props.setFieldType("text");
-    }
-    else {
-      console.log("flipping the property");
-      props.setFieldType("code");
-    }
-    console.log(code)
-  };
-
-
-  return (
-    <Box>
-      <HStack>
-        <Textarea
-          ml={MARGIN}
-          mt={MARGIN}
-          value={code}
-          onChange={updateCode}
-          placeholder='Add your code here'
-          size='lg'
-        />
-
-        <VStack pr={MARGIN} pt={MARGIN}>
-
-          <Tooltip hasArrow label="Execute" placement="right-start">
-
-            <IconButton
-              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-              onClick={handleExecute}
-              aria-label={''}
-              bg={useColorModeValue('#FFFFFF', '#000000')}
-              variant="ghost"
-              icon={
-                s.executeInfo?.executeFunc === 'execute' ? (
-                  <Spinner size="sm" color="teal.500" />
-                ) : (
-                  <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
-                )
-              }
-            />
-          </Tooltip>
-
-          <Tooltip hasArrow label="Clear All" placement="right-start">
-            <IconButton
-              boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-              onClick={handleClear}
-              aria-label={''}
-              bg={useColorModeValue('#FFFFFF', '#000000')}
-              variant="ghost"
-              icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-            />
-          </Tooltip>
-        </VStack>
-
-      </HStack>
-      <div style={{ border: "1px solid black" }}>
-        <p>CODE IS: {code}</p>
-        <p>FIELD TYPE IS: {fieldType}</p>
-      </div>
-
-
-    </Box>
-  );
-}
-
-type OutputBoxProps = {
-  output: string;
-  app: App;
-  fieldType: fieldT
-};
-
-const OutputBox = (props: OutputBoxProps): JSX.Element => {
-  // const s = props.app.data.state as AppState;
-  // const parsedJSON = JSON.parse(props.output);
-  // const fieldType = props.fieldType;
-  // // parsedJSON["stream"]["text"]
-  // return(
-  //   <div>
-  //     <div>FieldType is: {fieldType}</div>
-  //     <div>Received output is: {s.output}</div>
-  //
-  //   </div>
-  // );
-
-  const parsedJSON = JSON.parse(props.output);
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  if (!props.output) return <></>;
-  if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
-  return (
-    <Box
-      p={MARGIN}
-      m={MARGIN}
-      hidden={!parsedJSON ? true : false}
-      className="sc-output"
-      style={{
-        overflow: 'auto',
-        backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-        boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: s.fontSize + 'px',
-        color: useColorModeValue('#000000', '#FFFFFF'),
-        whiteSpace: 'pre-wrap',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-      }}
-    >
-      {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
-        <Text
-          fontSize="xs"
-          color="gray.500"
-          style={{
-            fontFamily: 'monospace',
-          }}
-        >
-          {`Out [${parsedJSON.execute_result.execution_count}]`}
-        </Text>
-      )}
-      {parsedJSON.request_id ? null : null}
-      {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
-        <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
-      ) : (
-        <Alert status="error" variant="left-accent">
-          <AlertIcon />
-          <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
-        </Alert>
-      )}
-
-      {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-        <Text id="sc-stdout">{parsedJSON.stream.text}</Text>
-      ) : (
-        <Text id="sc-stderr" color="red">
-          {parsedJSON.stream.text}
-        </Text>
-      )}
-
-      {!parsedJSON.display_data
-        ? null
-        : Object.keys(parsedJSON.display_data).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.display_data.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                default:
-                  return MapJSONObject(parsedJSON.display_data[key]);
-              }
-            });
-          }
-          return null;
-        })}
-
-      {!parsedJSON.execute_result
-        ? null
-        : Object.keys(parsedJSON.execute_result).map((key) => {
-          if (key === 'data') {
-            return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-              switch (key) {
-                case 'text/plain':
-                  if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                  return (
-                    <Text key={i} id="sc-stdout">
-                      {parsedJSON.execute_result.data[key]}
-                    </Text>
-                  );
-                case 'text/html':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                case 'image/png':
-                  return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/jpeg':
-                  return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                case 'image/svg+xml':
-                  return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                default:
-                  return null;
-              }
-            });
-          }
-          return null;
-        })}
-    </Box>
-  );
-};
-
-const MapJSONObject = (obj: any): JSX.Element => {
-  if (!obj) return <></>;
-  if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
-  return (
-    <Box
-      pl={2}
-      ml={2}
-      bg={useColorModeValue('#FFFFFF', '#000000')}
-      boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-      rounded={'md'}
-      fontSize={'16px'}
-      color={useColorModeValue('#000000', '#FFFFFF')}
-    >
-      {typeof obj === 'object'
-        ? Object.keys(obj).map((key) => {
-          if (typeof obj[key] === 'object') {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {MapJSONObject(obj[key])}
-                </Box>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={key}>
-                <Box as="span" fontWeight="bold">
-                  {key}:
-                </Box>
-                <Box as="span" ml={2}>
-                  {obj[key]}
-                </Box>
-              </Box>
-            );
-          }
-        })
-        : null}
-    </Box>
-  );
-};
-

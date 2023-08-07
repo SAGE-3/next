@@ -48,6 +48,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     if (s.online) {
       if (selected) {
         if (isPrivate) {
+          // TODO: The "locked by" is not working currently
           return [ownerId === user?._id ? 'Locked' : `Locked by ${ownerName}`, 'red'];
         }
         return ['Ready', 'green'];
@@ -163,14 +164,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       setIsPrivate(isPrivate);
     }
 
-    // const ownerId = selectedKernel?.owner;
-    // const ownerName = users.find((u: User) => u._id === ownerId)?.data.name;
-    // const isPrivate = selectedKernel?.is_private;
-    // setSelected(selectedKernel?.kernel_id ?? '');
-    // setOwnerId(ownerId ?? '');
-    // setOwnerName(ownerName ?? '');
-    // setIsPrivate(isPrivate ?? false);
-    update(props._id, { title: `SAGECell> ${selectedKernel?.alias ? selectedKernel.alias : 'untitled'}` });
+    update(props._id, { title: `Seer> ${selectedKernel?.alias ? selectedKernel.alias : 'untitled'}` });
   }, [JSON.stringify(s.kernels), s.kernel]); // include all dependencies
 
   /**
