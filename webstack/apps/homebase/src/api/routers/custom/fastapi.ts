@@ -19,7 +19,8 @@ export function FastAPIRouter() {
 
   const router = createProxyMiddleware({
     target: config.fastapi.url,
-    changeOrigin: true,
+    // changeOrigin: true,
+    pathRewrite: { '^/api/fastapi': '' },
     logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
   });

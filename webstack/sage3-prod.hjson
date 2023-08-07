@@ -36,7 +36,7 @@
 
   // Fastapi python server
   "fastapi": {
-    "url": "http://fastapi:6000"
+    "url": "http://fastapi:8000"
   },
 
   // External Services
