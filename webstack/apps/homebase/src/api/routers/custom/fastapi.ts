@@ -18,8 +18,12 @@ export function FastAPIRouter() {
   console.log('FastAPI> router for FastAPI', config.fastapi.url);
 
   const router = createProxyMiddleware({
-    target: 'http://0.0.0.0:81',
+    target: config.fastapi.url,
     changeOrigin: true,
+    secure: false,
+    headers: {
+      "Connection": "keep-alive"
+  },
     pathRewrite: (path) => {
       return path.replace('/api/fastapi', '');
     },

@@ -69,6 +69,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       const response = await fetch(`${fastApiRoute}/kernelspecs`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
       });
       const data = await response.json();
       // console.log(data);
@@ -117,6 +118,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       const response = await fetch(`${fastApiRoute}/collection`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
+        credentials:'include'
       });
       const data = await response.json();
       if (JSON.stringify(data) === JSON.stringify(s.kernels)) return;
@@ -162,6 +164,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...kernelInfo }),
+        credentials:'include'
       });
       if (response.ok) {
         getKernelCollection();

@@ -81,6 +81,7 @@ function AppComponent(props: App): JSX.Element {
     try {
       const response = await fetch(`${fastApiRoute}/collection`, {
         method: 'GET',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
@@ -116,6 +117,8 @@ function AppComponent(props: App): JSX.Element {
     if (!s.online) return;
     const response = await fetch(`${fastApiRoute}/kernels/${kernelId}`, {
       method: 'DELETE',
+      credentials: 'include',
+
     });
     if (response.ok) {
       toast({
@@ -147,6 +150,8 @@ function AppComponent(props: App): JSX.Element {
     if (!s.online) return;
     const response = await fetch(`${fastApiRoute}/restart/${kernelId}`, {
       method: 'POST',
+      credentials: 'include',
+
     });
     if (response.ok) {
       toast({
