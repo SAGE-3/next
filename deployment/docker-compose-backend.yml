@@ -16,6 +16,29 @@ services:
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
+  fastapi:
+    image: "sage3/fastapi:arm64"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${HOST}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: python src/main.py --url http://jupyter:8888
+    depends_on:
+      jupyter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   jupyter:
     image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
