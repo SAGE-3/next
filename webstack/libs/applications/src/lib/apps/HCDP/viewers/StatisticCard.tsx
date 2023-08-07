@@ -307,9 +307,9 @@ const Content = (props: {
 
   useEffect(() => {
     if (props.size.width < props.size.height) {
-      setScaleToFontSize(props.size.width);
+      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     } else {
-      setScaleToFontSize(props.size.height);
+      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
   }, [JSON.stringify(props.size)]);
   const getFormattedTimePeriod = (timePeriod: string) => {
@@ -349,8 +349,9 @@ const Content = (props: {
         }}
         position="relative"
         boxShadow={'lg'}
-        w={props.size.width}
-        h={props.size.height}
+        border={`${scaleToFontSize / 100}px solid grey`}
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
@@ -386,7 +387,7 @@ const Content = (props: {
               </Text>
               <Box
                 fontSize={scaleToFontSize / 20}
-                w={props.size.width - 200}
+                w={scaleToFontSize + 200}
                 p={scaleToFontSize / 30}
                 px={scaleToFontSize / 15}
                 // borderRadius={'lg'}
@@ -395,6 +396,7 @@ const Content = (props: {
                 overflow="visible"
                 // color="white"
                 // bg="#2A2A2A"
+                border={`${scaleToFontSize / 100}px solid grey`}
                 style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
               >
                 <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>

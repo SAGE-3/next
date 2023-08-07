@@ -91,6 +91,7 @@ export const checkAvailableVisualizations = (variable: string) => {
   switch (variable) {
     case 'Elevation, Longitude, Latitude, Name, Time':
       availableVisualizations.push({ value: 'stationMetadata', name: 'Station Metadata' });
+      availableVisualizations.push({ value: 'map', name: 'Map' });
       break;
     case 'Elevation & Current Temperature':
       availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });

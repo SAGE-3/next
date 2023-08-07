@@ -301,9 +301,9 @@ const Content = (props: {
 
   useEffect(() => {
     if (props.size.width < props.size.height) {
-      setScaleToFontSize(props.size.width);
+      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     } else {
-      setScaleToFontSize(props.size.height);
+      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
   }, [JSON.stringify(props.size)]);
   return (
@@ -328,8 +328,9 @@ const Content = (props: {
         }}
         position="relative"
         boxShadow={'lg'}
-        w={props.size.width}
-        h={props.size.height}
+        border={`${scaleToFontSize / 100}px solid grey`}
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
@@ -337,6 +338,7 @@ const Content = (props: {
         display="flex"
         flexDirection="column"
         // justifyContent={'center'}
+        // flexWrap={'wrap'}
         alignContent="center"
         textAlign={'center'}
       >

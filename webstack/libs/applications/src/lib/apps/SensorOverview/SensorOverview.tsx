@@ -33,7 +33,20 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  Heading,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  IconButton,
+  AccordionIcon,
+  AccordionPanel,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react';
+
+import { MdDelete, MdAdd } from 'react-icons/md';
+
+import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
 
 // Styling
 import './styling.css';
@@ -51,9 +64,10 @@ import CustomizeWidgets, {
 import StationMetadata from '../HCDP/viewers/StationMetadata';
 import FriendlyVariableCard from '../HCDP/viewers/FriendlyVariableCard';
 import StatisticCard from '../HCDP/viewers/StatisticCard';
+import MapViewer from '../HCDP/viewers/MapViewer';
 
 import { checkAvailableVisualizations } from '../HCDP/menu/CustomizeWidgets';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import LeafletWrapper from '../HCDP/LeafletWrapper';
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -157,7 +171,11 @@ function AppComponent(props: App): JSX.Element {
         tmpStationMetadata = sensorData;
       }
 
-      updateState(props._id, { availableVariableNames: Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS) });
+      const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
+      availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+      availableVariableNames.push('Elevation & Current Temperature');
+
+      updateState(props._id, { availableVariableNames: availableVariableNames });
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
     };
@@ -275,6 +293,11 @@ function AppComponent(props: App): JSX.Element {
                     />
                   </>
                 ) : null}
+                {props.data.state.widget.visualizationType === 'map' ? (
+                  <>
+                    <MapViewer {...props} isSelectingStations={false} />
+                  </>
+                ) : null}
               </Box>
             </HStack>
           </Box>
@@ -300,6 +323,62 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
   const fitApps = useUIStore((state) => state.fitApps);
+
+  const [map, setMap] = useState<any>(null);
+  const [stationMetadata, setStationMetadata] = useState([]);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+
+  // For color theme
+  const textColor = useColorModeValue('gray.800', 'gray.50');
+  const drawerBackgroundColor: string = useColorModeValue('gray.50', 'gray.700');
+  const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
+  const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
+
+  useEffect(() => {
+    const fetchStationData = async () => {
+      setIsLoaded(false);
+      let tmpStationMetadata: any = [];
+      let url = '';
+      console.log(stationData.map((station) => station.name));
+      const stationNames = stationData.map((station) => station.name);
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+        stationNames
+      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+        new Date()
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // if (props.data.state.widget.visualizationType === 'variableCard') {
+      //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+      //     s.stationNames
+      //   )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+      //     new Date()
+      //   )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // } else {
+      //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+      //     props.data.state.widget.startDate
+      //   }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // }
+
+      const response = await fetch(url);
+      const sensor = await response.json();
+      if (sensor) {
+        const sensorData = sensor['STATION'];
+        tmpStationMetadata = sensorData;
+      }
+
+      const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
+      availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+      availableVariableNames.push('Elevation & Current Temperature');
+
+      // updateState(props._id, { availableVariableNames: availableVariableNames });
+      setStationMetadata(tmpStationMetadata);
+      setIsLoaded(true);
+    };
+
+    fetchStationData().catch((err) => {
+      fetchStationData();
+      console.log(err);
+    });
+  }, []);
 
   const handleOpenAndEditWidget = async () => {
     const app = await createApp({
@@ -401,6 +480,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const variable = event.target.value;
     updateState(props._id, { widget: { ...s.widget, yAxisNames: [variable] } });
+
+    if (variable === 'Elevation & Current Temperature') {
+      updateState(props._id, { widget: { ...s.widget, yAxisNames: [variable] } });
+
+      // setWidget({ ...widget, yAxisNames: ['Elevation & Current Temperature'] });
+    } else {
+      updateState(props._id, { widget: { ...s.widget, yAxisNames: [variable], xAxisNames: ['date_time'] } });
+
+      // setWidget({ ...widget, yAxisNames: [value], xAxisNames: ['date_time'] });
+    }
   };
 
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -433,7 +522,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const timePeriod = e.target.value;
     const date = new Date();
-    console.log('updating');
     switch (timePeriod) {
       case 'previous24Hours':
         updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
@@ -456,28 +544,214 @@ function ToolbarComponent(props: App): JSX.Element {
   };
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
+    const stationNames = s.stationNames;
+    stationNames.push(station.name);
+    updateState(props._id, { stationNames: stationNames });
+  };
+
+  const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
+    const stationNames = s.stationNames;
+    const index = stationNames.indexOf(station.name);
+    if (index > -1) {
+      stationNames.splice(index, 1);
+    }
+    updateState(props._id, { stationNames: stationNames });
+  };
+
   return (
     <>
-      {/* <Button mr="1rem" size="xs" onClick={onOpen}>
+      <Button mr="1rem" size="xs" onClick={onOpen}>
         Select Stations
       </Button>
 
-      <Modal size="xl" isOpen={isOpen} onClose={onClose}>
+      <Modal size="xl" isOpen={true} onClose={onClose}>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Modal Title</ModalHeader>
+        <ModalContent maxH="60rem" maxW="60rem">
+          <ModalHeader>Station Selection</ModalHeader>
           <ModalCloseButton />
-          <MapContainer center={[51.505, -0.09]} zoom={13} scrollWheelZoom={false} style={{ height: `60rem`, width: `100%`, zIndex: 0 }}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={[51.505, -0.09]}>
-              <Popup>
-                A pretty CSS3 popup. <br /> Easily customizable.
-              </Popup>
-            </Marker>
-          </MapContainer>
+          <Box rounded="2xl" height={'40rem'} width="60rem">
+            <MapViewer {...props} isSelectingStations={true} />
+          </Box>
+          <ModalBody>
+            <Box
+              transform="translate(-25px, 7px)"
+              border="3px solid"
+              borderColor={accentColor}
+              boxShadow="lg"
+              mx="3"
+              rounded="lg"
+              height={'20rem'}
+              width="30rem"
+            >
+              <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
+                <Heading color={textColor} size="md" isTruncated={true}>
+                  Available Stations
+                </Heading>
+              </Box>
+              <Accordion allowMultiple overflowY="scroll" height="15rem">
+                {!isLoaded
+                  ? props.data.state.stationNames.map((stationName: string, index: number) => {
+                      return (
+                        <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          Loading Station...
+                        </Box>
+                      );
+                    })
+                  : stationMetadata.map((station: any, index: number) => {
+                      return (
+                        <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          <AccordionItem>
+                            <AccordionButton>
+                              <Box
+                                as="span"
+                                flex="1"
+                                textAlign="left"
+                                ml={'15px'}
+                                width="5rem"
+                                whiteSpace="nowrap"
+                                overflow="hidden"
+                                textOverflow="ellipsis"
+                              >
+                                {station.NAME}
+                              </Box>
+
+                              <AccordionIcon />
+                              <Tooltip
+                                key={index}
+                                placement="top"
+                                label={
+                                  props.data.state.stationNames.length < 2
+                                    ? 'You must have at least one station selected'
+                                    : 'Remove station from list'
+                                }
+                                openDelay={300}
+                                aria-label="A tooltip"
+                              >
+                                <IconButton
+                                  icon={<MdDelete />}
+                                  aria-label="Delete Station"
+                                  ml="1rem"
+                                  colorScheme="red"
+                                  size="xs"
+                                  isDisabled={props.data.state.stationNames.length < 2}
+                                  fontWeight="bold"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (props.data.state.stationNames.length >= 2)
+                                      handleRemoveSelectedStation({
+                                        lat: station.lat as number,
+                                        lon: station.lon as number,
+                                        name: station.STID as string,
+                                        selected: true,
+                                      });
+                                  }}
+                                >
+                                  X
+                                </IconButton>
+                              </Tooltip>
+                            </AccordionButton>
+
+                            <AccordionPanel pb={4}>
+                              <UnorderedList>
+                                {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
+                                  return (
+                                    <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
+                                      <ListItem key={index}>{name}</ListItem>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </UnorderedList>
+                            </AccordionPanel>
+                          </AccordionItem>
+                        </Box>
+                      );
+                    })}
+              </Accordion>
+              {/* <Accordion allowMultiple overflowY="scroll" height="15rem">
+                {!isLoaded
+                  ? props.data.state.stationNames.map((stationName: string, index: number) => {
+                      return (
+                        <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          Loading Station...
+                        </Box>
+                      );
+                    })
+                  : stationMetadata.map((station: any, index: number) => {
+                      return (
+                        <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          <AccordionItem>
+                            <AccordionButton>
+                              <Box
+                                as="span"
+                                flex="1"
+                                textAlign="left"
+                                ml={'15px'}
+                                width="5rem"
+                                whiteSpace="nowrap"
+                                overflow="hidden"
+                                textOverflow="ellipsis"
+                              >
+                                {station.NAME}
+                              </Box>
+
+                              <AccordionIcon />
+                              <Tooltip
+                                key={index}
+                                placement="top"
+                                label={
+                                  props.data.state.stationNames.length < 2
+                                    ? 'You must have at least one station selected'
+                                    : 'Remove station from list'
+                                }
+                                openDelay={300}
+                                aria-label="A tooltip"
+                              >
+                                <IconButton
+                                  icon={<MdDelete />}
+                                  aria-label="Delete Station"
+                                  ml="1rem"
+                                  colorScheme="red"
+                                  size="xs"
+                                  isDisabled={props.data.state.stationNames.length < 2}
+                                  fontWeight="bold"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (props.data.state.stationNames.length >= 2)
+                                      handleRemoveSelectedStation({
+                                        lat: station.lat as number,
+                                        lon: station.lon as number,
+                                        name: station.STID as string,
+                                        selected: true,
+                                      });
+                                  }}
+                                >
+                                  X
+                                </IconButton>
+                              </Tooltip>
+                            </AccordionButton>
+
+                            <AccordionPanel pb={4}>
+                              <UnorderedList>
+                                {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
+                                  return (
+                                    <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
+                                      <ListItem key={index}>{name}</ListItem>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </UnorderedList>
+                            </AccordionPanel>
+                          </AccordionItem>
+                        </Box>
+                      );
+                    })}
+              </Accordion> */}
+            </Box>
+          </ModalBody>
+
           <ModalFooter>
             <Button colorScheme="blue" mr={3} onClick={onClose}>
               Close
@@ -485,7 +759,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <Button variant="ghost">Secondary Action</Button>
           </ModalFooter>
         </ModalContent>
-      </Modal> */}
+      </Modal>
 
       <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
         <Select size="xs" w="10rem" placeholder={'Select time period'} value={s.widget.timePeriod} onChange={handleSelectDateChange}>
@@ -498,7 +772,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <Text mx="1rem">OR</Text>
       <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
         <Input
-          w="240px"
+          w="10rem"
           mr="1rem"
           size="xs"
           onChange={handleDateChange}
@@ -536,29 +810,28 @@ function ToolbarComponent(props: App): JSX.Element {
         <Select
           size="xs"
           w="10rem"
-          mx="1rem"
+          ml="1rem"
           placeholder={'Select Visualization Type'}
           value={s.widget.visualizationType}
           onChange={handleVisualizationTypeChange}
         >
-          {removeVisualizationsThatRequireMultipleStations(checkAvailableVisualizations(s.widget.yAxisNames[0])).map(
-            (visualization: { value: string; name: string }, index: number) => {
-              return (
-                <option key={index} value={visualization.value}>
-                  {visualization.name}
-                </option>
-              );
-            }
-          )}
+          {checkAvailableVisualizations(s.widget.yAxisNames[0]).map((visualization: { value: string; name: string }, index: number) => {
+            return (
+              <option key={index} value={visualization.value}>
+                {visualization.name}
+              </option>
+            );
+          })}
         </Select>
       </Tooltip>
+
       {s.widget.visualizationType === 'variableCard' ? (
         <ButtonGroup size="xs" isAttached variant="outline">
           {/* <Button >Celcius</Button>
   <Button >Fahrenheit</Button> */}
         </ButtonGroup>
       ) : null}
-      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+      <Divider border={'1px'} size={'2xl'} ml="1rem" orientation="vertical" />
       <ButtonGroup ml="1rem">
         <Tooltip label={'Duplicate this chart for all other variables from this station'} aria-label="A tooltip">
           <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
@@ -571,3 +844,103 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 export default { AppComponent, ToolbarComponent };
+
+// For now, this is hard-coded. Will change when HCDP is ready.
+export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
+  {
+    lat: 20.8415,
+    lon: -156.2948,
+    name: '017HI',
+    selected: false,
+  },
+  {
+    lat: 20.7067,
+    lon: -156.3554,
+    name: '016HI',
+    selected: false,
+  },
+  {
+    lat: 20.7579,
+    lon: -156.32,
+    name: '001HI',
+    selected: false,
+  },
+  {
+    lat: 20.7598,
+    lon: -156.2482,
+    name: '002HI',
+    selected: false,
+  },
+  {
+    lat: 20.7382,
+    lon: -156.2458,
+    name: '013HI',
+    selected: false,
+  },
+  {
+    lat: 20.7104,
+    lon: -156.2567,
+    name: '003HI',
+    selected: false,
+  },
+  {
+    lat: 19.6974,
+    lon: -155.0954,
+    name: '005HI',
+    selected: false,
+  },
+  {
+    lat: 19.964,
+    lon: -155.25,
+    name: '006HI',
+    selected: false,
+  },
+  {
+    lat: 19.932,
+    lon: -155.291,
+    name: '007HI',
+    selected: false,
+  },
+  {
+    lat: 19.748,
+    lon: -155.996,
+    name: '008HI',
+    selected: false,
+  },
+  {
+    lat: 19.803,
+    lon: -155.851,
+    name: '009HI',
+    selected: false,
+  },
+  {
+    lat: 19.73,
+    lon: -155.87,
+    name: '010HI',
+    selected: false,
+  },
+  {
+    lat: 21.333,
+    lon: -157.8025,
+    name: '011HI',
+    selected: false,
+  },
+  {
+    lat: 21.3391,
+    lon: -157.8369,
+    name: '012HI',
+    selected: false,
+  },
+  {
+    lat: 22.2026,
+    lon: -159.5188,
+    name: '014HI',
+    selected: false,
+  },
+  {
+    lat: 22.1975,
+    lon: -159.421,
+    name: '015HI',
+    selected: false,
+  },
+];

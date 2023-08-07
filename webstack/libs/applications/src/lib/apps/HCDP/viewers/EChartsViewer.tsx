@@ -60,7 +60,7 @@ const EChartsViewer = (props: {
     const height = outboxRef.current.getBoundingClientRect().height;
     chartInstance.resize({
       width: props.size ? props.size.width - 20 : width,
-      height: props.size ? props.size.height - 170 : height - 120,
+      height: props.size ? props.size.height - 250 : height - 250,
     });
 
     chartInstance.setOption(chartOptions);
@@ -68,12 +68,13 @@ const EChartsViewer = (props: {
 
   // If any properties for visualization changes, update the chart options
   useEffect(() => {
+    const tmpWidget = { ...props.widget };
     async function callToChartMangaer() {
       const options = await ChartManager(
-        props.stationNames,
-        props.widget.visualizationType,
-        props.widget.yAxisNames,
-        props.widget.xAxisNames,
+        tmpWidget.stationNames,
+        tmpWidget.visualizationType,
+        tmpWidget.yAxisNames,
+        tmpWidget.xAxisNames,
         colorMode,
         props.startDate,
 
@@ -85,7 +86,7 @@ const EChartsViewer = (props: {
     if (props.isLoaded) {
       callToChartMangaer();
     }
-  }, [JSON.stringify(props.widget), JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode]);
+  }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode]);
 
   return (
     <>
@@ -104,7 +105,7 @@ const EChartsViewer = (props: {
         {props.isLoaded ? (
           <>
             <Box pb="1rem" mt="-1rem">
-              <Text textAlign={'center'} fontSize={'50px'}>
+              <Text textAlign={'center'} fontSize={'80px'}>
                 {props.stationMetadata ? stationNames : 'No Station Selected'}
               </Text>
             </Box>
@@ -118,7 +119,7 @@ const EChartsViewer = (props: {
                 alignItems="center"
                 justifyContent={'center'}
                 fontSize={'25px'}
-                pb={'2rem'}
+                pb={'4rem'}
               >
                 {props.timeSinceLastUpdate}
               </Box>
