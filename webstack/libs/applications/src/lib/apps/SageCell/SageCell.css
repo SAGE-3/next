@@ -15,73 +15,31 @@
   * It is a modified version of the css file from SageCell.
   */
 
-.sc *,
-.sc *::before,
-.sc *::after {
+.grab-bar {
+  flex: 1;
+  margin: 1px 0;
+  padding: 4px;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=)
+    teal no-repeat center !important;
+  cursor: row-resize;
+}
+
+.yRemoteSelectionHead {
+  position: absolute;
+  height: 100%;
   box-sizing: border-box;
 }
-.sc * {
-  margin: 0;
-}
-.sc html,
-.sc body {
-  height: 100%;
-}
-.sc body {
-  line-height: calc(1em + 0.5rem);
-  -webkit-font-smoothing: antialiased;
-}
-.sc img,
-.sc picture,
-.sc video,
-.sc canvas,
-.sc svg {
-  display: block;
-  max-width: 95%;
-}
-.sc input,
-.sc button,
-.sc textarea,
-.sc select {
-  font: inherit;
-}
-.sc p,
-.sc h1,
-.sc h2,
-.sc h3,
-.sc h4,
-.sc h5,
-.sc h6 {
-  overflow-wrap: break-word;
-}
-.sc #root,
-.sc #__next {
-  isolation: isolate;
-}
-
-.arrow-top {
-  -webkit-transform: rotate(45deg);
-  transform: rotate(45deg);
-  width: 8px;
-  height: 8px;
-  border: solid teal;
-  border-width: 2px 0 0 2px;
-  margin: 0 0 0 calc(50% - 4px);
-}
-
-.arrow-down {
-  -webkit-transform: rotate(45deg);
-  transform: rotate(45deg);
-  width: 8px;
-  height: 8px;
-  border: solid teal;
-  border-width: 0 2px 2px 0;
-  margin: 0 0 0 calc(50% - 4px);
+.yRemoteSelectionHead::after {
+  position: absolute;
+  content: ' ';
+  border-radius: 4px;
+  left: -4px;
+  top: -5px;
 }
 
 .output {
   font-family: 'Monaco', 'Courier New', Courier, monospace;
-  padding-left: 1em;
+  padding-left: 0.5rem; /* aligns with code editor */
   display: block;
   font-size: 'inherit';
   white-space: pre-wrap;
@@ -133,6 +91,7 @@
   border-bottom: 4px solid #212121;
 }
 /********* Dark Mode *********/
+
 .output-area-dark table {
   /* border: 1px solid #cecece; */
   border: 1px solid #515151;
@@ -182,4 +141,13 @@
 
 .output-area-dark tbody tr:last-of-type {
   border-bottom: 2px solid #262626;
+}
+
+.output_html {
+  font-family: 'Monaco', 'Courier New', Courier, monospace;
+  display: block;
+  font-size: 'inherit';
+  white-space: pre-wrap;
+  overflow: auto;
+  line-height: calc(1em + 0.5rem);
 }
