@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useUser, useHexColor } from '@sage3/frontend';
+import { useUser, useHexColor, useAppStore } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -21,6 +21,7 @@ import { ToolbarComponent } from './components/toolbar';
 import { StatusBar } from './components/status';
 
 import './SageCell.css';
+import { pingServer, fetchKernels } from './useKernelUtils';
 import { KernelInfo } from '../KernelDashboard';
 
 /**
@@ -33,43 +34,87 @@ import { KernelInfo } from '../KernelDashboard';
 function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   if (!user) return <></>;
-  const userId = user._id;
+  // sage state
   const s = props.data.state as AppState;
-  const boardId = props.data.boardId;
-
+  const updateState = useAppStore((state) => state.updateState);
+  // local state
+  const [online, setOnline] = useState(true);
+  // const baseURL = `${window.location.protocol}//${window.location.hostname}:81`;
   const [access, setAccess] = useState(true);
-  // Needed for Div resizing
+  // styles
   const [editorHeight, setEditorHeight] = useState(150); // not beign used?
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = '#EE4B2B';
   const green = useHexColor('green');
-  const [online, setOnline] = useState(false);
-  const [kernel, setKernel] = useState<string>(s.kernel);
+  // const [selected, setSelected] = useState<KernelInfo | undefined>(s.kernels?.find((kernel) => kernel.kernel_id === s.kernel));
 
   /**
-   * Populate the user's kernels and check if the user has access to the kernel
+   * Initialize the app state
    */
   useEffect(() => {
-    let kernelId = '';
-    if (s.kernels) {
-      const myKernels = s.kernels.reduce((kernels, kernel) => {
-        if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === userId))) {
-          kernels.push(kernel);
-        }
-        return kernels;
-      }, [] as KernelInfo[]);
-      if (s.kernel) {
-        const kernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
-        setAccess(kernel ? true : false);
-        kernelId = kernel ? kernel.kernel_id : 'restricted';
+    pingServer().then((online) => {
+      if (online !== s.online) {
+        updateState(props._id, { online });
       }
-      setKernel(kernelId);
+      fetchKernels().then((kernels) => {
+        if (kernels !== s.kernels) {
+          updateState(props._id, { kernels });
+        }
+        const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+        setAccess(selectedKernel && selectedKernel.is_private ? selectedKernel.owner === user?._id : false);
+      });
+    });
+    if (s.kernel === '' && s.kernels?.length > 0) {
+      const firstPublicKernel = s.kernels?.find((kernel) => !kernel.is_private);
+      if (firstPublicKernel) {
+        updateState(props._id, { kernel: firstPublicKernel.kernel_id });
+      }
     }
-  }, [JSON.stringify(s.kernels), s.kernel]);
+  }, []);
 
+  function refreshState() {
+    pingServer().then((online) => {
+      if (online !== s.online) {
+        updateState(props._id, { online });
+      }
+      fetchKernels().then((kernels) => {
+        if (kernels !== s.kernels) {
+          updateState(props._id, { kernels });
+        }
+        const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+        setAccess(selectedKernel && selectedKernel.is_private ? selectedKernel.owner === user?._id : false);
+      });
+    });
+    if (s.kernel === '' && s.kernels?.length > 0) {
+      const firstPublicKernel = s.kernels?.find((kernel) => !kernel.is_private);
+      if (firstPublicKernel) {
+        updateState(props._id, { kernel: firstPublicKernel.kernel_id });
+      }
+    }
+  }
+
+  /**
+   * Update local state if the online status changes
+   * @param {boolean} online
+   */
   useEffect(() => {
-    setOnline(s.online);
-  }, [s.online]);
+    if (online !== s.online) {
+      setOnline(s.online);
+    }
+    if (!s.online) {
+      updateState(props._id, {
+        streaming: false,
+        kernel: '',
+        kernels: [],
+        msgId: '',
+      });
+    }
+  }, [s.online, online]);
+
+  // useEffect(() => {
+  //   const selectedKernel = s.kernels?.find((kernel) => kernel.kernel_id === s.kernel);
+  //   setAccess(selectedKernel && selectedKernel.is_private ? selectedKernel.owner === user?._id : false);
+  // }, [s.kernel, s.kernels]);
 
   // handle mouse move event
   const handleMouseMove = (e: MouseEvent) => {
@@ -89,9 +134,9 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
+      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'auto'} onClick={() => refreshState()}>
         <Box w={'100%'} borderBottom={`5px solid ${access ? green : accessDeniedColor}`}>
-          <StatusBar kernel={kernel} access={access} online={online} />
+          <StatusBar kernel={s.kernel} access={access} online={online} />
         </Box>
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
           <CodeEditor app={props} access={access} editorHeight={editorHeight} online={online} />
