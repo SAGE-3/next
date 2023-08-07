@@ -80,7 +80,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
   }, [s.msgId]);
 
   const updateState = useAppStore((state) => state.updateState);
-  const baseURL = 'http://localhost:81';
+  const baseURL = '/api/fastapi';
 
   // /**
   //  * This function will fetch the status of a kernel

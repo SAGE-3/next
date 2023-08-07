@@ -30,6 +30,8 @@ import { App } from '../../../schema';
 import { useAppStore, useUser } from '@sage3/frontend';
 import { state as AppState } from '../index';
 
+const baseURL = '/api/fastapi';
+
 /**
  * UI toolbar for the KernelDashboard application
  *
@@ -42,7 +44,6 @@ export function ToolbarComponent(props: App): JSX.Element {
   const { user } = useUser();
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const baseURL = 'http://localhost:81';
   const toast = useToast();
 
   // Checkbox private selection
@@ -156,12 +157,14 @@ export function ToolbarComponent(props: App): JSX.Element {
       is_private: isPrivate,
       owner: user._id,
     };
+    console.log(kernelInfo);
     try {
       const response = await fetch(`${baseURL}/kernels/${kernelName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...kernelInfo }),
       });
+      console.log(response);
       if (response.ok) {
         getKernelCollection();
       }

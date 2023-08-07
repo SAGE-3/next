@@ -42,7 +42,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   const boardName = useBoardStore((state) => state.boards).find((board) => board._id === boardId)?.data.name;
 
-  const baseURL = 'http://localhost:81';
+  const baseURL = '/api/fastapi';
 
   const [badgeText, badgeColorScheme] = useMemo(() => {
     if (s.online) {

@@ -25,7 +25,7 @@ import { KernelInfo } from './index';
  */
 
 // URL for the FastAPI backend
-const baseURL = process.env.NODE_ENV === 'production' ? 'n/a' : 'http://localhost:81';
+const baseURL = '/api/fastapi';
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {

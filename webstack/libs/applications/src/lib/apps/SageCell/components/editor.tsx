@@ -37,7 +37,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
-  const baseURL = 'http://localhost:81';
+  const baseURL = '/api/fastapi';
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
   const users = useUsersStore((state) => state.users);
   // get users currently active on this board
