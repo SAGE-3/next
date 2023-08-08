@@ -17,8 +17,7 @@ import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
 import { User } from '@sage3/shared/types';
-import { KernelInfo } from '../../KernelDashboard';
-
+import { KernelInfo } from '@sage3/shared/types';
 /**
  * UI toolbar for the SAGEcell application
  *

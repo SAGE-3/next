@@ -18,7 +18,7 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { ToolbarComponent } from './components/toolbar';
-import { KernelInfo } from './index';
+import { KernelInfo } from '@sage3/shared/types';
 
 /**
  * This is a sample state for testing the UI without a backend

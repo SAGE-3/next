@@ -40,11 +40,11 @@ import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
 
-import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useKernelStore, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-import { KernelInfo } from '../../KernelDashboard';
+import { KernelInfo } from '@sage3/shared/types';
 
 import { ContentItemType } from '../index';
 
@@ -61,9 +61,12 @@ export function Outputs(props: OutputsProps): JSX.Element {
   // Local state
   const [content, setContent] = useState<ContentItemType[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
+  const executionCountColor = useHexColor('red');
   const [msgType, setMsgType] = useState<string>('');
   const [msgId, setMsgId] = useState<string>();
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
+
+  const { kernels } = useKernelStore((state) => state);
 
   useEffect(() => {
     if (!s.msgId) {
@@ -181,7 +184,6 @@ export function Outputs(props: OutputsProps): JSX.Element {
   // Get the color of the kernel owner
   useEffect(() => {
     if (s.kernel && users) {
-      const kernels = s.kernels;
       const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
       const ownerColor = users.find((el) => el._id === owner)?.data.color;
       setOwnerColor(ownerColor || '#000000');
@@ -189,7 +191,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
     return () => {
       setOwnerColor('#000000');
     };
-  }, [s.kernel, users]);
+  }, [kernels, users]);
 
   // Get the error message and put it back together since it streamed in parts
   const error =
@@ -301,7 +303,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
                   <AccordionItem>
                     <AccordionButton>
                       <Box flex="1" textAlign="left">
-                        <Text color="red" fontSize={s.fontSize}>
+                        <Text color={executionCountColor} fontSize={s.fontSize}>
                           Error: {key} is not supported in this version of SAGECell.
                         </Text>
                       </Box>
@@ -322,7 +324,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
   return (
     <Box flex="1" borderLeft={`.4rem solid ${useHexColor(ownerColor)}`} display={'flex'} flexDirection={'row'}>
       {!executionCount && executionCount < 1 ? null : (
-        <Text padding={'0.25rem'} fontSize={s.fontSize} color="red">{`[${executionCount}]:`}</Text>
+        <Text padding={'0.25rem'} fontSize={s.fontSize} color={executionCountColor}>{`[${executionCount}]:`}</Text>
       )}
       <Box p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}>
         {error && error.ename && error.evalue ? (

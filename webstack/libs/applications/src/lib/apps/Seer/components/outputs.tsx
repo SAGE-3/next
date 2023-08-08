@@ -44,7 +44,7 @@ import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-import { KernelInfo } from '../../KernelDashboard';
+import { KernelInfo } from '@sage3/shared/types';
 
 import { ContentItemType } from '../index';
 

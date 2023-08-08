@@ -1,8 +1,8 @@
-import { Badge, Stack, Spacer } from '@chakra-ui/react';
+import { Badge, Stack, Spacer, Box } from '@chakra-ui/react';
 import { truncateWithEllipsis, useHexColor } from '@sage3/frontend';
 
 interface StatusBarProps {
-  kernel: string;
+  kernelName: string;
   access: boolean;
   online: boolean;
 }
@@ -12,25 +12,31 @@ export const StatusBar = (props: StatusBarProps) => {
   const yellow = useHexColor('yellow');
   const red = useHexColor('red');
 
+  const accessDeniedColor = useHexColor('red');
+  const accessAllowColor = useHexColor('green');
+
   return (
-    <Stack direction="row" p={1}>
-      <Badge variant="ghost" color={!props.access ? yellow : green}>
-        {props.kernel ? `Kernel: ${truncateWithEllipsis(props.kernel, 8)}` : 'No Kernel Selected'}
-      </Badge>
-      <Spacer />
-      {!props.online ? ( // no kernel selected and no access
-        <Badge variant="ghost" color={red}>
-          Offline
-        </Badge>
-      ) : props.online ? ( // no kernel selected but access
-        <Badge variant="ghost" color={props.kernel ? green : yellow}>
-          Online
-        </Badge>
-      ) : !props.access ? ( // kernel selected but no access
-        <Badge variant="ghost" color={red}>
-          No Access
-        </Badge>
-      ) : null}
-    </Stack>
+    <Box w={'100%'} borderBottom={`5px solid ${props.access ? accessAllowColor : accessDeniedColor}`}>
+      <Stack direction="row" p={1}>
+        {!props.online ? (
+          <></>
+        ) : (
+          <Badge variant="ghost" color={props.kernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
+            {props.kernelName ? `Kernel: ${props.kernelName}` : 'No Kernel Selected'}
+          </Badge>
+        )}
+
+        <Spacer />
+        {props.online ? ( // no kernel selected and no access
+          <Badge variant="ghost" color={green}>
+            Online
+          </Badge>
+        ) : (
+          <Badge variant="ghost" color={red}>
+            Offline
+          </Badge>
+        )}
+      </Stack>
+    </Box>
   );
 };

@@ -6,24 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// React Imports
+// React imports
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
-// SAGE3 Imports
-import { useUser, useHexColor } from '@sage3/frontend';
+// SAGE3 imports
+import { useUser, useHexColor, useAppStore, useKernelStore } from '@sage3/frontend';
 
 // App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
 
-// Component Imports
+// Componet imports
 import { CodeEditor, Outputs, ToolbarComponent, StatusBar } from './components';
 
-// Style Impots
+// Styling
 import './SageCell.css';
-import { KernelInfo } from '../KernelDashboard';
 
 /**
  * SageCell - SAGE3 application
@@ -33,50 +32,53 @@ import { KernelInfo } from '../KernelDashboard';
  */
 
 function AppComponent(props: App): JSX.Element {
-  // App State
-  const s = props.data.state as AppState;
-  const boardId = props.data.boardId;
-
-  // User info
   const { user } = useUser();
   if (!user) return <></>;
-  const userId = user._id;
 
-  // Access info
+  // App state
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
+
+  // Local state
   const [access, setAccess] = useState(true);
 
-  // Styling
+  // Styles
   const [editorHeight, setEditorHeight] = useState(150); // not beign used?
-  const backgroundColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useHexColor('red');
-  const accessAllowedColor = useHexColor('green');
-  // const [online, setOnline] = useState(false);
-  const [kernel, setKernel] = useState<string>(s.kernel);
+  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
+
+  // Kernel Store
+  const { apiStatus, kernels } = useKernelStore((state) => state);
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  useEffect(() => {
+    // If the API Status is down, set the publicKernels to empty array
+    if (!apiStatus) {
+      setAccess(false);
+      return;
+    } else {
+      const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+      setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
+      const isPrivate = selectedKernel?.is_private;
+      const owner = selectedKernel?.owner;
+      if (!isPrivate) setAccess(true);
+      else if (isPrivate && owner === user?._id) setAccess(true);
+      else setAccess(false);
+    }
+  }, [apiStatus, kernels, s.kernel, user]);
 
   /**
-   * Populate the user's kernels and check if the user has access to the kernel
+   * Update local state if the online status changes
+   * @param {boolean} online
    */
   useEffect(() => {
-    let kernelId = '';
-    if (s.kernels) {
-      const myKernels = s.kernels.reduce((kernels, kernel) => {
-        if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === userId))) {
-          kernels.push(kernel);
-        }
-        return kernels;
-      }, [] as KernelInfo[]);
-      if (s.kernel) {
-        const kernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
-        setAccess(kernel ? true : false);
-        kernelId = kernel ? kernel.kernel_id : 'restricted';
-      }
-      setKernel(kernelId);
+    if (!apiStatus) {
+      updateState(props._id, {
+        streaming: false,
+        kernel: '',
+        msgId: '',
+      });
     }
-  }, [JSON.stringify(s.kernels)]);
-
-  // useEffect(() => {
-  //   setOnline(s.online);
-  // }, [s.online]);
+  }, [apiStatus]);
 
   // handle mouse move event
   const handleMouseMove = (e: MouseEvent) => {
@@ -90,19 +92,16 @@ function AppComponent(props: App): JSX.Element {
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
-  // handle editor resize
   const handleEditorResize = (deltaY: number) => {
     setEditorHeight((prevHeight) => prevHeight + deltaY); // update the Monaco editor height
   };
 
   return (
     <AppWindow app={props}>
-      <VStack w={'100%'} h={'100%'} bg={backgroundColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
-        <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowedColor : accessDeniedColor}`}>
-          <StatusBar kernel={kernel} access={access} online={s.online} />
-        </Box>
+      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'hidden'}>
+        <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
-          <CodeEditor app={props} access={access} editorHeight={editorHeight} online={s.online} />
+          <CodeEditor app={props} access={access} editorHeight={editorHeight} online={apiStatus} />
           {/* The grab bar */}
           <Box
             className="grab-bar"
@@ -112,7 +111,7 @@ function AppComponent(props: App): JSX.Element {
               document.addEventListener('mouseup', handleMouseUp);
             }}
           />
-          <Outputs app={props} online={s.online} />
+          <Outputs app={props} online={apiStatus} />
         </Box>
       </VStack>
     </AppWindow>

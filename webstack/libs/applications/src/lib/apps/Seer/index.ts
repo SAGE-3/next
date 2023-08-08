@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { kernelInfo, KernelInfo } from '../KernelDashboard';
+import { KernelInfoSchema, KernelInfo } from '@sage3/shared/types';
 
 /**
  * SAGE3 application: Seer
@@ -61,7 +61,7 @@ export const schema = z.object({
   session: z.string(),
   online: z.boolean(),
   prompt: z.string(),
-  kernels: z.array(kernelInfo),
+  kernels: z.array(KernelInfoSchema),
   executeInfo: executeInfoSchema,
 });
 

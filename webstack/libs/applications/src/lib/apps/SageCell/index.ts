@@ -11,7 +11,6 @@
  * created by: SAGE3 team
  */
 import { z } from 'zod';
-import { kernelInfo, KernelInfo } from '../KernelDashboard';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
@@ -53,11 +52,8 @@ export const schema = z.object({
   streaming: z.boolean(),
   language: z.string(),
   fontSize: z.number(),
-  theme: z.string(),
   kernel: z.string(),
   session: z.string(),
-  online: z.boolean(),
-  kernels: z.array(kernelInfo),
   executeInfo: executeInfoSchema,
 });
 
@@ -72,11 +68,8 @@ export const init: Partial<state> = {
   streaming: false,
   language: 'python',
   fontSize: 16,
-  theme: 'vs-dark',
   kernel: '',
   session: '',
-  online: false,
-  kernels: [] as KernelInfo[],
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 

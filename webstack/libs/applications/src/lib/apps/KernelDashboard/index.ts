@@ -7,27 +7,11 @@
  */
 
 import { z } from 'zod';
-
-/**
- * SAGE3 application: KernelDashboard
- * created by: SAGE3 Team
- */
-
-export const kernelInfo = z.object({
-  kernel_id: z.string(),
-  room: z.string(),
-  board: z.string(),
-  name: z.string(),
-  alias: z.string(),
-  is_private: z.boolean(),
-  owner: z.string(),
-});
-
-export type KernelInfo = z.infer<typeof kernelInfo>;
+import { KernelInfoSchema } from '@sage3/shared/types';
 
 export const schema = z.object({
   kernelSpecs: z.array(z.string()),
-  kernels: z.array(kernelInfo),
+  kernels: z.array(KernelInfoSchema),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.any(),

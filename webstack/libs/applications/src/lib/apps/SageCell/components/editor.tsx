@@ -6,23 +6,30 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+// React imports
+import { useEffect, useState } from 'react';
+
+// Chakra Imports
 import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
-// Monaco + YJS imports
+// Monaco Imports
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+
+// Yjs Imports
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
 // SAGE3 imports
-import { useAppStore, useUser, useUsersStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
+import { useHexColor, useKernelStore, useAppStore, useUser, useUsersStore, FastAPI } from '@sage3/frontend';
+
+// App Imports
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
-// Props for the CodeEditor component
+// Code Editor Props
 type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
@@ -31,44 +38,45 @@ type CodeEditorProps = {
 };
 
 /**
- * A code editor based on Monaco plus YJS
+ * Editor component for the SageCell application
  * @param props
  * @returns
  */
 export function CodeEditor(props: CodeEditorProps): JSX.Element {
+  // App State
   const s = props.app.data.state as AppState;
-
   const updateState = useAppStore((state) => state.updateState);
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
-  const baseURL = '/api/fastapi';
+
+  // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
+
+  // Users
   const users = useUsersStore((state) => state.users);
-  // get users currently active on this board
   const { user } = useUser();
   const userId = user?._id;
   const userInfo = users.find((u) => u._id === userId)?.data;
   const userName = userInfo?.name;
   const userColor = useHexColor(userInfo?.color as string);
-  const [fontSize, setFontSize] = useState(s.fontSize);
-  const [numClients, setNumClients] = useState<number>(0);
-  const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
-  const [msgId, setMsgId] = useState<string>(s.msgId);
-  const toast = useToast();
-  const white = useHexColor('white');
+
+  // Room and Board info
   const roomId = props.app.data.roomId;
   const boardId = props.app.data.boardId;
 
-  useEffect(() => {
-    if (!props.online) {
-      console.log('The Jupyter proxy server appears to be offline.');
-      updateState(props.app._id, {
-        streaming: false,
-        kernel: '',
-        kernels: [],
-        msgId: '',
-      });
-    }
-  }, [props.online]);
+  // Local state
+  const [fontSize, setFontSize] = useState(s.fontSize);
+  const [numClients, setNumClients] = useState<number>(0);
+  const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
+
+  // YJS and Monaco
+  const [provider, setProvider] = useState<WebsocketProvider>();
+  const [binding, setBinding] = useState<MonacoBinding>();
+  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>();
+
+  // Kernel Store
+  const { apiStatus } = useKernelStore((state) => state);
+
+  // Toast
+  const toast = useToast();
 
   const monacoOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
@@ -96,23 +104,23 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     readOnly: !props.access,
   };
 
-  /**
-   *
-   * @param editor
-   * @param monaco
-   * @returns
-   */
-  const handleMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
-
-    editorRef.current.layout({
+  const onEditorDidMount: OnMount = (editor, monaco) => {
+    // sets the initial size of the editor manually since automaticLayout is set to false
+    editor.layout({
       width: props.app.data.size.width - 60,
       height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
       minHeight: '100%',
       minWidth: '100%',
     } as monaco.editor.IDimension);
 
-    editorRef.current.addAction({
+    // actions
+    editor.addAction({
+      id: 'execute',
+      label: 'Execute',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: handleExecute,
+    });
+    editor.addAction({
       id: 'increase-font-size',
       label: 'Increase Font Size',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
@@ -120,8 +128,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         setFontSize((prevSize) => prevSize + 1);
       },
     });
-
-    editorRef.current?.addAction({
+    editor.addAction({
       id: 'decrease-font-size',
       label: 'Decrease Font Size',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
@@ -129,8 +136,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         setFontSize((prevSize) => prevSize - 1);
       },
     });
-
-    editorRef.current?.addAction({
+    editor.addAction({
       id: 'reset-font-size',
       label: 'Reset Font Size',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR],
@@ -138,162 +144,121 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         setFontSize(s.fontSize);
       },
     });
-
-    editorRef.current?.addAction({
+    editor.addAction({
       id: 'save',
       label: 'Save',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: () => {
-        const text = editorRef.current?.getValue();
+        const text = editor.getValue();
         if (text) {
           updateState(props.app._id, { code: text });
+          console.log('saving code');
         }
       },
     });
-
-    editorRef.current?.addAction({
-      id: 'execute',
-      label: 'Execute',
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-      run: handleExecute,
-    });
-
-    const ydoc = new Y.Doc();
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, ydoc);
-    const yText = ydoc.getText('monaco');
-    // Initialize yjs with the current code
-    yText.insert(0, s.code);
-
-    const model = editor.getModel() as monaco.editor.ITextModel;
-    const binding = new MonacoBinding(yText, model, new Set([editor]), provider.awareness);
-
-    provider.awareness.setLocalStateField('user', {
-      id: user?._id,
-      name: userName,
-      color: userColor,
-    });
-    provider.awareness.setLocalStateField('cursor', {
-      position: editor.getPosition(),
-      selection: editor.getSelection(),
-    });
-    provider.awareness.on('status', (event: { status: 'disconnected' | 'connecting' | 'connected' }) => {
-      console.log(event.status); // logs "connected" or "disconnected"
-    });
-    provider.awareness.on('change', () => {
-      // update the css for the cursor based on the user's color
-      // Update cursor colors based on user color
-      const states = provider.awareness.getStates();
-      // get a list of the number of unique clients in the room
-
-      for (const [clientId, state] of states.entries()) {
-        // Ignore local client state
-        if (clientId !== provider.awareness.clientID) {
-          // Create new style element
-          const style = document.createElement('style');
-          style.id = `style-${clientId}`;
-          // Apply user color and name to CSS
-          const css = `
-            .yRemoteSelection {
-              background-color: ${state.user.color} !important;
-              margin-left: -1px;
-              margin-right: -1px;
-              pointer-events: none;
-              position: relative;
-              word-break: normal;
-            }
-
-            .yRemoteSelection-${clientId} {
-              border-left: 1px solid ${state.user.color} !important;
-              border-right: 1px solid ${state.user.color} !important;
-            }
-
-            // .yRemoteSelection-${clientId}::before {
-            //   content: '${truncateWithEllipsis(state.user.name, 6)}';
-            //   position: absolute;
-            //   top: -${s.fontSize}px;
-            //   left: 0;
-            //   padding: 0 0.25rem;
-            //   font-size: 0.75rem;
-            //   line-height: 0.9rem;
-            //   color: ${state.user.color};
-            //   background-color: ${white};
-            //   border-radius: 4px;
-            //   border: 1px solid ${state.user.color};
-            //   pointer-events: none;
-            // }
-
-            .monaco-editor-overlaymessage {
-              transform: scale(0.8);
-            }
-          `;
-
-          style.appendChild(document.createTextNode(css));
-          // Remove old style element if it exists
-          const oldStyle = document.getElementById(`style-${clientId}`);
-          if (oldStyle) {
-            document.head.removeChild(oldStyle);
-          }
-          // Append the style element to the document head
-          document.head.appendChild(style);
-        }
-      }
-
-      if (provider.awareness.getStates().size !== numClients) {
-        // const uniqueClients = new Set(states.keys());
-        // const activeUsers = Array.from(uniqueClients).map((id) => states.get(id)?.user.id);
-        // console.log('activeUsers', activeUsers);
-        setNumClients(provider.awareness.getStates().size);
-      }
-    });
-
-    return () => {
-      binding.destroy();
-      provider?.disconnect();
-    };
+    setEditor(editor);
   };
 
   useEffect(() => {
-    editorRef.current?.updateOptions({
+    if (editor && !binding && !provider) {
+      const ydoc = new Y.Doc();
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, ydoc);
+      const yText = ydoc.getText('monaco');
+      const model = editor.getModel() as monaco.editor.ITextModel;
+
+      provider.awareness.setLocalStateField('user', {
+        id: user?._id,
+        name: userName,
+        color: userColor,
+      });
+
+      provider.awareness.setLocalStateField('cursor', {
+        position: editor.getPosition(),
+        selection: editor.getSelection(),
+      });
+
+      provider.awareness.on('change', () => {
+        // Update cursor colors based on user color
+        const states = provider.awareness.getStates();
+        // get a list of the number of unique clients in the room
+        for (const [clientId, state] of states.entries()) {
+          // Ignore local client state
+          if (clientId !== provider.awareness.clientID) {
+            // Create new style element
+            const style = document.createElement('style');
+            style.id = `style-${clientId}`;
+            // Apply user color and name to CSS
+            const css = `
+              .yRemoteSelection-${clientId} {
+                background-color: ${state.user.color} !important;
+                margin-left: -1px;
+                margin-right: -1px;
+                pointer-events: none;
+                position: relative;
+                word-break: normal;
+              }
+
+              .yRemoteSelection-${clientId} {
+                border-left: 1px solid ${state.user.color} !important;
+                border-right: 1px solid ${state.user.color} !important;
+              }
+
+              .monaco-editor-overlaymessage {
+                transform: scale(0.8);
+              }
+            `;
+
+            style.appendChild(document.createTextNode(css));
+            // Remove old style element if it exists
+            const oldStyle = document.getElementById(`style-${clientId}`);
+            if (oldStyle) {
+              document.head.removeChild(oldStyle);
+            }
+            // Append the style element to the document head
+            document.head.appendChild(style);
+          }
+        }
+        // Update the number of clients in the room
+        setNumClients(states.size);
+      });
+      setProvider(provider);
+      setBinding(new MonacoBinding(yText, model, new Set([editor]), provider.awareness));
+    }
+
+    return () => {
+      if (binding) binding.destroy();
+      if (provider) provider?.disconnect();
+      setBinding(undefined);
+      setProvider(undefined);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    editor?.updateOptions({
       fontSize: fontSize,
     });
   }, [fontSize]);
 
-  useEffect(() => {
-    // do something drastic if there are too many authors
-    if (numClients > 4) {
-      // set the editor to read only
-      editorRef.current?.updateOptions({
-        readOnly: true,
-      });
-    } else {
-      editorRef.current?.updateOptions({
-        readOnly: !props.access,
-      });
-    }
-  }, [numClients]);
-
   /**
    * Saves the code to the database every 5 seconds
-   * if the code has changed since the last update
-   * and there is only one client
-   *
+   * TODO: Fix this to save as debounce instead of throttle
    * @param value
    * @param event
    * @returns
    */
   const handleChange: OnChange = (value, event) => {
-    editorRef.current?.onDidChangeCursorPosition((ev: any) => {
+    editor?.onDidChangeCursorPosition((ev) => {
       setCursorPosition({ r: ev.position.lineNumber, c: ev.position.column });
     });
     if (numClients > 1) return;
     if (event.changes.length > 10) {
-      const text = editorRef.current?.getValue();
+      const text = editor?.getValue();
       if (text) {
         const updateDelta = Date.now() - props.app._updatedAt;
         // console.log('delta', delta);
         if (updateDelta > 500) {
-          // console.log('saving code ' + updateDelta);
+          console.log('saving code ' + updateDelta);
           // saves code roughly every 1 second
           updateState(props.app._id, { code: text });
         }
@@ -301,32 +266,10 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     }
   };
 
-  // useEffect(() => {
-  //   if (!user) return;
-  //   const userId = user._id;
-  //   if (s.kernels) {
-  //     const updatedKernels = s.kernels.reduce((accumulatedKernels, kernel) => {
-  //       if (kernel.room === roomId && kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === userId))) {
-  //         accumulatedKernels.push(kernel);
-  //       }
-  //       return accumulatedKernels;
-  //     }, [] as KernelInfo[]);
-  //     // const kernel = updatedKernels.find((kernel) => kernel.kernel_id === s.kernel);
-  //     // if (kernel) {
-  //     //   console.log('kernel', kernel);
-  //     // }
-  //     // console.log('s.kernel', s.kernel);
-  //   }
-  // }, [JSON.stringify(s.kernels), s.kernel]);
-
   const handleExecute = async () => {
-    if (!user || editorRef.current?.getValue() === '' || !editorRef.current || !props.online) return;
-    updateState(props.app._id, {
-      streaming: true,
-    });
+    if (!user || !editor || !apiStatus || !props.access) return;
     const userId = user._id;
-    if (editorRef.current) {
-      // THIS LOGIC IS ALL SCREWED UP
+    if (editor) {
       if (!s.kernel && !s.msgId) {
         toast({
           title: 'No kernel selected',
@@ -349,26 +292,25 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         });
         return;
       }
-      if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
+      if (editor.getValue() && editor.getValue().slice(0, 6) === '%%info') {
         const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
-        editorRef.current.setValue(info);
+        editor.setValue(info);
       }
       try {
-        const response = await fetch(`${baseURL}/execute/${s.kernel}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: editorRef.current.getValue(),
-            session: userId,
-          }),
-        });
+        const response = await FastAPI.executeCode(editor.getValue(), s.kernel, user._id);
         if (response.ok) {
-          const data = await response.json();
-          // console.log(data);
-          if (data.msg_id) {
-            setMsgId(data.msg_id);
-            // console.log('msg_id', data.msg_id);
-          }
+          const msgId = response.msg_id;
+          console.log(msgId);
+          updateState(props.app._id, {
+            streaming: true,
+            msgId: msgId,
+          });
+        } else {
+          console.log('Error executing code');
+          updateState(props.app._id, {
+            streaming: false,
+            msgId: '',
+          });
         }
       } catch (error) {
         if (error instanceof TypeError) {
@@ -385,17 +327,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   };
 
   /**
-   * Updates the state with the msgId if it has changed
-   * @returns void
-   */
-  useEffect(() => {
-    if (msgId !== s.msgId)
-      updateState(props.app._id, {
-        msgId: msgId,
-      });
-  }, [msgId]);
-
-  /**
    * Clears the code and the msgId from the state
    * and resets the editor to an empty string
    * @returns void
@@ -407,20 +338,14 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       streaming: false,
       executeInfo: { executeFunc: '', params: {} },
     });
-    editorRef.current?.setValue('');
+    editor?.setValue('');
   };
 
   // Handle interrupt
   const handleInterrupt = () => {
     if (!user) return;
     // send signal to interrupt the kernel via http request
-    fetch(`${baseURL}/interrupt/${s.kernel}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session: user?._id,
-      }),
-    });
+    FastAPI.interruptKernel(s.kernel);
     updateState(props.app._id, {
       streaming: false,
       msgId: '',
@@ -431,15 +356,15 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
    * Needs to be reset every time the kernel changes
    */
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.addAction({
+    if (editor && s.kernel && props.access) {
+      editor.addAction({
         id: 'execute',
         label: 'Execute',
         keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: handleExecute,
       });
     }
-  }, [s.kernel]);
+  }, [s.kernel, props.access]);
 
   /**
    * Resizes the editor when the window is resized
@@ -451,15 +376,15 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
    * exceeded error.
    */
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.layout({
+    if (editor) {
+      editor.layout({
         width: props.app.data.size.width - 60,
         height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
         minHeight: 150,
         minWidth: 150,
       } as monaco.editor.IDimension);
     }
-  }, [props.app.data.size.width, props.editorHeight]);
+  }, [editor, props.app.data.size.width, props.editorHeight]);
 
   return (
     <>
@@ -469,7 +394,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
           language={s.language} // language of the editor
           options={monacoOptions}
           theme={defaultTheme}
-          onMount={handleMount}
+          onMount={onEditorDidMount}
           onChange={handleChange}
         />
         <Box p={1}>
@@ -486,7 +411,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
               <IconButton
                 onClick={handleInterrupt}
                 aria-label={''}
-                isDisabled={!s.kernel || s.streaming}
+                isDisabled={!s.streaming}
                 icon={<MdStop size={'1.5em'} color="#008080" />}
               />
             </Tooltip>
