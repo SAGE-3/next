@@ -18,7 +18,8 @@ python3 /conf/redis-store.py $token
 
 # dependencies (requirements.txt)
 # pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
-# pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share plotly
+# pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share
+pip3 install matplotlib plotly
 pip3 install jupyterlab-lsp pyright python-language-server python-lsp-server[all] jupyter_collaboration
 # Getting All the NodeJS-based Language Servers
 jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
