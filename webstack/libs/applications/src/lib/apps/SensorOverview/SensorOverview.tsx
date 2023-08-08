@@ -466,7 +466,7 @@ function ToolbarComponent(props: App): JSX.Element {
             sensorData: {},
             stationNames: props.data.state.stationNames,
             listOfStationNames: s.stationNames[0],
-            location: [21.297, -157.816],
+            location: [-157.816, 21.297],
             zoom: 8,
             baseLayer: 'OpenStreetMap',
             overlay: true,
