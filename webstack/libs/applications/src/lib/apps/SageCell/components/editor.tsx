@@ -9,18 +9,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
+
+// Monaco + YJS imports
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
-import { truncateWithEllipsis, useHexColor } from '@sage3/frontend';
-
-import { useAppStore, useUser, useUsersStore } from '@sage3/frontend';
+// SAGE3 imports
+import { useAppStore, useUser, useUsersStore, truncateWithEllipsis, useHexColor } from '@sage3/frontend';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
+// Props for the CodeEditor component
 type CodeEditorProps = {
   app: App;
   access: boolean; // Does this user have access to the sagecell's selected kernel
@@ -29,7 +31,7 @@ type CodeEditorProps = {
 };
 
 /**
- *
+ * A code editor based on Monaco plus YJS
  * @param props
  * @returns
  */
@@ -41,7 +43,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
   const users = useUsersStore((state) => state.users);
   // get users currently active on this board
-
   const { user } = useUser();
   const userId = user?._id;
   const userInfo = users.find((u) => u._id === userId)?.data;
@@ -160,6 +161,9 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, ydoc);
     const yText = ydoc.getText('monaco');
+    // Initialize yjs with the current code
+    yText.insert(0, s.code);
+
     const model = editor.getModel() as monaco.editor.ITextModel;
     const binding = new MonacoBinding(yText, model, new Set([editor]), provider.awareness);
 
@@ -255,7 +259,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   }, [fontSize]);
 
   useEffect(() => {
-    console.log('numClients', numClients);
     // do something drastic if there are too many authors
     if (numClients > 4) {
       // set the editor to read only
@@ -289,7 +292,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         const updateDelta = Date.now() - props.app._updatedAt;
         // console.log('delta', delta);
         if (updateDelta > 500) {
-          console.log('saving code ' + updateDelta);
+          // console.log('saving code ' + updateDelta);
           // saves code roughly every 1 second
           updateState(props.app._id, { code: text });
         }
@@ -363,7 +366,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
           // console.log(data);
           if (data.msg_id) {
             setMsgId(data.msg_id);
-            console.log('msg_id', data.msg_id);
+            // console.log('msg_id', data.msg_id);
           }
         }
       } catch (error) {
