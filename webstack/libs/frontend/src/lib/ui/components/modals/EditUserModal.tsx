@@ -124,12 +124,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           </FormControl>
           <FormControl mt="2">
             <FormLabel htmlFor="type">Type</FormLabel>
-            <RadioGroup onChange={handleTypeChange} value={type}>
+            <RadioGroup onChange={handleTypeChange} value={type} colorScheme='green'>
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
-                  <Radio value={value} key={i}>
-                    {value[0].toUpperCase() + value.substring(1)}
-                  </Radio>
+                  <Radio value={value} key={i}> {value[0].toUpperCase() + value.substring(1)} </Radio>
                 ))}
               </Stack>
             </RadioGroup>
