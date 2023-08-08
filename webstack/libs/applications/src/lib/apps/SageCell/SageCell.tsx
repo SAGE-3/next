@@ -6,20 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React Imports
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
-// SAGE3 imports
+// SAGE3 Imports
 import { useUser, useHexColor } from '@sage3/frontend';
 
+// App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { App } from '../../schema';
-import { CodeEditor } from './components/editor';
-import { Outputs } from './components/outputs';
-import { ToolbarComponent } from './components/toolbar';
-import { StatusBar } from './components/status';
 
+// Component Imports
+import { CodeEditor, Outputs, ToolbarComponent, StatusBar } from './components';
+
+// Style Impots
 import './SageCell.css';
 import { KernelInfo } from '../KernelDashboard';
 
@@ -31,18 +33,23 @@ import { KernelInfo } from '../KernelDashboard';
  */
 
 function AppComponent(props: App): JSX.Element {
-  const { user } = useUser();
-  if (!user) return <></>;
-  const userId = user._id;
+  // App State
   const s = props.data.state as AppState;
   const boardId = props.data.boardId;
 
+  // User info
+  const { user } = useUser();
+  if (!user) return <></>;
+  const userId = user._id;
+
+  // Access info
   const [access, setAccess] = useState(true);
-  // Needed for Div resizing
+
+  // Styling
   const [editorHeight, setEditorHeight] = useState(150); // not beign used?
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = '#EE4B2B';
-  const green = useHexColor('green');
+  const backgroundColor = useColorModeValue('#E8E8E8', '#1A1A1A');
+  const accessDeniedColor = useHexColor('red');
+  const accessAllowedColor = useHexColor('green');
   const [online, setOnline] = useState(false);
   const [kernel, setKernel] = useState<string>(s.kernel);
 
@@ -65,7 +72,7 @@ function AppComponent(props: App): JSX.Element {
       }
       setKernel(kernelId);
     }
-  }, [JSON.stringify(s.kernels), s.kernel]);
+  }, [JSON.stringify(s.kernels)]);
 
   useEffect(() => {
     setOnline(s.online);
@@ -89,8 +96,8 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
-        <Box w={'100%'} borderBottom={`5px solid ${access ? green : accessDeniedColor}`}>
+      <VStack w={'100%'} h={'100%'} bg={backgroundColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
+        <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowedColor : accessDeniedColor}`}>
           <StatusBar kernel={kernel} access={access} online={online} />
         </Box>
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
