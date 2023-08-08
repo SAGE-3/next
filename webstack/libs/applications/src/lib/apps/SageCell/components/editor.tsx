@@ -37,6 +37,7 @@ type CodeEditorProps = {
  */
 export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const s = props.app.data.state as AppState;
+
   const updateState = useAppStore((state) => state.updateState);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
   const baseURL = '/api/fastapi';

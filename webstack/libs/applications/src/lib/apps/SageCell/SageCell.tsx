@@ -50,7 +50,7 @@ function AppComponent(props: App): JSX.Element {
   const backgroundColor = useColorModeValue('#E8E8E8', '#1A1A1A');
   const accessDeniedColor = useHexColor('red');
   const accessAllowedColor = useHexColor('green');
-  const [online, setOnline] = useState(false);
+  // const [online, setOnline] = useState(false);
   const [kernel, setKernel] = useState<string>(s.kernel);
 
   /**
@@ -74,9 +74,9 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [JSON.stringify(s.kernels)]);
 
-  useEffect(() => {
-    setOnline(s.online);
-  }, [s.online]);
+  // useEffect(() => {
+  //   setOnline(s.online);
+  // }, [s.online]);
 
   // handle mouse move event
   const handleMouseMove = (e: MouseEvent) => {
@@ -90,6 +90,7 @@ function AppComponent(props: App): JSX.Element {
     document.removeEventListener('mouseup', handleMouseUp);
   };
 
+  // handle editor resize
   const handleEditorResize = (deltaY: number) => {
     setEditorHeight((prevHeight) => prevHeight + deltaY); // update the Monaco editor height
   };
@@ -98,10 +99,10 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <VStack w={'100%'} h={'100%'} bg={backgroundColor} fontSize={s.fontSize + 'px'} overflowY={'auto'}>
         <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowedColor : accessDeniedColor}`}>
-          <StatusBar kernel={kernel} access={access} online={online} />
+          <StatusBar kernel={kernel} access={access} online={s.online} />
         </Box>
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
-          <CodeEditor app={props} access={access} editorHeight={editorHeight} online={online} />
+          <CodeEditor app={props} access={access} editorHeight={editorHeight} online={s.online} />
           {/* The grab bar */}
           <Box
             className="grab-bar"
@@ -111,7 +112,7 @@ function AppComponent(props: App): JSX.Element {
               document.addEventListener('mouseup', handleMouseUp);
             }}
           />
-          <Outputs app={props} online={online} />
+          <Outputs app={props} online={s.online} />
         </Box>
       </VStack>
     </AppWindow>
