@@ -46,10 +46,16 @@ services:
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
-      - "80:8888"
+      - "8888:8888"
     environment:
       - ENVIRONMENT=development
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
