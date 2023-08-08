@@ -405,7 +405,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const handleVisualizationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const visualizationType = event.target.value;
-    updateState(props._id, { widget: { ...s.widget, visualizationType: visualizationType } });
+    if (visualizationType === 'line' || visualizationType === 'bar') {
+      updateState(props._id, { widget: { ...s.widget, visualizationType: visualizationType, xAxisNames: ['date_time'] } });
+    } else {
+      updateState(props._id, { widget: { ...s.widget, visualizationType: visualizationType } });
+    }
   };
 
   const removeVisualizationsThatRequireMultipleStations = (availableVisualizations: { value: string; name: string }[]) => {
@@ -541,15 +545,13 @@ function ToolbarComponent(props: App): JSX.Element {
           value={s.widget.visualizationType}
           onChange={handleVisualizationTypeChange}
         >
-          {removeVisualizationsThatRequireMultipleStations(checkAvailableVisualizations(s.widget.yAxisNames[0])).map(
-            (visualization: { value: string; name: string }, index: number) => {
-              return (
-                <option key={index} value={visualization.value}>
-                  {visualization.name}
-                </option>
-              );
-            }
-          )}
+          {checkAvailableVisualizations(s.widget.yAxisNames[0]).map((visualization: { value: string; name: string }, index: number) => {
+            return (
+              <option key={index} value={visualization.value}>
+                {visualization.name}
+              </option>
+            );
+          })}
         </Select>
       </Tooltip>
       {s.widget.visualizationType === 'variableCard' ? (
