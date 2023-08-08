@@ -350,8 +350,10 @@ const Content = (props: {
         position="relative"
         boxShadow={'lg'}
         border={`${scaleToFontSize / 100}px solid grey`}
-        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
-        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
+        pl="1"
+        pt="1"
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}

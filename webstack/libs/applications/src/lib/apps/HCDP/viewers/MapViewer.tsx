@@ -25,6 +25,7 @@ import { Asset } from '@sage3/shared/types';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 // import { state as AppState } from './index';
+import redMarker from './redMarker.png';
 
 // Styling
 import './maplibre-gl.css';
@@ -54,6 +55,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
   // Presence Information
   // const { user } = useUser();
   const stationDataRef = React.useRef(stationData);
+  const stationNameRef = React.useRef(s.stationNames);
 
   // Assets store
   const assets = useAssetStore((state) => state.assets);
@@ -61,7 +63,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
 
   // Convert ID to asset
   useEffect(() => {
-    console.log(props.data.state);
     const myasset = assets.find((a) => a._id === s.assetid);
     if (myasset) {
       setFile(myasset);
@@ -213,6 +214,9 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
 
   useEffect(() => {
     if (map) {
+      const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.name));
+      const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.name));
+      console.log(selectedStations, notSelectedStations);
       map.loadImage('https://maplibre.org/maplibre-gl-js/docs/assets/custom_marker.png', (error: any, image: any) => {
         if (error) {
           console.log(error);
@@ -223,7 +227,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
             type: 'geojson',
             data: {
               type: 'FeatureCollection',
-              features: stationDataRef.current.map((s) => {
+              features: selectedStations.map((s) => {
                 return {
                   type: 'Feature',
                   geometry: {
@@ -246,6 +250,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
               'icon-image': 'custom-marker',
             },
           });
+
           // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
           map.on('click', 'symbols', (e: any) => {
             // map.flyTo({
@@ -254,25 +259,29 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
             console.log(e);
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
             const element = document.getElementById(`marker-${stationInfo.name}`);
-            console.log(`marker-${stationInfo.name}`);
-            if (element) {
+            const stationIsSelected = s.stationNames.includes(stationInfo.name) || stationNameRef.current.includes(stationInfo.name);
+
+            if (element && stationIsSelected) {
+              stationNameRef.current = s.stationNames.filter((name: string) => name !== stationInfo.name);
               element?.remove();
             } else {
-              const el = document.createElement('div');
-              el.className = 'marker';
-              el.id = `marker-${stationInfo.name}`;
-              el.style.backgroundImage =
-                'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
-              el.style.width = '40px';
-              el.style.height = '40px';
-              el.style.borderRadius = '50%';
-              el.style.backgroundSize = 'cover';
-              el.style.cursor = 'pointer';
-              el.style.backgroundRepeat = 'no-repeat';
-              el.style.backgroundPosition = 'center';
-              el.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
-              el.style.zIndex = '1000';
-              new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+              // const el = document.createElement('div');
+              // el.className = 'marker';
+              // el.id = `marker-${stationInfo.name}`;
+              // el.style.backgroundImage =
+              //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
+              // el.style.width = '40px';
+              // el.style.height = '40px';
+              // el.style.borderRadius = '50%';
+              // el.style.backgroundSize = 'cover';
+              // el.style.cursor = 'pointer';
+              // el.style.backgroundRepeat = 'no-repeat';
+              // el.style.backgroundPosition = 'center';
+              // el.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+              // el.style.zIndex = '1000';
+              // new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+              updateState(props._id, { stationNames: [...s.stationNames, stationInfo.name] });
+              stationNameRef.current = [...s.stationNames, stationInfo.name];
             }
             // stationDataRef.current = JSON.parse(e.features[0].properties.stationInfo);
             // console.log(stationDataRef.current.selected);
@@ -289,9 +298,101 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
           });
         }
       });
-    }
-  }, [map]);
+      map.loadImage(redMarker, (error: any, image: any) => {
+        if (error) {
+          console.log(error);
+        } else {
+          map.addImage('custom-marker2', image);
+          // Add a GeoJSON source with 3 points.
+          map.addSource('stations2', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: notSelectedStations.map((s) => {
+                return {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [s.lon, s.lat],
+                  },
+                  properties: {
+                    stationInfo: s,
+                  },
+                };
+              }),
+            },
+          });
+          // Add a symbol layer
+          map.addLayer({
+            id: 'symbols2',
+            type: 'symbol',
+            source: 'stations2',
+            layout: {
+              'icon-image': 'custom-marker2',
+            },
+          });
 
+          // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
+          map.on('click', 'symbols2', (e: any) => {
+            // map.flyTo({
+            //   center: e.features[0].geometry.coordinates,
+            // });
+            console.log(e);
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const element = document.getElementById(`marker-${stationInfo.name}`);
+            const stationIsSelected = s.stationNames.includes(stationInfo.name) || stationNameRef.current.includes(stationInfo.name);
+
+            if (element && stationIsSelected) {
+              stationNameRef.current = s.stationNames.filter((name: string) => name !== stationInfo.name);
+              element?.remove();
+            } else {
+              // const el = document.createElement('div');
+              // el.className = 'marker';
+              // el.id = `marker-${stationInfo.name}`;
+              // el.style.backgroundImage =
+              //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
+              // el.style.width = '40px';
+              // el.style.height = '40px';
+              // el.style.borderRadius = '50%';
+              // el.style.backgroundSize = 'cover';
+              // el.style.cursor = 'pointer';
+              // el.style.backgroundRepeat = 'no-repeat';
+              // el.style.backgroundPosition = 'center';
+              // el.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+              // el.style.zIndex = '1000';
+              // new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+              updateState(props._id, { stationNames: [...s.stationNames, stationInfo.name] });
+              stationNameRef.current = [...s.stationNames, stationInfo.name];
+            }
+            // stationDataRef.current = JSON.parse(e.features[0].properties.stationInfo);
+            // console.log(stationDataRef.current.selected);
+            // stationDataRef.current.selected = !stationDataRef.current.selected;
+            // console.log(stationDataRef.current);
+          });
+          // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
+          map.on('mouseenter', 'symbols2', () => {
+            map.getCanvas().style.cursor = 'pointer';
+          });
+          // Change it back to a pointer when it leaves.
+          map.on('mouseleave', 'symbols2', () => {
+            map.getCanvas().style.cursor = '';
+          });
+        }
+      });
+
+      // loadImage().then(() => {
+      //   const stationNames = stationData.map((s) => s.name);
+      //   const stationElements = [];
+      //   for (let i = 0; i < stationNames.length; i++) {
+      //     const element = document.getElementById(`marker-${stationNames[i]}`);
+      //     if (element) {
+      //       stationElements.push(element);
+      //     }
+      //   }
+      //   console.log(stationElements);
+      // });
+    }
+  }, [map, JSON.stringify(s.stationNames)]);
   return (
     <>
       {/* One box for map, one box for container */}

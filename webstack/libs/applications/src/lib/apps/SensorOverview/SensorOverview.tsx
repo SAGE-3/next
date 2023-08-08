@@ -46,8 +46,6 @@ import {
 
 import { MdDelete, MdAdd } from 'react-icons/md';
 
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
-
 // Styling
 import './styling.css';
 import { useEffect, useState } from 'react';
@@ -334,12 +332,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
+  const [gridData, setGridData] = useState<{
+    columnDefs: { headerName: string; field: string }[];
+    rowData: { stationName: string; island: string; elevation: number; supportedVariables: string[] }[];
+  }>({ columnDefs: [], rowData: [] });
+
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
-      console.log(stationData.map((station) => station.name));
       const stationNames = stationData.map((station) => station.name);
       url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
         stationNames
@@ -565,7 +567,7 @@ function ToolbarComponent(props: App): JSX.Element {
         Select Stations
       </Button>
 
-      <Modal size="xl" isOpen={true} onClose={onClose}>
+      <Modal size="xl" isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent maxH="60rem" maxW="60rem">
           <ModalHeader>Station Selection</ModalHeader>
@@ -582,14 +584,42 @@ function ToolbarComponent(props: App): JSX.Element {
               mx="3"
               rounded="lg"
               height={'20rem'}
-              width="30rem"
+              width="58rem"
             >
               <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
                 <Heading color={textColor} size="md" isTruncated={true}>
                   Available Stations
                 </Heading>
               </Box>
-              <Accordion allowMultiple overflowY="scroll" height="15rem">
+              <Box overflowY="scroll" height="15rem" width="58rem">
+                <table id="stationTable">
+                  <tr>
+                    <th>Station Name</th>
+                    <th>County</th>
+                    <th>Elevation</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Variable</th>
+                  </tr>
+                  {!isLoaded ? (
+                    <div>Loading Stations...</div>
+                  ) : (
+                    stationMetadata.map((station: any, index: number) => {
+                      return (
+                        <tr key={index}>
+                          <td>{station.NAME}</td>
+                          <td>{station.COUNTY}</td>
+                          <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
+                          <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
+                          <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
+                          <td>variable</td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </table>
+              </Box>
+              {/* <Accordion allowMultiple overflowY="scroll" height="15rem">
                 {!isLoaded
                   ? props.data.state.stationNames.map((stationName: string, index: number) => {
                       return (
@@ -668,7 +698,7 @@ function ToolbarComponent(props: App): JSX.Element {
                         </Box>
                       );
                     })}
-              </Accordion>
+              </Accordion> */}
               {/* <Accordion allowMultiple overflowY="scroll" height="15rem">
                 {!isLoaded
                   ? props.data.state.stationNames.map((stationName: string, index: number) => {

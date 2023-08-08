@@ -36,7 +36,6 @@
     "@tanstack/react-table": "^0.0.1-alpha.0",
     "@turf/bbox": "^6.5.0",
     "@turf/center": "^6.5.0",
-    "ag-grid-react": "^30.0.6",
     "ansi-to-react": "^6.1.6",
     "axios": "^1.1.2",
     "brace": "^0.11.1",

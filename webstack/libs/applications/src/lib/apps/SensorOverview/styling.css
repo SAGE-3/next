@@ -7,3 +7,34 @@
  */
 
 /* CSS definitions for the app Sensor Overview */
+#stationTable {
+  font-family: Arial, Helvetica, sans-serif;
+  /* border-collapse: collapse; */
+  width: 100%;
+}
+
+#stationTable td,
+#stationTable th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#stationTable tr:nth-child(even) {
+  background-color: #727272;
+}
+
+/* #stationTable tr:hover {
+  background-color: #ddd;
+} */
+
+.rightAlign {
+  text-align: right;
+}
+
+#stationTable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #04aa6d;
+  color: white;
+}
