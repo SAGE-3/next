@@ -8,12 +8,13 @@
 
 import * as express from 'express';
 import { SAGEnlp } from '@sage3/backend';
-import { Configuration, OpenAIApi } from 'openai';
 
-const configuration = new Configuration({
-  apiKey: '',
-});
-const openai = new OpenAIApi(configuration);
+// FYI: updated to v4 API
+// import { Configuration, OpenAIApi } from 'openai';
+// const configuration = new Configuration({
+//   apiKey: '',
+// });
+// const openai = new OpenAIApi(configuration);
 
 export function NLPRouter(): express.Router {
   const router = express.Router();
