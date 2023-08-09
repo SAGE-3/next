@@ -140,10 +140,13 @@ export default function StatisticCard(
               color = variableUnits[i].color;
             }
           }
-          sensorValues = sensorValues.map((value: number) => {
-            return Number(value);
-          });
-          console.log(Math.min(...sensorValues), ...sensorValues, Math.max(...sensorValues));
+
+          sensorValues = sensorValues.filter((value: number) => Number(value) !== 0);
+          for (let i = 0; i < sensorValues.length; i++) {
+            if (sensorValues[i] === 0 || isNaN(sensorValues[i])) {
+              console.log('0 found here', sensorValues[i]);
+            }
+          }
           if (sensorValues.length !== 0) {
             values.push({
               variableName: props.widget.yAxisNames[j],

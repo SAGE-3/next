@@ -341,13 +341,13 @@ const Content = (props: {
         textAlign={'center'}
       >
         <Box bg="#2D62D2">
-          <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 12}>
+          <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 8}>
             {variableName.join(' ')}
           </Text>
         </Box>
 
         <Box>
-          <Text mt={scaleToFontSize / 10} textAlign={'center'} fontSize={scaleToFontSize / 6}>
+          <Text mt={scaleToFontSize / 10} textAlign={'center'} fontSize={scaleToFontSize / 8}>
             {props.variable.stationName}
           </Text>
         </Box>
