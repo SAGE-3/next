@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
 // SAGE3 imports
-import { useUser, useHexColor, useAppStore, useKernelStore } from '@sage3/frontend';
+import { useUser, useAppStore, useKernelStore } from '@sage3/frontend';
 
 // App Imports
 import { state as AppState } from './index';
@@ -43,7 +43,7 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState(true);
 
   // Styles
-  const [editorHeight, setEditorHeight] = useState(150); // not beign used?
+  const [editorHeight, setEditorHeight] = useState(300); // not beign used?
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
 
   // Kernel Store

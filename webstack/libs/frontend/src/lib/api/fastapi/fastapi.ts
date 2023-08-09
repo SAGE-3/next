@@ -19,6 +19,9 @@ async function fetchKernels(): Promise<KernelInfo[]> {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
+  if (!response.ok) {
+    return [];
+  }
   const kernels = await response.json();
   return kernels;
 }
@@ -28,11 +31,14 @@ async function fetchKernels(): Promise<KernelInfo[]> {
  * @param kernelId a kernel id
  * @returns
  */
-async function fetchKernel(kernelId: string): Promise<KernelInfo> {
+async function fetchKernel(kernelId: string): Promise<KernelInfo | undefined> {
   const response = await fetch(`${fastAPIRoute}/collection`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
+  if (!response.ok) {
+    return undefined;
+  }
   const kernels = await response.json();
   const kernel = kernels.find((kernel: KernelInfo) => kernel.kernel_id === kernelId);
   return kernel;
@@ -93,6 +99,30 @@ async function createKernel(kernelInfo: KernelInfo): Promise<boolean> {
 }
 
 /**
+ * Delete a kernel with the given id
+ * @param kernelId the id of the kernel to delete
+ * @returns
+ */
+async function deleteKernel(kernelId: string): Promise<boolean> {
+  const response = await fetch(`${fastAPIRoute}/kernels/${kernelId}`, {
+    method: 'DELETE',
+  });
+  return response.ok;
+}
+
+/**
+ * restart the kernel with the given id
+ * @param kernelId the id of the kernel to restart
+ * @returns
+ */
+async function restartKernel(kernelId: string): Promise<boolean> {
+  const response = await fetch(`${fastAPIRoute}/restart/${kernelId}`, {
+    method: 'POST',
+  });
+  return response.ok;
+}
+
+/**
  * Execute the given code on the kernel with the given id
  * @param code The code to execute
  * @param kernelId The id the kernel to execute the code on
@@ -131,4 +161,31 @@ async function interruptKernel(kernelId: string): Promise<any> {
   return data;
 }
 
-export const FastAPI = { interruptKernel, executeCode, createKernel, fetchKernel, fetchKernels, checkStatus };
+/**
+ * Get the kernel specs
+ *
+ */
+async function fetchKernelTypes(): Promise<string[]> {
+  const response = await fetch(`${fastAPIRoute}/kernelspecs`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await response.json();
+  const kernelTypes = [];
+  for (const key in data) {
+    kernelTypes.push(key);
+  }
+  return kernelTypes;
+}
+
+export const FastAPI = {
+  interruptKernel,
+  executeCode,
+  createKernel,
+  fetchKernel,
+  fetchKernels,
+  checkStatus,
+  deleteKernel,
+  restartKernel,
+  fetchKernelTypes,
+};

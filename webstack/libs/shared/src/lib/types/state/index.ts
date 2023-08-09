@@ -12,4 +12,3 @@ export * from './timezone';
 export * from './position';
 export * from './size';
 export * from './rotation';
-export * from './kernelinfo';

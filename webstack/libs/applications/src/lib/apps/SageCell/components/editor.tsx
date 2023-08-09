@@ -7,7 +7,7 @@
  */
 
 // React imports
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Chakra Imports
 import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer } from '@chakra-ui/react';
@@ -28,6 +28,7 @@ import { useHexColor, useKernelStore, useAppStore, useUser, useUsersStore, FastA
 // App Imports
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
+import { throttle } from 'throttle-debounce';
 
 // Code Editor Props
 type CodeEditorProps = {
@@ -73,7 +74,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>();
 
   // Kernel Store
-  const { apiStatus } = useKernelStore((state) => state);
+  const { apiStatus, executeCode } = useKernelStore((state) => state);
 
   // Toast
   const toast = useToast();
@@ -240,6 +241,15 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     });
   }, [fontSize]);
 
+  // Debounce Updates
+  const throttleUpdate = throttle(1000, () => {
+    if (editor) {
+      const text = editor?.getValue();
+      updateState(props.app._id, { code: text });
+    }
+  });
+  // Keep a copy of the function
+  const throttleFunc = useCallback(throttleUpdate, [editor]);
   /**
    * Saves the code to the database every 5 seconds
    * TODO: Fix this to save as debounce instead of throttle
@@ -251,19 +261,8 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     editor?.onDidChangeCursorPosition((ev) => {
       setCursorPosition({ r: ev.position.lineNumber, c: ev.position.column });
     });
-    if (numClients > 1) return;
-    if (event.changes.length > 10) {
-      const text = editor?.getValue();
-      if (text) {
-        const updateDelta = Date.now() - props.app._updatedAt;
-        // console.log('delta', delta);
-        if (updateDelta > 500) {
-          console.log('saving code ' + updateDelta);
-          // saves code roughly every 1 second
-          updateState(props.app._id, { code: text });
-        }
-      }
-    }
+
+    throttleFunc();
   };
 
   const handleExecute = async () => {
@@ -297,10 +296,9 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         editor.setValue(info);
       }
       try {
-        const response = await FastAPI.executeCode(editor.getValue(), s.kernel, user._id);
+        const response = await executeCode(editor.getValue(), s.kernel, user._id);
         if (response.ok) {
           const msgId = response.msg_id;
-          console.log(msgId);
           updateState(props.app._id, {
             streaming: true,
             msgId: msgId,

@@ -18,9 +18,15 @@ import { FastAPI } from '../api';
 
 type KernelStoreState = {
   kernels: KernelInfo[];
-  refreshKernels: () => void;
   apiStatus: boolean;
-  create: (kernelInfo: KernelInfo) => Promise<boolean>;
+  kernelTypes: string[];
+  fetchKernels: () => Promise<KernelInfo[]>;
+  fetchKernelTypes: () => Promise<string[]>;
+  createKernel: (kernelInfo: KernelInfo) => Promise<boolean>;
+  deleteKernel: (kernelId: string) => Promise<boolean>;
+  interruptKernel: (kernelId: string) => Promise<boolean>;
+  restartKernel: (kernelId: string) => Promise<boolean>;
+  executeCode: (code: string, kernelId: string, userId: string) => Promise<{ ok: boolean; msg_id: string }>;
 };
 
 /**
@@ -32,14 +38,27 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     const online = await FastAPI.checkStatus();
     set({ apiStatus: online });
   };
+  checkFastAPIStatus();
   // 5 second interval
   setInterval(checkFastAPIStatus, 5000);
+
+  // Get Kernel Types
+  const fetchKernelTypes = async () => {
+    const kernelTypes = await FastAPI.fetchKernelTypes();
+    set({ kernelTypes });
+    return kernelTypes;
+  };
+  fetchKernelTypes();
+  // 30 Second interval
+  setInterval(fetchKernelTypes, 30000);
 
   // Fetch kernels
   const fetchKernels = async () => {
     const kernels = await FastAPI.fetchKernels();
     set({ kernels });
+    return kernels;
   };
+  fetchKernels();
   // 5 second interval
   setInterval(fetchKernels, 5000);
 
@@ -50,11 +69,42 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     return response;
   };
 
+  // Delete a kernel
+  const deleteKernel = async (kernelId: string): Promise<boolean> => {
+    const response = await FastAPI.deleteKernel(kernelId);
+    fetchKernels();
+    return response;
+  };
+
+  // Interrupt a kernel
+  const interruptKernel = async (kernelId: string): Promise<boolean> => {
+    const response = await FastAPI.interruptKernel(kernelId);
+    return response;
+  };
+
+  // Restart a kernel
+  const restartKernel = async (kernelId: string): Promise<boolean> => {
+    const response = await FastAPI.restartKernel(kernelId);
+    return response;
+  };
+
+  // Execute code on a kernel
+  const executeCode = async (code: string, kernelId: string, userId: string): Promise<{ ok: boolean; msg_id: string }> => {
+    const response = await FastAPI.executeCode(code, kernelId, userId);
+    return response;
+  };
+
   return {
     kernels: [],
-    refreshKernels: fetchKernels,
     apiStatus: false,
-    create: createKernel,
+    kernelTypes: [],
+    fetchKernels: fetchKernels,
+    fetchKernelTypes: fetchKernelTypes,
+    createKernel: createKernel,
+    deleteKernel: deleteKernel,
+    interruptKernel: interruptKernel,
+    restartKernel: restartKernel,
+    executeCode: executeCode,
   };
 });
 
