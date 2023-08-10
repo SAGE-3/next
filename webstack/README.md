@@ -2,7 +2,7 @@
 
 Directory containing an Nrwl Nx Monorepo for the 'homebase' Nodejs web server and the 'webapp' React web application (the main collaboration canvas).
 
-# Technologies
+# Technologiesss
 
 The Webstack uses the following technologies for its core software stack. There are other various libraries used throughout but these are the core technologies used which every developer should be somewhat familiar with.
 
