@@ -85,52 +85,6 @@ export function Outputs(props: OutputsProps): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const baseURL = '/api/fastapi';
 
-  // /**
-  //  * This function will fetch the status of a kernel
-  //  * and return the final status
-  //  */
-  // const fetchMessageResults = async (msg_id: string) => {
-  //   if (!msg_id) {
-  //     // console.log('No message id to get status');
-  //     return;
-  //   }
-  //   try {
-  //     const response = await fetch(`${baseURL}/status/${msg_id}`, {
-  //       method: 'GET',
-  //       headers: { 'Content-Type': 'application/json' },
-  //     });
-  //     if (!response.ok) {
-  //       console.log('Error getting status');
-  //       return;
-  //     }
-  //     const result = await response.json();
-  //     // if the message is completed, then we can get the results
-  //     // and push the id to the set of completed messages
-  //     if (result.completed) {
-  //       updateState(props.app._id, {
-  //         streaming: false,
-  //       });
-  //       setContent(result.content as ContentItemType[]);
-  //       setExecutionCount(result.execution_count);
-  //       setMsgType(result.msg_type);
-  //       console.log('Finished execution before starting stream');
-  //     } else {
-  //       startStream(msg_id);
-  //     }
-  //   } catch (error) {
-  //     if (error instanceof TypeError) {
-  //       console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-  //       updateState(props.app._id, {
-  //         kernel: '',
-  //         kernelSpecs: ['python3'],
-  //         kernels: [],
-  //         online: false,
-  //         streaming: false,
-  //       });
-  //     }
-  //   }
-  // };
-
   /**
    * This function will start a stream to get the output of a kernel
    * and update the state with the output
@@ -147,7 +101,6 @@ export function Outputs(props: OutputsProps): JSX.Element {
     // console.log('Starting stream...for msg_id: ', msg_id);
     eventSource.addEventListener('new_message', function (event) {
       const result = JSON.parse(event.data);
-      setContent(result.content as ContentItemType[]);
       if (result.completed) {
         setContent(result.content as ContentItemType[]);
         setExecutionCount(result.execution_count);
@@ -156,6 +109,8 @@ export function Outputs(props: OutputsProps): JSX.Element {
           streaming: false,
         });
         eventSource.close();
+      } else {
+        setContent(result.content as ContentItemType[]);
       }
     });
   };
@@ -210,7 +165,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
     }, {} as { traceback?: string[]; ename?: string; evalue?: string });
 
   const processedContent = useMemo(() => {
-    if (!content || msgType === 'error') return null;
+    if (!content) return null;
     return content.map((item) => {
       return Object.keys(item).map((key) => {
         // console.log(msgType, key);

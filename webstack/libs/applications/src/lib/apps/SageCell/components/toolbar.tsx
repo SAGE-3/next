@@ -147,7 +147,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     <HStack>
       {myKernels.length === 0 ? (
         <Button onClick={onOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal" isDisabled={!apiStatus}>
-          Create Default Kernel <MdAdd />
+          Create Kernel <MdAdd />
         </Button>
       ) : (
         <Select

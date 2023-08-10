@@ -166,8 +166,12 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, ydoc);
       const yText = ydoc.getText('monaco');
+      const sourceCode = editor.getValue();
+      // Set the initial value of yjs to the code in the editor
+      if (yText.length === 0 && sourceCode) {
+        yText.insert(0, sourceCode);
+      }
       const model = editor.getModel() as monaco.editor.ITextModel;
-
       provider.awareness.setLocalStateField('user', {
         id: user?._id,
         name: userName,
@@ -267,7 +271,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   const handleExecute = async () => {
     if (!user || !editor || !apiStatus || !props.access) return;
-    const userId = user._id;
     if (editor) {
       if (!s.kernel && !s.msgId) {
         toast({
@@ -334,19 +337,17 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       code: '',
       msgId: '',
       streaming: false,
-      executeInfo: { executeFunc: '', params: {} },
     });
     editor?.setValue('');
   };
 
   // Handle interrupt
   const handleInterrupt = () => {
-    if (!user) return;
     // send signal to interrupt the kernel via http request
     FastAPI.interruptKernel(s.kernel);
     updateState(props.app._id, {
-      streaming: false,
       msgId: '',
+      streaming: false,
     });
   };
 
@@ -388,7 +389,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     <>
       <Flex direction={'row'}>
         <Editor
-          defaultValue={s.code} // code to initialize the editor with
+          defaultValue={s.code} // code to initialize the editor
           language={s.language} // language of the editor
           options={monacoOptions}
           theme={defaultTheme}
