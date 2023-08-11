@@ -305,7 +305,7 @@ const Content = (props: {
     } else {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
-  }, [JSON.stringify(props.size)]);
+  }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
   return (
     <>
       <Box
@@ -389,7 +389,7 @@ const Content = (props: {
           <Text
             overflow="hidden"
             color="gray.400"
-            transform={'translateY(70px)'}
+            transform={`translateY(${scaleToFontSize / 20}px)`}
             fontSize={scaleToFontSize / 20}
             fontWeight="semibold"
             // lineHeight={'48px'}

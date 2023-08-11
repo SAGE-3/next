@@ -265,7 +265,7 @@ function LeafletWrapper(props: App & { children: any; map: any; setMap: any }) {
       // scrollWheelZoom={false}
       preferCanvas={true}
       zoomControl={false}
-      style={{ height: `50vh`, width: `100%`, zIndex: 0 }}
+      style={{ height: `100%`, width: `100%`, zIndex: 0 }}
       ref={props.setMap}
       attributionControl={false}
     >

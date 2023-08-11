@@ -293,7 +293,9 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
-                    <MapViewer {...props} isSelectingStations={false} />
+                    <Box width={props.data.size.width} height={props.data.size.height}>
+                      <MapViewer {...props} isSelectingStations={false} />
+                    </Box>
                   </>
                 ) : null}
               </Box>
@@ -325,6 +327,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [map, setMap] = useState<any>(null);
   const [stationMetadata, setStationMetadata] = useState([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'none', direction: 'none' });
 
   // For color theme
   const textColor = useColorModeValue('gray.800', 'gray.50');
@@ -560,6 +563,38 @@ function ToolbarComponent(props: App): JSX.Element {
     }
     updateState(props._id, { stationNames: stationNames });
   };
+  const handleFilterOn = (attributeName: string) => {
+    const isFirstTime = isSortedOn.name !== attributeName;
+    const isSecondTime = isSortedOn.name === attributeName && isSortedOn.direction === 'descending';
+    const isThirdTime = isSortedOn.name === attributeName && isSortedOn.direction === 'ascending';
+    if (isFirstTime) {
+      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
+        if (isNaN(a[attributeName])) {
+          return a[attributeName] > b[attributeName] ? 1 : -1;
+        } else {
+          return Number(a[attributeName]) > Number(b[attributeName]) ? 1 : -1;
+        }
+      });
+      setStationMetadata(tmpStationMetadata);
+      setIsSortedOn({ name: attributeName, direction: 'descending' });
+    } else if (isSecondTime) {
+      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
+        if (isNaN(a[attributeName])) {
+          return a[attributeName] < b[attributeName] ? 1 : -1;
+        } else {
+          return Number(a[attributeName]) < Number(b[attributeName]) ? 1 : -1;
+        }
+      });
+      setStationMetadata(tmpStationMetadata);
+      setIsSortedOn({ name: attributeName, direction: 'ascending' });
+    } else if (isThirdTime) {
+      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
+        return 0;
+      });
+      setStationMetadata(tmpStationMetadata);
+      setIsSortedOn({ name: 'none', direction: 'none' });
+    }
+  };
 
   return (
     <>
@@ -593,18 +628,18 @@ function ToolbarComponent(props: App): JSX.Element {
               </Box>
               <Box overflowY="scroll" height="15rem" width="58rem">
                 <table id="stationTable">
-                  <tr>
-                    <th>Station Name</th>
-                    <th>County</th>
-                    <th>Elevation</th>
-                    <th>Latitude</th>
-                    <th>Longitude</th>
-                    <th>Variable</th>
-                  </tr>
+                  <th onClick={() => handleFilterOn('NAME')}>Station Name</th>
+                  <th onClick={() => handleFilterOn('COUNTY')}>County</th>
+                  <th onClick={() => handleFilterOn('ELEVATION')}>Elevation</th>
+                  <th onClick={() => handleFilterOn('LATITUDE')}>Latitude</th>
+                  <th onClick={() => handleFilterOn('LONGITUDE')}>Longitude</th>
+                  <th>Variable</th>
+                  <th onClick={() => handleFilterOn('SELECTED')}>Selected</th>
                   {!isLoaded ? (
                     <div>Loading Stations...</div>
                   ) : (
                     stationMetadata.map((station: any, index: number) => {
+                      const isSelected = s.stationNames.includes(station.STID);
                       return (
                         <tr key={index}>
                           <td>{station.NAME}</td>
@@ -613,6 +648,7 @@ function ToolbarComponent(props: App): JSX.Element {
                           <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
                           <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
                           <td>variable</td>
+                          <td>{isSelected ? 'X' : ''}</td>
                         </tr>
                       );
                     })
@@ -786,7 +822,9 @@ function ToolbarComponent(props: App): JSX.Element {
             <Button colorScheme="blue" mr={3} onClick={onClose}>
               Close
             </Button>
-            <Button variant="ghost">Secondary Action</Button>
+            <Button variant="ghost" onClick={() => console.log(s.stationNames)}>
+              Secondary Action
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
@@ -902,6 +940,12 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 20.64422,
+    lon: -156.342056,
+    name: '028HI',
+    selected: false,
+  },
+  {
     lat: 20.7382,
     lon: -156.2458,
     name: '013HI',
@@ -971,6 +1015,102 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     lat: 22.1975,
     lon: -159.421,
     name: '015HI',
+    selected: false,
+  },
+  {
+    lat: 20.63395,
+    lon: -156.27389,
+    name: '019HI',
+    selected: false,
+  },
+  {
+    lat: 20.644215,
+    lon: -156.284703,
+    name: '032HI',
+    selected: false,
+  },
+  {
+    lat: 20.7736,
+    lon: -156.2223,
+    name: '020HI',
+    selected: false,
+  },
+  {
+    lat: 20.7195,
+    lon: -156.00236,
+    name: '023HI',
+    selected: false,
+  },
+  {
+    lat: 19.6061748,
+    lon: -155.051523,
+    name: '033HI',
+    selected: false,
+  },
+  {
+    lat: 19.845036,
+    lon: -155.362586,
+    name: '022HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.6687,
+    lon: -155.9575, //missing a negative here in tom's website
+    name: '029HI',
+    selected: false,
+  },
+  {
+    lat: 19.1689,
+    lon: -155.5704,
+    name: '018HI',
+    selected: false,
+  },
+  {
+    lat: 20.12283,
+    lon: -155.749328,
+    name: '025HI',
+    selected: false,
+  },
+  {
+    lat: 20.019528,
+    lon: -155.677085,
+    name: '027HI',
+    selected: false,
+  },
+  {
+    lat: 21.145283,
+    lon: -156.729459,
+    name: '030HI',
+    selected: false,
+  },
+  {
+    lat: 21.131411,
+    lon: -156.758628,
+    name: '031HI',
+    selected: false,
+  },
+  {
+    lat: 21.506875,
+    lon: -158.145114,
+    name: '026HI',
+    selected: false,
+  },
+  {
+    lat: 22.2198,
+    lon: -159.57525,
+    name: '024HI',
     selected: false,
   },
 ];

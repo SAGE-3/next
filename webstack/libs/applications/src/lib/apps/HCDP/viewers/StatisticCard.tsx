@@ -128,7 +128,7 @@ export default function StatisticCard(
         props.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
       }
       for (let j = 0; j < props.widget.yAxisNames.length; j++) {
-        const sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
+        let sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
           let images: string[] = [];
@@ -140,6 +140,8 @@ export default function StatisticCard(
               color = variableUnits[i].color;
             }
           }
+
+          sensorValues = sensorValues.filter((value: number) => Number(value) !== 0);
           if (sensorValues.length !== 0) {
             values.push({
               variableName: props.widget.yAxisNames[j],
@@ -311,7 +313,7 @@ const Content = (props: {
     } else {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
-  }, [JSON.stringify(props.size)]);
+  }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
   const getFormattedTimePeriod = (timePeriod: string) => {
     switch (timePeriod) {
       case 'previous24Hours':
@@ -433,7 +435,7 @@ const Content = (props: {
           <Text
             overflow="hidden"
             color="gray.400"
-            transform={'translateY(70px)'}
+            transform={`translateY(${scaleToFontSize / 20}px)`}
             fontSize={scaleToFontSize / 30}
             fontWeight="semibold"
             // lineHeight={'48px'}

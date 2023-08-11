@@ -96,6 +96,7 @@ export const checkAvailableVisualizations = (variable: string) => {
     case 'Elevation & Current Temperature':
       availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
       break;
+
     default:
       availableVisualizations.push({ value: 'variableCard', name: 'Current Value (Large variable name)' });
       availableVisualizations.push({ value: 'friendlyVariableCard', name: 'Current Value (Large station name)' });
@@ -103,6 +104,7 @@ export const checkAvailableVisualizations = (variable: string) => {
       // availableVisualizations.push({value: 'allVariables', name: 'Current Conditions'});
       availableVisualizations.push({ value: 'line', name: 'Line Chart' });
       availableVisualizations.push({ value: 'bar', name: 'Bar Chart' });
+      availableVisualizations.push({ value: 'map', name: 'Map' });
       // availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
       break;
   }
@@ -1118,6 +1120,12 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 20.64422,
+    lon: -156.342056,
+    name: '028HI',
+    selected: false,
+  },
+  {
     lat: 20.7382,
     lon: -156.2458,
     name: '013HI',
@@ -1189,6 +1197,100 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     name: '015HI',
     selected: false,
   },
+  {
+    lat: 20.63395,
+    lon: -156.27389,
+    name: '019HI',
+    selected: false,
+  },
+  {
+    lat: 20.644215,
+    lon: -156.284703,
+    name: '032HI',
+    selected: false,
+  },
+  {
+    lat: 20.7736,
+    lon: -156.2223,
+    name: '020HI',
+    selected: false,
+  },
+  {
+    lat: 20.7195,
+    lon: -156.00236,
+    name: '023HI',
+    selected: false,
+  },
+  {
+    lat: 19.6061748,
+    lon: -155.051523,
+    name: '033HI',
+    selected: false,
+  },
+  {
+    lat: 19.845036,
+    lon: -155.362586,
+    name: '022HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.6687,
+    lon: -155.9575, //missing a negative here in tom's website
+    name: '029HI',
+    selected: false,
+  },
+  {
+    lat: 19.1689,
+    lon: -155.5704,
+    name: '018HI',
+    selected: false,
+  },
+  {
+    lat: 20.12283,
+    lon: -155.749328,
+    name: '025HI',
+    selected: false,
+  },
+  {
+    lat: 20.019528,
+    lon: -155.677085,
+    name: '027HI',
+    selected: false,
+  },
+  {
+    lat: 21.145283,
+    lon: -156.729459,
+    name: '030HI',
+    selected: false,
+  },
+  {
+    lat: 21.131411,
+    lon: -156.758628,
+    name: '031HI',
+    selected: false,
+  },
+  {
+    lat: 21.506875,
+    lon: -158.145114,
+    name: '026HI',
+    selected: false,
+  },
+  {
+    lat: 22.2198,
+    lon: -159.57525,
+    name: '024HI',
+    selected: false,
+  },
 ];
-
-const operations = ['average', 'max', 'min', 'current'];
