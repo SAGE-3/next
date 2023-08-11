@@ -293,7 +293,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
-                    <Box width={props.data.size.width} height={props.data.size.height}>
+                    <Box id={'container' + props._id} width={props.data.size.width} height={props.data.size.height}>
                       <MapViewer {...props} isSelectingStations={false} />
                     </Box>
                   </>

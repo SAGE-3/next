@@ -53,6 +53,8 @@ export const schema = z.object({
   zoom: z.number(),
   baseLayer: Baselayer,
   overlay: z.boolean(),
+  bearing: z.number(),
+  pitch: z.number(),
   assetid: z.string().optional(),
   availableVariableNames: z.string().array(),
 });
@@ -65,6 +67,8 @@ export const init: Partial<state> = {
   location: [-157.816, 21.297], //lnglat
   zoom: 13,
   baseLayer: 'OpenStreetMap',
+  bearing: 0,
+  pitch: 0,
   overlay: true,
   widget: widget,
   availableVariableNames: [],

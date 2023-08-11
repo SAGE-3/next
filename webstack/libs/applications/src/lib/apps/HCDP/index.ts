@@ -85,6 +85,8 @@ export const schema = z.object({
   variableToDisplay: variableTypes,
   stationData: z.any(),
   widget: z.any(),
+  bearing: z.number(),
+  pitch: z.number(),
   stationNames: z.any(),
   stationColor: z.string(),
   getDataFrom: z.string(),
@@ -95,6 +97,8 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   location: [21.297, -157.816],
   zoom: 8,
+  bearing: 0,
+  pitch: 0,
   baseLayer: 'OpenStreetMap',
   overlay: true,
   appIdsICreated: [],
