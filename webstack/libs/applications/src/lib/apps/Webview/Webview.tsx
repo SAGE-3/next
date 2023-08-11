@@ -20,6 +20,7 @@ import {
   MdOpenInNew,
   MdCopyAll,
 } from 'react-icons/md';
+import { FaEyeSlash } from 'react-icons/fa';
 
 import { useParams } from 'react-router';
 import create from 'zustand';
@@ -33,7 +34,6 @@ import { isElectron } from './util';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-import { FaEyeSlash } from 'react-icons/fa';
 
 export const useStore = create((set: any) => ({
   title: {} as { [key: string]: string },
@@ -507,7 +507,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <Tooltip placement="top-start" hasArrow={true} label={'Open page in new tab.'} openDelay={400}>
             <Button onClick={handleOpen} size="xs" variant="solid" colorScheme="teal">
               Open
-            </Button>{' '}
+            </Button>
           </Tooltip>
           <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
             <Button onClick={handleCopy} size="xs" variant="solid" colorScheme="teal">

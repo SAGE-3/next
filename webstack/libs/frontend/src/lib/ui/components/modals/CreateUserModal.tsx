@@ -67,7 +67,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   function createAccount() {
     if (name) {
       const newUser = {
-        name,
+        name: name.trim(),
         email: auth?.email ? auth.email : '',
         color: color,
         userRole: auth?.provider === 'guest' ? 'guest' : 'user',
@@ -122,13 +122,10 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
                   </Radio>
                 ))}
               </Stack>
-            </RadioGroup>{' '}
+            </RadioGroup>
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication:{' '}
-            <em>
-              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
-            </em>
+            Authentication: <em>{auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}</em>
           </Text>
           {auth?.provider === 'guest' && (
             <Text mt={1} fontSize={'md'}>
@@ -140,7 +137,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name}>
+          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name.trim()}>
             Create Account
           </Button>
         </ModalFooter>

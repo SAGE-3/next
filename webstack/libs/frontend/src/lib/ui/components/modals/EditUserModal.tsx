@@ -65,6 +65,12 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (user?.data.name) {
+      setName(user.data.name);
+    }
+  }, [user?.data.name]);
+
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
@@ -74,8 +80,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   const updateAccount = () => {
-    if (name !== user?.data.name && update) {
-      update({ name });
+    const newname = name.trim();
+    if (newname !== user?.data.name && update) {
+      update({ name: newname });
     }
     if (color !== user?.data.color && update) {
       update({ color });
@@ -100,7 +107,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               <Input
                 ref={initialRef}
                 type="string"
-                placeholder={user?.data.name}
+                placeholder={"Enter a username"}
                 _placeholder={{ opacity: 1, color: 'gray.600' }}
                 mr={4}
                 value={name}
@@ -125,20 +132,14 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
                   </Radio>
                 ))}
               </Stack>
-            </RadioGroup>{' '}
+            </RadioGroup>
           </FormControl>
 
           <Text mt={5} fontSize={'md'}>
-            Authentication:{' '}
-            <em>
-              {auth?.provider} {!isGuest && <>- {auth?.email}</>}
-            </em>
+            Authentication: <em>{auth?.provider} {!isGuest && <>- {auth?.email}</>}</em>
           </Text>
           <Text fontSize={'md'}>
-            Login expiration:{' '}
-            <em>
-              {formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}
-            </em>
+            Login expiration: <em>{formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}</em>
           </Text>
           {isGuest && (
             <Text mt={1} fontSize={'md'}>
@@ -147,7 +148,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name}>
+          <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name.trim()}>
             Update
           </Button>
         </ModalFooter>

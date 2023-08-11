@@ -13,3 +13,5 @@ export * from './ClearBoardModal';
 export * from './LassoToolbar';
 export * from './Panels';
 export * from './Twilio';
+export * from './PresenceFollow';
+export * from './BoardTitle';

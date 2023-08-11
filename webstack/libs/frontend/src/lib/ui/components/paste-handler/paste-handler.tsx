@@ -14,10 +14,9 @@ import { useEffect } from 'react';
 import { useToast } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { processContentURL, isValidURL } from '@sage3/frontend';
+import { isValidURL } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppState } from '@sage3/applications/schema';
 
 type PasteProps = {
   boardId: string;
@@ -44,10 +43,12 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   useEffect(() => {
     if (!user) return;
 
-    const pasteHandlerReachingDocumentBody = (event: ClipboardEvent) => {
+    const pasteHandlerBoard = (event: ClipboardEvent) => {
       // get the target element and make sure it is the background board
-      // const elt = event.target as HTMLElement;
-      // if (elt.id !== 'board') return;
+      const elt = event.target as HTMLElement;
+      if (elt.tagName === 'INPUT' || elt.tagName === 'TEXTAREA') return;
+
+      // Not on a selected app
       if (selectedApp) return;
 
       // Block guests from uploading assets
@@ -71,25 +72,39 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           // Iterate over all pasted files.
           Array.from(event.clipboardData.files).forEach(async (file) => {
             if (file.type.startsWith('image/')) {
+              // Images not supported yet
+              toast({
+                title: 'Copy/Paste Handler',
+                description: 'Image clipboard not supported yet',
+                status: 'error',
+                duration: 2 * 1000,
+                isClosable: true,
+              });
+
+              // Works but slow
               // For images, create an image and append it to the `body`.
-              const reader = new FileReader();
-              reader.readAsDataURL(file);
-              reader.onloadend = function () {
-                const base64data = reader.result;
-                // it's a base64 image
-                createApp({
-                  title: file.name,
-                  roomId: props.roomId,
-                  boardId: props.boardId,
-                  position: { x: xDrop, y: yDrop, z: 0 },
-                  size: { width: 800, height: 600, depth: 0 },
-                  rotation: { x: 0, y: 0, z: 0 },
-                  type: 'ImageViewer',
-                  state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
-                  raised: true,
-                  dragging: false,
-                });
-              };
+              // const reader = new FileReader();
+              // reader.readAsDataURL(file);
+              // reader.onloadend = function () {
+              //   const base64data = reader.result;
+              //   if (base64data && typeof base64data === 'string') {
+              //     if (base64data.length < 100000) {
+              //       // it's a base64 image
+              //       createApp({
+              //         title: file.name,
+              //         roomId: props.roomId,
+              //         boardId: props.boardId,
+              //         position: { x: xDrop, y: yDrop, z: 0 },
+              //         size: { width: 800, height: 600, depth: 0 },
+              //         rotation: { x: 0, y: 0, z: 0 },
+              //         type: 'ImageViewer',
+              //         state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
+              //         raised: true,
+              //         dragging: false,
+              //       });
+              //     }
+              //   }
+              // };
             } else if (file.type.startsWith('text/')) {
               // Read the text
               const textcontent = await file.text();
@@ -115,7 +130,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 duration: 2 * 1000,
                 isClosable: true,
               });
-              // return;
             }
           });
         }
@@ -130,24 +144,16 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
-          let w = 800;
-          let h = 800;
-          const final_url = processContentURL(isValid);
-          if (isValid !== final_url) {
-            // it has been changed, it must be a video
-            w = 1280;
-            h = 720;
-          }
-          // Create a webview
+          // Create a webpagelink app
           createApp({
-            title: final_url,
+            title: 'WebpageLink',
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 400, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'WebpageLink',
-            state: { ...initialValues['WebpageLink'], url: processContentURL(final_url) },
+            state: { ...initialValues['WebpageLink'], url: isValid },
             raised: true,
             dragging: false,
           });
@@ -161,7 +167,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'BoardLink',
-            state: { url: pastedText },
+            state: { url: pastedText.trim() },
             raised: true,
             dragging: false,
           });
@@ -184,11 +190,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     };
 
     // Add the handler to the whole page
-    document.addEventListener('paste', pasteHandlerReachingDocumentBody);
+    document.addEventListener('paste', pasteHandlerBoard);
 
     return () => {
       // Remove function during cleanup to prevent multiple additions
-      document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
+      document.removeEventListener('paste', pasteHandlerBoard);
     };
   }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
 

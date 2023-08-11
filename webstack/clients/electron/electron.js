@@ -649,20 +649,32 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    ipcMain.on('streamview', (e, args) => {
-      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      // console.log('Webview>    message', channel, args);
+    ipcMain.on('streamview_stop', (e, args) => {
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
+      if (viewContent) viewContent.endFrameSubscription();
+    });
+    ipcMain.on('streamview', (e, args) => {
+      // console.log('Webview>    message', channel, args);
+      // console.log('Webview> IPC Message', args.id, args.width, args.height);
+
+      // Message for the webview pixel streaming
+      const viewContent = electron.webContents.fromId(args.id);
+
+      viewContent.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: args.width, height: args.height },
+      });
+
+      viewContent.beginFrameSubscription(false, (image, dirty) => {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
-        const quality = 50;
+        const quality = 60;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
           dataenc = resizedimage.toJPEG(quality);
         } else {
           dataenc = image.toJPEG(quality);
@@ -670,6 +682,7 @@ function createWindow() {
           newh = dirty.height;
         }
         mainWindow.webContents.send('paint', {
+          id: args.id,
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });

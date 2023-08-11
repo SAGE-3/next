@@ -122,7 +122,6 @@ export function HomePage() {
       {/* Top Bar */}
       <Box display="flex" flexDirection="row" justifyContent="space-between" minHeight={45} width="100vw" px="2">
         <Box flex="1 1 0px">
-          {' '}
           <Text
             fontSize="xl"
             flex="1 1 0px"

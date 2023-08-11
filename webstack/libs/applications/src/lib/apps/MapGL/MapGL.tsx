@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
+import { MdAdd, MdRemove, MdMap, MdTerrain, Md3DRotation } from 'react-icons/md';
 
 // Data store
 import create from 'zustand';
@@ -40,8 +40,19 @@ export const useStore = create((set) => ({
   saveMap: (id: string, map: maplibregl.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
 
+// Zoom levels
 const maxZoom = 18;
 const minZoom = 1;
+
+// ArcGIS API Key
+const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
+
+// MapTiler API Key
+const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
+const baselayers = {
+  Satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${mapTilerAPI}`,
+  OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
+};
 
 /* App component for MapGL */
 
@@ -52,12 +63,67 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const saveMap = useStore((state: any) => state.saveMap);
   const map = useStore((state: any) => state.map[props._id]);
-  // Presence Information
-  // const { user } = useUser();
 
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
+
+  // Source
+  const [source, setSource] = useState<{ id: string; data: any } | null>(null);
+
+  // Toast to inform user about errors
+  const toast = useToast();
+
+  // Add the source to the map
+  // This is needed when the baselayer is changed
+  function addSource() {
+    if (source) {
+      // Check if the source is already added
+      if (map.getSource(source.id)) {
+        return;
+      }
+      // Add the source to the map
+      map.addSource(source.id, {
+        type: 'geojson',
+        data: source.data,
+      });
+      // Layer for Polygons (lines and fills)
+      map.addLayer({
+        id: source.id + 'line',
+        source: source.id,
+        type: 'line',
+        paint: {
+          'line-color': '#000',
+          'line-width': 2,
+        },
+        filter: ['==', '$type', 'Polygon'],
+      });
+      map.addLayer({
+        id: source.id + 'fill',
+        source: source.id,
+        type: 'fill',
+        paint: {
+          'fill-outline-color': '#000',
+          'fill-color': '#39b5e6',
+          'fill-opacity': 0.4,
+        },
+        filter: ['==', '$type', 'Polygon'],
+      });
+      // Layer for points
+      map.addLayer({
+        id: source.id + 'symbol',
+        source: source.id,
+        type: 'circle',
+        paint: {
+          'circle-color': '#ff7800',
+          'circle-opacity': 0.4,
+          'circle-stroke-width': 2,
+          'circle-radius': 5,
+        },
+        filter: ['==', '$type', 'Point'],
+      });
+    }
+  }
 
   // Convert ID to asset
   useEffect(() => {
@@ -73,120 +139,59 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (file && map) {
       // when the map is loaded, add the source and layers
-      map.on('load', () => {
+      map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
         console.log('MapGL> Adding source to map', newURL);
         // Get the GEOJSON data from the asset
-        fetch(newURL, {
+        const response = await fetch(newURL, {
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
           },
-        }).then(function (response) {
-          return response.json();
-        }).then(function (gson) {
-          // Add the source to the map
-          map.addSource(file._id, {
-            type: 'geojson',
-            data: gson
-          });
-          // Layer for Polygons (lines and fills)
-          map.addLayer({
-            id: file._id + 'line',
-            source: file._id,
-            type: "line",
-            paint: {
-              "line-color": "#000",
-              "line-width": 2,
-            },
-            filter: ['==', '$type', 'Polygon']
-          });
-          map.addLayer({
-            id: file._id + 'fill',
-            source: file._id,
-            type: "fill",
-            paint: {
-              "fill-outline-color": "#000",
-              "fill-color": '#39b5e6',
-              "fill-opacity": 0.4,
-            },
-            filter: ['==', '$type', 'Polygon']
-          });
-          // Layer for points
-          map.addLayer({
-            id: file._id + 'symbol',
-            source: file._id,
-            type: "circle",
-            paint: {
-              "circle-color": '#ff7800',
-              "circle-opacity": 0.4,
-              "circle-stroke-width": 2,
-              "circle-radius": 5,
-            },
-            filter: ['==', '$type', 'Point']
-          });
+        });
 
+        const gjson = await response.json();
+
+        // Check if the file is valid
+        // bbox will throw an error if an invalid geojson is passed
+        try {
           // Calculate the bounding box and center using turf library
-          const box = bbox(gson);
-          const cc = center(gson).geometry.coordinates;
+          const box = bbox(gjson);
+          const cc = center(gjson).geometry.coordinates;
           // Duration is zero to get a valid zoom value next
           map.fitBounds(box, { padding: 20, duration: 0 });
           updateState(props._id, { zoom: map.getZoom(), location: cc });
-        });
+          // Add the source to the map
+          setSource({ id: file._id, data: gjson });
+        } catch (error: any) {
+          toast({
+            title: 'Error',
+            description: 'Error loading GEOJSON file',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
       });
     }
-  }, [file, map]);
+  }, [file, map, setSource]);
+
+  // If the source is changed, add it to the map
+  useEffect(() => {
+    if (source) {
+      addSource();
+    }
+  }, [source]);
 
   useEffect(() => {
     const localmap = new maplibregl.Map({
       container: 'map' + props._id,
       attributionControl: false,
-      style: 'https://api.maptiler.com/maps/bright/style.json?key=4vBZtdgkPHakm28uzrnt',
-      // style: 'https://demotiles.maplibre.org/style.json',
-
-      // style: {
-      //   "version": 8,
-      //   "sources": {
-      //     "world": {
-      //       "type": "raster",
-      //       "tiles": ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-      //       "tileSize": 256,
-      //       "attribution": "Tiles &copy; Esri &mdash; Source: Esri, and the GIS User Community",
-      //       "maxzoom": 19
-      //     }
-      //   },
-      //   "layers": [
-      //     {
-      //       "id": "world",
-      //       "type": "raster",
-      //       "source": "world"
-      //     }
-      //   ]
-      // },
-
-
-      // style: {
-      //   "version": 8,
-      //   "sources": {
-      //     "osm": {
-      //       "type": "raster",
-      //       "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      //       "tileSize": 256,
-      //       "attribution": "OpenStreetMap Contributors",
-      //       "maxzoom": 19
-      //     }
-      //   },
-      //   "layers": [
-      //     {
-      //       "id": "osm",
-      //       "type": "raster",
-      //       "source": "osm" // This must match the source key above
-      //     }
-      //   ]
-      // },
-
+      style: baselayers[s.baseLayer as 'OpenStreetMap' | 'Satellite'],
       center: s.location as maplibregl.LngLatLike,
-      zoom: s.zoom
+      zoom: s.zoom,
+      pitch: s.pitch || 0,
+      bearing: s.bearing || 0,
     });
 
     localmap.on('moveend', (evt) => {
@@ -195,8 +200,11 @@ function AppComponent(props: App): JSX.Element {
         const lmap = evt.target;
         const zoom = lmap.getZoom();
         const center = lmap.getCenter();
+        const pitch = lmap.getPitch();
+        const bearing = lmap.getBearing();
+
         // Update center and zoom level
-        updateState(props._id, { zoom: zoom, location: [center.lng, center.lat] });
+        updateState(props._id, { zoom: zoom, location: [center.lng, center.lat], pitch: pitch, bearing: bearing });
       }
     });
 
@@ -206,7 +214,7 @@ function AppComponent(props: App): JSX.Element {
     localmap.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
     // Disable map rotations
-    localmap.dragRotate.disable();
+    // localmap.dragRotate.disable();
     localmap.touchZoomRotate.disableRotation();
     localmap.keyboard.disableRotation();
     // Disable map zooming with a box (shift click and drag)
@@ -216,20 +224,32 @@ function AppComponent(props: App): JSX.Element {
     saveMap(props._id, localmap);
   }, [props._id]);
 
+  // When the baselayer is changed
   useEffect(() => {
     if (map) {
-      // Update zoom from server, duration 0 to update immediately
-      map.zoomTo(s.zoom, { duration: 0 });
+      (map as maplibregl.Map).setStyle(baselayers[s.baseLayer as 'OpenStreetMap' | 'Satellite']);
+      // When the base layer changes readd the sources
+      setTimeout(addSource, 100);
     }
-  }, [map, s.zoom]);
+  }, [map, s.baseLayer]);
 
+  // When the state is changed
   useEffect(() => {
     if (map) {
       // Update center from server, duration 0 to update immediately
-      map.setCenter([s.location[0], s.location[1]], { duration: 0 });
+      map.easeTo({
+        bearing: s.bearing,
+        pitch: s.pitch,
+        center: [s.location[0], s.location[1]],
+        zoom: s.zoom,
+        speed: 0.2,
+        curve: 1,
+        duration: 1000,
+      });
     }
-  }, [map, s.location]);
+  }, [map, s.bearing, s.pitch, s.location[0], s.location[1], s.zoom]);
 
+  // When the app is resized
   useEffect(() => {
     // when app is resized, reset the center
     if (map) {
@@ -257,11 +277,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const [addrValue, setAddrValue] = useState('');
   const update = useAppStore((state) => state.update);
 
-  const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
   // @ts-ignore
   const geocoder = new esriLeafletGeocoder.geocode({
-    apikey: apiKey,
-
+    apikey: esriKey,
   });
 
   // from the UI to the react state
@@ -269,9 +287,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const changeAddr = (evt: any) => {
     evt.preventDefault();
 
-    geocoder.text(addrValue).run(function (err: any, results: any, response: any) {
+    geocoder.text(addrValue).run((err: any, results: any, response: any) => {
       if (err) {
-        console.log('geocoder> error:', err);
+        console.log('MapGL> Geocoder error:', err);
         return;
       }
       const res = results.results[0];
@@ -286,7 +304,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
         // Sync zoom after fitting bounds
         const newZoom = map.getZoom();
-        updateState(props._id, { location: center, zoom: newZoom });
+        updateState(props._id, { location: center, zoom: newZoom, bearing: 0 });
 
         // Update the app title
         update(props._id, { title: res.text });
@@ -310,11 +328,21 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: limitZoom });
   };
 
+  // Change Baselayer to Satellite
+  const changeToSatellite = () => {
+    updateState(props._id, { baseLayer: 'Satellite' });
+  };
+
+  // Change Baselayer to OpenStreetMap
+  const changeToStreetMap = () => {
+    updateState(props._id, { baseLayer: 'OpenStreetMap' });
+  };
+
   return (
     <HStack>
       <ButtonGroup>
         <form onSubmit={changeAddr}>
-          <InputGroup size="xs" minWidth="80px">
+          <InputGroup size="xs" minWidth="200px">
             <Input
               defaultValue={addrValue}
               onChange={handleAddrChange}
@@ -322,21 +350,35 @@ function ToolbarComponent(props: App): JSX.Element {
                 event.stopPropagation();
               }}
               backgroundColor="whiteAlpha.300"
-              placeholder="Type a place or address"
+              placeholder="Enter a place or address"
               _placeholder={{ opacity: 1, color: 'gray.400' }}
             />
           </InputGroup>
         </form>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
           <Button isDisabled={s.zoom <= minZoom} onClick={decZoom}>
             <MdRemove fontSize="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top" hasArrow={true} label={'Street Map'} openDelay={400}>
+          <Button onClick={changeToStreetMap}>
+            <MdMap fontSize="20px" />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top" hasArrow={true} label={'Satellite Map'} openDelay={400}>
+          <Button onClick={changeToSatellite}>
+            <MdTerrain fontSize="20px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
