@@ -113,77 +113,11 @@ export function Outputs(props: App): JSX.Element {
     }
   }, [s.msgId]);
 
-  // async function getResults() {
-  //   if (s.streaming && s.session !== user?._id) {
-  //     return; // Don't fetch results if someone else is streaming
-  //   }
-  //   let result: ExecOutput = {
-  //     completed: false,
-  //     content: [],
-  //     execution_count: 0,
-  //     msg_type: '',
-  //     session_id: '',
-  //     start_time: '',
-  //     end_time: '',
-  //     last_update_time: '',
-  //   };
-  //   const response = await fetchResults(s.msgId);
-  //   if (response.ok) {
-  //     result = response.execOutput;
-  //     console.log();
-  //     if (result.completed) {
-  //       console.log(result);
-  //       setContent(result.content);
-  //       setExecutionCount(result.execution_count);
-  //       updateState(props._id, { streaming: false, msgId: '', history: [...s.history, s.msgId] });
-  //     } else {
-  //       setContent(result.content);
-  //       setExecutionCount(result.execution_count ? result.execution_count : 0);
-  //     }
-  //   } else {
-  //     console.log(response);
-  //   }
-  // }
-
   useEffect(() => {
-    // get the last message from the history
-    if (s.history.length > 0) {
-      const msgId = s.history[s.history.length - 1];
-      fetchResults(msgId).then((response) => {
-        if (response.ok) {
-          const result = response.execOutput;
-          setContent(result.content);
-          setExecutionCount(result.execution_count);
-        }
-      });
-    } else {
-      setContent(null);
-      setExecutionCount(0);
-    }
+    if (s.history.length === 0) return;
+    const lastMsgId = s.history[s.history.length - 1];
+    getResults(lastMsgId);
   }, [s.history]);
-
-  // useEffect(() => {
-  //   if (!eventSource) return;
-  //   eventSource.addEventListener('new_message', function (event) {
-  //     const result = JSON.parse(event.data);
-  //     if (result.completed) {
-  //       setContent(result.content as ContentItem[]);
-  //       setExecutionCount(result.executionCount);
-  //       // setMsgType(result.msgType);
-  //       setStreaming(false);
-  //       eventSource.close();
-  //       setEventSource(null);
-  //     } else {
-  //       setContent(result.content as ContentItem[]);
-  //     }
-  //   });
-  // }, [eventSource]);
-
-  // useEffect(() => {
-  //   if (s.msgId) {
-  //     getResults();
-  //   }
-  // }, [s.msgId]);
 
   /**
    * This function will create a new webview app

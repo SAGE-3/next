@@ -117,13 +117,14 @@ function AppComponent(props: App): JSX.Element {
             overflow={'scroll'}
             css={{
               '&::-webkit-scrollbar': {
+                background: 'transparent',
                 width: '6px',
               },
               '&::-webkit-scrollbar-track': {
                 width: '6px',
               },
               '&::-webkit-scrollbar-thumb': {
-                background: bgColor,
+                background: 'teal.300',
                 borderRadius: 'md',
               },
             }}
