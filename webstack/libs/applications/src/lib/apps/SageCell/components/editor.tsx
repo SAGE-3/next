@@ -10,17 +10,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Chakra Imports
-import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer } from '@chakra-ui/react';
+import { useColorModeValue, useToast, Flex, Box, ButtonGroup, IconButton, Spinner, Tooltip, Spacer, Text } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
 // Monaco Imports
-import Editor, { OnMount, OnChange } from '@monaco-editor/react';
+import { useMonaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+import { monacoOptions } from './monacoOptions';
 
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
+import { useYjs } from '@sage3/frontend';
 
 // SAGE3 imports
 import { useHexColor, useKernelStore, useAppStore, useUser, useUsersStore, FastAPI } from '@sage3/frontend';
@@ -68,121 +68,113 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const [numClients, setNumClients] = useState<number>(0);
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
 
-  // YJS and Monaco
-  const [provider, setProvider] = useState<WebsocketProvider>();
-  const [binding, setBinding] = useState<MonacoBinding>();
-  const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>();
-
   // Kernel Store
   const { apiStatus, executeCode } = useKernelStore((state) => state);
+
+  const [count, setCount] = useState(0);
 
   // Toast
   const toast = useToast();
 
-  const monacoOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
-    minimap: { enabled: false },
-    glyphMargin: false,
-    automaticLayout: false, // this is needed to make the editor resizeable
-    wordWrap: 'off',
-    lineNumbers: 'on',
-    lineDecorationsWidth: 0,
-    lineNumbersMinChars: 3,
-    quickSuggestions: false,
-    renderLineHighlight: 'all',
-    scrollBeyondLastLine: false,
-    fontFamily: "'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'monospace'",
-    fontSize: s.fontSize,
-    scrollbar: {
-      useShadows: true,
-      verticalHasArrows: true,
-      horizontalHasArrows: true,
-      vertical: 'auto',
-      horizontal: 'auto',
-      verticalScrollbarSize: 18,
-      horizontalScrollbarSize: 18,
-      arrowSize: 30,
-    },
-    readOnly: !props.access,
-  };
-
-  const onEditorDidMount: OnMount = (editor, monaco) => {
-    // sets the initial size of the editor manually since automaticLayout is set to false
-    editor.layout({
-      width: props.app.data.size.width - 60,
-      height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as monaco.editor.IDimension);
-
-    // actions
-    editor.addAction({
-      id: 'execute',
-      label: 'Execute',
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-      run: handleExecute,
-    });
-    editor.addAction({
-      id: 'increase-font-size',
-      label: 'Increase Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: () => {
-        setFontSize((prevSize) => prevSize + 1);
-      },
-    });
-    editor.addAction({
-      id: 'decrease-font-size',
-      label: 'Decrease Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: () => {
-        setFontSize((prevSize) => prevSize - 1);
-      },
-    });
-    editor.addAction({
-      id: 'reset-font-size',
-      label: 'Reset Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR],
-      run: () => {
-        setFontSize(s.fontSize);
-      },
-    });
-    editor.addAction({
-      id: 'save',
-      label: 'Save',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => {
-        const text = editor.getValue();
-        if (text) {
-          updateState(props.app._id, { code: text });
-          console.log('saving code');
-        }
-      },
-    });
-    setEditor(editor);
-  };
+  // YJS and Monaco
+  const { yText, provider } = useYjs({ appId: props.app._id });
+  const element = useRef<null | HTMLDivElement>(null);
+  const monaco = useMonaco();
+  const [model, setModel] = useState<null | monaco.editor.ITextModel>(null);
+  const [editor, setEditor] = useState<null | monaco.editor.IStandaloneCodeEditor>(null);
+  const [binding, setBinding] = useState<null | MonacoBinding>(null);
 
   useEffect(() => {
-    if (editor && !binding && !provider) {
-      const ydoc = new Y.Doc();
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, ydoc);
-      const yText = ydoc.getText('monaco');
-      const sourceCode = editor.getValue();
-      // Set the initial value of yjs to the code in the editor
-      if (yText.length === 0 && sourceCode) {
-        yText.insert(0, sourceCode);
+    // This gets called when the editor is mounted
+    if (monaco && element.current) {
+      const model = monaco.editor.createModel(s.code, s.language);
+      const editor = monaco.editor.create(element.current, {
+        ...monacoOptions,
+        model: model,
+        fontSize: s.fontSize,
+        language: s.language,
+        theme: defaultTheme,
+        domReadOnly: !props.access,
+      });
+      editor.addAction({
+        id: 'execute',
+        label: 'Execute',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: handleExecute,
+      });
+      editor.addAction({
+        id: 'increase-font-size',
+        label: 'Increase Font Size',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+        run: () => {
+          setFontSize((prevSize) => prevSize + 1);
+        },
+      });
+      editor.addAction({
+        id: 'decrease-font-size',
+        label: 'Decrease Font Size',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+        run: () => {
+          setFontSize((prevSize) => prevSize - 1);
+        },
+      });
+      editor.addAction({
+        id: 'reset-font-size',
+        label: 'Reset Font Size',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyR],
+        run: () => {
+          setFontSize(s.fontSize);
+        },
+      });
+      editor.addAction({
+        id: 'save',
+        label: 'Save',
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+        run: () => {
+          const text = editor.getValue();
+          if (text) {
+            updateState(props.app._id, { code: text });
+            console.log('saving code');
+          }
+        },
+      });
+      editor.onDidChangeCursorPosition((ev) => {
+        setCursorPosition({ r: ev.position.lineNumber, c: ev.position.column });
+        throttleFunc();
+      });
+      setModel(model);
+      setEditor(editor);
+    }
+    return () => {
+      if (editor) {
+        console.log('disposing editor');
+        editor.dispose();
+        setEditor(null);
       }
-      const model = editor.getModel() as monaco.editor.ITextModel;
+      if (model) {
+        console.log('disposing model');
+        model.dispose();
+        setModel(null);
+      }
+    };
+    // }, []);
+  }, [monaco, element, s.code, s.language, s.fontSize]);
+
+  useEffect(() => {
+    if (editor && yText && model && provider && binding === null) {
+      if (yText.toString() === '' && props.app._updatedBy === user?._id) {
+        console.log('insert yText');
+        yText.insert(0, editor.getValue());
+      }
       provider.awareness.setLocalStateField('user', {
         id: user?._id,
         name: userName,
         color: userColor,
       });
-
       provider.awareness.setLocalStateField('cursor', {
         position: editor.getPosition(),
         selection: editor.getSelection(),
       });
-
       provider.awareness.on('change', () => {
         // Update cursor colors based on user color
         const states = provider.awareness.getStates();
@@ -227,23 +219,51 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         // Update the number of clients in the room
         setNumClients(states.size);
       });
-      setProvider(provider);
+      editor.updateOptions({
+        readOnly: !props.access,
+      });
+      console.log('creating binding');
       setBinding(new MonacoBinding(yText, model, new Set([editor]), provider.awareness));
     }
 
     return () => {
-      if (binding) binding.destroy();
+      setCount((prevCount) => prevCount + 1);
+      console.log('count line 257: ', count);
+
       if (provider) provider?.disconnect();
-      setBinding(undefined);
-      setProvider(undefined);
+      if (binding) binding.destroy();
+      // do not dispose model or editor
+      setBinding(null);
     };
-  }, [editor]);
+  }, [editor, model, provider]);
+
+  /**
+   * Resizes the editor when the window is resized
+   * or when the editorHeight changes.
+   *
+   * This is needed because the editor is not responsive
+   * and automaticLayout is set to false to make the editor
+   * resizeable and not trigger a ResizeObserver loop limit
+   * exceeded error.
+   */
+  useEffect(() => {
+    console.log('resizing editor');
+    if (editor) {
+      editor.layout({
+        width: props.app.data.size.width - 60,
+        height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
+        minHeight: '100%',
+        minWidth: '100%',
+      } as monaco.editor.IDimension);
+    }
+  }, [editor, props.app.data.size.width, props.editorHeight]);
 
   useEffect(() => {
+    console.log('updating fontSize');
     editor?.updateOptions({
       fontSize: fontSize,
     });
-  }, [fontSize]);
+  }, [editor, fontSize]);
 
   // Debounce Updates
   const throttleUpdate = throttle(1000, () => {
@@ -254,75 +274,65 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   });
   // Keep a copy of the function
   const throttleFunc = useCallback(throttleUpdate, [editor]);
+
   /**
-   * Saves the code to the database every 5 seconds
-   * TODO: Fix this to save as debounce instead of throttle
-   * @param value
-   * @param event
-   * @returns
+   * Executes the code in the editor
+   * @returns void
+   * TODO: Add a check to see if the kernel is still running
    */
-  const handleChange: OnChange = (value, event) => {
-    editor?.onDidChangeCursorPosition((ev) => {
-      setCursorPosition({ r: ev.position.lineNumber, c: ev.position.column });
-    });
-
-    throttleFunc();
-  };
-
   const handleExecute = async () => {
+    console.log('handleExecute');
     if (!user || !editor || !apiStatus || !props.access) return;
-    if (editor) {
-      if (!s.kernel && !s.msgId) {
-        toast({
-          title: 'No kernel selected',
-          description: 'Please select a kernel from the toolbar',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-          position: 'bottom',
+    if (!s.kernel) {
+      toast({
+        title: 'No kernel selected',
+        description: 'Please select a kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+      });
+      return;
+    }
+    if (!props.access) {
+      toast({
+        title: 'You do not have access to this kernel',
+        description: 'Please select a different kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+      });
+      return;
+    }
+    if (editor.getValue() && editor.getValue().slice(0, 6) === '%%info') {
+      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
+      editor.setValue(info);
+    }
+    try {
+      const response = await executeCode(editor.getValue(), s.kernel, user._id);
+      if (response.ok) {
+        const msgId = response.msg_id;
+        updateState(props.app._id, {
+          msgId: msgId,
+          session: user._id,
         });
-        return;
-      }
-      if (!s.kernel) {
-        toast({
-          title: 'You do not have access to this kernel',
-          description: 'Please select a different kernel from the toolbar',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-          position: 'bottom',
+      } else {
+        console.log('Error executing code');
+        updateState(props.app._id, {
+          streaming: false,
+          msgId: '',
         });
-        return;
       }
-      if (editor.getValue() && editor.getValue().slice(0, 6) === '%%info') {
-        const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
-        editor.setValue(info);
-      }
-      try {
-        const response = await executeCode(editor.getValue(), s.kernel, user._id);
-        if (response.ok) {
-          const msgId = response.msg_id;
-          updateState(props.app._id, {
-            streaming: true,
-            msgId: msgId,
-          });
-        } else {
-          console.log('Error executing code');
-          updateState(props.app._id, {
-            streaming: false,
-            msgId: '',
-          });
-        }
-      } catch (error) {
-        if (error instanceof TypeError) {
-          console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-          updateState(props.app._id, {
-            streaming: false,
-            kernel: '',
-            kernels: [],
-            msgId: '',
-          });
-        }
+    } catch (error) {
+      if (error instanceof TypeError) {
+        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+        updateState(props.app._id, {
+          streaming: false,
+          kernel: '',
+          kernels: [],
+          msgId: '',
+        });
       }
     }
   };
@@ -344,7 +354,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   // Handle interrupt
   const handleInterrupt = () => {
     // send signal to interrupt the kernel via http request
-    FastAPI.interruptKernel(s.kernel);
+    // FastAPI.interruptKernel(s.kernel);
     updateState(props.app._id, {
       msgId: '',
       streaming: false,
@@ -355,47 +365,41 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
    * Needs to be reset every time the kernel changes
    */
   useEffect(() => {
-    if (editor && s.kernel && props.access) {
+    setCount((prevCount) => prevCount + 1);
+
+    if (editor && s.kernel && props.access && monaco) {
+      editor.onDidAttemptReadOnlyEdit(() => {
+        toast({
+          title: 'You do not have access to this kernel',
+          description: 'Please select a different kernel from the toolbar',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+          position: 'bottom',
+        });
+      });
       editor.addAction({
         id: 'execute',
         label: 'Execute',
         keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: handleExecute,
       });
+      setEditor(editor);
     }
-  }, [s.kernel, props.access]);
-
-  /**
-   * Resizes the editor when the window is resized
-   * or when the editorHeight changes.
-   *
-   * This is needed because the editor is not responsive
-   * and automaticLayout is set to false to make the editor
-   * resizeable and not trigger a ResizeObserver loop limit
-   * exceeded error.
-   */
-  useEffect(() => {
-    if (editor) {
-      editor.layout({
-        width: props.app.data.size.width - 60,
-        height: props.editorHeight && props.editorHeight > 150 ? props.editorHeight : 150,
-        minHeight: 150,
-        minWidth: 150,
-      } as monaco.editor.IDimension);
-    }
-  }, [editor, props.app.data.size.width, props.editorHeight]);
+  }, [editor, monaco, s.kernel]);
 
   return (
     <>
       <Flex direction={'row'}>
-        <Editor
-          defaultValue={s.code} // code to initialize the editor
-          language={s.language} // language of the editor
-          options={monacoOptions}
-          theme={defaultTheme}
-          onMount={onEditorDidMount}
-          onChange={handleChange}
-        />
+        <Flex direction={'column'}>
+          {/* <div ref={element} style={{ width: '100%', height: '100%' }} /> */}
+          <div ref={element} />
+          <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
+            {numClients > 1 ? 'Online:' + numClients : null}
+            <Spacer />
+            {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+          </Flex>
+        </Flex>
         <Box p={1}>
           <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
             <Tooltip hasArrow label="Execute" placement="right-start">
@@ -424,11 +428,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
             </Tooltip>
           </ButtonGroup>
         </Box>
-      </Flex>
-      <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
-        {numClients > 1 ? 'Online:' + numClients : null}
-        <Spacer />
-        {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Line: ${cursorPosition.r} Column: ${cursorPosition.c}` : null}
       </Flex>
     </>
   );

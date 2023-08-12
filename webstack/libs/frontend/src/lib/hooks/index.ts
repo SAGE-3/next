@@ -19,3 +19,4 @@ export * from './useWindowResize';
 export * from './useCursorBoardPosition';
 export * from './usePluginListener';
 export * from './useFiles';
+export * from './useYjs';

@@ -17,34 +17,6 @@ const executeInfoSchema = z.object({
   params: z.any(),
 });
 
-const ContentItemSchema = z
-  .object({
-    stdout: z.string().optional(),
-    stderr: z.string().optional(),
-    traceback: z.array(z.string()).optional(),
-    ename: z.string().optional(),
-    evalue: z.string().optional(),
-    'text/plain': z.string().optional(),
-    'application/javascript': z.string().optional(),
-    'text/html': z.string().optional(),
-    'text/latex': z.string().optional(),
-    'image/jpeg': z.string().optional(),
-    'text/markdown': z.string().optional(),
-    'image/png': z.string().optional(),
-    'image/svg+xml': z.string().optional(),
-    'application/vnd.plotly.v1+json': z.string().optional(),
-    'application/vnd.vega.v5+json': z.string().optional(),
-    'application/vnd.vegalite.v4+json': z.string().optional(),
-    'application/vnd.vega.v4+json': z.string().optional(),
-    'application/vnd.vegalite.v3+json': z.string().optional(),
-    'application/vnd.vega.v3+json': z.string().optional(),
-    'application/vnd.vegalite.v2+json': z.string().optional(),
-    'application/vnd.vega.v2+json': z.string().optional(),
-    'application/vnd.vegalite.v1+json': z.string().optional(),
-    'application/vnd.vega.v1+json': z.string().optional(),
-  })
-  .catchall(z.string());
-
 export const schema = z.object({
   code: z.string(),
   msgId: z.string(),
@@ -58,7 +30,6 @@ export const schema = z.object({
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
-export type ContentItemType = z.infer<typeof ContentItemSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {

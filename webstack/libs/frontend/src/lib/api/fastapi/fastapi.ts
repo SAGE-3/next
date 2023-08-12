@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { KernelInfo } from '@sage3/shared/types';
+import { KernelInfo, ContentItem, ExecOutput } from '@sage3/shared/types';
 
 export const fastAPIRoute = '/api/fastapi';
 
@@ -153,7 +153,7 @@ async function executeCode(code: string, kernelId: string, userId: string): Prom
  * @returns
  */
 async function interruptKernel(kernelId: string): Promise<any> {
-  const response = await fetch(`${fastAPIRoute}/interrupt/${kernelId}`, {
+  const response = await fetch(`${fastAPIRoute}/stop/${kernelId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -178,6 +178,58 @@ async function fetchKernelTypes(): Promise<string[]> {
   return kernelTypes;
 }
 
+/**
+ * This function will fetch the results of executed code from the kernel
+ * @param msgId
+ * @returns
+ */
+async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> {
+  const response = await fetch(`${fastAPIRoute}/status/${msgId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!response.ok) {
+    return {
+      ok: false,
+      execOutput: {
+        completed: true,
+        session_id: '',
+        start_time: '',
+        end_time: '',
+        msg_type: '',
+        // content: [{ data: { 'text/plain': 'Error: Failed to fetch results.' }, metadata: {}, output_type: 'error' }],
+        content: [{ ename: 'Error', evalue: 'Failed to fetch results.' }],
+        last_update_time: '',
+        execution_count: 0,
+      },
+    };
+  } else {
+    const data = await response.json();
+    return { ok: true, execOutput: data };
+  }
+}
+
+async function startServerSentEventsStream(msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }> {
+  const eventSource = new EventSource(`${fastAPIRoute}/status/${msgId}/stream`);
+
+  return new Promise((resolve, reject) => {
+    eventSource.addEventListener('new_message', function (event) {
+      const execOutput = JSON.parse(event.data);
+      if (execOutput.completed) {
+        eventSource.close();
+        resolve({ ok: true, execOutput: execOutput, es: eventSource });
+      } else {
+        resolve({ ok: false, execOutput: execOutput, es: eventSource });
+      }
+    });
+
+    eventSource.addEventListener('error', function (event) {
+      reject(new Error('Failed to connect to the stream or an error occurred during the stream.'));
+      eventSource.close();
+    });
+  });
+}
+
 export const FastAPI = {
   interruptKernel,
   executeCode,
@@ -188,4 +240,6 @@ export const FastAPI = {
   deleteKernel,
   restartKernel,
   fetchKernelTypes,
+  fetchResults,
+  startServerSentEventsStream,
 };

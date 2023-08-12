@@ -6,17 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useUsersStore, useBoardStore, useKernelStore, CreateKernelModal } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
-import { User } from '@sage3/shared/types';
 import { KernelInfo } from '@sage3/shared/types';
 
 /**
@@ -32,11 +31,6 @@ export function ToolbarComponent(props: App): JSX.Element {
 
   // User state
   const { user } = useUser();
-  const users = useUsersStore((state) => state.users);
-
-  // Board Info
-  const boardId = props.data.boardId;
-  const boardName = useBoardStore((state) => state.boards).find((board) => board._id === boardId)?.data.name;
 
   // Access
   const [access, setAccess] = useState<boolean>(true); // Default true, it will be updated later
@@ -48,7 +42,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Kernel Store
-  const { apiStatus, kernels, createKernel, fetchKernels } = useKernelStore((state) => state);
+  const { apiStatus, kernels, fetchKernels } = useKernelStore((state) => state);
 
   // Filter out this board's kernels and boards this user has access to
   const filterMyKernels = (kernels: KernelInfo[]) => {

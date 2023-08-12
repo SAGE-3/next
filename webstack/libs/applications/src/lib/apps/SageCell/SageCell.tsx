@@ -43,7 +43,7 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState(true);
 
   // Styles
-  const [editorHeight, setEditorHeight] = useState(300); // not beign used?
+  const [editorHeight, setEditorHeight] = useState(150);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
 
   // Kernel Store
@@ -64,7 +64,7 @@ function AppComponent(props: App): JSX.Element {
       else if (isPrivate && owner === user?._id) setAccess(true);
       else setAccess(false);
     }
-  }, [apiStatus, kernels, s.kernel, user]);
+  }, [apiStatus, kernels, s.kernel, user, access]);
 
   /**
    * Update local state if the online status changes
@@ -98,7 +98,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'} overflowY={'hidden'}>
+      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'}>
         <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
         <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
           <CodeEditor app={props} access={access} editorHeight={editorHeight} online={apiStatus} />
@@ -111,7 +111,25 @@ function AppComponent(props: App): JSX.Element {
               document.addEventListener('mouseup', handleMouseUp);
             }}
           />
-          <Outputs app={props} online={apiStatus} />
+          <Box
+            h={'100%'}
+            maxHeight={window.innerHeight - editorHeight - 50 + 'px'}
+            overflow={'scroll'}
+            css={{
+              '&::-webkit-scrollbar': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-track': {
+                width: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: bgColor,
+                borderRadius: 'md',
+              },
+            }}
+          >
+            <Outputs {...props} />
+          </Box>
         </Box>
       </VStack>
     </AppWindow>

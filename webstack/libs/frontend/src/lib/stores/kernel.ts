@@ -12,9 +12,10 @@ import create from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
-import { KernelInfo } from '@sage3/shared/types';
+import { KernelInfo, ExecOutput } from '@sage3/shared/types';
 
 import { FastAPI } from '../api';
+// import { ContentItemType } from 'libs/applications/src/lib/apps/SageCell';
 
 type KernelStoreState = {
   kernels: KernelInfo[];
@@ -27,6 +28,8 @@ type KernelStoreState = {
   interruptKernel: (kernelId: string) => Promise<boolean>;
   restartKernel: (kernelId: string) => Promise<boolean>;
   executeCode: (code: string, kernelId: string, userId: string) => Promise<{ ok: boolean; msg_id: string }>;
+  fetchResults: (msgId: string) => Promise<{ ok: boolean; execOutput: ExecOutput }>;
+  startServerSentEventsStream: (msgId: string) => Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }>;
 };
 
 /**
@@ -94,6 +97,16 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     return response;
   };
 
+  const fetchResults = async (msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> => {
+    const response = await FastAPI.fetchResults(msgId);
+    return response;
+  };
+
+  const startServerSentEventsStream = async (msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }> => {
+    const response = await FastAPI.startServerSentEventsStream(msgId);
+    return response;
+  };
+
   return {
     kernels: [],
     apiStatus: false,
@@ -105,6 +118,8 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     interruptKernel: interruptKernel,
     restartKernel: restartKernel,
     executeCode: executeCode,
+    fetchResults: fetchResults,
+    startServerSentEventsStream: startServerSentEventsStream,
   };
 });
 

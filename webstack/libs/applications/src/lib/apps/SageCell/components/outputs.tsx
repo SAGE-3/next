@@ -40,80 +40,150 @@ import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
 
-import { useAppStore, useHexColor, useKernelStore, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-import { KernelInfo } from '@sage3/shared/types';
+import { KernelInfo, ExecOutput, ContentItem } from '@sage3/shared/types';
 
-import { ContentItemType } from '../index';
-
-interface OutputsProps {
-  app: App;
-  online: boolean;
-}
-
-export function Outputs(props: OutputsProps): JSX.Element {
-  const s = props.app.data.state as AppState;
+/**
+ * The Outputs component is responsible for rendering the output of the kernel
+ * in the app. It will render the output based on the type of output that is
+ * returned from the kernel. It will also render the error message if there is
+ * an error. If the output is streaming, it will render the output as it comes
+ * in from the kernel. If the output is not streaming, it will render the output
+ * as a whole when the kernel is done executing. Completed message ids are stored in
+ * the history array in the state. The last message id in the history array is
+ * used to get the output of the kernel when not streaming.
+ *
+ * @param props
+ * @returns
+ */
+export function Outputs(props: App): JSX.Element {
+  const s = props.data.state as AppState;
   // Data stores
   const users = useUsersStore((state) => state.users);
+  const { user } = useUser();
   const createApp = useAppStore((state) => state.create);
+  const updateState = useAppStore((state) => state.updateState);
   // Local state
-  const [content, setContent] = useState<ContentItemType[] | null>(null);
+  const [content, setContent] = useState<ContentItem[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const executionCountColor = useHexColor('red');
-  const [msgType, setMsgType] = useState<string>('');
-  const [msgId, setMsgId] = useState<string>();
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
+  const { fetchResults, startServerSentEventsStream } = useKernelStore((state) => state);
+  const [msgId, setMsgId] = useState<string>(s.history[s.history.length - 1] || '');
 
-  const { kernels } = useKernelStore((state) => state);
+  async function getResults(msgId: string) {
+    if (s.streaming && s.session !== user?._id) {
+      return; // Don't update results just yet if someone else is streaming
+    }
+    const response = await fetchResults(msgId);
+    if (response.ok) {
+      const result = response.execOutput;
+      if (result.completed) {
+        setContent(result.content);
+        setExecutionCount(result.execution_count);
+      }
+    } else {
+      console.log(response);
+    }
+  }
+
+  async function getStreamingResults() {
+    if (s.streaming && s.session !== user?._id) {
+      return; // Don't update results just yet if someone else is streaming
+    }
+    const response = await startServerSentEventsStream(s.msgId);
+    if (response.ok) {
+      const result = response.execOutput;
+      if (result.completed) {
+        setContent(result.content);
+        setExecutionCount(result.execution_count);
+        updateState(props._id, { streaming: false, msgId: '', history: [...s.history, s.msgId] });
+      }
+    } else {
+      setContent(response.execOutput.content);
+    }
+  }
 
   useEffect(() => {
-    if (!s.msgId) {
-      setContent(null);
-      setExecutionCount(0);
-      setMsgType('');
-      return;
+    if (s.msgId) {
+      getStreamingResults();
     }
-    if (msgId !== s.msgId) {
-      setMsgId(s.msgId);
-      startStream(s.msgId);
-    }
-    // fetchMessageResults(s.msgId);
   }, [s.msgId]);
 
-  const updateState = useAppStore((state) => state.updateState);
-  const baseURL = '/api/fastapi';
+  // async function getResults() {
+  //   if (s.streaming && s.session !== user?._id) {
+  //     return; // Don't fetch results if someone else is streaming
+  //   }
+  //   let result: ExecOutput = {
+  //     completed: false,
+  //     content: [],
+  //     execution_count: 0,
+  //     msg_type: '',
+  //     session_id: '',
+  //     start_time: '',
+  //     end_time: '',
+  //     last_update_time: '',
+  //   };
+  //   const response = await fetchResults(s.msgId);
+  //   if (response.ok) {
+  //     result = response.execOutput;
+  //     console.log();
+  //     if (result.completed) {
+  //       console.log(result);
+  //       setContent(result.content);
+  //       setExecutionCount(result.execution_count);
+  //       updateState(props._id, { streaming: false, msgId: '', history: [...s.history, s.msgId] });
+  //     } else {
+  //       setContent(result.content);
+  //       setExecutionCount(result.execution_count ? result.execution_count : 0);
+  //     }
+  //   } else {
+  //     console.log(response);
+  //   }
+  // }
 
-  /**
-   * This function will start a stream to get the output of a kernel
-   * and update the state with the output
-   * @param msg_id
-   * @returns
-   */
-  const startStream = async (msg_id: string) => {
-    if (!msg_id) {
-      // console.log('No message id to start stream');
-      return;
+  useEffect(() => {
+    // get the last message from the history
+    if (s.history.length > 0) {
+      const msgId = s.history[s.history.length - 1];
+      fetchResults(msgId).then((response) => {
+        if (response.ok) {
+          const result = response.execOutput;
+          setContent(result.content);
+          setExecutionCount(result.execution_count);
+        }
+      });
+    } else {
+      setContent(null);
+      setExecutionCount(0);
     }
-    const url = `${baseURL}/status/${msg_id}/stream`;
-    const eventSource = new EventSource(url);
-    // console.log('Starting stream...for msg_id: ', msg_id);
-    eventSource.addEventListener('new_message', function (event) {
-      const result = JSON.parse(event.data);
-      if (result.completed) {
-        setContent(result.content as ContentItemType[]);
-        setExecutionCount(result.execution_count);
-        setMsgType(result.msg_type);
-        updateState(props.app._id, {
-          streaming: false,
-        });
-        eventSource.close();
-      } else {
-        setContent(result.content as ContentItemType[]);
-      }
-    });
-  };
+  }, [s.history]);
+
+  // useEffect(() => {
+  //   if (!eventSource) return;
+  //   eventSource.addEventListener('new_message', function (event) {
+  //     const result = JSON.parse(event.data);
+  //     if (result.completed) {
+  //       setContent(result.content as ContentItem[]);
+  //       setExecutionCount(result.executionCount);
+  //       // setMsgType(result.msgType);
+  //       setStreaming(false);
+  //       eventSource.close();
+  //       setEventSource(null);
+  //     } else {
+  //       setContent(result.content as ContentItem[]);
+  //     }
+  //   });
+  // }, [eventSource]);
+
+  // useEffect(() => {
+  //   if (s.msgId) {
+  //     getResults();
+  //   }
+  // }, [s.msgId]);
 
   /**
    * This function will create a new webview app
@@ -124,10 +194,10 @@ export function Outputs(props: OutputsProps): JSX.Element {
   const openInWebview = (url: string): void => {
     createApp({
       title: 'Webview',
-      roomId: props.app.data.roomId,
-      boardId: props.app.data.boardId,
-      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
-      size: { width: 600, height: props.app.data.size.height, depth: 0 },
+      roomId: props.data.roomId,
+      boardId: props.data.boardId,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: 600, height: props.data.size.height, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'Webview',
       state: { webviewurl: url },
@@ -136,17 +206,17 @@ export function Outputs(props: OutputsProps): JSX.Element {
     });
   };
 
-  // Get the color of the kernel owner
-  useEffect(() => {
-    if (s.kernel && users) {
-      const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
-      const ownerColor = users.find((el) => el._id === owner)?.data.color;
-      setOwnerColor(ownerColor || '#000000');
-    }
-    return () => {
-      setOwnerColor('#000000');
-    };
-  }, [kernels, users]);
+  // // Get the color of the kernel owner
+  // useEffect(() => {
+  //   if (s.kernel && users) {
+  //     const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
+  //     const ownerColor = users.find((el) => el._id === owner)?.data.color;
+  //     setOwnerColor(ownerColor || '#000000');
+  //   }
+  //   return () => {
+  //     setOwnerColor('#000000');
+  //   };
+  // }, [kernels, users]);
 
   // Get the error message and put it back together since it streamed in parts
   const error =
@@ -278,6 +348,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
 
   return (
     <Box flex="1" borderLeft={`.4rem solid ${useHexColor(ownerColor)}`} display={'flex'} flexDirection={'row'}>
+      {/* <Box p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')} overflowY={'auto'}> */}
       {!executionCount && executionCount < 1 ? null : (
         <Text padding={'0.25rem'} fontSize={s.fontSize} color={executionCountColor}>{`[${executionCount}]:`}</Text>
       )}
@@ -303,6 +374,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
         {error && error.traceback ? Object(error.traceback).map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>) : null}
         {processedContent}
       </Box>
+      {/* </Box> */}
     </Box>
   );
 }
