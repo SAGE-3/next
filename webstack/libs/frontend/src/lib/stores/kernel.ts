@@ -29,7 +29,6 @@ type KernelStoreState = {
   restartKernel: (kernelId: string) => Promise<boolean>;
   executeCode: (code: string, kernelId: string, userId: string) => Promise<{ ok: boolean; msg_id: string }>;
   fetchResults: (msgId: string) => Promise<{ ok: boolean; execOutput: ExecOutput }>;
-  startServerSentEventsStream: (msgId: string) => Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }>;
 };
 
 /**
@@ -102,11 +101,6 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     return response;
   };
 
-  const startServerSentEventsStream = async (msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }> => {
-    const response = await FastAPI.startServerSentEventsStream(msgId);
-    return response;
-  };
-
   return {
     kernels: [],
     apiStatus: false,
@@ -119,7 +113,6 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     restartKernel: restartKernel,
     executeCode: executeCode,
     fetchResults: fetchResults,
-    startServerSentEventsStream: startServerSentEventsStream,
   };
 });
 

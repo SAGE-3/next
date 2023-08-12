@@ -73,7 +73,7 @@ export function ToolbarComponent(props: App): JSX.Element {
     if (!apiStatus) {
       setAccess(false);
       return;
-    } else if (kernels.length === 0 && apiStatus) {
+    } else {
       const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
       const isPrivate = selectedKernel?.is_private;
       const owner = selectedKernel?.owner;
@@ -81,7 +81,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       else if (isPrivate && owner === user?._id) setAccess(true);
       else setAccess(false);
     }
-  }, [apiStatus, kernels, s.kernel, user]);
+  }, [apiStatus, JSON.stringify(kernels), s.kernel, user]);
 
   // Set Selected Kernel
   useEffect(() => {

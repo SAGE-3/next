@@ -8,7 +8,7 @@
 
 // React imports
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, VStack } from '@chakra-ui/react';
+import { background, Box, useColorModeValue, VStack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useUser, useAppStore, useKernelStore } from '@sage3/frontend';
@@ -93,14 +93,35 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const handleEditorResize = (deltaY: number) => {
-    setEditorHeight((prevHeight) => prevHeight + deltaY); // update the Monaco editor height
+    setEditorHeight((prevHeight) => {
+      const newHeight = prevHeight + deltaY;
+      // set the minimum height of the editor to 150px
+      if (newHeight < 150) return 150;
+      // set the maximum height of the editor to 50% of the window height
+      if (newHeight > props.data.size.height * 0.8) return props.data.size.height * 0.8;
+      return newHeight;
+    }); // update the Monaco editor height
   };
+
+  useEffect(() => {
+    handleEditorResize(0);
+  }, [props.data.size.height]);
 
   return (
     <AppWindow app={props}>
-      <VStack w={'100%'} h={'100%'} bg={bgColor} fontSize={s.fontSize + 'px'}>
+      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
         <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
-        <Box w={'100%'} display="flex" flexDirection="column" whiteSpace={'pre-wrap'}>
+        <Box
+          w={'100%'}
+          h={'100%'}
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          whiteSpace={'pre-wrap'}
+          overflowWrap="break-word"
+          overflowY="auto"
+          pointerEvents={access ? 'auto' : 'none'}
+        >
           <CodeEditor app={props} access={access} editorHeight={editorHeight} online={apiStatus} />
           {/* The grab bar */}
           <Box
@@ -113,8 +134,9 @@ function AppComponent(props: App): JSX.Element {
           />
           <Box
             h={'100%'}
+            width={'100%'}
             maxHeight={window.innerHeight - editorHeight - 50 + 'px'}
-            overflow={'scroll'}
+            overflowY={'auto'}
             css={{
               '&::-webkit-scrollbar': {
                 background: 'transparent',
@@ -132,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
             <Outputs {...props} />
           </Box>
         </Box>
-      </VStack>
+      </Box>
     </AppWindow>
   );
 }

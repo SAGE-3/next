@@ -40,7 +40,7 @@ import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
 
-import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { FastAPI, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
@@ -71,7 +71,7 @@ export function Outputs(props: App): JSX.Element {
   const [executionCount, setExecutionCount] = useState<number>(0);
   const executionCountColor = useHexColor('red');
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
-  const { fetchResults, startServerSentEventsStream } = useKernelStore((state) => state);
+  const { fetchResults } = useKernelStore((state) => state);
   const [msgId, setMsgId] = useState<string>(s.history[s.history.length - 1] || '');
 
   async function getResults(msgId: string) {
@@ -94,17 +94,27 @@ export function Outputs(props: App): JSX.Element {
     if (s.streaming && s.session !== user?._id) {
       return; // Don't update results just yet if someone else is streaming
     }
-    const response = await startServerSentEventsStream(s.msgId);
-    if (response.ok) {
-      const result = response.execOutput;
-      if (result.completed) {
-        setContent(result.content);
-        setExecutionCount(result.execution_count);
-        updateState(props._id, { streaming: false, msgId: '', history: [...s.history, s.msgId] });
+
+    let eventSource: any | EventSource = null;
+    function messageCallback(message: MessageEvent<unknown>) {
+      const result = JSON.parse(message.data as string) as ExecOutput;
+      console.log('Streaming result: ', result);
+      if (result) {
+        if (result.completed) {
+          setContent(result.content);
+          setExecutionCount(result.execution_count);
+          updateState(props._id, { streaming: false, msgId: '', history: [...s.history, s.msgId] });
+        } else {
+          setContent(result.content);
+          setExecutionCount(result.execution_count);
+        }
       }
-    } else {
-      setContent(response.execOutput.content);
     }
+    function errorCallback(error: any) {
+      console.log('Error with ServerSentEventStream>: ', error);
+      if (eventSource) eventSource.close();
+    }
+    eventSource = FastAPI.startServerSentEventsStream(s.msgId, messageCallback, errorCallback);
   }
 
   useEffect(() => {
@@ -116,7 +126,7 @@ export function Outputs(props: App): JSX.Element {
   useEffect(() => {
     if (s.history.length === 0) return;
     const lastMsgId = s.history[s.history.length - 1];
-    getResults(lastMsgId);
+    // getResults(lastMsgId);
   }, [s.history]);
 
   /**
@@ -281,12 +291,12 @@ export function Outputs(props: App): JSX.Element {
   }, [content, s.fontSize]);
 
   return (
-    <Box flex="1" borderLeft={`.4rem solid ${useHexColor(ownerColor)}`} display={'flex'} flexDirection={'row'}>
+    <Box flex="1" borderLeft={`.4rem solid ${useHexColor(ownerColor)}`} display={'flex'} flexDirection={'row'} height="100%" width="100%">
       {/* <Box p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')} overflowY={'auto'}> */}
       {!executionCount && executionCount < 1 ? null : (
         <Text padding={'0.25rem'} fontSize={s.fontSize} color={executionCountColor}>{`[${executionCount}]:`}</Text>
       )}
-      <Box p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}>
+      <Box width="100%" p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}>
         {error && error.ename && error.evalue ? (
           <Alert status="error">
             <Icon as={MdError} />

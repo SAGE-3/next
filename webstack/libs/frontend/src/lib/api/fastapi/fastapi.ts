@@ -209,25 +209,15 @@ async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: E
   }
 }
 
-async function startServerSentEventsStream(msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput; es: EventSource }> {
+function startServerSentEventsStream(
+  msgId: string,
+  messageCallback: (event: MessageEvent<unknown>) => void,
+  errorCallback: (error: any) => void
+): EventSource {
   const eventSource = new EventSource(`${fastAPIRoute}/status/${msgId}/stream`);
-
-  return new Promise((resolve, reject) => {
-    eventSource.addEventListener('new_message', function (event) {
-      const execOutput = JSON.parse(event.data);
-      if (execOutput.completed) {
-        eventSource.close();
-        resolve({ ok: true, execOutput: execOutput, es: eventSource });
-      } else {
-        resolve({ ok: false, execOutput: execOutput, es: eventSource });
-      }
-    });
-
-    eventSource.addEventListener('error', function (event) {
-      reject(new Error('Failed to connect to the stream or an error occurred during the stream.'));
-      eventSource.close();
-    });
-  });
+  eventSource.addEventListener('new_message', messageCallback);
+  eventSource.addEventListener('error', errorCallback);
+  return eventSource;
 }
 
 export const FastAPI = {

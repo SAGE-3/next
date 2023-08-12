@@ -74,6 +74,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const [count, setCount] = useState(0);
 
   // Toast
+  const toastId = 'editor-toast-' + props.app._id;
   const toast = useToast();
 
   // YJS and Monaco
@@ -94,7 +95,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         fontSize: s.fontSize,
         language: s.language,
         theme: defaultTheme,
-        domReadOnly: !props.access,
+        // domReadOnly: !props.access,
       });
       editor.addAction({
         id: 'execute',
@@ -157,8 +158,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         setModel(null);
       }
     };
-    // }, []);
-  }, [monaco, element, s.code, s.language, s.fontSize]);
+  }, [monaco, element, s.language, s.fontSize]);
 
   useEffect(() => {
     if (editor && yText && model && provider && binding === null) {
@@ -284,6 +284,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     console.log('handleExecute');
     if (!user || !editor || !apiStatus || !props.access) return;
     if (!s.kernel) {
+      toast.close(toastId);
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -291,10 +292,12 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         duration: 4000,
         isClosable: true,
         position: 'bottom',
+        id: toastId,
       });
       return;
     }
     if (!props.access) {
+      toast.close(toastId);
       toast({
         title: 'You do not have access to this kernel',
         description: 'Please select a different kernel from the toolbar',
@@ -302,6 +305,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         duration: 4000,
         isClosable: true,
         position: 'bottom',
+        id: toastId,
       });
       return;
     }
@@ -369,6 +373,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
     if (editor && s.kernel && props.access && monaco) {
       editor.onDidAttemptReadOnlyEdit(() => {
+        toast.close(toastId);
         toast({
           title: 'You do not have access to this kernel',
           description: 'Please select a different kernel from the toolbar',
@@ -376,6 +381,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
           duration: 4000,
           isClosable: true,
           position: 'bottom',
+          id: toastId,
         });
       });
       editor.addAction({

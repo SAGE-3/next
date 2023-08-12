@@ -26,6 +26,11 @@ export function FastAPIRouter() {
     logProvider: () => console,
     // request handler making sure the body is parsed before proxying
     onProxyReq: restream,
+    onProxyRes: (proxyRes) => {
+      proxyRes.headers['Cache-Control'] = 'no-cache';
+      proxyRes.headers['Connection'] = 'keep-alive';
+      proxyRes.headers['Content-Type'] = 'text/event-stream';
+    },
   });
 
   return router;
@@ -38,6 +43,8 @@ export function FastAPIRouter() {
  * @param {Request} req
  * */
 function restream(proxyReq: ClientRequest, req: Request): void {
+  proxyReq.setHeader('Connection', 'keep-alive');
+  proxyReq.setHeader('Cache-Control', 'no-cache');
   if (req.method == 'POST' && req.body) {
     const bodyData = JSON.stringify(req.body);
     // incase if content-type is application/x-www-form-urlencoded -> we need to change to application/json
@@ -45,5 +52,10 @@ function restream(proxyReq: ClientRequest, req: Request): void {
     proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
     // stream the content
     proxyReq.write(bodyData);
+  }
+  if (req.method == 'GET' && req.path.includes('stream')) {
+    proxyReq.setHeader('Connection', 'keep-alive');
+    proxyReq.setHeader('Cache-Control', 'no-cache');
+    proxyReq.setHeader('Content-Type', 'text/event-stream');
   }
 }
