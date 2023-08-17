@@ -45,7 +45,7 @@ const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = req
 // MenuBuilder
 const { buildMenu } = require('./src/menuBuilder');
 
-// Store
+// Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
@@ -185,7 +185,7 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  windowStore.clear();
+  windowStore.default();
   bookmarkStore.clear();
 
   // clear the caches, useful to remove password cookies
@@ -373,7 +373,14 @@ const saveState = async () => {
 
   if (commander.clear) {
     console.log('Preferences> clear all');
-    windowStore.clear();
+    windowStore.default();
+    bookmarkStore.clear();
+
+    // clear the caches, useful to remove password cookies
+    const session = electron.session.defaultSession;
+    session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+      console.log('Electron>	Caches cleared');
+    });
   }
 };
 

@@ -26,6 +26,7 @@ const defaultWindowState = {
   height: 720,
 };
 store.get('window-state', defaultWindowState);
+store.get('clean', false);
 
 module.exports = {
   getWindow: function () {
@@ -33,6 +34,15 @@ module.exports = {
   },
   setWindow: function (value) {
     return store.set('window-state', value);
+  },
+  getClean: function () {
+    return store.get('clean', false);
+  },
+  setClean: function (value) {
+    return store.set('clean', value);
+  },
+  default: function () {
+    store.set('window-state', defaultWindowState);
   },
   clear: function () {
     return store.clear();

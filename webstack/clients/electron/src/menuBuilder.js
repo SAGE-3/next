@@ -12,7 +12,8 @@ const { app, dialog, Menu, Tray, nativeImage } = require('electron');
 const shell = electron.shell;
 const path = require('path');
 
-// Store
+// Stores
+const windowStore = require('./windowstore');
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
@@ -131,12 +132,11 @@ function buildSageMenu(window, commander) {
           },
         },
         {
-          label: 'Clear Preferences',
+          label: 'Clear Caches',
           click: function () {
-            // clear on quit
-            commander.clear = true;
-            // Clear cache
-            // clear the caches, useful to remove password cookies
+            windowStore.default();
+            bookmarkStore.clear();
+            // Clear the caches, useful to remove password cookies
             const session = electron.session.defaultSession;
             session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
               console.log('Electron>	Caches cleared');
@@ -148,6 +148,17 @@ function buildSageMenu(window, commander) {
                 buttons: ['Ok'],
               });
             });
+          },
+        },
+        {
+          label: 'Clear Preferences on Quit',
+          type: 'checkbox',
+          checked: windowStore.getClean(),
+          click: function (e) {
+            console.log('Electron>	Clear preferences on quit: ', e.checked);
+            // clear on quit
+            commander.clear = e.checked;
+            windowStore.setClean(e.checked);
           },
         },
         {
