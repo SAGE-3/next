@@ -187,6 +187,12 @@ if (commander.clear) {
   console.log('Preferences> clear all');
   windowStore.clear();
   bookmarkStore.clear();
+
+  // clear the caches, useful to remove password cookies
+  const session = electron.session.defaultSession;
+  session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+    console.log('Electron>	Caches cleared');
+  });
 }
 
 if (process.platform === 'win32') {
