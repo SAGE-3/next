@@ -16,7 +16,7 @@ export interface IUseYjsProps {
   appId: string;
 }
 
-export function useYjs({ appId }: IUseYjsProps) {
+export function useYjs(appId: string) {
   const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yText, setYText] = useState<Y.Text | null>(null);
@@ -29,8 +29,8 @@ export function useYjs({ appId }: IUseYjsProps) {
 
   const createYMap = useCallback(() => {
     if (ydoc === null || yText !== null) return;
-    setYText(ydoc.getText(appId));
-  }, [ydoc, yText, appId]);
+    setYText(ydoc.getText('monaco'));
+  }, [ydoc, yText]);
 
   useEffect(() => {
     if (ydoc === null) setYdoc(new Y.Doc());

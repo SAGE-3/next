@@ -24,12 +24,37 @@ export function FastAPIRouter() {
     pathRewrite: { '^/api/fastapi': '' },
     logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
+    selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying
     onProxyReq: restream,
-    onProxyRes: (proxyRes) => {
-      proxyRes.headers['Cache-Control'] = 'no-cache';
-      proxyRes.headers['Connection'] = 'keep-alive';
-      proxyRes.headers['Content-Type'] = 'text/event-stream';
+    onProxyRes: (proxyRes, req, res) => {
+      let data = '';
+
+      // Only for SSE routes
+      if (req.path.includes('stream')) {
+        proxyRes.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        proxyRes.on('end', () => {
+          res.writeHead(200, {
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            'Content-Type': 'text/event-stream',
+          });
+          res.write(data);
+          res.end();
+        });
+      } else {
+        // Handle other routes normally
+        proxyRes.on('data', (chunk) => {
+          res.write(chunk);
+        });
+
+        proxyRes.on('end', () => {
+          res.end();
+        });
+      }
     },
   });
 
@@ -43,17 +68,14 @@ export function FastAPIRouter() {
  * @param {Request} req
  * */
 function restream(proxyReq: ClientRequest, req: Request): void {
-  proxyReq.setHeader('Connection', 'keep-alive');
-  proxyReq.setHeader('Cache-Control', 'no-cache');
-  if (req.method == 'POST' && req.body) {
+  if (req.method === 'POST' && req.body) {
     const bodyData = JSON.stringify(req.body);
-    // incase if content-type is application/x-www-form-urlencoded -> we need to change to application/json
     proxyReq.setHeader('Content-Type', 'application/json');
     proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-    // stream the content
     proxyReq.write(bodyData);
   }
-  if (req.method == 'GET' && req.path.includes('stream')) {
+
+  if (req.method === 'GET' && req.path.includes('stream')) {
     proxyReq.setHeader('Connection', 'keep-alive');
     proxyReq.setHeader('Cache-Control', 'no-cache');
     proxyReq.setHeader('Content-Type', 'text/event-stream');

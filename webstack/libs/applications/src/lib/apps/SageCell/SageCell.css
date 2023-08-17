@@ -17,52 +17,16 @@
 
 .grab-bar {
   flex: 1;
+  max-height: 5px;
   margin: 1px 0;
   padding: 4px;
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=)
     teal no-repeat center !important;
   cursor: row-resize;
 }
-
-/* .yRemoteSelectionHead {
-    position: absolute;
-    height: 100%;
-    box-sizing: border-box;
-  }
-  .yRemoteSelectionHead::after {
-    position: absolute;
-    content: ' ';
-    border-radius: 4px;
-    left: -4px;
-    top: -5px;
-  } */
-
-/* Give a remote user a caret */
-/* .yRemoteSelectionHead {
-    border-left: 1px solid #0d0d0d;
-    border-right: 1px solid #0d0d0d;
-    margin-left: -1px;
-    margin-right: -1px;
-    pointer-events: none;
-    position: relative;
-    word-break: normal;
-  } */
-
-/* Render the username above the caret */
-/* .yRemoteSelectionHead::after {
-    border-radius: 3px 3px 3px 0;
-    color: #0d0d0d;
-    font-size: 12px;
-    font-style: normal;
-    font-weight: 600;
-    left: -1px;
-    line-height: normal;
-    padding: 0.1rem 0.3rem;
-    position: absolute;
-    top: -1.4em;
-    user-select: none;
-    white-space: nowrap;
-  } */
+.monaco-editor-overlaymessage {
+  transform: scale(0.8);
+}
 
 .output {
   font-family: 'Monaco', 'Courier New', Courier, monospace;
@@ -75,6 +39,18 @@
 }
 
 /******** Light Theme ********/
+
+.output-area-light {
+  font-family: 'Monaco', 'Courier New', Courier, monospace;
+  padding-left: 0.5rem; /* aligns with code editor */
+  display: block;
+  font-size: 'inherit';
+  white-space: pre-wrap;
+  overflow: auto;
+  line-height: calc(1em + 0.5rem);
+  background-color: #fff;
+}
+
 .output table {
   border: 1px solid #212121;
   color: #171717;
@@ -118,6 +94,17 @@
   border-bottom: 4px solid #212121;
 }
 /********* Dark Mode *********/
+
+.output-area-dark {
+  font-family: 'Monaco', 'Courier New', Courier, monospace;
+  padding-left: 0.5rem; /* aligns with code editor */
+  display: block;
+  font-size: 'inherit';
+  white-space: pre-wrap;
+  overflow: auto;
+  line-height: calc(1em + 0.5rem);
+  background-color: #212121;
+}
 
 .output-area-dark table {
   /* border: 1px solid #cecece; */

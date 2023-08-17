@@ -197,7 +197,6 @@ async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: E
         start_time: '',
         end_time: '',
         msg_type: '',
-        // content: [{ data: { 'text/plain': 'Error: Failed to fetch results.' }, metadata: {}, output_type: 'error' }],
         content: [{ ename: 'Error', evalue: 'Failed to fetch results.' }],
         last_update_time: '',
         execution_count: 0,
@@ -211,12 +210,12 @@ async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: E
 
 function startServerSentEventsStream(
   msgId: string,
-  messageCallback: (event: MessageEvent<unknown>) => void,
-  errorCallback: (error: any) => void
+  messageCallback: (event: MessageEvent<unknown>) => void
+  // errorCallback: (error: MessageEvent<unknown>) => void
 ): EventSource {
   const eventSource = new EventSource(`${fastAPIRoute}/status/${msgId}/stream`);
   eventSource.addEventListener('new_message', messageCallback);
-  eventSource.addEventListener('error', errorCallback);
+  // eventSource.addEventListener('error', errorCallback);
   return eventSource;
 }
 
