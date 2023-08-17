@@ -10,11 +10,6 @@ import { RedisClientType } from 'redis';
 import * as passport from 'passport';
 import { Express, NextFunction, Request, Response } from 'express';
 
-// eslint-disable-next-line
-// const session = require('express-session');
-// eslint-disable-next-line
-// const connectRedis = require('connect-redis');
-
 import RedisStore from 'connect-redis';
 import * as session from 'express-session';
 
@@ -75,7 +70,7 @@ export class SBAuth {
       saveUninitialized: false,
       cookie: {
         secure: false, // if true only transmit cookie over https
-        httpOnly: false, // if true prevent client side JS from reading the cookie
+        httpOnly: true, // if true prevent client side JS from reading the cookie
         maxAge: config.sessionMaxAge, // session max age in miliseconds
       },
     });
@@ -144,7 +139,7 @@ export class SBAuth {
     }
 
     // Route to logout
-    express.get('/auth/logout', (req, res) => this.logout(req, res));
+    express.get('/auth/logout', (req, res, next) => this.logout(req, res, next));
 
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
@@ -185,18 +180,24 @@ export class SBAuth {
   /**
    * Log the current user out of the session.
    */
-  public logout(req: any, res: Response): void {
+  public logout(req: any, res: Response, next: NextFunction): void {
     const user = req.user;
     if (!user) {
       res.send({ success: true });
       return;
     }
-    if (req.user.provider == 'guest') {
+    if (req.user?.provider == 'guest') {
       this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
-    req.session.destroy();
-    req.logout();
-    res.send({ success: true });
+    // req.session.destroy();
+    req.session.user = null;
+
+    req.logout({ keepSessionInfo: false }, function (err: Error) {
+      if (err) {
+        return next(err);
+      }
+      res.send({ success: true });
+    });
   }
 
   private serializeUser(user: Express.User, done: (err: unknown, id?: unknown) => void): void {
