@@ -20,10 +20,11 @@ import { formatDistance } from 'date-fns';
 import dateFormat from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
+// OpenAI API v4
+import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
-
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -37,19 +38,12 @@ const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
 const LLAMA2_TOKENS = 300;
 const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
-// OpenAI API v4
-import OpenAI from 'openai';
-
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_ENGINE = 'gpt-3.5-turbo';
+// OpenAI API
+let OPENAI_API_KEY = '';
+let OPENAI_ENGINE = '';
 const OPENAI_TOKENS = 300;
 const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
-console.log('openai', openai);
 
 /* App component for Chat */
 
@@ -70,6 +64,10 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.700', 'gray.100');
   // Get presences of users
   const users = useUsersStore((state) => state.users);
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
+
+  const [openai, setOpenai] = useState<OpenAI>();
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -151,7 +149,7 @@ function AppComponent(props: App): JSX.Element {
       let tempText = '';
       setStreamText(tempText);
 
-      if (isOpenAIQuestion) {
+      if (isOpenAIQuestion && openai) {
         const messages = [
           { "role": "system", "content": OPENAI_SYSTEM_PROMPT },
           { "role": "user", "content": request }
@@ -334,12 +332,12 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
 
-  // Control the scrolling of the chat box
   useEffect(() => {
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "instant",
     });
+    // Control the scrolling of the chat box
     chatBox.current?.addEventListener('scrollend', () => {
       if (chatBox.current && chatBox.current.scrollTop) {
         const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
@@ -351,6 +349,17 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     });
+
+    // API configuration
+    OPENAI_API_KEY = config.openai.apiKey || '';
+    OPENAI_ENGINE = config.openai.model || 'gpt-3.5-turbo';
+    if (!OPENAI_API_KEY) {
+      const openaiClient = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      setOpenai(openaiClient);
+    }
   }, []);
 
   // Wait for new messages to scroll to the bottom
@@ -489,7 +498,7 @@ function AppComponent(props: App): JSX.Element {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
                               e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData('app_state', JSON.stringify({ color: "purple", text: message.response }));
+                              e.dataTransfer.setData('app_state', JSON.stringify({ color: message.userName === 'OpenAI' ? "green" : "purple", text: message.response }));
                             }}>
                             <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
                               {message.response}

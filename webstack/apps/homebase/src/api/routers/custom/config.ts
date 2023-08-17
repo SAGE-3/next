@@ -34,6 +34,7 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
+      openai: config.services.openai || {},
     } as OpenConfiguration;
     res.json(configuration);
   });
