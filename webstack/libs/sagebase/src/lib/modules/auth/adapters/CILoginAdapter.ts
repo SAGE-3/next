@@ -85,4 +85,5 @@ export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
     console.log('CILogon> Failed setup', error);
     return false;
   }
+  return false;
 }
