@@ -8,11 +8,12 @@
 
 // Electron
 const electron = require('electron');
-const { app, Menu, Tray, nativeImage } = require('electron');
+const { app, dialog, Menu, Tray, nativeImage } = require('electron');
 const shell = electron.shell;
 const path = require('path');
 
-// Store
+// Stores
+const windowStore = require('./windowstore');
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
@@ -131,10 +132,33 @@ function buildSageMenu(window, commander) {
           },
         },
         {
-          label: 'Clear Preferences',
+          label: 'Clear Caches',
           click: function () {
+            windowStore.default();
+            bookmarkStore.clear();
+            // Clear the caches, useful to remove password cookies
+            const session = electron.session.defaultSession;
+            session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+              console.log('Electron>	Caches cleared');
+
+              dialog.showMessageBox({
+                type: 'warning',
+                title: 'Preferences Cleared',
+                message: 'Preferences have been cleared. Restart SAGE3 to continue.',
+                buttons: ['Ok'],
+              });
+            });
+          },
+        },
+        {
+          label: 'Clear Preferences on Quit',
+          type: 'checkbox',
+          checked: windowStore.getClean(),
+          click: function (e) {
+            console.log('Electron>	Clear preferences on quit: ', e.checked);
             // clear on quit
-            commander.clear = true;
+            commander.clear = e.checked;
+            windowStore.setClean(e.checked);
           },
         },
         {
