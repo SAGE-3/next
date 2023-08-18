@@ -130,7 +130,8 @@ export class SBAuth {
 
       // CILogon Setup
       if (config.strategies.includes('cilogon') && config.cilogonConfig) {
-        if (passportCILogonSetup(config.cilogonConfig)) {
+        const ready = await passportCILogonSetup(config.cilogonConfig);
+        if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
             passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
