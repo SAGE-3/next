@@ -30,60 +30,55 @@ const CILogonURL = 'https://cilogon.org/.well-known/openid-configuration';
  * @param router The express router
  */
 export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
-  try {
-    // Increase timeout to 10 seconds
-    custom.setHttpOptionsDefaults({ timeout: 10000 });
-    // Get information from CILogon
-    Issuer.discover(CILogonURL)
-      .then(function (ciLogon) {
-        console.log('CILogon> Received cilogon information', ciLogon.issuer);
-        // Pass it along with site specific info
-        const cilongconfig = {
-          // cilogon info
-          issuer: ciLogon.issuer,
-          authorizationURL: ciLogon.authorization_endpoint,
-          tokenURL: ciLogon.token_endpoint,
-          userInfoURL: ciLogon.userinfo_endpoint,
+  // Increase timeout to 10 seconds
+  custom.setHttpOptionsDefaults({ timeout: 10000 });
+  // Get information from CILogon
+  const ciLogon = await Issuer.discover(CILogonURL).catch(function (err) {
+    console.log('CILogon> Failed to get CILogon information', err);
+  });
+  if (ciLogon) {
+    console.log('CILogon> Received cilogon information', ciLogon.issuer);
+    // Pass it along with site specific info
+    const cilongconfig = {
+      // cilogon info
+      issuer: ciLogon.issuer,
+      authorizationURL: ciLogon.authorization_endpoint,
+      tokenURL: ciLogon.token_endpoint,
+      userInfoURL: ciLogon.userinfo_endpoint,
 
-          // site specific info
-          clientID: config.clientID,
-          callbackURL: config.callbackURL,
-        } as any;
-        // add the secret if specified
-        if (config.clientSecret) cilongconfig.clientSecret = config.clientSecret;
+      // site specific info
+      clientID: config.clientID,
+      callbackURL: config.callbackURL,
+    } as any;
+    // add the secret if specified
+    if (config.clientSecret) cilongconfig.clientSecret = config.clientSecret;
 
-        passport.use(
-          'openidconnect',
-          new Strategy(
-            cilongconfig,
-            async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
-              const displayName = profile.displayName;
-              const email = profile.emails ? profile.emails[0].value : '';
-              const picture = profile.photos ? profile.photos[0].value : '';
-              const extras = {
-                displayName: displayName ?? '',
-                email: email ?? '',
-                picture: picture ?? '',
-              };
-              const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id, extras);
-              if (authRecord != undefined) {
-                done(null, authRecord);
-              } else {
-                done(null, false);
-              }
-            }
-          )
-        );
-        console.log('CILogon> Setup done');
-        return true;
-      })
-      .catch(function (err) {
-        console.log('CILogon> Failed to get CILogon information', err);
-        return false;
-      });
-  } catch (error) {
-    console.log('CILogon> Failed setup', error);
+    passport.use(
+      'openidconnect',
+      new Strategy(
+        cilongconfig,
+        async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
+          const displayName = profile.displayName;
+          const email = profile.emails ? profile.emails[0].value : '';
+          const picture = profile.photos ? profile.photos[0].value : '';
+          const extras = {
+            displayName: displayName ?? '',
+            email: email ?? '',
+            picture: picture ?? '',
+          };
+          const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id, extras);
+          if (authRecord != undefined) {
+            done(null, authRecord);
+          } else {
+            done(null, false);
+          }
+        }
+      )
+    );
+    console.log('CILogon> Setup done');
+    return true;
+  } else {
+    console.log('CILogon> Failed setup');
     return false;
   }
-  return false;
 }
