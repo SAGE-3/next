@@ -8,7 +8,10 @@
 
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
+import {
+  Button, useToast,
+  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure
+} from '@chakra-ui/react';
 
 import {
   useAppStore,
@@ -23,6 +26,8 @@ import {
   usePluginListener,
   usePluginStore,
   useAuth,
+  isElectron,
+  getSAGE3BoardUrl,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -69,6 +74,9 @@ export function BoardPage() {
   // Plugin Listener
   // Listens to updates from plugin apps and sends them to the AppStore
   usePluginListener();
+
+  // UI Message
+  const toast = useToast();
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
@@ -132,6 +140,37 @@ export function BoardPage() {
       if (timeLeft < (3600 * 1000 * 4)) {
         onOpen();
       }
+    }
+
+    if (!isElectron()) {
+
+      function openDesktopApp() {
+        if (!boardId || !roomId) return;
+        // Get the board link
+        const link = getSAGE3BoardUrl(boardId, roomId);
+        // Close the toast
+        toast.closeAll();
+        // Open the link in the sage3 app
+        window.open(link, '_self');
+      }
+
+      // Show a notification
+      toast({
+        title: 'Using a browser is not recommended',
+        status: 'info',
+        duration: 30000, // 30 sec.
+        isClosable: true,
+        position: 'bottom',
+        description: (
+          <p>
+            Continue in the SAGE3 Desktop ?
+            <Button ml="2" size="xs" colorScheme="red" onClick={openDesktopApp}>
+              OK
+            </Button>
+          </p>
+        ),
+      });
+
     }
 
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
