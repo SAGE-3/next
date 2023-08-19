@@ -163,7 +163,7 @@ export function BoardPage() {
         position: 'bottom',
         description: (
           <p>
-            Continue in the SAGE3 Desktop ?
+            Continue in the SAGE3 App ?
             <Button ml="2" size="xs" colorScheme="red" onClick={openDesktopApp}>
               OK
             </Button>
