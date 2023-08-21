@@ -32,16 +32,18 @@ export function FastAPIRouter() {
 
       // Only for SSE routes
       if (req.path.includes('stream')) {
+        res.writeHead(200, {
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'Content-Type': 'text/event-stream',
+        });
         proxyRes.on('data', (chunk) => {
           data += chunk;
+          res.write(chunk);
+          res.flush();
         });
 
         proxyRes.on('end', () => {
-          res.writeHead(200, {
-            'Cache-Control': 'no-cache',
-            Connection: 'keep-alive',
-            'Content-Type': 'text/event-stream',
-          });
           res.write(data);
           res.end();
         });

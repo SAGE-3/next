@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { KernelInfo, ContentItem, ExecOutput } from '@sage3/shared/types';
+import { KernelInfo, ExecOutput } from '@sage3/shared/types';
 
 export const fastAPIRoute = '/api/fastapi';
 
@@ -153,7 +153,7 @@ async function executeCode(code: string, kernelId: string, userId: string): Prom
  * @returns
  */
 async function interruptKernel(kernelId: string): Promise<any> {
-  const response = await fetch(`${fastAPIRoute}/stop/${kernelId}`, {
+  const response = await fetch(`${fastAPIRoute}/interrupt/${kernelId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   });

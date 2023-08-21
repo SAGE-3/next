@@ -10,6 +10,9 @@
 import { useCallback, useRef } from 'react';
 import { Monaco } from '@monaco-editor/react';
 
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+
 // Chakra Imports
 import {
   useToast,
@@ -134,6 +137,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Local state
   const [access, setAccess] = useState(true);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   // Styles
   const [editorHeight, setEditorHeight] = useState(150);
@@ -146,7 +150,7 @@ function AppComponent(props: App): JSX.Element {
   const accessAllowColor = useHexColor('green');
 
   // Kernel Store
-  const { apiStatus, kernels, executeCode, fetchResults } = useKernelStore((state) => state);
+  const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
   const [selectedKernelName, setSelectedKernelName] = useState<string>('');
 
   useEffect(() => {
@@ -393,9 +397,8 @@ function AppComponent(props: App): JSX.Element {
           msgId: '',
           streaming: false,
         });
+    interruptKernel(s.kernel);
   };
-
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   async function getResults(msgId: string) {
     if (s.streaming || s.msgId) return;
@@ -446,24 +449,37 @@ function AppComponent(props: App): JSX.Element {
   }, [s.history]);
 
   useEffect(() => {
-    if (s.msgId && s.session === user?._id) {
-      // const eventSource = new EventSource(`api/fastapi/status/${s.msgId}/stream`);
-      const eventSource = new EventSource(`http://localhost:8000/status/${s.msgId}/stream`);
-      eventSource.addEventListener('new_message', function (event) {
-        setError(null);
-        try {
-          const parsedData = JSON.parse(event.data);
-          setContent(parsedData.content);
-          if (parsedData.completed) {
-            setExecutionCount(parsedData.execution_count);
-            updateState(props._id, { streaming: false, history: [...s.history, s.msgId], msgId: '' });
-            if (eventSource) eventSource.close();
+    async function setEventSource() {
+      const ctrl = new AbortController();
+      const es = await fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+        signal: ctrl.signal,
+        onmessage(event) {
+          setError(null);
+          try {
+            const parsedData = JSON.parse(event.data);
+            setContent(parsedData.content);
+            if (parsedData.execution_count) {
+              setExecutionCount(parsedData.execution_count);
+            }
+          } catch (error) {
+            console.log(error);
+            ctrl.abort();
           }
-        } catch (error) {
-          console.log(error);
-        }
+        },
+        onclose() {
+          updateState(props._id, { streaming: false, history: [...s.history, s.msgId], msgId: '' });
+        },
       });
-      setEventSource(eventSource);
+    }
+
+    if (s.msgId && s.session === user?._id) {
+      setEventSource();
     }
   }, [s.msgId]);
 
