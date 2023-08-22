@@ -725,10 +725,10 @@ function createWindow() {
         });
       });
 
-      // Block automatic download from webviews
-      contents.session.on('will-download', (event, item, webContents) => {
-        event.preventDefault();
-      });
+      // Block automatic download from webviews (seems to block all downloads)
+      // contents.session.on('will-download', (event, item, webContents) => {
+      //   event.preventDefault();
+      // });
     }
   });
 
