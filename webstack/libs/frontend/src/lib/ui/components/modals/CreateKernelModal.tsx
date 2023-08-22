@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -49,6 +49,9 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
 
   // Toast
   const toast = useToast();
+
+  // When the modal panel opens, select the input element
+  const initialRef = useRef<HTMLInputElement>(null);
 
   /**
    *
@@ -106,8 +109,10 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
       hanldeCreateKernel();
     }
   };
+
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
+      initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Create New Kernel</ModalHeader>
@@ -139,9 +144,11 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
           Alias
           <Input
             placeholder="Enter kernel alias..."
+            _placeholder={{ opacity: 1, color: 'gray.600' }}
             variant="outline"
             size="md"
             mt="1"
+            ref={initialRef}
             value={kernelAlias}
             onChange={changeAlias}
             onPaste={(event) => {
@@ -166,7 +173,8 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
           <Button colorScheme="red" mr="2" onClick={props.onClose}>
             Cancel
           </Button>
-          <Button colorScheme="teal" onClick={hanldeCreateKernel}>
+          <Button colorScheme="teal" onClick={hanldeCreateKernel}
+            isDisabled={kernelAlias.length === 0}>
             Create
           </Button>
         </ModalFooter>

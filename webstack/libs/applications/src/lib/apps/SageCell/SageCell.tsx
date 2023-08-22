@@ -427,8 +427,8 @@ function AppComponent(props: App): JSX.Element {
         setError(null);
         setContent(result.content);
         setExecutionCount(result.execution_count);
-      } else {
-        console.log('Message not completed: ', result);
+        // } else {
+        //   console.log('Message not completed: ', result);
       }
     } else {
       setError({
