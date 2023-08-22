@@ -457,7 +457,9 @@ function AppComponent(props: App): JSX.Element {
                             // Get the color of the user
                             const colorMessage = isMe ? user?.data.color : users.find((u) => u._id === message.userId)?.data.color || 'blue';
                             // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData('app_state', JSON.stringify({ color: colorMessage, text: message.query }));
+                            e.dataTransfer.setData('app_state', JSON.stringify({
+                              color: colorMessage, text: message.query, fontSize: 24,
+                            }));
                           }}
                         >
                           {message.query}
@@ -498,7 +500,11 @@ function AppComponent(props: App): JSX.Element {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
                               e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData('app_state', JSON.stringify({ color: message.userName === 'OpenAI' ? "green" : "purple", text: message.response }));
+                              e.dataTransfer.setData('app_state', JSON.stringify({
+                                color: message.userName === 'OpenAI' ? "green" : "purple",
+                                text: message.response,
+                                fontSize: 24,
+                              }));
                             }}>
                             <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
                               {message.response}
