@@ -39,7 +39,7 @@ import { ToolbarComponent } from './components/toolbar';
 import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
-import { KernelInfo } from '../KernelDashboard';
+import { KernelInfo } from '@sage3/shared/types';
 // import { BiHide, BiShow } from 'react-icons/bi';
 
 /**
@@ -57,7 +57,7 @@ function AppComponent(props: App): JSX.Element {
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
-  const [myKernels, setMyKernels] = useState(s.kernels);
+  const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
   const [access, setAccess] = useState<boolean>(false);
   const boardId = props.data.boardId;
   // Needed for Div resizing
@@ -81,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
         return kernels;
       }, [] as KernelInfo[]);
       if (s.kernel) {
-        const kernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
+        const kernel = myKernels.find((kernel: KernelInfo) => kernel.kernel_id === s.kernel);
         setAccess(kernel ? true : false);
         kernelId = kernel ? kernel.kernel_id : 'restricted';
       }

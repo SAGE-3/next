@@ -18,14 +18,14 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { ToolbarComponent } from './components/toolbar';
-import { KernelInfo } from './index';
+import { KernelInfo } from '@sage3/shared/types';
 
 /**
  * This is a sample state for testing the UI without a backend
  */
 
 // URL for the FastAPI backend
-const baseURL = process.env.NODE_ENV === 'production' ? 'n/a' : 'http://localhost:81';
+const baseURL = '/api/fastapi';
 
 /* App component for KernelDashboard */
 function AppComponent(props: App): JSX.Element {

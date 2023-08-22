@@ -19,6 +19,7 @@ export * from './modals/ConfirmModal';
 export * from './modals/AboutModal';
 export * from './modals/PluginModal';
 export * from './modals/UserSearchModal';
+export * from './modals/CreateKernelModal';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';
