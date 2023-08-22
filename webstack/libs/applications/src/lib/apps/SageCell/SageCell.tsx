@@ -776,7 +776,7 @@ function AppComponent(props: App): JSX.Element {
                     icon={<MdStop size={'1.5em'} color="#008080" />}
                   />
                 </Tooltip>
-                <Tooltip hasArrow label="Clear All" placement="right-start">
+                <Tooltip hasArrow label="Clear Cell" placement="right-start">
                   <IconButton
                     onClick={handleClear}
                     aria-label={''}
