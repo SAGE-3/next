@@ -6,39 +6,25 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React
 import {
-  useColorModeValue,
-  VStack,
-  Tooltip,
-  Box,
-  Badge,
-  Text,
-  useToast,
-  Flex,
-  IconButton,
-  Icon,
-  Divider,
-  useDisclosure,
-  Button,
-  Spacer,
-  ButtonGroup,
+  useColorModeValue, Tooltip, Box, Text, useToast, Flex,
+  IconButton, Divider, useDisclosure, Button, Spacer, HStack,
 } from '@chakra-ui/react';
-import {
-  CreateKernelModal,
-  useAppStore,
-  useCursorBoardPosition,
-  useHexColor,
-  useKernelStore,
-  usePluginStore,
-  useUIStore,
-  useUser,
-} from '@sage3/frontend';
-import { format, set } from 'date-fns';
-import { ButtonPanel, Panel } from '../Panel';
-import { useEffect, useState } from 'react';
-import { KernelInfo } from '@sage3/shared/types';
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
+// SAGE3 imports
+import {
+  CreateKernelModal, useAppStore, useHexColor, useKernelStore,
+  useUIStore, useUser,
+} from '@sage3/frontend';
+import { KernelInfo } from '@sage3/shared/types';
+
+// App imports
+import { Panel } from '../Panel';
+import { useEffect, useState } from 'react';
+
+// Props to the Kernels Panel component
 export interface KernelsPanelProps {
   boardId: string;
   roomId: string;
@@ -62,8 +48,6 @@ export function KernelsPanel(props: KernelsPanelProps) {
   // UI Styling
   const red = useHexColor('red');
   const green = useHexColor('green');
-  const tableBackground = useColorModeValue('gray.50', 'gray.700');
-  const tableDividerColor = useColorModeValue('gray.200', 'gray.600');
 
   // Disclousre for the create kernel modal
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -81,9 +65,9 @@ export function KernelsPanel(props: KernelsPanelProps) {
 
   // Set My Kernels
   useEffect(() => {
-    console.log(kernels);
     filterAndSetMyKernels(kernels);
   }, [kernels.length]);
+
   // Filter out this board's kernels and boards this user has access to
   const filterAndSetMyKernels = (kernels: KernelInfo[]) => {
     const filteredKernels = kernels.filter((kernel) => kernel.board === props.boardId && hasKernelAccess(kernel));
@@ -99,6 +83,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const hasKernelAccess = (kernel: KernelInfo): boolean => {
     return !kernel.is_private || (kernel.is_private && kernel.owner === user?._id);
   };
+
   /**
    * Remove the kernel if the user confirms the action
    * @param kernelId the id of the kernel to remove
@@ -169,84 +154,84 @@ export function KernelsPanel(props: KernelsPanelProps) {
 
   return (
     <Panel title={'Kernels'} name="kernels" width={0} showClose={false}>
-      <Box display="flex" flexDirection="column">
-        <Box alignItems="left" p="1" width={880} display="flex" flexDirection={'column'}>
-          <>
-            {/* Headers */}
-            <Flex w="1000px" fontFamily="mono" alignItems="left" userSelect={'none'}>
-              <Box w="80px">Private</Box>
-              <Box w="200px">Alias</Box>
-              <Box w="400px">Kernel ID</Box>
-              <Box w="100px">Type</Box>
-              <Box w="200px">Actions</Box>
-            </Flex>
-            <Divider mb={1} />
-            {myKernels.length == 0 ? (
-              <Text fontWeight={'bold'} width="100%" textAlign="center">
-                No Available Kernels.
-              </Text>
-            ) : (
-              myKernels.map((kernel) => (
-                <Flex w="1000px" fontFamily="mono" alignItems="left" userSelect={'none'} my={1.5} key={kernel.kernel_id}>
-                  <Box w="80px" fontSize="xl" pl="5" lineHeight={'32px'}>
-                    {kernel.is_private ? <MdLock color={red} /> : <MdLockOpen color={green} />}
-                  </Box>
-                  <Box w="200px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'}>
-                    {kernel.alias}
-                  </Box>
-                  <Box w="400px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'}>
-                    {kernel.kernel_id}
-                  </Box>
-                  <Box w="100px">{kernel.name}</Box>
-                  <Box w="200px">
-                    <Tooltip placement="top" hasArrow={true} label={'Create SAGECell'} openDelay={400}>
-                      <IconButton
-                        onClick={() => handleCreateSageCell(kernel)}
-                        colorScheme="green"
-                        icon={<MdCode />}
-                        fontSize="xl"
-                        size="xs"
-                        aria-label={''}
-                        mr={2}
-                      />
-                    </Tooltip>
-                    <Tooltip placement="top" hasArrow={true} label={'Restart Kernel'} openDelay={400}>
-                      <IconButton
-                        onClick={() => handleRestartKernel(kernel.kernel_id)}
-                        colorScheme="yellow"
-                        icon={<MdRestartAlt />}
-                        size="xs"
-                        fontSize="xl"
-                        aria-label={''}
-                        mr={2}
-                      />
-                    </Tooltip>
+      <Box display="flex" flexDirection="column" fontSize={'xs'}>
+        <Box alignItems="left" p="1" width={670} display="flex" flexDirection={'column'}>
+          {/* Headers */}
+          <Flex w="670px" fontFamily="mono" alignItems="left" userSelect={'none'}>
+            <Box w="70px">Private</Box>
+            <Box w="120px">Alias</Box>
+            <Box w="280px">Kernel ID</Box>
+            <Box w="100px">Type</Box>
+            <Box w="100px">Actions</Box>
+          </Flex>
+          <Divider mb={1} />
+          {myKernels.length == 0 ? (
+            <Text fontWeight={'bold'} width="100%" textAlign="center">
+              No Available Kernels.
+            </Text>
+          ) : (
+            myKernels.map((kernel) => (
+              <Flex w="1000px" fontFamily="mono" alignItems="left" userSelect={'none'} my={1} key={kernel.kernel_id}>
+                <Box w="70px" fontSize="xl" pl="4">
+                  {kernel.is_private ? <MdLock color={red} /> : <MdLockOpen color={green} />}
+                </Box>
+                <Box w="120px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'} fontWeight={"bold"}>
+                  {kernel.alias}
+                </Box>
+                <Box w="280px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'}>
+                  {kernel.kernel_id}
+                </Box>
+                <Box w="100px">{kernel.name}</Box>
+                <Box w="100px">
+                  <Tooltip placement="top" hasArrow={true} label={'Create SAGECell'} openDelay={400}>
+                    <IconButton
+                      onClick={() => handleCreateSageCell(kernel)}
+                      colorScheme="green"
+                      icon={<MdCode />}
+                      fontSize="xl"
+                      size="xs"
+                      aria-label={''}
+                      mr={2}
+                    />
+                  </Tooltip>
+                  <Tooltip placement="top" hasArrow={true} label={'Restart Kernel'} openDelay={400}>
+                    <IconButton
+                      onClick={() => handleRestartKernel(kernel.kernel_id)}
+                      colorScheme="yellow"
+                      icon={<MdRestartAlt />}
+                      size="xs"
+                      fontSize="xl"
+                      aria-label={''}
+                      mr={2}
+                    />
+                  </Tooltip>
 
-                    <Tooltip placement="top" hasArrow={true} label={'Delete Kernel'} openDelay={400}>
-                      <IconButton
-                        onClick={() => handleDeleteKernel(kernel.kernel_id)}
-                        colorScheme="red"
-                        icon={<MdDelete />}
-                        fontSize="xl"
-                        size="xs"
-                        aria-label={''}
-                        mr={2}
-                      />
-                    </Tooltip>
-                  </Box>
-                </Flex>
-              ))
-            )}
-          </>
+                  <Tooltip placement="top" hasArrow={true} label={'Delete Kernel'} openDelay={400}>
+                    <IconButton
+                      onClick={() => handleDeleteKernel(kernel.kernel_id)}
+                      colorScheme="red"
+                      icon={<MdDelete />}
+                      fontSize="xl"
+                      size="xs"
+                      aria-label={''}
+                      mr={2}
+                    />
+                  </Tooltip>
+                </Box>
+              </Flex>
+            ))
+          )}
         </Box>
         <Divider p={0} mt={1} mb={2} />
         <Flex>
-          <Box ml="1">
-            <Box width={'16px'} height={'16px'} borderRadius={'100%'} backgroundColor={apiStatus ? green : red} mt="1"></Box>
-          </Box>
-          <Text ml="1" fontSize="sm" fontWeight="bold">
-            {apiStatus ? 'Python Online' : 'Python Offline'}
-          </Text>
+          <HStack p={0} m={0}>
+            <Box ml={1}>
+              <Box width={'12px'} height={'12px'} borderRadius={'100%'} backgroundColor={apiStatus ? green : red} mt="0"></Box>
+            </Box>
+            <Text ml={0} fontSize="sm">
+              {apiStatus ? 'Python Online' : 'Python Offline'}
+            </Text>
+          </HStack>
           <Spacer />
           <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}>
             Create Kernel
