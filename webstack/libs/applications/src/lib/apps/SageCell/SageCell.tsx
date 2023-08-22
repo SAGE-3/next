@@ -347,13 +347,12 @@ function AppComponent(props: App): JSX.Element {
       const response = await executeCode(editorRef.current.getValue(), s.kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
-        console.log('msgId: ', msgId);
         updateState(props._id, {
           msgId: msgId,
           session: user._id,
         });
       } else {
-        console.log('Error executing code');
+        // console.log('Error executing code');
         updateState(props._id, {
           streaming: false,
           msgId: '',
@@ -449,9 +448,9 @@ function AppComponent(props: App): JSX.Element {
   }, [s.history]);
 
   useEffect(() => {
-    async function setEventSource() {
+    function setEventSource() {
       const ctrl = new AbortController();
-      const es = await fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
         method: 'GET',
         headers: {
           'Content-Type': 'text/event-stream',
@@ -461,6 +460,7 @@ function AppComponent(props: App): JSX.Element {
         signal: ctrl.signal,
         onmessage(event) {
           setError(null);
+          if (!event.data) return;
           try {
             const parsedData = JSON.parse(event.data);
             setContent(parsedData.content);
@@ -468,7 +468,7 @@ function AppComponent(props: App): JSX.Element {
               setExecutionCount(parsedData.execution_count);
             }
           } catch (error) {
-            console.log(error);
+            console.log('EventSource> error', error);
             ctrl.abort();
           }
         },
@@ -483,12 +483,6 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.msgId]);
 
-  // const themesList = [
-  //   { name: 'vs', label: 'Light' },
-  //   { name: 'vs-dark', label: 'Dark' },
-  //   { name: 'hc-black', label: 'High Contrast' },
-  // ];
-
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
@@ -496,7 +490,6 @@ function AppComponent(props: App): JSX.Element {
     if (!content) return <></>;
     return content.map((item) => {
       return Object.keys(item).map((key) => {
-        // console.log(msgType, key);
         const value = item[key];
         switch (key) {
           // error messages are handled above
@@ -645,7 +638,6 @@ function AppComponent(props: App): JSX.Element {
       // only save the the code user is typing
       if (e.reason === 3) {
         throttleFunc();
-        // console.log('throttleFunc should be called', userName);
       }
     });
     editor.addAction({
