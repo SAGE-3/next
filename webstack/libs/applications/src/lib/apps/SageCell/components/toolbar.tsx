@@ -106,7 +106,6 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   function selectKernel(e: React.ChangeEvent<HTMLSelectElement>): void {
     const newKernelValue = e.target.value;
-    console.log(newKernelValue);
     updateState(props._id, { kernel: newKernelValue });
   }
 
