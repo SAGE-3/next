@@ -719,8 +719,10 @@ function createWindow() {
       // NEW API
       contents.on('dom-ready', () => {
         // Block creating new windows from webviews
-        // TODO: tell the renderer to create another webview
         contents.setWindowOpenHandler((details) => {
+          // tell the renderer to create another webview
+          mainWindow.webContents.send('open-webview', { url: details.url });
+          // do nothing in the main process
           return { action: 'deny' };
         });
       });
