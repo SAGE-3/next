@@ -1,0 +1,9 @@
+.textLayer .endOfContent {
+  user-select: all;
+  pointer-events: all;
+}
+
+.annotationLayer .annotationTextContent {
+  user-select: all;
+  pointer-events: all;
+}
