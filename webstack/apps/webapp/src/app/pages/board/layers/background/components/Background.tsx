@@ -251,6 +251,12 @@ export function Background(props: BackgroundProps) {
               // Too many assets selected, not doing it.
               lotsOnOpen();
             }
+          } else {
+            const sometext = event.dataTransfer.getData('text/plain');
+            createApp(
+              setupApp(user.data.name, 'Stickie', xdrop, ydrop, props.roomId, props.boardId,
+                { w: 600, h: 320 }, { color: user.data.color || 'yellow', fontSize: 32, text: sometext })
+            );
           }
         }
       }

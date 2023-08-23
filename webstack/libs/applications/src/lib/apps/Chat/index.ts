@@ -16,6 +16,7 @@ import { z } from 'zod';
 export const schema = z.object({
   previousQ: z.string(),
   previousA: z.string(),
+  context: z.string(),
   messages: z
     .object({
       id: z.string(),
@@ -33,6 +34,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   previousQ: '',
   previousA: '',
+  context: '',
   messages: [
     {
       id: 'starting',

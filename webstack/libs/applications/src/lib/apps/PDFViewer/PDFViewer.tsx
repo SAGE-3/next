@@ -6,9 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router';
-
 // Chakra UI
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
 // Icons
@@ -16,6 +16,7 @@ import {
   MdFileDownload,
   MdOutlineFastRewind,
   MdOutlineFastForward,
+  MdTextFields,
   MdAdd,
   MdRemove,
   MdMenu,
@@ -35,11 +36,25 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
+// PDF
+import { pdfjs } from 'react-pdf';
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url,
+).toString();
+import { Document, Page } from 'react-pdf';
+// Support for text layer
+import 'react-pdf/dist/Page/TextLayer.css';
+// Support for annotations
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import './styles.css';
+
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
   const s = props.data.state as AppState;
+  const [pdfUrl, setPDFUrl] = useState('');
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
@@ -95,6 +110,8 @@ function AppComponent(props: App): JSX.Element {
         const firstpage = pages[0];
         setAspecRatio(firstpage[0].width / firstpage[0].height);
       }
+      // Save the url to the pdf file
+      setPDFUrl('api/assets/static/' + file.data.file);
     }
   }, [file]);
 
@@ -145,6 +162,11 @@ function AppComponent(props: App): JSX.Element {
       });
     }
   }, [s.analyzed]);
+
+  useEffect(() => {
+    console.log('Text mode: ', s.textMode);
+    if (s.textMode) updateState(props._id, { displayPages: 1 });
+  }, [s.textMode]);
 
   // Event handler
   const handleUserKeyPress = useCallback(
@@ -210,9 +232,8 @@ function AppComponent(props: App): JSX.Element {
         case 'D': {
           // Trigger a download
           if (file) {
-            const url = file?.data.file;
             const filename = file?.data.originalfilename;
-            downloadFile('api/assets/static/' + url, filename);
+            downloadFile(pdfUrl, filename);
           }
           break;
         }
@@ -240,6 +261,11 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [divRef, handleUserKeyPress]);
 
+  // PDF rendering
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+    console.log('PDF loaded', numPages);
+  }
+
   return (
     <AppWindow app={props} processing={processing}>
       <HStack
@@ -255,13 +281,31 @@ function AppComponent(props: App): JSX.Element {
           .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
           .map((url, idx) => (
             <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
-              <img src={url} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
+              {s.textMode ?
+                <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess}>
+                  <Page pageNumber={s.currentPage + 1} renderTextLayer={true}
+                    renderAnnotationLayer={true} width={props.data.size.width}
+                  />
+                </Document>
+                : <img src={url} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
+              }
             </Box>
           ))}
       </HStack>
     </AppWindow>
   );
 }
+
+// userSelect={'text'} draggable={true}
+// onDragStart={(e) => {
+//   e.dataTransfer.clearData();
+//   // Will create a new sticky
+//   e.dataTransfer.setData('app', 'Stickie');
+//   // Put the state of the app into the drag/drop events
+//   e.dataTransfer.setData('app_state', JSON.stringify({
+//     color: 'yellow', text: 'bla bla', fontSize: 24,
+//   }));
+// }}
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -270,6 +314,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  const [pdfUrl, setPDFUrl] = useState('');
   // User information
   const { user } = useUser();
 
@@ -289,6 +334,8 @@ function ToolbarComponent(props: App): JSX.Element {
         // First image of the page
         setAspecRatio(page[0].width / page[0].height);
       }
+      // Save the url to the pdf file
+      setPDFUrl('api/assets/static/' + file.data.file);
     }
   }, [file]);
 
@@ -401,9 +448,8 @@ function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
           <Button onClick={() => {
             if (file) {
-              const url = file?.data.file;
               const filename = file?.data.originalfilename;
-              downloadFile('api/assets/static/' + url, filename);
+              downloadFile(pdfUrl, filename);
             }
           }}
           >
@@ -439,6 +485,9 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuItem>
             <MenuItem icon={<MdOutlineFastForward />} onClick={() => handleNext(10)}>
               Forward 10 pages
+            </MenuItem>
+            <MenuItem icon={<MdTextFields />} onClick={() => updateState(props._id, { textMode: !s.textMode })}>
+              Text Mode
             </MenuItem>
           </MenuList>
         </Menu>

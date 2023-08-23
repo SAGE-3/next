@@ -12,6 +12,7 @@ import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textare
 
 import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
+import { initialValues } from '@sage3/applications/initialValues';
 
 import { state as AppState } from './';
 
@@ -28,6 +29,14 @@ import './styling.css';
 import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 import { useParams } from 'react-router';
 import { SAGEColors } from '@sage3/shared';
+
+// LLAMA2 API
+//  - API: https://huggingface.github.io/text-generation-inference/
+const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
+const LLAMA2_ENDPOINT = '/generate';
+const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
+const LLAMA2_TOKENS = 200;
+const LLAMA2_SYSTEM_PROMPT = 'You are a helpful assistant that answer questions in short and concise manner.';
 
 /**
  * NoteApp SAGE3 application
@@ -135,7 +144,7 @@ function AppComponent(props: App): JSX.Element {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Stickie',
           // keep the same color, like a clone operation except for the text
-          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          state: { ...(initialValues['Stickie'] as AppState), text: '', color: s.color, fontSize: s.fontSize },
           raised: true,
           dragging: false,
         });
@@ -198,9 +207,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+  const { boardId, roomId } = useParams();
 
   const yours = user?._id === props._createdBy;
   const locked = s.lock;
@@ -245,6 +256,98 @@ function ToolbarComponent(props: App): JSX.Element {
     const filename = 'stickie-' + dt + '.md';
     // Go for download
     downloadFile(txturl, filename);
+  };
+
+  const summarize = () => {
+    // Test to tweak the system prompt
+    const complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> Summarize this in one sentence: ${s.text} [/INST]`;
+    // URL for the request
+    const modelURL = LLAMA2_URL;
+    // Build the body of the request
+    const modelBody = {
+      inputs: complete_request,
+      parameters: { "max_new_tokens": LLAMA2_TOKENS },
+    };
+    // Post the request and handle server-sent events
+    fetch(modelURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(modelBody)
+    }).then((response) => response.json())
+      .then((data) => {
+        console.log('Got>', data);
+        if (data.generated_text) {
+          // Create a new stickie
+          createApp({
+            title: user?.data.name || 'Stickie',
+            roomId: roomId!,
+            boardId: boardId!,
+            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+            size: { width: props.data.size.width, height: props.data.size.height / 4, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Stickie',
+            state: { ...(initialValues['Stickie'] as AppState), text: data.generated_text, color: 'purple', fontSize: s.fontSize },
+            raised: true,
+            dragging: false,
+          });
+        }
+      });
+  };
+
+  const topics = () => {
+    // Test to tweak the system prompt
+    const complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> What are the main topics of this text, answer in Mardown format: ${s.text} [/INST]`;
+    // URL for the request
+    const modelURL = LLAMA2_URL;
+    // Build the body of the request
+    const modelBody = {
+      inputs: complete_request,
+      parameters: { "max_new_tokens": LLAMA2_TOKENS },
+    };
+    // Post the request and handle server-sent events
+    fetch(modelURL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(modelBody)
+    }).then((response) => response.json())
+      .then((data) => {
+        console.log('Got>', data);
+        if (data.generated_text) {
+          // Create a new stickie
+          createApp({
+            title: user?.data.name || 'Stickie',
+            roomId: roomId!,
+            boardId: boardId!,
+            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+            size: { width: props.data.size.width, height: props.data.size.height / 4, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Stickie',
+            state: { ...(initialValues['Stickie'] as AppState), text: data.generated_text, color: 'purple', fontSize: s.fontSize },
+            raised: true,
+            dragging: false,
+          });
+        }
+      });
+  };
+
+  const newChat = () => {
+    // Create a new stickie
+    createApp({
+      title: user?.data.name || 'Chat',
+      roomId: roomId!,
+      boardId: boardId!,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: 600, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Chat',
+      state: { ...(initialValues['Chat'] as AppState), context: s.text },
+      raised: true,
+      dragging: false,
+    });
   };
 
   const handleColorChange = (color: string) => {
@@ -298,6 +401,15 @@ function ToolbarComponent(props: App): JSX.Element {
           <MenuList minWidth="150px" fontSize={"sm"}>
             <MenuItem icon={<MdFileDownload />} onClick={downloadMd}>
               Download as Markdown
+            </MenuItem>
+            <MenuItem icon={<MdFileDownload />} onClick={summarize}>
+              Summarize in one sentence
+            </MenuItem>
+            <MenuItem icon={<MdFileDownload />} onClick={topics}>
+              What are the main topics
+            </MenuItem>
+            <MenuItem icon={<MdFileDownload />} onClick={newChat}>
+              Chat about this
             </MenuItem>
           </MenuList>
         </Menu>
