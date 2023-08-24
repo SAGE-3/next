@@ -20,21 +20,30 @@ import { formatDistance } from 'date-fns';
 import dateFormat from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
+// OpenAI API v4
+import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
-
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-// API: https://huggingface.github.io/text-generation-inference/
-const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu/';
+// LLAMA2 API
+//  - API: https://huggingface.github.io/text-generation-inference/
+const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
 const LLAMA2_ENDPOINT = '/generate_stream';
 const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
 const LLAMA2_TOKENS = 300;
 const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+
+// OpenAI API
+let OPENAI_API_KEY = '';
+let OPENAI_ENGINE = '';
+const OPENAI_TOKENS = 300;
+const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+
 
 /* App component for Chat */
 
@@ -46,7 +55,8 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
   const geppettoColor = useHexColor('purple');
-  const geppettoTypingColor = useHexColor('orange');
+  const openaiColor = useHexColor('green');
+  const aiTypingColor = useHexColor('orange');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
@@ -54,6 +64,10 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.700', 'gray.100');
   // Get presences of users
   const users = useUsersStore((state) => state.users);
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
+
+  const [openai, setOpenai] = useState<OpenAI>();
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -108,21 +122,24 @@ function AppComponent(props: App): JSX.Element {
     // Get server time
     const now = await serverTime();
     // Is it a question to Geppetto?
-    const isQuestion = new_input.startsWith('@G');
+    const isGeppettoQuestion = new_input.startsWith('@G');
+    const isOpenAIQuestion = new_input.startsWith('@O');
+    const isQuestion = isGeppettoQuestion || isOpenAIQuestion;
+    const name = isQuestion ? isOpenAIQuestion ? 'OpenAI' : 'Geppetto' : user?.data.name;
     // Add messages
     const initialAnswer = {
       id: genId(),
       userId: user._id,
       creationId: '',
       creationDate: now.epoch,
-      userName: user?.data.name,
+      userName: name,
       query: new_input,
       response: isQuestion ? 'Working on it...' : '',
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
       setProcessing(true);
-      // Remove the @G
+      // Remove the @X
       const request = new_input.slice(2);
       // Object to stop the request and the stream of events
       const ctrl = new AbortController();
@@ -131,71 +148,139 @@ function AppComponent(props: App): JSX.Element {
       // Build the request
       let tempText = '';
       setStreamText(tempText);
-      let complete_request = '';
-      if (previousQuestion && previousAnswer) {
-        /*
-          schema for follow up questions:
-          https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-          {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-          <s>[INST] {{ user_msg_2 }} [/INST]
-        */
-        complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+
+      if (isOpenAIQuestion && openai) {
+        const messages = [
+          { "role": "system", "content": OPENAI_SYSTEM_PROMPT },
+          { "role": "user", "content": request }
+        ];
+        let complete_request;
+        if (previousQuestion && previousAnswer) {
+          complete_request = [
+            { "role": "system", "content": OPENAI_SYSTEM_PROMPT },
+            { "role": "user", "content": previousQuestion },
+            { "role": "assistant", "content": previousAnswer },
+            { "role": "user", "content": request }
+          ];
+        } else {
+          complete_request = messages;
+        }
+
+        const stream = await openai.chat.completions.create({
+          model: OPENAI_ENGINE,
+          // @ts-expect-error
+          messages: complete_request || messages,
+          max_tokens: OPENAI_TOKENS,
+          temperature: 0.2,
+          stream: true,
+        });
+        for await (const part of stream) {
+          const text = part.choices[0]?.delta?.content;
+          if (text) {
+            tempText += part.choices[0]?.delta?.content;
+            setStreamText(tempText);
+            goToBottom("auto");
+          }
+        }
+        setProcessing(false);
+        // Clear the stream text
+        setStreamText('');
+        ctrlRef.current = null;
+        setPreviousAnswer(tempText);
+        // Add messages
+        updateState(props._id, {
+          ...s,
+          previousQ: request,
+          previousA: tempText,
+          messages: [
+            ...s.messages, initialAnswer,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'OpenAI',
+              query: '',
+              response: tempText,
+            },
+          ],
+        });
       } else {
-        // Test to tweak the system prompt
-        complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
-      }
-      // Post the request and handle server-sent events
-      fetchEventSource(LLAMA2_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+
+        let complete_request = '';
+        if (previousQuestion && previousAnswer) {
+          /*
+            schema for follow up questions:
+            https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+            {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
+            <s>[INST] {{ user_msg_2 }} [/INST]
+          */
+          complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+        } else {
+          // Test to tweak the system prompt
+          complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+        }
+
+        // URL for the request
+        const modelURL = LLAMA2_URL;
+        // Build the body of the request
+        const modelBody = {
           inputs: complete_request || request,
           parameters: { "max_new_tokens": LLAMA2_TOKENS },
-        }),
-        signal: ctrl.signal,
-        onmessage(msg) {
-          // if the server emits an error message, throw an exception
-          // so it gets handled by the onerror callback below:
-          if (msg.event === 'FatalError') {
-            console.log('Llama2> Error', msg.data);
-            setStreamText('');
-            ctrlRef.current = null;
-          } else {
-            const message = JSON.parse(msg.data);
-            if (message.generated_text) {
-              setProcessing(false);
-              // Clear the stream text
+        };
+        const modelHeaders: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        // Post the request and handle server-sent events
+        fetchEventSource(modelURL, {
+          method: 'POST',
+          headers: modelHeaders,
+          body: JSON.stringify(modelBody),
+          signal: ctrl.signal,
+          onmessage(msg) {
+            // if the server emits an error message, throw an exception
+            // so it gets handled by the onerror callback below:
+            if (msg.event === 'FatalError') {
+              console.log('LLM> Error', msg.data);
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(message.generated_text);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: request,
-                previousA: message.generated_text,
-                messages: [
-                  ...s.messages, initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'Geppetto',
-                    query: '',
-                    response: message.generated_text,
-                  },
-                ],
-              });
             } else {
-              if (message.token.text) {
-                tempText += message.token.text;
-                setStreamText(tempText);
-                goToBottom("auto");
+              const message = JSON.parse(msg.data);
+              if (message.generated_text) {
+                setProcessing(false);
+                // Clear the stream text
+                setStreamText('');
+                ctrlRef.current = null;
+                setPreviousAnswer(message.generated_text);
+                // Add messages
+                updateState(props._id, {
+                  ...s,
+                  previousQ: request,
+                  previousA: message.generated_text,
+                  messages: [
+                    ...s.messages, initialAnswer,
+                    {
+                      id: genId(),
+                      userId: user._id,
+                      creationId: '',
+                      creationDate: now.epoch + 1,
+                      userName: 'Geppetto',
+                      query: '',
+                      response: message.generated_text,
+                    },
+                  ],
+                });
+              } else {
+                if (message.token.text) {
+                  tempText += message.token.text;
+                  setStreamText(tempText);
+                  goToBottom("auto");
+                }
               }
             }
-          }
-        },
-      });
+          },
+        });
+      }
     }
 
     setTimeout(() => {
@@ -211,7 +296,7 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const stopGepetto = async () => {
+  const stopGeppetto = async () => {
     setProcessing(false);
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
@@ -229,7 +314,7 @@ function AppComponent(props: App): JSX.Element {
               userId: user._id,
               creationId: '',
               creationDate: now.epoch,
-              userName: 'Geppetto',
+              userName: 'Geppetto/OpenAI',
               query: '',
               response: streamText + '...(interrupted)',
             },
@@ -247,12 +332,12 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
 
-  // Control the scrolling of the chat box
   useEffect(() => {
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight, behavior: "instant",
     });
+    // Control the scrolling of the chat box
     chatBox.current?.addEventListener('scrollend', () => {
       if (chatBox.current && chatBox.current.scrollTop) {
         const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
@@ -264,6 +349,17 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     });
+
+    // API configuration
+    OPENAI_API_KEY = config.openai.apiKey || '';
+    OPENAI_ENGINE = config.openai.model || 'gpt-3.5-turbo';
+    if (!OPENAI_API_KEY) {
+      const openaiClient = new OpenAI({
+        apiKey: OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true,
+      });
+      setOpenai(openaiClient);
+    }
   }, []);
 
   // Wait for new messages to scroll to the bottom
@@ -361,7 +457,9 @@ function AppComponent(props: App): JSX.Element {
                             // Get the color of the user
                             const colorMessage = isMe ? user?.data.color : users.find((u) => u._id === message.userId)?.data.color || 'blue';
                             // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData('app_state', JSON.stringify({ color: colorMessage, text: message.query }));
+                            e.dataTransfer.setData('app_state', JSON.stringify({
+                              color: colorMessage, text: message.query, fontSize: 24,
+                            }));
                           }}
                         >
                           {message.query}
@@ -376,14 +474,14 @@ function AppComponent(props: App): JSX.Element {
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        Geppetto
+                        {message.userName}
                       </Text>
                     </Box>
 
                     <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
                       <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
                         placement="top" hasArrow={true} label={time} openDelay={400}>
-                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoColor} p={1} m={3} fontFamily="arial"
+                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor} p={1} m={3} fontFamily="arial"
                           onDoubleClick={() => {
                             // Copy into clipboard
                             navigator.clipboard.writeText(message.response);
@@ -402,7 +500,11 @@ function AppComponent(props: App): JSX.Element {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
                               e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData('app_state', JSON.stringify({ color: "purple", text: message.response }));
+                              e.dataTransfer.setData('app_state', JSON.stringify({
+                                color: message.userName === 'OpenAI' ? "green" : "purple",
+                                text: message.response,
+                                fontSize: 24,
+                              }));
                             }}>
                             <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
                               {message.response}
@@ -432,12 +534,12 @@ function AppComponent(props: App): JSX.Element {
             <Box position="relative" my={1} maxWidth={'70%'}>
               <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                 <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  Geppetto is typing...
+                  AI is typing...
                 </Text>
               </Box>
 
               <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={geppettoTypingColor} p={1} m={3} fontFamily="arial">
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
                   {streamText}
                 </Box>
               </Box>
@@ -462,7 +564,7 @@ function AppComponent(props: App): JSX.Element {
             <IconButton aria-label='stop' size={"xs"}
               p={0} m={0} colorScheme={"blue"} variant='ghost'
               icon={<MdStopCircle size="1.5rem" />}
-              onClick={stopGepetto}
+              onClick={stopGeppetto}
               width="34%"
             />
           </Tooltip>
@@ -477,7 +579,7 @@ function AppComponent(props: App): JSX.Element {
           </Tooltip>
         </HStack>
         <InputGroup bg={"blackAlpha.100"}>
-          <Input placeholder='Chat or @G Ask me anyting' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
+          <Input placeholder='Chat, @G ask Geppetto or @A ask OpenAI' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
             onChange={handleChange}
             onKeyDown={onSubmit}
             value={input}

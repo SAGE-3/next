@@ -43,6 +43,12 @@
       "apiKey": "",
       // API Secret
       "apiSecret": ""
+    },
+    "openai": {
+      // API Key
+      "apiKey": "",
+      // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
+      "model": "gpt-3.5-turbo"
     }
   },
 
@@ -52,7 +58,18 @@
     "plugins": true,
     // Which Apps to enable.  Available Apps: 
     // ChartMaker, MapGL, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
-    apps: ["Chat", "ChartMaker", "MapGL", "Notepad", "SageCell", "KernelDashboard", "Stickie", "Screenshare", "Webview", "Hawaii Mesonet"],
+    "apps": [
+      "Chat",
+      "ChartMaker",
+      "MapGL",
+      "Notepad",
+      "SageCell",
+      "KernelDashboard",
+      "Stickie",
+      "Screenshare",
+      "Webview",
+      "Hawaii Mesonet"
+    ]
   },
 
   // Auth Configuration

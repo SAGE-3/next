@@ -45,7 +45,7 @@ const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = req
 // MenuBuilder
 const { buildMenu } = require('./src/menuBuilder');
 
-// Store
+// Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
@@ -185,8 +185,14 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  windowStore.clear();
+  windowStore.default();
   bookmarkStore.clear();
+
+  // clear the caches, useful to remove password cookies
+  const session = electron.session.defaultSession;
+  session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+    console.log('Electron>	Caches cleared');
+  });
 }
 
 if (process.platform === 'win32') {
@@ -367,7 +373,14 @@ const saveState = async () => {
 
   if (commander.clear) {
     console.log('Preferences> clear all');
-    windowStore.clear();
+    windowStore.default();
+    bookmarkStore.clear();
+
+    // clear the caches, useful to remove password cookies
+    const session = electron.session.defaultSession;
+    session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+      console.log('Electron>	Caches cleared');
+    });
   }
 };
 
@@ -706,16 +719,18 @@ function createWindow() {
       // NEW API
       contents.on('dom-ready', () => {
         // Block creating new windows from webviews
-        // TODO: tell the renderer to create another webview
         contents.setWindowOpenHandler((details) => {
+          // tell the renderer to create another webview
+          mainWindow.webContents.send('open-webview', { url: details.url });
+          // do nothing in the main process
           return { action: 'deny' };
         });
       });
 
-      // Block automatic download from webviews
-      contents.session.on('will-download', (event, item, webContents) => {
-        event.preventDefault();
-      });
+      // Block automatic download from webviews (seems to block all downloads)
+      // contents.session.on('will-download', (event, item, webContents) => {
+      //   event.preventDefault();
+      // });
     }
   });
 
