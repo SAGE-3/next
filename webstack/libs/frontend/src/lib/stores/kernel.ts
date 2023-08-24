@@ -15,7 +15,6 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { KernelInfo, ExecOutput } from '@sage3/shared/types';
 
 import { FastAPI } from '../api';
-// import { ContentItemType } from 'libs/applications/src/lib/apps/SageCell';
 
 type KernelStoreState = {
   kernels: KernelInfo[];
