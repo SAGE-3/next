@@ -16,6 +16,7 @@ import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
 import { MdOutlineArrowUpward } from 'react-icons/md';
 import { WidgetType } from '../menu/CustomizeWidgets';
+import { getFormattedTimePeriod } from '../../SensorOverview/SensorOverview';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -314,20 +315,6 @@ const Content = (props: {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
-  const getFormattedTimePeriod = (timePeriod: string) => {
-    switch (timePeriod) {
-      case 'previous24Hours':
-        return '24 hours';
-      case 'previous1Week':
-        return '1 week';
-      case 'previous1Month':
-        return '1 month';
-      case 'previous1Year':
-        return '1 year';
-      default:
-        return 'Custom date range';
-    }
-  };
 
   return (
     <>

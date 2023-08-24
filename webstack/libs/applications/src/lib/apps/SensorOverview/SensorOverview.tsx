@@ -42,13 +42,15 @@ import {
   AccordionPanel,
   UnorderedList,
   ListItem,
+  Checkbox,
+  Portal,
 } from '@chakra-ui/react';
 
-import { MdDelete, MdAdd } from 'react-icons/md';
+import { MdDelete, MdAdd, MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
 
 // Styling
 import './styling.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Visualization imports
 import VariableCard from '../HCDP/viewers/VariableCard';
@@ -66,6 +68,22 @@ import MapViewer from '../HCDP/viewers/MapViewer';
 
 import { checkAvailableVisualizations } from '../HCDP/menu/CustomizeWidgets';
 import LeafletWrapper from '../HCDP/LeafletWrapper';
+import MapGL from './MapGL';
+
+export const getFormattedTimePeriod = (timePeriod: string) => {
+  switch (timePeriod) {
+    case 'previous24Hours':
+      return '24 hours';
+    case 'previous1Week':
+      return '1 week';
+    case 'previous1Month':
+      return '1 month';
+    case 'previous1Year':
+      return '1 year';
+    default:
+      return 'Custom date range';
+  }
+};
 
 function convertToFormattedDateTime(date: Date) {
   const now = new Date(date);
@@ -130,6 +148,9 @@ function AppComponent(props: App): JSX.Element {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
+  const [isDuplicateMenuOpen, setIsDuplicateMenuOpen] = useState<boolean>(false);
+  const scale = useUIStore((state) => state.scale);
+  const createApp = useAppStore((state) => state.create);
 
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
@@ -207,9 +228,114 @@ function AppComponent(props: App): JSX.Element {
         return false;
     }
   };
+
+  //TODO just for testing out the menu for now, Later will move to top
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [buttonPosition, setButtonPosition] = useState({ top: 0, left: 0 });
+
+  const handleButtonHover = (event: any) => {
+    const buttonRect = event.target.getBoundingClientRect();
+    const buttonCenterX = buttonRect.left + buttonRect.width / 2;
+    setButtonPosition({ top: buttonRect.top, left: buttonCenterX });
+    onOpen();
+  };
+
+  const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
+    const widget = { ...props.data.state.widget, visualizationType: visualizationType };
+    const app = await createApp({
+      title: 'Hawaii Mesonet',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      //TODO get middle of the screen space
+      position: {
+        x: props.data.position.x + props.data.size.width,
+        y: props.data.position.y,
+        z: 0,
+      },
+      size: {
+        width: props.data.size.width,
+        height: props.data.size.height,
+        depth: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Hawaii Mesonet',
+      state: {
+        sensorData: {},
+        stationNames: props.data.state.stationNames,
+        listOfStationNames: s.stationNames[0],
+        location: [-157.816, 21.297],
+        zoom: 10,
+        pitch: 0,
+        stationScale: 5,
+        baseLayer: 'OpenStreetMap',
+        overlay: true,
+        widget: widget,
+      },
+
+      raised: true,
+      dragging: false,
+    });
+  };
+
   return (
     <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
+        <Box position="absolute" top="50%" right="1rem" zIndex={999}>
+          <Button
+            onMouseEnter={handleButtonHover}
+            onMouseLeave={() => {
+              onClose();
+            }}
+            colorScheme="twitter"
+            height="10%"
+          >
+            <MdDoubleArrow size="40" />
+          </Button>
+          {isOpen && (
+            <Portal>
+              <Box
+                onMouseEnter={() => {
+                  onOpen();
+                }}
+                onMouseLeave={() => {
+                  onClose();
+                }}
+                position="absolute"
+                top={`${buttonPosition.top}px`}
+                left={`${buttonPosition.left}px`}
+                // bg="blue.200"
+                borderRadius="md"
+                p={4}
+                boxShadow="md"
+                zIndex={1}
+                className="selectableList"
+                transform={`scale(0.9) translateY(-${buttonPosition.top / 4}px)`}
+                transformOrigin={'top left'}
+              >
+                {/* Content of the opened div */}
+                <Box ml="0.4rem">Duplicate as:</Box>
+                {/* <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip"> */}
+                {checkAvailableVisualizations(s.widget.yAxisNames[0]).map(
+                  (visualization: { value: string; name: string }, index: number) => {
+                    return (
+                      <Text
+                        key={index}
+                        onClick={() => {
+                          handleDuplicateVisualizationsAs(visualization.value);
+                        }}
+                        className="selectableListItem"
+                      >
+                        {visualization.name}
+                      </Text>
+                    );
+                  }
+                )}
+                {/* </Tooltip> */}
+              </Box>
+            </Portal>
+          )}
+        </Box>
+
         {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
             <HStack>
@@ -294,7 +420,7 @@ function AppComponent(props: App): JSX.Element {
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
                     <Box id={'container' + props._id} width={props.data.size.width} height={props.data.size.height}>
-                      <MapViewer {...props} isSelectingStations={false} />
+                      <MapViewer {...props} isSelectingStations={false} isLoaded={isLoaded} stationMetadata={stationMetadata} />
                     </Box>
                   </>
                 ) : null}
@@ -302,13 +428,14 @@ function AppComponent(props: App): JSX.Element {
             </HStack>
           </Box>
         ) : (
-          <Spinner
-            w={Math.min(props.data.size.height / 2, props.data.size.width / 2)}
-            h={Math.min(props.data.size.height / 2, props.data.size.width / 2)}
-            thickness="20px"
-            speed="0.30s"
-            emptyColor="gray.200"
-          />
+          <Box
+            position="absolute"
+            top="50%"
+            left="50%"
+            transform={`scale(${Math.min(props.data.size.width / 50, props.data.size.height / 50)})`}
+          >
+            <Spinner thickness="5px" speed="0.30s" emptyColor="gray.200" />
+          </Box>
         )}
       </Box>
     </AppWindow>
@@ -327,7 +454,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [map, setMap] = useState<any>(null);
   const [stationMetadata, setStationMetadata] = useState([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'none', direction: 'none' });
+  const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'NAME', direction: 'ascending' });
 
   // For color theme
   const textColor = useColorModeValue('gray.800', 'gray.50');
@@ -335,11 +462,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
-  const [gridData, setGridData] = useState<{
-    columnDefs: { headerName: string; field: string }[];
-    rowData: { stationName: string; island: string; elevation: number; supportedVariables: string[] }[];
-  }>({ columnDefs: [], rowData: [] });
-
+  const stationNameRef = useRef<any>(s.stationNames);
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
@@ -351,17 +474,6 @@ function ToolbarComponent(props: App): JSX.Element {
       )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
         new Date()
       )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      // if (props.data.state.widget.visualizationType === 'variableCard') {
-      //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-      //     s.stationNames
-      //   )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-      //     new Date()
-      //   )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      // } else {
-      //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-      //     props.data.state.widget.startDate
-      //   }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      // }
 
       const response = await fetch(url);
       const sensor = await response.json();
@@ -369,12 +481,6 @@ function ToolbarComponent(props: App): JSX.Element {
         const sensorData = sensor['STATION'];
         tmpStationMetadata = sensorData;
       }
-
-      const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
-      availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
-      availableVariableNames.push('Elevation & Current Temperature');
-
-      // updateState(props._id, { availableVariableNames: availableVariableNames });
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
     };
@@ -384,41 +490,6 @@ function ToolbarComponent(props: App): JSX.Element {
       console.log(err);
     });
   }, []);
-
-  const handleOpenAndEditWidget = async () => {
-    const app = await createApp({
-      title: 'SensorOverview',
-      roomId: props.data.roomId!,
-      boardId: props.data.boardId!,
-      //TODO get middle of the screen space
-      position: {
-        x: props.data.position.x + props.data.size.width,
-        y: props.data.position.y,
-        z: 0,
-      },
-      size: {
-        width: props.data.size.width,
-        height: props.data.size.height,
-        depth: 0,
-      },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'SensorOverview',
-      state: {
-        sensorData: {},
-        stationNames: props.data.state.stationNames,
-        listOfStationNames: s.stationNames[0],
-        location: [21.297, -157.816],
-        zoom: 8,
-        baseLayer: 'OpenStreetMap',
-        overlay: true,
-        widget: props.data.state.widget,
-      },
-      raised: true,
-      dragging: false,
-    });
-    // console.log(app);
-    fitApps([app.data]);
-  };
 
   const handleVisualizeAllVariables = async () => {
     let url = '';
@@ -440,7 +511,19 @@ function ToolbarComponent(props: App): JSX.Element {
       const observations = sensor['STATION'][0]['OBSERVATIONS'];
       let properties = Object.getOwnPropertyNames(observations);
       let row = 0;
-      const largestSize = props.data.size.width > props.data.size.height ? props.data.size.width : props.data.size.height;
+      let visualizationSize = { height: 1800, width: 1800 };
+      const isLineBarScatterStationMetadataVis =
+        props.data.state.widget.visualizationType === 'line' ||
+        props.data.state.widget.visualizationType === 'bar' ||
+        props.data.state.widget.visualizationType === 'scatter' ||
+        props.data.state.widget.visualizationType === 'stationMetadata';
+
+      const isStatisticsCard = props.data.state.widget.visualizationType === 'statisticCard';
+      if (isLineBarScatterStationMetadataVis) {
+        visualizationSize = { height: 1200, width: 2000 };
+      } else if (isStatisticsCard) {
+        visualizationSize = { height: 1200, width: 1800 };
+      }
       properties = properties.filter((property) => property !== 'date_time');
       properties = properties.filter((property) => property !== 'wind_cardinal_direction_1d');
       for (let i = 0; i < properties.length; i++) {
@@ -449,22 +532,21 @@ function ToolbarComponent(props: App): JSX.Element {
         const widget = props.data.state.widget;
         widget.yAxisNames[0] = properties[i];
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
-          //TODO get middle of the screen space
           position: {
-            x: props.data.position.x + largestSize * (i % 3),
-            y: props.data.position.y + largestSize * row,
+            x: props.data.position.x + visualizationSize.width * (i % 3),
+            y: props.data.position.y + visualizationSize.height * row,
             z: 0,
           },
           size: {
-            width: largestSize,
-            height: largestSize,
+            width: visualizationSize.width,
+            height: visualizationSize.height,
             depth: 0,
           },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: props.data.state.stationNames,
@@ -563,14 +645,25 @@ function ToolbarComponent(props: App): JSX.Element {
     }
     updateState(props._id, { stationNames: stationNames });
   };
+
   const handleFilterOn = (attributeName: string) => {
-    const isFirstTime = isSortedOn.name !== attributeName;
+    const isFirstTime = isSortedOn.name !== attributeName || isSortedOn.direction === 'ascending';
     const isSecondTime = isSortedOn.name === attributeName && isSortedOn.direction === 'descending';
     const isThirdTime = isSortedOn.name === attributeName && isSortedOn.direction === 'ascending';
     if (isFirstTime) {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
-          return a[attributeName] > b[attributeName] ? 1 : -1;
+          if (attributeName === 'SELECTED') {
+            console.log('Here selected');
+
+            if (s.stationNames.includes(a['STID'])) {
+              return -1;
+            } else {
+              return 1;
+            }
+          } else {
+            return a[attributeName] < b[attributeName] ? 1 : -1;
+          }
         } else {
           return Number(a[attributeName]) > Number(b[attributeName]) ? 1 : -1;
         }
@@ -580,20 +673,48 @@ function ToolbarComponent(props: App): JSX.Element {
     } else if (isSecondTime) {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
-          return a[attributeName] < b[attributeName] ? 1 : -1;
+          if (attributeName === 'SELECTED') {
+            console.log('Here selected');
+
+            if (s.stationNames.includes(a['STID'])) {
+              return 1;
+            } else {
+              return -1;
+            }
+          } else {
+            return a[attributeName] < b[attributeName] ? 1 : -1;
+          }
         } else {
           return Number(a[attributeName]) < Number(b[attributeName]) ? 1 : -1;
         }
       });
       setStationMetadata(tmpStationMetadata);
       setIsSortedOn({ name: attributeName, direction: 'ascending' });
-    } else if (isThirdTime) {
-      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
-        return 0;
-      });
-      setStationMetadata(tmpStationMetadata);
-      setIsSortedOn({ name: 'none', direction: 'none' });
     }
+  };
+
+  const tableRows = [
+    { propName: 'SELECTED', name: 'Selected' },
+
+    { propName: 'NAME', name: 'Station Name' },
+    { propName: 'COUNTY', name: 'County Name' },
+    { propName: 'ELEVATION', name: 'Elevation' },
+    { propName: 'LATITUDE', name: 'Latitude' },
+    { propName: 'LONGITUDE', name: 'Longitude' },
+  ];
+
+  const handleChangeSelectedStation = (e: React.ChangeEvent<HTMLInputElement>, stationSTID: string) => {
+    const tmpSelectedStations = s.stationNames;
+    if (e.target.checked) {
+      tmpSelectedStations.push(stationSTID);
+    } else {
+      for (let i = 0; i < tmpSelectedStations.length; i++) {
+        if (tmpSelectedStations[i] === stationSTID) {
+          tmpSelectedStations.splice(i, 1);
+        }
+      }
+    }
+    updateState(props._id, { stationNames: tmpSelectedStations });
   };
 
   return (
@@ -608,7 +729,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <ModalHeader>Station Selection</ModalHeader>
           <ModalCloseButton />
           <Box rounded="2xl" height={'40rem'} width="60rem">
-            <MapViewer {...props} isSelectingStations={true} />
+            <MapGL {...props} isSelectingStations={true} stationNameRef={stationNameRef} />
           </Box>
           <ModalBody>
             <Box
@@ -627,194 +748,79 @@ function ToolbarComponent(props: App): JSX.Element {
                 </Heading>
               </Box>
               <Box overflowY="scroll" height="15rem" width="58rem">
-                <table id="stationTable">
-                  <th onClick={() => handleFilterOn('NAME')}>Station Name</th>
-                  <th onClick={() => handleFilterOn('COUNTY')}>County</th>
-                  <th onClick={() => handleFilterOn('ELEVATION')}>Elevation</th>
-                  <th onClick={() => handleFilterOn('LATITUDE')}>Latitude</th>
-                  <th onClick={() => handleFilterOn('LONGITUDE')}>Longitude</th>
-                  <th>Variable</th>
-                  <th onClick={() => handleFilterOn('SELECTED')}>Selected</th>
-                  {!isLoaded ? (
-                    <div>Loading Stations...</div>
-                  ) : (
-                    stationMetadata.map((station: any, index: number) => {
-                      const isSelected = s.stationNames.includes(station.STID);
-                      return (
-                        <tr key={index}>
-                          <td>{station.NAME}</td>
-                          <td>{station.COUNTY}</td>
-                          <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
-                          <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
-                          <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
-                          <td>variable</td>
-                          <td>{isSelected ? 'X' : ''}</td>
-                        </tr>
-                      );
-                    })
-                  )}
+                {/* //MdKeyboardArrowUp
+                //MdArrowDropDown
+                //MdArrowDropUp */}
+                <table id="stationTable" style={{ width: '100%' }}>
+                  {tableRows.map((row, index) => {
+                    let icon = null;
+                    let widthSize = '0%';
+                    if (isSortedOn.name == row.propName && isSortedOn.direction === 'ascending') {
+                      icon = <MdArrowDropUp size="20px" />;
+                    } else if (isSortedOn.name == row.propName && isSortedOn.direction === 'descending') {
+                      icon = <MdArrowDropDown size="20px" />;
+                    }
+
+                    switch (row.propName) {
+                      case 'SELECTED':
+                        widthSize = '9%';
+                        break;
+                      case 'NAME':
+                        widthSize = '21%';
+                        break;
+                      case 'COUNTY':
+                        widthSize = '20%';
+                        break;
+                      case 'ELEVATION':
+                        widthSize = '10%';
+                        break;
+                      case 'LATITUDE':
+                        widthSize = '10%';
+                        break;
+                      case 'LONGITUDE':
+                        widthSize = '10%';
+                        break;
+                    }
+                    return (
+                      <th style={{ width: widthSize }} key={index} onClick={() => handleFilterOn(row.propName)}>
+                        <Box display="flex">
+                          {row.name} {icon}
+                        </Box>
+                      </th>
+                    );
+                  })}
+                  {!isLoaded
+                    ? null
+                    : stationMetadata.map((station: any, index: number) => {
+                        const isSelected = s.stationNames.includes(station.STID);
+                        return (
+                          <tr key={index}>
+                            <td style={{ textAlign: 'center', width: '10px' }}>
+                              <Checkbox
+                                colorScheme="teal"
+                                isChecked={isSelected}
+                                onChange={(e) => handleChangeSelectedStation(e, station.STID)}
+                              />
+                            </td>
+                            <td>{station.NAME}</td>
+                            <td>{station.COUNTY}</td>
+                            <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
+                            {/* <td>variable</td> */}
+                          </tr>
+                        );
+                      })}
                 </table>
+                {!isLoaded ? (
+                  <Box width="100%" height="100%" position="relative">
+                    {' '}
+                    <Box top="50%" left="50%" position="absolute">
+                      <Text>Loading Stations...</Text>
+                    </Box>
+                  </Box>
+                ) : null}
               </Box>
-              {/* <Accordion allowMultiple overflowY="scroll" height="15rem">
-                {!isLoaded
-                  ? props.data.state.stationNames.map((stationName: string, index: number) => {
-                      return (
-                        <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                          Loading Station...
-                        </Box>
-                      );
-                    })
-                  : stationMetadata.map((station: any, index: number) => {
-                      return (
-                        <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                          <AccordionItem>
-                            <AccordionButton>
-                              <Box
-                                as="span"
-                                flex="1"
-                                textAlign="left"
-                                ml={'15px'}
-                                width="5rem"
-                                whiteSpace="nowrap"
-                                overflow="hidden"
-                                textOverflow="ellipsis"
-                              >
-                                {station.NAME}
-                              </Box>
-
-                              <AccordionIcon />
-                              <Tooltip
-                                key={index}
-                                placement="top"
-                                label={
-                                  props.data.state.stationNames.length < 2
-                                    ? 'You must have at least one station selected'
-                                    : 'Remove station from list'
-                                }
-                                openDelay={300}
-                                aria-label="A tooltip"
-                              >
-                                <IconButton
-                                  icon={<MdDelete />}
-                                  aria-label="Delete Station"
-                                  ml="1rem"
-                                  colorScheme="red"
-                                  size="xs"
-                                  isDisabled={props.data.state.stationNames.length < 2}
-                                  fontWeight="bold"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (props.data.state.stationNames.length >= 2)
-                                      handleRemoveSelectedStation({
-                                        lat: station.lat as number,
-                                        lon: station.lon as number,
-                                        name: station.STID as string,
-                                        selected: true,
-                                      });
-                                  }}
-                                >
-                                  X
-                                </IconButton>
-                              </Tooltip>
-                            </AccordionButton>
-
-                            <AccordionPanel pb={4}>
-                              <UnorderedList>
-                                {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
-                                  return (
-                                    <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
-                                      <ListItem key={index}>{name}</ListItem>
-                                    </Tooltip>
-                                  );
-                                })}
-                              </UnorderedList>
-                            </AccordionPanel>
-                          </AccordionItem>
-                        </Box>
-                      );
-                    })}
-              </Accordion> */}
-              {/* <Accordion allowMultiple overflowY="scroll" height="15rem">
-                {!isLoaded
-                  ? props.data.state.stationNames.map((stationName: string, index: number) => {
-                      return (
-                        <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                          Loading Station...
-                        </Box>
-                      );
-                    })
-                  : stationMetadata.map((station: any, index: number) => {
-                      return (
-                        <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                          <AccordionItem>
-                            <AccordionButton>
-                              <Box
-                                as="span"
-                                flex="1"
-                                textAlign="left"
-                                ml={'15px'}
-                                width="5rem"
-                                whiteSpace="nowrap"
-                                overflow="hidden"
-                                textOverflow="ellipsis"
-                              >
-                                {station.NAME}
-                              </Box>
-
-                              <AccordionIcon />
-                              <Tooltip
-                                key={index}
-                                placement="top"
-                                label={
-                                  props.data.state.stationNames.length < 2
-                                    ? 'You must have at least one station selected'
-                                    : 'Remove station from list'
-                                }
-                                openDelay={300}
-                                aria-label="A tooltip"
-                              >
-                                <IconButton
-                                  icon={<MdDelete />}
-                                  aria-label="Delete Station"
-                                  ml="1rem"
-                                  colorScheme="red"
-                                  size="xs"
-                                  isDisabled={props.data.state.stationNames.length < 2}
-                                  fontWeight="bold"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (props.data.state.stationNames.length >= 2)
-                                      handleRemoveSelectedStation({
-                                        lat: station.lat as number,
-                                        lon: station.lon as number,
-                                        name: station.STID as string,
-                                        selected: true,
-                                      });
-                                  }}
-                                >
-                                  X
-                                </IconButton>
-                              </Tooltip>
-                            </AccordionButton>
-
-                            <AccordionPanel pb={4}>
-                              <UnorderedList>
-                                {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
-                                  return (
-                                    <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
-                                      <ListItem key={index}>{name}</ListItem>
-                                    </Tooltip>
-                                  );
-                                })}
-                              </UnorderedList>
-                            </AccordionPanel>
-                          </AccordionItem>
-                        </Box>
-                      );
-                    })}
-              </Accordion> */}
             </Box>
           </ModalBody>
 
@@ -822,23 +828,28 @@ function ToolbarComponent(props: App): JSX.Element {
             <Button colorScheme="blue" mr={3} onClick={onClose}>
               Close
             </Button>
-            <Button variant="ghost" onClick={() => console.log(s.stationNames)}>
-              Secondary Action
-            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
 
       <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
-        <Select size="xs" w="10rem" placeholder={'Select time period'} value={s.widget.timePeriod} onChange={handleSelectDateChange}>
+        <Select
+          mx="1rem"
+          size="xs"
+          w="10rem"
+          placeholder={'Select time period'}
+          value={s.widget.timePeriod}
+          onChange={handleSelectDateChange}
+        >
           <option value={'previous24Hours'}>24 hours</option>
           <option value={'previous1Week'}>1 week</option>
           <option value={'previous1Month'}>1 month</option>
           <option value={'previous1Year'}>1 year</option>
         </Select>
       </Tooltip>
-      <Text mx="1rem">OR</Text>
-      <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
+      {/* <Text mx="1rem">OR</Text> */}
+      {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
         <Input
           w="10rem"
           mr="1rem"
@@ -851,7 +862,7 @@ function ToolbarComponent(props: App): JSX.Element {
           //   widget.visualizationType === 'variableCard' || widget.visualizationType === 'friendlyVariableCard' ? true : false
           // }
         />
-      </Tooltip>
+      </Tooltip> */}
       <Divider border={'1px'} size={'2xl'} orientation="vertical" />
 
       <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
@@ -911,7 +922,132 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  const apps = useAppStore((state) => state.apps);
+  const updateState = useAppStore((state) => state.updateState);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [stationMetadata, setStationMetadata] = useState([]);
+  const [variableNames, setVariableNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    const availableVariableNames = props.apps.map((app) => app.data.state.availableVariableNames);
+    setVariableNames(findDuplicateElementsInArray(...availableVariableNames));
+  }, []);
+
+  const handleVariableChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    if (value === 'Elevetion & Current Temperature') {
+      props.apps.forEach((app: App) => {
+        updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: ['Elevation & Current Temperature'] } });
+      });
+    } else {
+      props.apps.forEach((app: App) => {
+        updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: [value], xAxisNames: ['date_time'] } });
+      });
+    }
+  };
+
+  const handleVisualizationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+  };
+
+  const availableVisualizations = (): any => {
+    const availableVis = [];
+    for (let i = 0; i < props.apps.length; i++) {
+      availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
+    }
+    return findDuplicateElementsInArrayObjects(...availableVis);
+  };
+
+  return (
+    <>
+      <Tooltip label={'Choose the variable that you would like to visualize'} aria-label="A tooltip">
+        <Select size="xs" mr="1rem" placeholder={'Select Variable'} onChange={handleVariableChange}>
+          {variableNames.map((name: string, index: number) => {
+            return (
+              <option key={index} value={name}>
+                {name}
+              </option>
+            );
+          })}
+        </Select>
+      </Tooltip>
+      <Select
+        size="xs"
+        placeholder={'Select Visualization Type'}
+        mr="1rem"
+        // value={widget.visualizationType}
+        onChange={handleVisualizationChange}
+        // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+      >
+        {availableVisualizations().map((visualization: { value: string; name: string }, index: number) => {
+          return (
+            <option key={index} value={visualization.value}>
+              {visualization.name}
+            </option>
+          );
+        })}
+      </Select>
+    </>
+  );
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+
+// This function is used to only display common variables between all stations
+// Will return an array of variables that are common between all stations
+function findDuplicateElementsInArrayObjects(...arrays: any) {
+  const elementCount: any = [];
+  arrays.forEach((array: any[]) => {
+    array.forEach((element) => {
+      let found = false;
+      for (let i = 0; i < elementCount.length; i++) {
+        if (JSON.stringify(elementCount[i].element) === JSON.stringify(element)) {
+          elementCount[i].count++;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        elementCount.push({ element: element, count: 1 });
+      }
+    });
+  });
+  const duplicates = [];
+  for (let i = 0; i < elementCount.length; i++) {
+    if (elementCount[i].count === arrays.length) {
+      duplicates.push(elementCount.element);
+    }
+  }
+
+  return [];
+}
+
+// This function is used to only display common variables between all stations
+// Will return an array of variables that are common between all stations
+function findDuplicateElementsInArray(...arrays: any) {
+  const elementCount: any = {};
+  arrays.forEach((array: any[]) => {
+    array.forEach((element) => {
+      if (element in elementCount) {
+        elementCount[element]++;
+      } else {
+        elementCount[element] = 1;
+      }
+    });
+  });
+
+  const duplicates = [];
+  for (const element in elementCount) {
+    if (elementCount[element] === arrays.length) {
+      duplicates.push(element);
+    }
+  }
+
+  return duplicates;
+}
 
 // For now, this is hard-coded. Will change when HCDP is ready.
 export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [

@@ -104,7 +104,7 @@ export const checkAvailableVisualizations = (variable: string) => {
       // availableVisualizations.push({value: 'allVariables', name: 'Current Conditions'});
       availableVisualizations.push({ value: 'line', name: 'Line Chart' });
       availableVisualizations.push({ value: 'bar', name: 'Bar Chart' });
-      availableVisualizations.push({ value: 'map', name: 'Map' });
+      availableVisualizations.push({ value: 'map', name: 'Map (Current Value)' });
       // availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
       break;
   }
@@ -400,7 +400,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
         if (i % 3 === 0) row++;
         const stationNames = props.data.state.stationNames;
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
@@ -411,7 +411,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
           },
           size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: [stationNames[i]],
@@ -432,7 +432,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
         if (i % 3 === 0) row++;
         const stationNames = props.data.state.stationNames;
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
@@ -443,7 +443,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
           },
           size: { width: 1500, height: 400, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: [stationNames[i]],
@@ -465,7 +465,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
         if (i % 3 === 0) row++;
         const stationName = props.data.state.stationNames[i];
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
@@ -476,7 +476,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
           },
           size: { width: 2000, height: 800, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: [stationName],
@@ -493,7 +493,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
       }
     } else {
       const app = await createApp({
-        title: 'SensorOverview',
+        title: 'Hawaii Mesonet',
         roomId: props.data.roomId!,
         boardId: props.data.boardId!,
         //TODO get middle of the screen space
@@ -504,7 +504,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
         },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        type: 'SensorOverview',
+        type: 'Hawaii Mesonet',
         state: {
           sensorData: {},
           stationNames: props.data.state.stationNames,

@@ -77,8 +77,8 @@ const EChartsViewer = (props: {
         tmpWidget.xAxisNames,
         colorMode,
         props.startDate,
-
-        props.stationMetadata
+        props.stationMetadata,
+        props.widget.timePeriod
       );
 
       setChartOptions(options);

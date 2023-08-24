@@ -1,4 +1,6 @@
 import type { EChartsOption } from 'echarts';
+import { getFormattedTimePeriod } from '../SensorOverview/SensorOverview';
+import variableUnits from '../HCDP/data/VariableUnits';
 
 //Types
 type filterType = {
@@ -45,13 +47,13 @@ export const ChartManager = async (
   xAxisAttributes: string[],
   colorMode: string,
   startDate: string,
-  stationMetadata?: any,
+  stationMetadata: any,
+  timePeriod: string,
   transform?: (filterType | aggregateType)[]
 ): Promise<EChartsOption> => {
   let options: EChartsOption = {};
   let data = [];
   const stationReadableNames = [];
-  console.log(yAxisAttributes, xAxisAttributes);
   //
   if (yAxisAttributes[0] === 'Elevation & Current Temperature') {
     yAxisAttributes[0] = 'elevation';
@@ -115,13 +117,13 @@ export const ChartManager = async (
     //   break;
   }
 
-  createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '));
+  createTitle(options, yAxisAttributes, xAxisAttributes, stationReadableNames.join(', '), timePeriod);
   options = customizeChart(options, colorMode);
   options.color = createColors(options, data);
 
   //Next two calls generates the X and Y axis for the charts
   createXAxis(options, xAxisAttributes, xAxisData, chartType);
-  createYAxis(options);
+  createYAxis(options, yAxisAttributes);
   createGrid(options);
 
   return options;
@@ -165,8 +167,21 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
   }
 };
 
-const createYAxis = (options: EChartsOption) => {
+const createYAxis = (options: EChartsOption, yAxisAttributes: string[]) => {
+  let units = '';
+  for (let i = 0; i < variableUnits.length; i++) {
+    if (yAxisAttributes[0].includes(variableUnits[i].variable)) {
+      units = variableUnits[i].unit;
+    }
+  }
   options.yAxis = {
+    name: yAxisAttributes[0] + ' (' + units + ')',
+    nameTextStyle: {
+      fontSize: 40, // Increase the font size here
+      fontWeight: 'bold', // Customize the style of the title (optional)
+    },
+    nameGap: 50,
+
     type: 'value',
     axisLabel: {
       fontSize: 30,
@@ -331,7 +346,13 @@ function createScatterPlot(
   }
 }
 
-function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAttributes: string[], stationName: string) {
+function createTitle(
+  options: EChartsOption,
+  yAxisAttributes: string[],
+  xAxisAttributes: string[],
+  stationName: string,
+  timePeriod: string
+) {
   let finalVariableName = yAxisAttributes[0];
   if (!finalVariableName) {
     finalVariableName = 'None';
@@ -346,7 +367,7 @@ function createTitle(options: EChartsOption, yAxisAttributes: string[], xAxisAtt
 
   for (let i = 0; i < yAxisAttributes.length; i++) {
     options.title = {
-      text: `${finalVariableName} versus ${xAxisAttributes[0]}`,
+      text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${getFormattedTimePeriod(timePeriod)}`,
       textStyle: {
         fontSize: 40,
       },

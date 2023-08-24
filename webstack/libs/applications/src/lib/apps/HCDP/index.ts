@@ -7,7 +7,7 @@
  */
 
 /**
- * SAGE3 application: Hawaii Mesonet
+ * SAGE3 application: HCDP
  * created by: SAGE3 team
  */
 
@@ -109,7 +109,7 @@ export const init: Partial<state> = {
   widget: widget,
   stationColor: '',
   getDataFrom: 'mesonet',
-  stationScale: 1,
+  stationScale: 5,
 };
 
-export const name = 'Hawaii Mesonet';
+export const name = 'HCDP';

@@ -345,13 +345,13 @@ const Content = (props: {
         textAlign={'center'}
       >
         <Box bg="#2D62D2">
-          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 7}>
+          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 10}>
             {props.variable.stationName}
           </Text>
         </Box>
 
         <Box>
-          <Text mt={scaleToFontSize / 6} textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 11.5}>
+          <Text mt={scaleToFontSize / 6} textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 8}>
             {variableName.join(' ')}
           </Text>
         </Box>

@@ -81,9 +81,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
       w = 1280;
       h = 720;
       state.accessId = accessId;
-    } else if (appName === 'SensorOverview') {
-      w = 580;
-      h = 575;
+    } else if (appName === 'Hawaii Mesonet') {
+      w = 1200;
+      h = 1200;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

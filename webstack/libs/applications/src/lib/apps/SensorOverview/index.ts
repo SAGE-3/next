@@ -25,11 +25,12 @@ function getFormattedDateTime24HoursBefore() {
 }
 
 const widget = {
-  visualizationType: 'variableCard',
+  visualizationType: 'map',
   yAxisNames: ['air_temp_set_1'],
   xAxisNames: ['date_time'],
   color: '#5AB2D3',
   startDate: getFormattedDateTime24HoursBefore(),
+  timePeriod: 'previous24Hours',
   layout: { x: 0, y: 0, w: 11, h: 130 },
 };
 // [
@@ -57,21 +58,23 @@ export const schema = z.object({
   pitch: z.number(),
   assetid: z.string().optional(),
   availableVariableNames: z.string().array(),
+  stationScale: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sensorData: {},
-  stationNames: ['016HI'],
+  stationNames: ['016HI', '012HI', '014HI'],
   listOfStationNames: '016HI',
   location: [-157.816, 21.297], //lnglat
-  zoom: 13,
+  zoom: 10,
   baseLayer: 'OpenStreetMap',
   bearing: 0,
   pitch: 0,
   overlay: true,
   widget: widget,
   availableVariableNames: [],
+  stationScale: 5,
 };
 
-export const name = 'SensorOverview';
+export const name = 'Hawaii Mesonet';

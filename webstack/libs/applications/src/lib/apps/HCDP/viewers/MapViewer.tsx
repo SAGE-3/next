@@ -13,7 +13,7 @@ import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 // Data store
 import create from 'zustand';
 // Map library
-import maplibregl from 'maplibre-gl';
+import maplibregl, { Marker, latest } from 'maplibre-gl';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
@@ -25,7 +25,7 @@ import { Asset } from '@sage3/shared/types';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 // import { state as AppState } from './index';
-import redMarker from './redMarker.png';
+// import redMarker from './redMarker.png';
 
 // Styling
 import './maplibre-gl.css';
@@ -56,19 +56,21 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
-const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element => {
+const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationMetadata?: any }): JSX.Element => {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const saveMap = useStore((state: any) => state.saveMap);
-  const map = useStore((state: any) => state.map[props._id]);
+  const map = useStore((state: any) => state.map[props._id + '0']);
   const stationDataRef = React.useRef(stationData);
   const stationNameRef = React.useRef(s.stationNames);
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const scale = useUIStore((state) => state.scale);
   const [file, setFile] = useState<Asset>();
+  const [markers, setMarkers] = useState<Marker[]>([]);
+  const [scaleSize, setScaleSize] = useState<number>(5);
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
@@ -127,12 +129,12 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
     }
   }
 
-  useEffect(() => {
-    if (map) {
-      const mapContainer = map.getContainer();
-      mapContainer.style.transform = `scale(${1 / scale})`;
-    }
-  }, [scale]);
+  // useEffect(() => {
+  //   if (map) {
+  //     const mapContainer = map.getContainer();
+  //     mapContainer.style.transform = `scale(${1 / scale})`;
+  //   }
+  // }, [scale]);
 
   // Convert ID to asset
   useEffect(() => {
@@ -194,7 +196,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
 
   useEffect(() => {
     const localmap = new maplibregl.Map({
-      container: 'map' + props._id,
+      container: 'map' + props._id + '0',
       attributionControl: false,
       style: baselayers[s.baseLayer as 'OpenStreetMap' | 'Satellite'],
       center: s.location as maplibregl.LngLatLike,
@@ -230,7 +232,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
     localmap.boxZoom.disable();
 
     // Save map to store
-    saveMap(props._id, localmap);
+    saveMap(props._id + '0', localmap);
   }, [props._id]);
 
   // When the baselayer is changed
@@ -268,194 +270,135 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
   }, [props.data.size.width, props.data.size.height, map]);
 
   useEffect(() => {
-    if (map) {
-      if (props.isSelectingStations) {
-        const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.name));
-        const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.name));
-
-        map.loadImage('https://maplibre.org/maplibre-gl-js/docs/assets/custom_marker.png', (error: any, image: any) => {
-          if (error) {
-            console.log(error);
-          } else {
-            // map.addImage('custom-marker', image);
-            // Add a GeoJSON source with 3 points.
-
-            /**
-             * NOT SELECTED STATION
-             */
-            map.addSource('notSelectedStations', {
-              type: 'geojson',
-              data: {
-                type: 'FeatureCollection',
-                features: notSelectedStations.map((s) => {
-                  return {
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point',
-                      coordinates: [s.lon, s.lat],
-                    },
-                    properties: {
-                      stationInfo: s,
-                    },
-                  };
-                }),
-              },
-            });
-
-            map.addLayer({
-              id: 'notSelectedCircle',
-              type: 'circle',
-              source: 'notSelectedStations',
-              paint: {
-                'circle-radius': 15,
-                'circle-stroke-color': 'black',
-                'circle-stroke-width': 2,
-                'circle-color': 'white',
-              },
-            });
-
-            // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
-            map.on('click', 'notSelectedCircle', (e: any) => {
-              // map.flyTo({
-              //   center: e.features[0].geometry.coordinates,
-              // });
-              const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-              const element = document.getElementById(`marker-${stationInfo.name}`);
-              const stationIsSelected = s.stationNames.includes(stationInfo.name) || stationNameRef.current.includes(stationInfo.name);
-
-              if (element && stationIsSelected) {
-                const tmpSelectedStations = s.stationNames;
-                // tmpSelectedStations = tmpSelectedStations.filter((name: string) => name !== stationInfo.name);
-                for (let i = 0; i < tmpSelectedStations.length; i++) {
-                  if (tmpSelectedStations[i] === stationInfo.name) {
-                    tmpSelectedStations.splice(i, 1);
-                  }
-                }
-                updateState(props._id, { stationNames: tmpSelectedStations });
-
-                // stationNameRef.current = s.stationNames.filter((name: string) => name !== stationInfo.name);
-                element?.remove();
-              } else {
-                const el = document.createElement('div');
-                el.className = 'marker';
-                el.id = `marker-${stationInfo.name}`;
-                // el.style.backgroundImage =
-                //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
-                el.style.width = '35px';
-                el.style.height = '35px';
-                el.style.borderRadius = '50%';
-                el.style.cursor = 'pointer';
-                el.style.border = '2px solid black';
-                el.style.backgroundColor = '#CC4833';
-                el.style.zIndex = '1000';
-                new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
-                const tmpSelectedStations = s.stationNames;
-                tmpSelectedStations.push(stationInfo.name);
-                updateState(props._id, { stationNames: tmpSelectedStations });
-                stationNameRef.current = [...s.stationNames, stationInfo.name];
-              }
-            });
-
-            // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
-            map.on('mouseenter', 'notSelectedCircle', () => {
-              map.getCanvas().style.cursor = 'pointer';
-            });
-            // Change it back to a pointer when it leaves.
-            map.on('mouseleave', 'notSelectedCircle', () => {
-              map.getCanvas().style.cursor = '';
-            });
-
-            /**
-             * SELECTED STATION
-             */
-            map.addSource('selectedStations', {
-              type: 'geojson',
-              data: {
-                type: 'FeatureCollection',
-                features: selectedStations.map((s) => {
-                  return {
-                    type: 'Feature',
-                    geometry: {
-                      type: 'Point',
-                      coordinates: [s.lon, s.lat],
-                    },
-                    properties: {
-                      stationInfo: s,
-                    },
-                  };
-                }),
-              },
-            });
-
-            map.addLayer({
-              id: 'selectedCircle',
-              type: 'circle',
-              source: 'selectedStations',
-              paint: {
-                'circle-radius': 15,
-                'circle-color': '#CC4833',
-                'circle-stroke-color': 'black',
-                'circle-stroke-width': 2,
-              },
-            });
-
-            map.on('click', 'selectedCircle', (e: any) => {
-              console.log('CLIKED< I AM SUPPOSED TO BE CLICKED');
-
-              const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-              const element = document.getElementById(`marker-${stationInfo.name}`);
-              const stationIsSelected = s.stationNames.includes(stationInfo.name) || stationNameRef.current.includes(stationInfo.name);
-              const tmpSelectedStations = s.stationNames;
-
-              if (element && stationIsSelected) {
-                element?.remove();
-                tmpSelectedStations.push(stationInfo.name);
-              } else {
-                const el = document.createElement('div');
-                el.className = 'marker';
-                el.id = `marker-${stationInfo.name}`;
-                // el.style.backgroundImage =
-                //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
-                el.style.width = '35px';
-                el.style.height = '35px';
-                el.style.borderRadius = '50%';
-                el.style.cursor = 'pointer';
-                el.style.border = '2px black solid';
-
-                el.style.backgroundColor = 'white';
-                // el.style.opacity = '0.1';
-                el.style.zIndex = '1000';
-                new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
-
-                // tmpSelectedStations = tmpSelectedStations.filter((name: string) => name !== stationInfo.name);
-                for (let i = 0; i < tmpSelectedStations.length; i++) {
-                  if (tmpSelectedStations[i] === stationInfo.name) {
-                    tmpSelectedStations.splice(i, 1);
-                  }
-                }
-              }
-              updateState(props._id, { stationNames: tmpSelectedStations });
-              stationNameRef.current = [...s.stationNames, stationInfo.name];
-              // stationNameRef.current = tmpSelectedStations;
-            });
-            // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
-            map.on('mouseenter', 'selectedCircle', () => {
-              map.getCanvas().style.cursor = 'pointer';
-            });
-            // Change it back to a pointer when it leaves.
-            map.on('mouseleave', 'selectedCircle', () => {
-              map.getCanvas().style.cursor = '';
-            });
-          }
-        });
+    console.log('here');
+    if (map && props.isLoaded && !props.isSelectingStations) {
+      const widget = props.data.state.widget;
+      // const observations = props.stationMetadata[0].OBSERVATIONS;
+      const variableName = widget.yAxisNames[0];
+      // console.log(props.stationMetadata)
+      map.resize();
+      for (let i = 0; i < markers.length; i++) {
+        markers[i].remove();
       }
+      // map.on('load', () => {
+      for (let i = 0; i < props.stationMetadata.length; i++) {
+        // console.log(props.stationMetadata[i].OBSERVATIONS[variableName]);
+        if (props.stationMetadata[i].OBSERVATIONS[variableName]) {
+          const latestValue =
+            props.stationMetadata[i].OBSERVATIONS[variableName][props.stationMetadata[i].OBSERVATIONS[variableName].length - 1];
+
+          const station: StationDataType | undefined = stationData.find(
+            (station: StationDataType) => station.name == props.stationMetadata[i].STID
+          );
+
+          if (station) {
+            const el = document.createElement('div');
+
+            el.innerHTML = `<div style="position: relative; ">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
+              s.stationScale
+            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <p  style="font-size:5px; font-weight: bold; text-align: center">
+            ${Number(latestValue).toFixed(1)}</p>
+            </div>
+            </div>`;
+            if (el && el !== null) {
+              const marker = new maplibregl.Marker({
+                color: '#000000',
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
+                element: el.firstChild,
+              })
+                .setLngLat([station.lon, station.lat])
+                .addTo(map);
+              marker.togglePopup();
+              setMarkers((prev) => [...prev, marker]);
+            }
+
+            // // station.value = latestValue;
+            // map.addSource(`stationValues${props._id + "0" + variableName + station.name}`, {
+            //   type: 'geojson',
+            //   data: {
+            //     type: 'FeatureCollection',
+            //     features: [
+            //       {
+            //         type: 'Feature',
+            //         geometry: { type: 'Point', coordinates: [station.lon, station.lat] },
+            //         // properties: { stationInfo: station },
+            //       },
+            //     ],
+            //   },
+            // });
+
+            // // map.addLayer({
+            // //   id: 'selectedCircle',
+            // //   type: 'circle',
+            // //   source: 'selectedStations',
+            // //   paint: {
+            // //     'circle-radius': 15,
+            // //     'circle-color': '#CC4833',
+            // //     'circle-stroke-color': 'black',
+            // //     'circle-stroke-width': 2,
+            // //   },
+            // // });
+            // map.addLayer({
+            //   id: `stationValues${props._id + "0" + variableName + station.name}`,
+            //   type: 'symbol',
+            //   source: `stationValues${props._id + "0" + variableName + station.name}`,
+            //   layout: {
+            //     'icon-image': 'marker_15',
+            //     'text-field': `Soil Moisture: ${Number(latestValue).toFixed(1)} at ${station.name}`,
+            //     'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+            //     'text-offset': [0, 0.6],
+            //     'text-anchor': 'top',
+            //   },
+            // });
+          }
+        }
+      }
+      // });
     }
-  }, [map, JSON.stringify(s.stationNames), stationDataRef.current]);
+  }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale)]);
+
+  const increaseScaleSize = () => {
+    if (s.stationScale < 8) {
+      updateState(props._id, { stationScale: s.stationScale + 1 });
+      console.log(s.stationScale, 'inside');
+    }
+    console.log(s.stationScale);
+  };
+
+  const decreaseScaleSize = () => {
+    if (s.stationScale > 3) {
+      updateState(props._id, { stationScale: s.stationScale - 1 });
+    }
+  };
+
   return (
     <>
       {/* One box for map, one box for container */}
-      {/* <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}> */}
-      <Box id={'map' + props._id} w={'100%'} h={'100%'} />
+      {/* <Box id={'container' + props._id + "0"} w={props.data.size.width} h={props.data.size.height}> */}
+      <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
+      <Box
+        position="absolute"
+        left="2rem"
+        bottom="2rem"
+        display="flex"
+        flexDir={'column'}
+        gap="1rem"
+        p="1rem"
+        borderRadius={'lg'}
+        backgroundColor={'#ffffff'}
+        transform="scale(2)"
+        transformOrigin={'bottom left'}
+      >
+        <Button size={'lg'} onClick={increaseScaleSize} colorScheme="teal">
+          Increase Marker Size
+        </Button>
+        <Button size={'lg'} onClick={decreaseScaleSize} colorScheme="teal">
+          Decrease Marker Size
+        </Button>
+      </Box>
       {/* </Box> */}
     </>
   );
@@ -463,8 +406,9 @@ const MapViewer = (props: App & { isSelectingStations: boolean }): JSX.Element =
 
 export default MapViewer;
 
+type StationDataType = { lat: number; lon: number; name: string; selected: boolean };
 // For now, this is hard-coded. Will change when HCDP is ready.
-export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
+export const stationData: StationDataType[] = [
   {
     lat: 20.8415,
     lon: -156.2948,
