@@ -48,6 +48,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
+    openai: OpenAIConfiguration;
   };
 
   // Feature flags
@@ -81,6 +82,7 @@ export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' 
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
+  openai: ServerConfiguration['services']['openai'];
 };
 
 /**
@@ -133,4 +135,10 @@ export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
+}
+
+// The OpenAI Configuration
+export interface OpenAIConfiguration {
+  apiKey: string; // API Key
+  model: string; // LLM model
 }

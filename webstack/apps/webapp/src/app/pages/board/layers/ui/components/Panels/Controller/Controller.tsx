@@ -44,9 +44,12 @@ export function Controller(props: ControllerProps) {
   const plugins = getPanel('plugins');
 
   // Redirect the user back to the homepage when clicking the arrow button
-  const { toHome } = useRouteNav();
+  const { toHome, back } = useRouteNav();
   function handleHomeClick() {
-    toHome(props.roomId);
+    // Back to the homepage with the room id
+    // toHome(props.roomId);
+    // Just go back to the previous page
+    back();
   }
 
   // Copy the board id to the clipboard
@@ -80,7 +83,10 @@ export function Controller(props: ControllerProps) {
   return (
     <Panel name="controller" title={'Main Menu'} width={400} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
-        <IconButtonPanel icon={<MdArrowBack />} description={`Back to ${room?.data.name}`} isActive={false} onClick={handleHomeClick} />
+        <IconButtonPanel icon={<MdArrowBack />} isActive={false} onClick={handleHomeClick}
+          description={`Navigate to previous page`}
+        //  description={`Back to ${room?.data.name}`}
+        />
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
         <IconButtonPanel

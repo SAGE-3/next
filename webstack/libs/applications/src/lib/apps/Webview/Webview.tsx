@@ -20,6 +20,7 @@ import {
   MdOpenInNew,
   MdCopyAll,
 } from 'react-icons/md';
+import { FaEyeSlash } from 'react-icons/fa';
 
 import { useParams } from 'react-router';
 import create from 'zustand';
@@ -33,7 +34,6 @@ import { isElectron } from './util';
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
-import { FaEyeSlash } from 'react-icons/fa';
 
 export const useStore = create((set: any) => ({
   title: {} as { [key: string]: string },
@@ -210,6 +210,7 @@ function AppComponent(props: App): JSX.Element {
     if (!isElectron()) return;
     if (domReady === false || attached === false) return;
     const webview = webviewNode.current;
+
     const openUrlInNewWebviewApp = (url: string): void => {
       if (!user) return;
       createApp({
@@ -245,7 +246,7 @@ function AppComponent(props: App): JSX.Element {
         // Dont try to download a PDF
         event.preventDefault();
         webview.stop();
-        openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit');
+        openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit&pagemode=none');
       } else {
         setUrl(event.url);
         setLocalURL(props._id, event.url);
@@ -260,17 +261,24 @@ function AppComponent(props: App): JSX.Element {
       }
     };
 
+    const openWebview = ({ url }: { url: string }) => {
+      openUrlInNewWebviewApp(url);
+    };
+
     // Webview opened a new window
     webview.addEventListener('new-window', newWindow);
     // Check the url before navigating
     webview.addEventListener('will-navigate', willNavigate);
     webview.addEventListener('did-start-navigation', didNavigate);
 
+    window.electron.on('open-webview', openWebview);
+
     return () => {
       if (webview) {
         webview.removeEventListener('new-window', newWindow);
         webview.removeEventListener('will-navigate', willNavigate);
         webview.removeEventListener('did-start-navigation', didNavigate);
+        window.electron.removeAllListeners('open-webview');
       }
     };
   }, [props.data.position, domReady]);

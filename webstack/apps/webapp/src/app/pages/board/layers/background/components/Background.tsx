@@ -6,20 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  Box,
-  useColorModeValue,
-  useToast,
-  ToastId,
-  Modal,
-  useDisclosure,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
+  Box, Button, useColorModeValue, useToast, ToastId,
+  Modal, useDisclosure, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  Popover, PopoverContent, PopoverHeader, PopoverBody, Portal, Center,
 } from '@chakra-ui/react';
 
 import { isValidURL, setupApp } from '@sage3/frontend';
@@ -55,6 +46,8 @@ export function Background(props: BackgroundProps) {
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // Modal for opening lots of files
   const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
+  // Popover
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure()
 
   // Hooks
   const { uploadFiles, openAppForFile } = useFiles();
@@ -88,6 +81,9 @@ export function Background(props: BackgroundProps) {
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.800');
   const gridColor = useHexColor(gc);
+  const [dropPosition, setDropPosition] = useState({ x: 0, y: 0 });
+  const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
+  const [validURL, setValidURL] = useState('');
 
   // For Lasso
   const isShiftPressed = useKeyPress('Shift');
@@ -159,6 +155,8 @@ export function Background(props: BackgroundProps) {
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
+    setDropCursor({ x: event.clientX, y: event.clientY });
+    setDropPosition({ x: xdrop, y: ydrop });
 
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
@@ -200,8 +198,9 @@ export function Background(props: BackgroundProps) {
             // Is it a valid URL
             const valid = isValidURL(pastedText);
             if (valid) {
-              // Create a link app
-              createApp(setupApp('', 'WebpageLink', xdrop, ydrop, props.roomId, props.boardId, { w: 400, h: 400 }, { url: pastedText }));
+              // Create a link or view app
+              popOnOpen();
+              setValidURL(valid);
             }
           }
         }
@@ -344,6 +343,17 @@ export function Background(props: BackgroundProps) {
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
+  const createWeblink = () => {
+    createApp(setupApp('WebpageLink', 'WebpageLink', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
+      { w: 400, h: 400 }, { url: validURL }));
+    popOnClose();
+  };
+  const createWebview = () => {
+    createApp(setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
+      { w: 800, h: 1000 }, { webviewurl: validURL }));
+    popOnClose();
+  };
+
   return (
     <Box
       className="board-handle"
@@ -373,6 +383,23 @@ export function Background(props: BackgroundProps) {
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       </Modal>
+
+      <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+        <Portal >
+          <PopoverContent w={"250px"} style={{ position: "absolute", left: dropCursor.x - 125 + "px", top: dropCursor.y - 45 + "px" }}>
+            <PopoverHeader fontSize={"sm"} fontWeight={"bold"}>Create a WebLink or a WebView</PopoverHeader>
+            <PopoverBody>
+              <Center>
+                <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
+                  WebLink
+                </Button>
+                <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
+                  WebView
+                </Button></Center>
+            </PopoverBody>
+          </PopoverContent>
+        </Portal>
+      </Popover>
 
       {/* Too many assets selected */}
       <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>

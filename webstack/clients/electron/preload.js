@@ -19,6 +19,7 @@ const validChannels = [
   'close-connect-page',
   'take-screenshot',
   'streamview',
+  'streamview_stop',
   'paint',
   'load-landing',
   'store-interface',
@@ -27,6 +28,7 @@ const validChannels = [
   'request-current-display',
   'current-display',
   'open-external-url',
+  'open-webview',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

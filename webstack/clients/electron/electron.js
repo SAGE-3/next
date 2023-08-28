@@ -45,7 +45,7 @@ const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = req
 // MenuBuilder
 const { buildMenu } = require('./src/menuBuilder');
 
-// Store
+// Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
@@ -185,8 +185,14 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  windowStore.clear();
+  windowStore.default();
   bookmarkStore.clear();
+
+  // clear the caches, useful to remove password cookies
+  const session = electron.session.defaultSession;
+  session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+    console.log('Electron>	Caches cleared');
+  });
 }
 
 if (process.platform === 'win32') {
@@ -367,7 +373,14 @@ const saveState = async () => {
 
   if (commander.clear) {
     console.log('Preferences> clear all');
-    windowStore.clear();
+    windowStore.default();
+    bookmarkStore.clear();
+
+    // clear the caches, useful to remove password cookies
+    const session = electron.session.defaultSession;
+    session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+      console.log('Electron>	Caches cleared');
+    });
   }
 };
 
@@ -649,20 +662,32 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    ipcMain.on('streamview', (e, args) => {
-      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      // console.log('Webview>    message', channel, args);
+    ipcMain.on('streamview_stop', (e, args) => {
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
+      if (viewContent) viewContent.endFrameSubscription();
+    });
+    ipcMain.on('streamview', (e, args) => {
+      // console.log('Webview>    message', channel, args);
+      // console.log('Webview> IPC Message', args.id, args.width, args.height);
+
+      // Message for the webview pixel streaming
+      const viewContent = electron.webContents.fromId(args.id);
+
+      viewContent.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: args.width, height: args.height },
+      });
+
+      viewContent.beginFrameSubscription(false, (image, dirty) => {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
-        const quality = 50;
+        const quality = 60;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
           dataenc = resizedimage.toJPEG(quality);
         } else {
           dataenc = image.toJPEG(quality);
@@ -670,6 +695,7 @@ function createWindow() {
           newh = dirty.height;
         }
         mainWindow.webContents.send('paint', {
+          id: args.id,
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });
@@ -693,16 +719,18 @@ function createWindow() {
       // NEW API
       contents.on('dom-ready', () => {
         // Block creating new windows from webviews
-        // TODO: tell the renderer to create another webview
         contents.setWindowOpenHandler((details) => {
+          // tell the renderer to create another webview
+          mainWindow.webContents.send('open-webview', { url: details.url });
+          // do nothing in the main process
           return { action: 'deny' };
         });
       });
 
-      // Block automatic download from webviews
-      contents.session.on('will-download', (event, item, webContents) => {
-        event.preventDefault();
-      });
+      // Block automatic download from webviews (seems to block all downloads)
+      // contents.session.on('will-download', (event, item, webContents) => {
+      //   event.preventDefault();
+      // });
     }
   });
 

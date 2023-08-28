@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import image from 'libs/workers/src/lib/image';
 import * as urlMetadata from 'url-metadata';
 
 // Data we need to the WebpageLink app
@@ -32,7 +31,6 @@ export async function URLMetadata(url: string): Promise<URLMetadata> {
       // return raw response body as string
       includeResponseBody: false,
     });
-
     // Strip out empty values
     const metadata = removeEmpty(data);
 
@@ -130,6 +128,9 @@ function extractImageUrl(meta: any, siteurl: string) {
   } else if (meta['twitter:image']) {
     // Attempt to extract from Twitter
     url = meta['twitter:image'];
+  } else if (meta['msapplication-TileImage']) {
+    // Attempt to extract from msapplication ;-)
+    url = meta['msapplication-TileImage'];
   }
   // Validate the url is a valid image url
   if (url) {
