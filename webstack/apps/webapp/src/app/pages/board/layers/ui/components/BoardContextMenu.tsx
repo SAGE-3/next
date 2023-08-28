@@ -15,11 +15,9 @@ import {
   useUIStore,
   useUser,
   useRouteNav,
-  useData,
   useCursorBoardPosition,
   usePanelStore,
   useConfigStore,
-  GetConfiguration,
 } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
@@ -177,6 +175,28 @@ export function BoardContextMenu(props: ContextProps) {
     });
   };
 
+  const openChat = () => {
+    // Not logged in
+    if (!user) return;
+
+    const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
+    const width = 600;
+    const height = 400;
+    // Open a webview into the SAGE3 builtin Jupyter instance
+    createApp({
+      title: 'Chat',
+      roomId: props.roomId,
+      boardId: props.boardId,
+      position: { ...position, z: 0 },
+      size: { width, height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Chat',
+      state: { ...initialValues['Chat'] },
+      raised: true,
+      dragging: false,
+    });
+  };
+
   return (
     <VStack
       whiteSpace={'nowrap'}
@@ -289,10 +309,10 @@ export function BoardContextMenu(props: ContextProps) {
             fontSize={14}
             color={textColor}
             justifyContent="flex-start"
-            onClick={() => openJupyter()}
+            onClick={() => openChat()}
             isDisabled={!appsList.includes('JupyterLab')}
           >
-            Jupyter
+            Chat
           </Button>
 
           <Button
