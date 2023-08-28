@@ -15,11 +15,9 @@ import {
   useUIStore,
   useUser,
   useRouteNav,
-  useData,
   useCursorBoardPosition,
   usePanelStore,
   useConfigStore,
-  GetConfiguration,
 } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { Applications } from '@sage3/applications/apps';
