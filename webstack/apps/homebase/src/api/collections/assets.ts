@@ -69,7 +69,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     this.imgQ = new ImageProcessor(redisUrl, assetFolder);
     console.log('Queue> image initialized', this.imgQ.getName());
     // A queue for PDF processing
-    this.pdfQ = new PDFProcessor(redisUrl, assetFolder);
+    this.pdfQ = new PDFProcessor(redisUrl, assetFolder, false);
     console.log('Queue> pdf initialized', this.pdfQ.getName());
   }
 
