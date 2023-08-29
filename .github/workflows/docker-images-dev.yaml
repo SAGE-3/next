@@ -26,6 +26,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
+        name: Checkout
+          uses: actions/checkout@v3
+          with:
+            ref: dev
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
@@ -40,7 +45,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          file: deployment/node_server/Dockerfile
+          file: ./deployment/node_server/Dockerfile
           context: "{{defaultContext}}:deployment"
           platforms: linux/amd64, linux/arm64
           push: true
