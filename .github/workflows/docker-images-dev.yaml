@@ -26,11 +26,11 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
-        name: Checkout
-          uses: actions/checkout@v3
-          with:
-            ref: dev
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: dev
 
       # https://github.com/docker/setup-qemu-action
       - name: Set up QEMU
