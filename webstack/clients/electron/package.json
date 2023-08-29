@@ -10,7 +10,7 @@
   "dependencies": {
     "commander": "^7",
     "electron-store": "^8",
-    "jquery": "^3.6.1",
+    "jquery": "^3.7.0",
     "node-fetch": "^2",
     "semver": "^7"
   },
