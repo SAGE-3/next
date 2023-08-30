@@ -46,7 +46,7 @@ jobs:
           context: "{{defaultContext}}:."
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
@@ -85,5 +85,5 @@ jobs:
           context: "{{defaultContext}}:."
           platforms: linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
           labels: ${{ steps.meta.outputs.labels }}
