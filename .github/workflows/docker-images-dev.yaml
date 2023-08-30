@@ -8,14 +8,15 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}:dev
+  IMAGE_AMD_NAME: sage3/next:dev:amd64
+  IMAGE_ARM_NAME: sage3/next:dev:arm64
 
 #permissions:
-  #contents: read
-  #packages: write
+#contents: read
+#packages: write
 
 jobs:
-  build-and-push-image:
+  build-and-push-amd64:
     runs-on: ubuntu-latest
 
     steps:
@@ -49,4 +50,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_AMD_NAME }}
