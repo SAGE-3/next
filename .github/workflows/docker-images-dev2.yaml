@@ -1,0 +1,44 @@
+name: Docker multi-arch
+
+on:
+  push:
+    branches: ["dev", "dev-github-actions-images"]
+  pull_request:
+    branches: ["dev", "dev-github-actions-images"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: sage-3/next:multi
+
+jobs:
+  build-and-push:
+    runs-on: macos-12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Login To GitHub Container Registry
+      - name: Log in to the Container GHCR registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+
+      # https://github.com/docker/build-push-action
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          file: deployment/node_server/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
