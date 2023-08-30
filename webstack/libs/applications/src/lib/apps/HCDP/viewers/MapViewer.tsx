@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
+import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Text } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
@@ -71,6 +71,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   const [file, setFile] = useState<Asset>();
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [scaleSize, setScaleSize] = useState<number>(5);
+  const [scaleToFontSize, setScaleToFontSize] = useState(100);
+  const variableName = props.data.state.widget.yAxisNames[0].split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1));
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
@@ -374,11 +376,25 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
     }
   };
 
+  useEffect(() => {
+    if (props.data.size.width < props.data.size.height) {
+      setScaleToFontSize(props.data.size.width / Math.ceil(Math.sqrt(props.data.state.stationNames.length)) - 10);
+    } else {
+      setScaleToFontSize(props.data.size.height / Math.ceil(Math.sqrt(props.data.state.stationNames.length)) - 10);
+    }
+  }, [JSON.stringify(props.data.size), JSON.stringify(props.data.state.stationNames)]);
+
   return (
     <>
       {/* One box for map, one box for container */}
       {/* <Box id={'container' + props._id + "0"} w={props.data.size.width} h={props.data.size.height}> */}
+      <Box zIndex={999999999} bg="#2D62D2" textAlign={'center'}>
+        <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 10}>
+          {variableName.join(' ')}
+        </Text>
+      </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
+
       <Box
         position="absolute"
         left="2rem"
