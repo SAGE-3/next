@@ -1,8 +1,8 @@
-name: Docker Images Dev
+name: Docker Images DEV
 
 on:
   push:
-    branches: ["dev", "dev-github-actions-images"]
+    branches: ["dev"]
   pull_request:
     branches: ["dev"]
 
