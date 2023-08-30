@@ -28,7 +28,7 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -44,7 +44,7 @@ services:
     image: "sage3/foresight:amd64"
     environment:
       - ENVIRONMENT=production
-      - SAGE3_SERVER=${HOST}
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
       - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
       - TOKEN=${TOKEN}
@@ -71,7 +71,7 @@ services:
       - "redis-server"
     command: /conf/start.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${HOST}:4443"]
+      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}:4443"]
       interval: 10s
       timeout: 10s
       retries: 3

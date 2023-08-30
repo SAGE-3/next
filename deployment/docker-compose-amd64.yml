@@ -28,7 +28,7 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${HOST}"]
+      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
       interval: 10s
       timeout: 10s
       retries: 3
@@ -90,7 +90,7 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
