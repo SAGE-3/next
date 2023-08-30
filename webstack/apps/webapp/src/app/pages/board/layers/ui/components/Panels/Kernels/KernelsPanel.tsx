@@ -8,16 +8,23 @@
 
 // React
 import {
-  useColorModeValue, Tooltip, Box, Text, useToast, Flex,
-  IconButton, Divider, useDisclosure, Button, Spacer, HStack,
+  useColorModeValue,
+  Tooltip,
+  Box,
+  Text,
+  useToast,
+  Flex,
+  IconButton,
+  Divider,
+  useDisclosure,
+  Button,
+  Spacer,
+  HStack,
 } from '@chakra-ui/react';
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
-import {
-  CreateKernelModal, useAppStore, useHexColor, useKernelStore,
-  useUIStore, useUser,
-} from '@sage3/frontend';
+import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useUIStore, useUser } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
 // App imports
@@ -175,7 +182,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
                 <Box w="70px" fontSize="xl" pl="4">
                   {kernel.is_private ? <MdLock color={red} /> : <MdLockOpen color={green} />}
                 </Box>
-                <Box w="120px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'} fontWeight={"bold"}>
+                <Box w="120px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'} fontWeight={'bold'}>
                   {kernel.alias}
                 </Box>
                 <Box w="280px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'}>
@@ -229,7 +236,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
               <Box width={'12px'} height={'12px'} borderRadius={'100%'} backgroundColor={apiStatus ? green : red} mt="0"></Box>
             </Box>
             <Text ml={0} fontSize="sm">
-              {apiStatus ? 'Python Online' : 'Python Offline'}
+              Kernel Service {apiStatus ? ' Online' : 'Offline'}
             </Text>
           </HStack>
           <Spacer />

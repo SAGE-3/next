@@ -74,11 +74,12 @@ import { VegaLite } from 'react-vega';
 import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import e from 'express';
 
-interface YjsClientState {
+type YjsClientState = {
   name: string;
   color: string;
-}
+};
 
 /**
  * SageCell - SAGE3 application
@@ -124,57 +125,12 @@ function AppComponent(props: App): JSX.Element {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [binding, setBinding] = useState<MonacoBinding | null>(null);
-  const [fontSize, setFontSize] = useState(s.fontSize);
-  const documentId = props._id;
 
-  const doc = new Y.Doc();
-  const yText = doc.getText('monaco');
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, documentId, doc, {
-    connect: false,
-  });
+  const [yProvider, setYProvider] = useState<WebsocketProvider | null>(null);
+  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
+  const [yText, setYText] = useState<Y.Text | null>(null);
 
-  const [peers, setPeers] = useState(new Map(provider.awareness.getStates()) as Map<number, YjsClientState>);
-
-  provider.awareness.setLocalStateField('user', {
-    name: userName,
-    color: userColor,
-  });
-
-  provider.on('status', (event: any) => {
-    if (event.status === 'connected') {
-      // sync before binding
-      yText.insert(0, editorRef.current?.getValue() || '');
-      provider.awareness.setLocalStateField('user', {
-        name: userName,
-        color: userColor,
-      });
-      // console.log('user', userName, 'connected');
-      if (!editorRef.current) return;
-      try {
-        if (binding === null) {
-          const binding = new MonacoBinding(
-            yText,
-            editorRef.current.getModel() as editor.ITextModel,
-            new Set([editorRef.current]),
-            provider.awareness
-          );
-          setBinding(binding);
-        }
-      } catch (error) {
-        console.log('error', error);
-      }
-    }
-    console.log('yjs:', event.status);
-
-    if (event.status === 'disconnected') {
-      console.log(`${userName} disconnected`);
-      if (binding) binding.destroy();
-    }
-    if (event.status === 'synced') {
-      console.log('synced');
-    }
-  });
+  const [peers, setPeers] = useState<Map<number, YjsClientState>>(new Map());
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -193,15 +149,17 @@ function AppComponent(props: App): JSX.Element {
   const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
   const [selectedKernelName, setSelectedKernelName] = useState<string>('');
 
+  // Memos and errors
+  const renderedContent = useMemo(() => processedContent(content || []), [content]);
+  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
+
   useEffect(() => {
-    if (provider && !provider.wsconnected) provider.connect();
-    // provider.connect();
-    provider.awareness.on('change', () => {
-      throttleFunc;
-      const states = provider.awareness.getStates();
+    if (!yProvider) return;
+    yProvider.awareness.on('change', () => {
+      const states = yProvider.awareness.getStates();
       const peers = new Map(states) as Map<number, YjsClientState>;
       for (const [clientId, state] of states.entries()) {
-        if (clientId !== provider.awareness.clientID) {
+        if (clientId !== yProvider.awareness.clientID) {
           const style = document.createElement('style');
           style.id = `style-${clientId}`;
           const css = `
@@ -227,15 +185,17 @@ function AppComponent(props: App): JSX.Element {
           document.head.appendChild(style);
         }
       }
-      peers.delete(doc.clientID);
+      if (yDoc) {
+        peers.delete(yDoc.clientID);
+      }
       setPeers(peers);
     });
 
     return () => {
-      if (provider) provider.disconnect();
-      if (provider && peers.size < 1) provider.destroy();
+      if (yProvider) yProvider.disconnect();
+      if (yProvider && peers.size < 1) yProvider.destroy();
     };
-  }, []);
+  }, [yProvider]);
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -311,16 +271,14 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.updateOptions({
-      fontSize: fontSize,
+      fontSize: s.fontSize,
     });
-  }, [fontSize]);
+  }, [s.fontSize]);
 
   // // Debounce Updates
   const throttleUpdate = throttle(1000, () => {
     if (!editorRef.current) return;
-    if (s.code !== editorRef.current.getValue()) {
-      updateState(props._id, { code: editorRef.current.getValue() });
-    }
+    updateState(props._id, { code: editorRef.current.getValue() });
   });
 
   // Keep a copy of the function
@@ -503,9 +461,6 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.msgId]);
 
-  const renderedContent = useMemo(() => processedContent(content || []), [content]);
-  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
-
   function processedContent(content: ContentItem[]) {
     if (!content) return <></>;
     return content.map((item) => {
@@ -645,6 +600,68 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const doc = new Y.Doc();
+    const yText = doc.getText('monaco');
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    const binding = new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+    setBinding(binding);
+    setYProvider(provider);
+    setYDoc(doc);
+    setYText(yText);
+
+    provider.awareness.setLocalStateField('user', {
+      name: userName,
+      color: userColor,
+    });
+
+    provider.on('sync', () => {
+      const users = provider.awareness.getStates();
+      const count = users.size;
+      console.log(count);
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count == 1) {
+        // Does the board have lines?
+        if (s.code) {
+          // Clear any existing lines
+          yText.delete(0, yText.length);
+          // Set the lines from the database
+          yText.insert(0, s.code);
+          console.log('synced with database');
+        }
+      }
+    });
+  };
+
+  const handleFontIncrease = useCallback(() => {
+    updateState(props._id, { fontSize: s.fontSize + 1 });
+  }, [s.fontSize]);
+
+  const handleFontDecrease = useCallback(() => {
+    updateState(props._id, { fontSize: s.fontSize - 1 });
+  }, [s.fontSize]);
+
+  useEffect(() => {
+    if (!editorRef.current || !monaco) return;
+    editorRef.current.updateOptions({
+      fontSize: s.fontSize,
+    });
+    editorRef.current.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editorRef.current.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+  }, [s.fontSize, editorRef.current, monaco]);
+
   /**
    *
    * @param editor
@@ -654,6 +671,10 @@ function AppComponent(props: App): JSX.Element {
   const handleMount: OnMount = (editor, monaco) => {
     // set the editorRef
     editorRef.current = editor;
+
+    // Connect to Yjs
+    connectToYjs(editor);
+
     // set the editor options
     editor.updateOptions({
       fontSize: s.fontSize,
@@ -663,8 +684,6 @@ function AppComponent(props: App): JSX.Element {
     monaco.editor.setTheme(defaultTheme);
     // set the editor language
     monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
-    // set the editor value
-    editor.setValue(s.code);
     // set the editor cursor position
     editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
     // set the editor cursor selection
@@ -682,67 +701,32 @@ function AppComponent(props: App): JSX.Element {
       minWidth: '100%',
     } as editor.IDimension);
 
-    editorRef.current.onDidChangeCursorPosition((e) => {
+    editor.onDidChangeCursorPosition((e) => {
       setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
-      throttleFunc();
     });
-    editorRef.current.addAction({
+    editor.addAction({
       id: 'execute',
       label: 'Execute',
       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
       run: handleExecute,
     });
-    editorRef.current.addAction({
+    editor.addAction({
       id: 'clear',
       label: 'Clear',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
       run: handleClear,
     });
-    editorRef.current.addAction({
+    editor.addAction({
       id: 'interrupt',
       label: 'Interrupt',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
-    editorRef.current.addAction({
-      id: 'save',
-      label: 'Save',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => {
-        const text = editor.getValue();
-        if (text) {
-          updateState(props._id, { code: text });
-          console.log('saving code');
-        }
-      },
-    });
-    editor.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: () => {
-        setFontSize((prev) => {
-          if (prev < 20) return prev + 1;
-          return prev;
-        });
-      },
-    });
-    editor.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: () => {
-        setFontSize((prev) => {
-          if (prev > 8) return prev - 1;
-          return prev;
-        });
-      },
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      throttleFunc();
     });
   };
-
-  useEffect(() => {
-    updateState(props._id, { fontSize: fontSize });
-  }, [fontSize]);
 
   /**
    * Needs to be reset every time the kernel changes
@@ -811,7 +795,7 @@ function AppComponent(props: App): JSX.Element {
             {/* The editor status info (bottom) */}
             <Flex direction={'column'}>
               <Editor
-                defaultValue={s.code}
+                // defaultValue={s.code}
                 loading={<Spinner />}
                 options={monacoOptions}
                 onMount={handleMount}
@@ -821,9 +805,8 @@ function AppComponent(props: App): JSX.Element {
                 language={s.language}
               />
               <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
-                {peers.size > 0 ? `Online: ${peers.size + 1}` : null}
-                <Spacer />
                 {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+                <Spacer />
               </Flex>
             </Flex>
             {/* The editor action panel (right side) */}
