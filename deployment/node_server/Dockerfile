@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y exiftool libcairo2-dev libpango1.0-dev 
 COPY webstack/package.json package.json
 COPY webstack/yarn.lock yarn.lock
 # Install in production mode
-RUN yarn install --ignore-optional --frozen-lockfile
+RUN yarn install --ignore-optional --frozen-lockfile --network-timeout 1000000
 
 # Code
 COPY webstack/nx.json nx.json
@@ -41,7 +41,7 @@ COPY webstack/yarn.lock yarn.lock
 # nodejs module to reduce size
 RUN npm install modclean patch-package -g
 # Install deps in production mode and cleanup
-RUN yarn install --frozen-lockfile --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**"
+RUN yarn install --frozen-lockfile --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**" --network-timeout 1000000
 
 COPY --from=build /app/dist ./dist
 
