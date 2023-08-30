@@ -42,7 +42,7 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next:amd64
 
-  build-and-push-amd:
+  build-and-push-arm:
     runs-on: macos
 
     steps:
