@@ -10,9 +10,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}:dev
 
-permissions:
-  contents: read
-  packages: write
+#permissions:
+  #contents: read
+  #packages: write
 
 jobs:
   build-and-push-image:
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       # https://github.com/docker/setup-qemu-action
       #- name: Set up QEMU
@@ -45,6 +47,6 @@ jobs:
         with:
           file: deployment/node_server/Dockerfile
           context: .
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE_NAME }}
