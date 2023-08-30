@@ -43,7 +43,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/sage-3/next:amd64
 
   build-and-push-arm:
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - name: Checkout
