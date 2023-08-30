@@ -41,7 +41,7 @@ COPY webstack/yarn.lock yarn.lock
 # nodejs module to reduce size
 RUN npm install modclean patch-package -g
 # Install deps in production mode and cleanup
-RUN yarn install --frozen-lockfile --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**" --network-timeout 1000000
+RUN yarn install --frozen-lockfile --network-timeout 1000000 --prod && modclean -P -r --patterns="default:*" --ignore="pdfjs-dist/**" 
 
 COPY --from=build /app/dist ./dist
 
