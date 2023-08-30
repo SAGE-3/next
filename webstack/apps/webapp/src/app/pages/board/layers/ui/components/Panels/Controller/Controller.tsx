@@ -39,11 +39,14 @@ export function Controller(props: ControllerProps) {
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
-  function handleHomeClick() {
-    // Back to the homepage with the room id
-    // toHome(props.roomId);
-    // Just go back to the previous page
-    back();
+  function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    if (event.shiftKey) {
+      // Back to the homepage with the room id
+      toHome(props.roomId);
+    } else {
+      // Just go back to the previous page
+      back();
+    }
   }
 
   // Copy the board id to the clipboard
@@ -78,8 +81,7 @@ export function Controller(props: ControllerProps) {
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <IconButtonPanel icon={<MdArrowBack />} isActive={false} onClick={handleHomeClick}
-          description={`Navigate to previous page`}
-        //  description={`Back to ${room?.data.name}`}
+          description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
         />
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
