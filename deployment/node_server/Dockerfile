@@ -19,6 +19,6 @@ COPY webstack/apps apps
 COPY webstack/libs libs
 
 # Build the app
-RUN yarn install && yarn prod  && yarn cache clean
+RUN yarn install && yarn prod && yarn cache clean
 
 CMD ["node", "dist/apps/homebase/main.js"]
