@@ -8,8 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_AMD_NAME: sage3/next:dev:amd64
-  IMAGE_ARM_NAME: sage3/next:dev:arm64
+  IMAGE_NAME: sage3/next:dev
 
 #permissions:
 #contents: read
@@ -50,4 +49,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ env.IMAGE_AMD_NAME }}
+          tags: ${{ env.IMAGE_NAME }}
