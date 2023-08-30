@@ -12,6 +12,7 @@ import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 
 import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
+import { Applications } from '@sage3/applications/apps';
 
 /**
  * Lasso Toolbar Component
@@ -36,6 +37,7 @@ export function LassoToolbar() {
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
+    selectedAppFunctions();
   }, [lassoApps]);
 
   // Theme
@@ -58,6 +60,36 @@ export function LassoToolbar() {
   const fitSelectedApps = () => {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
+  };
+
+  // This function will check if the selected apps are all of the same type
+  // Then, it will check if that type has a GroupedToolbarComponent to display
+  const selectedAppFunctions = (): JSX.Element => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+
+    // Check if all of same type
+    let isAllOfSameType = selectedApps.every((element) => {
+      if (element.data.type === selectedApps[0].data.type) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+
+    let component = <></>;
+
+    // If they are all of same type
+    if (isAllOfSameType) {
+      selectedApps.map((app) => {
+        //Check if that type has a GroupedToolbarComponent
+        if (app.data.type in Applications) {
+          const Component = Applications[app.data.type].GroupedToolbarComponent;
+          if (Component) component = <Component key={app._id} apps={selectedApps}></Component>;
+        }
+      });
+    }
+    // Return the component
+    return component;
   };
 
   return (
@@ -89,6 +121,9 @@ export function LassoToolbar() {
               {'Actions'}
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+              {/* Show the GroupedToolberComponent here */}
+              {selectedAppFunctions()}
+
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
                   <MdZoomOutMap />

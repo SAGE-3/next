@@ -83,7 +83,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       state.accessId = accessId;
     } else if (appName === 'Hawaii Mesonet') {
       w = 1200;
-      h = 1000;
+      h = 1200;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross
