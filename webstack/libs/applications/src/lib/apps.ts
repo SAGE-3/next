@@ -3,17 +3,13 @@
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
-import { name as ChartGeneratorName } from './apps/ChartGenerator';
-import { name as ChartMakerName } from './apps/ChartMaker';
 import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CounterName } from './apps/Counter';
 import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
-import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
-import { name as HCDPName } from './apps/HCDP';
 import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as KernelDashboardName } from './apps/KernelDashboard';
@@ -28,7 +24,6 @@ import { name as PluginAppName } from './apps/PluginApp';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
-import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
@@ -37,20 +32,17 @@ import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
+
 import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
-import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
-import ChartMaker from './apps/ChartMaker/ChartMaker';
 import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import Counter from './apps/Counter/Counter';
 import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
-import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
-import HCDP from './apps/HCDP/HCDP';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
 import KernelDashboard from './apps/KernelDashboard/KernelDashboard';
@@ -65,7 +57,6 @@ import PluginApp from './apps/PluginApp/PluginApp';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
-import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
@@ -74,23 +65,19 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
 import React from 'react';
-import { App } from './schema';
+
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent },
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent },
-  [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent },
-  [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent },
   [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent },
   [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent },
-  [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
-  [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
   [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent },
   [KernelDashboardName]: { AppComponent: React.memo(KernelDashboard.AppComponent), ToolbarComponent: KernelDashboard.ToolbarComponent },
