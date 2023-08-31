@@ -38,7 +38,7 @@ export interface KernelsPanelProps {
 }
 
 /**
- * Panel to show all the Server's plugins and allow the users to create new apps from them
+ * Panel to show all the kernels available to the user
  * @param props
  * @returns
  */
