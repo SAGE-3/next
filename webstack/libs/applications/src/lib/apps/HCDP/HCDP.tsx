@@ -25,8 +25,6 @@ import LeafletWrapper from './LeafletWrapper';
 
 import { SensorTypes } from './data/stationData';
 
-import { hcdpStationData } from './data/hcdpStationData';
-
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
@@ -190,39 +188,7 @@ null
                   </div>
                 );
               })
-            : hcdpStationData.map((station: any, index: number) => {
-                if (station.value.island !== 'OA') return null;
-                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
-                return (
-                  <div key={index}>
-                    <SVGOverlay
-                      bounds={[
-                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
-                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
-                      ]}
-                      eventHandlers={{
-                        click: () => {
-                          console.log(station);
-                        },
-                      }}
-                    >
-                      {s.variableToDisplay === 'windSpeed' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      )}
-                    </SVGOverlay>
-                  </div>
-                );
-              })}
+            : null}
         </LayersControl.BaseLayer>
       </LeafletWrapper>
     </AppWindow>
