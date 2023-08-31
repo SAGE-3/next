@@ -24,7 +24,6 @@ import {
   Tooltip,
   Select,
   Divider,
-  Input,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -34,14 +33,6 @@ import {
   ModalFooter,
   useDisclosure,
   Heading,
-  Accordion,
-  AccordionItem,
-  AccordionButton,
-  IconButton,
-  AccordionIcon,
-  AccordionPanel,
-  UnorderedList,
-  ListItem,
   Checkbox,
   Portal,
 } from '@chakra-ui/react';
@@ -925,10 +916,7 @@ function ToolbarComponent(props: App): JSX.Element {
 /* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
 
 const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
-  const apps = useAppStore((state) => state.apps);
   const updateState = useAppStore((state) => state.updateState);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [stationMetadata, setStationMetadata] = useState([]);
   const [variableNames, setVariableNames] = useState<string[]>([]);
 
   useEffect(() => {

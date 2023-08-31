@@ -110,7 +110,11 @@ export const Applications = {
     ToolbarComponent: SensorOverview.ToolbarComponent,
     GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent,
   },
-  [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent },
+  [StickieName]: {
+    AppComponent: React.memo(Stickie.AppComponent),
+    ToolbarComponent: Stickie.ToolbarComponent,
+    GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
+  },
   [TwilioScreenshareName]: {
     AppComponent: React.memo(TwilioScreenshare.AppComponent),
     ToolbarComponent: TwilioScreenshare.ToolbarComponent,

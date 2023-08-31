@@ -64,29 +64,22 @@ export function LassoToolbar() {
 
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
-  const selectedAppFunctions = (): JSX.Element => {
+  const selectedAppFunctions = (): JSX.Element | null => {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
 
     // Check if all of same type
-    let isAllOfSameType = selectedApps.every((element) => {
-      if (element.data.type === selectedApps[0].data.type) {
-        return true;
-      } else {
-        return false;
-      }
-    });
+    let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
 
-    let component = <></>;
+    let component = null;
 
     // If they are all of same type
     if (isAllOfSameType) {
-      selectedApps.map((app) => {
-        //Check if that type has a GroupedToolbarComponent
-        if (app.data.type in Applications) {
-          const Component = Applications[app.data.type].GroupedToolbarComponent;
-          if (Component) component = <Component key={app._id} apps={selectedApps}></Component>;
-        }
-      });
+      const firstApp = selectedApps[0];
+      //Check if that type has a GroupedToolbarComponent
+      if (firstApp && firstApp.data.type in Applications) {
+        const Component = Applications[firstApp.data.type].GroupedToolbarComponent;
+        if (Component) component = <Component key={firstApp._id} apps={selectedApps}></Component>;
+      }
     }
     // Return the component
     return component;

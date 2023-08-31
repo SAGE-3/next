@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import { Button, ButtonGroup } from '@chakra-ui/react';
 
 import { SAGEColors, colors } from '@sage3/shared';
@@ -17,6 +17,7 @@ type ColorPickerProps = {
   onChange: (newColor: SAGEColors) => void;
   size?: 'xs' | 'sm' | 'md' | 'lg';
   disabled?: boolean;
+  style?: CSSProperties;
 };
 
 export function ColorPicker(props: ColorPickerProps) {
@@ -33,7 +34,7 @@ export function ColorPicker(props: ColorPickerProps) {
   };
 
   return (
-    <ButtonGroup isAttached size="xs" colorScheme="teal">
+    <ButtonGroup isAttached size="xs" colorScheme="teal" style={{ ...props.style }}>
       {colors.map((color) => {
         const c = getColor(color);
         return (
