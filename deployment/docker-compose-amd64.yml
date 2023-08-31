@@ -29,10 +29,10 @@ services:
         condition: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
-      interval: 10s
-      timeout: 10s
+      interval: 30s
+      timeout: 30s
       retries: 3
-      start_period: 10s
+      start_period: 30s
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -45,8 +45,6 @@ services:
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
-      - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
-      - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
@@ -90,7 +88,7 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=development
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
