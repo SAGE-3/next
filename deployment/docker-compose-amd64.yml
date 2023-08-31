@@ -13,7 +13,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "sage3/next:amd64"
+    image: "ghcr.io/sage-3/next:amd64"
     ports:
       - "443:443"
     depends_on:
