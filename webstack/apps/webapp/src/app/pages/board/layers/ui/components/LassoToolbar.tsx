@@ -37,7 +37,7 @@ export function LassoToolbar() {
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
-    selectedAppFunctions();
+    // selectedAppFunctions();
   }, [lassoApps]);
 
   // Theme
@@ -115,7 +115,7 @@ export function LassoToolbar() {
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
-              {selectedAppFunctions()}
+              {/* {selectedAppFunctions()} */}
 
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
