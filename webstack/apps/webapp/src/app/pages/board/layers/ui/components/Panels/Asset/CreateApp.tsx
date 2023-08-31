@@ -224,12 +224,7 @@ export async function setupAppForFile(
     const conf = await GetConfiguration();
     if (conf.token) {
       // Create a new notebook
-      let base: string;
-      if (conf.production) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
+      const base = `http://${window.location.hostname}:8888`;
       // Talk to the jupyter server API
       const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
       const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };

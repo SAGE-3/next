@@ -1,20 +1,12 @@
-/* /**
- * Copyright (c) SAGE3 Development Team
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
-/**
-* This css file is used to style the HTML elements in SageCell.
-*/
-
-/**
-  * This css file is used to style the HTML elements in SageCell.
-  * It is a modified version of the css file from SageCell.
-  */
-
+/* CSS definitions for the app Seer */
 .sc *,
 .sc *::before,
 .sc *::after {
@@ -59,7 +51,7 @@
   isolation: isolate;
 }
 
-.arrow-top {
+/* .arrow-top {
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
   width: 8px;
@@ -77,7 +69,7 @@
   border: solid teal;
   border-width: 0 2px 2px 0;
   margin: 0 0 0 calc(50% - 4px);
-}
+} */
 
 .output {
   font-family: 'Monaco', 'Courier New', Courier, monospace;
@@ -183,3 +175,5 @@
 .output-area-dark tbody tr:last-of-type {
   border-bottom: 2px solid #262626;
 }
+
+/* Path: webstack/libs/applications/src/lib/apps/Seer/Seer.tsx */

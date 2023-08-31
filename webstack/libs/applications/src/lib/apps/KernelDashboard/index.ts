@@ -7,36 +7,25 @@
  */
 
 import { z } from 'zod';
-
-/**
- * SAGE3 application: KernelDashboard
- * created by: SAGE3 Team
- */
+import { KernelInfoSchema } from '@sage3/shared/types';
 
 export const schema = z.object({
   kernelSpecs: z.array(z.string()),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.any(),
-    })
-  ),
+  kernels: z.array(KernelInfoSchema),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.any(),
   }),
-  lastHeartBeat: z.number(),
   online: z.boolean(),
 });
 
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  kernelSpecs: [],
-  availableKernels: [],
+  kernelSpecs: ['python3'],
+  kernels: [],
   executeInfo: { executeFunc: '', params: {} },
   online: false,
-  lastHeartBeat: 0,
 };
 
 export const name = 'KernelDashboard';

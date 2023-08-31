@@ -20,14 +20,13 @@ logger = logging.getLogger(__name__)
 
 class SageCellState(TrackedBaseModel):
     code: str = ""
+    output: str = ""
     language: str = ""
-    isTyping: bool = False
     fontSize: int = 16
-    theme: str = "xcode"
+    theme: str = "vs-dark"
     kernel: str = ""
     privateMessage: list = []
     availableKernels: list = []
-    output: str = ""
     executeInfo: ExecuteInfo
 
 class SageCell(SmartBit):

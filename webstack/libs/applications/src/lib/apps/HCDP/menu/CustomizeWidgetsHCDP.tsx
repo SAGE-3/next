@@ -315,7 +315,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
         if (i % 3 === 0) row++;
         const stationNames = props.data.state.stationNames;
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
@@ -326,7 +326,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
           },
           size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: [stationNames[i]],
@@ -347,7 +347,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
         if (i % 3 === 0) row++;
         const stationNames = props.data.state.stationNames;
         const app = await createApp({
-          title: 'SensorOverview',
+          title: 'Hawaii Mesonet',
           roomId: props.data.roomId!,
           boardId: props.data.boardId!,
           //TODO get middle of the screen space
@@ -358,7 +358,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
           },
           size: { width: 1500, height: 400, depth: 0 },
           rotation: { x: 0, y: 0, z: 0 },
-          type: 'SensorOverview',
+          type: 'Hawaii Mesonet',
           state: {
             sensorData: {},
             stationNames: [stationNames[i]],
@@ -375,7 +375,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
       }
     } else {
       const app = await createApp({
-        title: 'SensorOverview',
+        title: 'Hawaii Mesonet',
         roomId: props.data.roomId!,
         boardId: props.data.boardId!,
         //TODO get middle of the screen space
@@ -386,7 +386,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
         },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        type: 'SensorOverview',
+        type: 'Hawaii Mesonet',
         state: {
           sensorData: {},
           stationNames: props.data.state.stationNames,
@@ -430,7 +430,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
         trapFocus={false}
         placement={'bottom'}
         onClose={onClose}
-        isOpen={props.data.state.isWidgetOpen}
+        isOpen={false}
         variant="alwaysOpen"
         onOverlayClick={() => {
           console.log('clicked');

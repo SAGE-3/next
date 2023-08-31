@@ -13,3 +13,4 @@ export * from './Navigation/NavigationPanel';
 export * from './Users/UsersPanel';
 export * from './Annotations/AnnotationsPanel';
 export * from './Plugins/PluginsPanels';
+export * from './Kernels/KernelsPanel';

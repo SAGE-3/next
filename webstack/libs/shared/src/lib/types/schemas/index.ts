@@ -6,11 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+export * from './SBSchema';
 export * from './user';
 export * from './board';
 export * from './room';
 export * from './asset';
 export * from './presence';
 export * from './message';
-export * from './SBSchema';
 export * from './plugin';
+export * from './kernelinfo';
+export * from './output';

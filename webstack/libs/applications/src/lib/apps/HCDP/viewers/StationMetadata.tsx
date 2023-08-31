@@ -37,7 +37,6 @@ export default function StationMetadata(
 
   useEffect(() => {
     const values: VariableProps[] = [];
-    console.log(props.stationMetadata);
     setVariablesToDisplay(values);
   }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.state.widget)]);
 

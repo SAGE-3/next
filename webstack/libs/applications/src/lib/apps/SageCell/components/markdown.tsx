@@ -9,7 +9,7 @@
 import { default as MD } from 'markdown-to-jsx';
 
 type MarkdownProps = {
-  data: any;
+  data: string;
   openInWebview: (url: string) => void;
 };
 

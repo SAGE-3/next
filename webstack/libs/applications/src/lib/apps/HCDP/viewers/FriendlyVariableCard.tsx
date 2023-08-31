@@ -300,13 +300,12 @@ const Content = (props: {
   const { colorMode } = useColorMode();
 
   useEffect(() => {
-    console.log(props.variable.stationName);
     if (props.size.width < props.size.height) {
-      setScaleToFontSize(props.size.width);
+      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     } else {
-      setScaleToFontSize(props.size.height);
+      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
-  }, [JSON.stringify(props.size)]);
+  }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
   return (
     <>
       <Box
@@ -329,8 +328,11 @@ const Content = (props: {
         }}
         position="relative"
         boxShadow={'lg'}
-        w={props.size.width}
-        h={props.size.height}
+        border={`${scaleToFontSize / 100}px solid grey`}
+        pl="1"
+        pt="1"
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
@@ -338,15 +340,18 @@ const Content = (props: {
         display="flex"
         flexDirection="column"
         // justifyContent={'center'}
+        // flexWrap={'wrap'}
         alignContent="center"
         textAlign={'center'}
       >
-        <Box bg="#2A98D5">
-          <Text fontSize={scaleToFontSize / 12}>{variableName.join(' ')}</Text>
+        <Box bg="#2D62D2">
+          <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 10}>
+            {variableName.join(' ')}
+          </Text>
         </Box>
 
         <Box>
-          <Text textAlign={'center'} fontSize={scaleToFontSize / 6}>
+          <Text mt={scaleToFontSize / 10} textAlign={'center'} fontSize={scaleToFontSize / 8}>
             {props.variable.stationName}
           </Text>
         </Box>
@@ -366,7 +371,7 @@ const Content = (props: {
                 justifyContent="center"
                 alignItems="center"
                 overflow="hidden"
-                fontSize={scaleToFontSize / 4}
+                fontSize={scaleToFontSize / 6}
                 fontWeight="bold"
               >
                 {isNaN(props.variable.value)
@@ -384,10 +389,11 @@ const Content = (props: {
           <Text
             overflow="hidden"
             color="gray.400"
-            transform={'translateY(70px)'}
+            transform={`translateY(${scaleToFontSize / 20}px)`}
             fontSize={scaleToFontSize / 20}
             fontWeight="semibold"
             // lineHeight={'48px'}
+            mt={scaleToFontSize / 20}
           >
             <>{props.timeSinceLastUpdate}</>
           </Text>

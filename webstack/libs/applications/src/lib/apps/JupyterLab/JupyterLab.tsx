@@ -46,12 +46,7 @@ function AppComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Create a new notebook
-        let base: string;
-        if (conf.production) {
-          base = `https://${window.location.hostname}:4443`;
-        } else {
-          base = `http://${window.location.hostname}`;
-        }
+        const base = `http://${window.location.hostname}:8888`;
         // Talk to the jupyter server API
         let j_url: string;
         if (s.notebook) {
@@ -99,12 +94,7 @@ function AppComponent(props: App): JSX.Element {
                 .then((res) => {
                   console.log('Juypyter> session created', res);
                   //  Open the notebook in a separate workspace
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
+                  const base = `http://${window.location.hostname}:8888`;
                   const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
                   setUrl(newUrl);
                 });
@@ -170,12 +160,7 @@ function AppComponent(props: App): JSX.Element {
                     .then((res) => {
                       console.log('Juypyter> session created', res);
                       //  Open the notebook in a separate workspace
-                      let base: string;
-                      if (conf.production) {
-                        base = `https://${window.location.hostname}:4443`;
-                      } else {
-                        base = `http://${window.location.hostname}`;
-                      }
+                      const base = `http://${window.location.hostname}:8888`;
                       const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
                       setUrl(newUrl);
                     });
@@ -265,12 +250,7 @@ function ToolbarComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Create a new notebook
-        let base: string;
-        if (conf.production) {
-          base = `https://${window.location.hostname}:4443`;
-        } else {
-          base = `http://${window.location.hostname}`;
-        }
+        const base = `http://${window.location.hostname}:8888`;
         let j_url: string;
         if (s.notebook) {
           j_url = base + '/api/contents/notebooks/' + `${s.notebook}?token=${conf.token}`;
@@ -302,12 +282,7 @@ function ToolbarComponent(props: App): JSX.Element {
       GetConfiguration().then((conf) => {
         if (conf.token) {
           // Create a new notebook
-          let base: string;
-          if (conf.production) {
-            base = `https://${window.location.hostname}:4443`;
-          } else {
-            base = `http://${window.location.hostname}`;
-          }
+          const base = `http://${window.location.hostname}:8888`;
           let j_url: string;
           if (s.notebook) {
             j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;

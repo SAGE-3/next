@@ -16,48 +16,31 @@ const executeInfoSchema = z.object({
   executeFunc: z.string(),
   params: z.any(),
 });
-const availableKernelsSchema = z.array(
-  z.object({
-    key: z.string(),
-    value: z.any(),
-  })
-);
 
 export const schema = z.object({
   code: z.string(),
+  msgId: z.string(),
+  history: z.array(z.string()),
+  streaming: z.boolean(),
   language: z.string(),
-  isTyping: z.boolean(),
   fontSize: z.number(),
-  theme: z.string(),
   kernel: z.string(),
-  privateMessage: z.array(
-    z.object({
-      userId: z.string(),
-      message: z.string(),
-    })
-  ),
-  availableKernels: availableKernelsSchema,
-  output: z.string(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
+  session: z.string(),
+  executeInfo: executeInfoSchema,
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
-export type availableKernelsType = z.infer<typeof availableKernelsSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
+  msgId: '',
+  history: [],
+  streaming: false,
   language: 'python',
-  isTyping: false,
   fontSize: 16,
-  theme: 'xcode',
   kernel: '',
-  output: '',
-  privateMessage: [],
-  availableKernels: [],
+  session: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
