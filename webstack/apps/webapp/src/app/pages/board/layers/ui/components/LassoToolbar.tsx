@@ -37,7 +37,7 @@ export function LassoToolbar() {
 
   useEffect(() => {
     setShowLasso(lassoApps.length > 0);
-    selectedAppFunctions();
+    // selectedAppFunctions();
   }, [lassoApps]);
 
   // Theme
@@ -64,26 +64,26 @@ export function LassoToolbar() {
 
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
-  const selectedAppFunctions = (): JSX.Element | null => {
-    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+  // const selectedAppFunctions = (): JSX.Element | null => {
+  //   const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
 
-    // Check if all of same type
-    let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+  //   // Check if all of same type
+  //   let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
 
-    let component = null;
+  //   let component = null;
 
-    // If they are all of same type
-    if (isAllOfSameType) {
-      const firstApp = selectedApps[0];
-      //Check if that type has a GroupedToolbarComponent
-      if (firstApp && firstApp.data.type in Applications) {
-        const Component = Applications[firstApp.data.type].GroupedToolbarComponent;
-        if (Component) component = <Component key={firstApp._id} apps={selectedApps}></Component>;
-      }
-    }
-    // Return the component
-    return component;
-  };
+  //   // If they are all of same type
+  //   if (isAllOfSameType) {
+  //     const firstApp = selectedApps[0];
+  //     // Check if that type has a GroupedToolbarComponent
+  //     if (firstApp && firstApp.data.type in Applications) {
+  //       const Component = Applications[firstApp.data.type].GroupedToolbarComponent;
+  //       if (Component) component = <Component key={firstApp._id} apps={selectedApps}></Component>;
+  //     }
+  //   }
+  //   // Return the component
+  //   return component;
+  // };
 
   return (
     <>
@@ -115,7 +115,7 @@ export function LassoToolbar() {
             </Text>
             <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
-              {selectedAppFunctions()}
+              {/* {selectedAppFunctions()} */}
 
               <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
                 <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
