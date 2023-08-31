@@ -108,12 +108,10 @@ export const Applications = {
   [SensorOverviewName]: {
     AppComponent: React.memo(SensorOverview.AppComponent),
     ToolbarComponent: SensorOverview.ToolbarComponent,
-    GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent,
   },
   [StickieName]: {
     AppComponent: React.memo(Stickie.AppComponent),
     ToolbarComponent: Stickie.ToolbarComponent,
-    GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
   },
   [TwilioScreenshareName]: {
     AppComponent: React.memo(TwilioScreenshare.AppComponent),
@@ -127,7 +125,6 @@ export const Applications = {
 } as unknown as Record<
   string,
   {
-    GroupedToolbarComponent?: (props: { apps: App[] }) => JSX.Element;
     AppComponent: () => JSX.Element;
     ToolbarComponent: () => JSX.Element;
   }

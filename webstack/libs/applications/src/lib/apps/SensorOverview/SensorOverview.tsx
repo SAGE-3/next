@@ -915,74 +915,75 @@ function ToolbarComponent(props: App): JSX.Element {
 
 /* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
 
-const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
-  const updateState = useAppStore((state) => state.updateState);
-  const [variableNames, setVariableNames] = useState<string[]>([]);
+// const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+//   const updateState = useAppStore((state) => state.updateState);
+//   const [variableNames, setVariableNames] = useState<string[]>([]);
 
-  useEffect(() => {
-    const availableVariableNames = props.apps.map((app) => app.data.state.availableVariableNames);
-    setVariableNames(findDuplicateElementsInArray(...availableVariableNames));
-  }, []);
+//   useEffect(() => {
+//     const availableVariableNames = props.apps.map((app) => app.data.state.availableVariableNames);
+//     setVariableNames(findDuplicateElementsInArray(...availableVariableNames));
+//   }, []);
 
-  const handleVariableChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-    if (value === 'Elevetion & Current Temperature') {
-      props.apps.forEach((app: App) => {
-        updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: ['Elevation & Current Temperature'] } });
-      });
-    } else {
-      props.apps.forEach((app: App) => {
-        updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: [value], xAxisNames: ['date_time'] } });
-      });
-    }
-  };
+//   const handleVariableChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+//     const value = event.target.value;
+//     if (value === 'Elevetion & Current Temperature') {
+//       props.apps.forEach((app: App) => {
+//         updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: ['Elevation & Current Temperature'] } });
+//       });
+//     } else {
+//       props.apps.forEach((app: App) => {
+//         updateState(app._id, { widget: { ...app.data.state.widget, yAxisNames: [value], xAxisNames: ['date_time'] } });
+//       });
+//     }
+//   };
 
-  const handleVisualizationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value;
-  };
+//   const handleVisualizationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+//     const value = event.target.value;
+//   };
 
-  const availableVisualizations = (): any => {
-    const availableVis = [];
-    for (let i = 0; i < props.apps.length; i++) {
-      availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
-    }
-    return findDuplicateElementsInArrayObjects(...availableVis);
-  };
+//   const availableVisualizations = (): any => {
+//     const availableVis = [];
+//     for (let i = 0; i < props.apps.length; i++) {
+//       availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
+//     }
+//     return findDuplicateElementsInArrayObjects(...availableVis);
+//   };
 
-  return (
-    <>
-      <Tooltip label={'Choose the variable that you would like to visualize'} aria-label="A tooltip">
-        <Select size="xs" mr="1rem" placeholder={'Select Variable'} onChange={handleVariableChange}>
-          {variableNames.map((name: string, index: number) => {
-            return (
-              <option key={index} value={name}>
-                {name}
-              </option>
-            );
-          })}
-        </Select>
-      </Tooltip>
-      <Select
-        size="xs"
-        placeholder={'Select Visualization Type'}
-        mr="1rem"
-        // value={widget.visualizationType}
-        onChange={handleVisualizationChange}
-        // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
-      >
-        {availableVisualizations().map((visualization: { value: string; name: string }, index: number) => {
-          return (
-            <option key={index} value={visualization.value}>
-              {visualization.name}
-            </option>
-          );
-        })}
-      </Select>
-    </>
-  );
-};
+//   return (
+//     <>
+//       <Tooltip label={'Choose the variable that you would like to visualize'} aria-label="A tooltip">
+//         <Select size="xs" mr="1rem" placeholder={'Select Variable'} onChange={handleVariableChange}>
+//           {variableNames.map((name: string, index: number) => {
+//             return (
+//               <option key={index} value={name}>
+//                 {name}
+//               </option>
+//             );
+//           })}
+//         </Select>
+//       </Tooltip>
+//       <Select
+//         size="xs"
+//         placeholder={'Select Visualization Type'}
+//         mr="1rem"
+//         // value={widget.visualizationType}
+//         onChange={handleVisualizationChange}
+//         // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+//       >
+//         {availableVisualizations().map((visualization: { value: string; name: string }, index: number) => {
+//           return (
+//             <option key={index} value={visualization.value}>
+//               {visualization.name}
+//             </option>
+//           );
+//         })}
+//       </Select>
+//     </>
+//   );
+// };
 
-export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+export default { AppComponent, ToolbarComponent };
+// export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
 // This function is used to only display common variables between all stations
 // Will return an array of variables that are common between all stations
