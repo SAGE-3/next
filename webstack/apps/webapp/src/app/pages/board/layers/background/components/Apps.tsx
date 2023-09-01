@@ -6,14 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 
 import { useToast } from '@chakra-ui/react';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
+
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { throttle } from 'throttle-debounce';
@@ -32,11 +33,8 @@ export function Apps() {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
-  // User information
-  const { user } = useUser();
+  const lassoApps = useUIStore((state) => state.selectedAppsIds);
 
-  // const userCursor = useCursorBoardPosition();
-  // const cursorPositionRef = useRef(userCursor);
   const { roomId, boardId } = useParams();
   // Display some notifications
   const toast = useToast();
@@ -62,7 +60,12 @@ export function Apps() {
   useHotkeys(
     'ctrl+d,cmd+d',
     () => {
-      if (position && apps.length > 0) {
+      if (lassoApps.length > 0) {
+        // If there are selected apps, delete them
+        deleteApp(lassoApps);
+        setSelectedApps([]);
+      } else if (position && apps.length > 0) {
+        // or find the one under the cursor
         const cx = position.x;
         const cy = position.y;
         let found = false;
