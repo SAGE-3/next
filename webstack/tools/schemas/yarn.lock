@@ -294,10 +294,10 @@ yn@3.1.1:
   resolved "https://registry.yarnpkg.com/yn/-/yn-3.1.1.tgz#1e87401a09d767c1d5eab26a6e4c185182d2eb50"
   integrity sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
 
-zod-to-json-schema@^3.20.4:
-  version "3.20.4"
-  resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.20.4.tgz#155f687c5a059fdc0f1bb3ff32d6e9200036b6f4"
-  integrity sha512-Un9+kInJ2Zt63n6Z7mLqBifzzPcOyX+b+Exuzf7L1+xqck9Q2EPByyTRduV3kmSPaXaRer1JCsucubpgL1fipg==
+zod-to-json-schema@^3.21.4:
+  version "3.21.4"
+  resolved "https://registry.yarnpkg.com/zod-to-json-schema/-/zod-to-json-schema-3.21.4.tgz#de97c5b6d4a25e9d444618486cb55c0c7fb949fd"
+  integrity sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==
 
 zod@^3.20.6:
   version "3.20.6"
