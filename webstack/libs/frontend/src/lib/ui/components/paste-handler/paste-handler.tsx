@@ -222,14 +222,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   return <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
     <Portal >
       <PopoverContent w={"250px"} style={{ position: "absolute", left: dropCursor.x - 125 + "px", top: dropCursor.y - 45 + "px" }}>
-        <PopoverHeader fontSize={"sm"} fontWeight={"bold"}>Create a WebLink or a WebView</PopoverHeader>
+        <PopoverHeader fontSize={"sm"} fontWeight={"bold"}><Center>Create a Link or open URL</Center></PopoverHeader>
         <PopoverBody>
           <Center>
             <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
-              WebLink
+              Create Link
             </Button>
             <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
-              WebView
+              Open URL
             </Button></Center>
         </PopoverBody>
       </PopoverContent>
