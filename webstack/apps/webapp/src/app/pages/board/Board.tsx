@@ -33,6 +33,9 @@ import {
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
 
+// Development or production
+const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
 /**
  * The board page which displays the board and its apps.
  */
@@ -142,7 +145,7 @@ export function BoardPage() {
       }
     }
 
-    if (!isElectron()) {
+    if (!isElectron() && !development) {
 
       function openDesktopApp() {
         if (!boardId || !roomId) return;
