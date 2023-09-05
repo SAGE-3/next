@@ -10,14 +10,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 
-import { useToast } from '@chakra-ui/react';
+import { Box, useToast, Text, Icon } from '@chakra-ui/react';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useCursorBoardPosition, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { throttle } from 'throttle-debounce';
+import { MdError } from 'react-icons/md';
 
 // Renders all the apps
 export function Apps() {
@@ -44,6 +45,8 @@ export function Apps() {
 
   // Fitapps
   const fitApps = useUIStore((state) => state.fitApps);
+
+  const iconColorAppNotFound = useHexColor('red');
 
   // Reset the global zIndex when no apps
   useEffect(() => {
@@ -184,11 +187,14 @@ export function Apps() {
   const pasteApp = useCallback(pasteAppThrottle, []);
 
   // Create a new app from the clipboard
-  useHotkeys('v', (evt) => {
-    evt.preventDefault();
-    evt.stopPropagation();
-    pasteApp(position);
-  }, { dependencies: [position.x, position.y] }
+  useHotkeys(
+    'v',
+    (evt) => {
+      evt.preventDefault();
+      evt.stopPropagation();
+      pasteApp(position);
+    },
+    { dependencies: [position.x, position.y] }
   );
 
   // Zoom to app when pressing z over an app
@@ -258,9 +264,24 @@ export function Apps() {
           );
         } else {
           // App not found: happens if unkonw app in Database
+          const iconSize = Math.min(500, Math.max(40, app.data.size.height - 200));
+          const fontSize = 15 + app.data.size.height / 100;
           return (
             <AppWindow key={app._id} app={app}>
-              <div>App not found</div>
+              <Box
+                display="flex"
+                flexDir={'column'}
+                justifyContent={'center'}
+                alignItems={'center'}
+                style={{ width: app.data.size.width + 'px', height: app.data.size.height + 'px' }}
+              >
+                <Icon fontSize={`${iconSize}px`} color={iconColorAppNotFound}>
+                  <MdError size={'xl'}></MdError>
+                </Icon>
+                <Text fontWeight={'bold'} fontSize={fontSize} align={'center'}>
+                  Application '{app.data.type}' was not found.
+                </Text>
+              </Box>
             </AppWindow>
           );
         }
