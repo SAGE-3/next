@@ -6,43 +6,31 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
-import {
-  Box,
-  Button,
-  Text,
-  Input,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-  useColorModeValue,
-  Progress,
-  FormControl,
-  list,
-} from '@chakra-ui/react';
+// React
+import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState, useRef, useMemo } from 'react';
+import { useParams } from 'react-router';
+// Chakra UI
+import { Box, Button, Text, Input, useColorModeValue, Progress, } from '@chakra-ui/react';
+// Libraries
+import { parse } from 'csv-parse/browser/esm';
+// SAGE3
+import { apiUrls, serverTime, timeout, useAppStore, useAssetStore, useHexColor, useUser } from '@sage3/frontend';
+import { genId } from '@sage3/shared';
+// App
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { parse } from 'csv-parse/browser/esm';
-import { createCharts } from './components/createCharts';
+import { SensorTypes, stationDataTemplate } from '../HCDP/data/stationData';
 
 // Styling
 import './styling.css';
-import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState, useRef, useMemo } from 'react';
-import { useParams } from 'react-router';
-import { Asset } from '@sage3/shared/types';
-import { genId } from '@sage3/shared';
-import createPropertyList from './components/createPropertyList';
-import { SensorTypes, stationDataTemplate } from '../HCDP/data/stationData';
 
 type NLPRequestResponse = {
   success: boolean;
   message: string;
 };
 export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
-  const response = await fetch('/api/nlp', {
+  const response = await fetch(apiUrls.misc.nlp, {
     method: 'POST',
     credentials: 'include',
     headers: {

@@ -146,21 +146,6 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [Object.keys(s.hostedApps).length]);
 
-  // Heartbeat checker copied from KernelDashboard
-  // Interval to check if the proxy is still alive
-  // useEffect(() => {
-  //   const checkHeartBeat = setInterval(async () => {
-  //     const response = await fetch('/api/time');
-  //     const time = await response.json();
-  //     const delta = Math.abs(time.epoch - s.lastHeartBeat);
-  //     console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
-  //     if (delta > heartBeatTimeCheck && s.runStatus) {
-  //       updateState(props._id, {runStatus: false});
-  //     }
-  //   }, 15 * 1000); // 15 Seconds
-  //   return () => clearInterval(checkHeartBeat);
-  // }, [s.lastHeartBeat, s.runStatus]);
-
   // If more than 1 app added to pane, checks that all hosted apps are of the same type
   // @return error and disables pane if there is more than 1 hosted app types.
   function checkAppType() {
@@ -218,8 +203,8 @@ function AppComponent(props: App): JSX.Element {
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
                 : checkAppType() === 1
-                ? 'File type accepted'
-                : 'Error. More than 1 app type on board'}
+                  ? 'File type accepted'
+                  : 'Error. More than 1 app type on board'}
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (

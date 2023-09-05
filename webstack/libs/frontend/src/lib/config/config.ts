@@ -31,7 +31,7 @@ export async function GetConfiguration(): Promise<OpenConfiguration> {
  * @returns {PublicInformation}
  */
 export async function GetServerInfo(): Promise<PublicInformation> {
-  const response = await fetch('/api/info', {
+  const response = await fetch(apiUrls.misc.getInfo, {
     method: 'GET',
     credentials: 'include',
     headers: {

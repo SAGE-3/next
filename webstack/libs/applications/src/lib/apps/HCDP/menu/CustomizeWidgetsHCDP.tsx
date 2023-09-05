@@ -6,41 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {
-  Button,
-  useDisclosure,
-  Box,
-  Text,
-  Drawer,
-  DrawerContent,
-  DrawerBody,
-  Select,
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
-  UnorderedList,
-  ListItem,
-  Input,
-  Heading,
-  Tooltip,
-  useColorModeValue,
-  IconButton,
-} from '@chakra-ui/react';
+// React
 import React, { useEffect, useState } from 'react';
-import LeafletWrapper from '../LeafletWrapper';
-import { App } from '@sage3/applications/schema';
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
-
-import { useAppStore } from '@sage3/frontend';
-import VariableCard from '../viewers/VariableCard';
-import EChartsViewer from '../viewers/EChartsViewer';
-import { getColor } from '../../EChartsViewer/ChartManager';
-import CurrentConditions from '../viewers/CurrentConditions';
-import StationMetadata from '../viewers/StationMetadata';
+// Chakra UI
+import {
+  Button, useDisclosure, Box, Text, Drawer, DrawerContent, DrawerBody, Select,
+  Accordion, AccordionButton, AccordionIcon, AccordionItem,
+  Input, Heading, Tooltip, useColorModeValue, IconButton,
+} from '@chakra-ui/react';
 import { MdDelete } from 'react-icons/md';
-
+// Libraries
+import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
+// SAGE3
+import { App } from '@sage3/applications/schema';
+import { apiUrls, useAppStore } from '@sage3/frontend';
+// App
+import LeafletWrapper from '../LeafletWrapper';
+import VariableCard from '../viewers/VariableCard';
 import { hcdpStationData } from '../data/hcdpStationData_legacy';
 
 type NLPRequestResponse = {
@@ -75,7 +57,7 @@ function findDuplicateElements(...arrays: any) {
 
 // Not used for now. TODO in future, will ask ChatGPT to generate a chart
 export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
-  const response = await fetch('/api/nlp', {
+  const response = await fetch(apiUrls.misc.nlp, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -663,7 +645,7 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                         type="datetime-local"
                         disabled={
                           props.data.state.widget.visualizationType === 'variableCard' ||
-                          props.data.state.widget.visualizationType === 'allVariables'
+                            props.data.state.widget.visualizationType === 'allVariables'
                             ? true
                             : false
                         }
@@ -719,8 +701,8 @@ const CustomizeWidgetsHCDP = React.memo((props: App) => {
                   </Box>
                 ) : null}
                 {props.data.state.widget.visualizationType === 'line' ||
-                props.data.state.widget.visualizationType === 'bar' ||
-                props.data.state.widget.visualizationType === 'scatter' ? (
+                  props.data.state.widget.visualizationType === 'bar' ||
+                  props.data.state.widget.visualizationType === 'scatter' ? (
                   <Box p="1rem" display="flex" flexDirection="row" justifyContent={'center'} alignContent="center">
                     <Box display="flex" flexDirection="column" justifyContent={'center'} alignContent="center">
                       <Text>X Axis: </Text>

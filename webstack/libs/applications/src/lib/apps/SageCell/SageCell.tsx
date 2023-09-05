@@ -9,59 +9,16 @@
 // React imports
 import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
-// Event Source import
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-
-// Styling
-import './SageCell.css';
-
 // Chakra Imports
 import {
-  Accordion,
-  AccordionItem,
-  AccordionIcon,
-  AccordionButton,
-  AccordionPanel,
-  Alert,
-  Badge,
-  Box,
-  ButtonGroup,
-  Code,
-  Flex,
-  Icon,
-  IconButton,
-  Image,
-  Spacer,
-  Spinner,
-  Stack,
-  Tooltip,
-  Text,
-  useColorModeValue,
-  useToast,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
-// Monaco Imports
-import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
-import { monacoOptions } from './components/monacoOptions';
-
-// Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
-
-// Throttle
-import { throttle } from 'throttle-debounce';
-
-// App Imports
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
-
-// Component imports
-import { ToolbarComponent, PdfViewer, Markdown } from './components';
-
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Ansi library
 import Ansi from 'ansi-to-react';
 // Plotly library
@@ -70,11 +27,30 @@ import Plot, { PlotParams } from 'react-plotly.js';
 import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
+// Monaco Imports
+import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
+import { monacoOptions } from './components/monacoOptions';
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { MonacoBinding } from 'y-monaco';
+// Throttle
+import { throttle } from 'throttle-debounce';
 
-import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
-
+// SAGE3 Component imports
+import { apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
-import e from 'express';
+
+// App Imports
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { ToolbarComponent, PdfViewer, Markdown } from './components';
+import { App } from '../../schema';
+
+// Styling
+import './SageCell.css';
+
 
 type YjsClientState = {
   name: string;
@@ -427,8 +403,12 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     function setEventSource() {
+      // Controller to stop the event source if needed
       const ctrl = new AbortController();
-      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+      // Get the URL of the stream
+      const streamURL = apiUrls.fastapi.getMessageStream(s.msgId);
+      // Fetch the evet source
+      fetchEventSource(streamURL, {
         method: 'GET',
         headers: {
           'Content-Type': 'text/event-stream',

@@ -16,5 +16,23 @@ export const apiUrls = {
   assets: {
     getAssets: '/api/assets',
     getAssetById: (id: string) => `api/assets/static/${id}`,
+    upload: '/api/assets/upload',
+  },
+  fastapi: {
+    heartbeat: `/api/fastapi/heartbeat`,
+    getKernels: `/api/fastapi/collection`,
+    getKernelsSpecs: `/api/fastapi/kernelspecs`,
+    getMessageStream: (msgId: string) => `/api/fastapi/status/${msgId}/stream`,
+    createKernel: (name: string) => `/api/fastapi/kernels/${name}`,
+    deleteKernel: (id: string) => `/api/fastapi/kernels/${id}`,
+    restartKernel: (id: string) => `/api/fastapi/restart/${id}`,
+    executeKernel: (id: string) => `/api/fastapi/execute/${id}`,
+    statusKernel: (id: string) => `/api/fastapi/status/${id}`,
+    interruptKernel: (id: string) => `/api/fastapi/interrupt/${id}`,
+  },
+  misc: {
+    getTime: '/api/time',
+    getInfo: '/api/info',
+    nlp: '/api/nlp',
   },
 };
