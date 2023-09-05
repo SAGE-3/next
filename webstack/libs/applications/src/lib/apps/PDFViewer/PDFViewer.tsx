@@ -27,7 +27,7 @@ import {
 } from 'react-icons/md';
 
 // Utility functions from SAGE3
-import { useAssetStore, useAppStore, useUser, downloadFile } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls } from '@sage3/frontend';
 import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 // App components
@@ -212,7 +212,8 @@ function AppComponent(props: App): JSX.Element {
           if (file) {
             const url = file?.data.file;
             const filename = file?.data.originalfilename;
-            downloadFile('api/assets/static/' + url, filename);
+            const dl = apiUrls.assets.getAssetById(url);
+            downloadFile(dl, filename);
           }
           break;
         }
@@ -403,7 +404,8 @@ function ToolbarComponent(props: App): JSX.Element {
             if (file) {
               const url = file?.data.file;
               const filename = file?.data.originalfilename;
-              downloadFile('api/assets/static/' + url, filename);
+              const dl = apiUrls.assets.getAssetById(url);
+              downloadFile(dl, filename);
             }
           }}
           >
@@ -428,7 +430,8 @@ function ToolbarComponent(props: App): JSX.Element {
                   const url = file?.data.file;
                   const parts = url.split('.');
                   const filename = file?.data.originalfilename + '.json';
-                  downloadFile('api/assets/static/' + parts[0] + '-text.json', filename);
+                  const dl = apiUrls.assets.getAssetById(parts[0] + '-text.json');
+                  downloadFile(dl, filename);
                 }
               }}
             >

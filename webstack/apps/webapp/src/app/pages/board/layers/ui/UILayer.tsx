@@ -22,6 +22,7 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
+  apiUrls,
 } from '@sage3/frontend';
 
 import {
@@ -120,16 +121,18 @@ export function UILayer(props: UILayerProps) {
         if (assetid) {
           // Get the asset from the store
           const asset = assets.find((a) => a._id === assetid);
-          // Derive the public URL
-          const url = 'api/assets/static/' + asset?.data.file;
-          // Get the filename for the asset
-          const filename = asset?.data.originalfilename;
-          // if all set, add the file to the zip
-          if (asset && url && filename && session) {
-            // Download the file contents
-            const buffer = await fetch(url).then((r) => r.arrayBuffer());
-            // add to zip
-            session.file(filename, buffer);
+          if (asset) {
+            // Derive the public URL
+            const url = apiUrls.assets.getAssetById(asset.data.file);
+            // Get the filename for the asset
+            const filename = asset.data.originalfilename;
+            // if all set, add the file to the zip
+            if (url && filename && session) {
+              // Download the file contents
+              const buffer = await fetch(url).then((r) => r.arrayBuffer());
+              // add to zip
+              session.file(filename, buffer);
+            }
           }
         }
       } else if (a.data.type === 'Stickie') {
