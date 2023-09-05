@@ -16,8 +16,6 @@ import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFVi
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
-import { name as KernelDashboardName, init as defaultKernelDashboard } from './apps/KernelDashboard';
-import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
@@ -54,8 +52,6 @@ export const initialValues = {
   [HCDPName]: defaultHCDP,
   [ImageViewerName]: defaultImageViewer,
   [JupyterLabName]: defaultJupyterLab,
-  [KernelDashboardName]: defaultKernelDashboard,
-  [KernelsName]: defaultKernels,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,
