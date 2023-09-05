@@ -11,5 +11,6 @@ import { Asset, Board, Message, Plugin, Presence, Room, User } from '@sage3/shar
 
 export * from './http/index';
 export * from './ws/api-socket';
+export * from './fastapi/fastapi';
 
 export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User;

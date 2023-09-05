@@ -412,13 +412,13 @@ function ToolbarComponent(props: App): JSX.Element {
               ],
             });
             createApp({
-              title: 'SensorOverview',
+              title: 'Hawaii Mesonet',
               roomId: roomId!,
               boardId: boardId!,
               position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
               size: { width: 1000, height: 1000, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'SensorOverview',
+              type: 'Hawaii Mesonet',
               state: {
                 listOfStationNames: listOfStationNames,
               },
@@ -468,13 +468,13 @@ function ToolbarComponent(props: App): JSX.Element {
             size="xs"
             onClick={() => {
               createApp({
-                title: 'SensorOverview',
+                title: 'Hawaii Mesonet',
                 roomId: roomId!,
                 boardId: boardId!,
                 position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
                 size: { width: 1000, height: 1000, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
-                type: 'SensorOverview',
+                type: 'Hawaii Mesonet',
                 state: {
                   listOfStationNames: ['001HI', '002HI', '001HI', '009HI'],
                 },

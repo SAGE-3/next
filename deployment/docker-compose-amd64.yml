@@ -13,7 +13,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "sage3/next:amd64"
+    image: "ghcr.io/sage-3/next:amd64"
     ports:
       - "443:443"
     depends_on:
@@ -28,11 +28,11 @@ services:
       restart_policy:
         condition: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${HOST}"]
-      interval: 10s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
+      interval: 30s
+      timeout: 30s
       retries: 3
-      start_period: 10s
+      start_period: 30s
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -44,9 +44,7 @@ services:
     image: "sage3/foresight:amd64"
     environment:
       - ENVIRONMENT=production
-      - SAGE3_SERVER=${HOST}
-      - FUNCX_SDK_CLIENT_ID=${FUNCX_SDK_CLIENT_ID}
-      - FUNCX_SDK_CLIENT_SECRET=${FUNCX_SDK_CLIENT_SECRET}
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
@@ -56,6 +54,31 @@ services:
         condition: service_healthy
       jupyter:
         condition: service_healthy
+  fastapi:
+    image: "sage3/fastapi:amd64"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: python src/main.py --url http://jupyter:8888
+    depends_on:
+      node-server:
+        condition: service_healthy
+      jupyter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   jupyter:
     image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
@@ -63,19 +86,19 @@ services:
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
-      - "4443:8888"
+      - "8888:8888"
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=development
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${HOST}:4443"]
-      interval: 10s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 30s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     deploy:
       restart_policy:
         condition: on-failure

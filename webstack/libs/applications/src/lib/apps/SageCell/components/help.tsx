@@ -7,8 +7,20 @@
  */
 
 import {
-  Box, Button, ButtonGroup, IconButton, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  Text, Kbd, HStack, Container,
+  Box,
+  Button,
+  ButtonGroup,
+  IconButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Text,
+  Kbd,
+  HStack,
+  Container,
 } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 

@@ -71,12 +71,7 @@ function AppComponent(props: App): JSX.Element {
     if (token && s.refresh) {
       updateState(props._id, { refresh: false });
       // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
+      const base = `http://${window.location.hostname}:8888`;
       const j_url = base + '/api/sessions';
       // Talk to the jupyter server API
       fetch(j_url, {
@@ -254,12 +249,7 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleNewKernel() {
     if (token) {
       // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
+      const base = `http://${window.location.hostname}:8888`;
       // Create a new kernel: notebook + kernel + session
       const j_url = base + '/api/contents/boards/' + `${name}.ipynb`;
       const payload = { type: 'notebook', path: '/', format: 'text' };
@@ -340,12 +330,7 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleDeleteKernel() {
     if (token) {
       // Jupyter URL
-      let base: string;
-      if (prod) {
-        base = `https://${window.location.hostname}:4443`;
-      } else {
-        base = `http://${window.location.hostname}`;
-      }
+      const base = `http://${window.location.hostname}:8888`;
       // Iterate over selected kernels
       selected.forEach((k: string) => {
         const k_url = base + '/api/kernels/' + k;

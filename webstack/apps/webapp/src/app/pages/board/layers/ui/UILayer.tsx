@@ -41,6 +41,7 @@ import {
   PluginsPanel,
   PresenceFollow,
   BoardTitle,
+  KernelsPanel,
 } from './components';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -218,6 +219,8 @@ export function UILayer(props: UILayerProps) {
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
+
+      <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <AnnotationsPanel />
 

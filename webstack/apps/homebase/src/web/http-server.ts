@@ -42,18 +42,14 @@ export function createApp(assetPath: string): express.Express {
   // http://expressjs.com/en/api.html#app.settings.table for more details.
   app.enable('trust proxy');
 
-  // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
-
   // Cookies
   app.use(cookieParser());
-  app.use(express.json());
+  // using express to parse JSON bodies into JS objects
+  app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true }));
 
   // adding Helmet to enhance your API's security
-  // All options
-  // app.use(helmet());
-  // Disabling a few for now, easier during development
+  // Disabling a few rules for now, easier during development
   app.use(
     helmet({
       // Content-Security-Policy

@@ -34,6 +34,12 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
+  // Fastapi python server
+  "fastapi": {
+    "url": "http://127.0.0.1:8000"
+  },
+
+
   // External Services
   "services": {
     "twilio": {

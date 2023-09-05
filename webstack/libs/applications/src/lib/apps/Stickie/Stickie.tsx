@@ -175,7 +175,7 @@ function AppComponent(props: App): JSX.Element {
           name={'stickie' + props._id}
           css={{
             // Balance the text, improve text layouts
-            textWrap: "balance"
+            textWrap: 'balance',
           }}
         />
         {locked && (
@@ -295,7 +295,7 @@ function ToolbarComponent(props: App): JSX.Element {
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px" fontSize={"sm"}>
+          <MenuList minWidth="150px" fontSize={'sm'}>
             <MenuItem icon={<MdFileDownload />} onClick={downloadMd}>
               Download as Markdown
             </MenuItem>
@@ -322,4 +322,87 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
+
+  const handleColorChange = (color: string) => {
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      updateState(app._id, { color: color });
+    });
+  };
+
+  const handleIncreaseFont = () => {
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+
+      const size = app.data.state.fontSize + 8;
+      if (size > 128) return;
+      updateState(app._id, { fontSize: app.data.state.fontSize + 8 });
+    });
+  };
+
+  const handleDecreaseFont = () => {
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      const size = app.data.state.fontSize - 8;
+      if (size <= 8) return;
+      updateState(app._id, { fontSize: app.data.state.fontSize - 8 });
+    });
+  };
+
+  const handleLock = () => {
+    props.apps.forEach((app) => {
+      if (app._createdBy !== user?._id) return;
+      updateState(app._id, { lock: true });
+    });
+  };
+
+  const handleUnlock = () => {
+    props.apps.forEach((app) => {
+      if (app._createdBy !== user?._id) return;
+      updateState(app._id, { lock: false });
+    });
+  };
+
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button onClick={() => handleIncreaseFont()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button onClick={() => handleDecreaseFont()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Lock Stickies'} openDelay={400}>
+          <Button onClick={() => handleLock()}>
+            <MdLock />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
+          <Button onClick={() => handleUnlock()}>
+            <MdLockOpen />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ColorPicker
+        onChange={handleColorChange}
+        selectedColor={props.apps[0].data.state.color as SAGEColors}
+        size="xs"
+        style={{ marginRight: 4 }}
+      />
+    </>
+  );
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

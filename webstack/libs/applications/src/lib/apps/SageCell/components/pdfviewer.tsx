@@ -18,9 +18,11 @@ export const PdfViewer = memo(({ data }: PdfViewerProps): JSX.Element => {
 
   useEffect(() => {
     // Function to convert base64 to blob, without dependencies
-    const b64toBlob = (base64: string) => fetch(`data:application/pdf;base64,${base64}`).then(res => res.blob())
+    const b64toBlob = (base64: string) => fetch(`data:application/pdf;base64,${base64}`).then((res) => res.blob());
     // convert the data we got into a blob that can be displayed in an iframe
-    b64toBlob(data).then(blob => { setUrl(URL.createObjectURL(blob)); });
+    b64toBlob(data).then((blob) => {
+      setUrl(URL.createObjectURL(blob));
+    });
   }, [data]);
 
   return (

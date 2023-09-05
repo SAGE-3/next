@@ -929,8 +929,12 @@ if (process.platform === 'win32') {
 // Protocol handler for osx while application is not running in the background.
 app.on('open-url', (event, url) => {
   event.preventDefault();
+  // Parsing the URL to find if there is a port number
+  // Asuming that if there is a port number, it is a local server with http
+  // Otherwise, it is a remote server with https
+  const parsedURL = new URL(url);
   // make it a valid URL
-  const newurl = url.replace('sage3://', 'https://');
+  const newurl = url.replace('sage3://', parsedURL.port ? 'http://' : 'https://');
   if (mainWindow) {
     mainWindow.loadURL(newurl);
   } else {
