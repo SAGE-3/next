@@ -17,6 +17,12 @@ import { App } from '../../schema';
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
 
+// Consraints on the app window size
+const APP_MIN_WIDTH = 200;
+const APP_MIN_HEIGHT = 100;
+const APP_MAX_WIDTH = 8 * 1024;
+const APP_MAX_HEIGHT = 8 * 1024;
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
@@ -293,9 +299,11 @@ export function AppWindow(props: WindowProps) {
         topLeft: { transform: `scale(${handleScale})` },
         topRight: { transform: `scale(${handleScale})` },
       }}
-      // minimum size of the app: 200 px
-      minWidth={200}
-      minHeight={100}
+      // min/max app window dimensions
+      minWidth={APP_MIN_WIDTH}
+      minHeight={APP_MIN_HEIGHT}
+      maxWidth={APP_MAX_WIDTH}
+      maxHeight={APP_MAX_HEIGHT}
       // Scaling of the board
       scale={scale}
       // resize and move snapping to grid
