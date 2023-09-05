@@ -16,8 +16,6 @@ import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as JupyterLabName } from './apps/JupyterLab';
-import { name as KernelDashboardName } from './apps/KernelDashboard';
-import { name as KernelsName } from './apps/Kernels';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
@@ -54,8 +52,6 @@ import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
-import KernelDashboard from './apps/KernelDashboard/KernelDashboard';
-import Kernels from './apps/Kernels/Kernels';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
@@ -94,8 +90,6 @@ export const Applications = {
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
   [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent },
-  [KernelDashboardName]: { AppComponent: React.memo(KernelDashboard.AppComponent), ToolbarComponent: KernelDashboard.ToolbarComponent },
-  [KernelsName]: { AppComponent: React.memo(Kernels.AppComponent), ToolbarComponent: Kernels.ToolbarComponent },
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent },
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent },
   [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent },
