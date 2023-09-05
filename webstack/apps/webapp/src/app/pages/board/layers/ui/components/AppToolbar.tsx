@@ -165,7 +165,7 @@ export function AppToolbar(props: AppToolbarProps) {
   }
 
   function getAppToolbar() {
-    if (app) {
+    if (app && Applications[app.data.type]) {
       const Component = Applications[app.data.type].ToolbarComponent;
       return (
         <ErrorBoundary
@@ -201,7 +201,12 @@ export function AppToolbar(props: AppToolbarProps) {
         </ErrorBoundary>
       );
     } else {
-      return null;
+      // just the delete button
+      return <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+        <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+          <HiOutlineTrash size="18px" color={buttonTextColor} />
+        </Button>
+      </Tooltip>;
     }
   }
 
