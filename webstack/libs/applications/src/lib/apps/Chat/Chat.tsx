@@ -552,7 +552,7 @@ function AppComponent(props: App): JSX.Element {
             placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
             <IconButton aria-label='Messages' size={"xs"}
               p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
-              icon={<MdExpandCircleDown size="1.5rem" />}
+              icon={<MdExpandCircleDown size="24px" />}
               isDisabled={!newMessages}
               isLoading={processing}
               onClick={() => goToBottom("instant")}
@@ -563,7 +563,7 @@ function AppComponent(props: App): JSX.Element {
             placement="top" hasArrow={true} label={"Stop Geppetto"} openDelay={400}>
             <IconButton aria-label='stop' size={"xs"}
               p={0} m={0} colorScheme={"blue"} variant='ghost'
-              icon={<MdStopCircle size="1.5rem" />}
+              icon={<MdStopCircle size="24px" />}
               onClick={stopGeppetto}
               width="34%"
             />
@@ -572,7 +572,7 @@ function AppComponent(props: App): JSX.Element {
             placement="top" hasArrow={true} label={"Reset Chat"} openDelay={400}>
             <IconButton aria-label='reset' size={"xs"}
               p={0} m={0} colorScheme={"blue"} variant='ghost'
-              icon={<MdChangeCircle size="1.5rem" />}
+              icon={<MdChangeCircle size="24px" />}
               onClick={resetGepetto}
               width="33%"
             />

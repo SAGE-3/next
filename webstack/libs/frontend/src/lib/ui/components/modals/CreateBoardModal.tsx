@@ -147,7 +147,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -161,7 +161,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Board Description'}
