@@ -1,4 +1,4 @@
-FROM node:18-bullseye
+FROM node:18-bookworm-slim
 
 # Install in that directory
 WORKDIR /app
