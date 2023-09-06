@@ -18,6 +18,8 @@ COPY webstack/tsconfig.base.json	tsconfig.base.json
 COPY webstack/apps apps
 COPY webstack/libs libs
 
+# Increase RAM for node to build the app
+ENV NODE_OPTIONS=--max-old-space-size=8192
 # Build the app
 RUN yarn install && yarn prod && yarn cache clean
 
