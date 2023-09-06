@@ -437,16 +437,18 @@ function AppComponent(props: App): JSX.Element {
                           maxWidth="70%"
                           userSelect={"none"}
                           onDoubleClick={() => {
-                            // Copy into clipboard
-                            navigator.clipboard.writeText(message.query);
-                            // Notify the user
-                            toast({
-                              title: 'Success',
-                              description: `Content Copied to Clipboard`,
-                              duration: 3000,
-                              isClosable: true,
-                              status: 'success',
-                            });
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.query);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
                           }}
                           draggable={true}
                           // Store the query into the drag/drop events to create stickies
@@ -483,16 +485,18 @@ function AppComponent(props: App): JSX.Element {
                         placement="top" hasArrow={true} label={time} openDelay={400}>
                         <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor} p={1} m={3} fontFamily="arial"
                           onDoubleClick={() => {
-                            // Copy into clipboard
-                            navigator.clipboard.writeText(message.response);
-                            // Notify the user
-                            toast({
-                              title: 'Success',
-                              description: `Content Copied to Clipboard`,
-                              duration: 3000,
-                              isClosable: true,
-                              status: 'success',
-                            });
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.response);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
                           }}>
                           <Box pl={3}
                             draggable={true}

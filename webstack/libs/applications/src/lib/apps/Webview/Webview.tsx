@@ -431,12 +431,14 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Copy the url to the clipboard
   const handleCopy = () => {
-    navigator.clipboard.writeText(localURL);
-    toast({
-      title: 'Copied URL to clipboard',
-      status: 'success',
-      duration: 3000,
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(localURL);
+      toast({
+        title: 'Copied URL to clipboard',
+        status: 'success',
+        duration: 3000,
+      });
+    }
   };
 
   return (
