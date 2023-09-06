@@ -15,7 +15,7 @@
     "node-fetch": "^2.6.8",
     "semver": "^7",
     "update-electron-app": "^2.0.1",
-    "uuid": "8.3.0"
+    "uuid": "8.3.2"
   },
   "devDependencies": {
     "electron": "^26.1.0",
