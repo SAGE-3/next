@@ -180,7 +180,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             Board Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}

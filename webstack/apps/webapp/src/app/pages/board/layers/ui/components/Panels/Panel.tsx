@@ -343,7 +343,7 @@ export function Panel(props: PanelProps) {
                 )}
                 {panel.name !== 'controller' ? (
                   <IconButton
-                    icon={<MdClose size="1.25rem" />}
+                    icon={<MdClose size="20px" />}
                     aria-label="close panel"
                     size="xs"
                     mx="1"
