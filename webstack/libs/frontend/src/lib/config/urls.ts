@@ -15,7 +15,8 @@ export const apiUrls = {
   },
   assets: {
     getAssets: '/api/assets',
-    getAssetById: (id: string) => `api/assets/static/${id}`,
+    getAssetById: (id: string) => `/api/assets/static/${id}`,
+    getNotebookByName: (name: string) => `/api/contents/notebooks/${name}`,
     upload: '/api/assets/upload',
   },
   fastapi: {

@@ -96,7 +96,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       downloadFile(url, file.originalfilename);
     } else if (id === 'copy') {
       // Copy the file URL to the clipboard
-      const publicUrl = window.location.origin + '/api/assets/static/' + file.filename;
+      const publicUrl = window.location.origin + apiUrls.assets.getAssetById(file.filename);
       navigator.clipboard.writeText(publicUrl);
       // Notify the user
       toast({

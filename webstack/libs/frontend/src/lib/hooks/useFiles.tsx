@@ -35,7 +35,7 @@ import { useUser } from './useUser';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { GetConfiguration } from '../config';
+import { GetConfiguration, apiUrls } from '../config';
 
 /**
  * Setup data structure to open an application
@@ -339,7 +339,7 @@ export function useFiles(): UseFiles {
             // Create a new notebook
             const base = `http://${window.location.hostname}:8888`;
             // Talk to the jupyter server API
-            const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
             const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
             // Create a new notebook
             const response = await fetch(j_url, {

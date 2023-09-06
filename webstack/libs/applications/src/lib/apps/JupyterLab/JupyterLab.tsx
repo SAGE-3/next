@@ -17,7 +17,7 @@ import dateFormat from 'date-fns/format';
 // Icons
 import { MdFileDownload, MdOpenInNew } from 'react-icons/md';
 
-import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
+import { apiUrls, downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
 import { AppWindow, ElectronRequired } from '../../components';
 import { state as AppState } from './index';
@@ -48,9 +48,7 @@ function AppComponent(props: App): JSX.Element {
         // Create a new notebook
         const base = `http://${window.location.hostname}:8888`;
         // Talk to the jupyter server API
-        let j_url: string;
         if (s.notebook) {
-          j_url = base + '/api/contents/notebooks/' + `${s.notebook}`;
           // Create a new kernel
           const k_url = base + '/api/kernels';
           const kpayload = { name: 'python3', path: '/' };
@@ -97,73 +95,6 @@ function AppComponent(props: App): JSX.Element {
                   const base = `http://${window.location.hostname}:8888`;
                   const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
                   setUrl(newUrl);
-                });
-            })
-            .catch((err) => {
-              console.log('Jupyter> error', err);
-            });
-        } else {
-          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
-          const payload = { type: 'notebook', path: '/boards', format: 'text' };
-          // Create a new notebook
-          fetch(j_url, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Token ' + conf.token,
-            },
-            body: JSON.stringify(payload),
-          })
-            .then((response) => response.json())
-            .then((res) => {
-              console.log('Jupyter> notebook created', res);
-              // Create a new kernel
-              const k_url = base + '/api/kernels';
-              const kpayload = { name: 'python3', path: '/' };
-              // Creating a new kernel with HTTP POST
-              fetch(k_url, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Token ' + conf.token,
-                },
-                body: JSON.stringify(kpayload),
-              })
-                .then((response) => response.json())
-                .then((res) => {
-                  console.log('Jupyter> kernel created', res);
-                  const kernel = res;
-                  // Create a new session
-                  const s_url = base + '/api/sessions';
-                  const sid = uuidv1();
-                  const spayload = {
-                    id: sid.replace(/-/g, ''),
-                    kernel: kernel,
-                    name: boardId,
-                    path: `boards/${boardId}.ipynb`,
-                    notebook: {
-                      name: `${boardId}.ipynb`,
-                      path: `boards/${boardId}.ipynb`,
-                    },
-                    type: 'notebook',
-                  };
-                  // Creating a new session with HTTP POST
-                  fetch(s_url, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(spayload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Juypyter> session created', res);
-                      //  Open the notebook in a separate workspace
-                      const base = `http://${window.location.hostname}:8888`;
-                      const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
-                      setUrl(newUrl);
-                    });
                 });
             })
             .catch((err) => {
@@ -248,15 +179,10 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the notebook for this board
   function downloadNotebook() {
     GetConfiguration().then((conf) => {
-      if (conf.token) {
+      if (conf.token && s.notebook) {
         // Create a new notebook
         const base = `http://${window.location.hostname}:8888`;
-        let j_url: string;
-        if (s.notebook) {
-          j_url = base + '/api/contents/notebooks/' + `${s.notebook}?token=${conf.token}`;
-        } else {
-          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb?token=${conf.token}`;
-        }
+        const j_url = base + apiUrls.assets.getNotebookByName(s.notebook) + `?token=${conf.token}`;
         fetch(j_url)
           .then((response) => response.json())
           .then((note) => {
@@ -280,15 +206,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleOpen = () => {
     if (isElectron()) {
       GetConfiguration().then((conf) => {
-        if (conf.token) {
-          // Create a new notebook
+        if (conf.token && s.notebook) {
           const base = `http://${window.location.hostname}:8888`;
-          let j_url: string;
-          if (s.notebook) {
-            j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
-          } else {
-            j_url = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
-          }
+          const j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
           window.electron.send('open-external-url', { url: j_url });
         }
       });
