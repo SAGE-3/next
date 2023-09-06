@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { SAGEAuthorization, URLMetadata } from '@sage3/backend';
+import { URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -16,7 +16,6 @@ import {
   PresenceCollection,
   MessageCollection,
   PluginsCollection,
-  RoomMembersCollection,
 } from '../collections';
 
 export * from './apps';
@@ -27,13 +26,11 @@ export * from './assets';
 export * from './presence';
 export * from './message';
 export * from './plugins';
-export * from './roomMembers';
 
 /**
  * Load the various models at startup.
  */
 export async function loadCollections(): Promise<void> {
-  // Collection Initialization
   await AppsCollection.initialize();
   await BoardsCollection.initialize();
   await RoomsCollection.initialize();
@@ -42,53 +39,12 @@ export async function loadCollections(): Promise<void> {
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
   await PluginsCollection.initialize();
-  // Authoriztion Collections
-  await RoomMembersCollection.initialize();
 
-  // Initialize Authorization with UsersCollection
-  SAGEAuthorization.initialize(UsersCollection, RoomMembersCollection);
-
-  // Get All Room Members
-  const roomMembers = await RoomMembersCollection.getAll('NODE_SERVER');
-  // Setup default room and board and check room has a room_members doc
-  RoomsCollection.getAll('NODE_SERVER').then(async (rooms) => {
+  // Setup default room and board
+  RoomsCollection.getAll().then(async (rooms) => {
     if (rooms) {
       if (rooms.length > 0) {
         console.log(`Rooms> Loaded ${rooms.length} room(s) from store`);
-
-        rooms.forEach((r) => {
-          if (roomMembers) {
-            // Check if room has a room_members doc
-            const roomMember = roomMembers.find((rm) => rm.data.roomId === r._id);
-            if (!roomMember) {
-              RoomMembersCollection.add(
-                {
-                  roomId: r._id,
-                  members: [
-                    {
-                      userId: r._createdBy,
-                      role: 'owner',
-                    },
-                  ],
-                },
-                'NODE_SERVER'
-              );
-            } else {
-              RoomMembersCollection.add(
-                {
-                  roomId: r._id,
-                  members: [
-                    {
-                      userId: r._createdBy,
-                      role: 'owner',
-                    },
-                  ],
-                },
-                'NODE_SERVER'
-              );
-            }
-          }
-        });
       } else {
         const res = await RoomsCollection.add(
           {
@@ -136,5 +92,5 @@ export async function loadCollections(): Promise<void> {
         }
       });
     }
-  }, 'NODE_SERVER');
+  });
 }

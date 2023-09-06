@@ -14,6 +14,5 @@ export * from './asset';
 export * from './presence';
 export * from './message';
 export * from './plugin';
-export * from './roomMembers';
 export * from './kernelinfo';
 export * from './output';

@@ -34,7 +34,7 @@ export function FilesRouter(): express.Router {
   // Get one asset: GET /api/files/:id/:token
   router.get('/:id/:token', async ({ params }, res) => {
     // Get the asset
-    const data = await AssetsCollection.get(params.id, 'NODE_SERVER');
+    const data = await AssetsCollection.get(params.id);
     // Calculate the uuid v5 from asset id and namespace (from config)
     const key = uuidv5(params.id, config.namespace);
     // if it matches the passed token, send the file

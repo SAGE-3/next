@@ -11,8 +11,13 @@ import * as express from 'express';
 import { SBAuthSchema, SBJSON } from '@sage3/sagebase';
 import { SAGE3Collection } from './SAGECollection';
 
+import { checkPermissionsREST, AuthSubject } from './permissions';
+
 export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): express.Router {
   const router = express.Router();
+
+  //  Check permissions on collections
+  router.use(checkPermissionsREST(collection.name as AuthSubject));
 
   // POST: Add new document or multiple docs with a batch request
   router.post('/', async ({ body, user }, res) => {
@@ -31,21 +36,19 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // GET: Get all the docs, multiple docs by id, or query
-  router.get('/', async ({ query, body, user }, res) => {
+  router.get('/', async ({ query, body }, res) => {
     let docs = null;
-    const auth = user as SBAuthSchema;
-    const userId = auth?.id || '-';
     // If body has property 'batch', this is a batch request
     if (body && body.batch) {
-      docs = await collection.getBatch(body.batch, userId);
+      docs = await collection.getBatch(body.batch);
     }
     // Check for a query, if not query get all the docs
     else if (Object.keys(query).length === 0) {
-      docs = await collection.getAll(userId);
+      docs = await collection.getAll();
     } else if (Object.keys(query).length === 1) {
       const field = Object.keys(query)[0];
       const q = query[field] as string | number;
-      docs = await collection.query(field, q, userId);
+      docs = await collection.query(field, q);
     } else {
       res.status(500).send({ success: false, message: 'Too many query parameters. Only one query parameter allowed.', data: undefined });
     }
@@ -54,10 +57,8 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // GET: Get one doc.
-  router.get('/:id', async ({ params, user }, res) => {
-    const auth = user as SBAuthSchema;
-    const userId = auth?.id || '-';
-    const doc = await collection.get(params.id, userId);
+  router.get('/:id', async ({ params }, res) => {
+    const doc = await collection.get(params.id);
     if (doc) res.status(200).send({ success: true, message: 'Successfully retrieved the documents.', data: [doc] });
     else res.status(500).send({ success: false, message: 'Failed to retrieve the document.', data: undefined });
   });
@@ -85,11 +86,9 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // DELETE: Delete multiple docs with batch
-  router.delete('', async ({ body, user }, res) => {
-    const auth = user as SBAuthSchema;
-    const userId = auth?.id || '-';
+  router.delete('', async ({ body }, res) => {
     if (body && body.batch) {
-      const success = await collection.deleteBatch(body.batch, userId);
+      const success = await collection.deleteBatch(body.batch);
       if (success) res.status(200).send({ success: true, message: 'Successfully deleted the documents.', data: success });
       else res.status(500).send({ success: false, message: 'Failed to delete the documents.', data: undefined });
     } else {
@@ -98,10 +97,8 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // DELETE: Delete one doc
-  router.delete('/:id', async ({ params, user }, res) => {
-    const auth = user as SBAuthSchema;
-    const userId = auth?.id || '-';
-    const del = await collection.delete(params.id, userId);
+  router.delete('/:id', async ({ params }, res) => {
+    const del = await collection.delete(params.id);
     if (del) res.status(200).send({ success: true, message: 'Successfully deleted the document.', data: [del] });
     else res.status(500).send({ success: false, message: 'Failed to delete document.', data: undefined });
   });

@@ -27,6 +27,7 @@ import { AssetsCollection, MessageCollection } from '../../collections';
 
 // Lib Imports
 import { SBAuthSchema } from '@sage3/sagebase';
+import { isText } from '@sage3/shared';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';

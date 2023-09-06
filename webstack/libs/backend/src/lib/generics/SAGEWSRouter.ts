@@ -13,6 +13,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
+import { checkPermissionsWS, AuthSubject } from './permissions';
 
 import { URL } from 'node:url';
 
@@ -26,6 +27,12 @@ export async function sageWSRouter<T extends SBJSON>(
   // path to the current collection
   const path = '/api/' + collection.name.toLowerCase();
 
+  //  Check permissions on collections
+  if (!checkPermissionsWS(user, message.method, collection.name as AuthSubject)) {
+    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
+    return;
+  }
+
   // Create a URL object to parse the route:
   // second argument required because the route is a relative URL but otherwise meaningless
   const socket_url = new URL(message.route, 'ws://localhost');
@@ -33,13 +40,6 @@ export async function sageWSRouter<T extends SBJSON>(
   // get all the parameters and their values into an array, instead of a Map
   const params = Array.from(socket_url.searchParams);
   const numParams = params.length;
-
-  // Get the method
-  const method = message.method;
-  if (!method) {
-    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Invalid method' }));
-    return;
-  }
 
   switch (message.method) {
     case 'POST': {
@@ -69,13 +69,13 @@ export async function sageWSRouter<T extends SBJSON>(
       const body = message.body;
       if (body && body.batch) {
         const ids = body.batch as string[];
-        const docs = await collection.getBatch(ids, user.id);
+        const docs = await collection.getBatch(ids);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
       }
       // GET: Get all the docs.
       else if (route === path) {
-        const docs = await collection.getAll(user.id);
+        const docs = await collection.getAll();
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get docs' }));
       }
@@ -86,7 +86,7 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const doc = await collection.get(id, user.id);
+        const doc = await collection.get(id);
         if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to get doc.' }));
       }
@@ -120,7 +120,7 @@ export async function sageWSRouter<T extends SBJSON>(
           const body = message.body as SBDocumentUpdate<T>;
           const doc = await collection.update(id, user.id, body);
           if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
-          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update doc.' }));
+          else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
         }
       }
       break;
@@ -131,7 +131,7 @@ export async function sageWSRouter<T extends SBJSON>(
       const body = message.body;
       if (body && body.batch) {
         const batch = body.batch as string[];
-        const docs = await collection.deleteBatch(batch, user.id);
+        const docs = await collection.deleteBatch(batch);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete docs.' }));
       } else {
@@ -140,7 +140,7 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const del = await collection.delete(id, user.id);
+        const del = await collection.delete(id);
         if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));
       }
@@ -152,7 +152,7 @@ export async function sageWSRouter<T extends SBJSON>(
         const sub = await collection.subscribeAll((doc) => {
           const msg = { id: message.id, event: doc };
           socket.send(JSON.stringify(msg));
-        }, user.id);
+        });
         if (sub) cache.add(message.id, [sub]);
       } else if (numParams > 0) {
         if (numParams != 1) {
@@ -161,15 +161,10 @@ export async function sageWSRouter<T extends SBJSON>(
         } else {
           const prop = params[0][0]; // first key
           const query = params[0][1]; // first value
-          const sub = await collection.subscribeByQuery(
-            prop,
-            query,
-            (doc) => {
-              const msg = { id: message.id, event: doc };
-              socket.send(JSON.stringify(msg));
-            },
-            user.id
-          );
+          const sub = await collection.subscribeByQuery(prop, query, (doc) => {
+            const msg = { id: message.id, event: doc };
+            socket.send(JSON.stringify(msg));
+          });
           if (sub) cache.add(message.id, [sub]);
         }
       }
@@ -180,14 +175,10 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const sub = await collection.subscribe(
-          id,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          user.id
-        );
+        const sub = await collection.subscribe(id, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
         if (sub) cache.add(message.id, [sub]);
       }
       break;

@@ -38,7 +38,7 @@ class PresenceThrottleClass {
    * Initialize the Presence Throttle
    */
   async init() {
-    const p = await PresenceCollection.getAll('NODE_SERVER');
+    const p = await PresenceCollection.getAll();
     if (p) {
       this._presences = p;
     }
@@ -76,7 +76,7 @@ class PresenceThrottleClass {
       }
       // Send the updates
       throttleUpdate();
-    }, 'NODE_SERVER');
+    });
 
     // Init is done
     this._initialized = true;

@@ -43,7 +43,6 @@ export async function subscriptionWSRouter(
   user: SBAuthSchema,
   cache: SubscriptionCache
 ): Promise<void> {
-  const userId = user.id;
   switch (message.method) {
     case 'SUB': {
       // Subscribe to a room and all its children (Boards, apps)
@@ -53,32 +52,18 @@ export async function subscriptionWSRouter(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const roomSub = await RoomsCollection.subscribe(
-          roomId,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          userId
-        );
-        const boardsSub = await BoardsCollection.subscribeByQuery(
-          'roomId',
-          roomId,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          userId
-        );
-        const appsSub = await AppsCollection.subscribeByQuery(
-          'roomId',
-          roomId,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          userId
-        );
+        const roomSub = await RoomsCollection.subscribe(roomId, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
+        const boardsSub = await BoardsCollection.subscribeByQuery('roomId', roomId, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
+        const appsSub = await AppsCollection.subscribeByQuery('roomId', roomId, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
         const subs = [];
         if (roomSub) subs.push(roomSub);
         if (boardsSub) subs.push(boardsSub);
@@ -93,23 +78,14 @@ export async function subscriptionWSRouter(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
-        const boardSub = await BoardsCollection.subscribe(
-          boardId,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          userId
-        );
-        const appsSub = await AppsCollection.subscribeByQuery(
-          'boardId',
-          boardId,
-          (doc) => {
-            const msg = { id: message.id, event: doc };
-            socket.send(JSON.stringify(msg));
-          },
-          userId
-        );
+        const boardSub = await BoardsCollection.subscribe(boardId, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
+        const appsSub = await AppsCollection.subscribeByQuery('boardId', boardId, (doc) => {
+          const msg = { id: message.id, event: doc };
+          socket.send(JSON.stringify(msg));
+        });
         const subs = [];
         if (boardSub) subs.push(boardSub);
         if (appsSub) subs.push(appsSub);
