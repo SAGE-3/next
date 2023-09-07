@@ -28,12 +28,12 @@ export class SAGEPresence {
 
     this._socket.on('close', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      this.removePresence();
+      this.setOffline();
     });
 
     this._socket.on('error', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      this.removePresence();
+      this.setOffline();
     });
   }
 

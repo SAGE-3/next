@@ -99,6 +99,8 @@ export async function subscriptionWSRouter(
       break;
     }
     case 'UNSUB': {
+      // Attempt to remove the subscription from presence. It might not be for presence but have to check to avoid memory leak
+      PresenceThrottle.removeClient(message.id);
       // Unsubscribe Message
       cache.delete(message.id);
       break;
