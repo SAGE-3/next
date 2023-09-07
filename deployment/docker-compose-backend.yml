@@ -17,7 +17,7 @@ services:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
   fastapi:
-    image: "sage3/fastapi:latest"
+    image: "ghcr.io/mahdi-b/sagekernelserver:latest"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
