@@ -4,7 +4,7 @@ FROM node:18-bookworm-slim
 WORKDIR /app
 
 # Debian package
-RUN apt-get update && apt-get install -y exiftool build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libheif1 libheif-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl exiftool build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libheif1 libheif-dev && rm -rf /var/lib/apt/lists/*
 
 # Project files
 COPY webstack/package.json package.json

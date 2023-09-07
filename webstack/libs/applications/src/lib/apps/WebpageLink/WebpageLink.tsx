@@ -282,12 +282,14 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const copyUrl = () => {
     if (!s.url) return;
-    navigator.clipboard.writeText(s.url);
-    toast({
-      title: 'Copied URL to clipboard',
-      status: 'success',
-      duration: 3000,
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(s.url);
+      toast({
+        title: 'Copied URL to clipboard',
+        status: 'success',
+        duration: 3000,
+      });
+    }
   };
 
   const openInSAGE3 = async () => {

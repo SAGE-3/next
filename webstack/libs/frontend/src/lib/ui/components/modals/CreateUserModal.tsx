@@ -95,7 +95,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           <FormControl isRequired mb={4}>
             <FormLabel htmlFor="htmlFor">Username</FormLabel>
             <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
               <Input
                 ref={initialRef}
                 type="string"

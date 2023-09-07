@@ -51,6 +51,11 @@ type BackgroundProps = {
   boardId: string;
 };
 
+// Global vars to cache event state
+const evCache = new Array();
+let prevDiff = -1;
+
+
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
@@ -86,6 +91,8 @@ export function Background(props: BackgroundProps) {
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const zoomIn = useUIStore((state) => state.zoomIn);
+  const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -388,6 +395,62 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
 
+  // Functions for zooming with touch events
+  function remove_event(ev: any) {
+    // Remove this event from the target's cache
+    for (var i = 0; i < evCache.length; i++) {
+      if (evCache[i].pointerId == ev.pointerId) {
+        evCache.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  const onPointerDown = (ev: any) => {
+    evCache.push(ev);
+  }
+
+  /**
+   * This function implements a 2-pointer horizontal pinch/zoom gesture.
+   * If the distance between the two pointers has increased (zoom in),
+   * and if the distance is decreasing (zoom out)
+   *
+   * @param ev
+   */
+  const onPointerMove = (ev: any) => {
+    // Find this event in the cache and update its record with this event
+    for (var i = 0; i < evCache.length; i++) {
+      if (ev.pointerId == evCache[i].pointerId) {
+        evCache[i] = ev;
+        break;
+      }
+    }
+
+    // If two pointers are down, check for pinch gestures
+    if (evCache.length == 2) {
+      // Calculate the distance between the two pointers
+      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
+      if (prevDiff > 0) {
+        if (curDiff > prevDiff) {
+          // The distance between the two pointers has increased
+          zoomIn();
+        }
+        if (curDiff < prevDiff) {
+          // The distance between the two pointers has decreased
+          zoomOut();
+        }
+      }
+      // Cache the distance for the next move event
+      prevDiff = curDiff;
+    }
+  }
+  const onPointerUp = (ev: any) => {
+    // Remove this pointer from the cache
+    remove_event(ev);
+    // If the number of pointers down is less than two then reset diff tracker
+    if (evCache.length < 2) prevDiff = -1;
+  }
+
   return (
     <Box
       className="board-handle"
@@ -413,6 +476,13 @@ export function Background(props: BackgroundProps) {
           zoomOutDelta(evt.deltaY, cursor);
         }
       }}
+      // Zoom touch events
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onPointerOut={onPointerUp}
+      onPointerLeave={onPointerUp}
     >
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>

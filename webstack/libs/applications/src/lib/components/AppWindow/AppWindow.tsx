@@ -59,7 +59,6 @@ export function AppWindow(props: WindowProps) {
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  // const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
@@ -253,6 +252,23 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  function handleAppTouchStart(e: PointerEvent) {
+    e.stopPropagation();
+    bringForward();
+    // Set the selected app in the UI store
+    if (appWasDragged) {
+      setAppWasDragged(false);
+    } else {
+      clearSelectedApps();
+      setSelectedApp(props.app._id);
+    }
+  }
+
+  function handleAppTouchMove(e: PointerEvent) {
+    e.stopPropagation();
+    setAppWasDragged(true);
+  }
+
   // Bring the app forward
   function bringForward() {
     if (!props.lockToBackground) {
@@ -289,6 +305,9 @@ export function AppWindow(props: WindowProps) {
       onClick={handleAppClick}
       enableResizing={enableResize && canResize}
       disableDragging={!canMove}
+      // select an app on touch
+      onPointerDown={handleAppTouchStart}
+      onPointerMove={handleAppTouchMove}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,

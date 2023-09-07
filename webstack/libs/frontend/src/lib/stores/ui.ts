@@ -261,7 +261,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   zoomIn: () => {
-    const zoomInVal = Math.min(get().scale + 0.1 * get().scale, MaxZoom);
+    const zoomInVal = Math.min(get().scale + 0.02 * get().scale, MaxZoom);
     if (!get().boardLocked) {
       const b = get().boardPosition;
       const s = get().scale;
@@ -272,7 +272,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   zoomOut: () => {
-    const zoomOutVal = Math.max(get().scale - 0.1 * get().scale, MinZoom);
+    const zoomOutVal = Math.max(get().scale - 0.02 * get().scale, MinZoom);
     if (!get().boardLocked) {
       const b = get().boardPosition;
       const s = get().scale;

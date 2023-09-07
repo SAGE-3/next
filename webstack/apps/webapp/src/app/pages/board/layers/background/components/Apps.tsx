@@ -129,15 +129,17 @@ export function Apps() {
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
               found = true;
               // Put the app data into the clipboard
-              navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
-              // Notify the user
-              toast({
-                title: 'Success',
-                description: `Application Copied to Clipboard`,
-                duration: 2000,
-                isClosable: true,
-                status: 'success',
-              });
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
+                // Notify the user
+                toast({
+                  title: 'Success',
+                  description: `Application Copied to Clipboard`,
+                  duration: 2000,
+                  isClosable: true,
+                  status: 'success',
+                });
+              }
             }
           });
       }
@@ -151,35 +153,37 @@ export function Apps() {
       const cx = position.x;
       const cy = position.y;
 
-      navigator.clipboard.readText().then((data) => {
-        try {
-          const parsed = JSON.parse(data);
-          // Test if sage3 JSON data
-          if (parsed.sage3) {
-            // Create a new duplicate app
-            const type = parsed.sage3.data.type as AppName;
-            const size = parsed.sage3.data.size;
-            const state = parsed.sage3.data.state;
-            // Create the app
-            createApp({
-              title: type,
-              roomId: roomId!,
-              boardId: boardId!,
-              position: { x: cx, y: cy, z: 0 },
-              size: size,
-              rotation: { x: 0, y: 0, z: 0 },
-              type: type,
-              state: { ...(initialValues[type] as AppState), ...state },
-              raised: true,
-              dragging: false,
-            });
-          } else {
-            console.log('Paste> JSON is not a SAGE3 app');
+      if (navigator.clipboard) {
+        navigator.clipboard.readText().then((data) => {
+          try {
+            const parsed = JSON.parse(data);
+            // Test if sage3 JSON data
+            if (parsed.sage3) {
+              // Create a new duplicate app
+              const type = parsed.sage3.data.type as AppName;
+              const size = parsed.sage3.data.size;
+              const state = parsed.sage3.data.state;
+              // Create the app
+              createApp({
+                title: type,
+                roomId: roomId!,
+                boardId: boardId!,
+                position: { x: cx, y: cy, z: 0 },
+                size: size,
+                rotation: { x: 0, y: 0, z: 0 },
+                type: type,
+                state: { ...(initialValues[type] as AppState), ...state },
+                raised: true,
+                dragging: false,
+              });
+            } else {
+              console.log('Paste> JSON is not a SAGE3 app');
+            }
+          } catch (error) {
+            console.log('Paste> Error, Not valid json');
           }
-        } catch (error) {
-          console.log('Paste> Error, Not valid json');
-        }
-      });
+        });
+      }
     }
   });
 

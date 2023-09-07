@@ -327,7 +327,7 @@ export function Panel(props: PanelProps) {
                 {!panel.minimized ? (
                   <IconButton
                     size="xs"
-                    icon={<MdExpandLess size="1.5rem" />}
+                    icon={<MdExpandLess size="24px" />}
                     aria-label="show less"
                     onClick={handleMinimizeClick}
                     mx="1"
@@ -336,7 +336,7 @@ export function Panel(props: PanelProps) {
                 ) : (
                   <IconButton
                     size="xs"
-                    icon={<MdExpandMore size="1.5rem" />}
+                    icon={<MdExpandMore size="24px" />}
                     aria-label="show more"
                     onClick={handleMinimizeClick}
                     mx="1"
@@ -345,7 +345,7 @@ export function Panel(props: PanelProps) {
                 )}
                 {panel.name !== 'controller' ? (
                   <IconButton
-                    icon={<MdClose size="1.25rem" />}
+                    icon={<MdClose size="20px" />}
                     aria-label="close panel"
                     size="xs"
                     mx="1"
