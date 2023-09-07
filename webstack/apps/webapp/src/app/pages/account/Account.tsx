@@ -25,19 +25,19 @@ export function AccountPage() {
     }
   }, [user]);
 
-  // If the user is a spectator, create a user for them
-  useEffect(() => {
-    if (auth && auth.provider === 'spectator') {
-      handleCreateUser({
-        name: `Spectator#${Math.floor(Math.random() * 10000)}`,
-        email: ``,
-        color: 'red',
-        profilePicture: '',
-        userType: 'client',
-        userRole: 'spectator',
-      });
-    }
-  }, [auth]);
+  // // If the user is a spectator, create a user for them
+  // useEffect(() => {
+  //   if (auth && auth.provider === 'spectator') {
+  //     handleCreateUser({
+  //       name: `Spectator#${Math.floor(Math.random() * 10000)}`,
+  //       email: ``,
+  //       color: 'red',
+  //       profilePicture: '',
+  //       userType: 'client',
+  //       userRole: 'spectator',
+  //     });
+  //   }
+  // }, [auth]);
 
   // Create a user
   const handleCreateUser = (user: UserSchema) => {
