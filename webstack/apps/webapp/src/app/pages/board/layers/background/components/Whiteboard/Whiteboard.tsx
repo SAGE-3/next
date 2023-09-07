@@ -265,7 +265,13 @@ export function Whiteboard(props: WhiteboardProps) {
   );
 
   return (
-    <div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
+    <div
+      className="canvas-container"
+      style={{
+        pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none',
+        touchAction: whiteboardMode && !spacebarPressed ? 'none' : 'auto',
+      }}
+    >
       <svg
         className="canvas-layer"
         style={{
