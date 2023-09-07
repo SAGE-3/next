@@ -11,8 +11,7 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useUser } from '@sage3/frontend';
-import { SAGE3Ability } from '@sage3/shared';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useAbility } from '@sage3/frontend';
 import { App } from '../../schema';
 
 // Window Components
@@ -35,12 +34,9 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
-  // Guest mode disabled for now
-  const { user } = useUser();
-
   // Can update
-  const canMove = SAGE3Ability.can(user?.data.userRole, 'move', 'apps');
-  const canResize = SAGE3Ability.can(user?.data.userRole, 'resize', 'apps');
+  const canMove = useAbility('move', 'apps');
+  const canResize = useAbility('resize', 'apps');
 
   // App Store
   const apps = useAppStore((state) => state.apps);

@@ -12,12 +12,9 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
-import { duplicate } from 'vega-lite';
-import { BsTrash } from 'react-icons/bs';
 import { HiOutlineTrash } from 'react-icons/hi';
-import { SAGE3Ability } from '@sage3/shared';
 
 type AppToolbarProps = {};
 
@@ -63,9 +60,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const app = apps.find((app) => app._id === selectedApp);
 
   //Abilities
-  const { user } = useUser();
-  const canDeleteApp = SAGE3Ability.can(user?.data.userRole, 'delete', 'apps');
-  const canDuplicateApp = SAGE3Ability.can(user?.data.userRole, 'create', 'apps');
+  const canDeleteApp = useAbility('delete', 'apps');
+  const canDuplicateApp = useAbility('create', 'apps');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -222,11 +218,13 @@ export function AppToolbar(props: AppToolbarProps) {
       );
     } else {
       // just the delete button
-      return <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-        <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
-          <HiOutlineTrash size="18px" color={buttonTextColor} />
-        </Button>
-      </Tooltip>;
+      return (
+        <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+          <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+            <HiOutlineTrash size="18px" color={buttonTextColor} />
+          </Button>
+        </Tooltip>
+      );
     }
   }
 

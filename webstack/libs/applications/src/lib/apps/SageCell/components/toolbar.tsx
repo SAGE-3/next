@@ -12,7 +12,7 @@ import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } f
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility } from '@sage3/frontend';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
@@ -28,6 +28,9 @@ export function ToolbarComponent(props: App): JSX.Element {
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+
+  // Abilities
+  const canCreateKernels = useAbility('create', 'kernels');
 
   // User state
   const { user } = useUser();
@@ -139,7 +142,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   return (
     <HStack>
       {myKernels.length === 0 ? (
-        <Button onClick={onOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal" isDisabled={!apiStatus}>
+        <Button onClick={onOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal" isDisabled={!apiStatus || !canCreateKernels}>
           Create Kernel <MdAdd />
         </Button>
       ) : (
@@ -154,7 +157,7 @@ export function ToolbarComponent(props: App): JSX.Element {
           onChange={(e) => selectKernel(e as React.ChangeEvent<HTMLSelectElement>)}
           value={selected?.kernel_id}
           variant={'outline'}
-          isDisabled={selected?.is_private && !access}
+          isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
           {
             //show my kernels

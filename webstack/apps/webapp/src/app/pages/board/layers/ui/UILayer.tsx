@@ -23,6 +23,7 @@ import {
   useConfigStore,
   Clock,
   useUser,
+  useAbility,
 } from '@sage3/frontend';
 
 import {
@@ -43,7 +44,6 @@ import {
   BoardTitle,
   KernelsPanel,
 } from './components';
-import { SAGE3Ability } from '@sage3/shared';
 
 type UILayerProps = {
   boardId: string;
@@ -52,8 +52,7 @@ type UILayerProps = {
 
 export function UILayer(props: UILayerProps) {
   // Abilities
-  const { user } = useUser();
-  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'apps');
+  const canLasso = useAbility('lasso', 'apps');
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);

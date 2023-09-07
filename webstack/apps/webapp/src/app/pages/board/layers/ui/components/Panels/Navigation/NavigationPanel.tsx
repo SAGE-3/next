@@ -11,11 +11,10 @@ import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, Butto
 
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
+import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
-import { SAGE3Ability } from '@sage3/shared';
 
 export interface NavProps {
   fitApps: () => void;
@@ -37,8 +36,8 @@ export function NavigationPanel(props: NavProps) {
   const { user } = useUser();
 
   // Abilities
-  const canOrganize = SAGE3Ability.can(user?.data.userRole, 'update', 'apps');
-  const canDelete = SAGE3Ability.can(user?.data.userRole, 'delete', 'apps');
+  const canOrganize = useAbility('update', 'apps');
+  const canDelete = useAbility('delete', 'apps');
 
   // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');

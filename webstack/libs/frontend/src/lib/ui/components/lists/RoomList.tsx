@@ -23,10 +23,8 @@ import {
 
 import { Board, Room } from '@sage3/shared/types';
 import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
-import { useUser, useAuth } from '@sage3/frontend';
-import { MdAdd, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
-
-import { SAGE3Ability } from '@sage3/shared';
+import { useUser, useAbility } from '@sage3/frontend';
+import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -43,7 +41,7 @@ export function RoomList(props: RoomListProps) {
   const { user } = useUser();
 
   // Abilities
-  const canCreateRoom = SAGE3Ability.can(user?.data.userRole, 'create', 'rooms');
+  const canCreateRoom = useAbility('create', 'rooms');
 
   // Data stores
   const storeError = useRoomStore((state) => state.error);

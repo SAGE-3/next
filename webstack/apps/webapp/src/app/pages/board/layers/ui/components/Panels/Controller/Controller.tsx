@@ -11,9 +11,8 @@ import { HStack, useToast } from '@chakra-ui/react';
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 
-import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser } from '@sage3/frontend';
+import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
-import { SAGE3Ability } from '@sage3/shared';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 export interface ControllerProps {
@@ -29,9 +28,10 @@ export function Controller(props: ControllerProps) {
 
   // Can Annotate
   const { user } = useUser();
-  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'boards');
-  const canCreateApps = SAGE3Ability.can(user?.data.userRole, 'create', 'apps');
-  const canDownload = SAGE3Ability.can(user?.data.userRole, 'download', 'assets');
+  const canAnnotate = useAbility('update', 'boards');
+  const canCreateApps = useAbility('create', 'apps');
+  const canDownload = useAbility('download', 'assets');
+  const canCreateKernels = useAbility('create', 'kernels');
 
   // Panel Store
   const { updatePanel, getPanel, bringPanelForward } = usePanelStore((state) => state);
@@ -112,7 +112,13 @@ export function Controller(props: ControllerProps) {
           />
         )}
 
-        <IconButtonPanel icon={<HiChip />} description="Kernels" isActive={kernels?.show} onClick={() => handleShowPanel(kernels)} />
+        <IconButtonPanel
+          icon={<HiChip />}
+          description="Kernels"
+          isActive={kernels?.show}
+          isDisabled={!canCreateKernels}
+          onClick={() => handleShowPanel(kernels)}
+        />
         <IconButtonPanel
           icon={<MdFolder />}
           description="Assets"

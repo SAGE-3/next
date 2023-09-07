@@ -53,11 +53,11 @@ import {
   EnterBoardModal,
   useHexColor,
   UserSearchModal,
+  useAbility,
 } from '@sage3/frontend';
 import { useEffect, useState } from 'react';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 import { useParams } from 'react-router';
-import { SAGE3Ability } from '@sage3/shared';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -75,8 +75,8 @@ export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
 
   // Abilties
-  const canCreatePlugins = SAGE3Ability.can(user?.data.userRole, 'create', 'plugins');
-  const canUpdateAccount = SAGE3Ability.can(user?.data.userRole, 'update', 'users');
+  const canCreatePlugins = useAbility('create', 'plugins');
+  const canUpdateAccount = useAbility('update', 'users');
 
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();

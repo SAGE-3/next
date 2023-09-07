@@ -13,9 +13,8 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
-import { SAGE3Ability } from '@sage3/shared';
 
 type WhiteboardProps = {
   boardId: string;
@@ -25,7 +24,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
   // Can annotate
-  const canAnnotate = SAGE3Ability.can(user?.data.userRole, 'update', 'boards');
+  const canAnnotate = useAbility('update', 'boards');
 
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);

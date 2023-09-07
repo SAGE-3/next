@@ -13,7 +13,7 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 
 import { SubscriptionCache } from '../utils/subscription-cache';
 import { SAGE3Collection } from './SAGECollection';
-import { checkPermissionsWS, AuthSubject } from './permissions';
+// import { checkPermissionsWS, AuthSubject } from './permissions';
 
 import { URL } from 'node:url';
 
@@ -28,10 +28,10 @@ export async function sageWSRouter<T extends SBJSON>(
   const path = '/api/' + collection.name.toLowerCase();
 
   //  Check permissions on collections
-  if (!checkPermissionsWS(user, message.method, collection.name as AuthSubject)) {
-    socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
-    return;
-  }
+  // if (!checkPermissionsWS(user, message.method, collection.name as AuthSubject)) {
+  //   socket.send(JSON.stringify({ id: message.id, success: false, message: 'Not Allowed' }));
+  //   return;
+  // }
 
   // Create a URL object to parse the route:
   // second argument required because the route is a relative URL but otherwise meaningless

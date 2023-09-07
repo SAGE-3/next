@@ -11,9 +11,8 @@ import { useEffect, useState, useRef } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useAppStore, useUIStore, useUser } from '@sage3/frontend';
 
-import { SAGE3Ability } from '@sage3/shared';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
 
 type BackgroundLayerProps = {
@@ -24,7 +23,7 @@ type BackgroundLayerProps = {
 export function BackgroundLayer(props: BackgroundLayerProps) {
   // Abilities
   const { user } = useUser();
-  const canLasso = SAGE3Ability.can(user?.data.userRole, 'lasso', 'apps');
+  const canLasso = useAbility('lasso', 'apps');
 
   // Apps Store
   const apps = useAppStore((state) => state.apps);

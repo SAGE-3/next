@@ -10,7 +10,7 @@ import { User, UserSchema } from '@sage3/shared/types';
 
 // Actions
 export type Action = ActionArg | 'all';
-export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move' | 'lasso';
+export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move' | 'lasso' | 'execute';
 
 // Roles
 export type Role = RoleArg | 'all';
@@ -18,7 +18,7 @@ export type RoleArg = UserSchema['userRole'];
 
 // Resources
 export type Resource = ResourceArg | 'all';
-export type ResourceArg = 'assets' | 'apps' | 'boards' | 'message' | 'plugins' | 'presence' | 'rooms' | 'users';
+export type ResourceArg = 'assets' | 'apps' | 'boards' | 'message' | 'plugins' | 'presence' | 'rooms' | 'users' | 'kernels';
 
 // Abliity
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -59,12 +59,12 @@ class SAGE3AbilityClass {
   }
 
   // Set the user. Not required.
-  public setUser(user: User) {
+  public setUser(user: User): void {
     this._user = user;
   }
 
   // Check if a user role can perform a specific action ability
-  private checkAbility(role: RoleArg, action: ActionArg, resource: ResourceArg, ability: Ability) {
+  private checkAbility(role: RoleArg, action: ActionArg, resource: ResourceArg, ability: Ability): boolean {
     // Check if the role is allowed
     if (!ability.role.includes('all') && !ability.role.includes(role)) {
       return false;
@@ -81,7 +81,7 @@ class SAGE3AbilityClass {
   }
 
   // Check if the user can perform the action
-  public can(role: RoleArg | undefined, action: ActionArg, resource: ResourceArg) {
+  public can(role: RoleArg | undefined, action: ActionArg, resource: ResourceArg): boolean {
     if (!role) {
       return false;
     }
@@ -92,7 +92,8 @@ class SAGE3AbilityClass {
   }
 
   // Check if the current user can do something
-  public canCurrentUser(action: ActionArg, resource: ResourceArg) {
+  public canCurrentUser(action: ActionArg, resource: ResourceArg): boolean {
+    if (!this._user) return false;
     return this.can(this._user?.data.userRole, action, resource);
   }
 }

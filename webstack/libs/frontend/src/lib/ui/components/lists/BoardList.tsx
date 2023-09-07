@@ -23,9 +23,8 @@ import {
 
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth, useUser } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAbility } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-import { SAGE3Ability } from '@sage3/shared';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;
@@ -55,8 +54,7 @@ export function BoardList(props: BoardListProps) {
   const [search, setSearch] = useState('');
 
   // Abilities
-  const { user } = useUser();
-  const canCreateBoards = SAGE3Ability.can(user?.data.userRole, 'create', 'boards');
+  const canCreateBoards = useAbility('create', 'boards');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');

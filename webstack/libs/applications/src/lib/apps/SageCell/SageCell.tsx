@@ -71,10 +71,9 @@ import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
 
-import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
-import e from 'express';
 
 type YjsClientState = {
   name: string;
@@ -91,6 +90,9 @@ type YjsClientState = {
 function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   if (!user) return <></>;
+
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
 
   // App state
   const s = props.data.state as AppState;
@@ -289,7 +291,7 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const handleExecute = async () => {
-    if (!user || !editorRef.current || !apiStatus || !access) return;
+    if (!user || !editorRef.current || !apiStatus || !access || !canExecuteCode) return;
     updateState(props._id, { code: editorRef.current.getValue() });
     if (!s.kernel) {
       if (toastRef.current) return;
@@ -817,14 +819,14 @@ function AppComponent(props: App): JSX.Element {
                     onClick={handleExecute}
                     aria-label={''}
                     icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
-                    isDisabled={!s.kernel}
+                    isDisabled={!s.kernel || !canExecuteCode}
                   />
                 </Tooltip>
                 <Tooltip hasArrow label="Stop" placement="right-start">
                   <IconButton
                     onClick={handleInterrupt}
                     aria-label={''}
-                    isDisabled={!s.msgId}
+                    isDisabled={!s.msgId || !canExecuteCode}
                     icon={<MdStop size={'1.5em'} color="#008080" />}
                   />
                 </Tooltip>

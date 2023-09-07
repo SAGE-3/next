@@ -9,12 +9,11 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
 
-import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useUser } from '@sage3/frontend';
+import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useAbility } from '@sage3/frontend';
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
 import { FileEntry } from './types';
-import { SAGE3Ability } from '@sage3/shared';
 
 type AssetsPanelProps = {
   boardId: string;
@@ -39,10 +38,9 @@ export function AssetsPanel(props: AssetsPanelProps) {
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { auth } = useAuth();
-  const { user } = useUser();
 
   // Ablities
-  const canUpload = SAGE3Ability.can(user?.data.userRole, 'upload', 'assets');
+  const canUpload = useAbility('upload', 'assets');
 
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
