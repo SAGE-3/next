@@ -66,7 +66,7 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
     },
     update: async (id: string, updates: Partial<PresenceSchema>) => {
       if (!SAGE3Ability.canCurrentUser('update', 'presence')) return;
-      const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', updates);
+      const res = await SocketAPI.sendRESTMessage(`/presence/${id}`, 'PUT', { ...updates, status: 'online' });
       if (!res.success) {
         set({ error: res.message });
       }
