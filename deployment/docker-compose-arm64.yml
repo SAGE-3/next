@@ -55,7 +55,7 @@ services:
       jupyter:
         condition: service_healthy
   fastapi:
-    image: "sage3/fastapi:arm64"
+    image: "ghcr.io/mahdi-b/sagekernelserver:arm64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
