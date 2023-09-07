@@ -799,7 +799,7 @@ function AppComponent(props: App): JSX.Element {
               <Editor
                 // defaultValue={s.code}
                 loading={<Spinner />}
-                options={monacoOptions}
+                options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
                 onMount={handleMount}
                 height={editorHeight && editorHeight > 150 ? editorHeight : 150}
                 width={props.data.size.width - 60}

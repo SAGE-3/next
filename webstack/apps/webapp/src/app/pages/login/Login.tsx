@@ -158,7 +158,7 @@ export function LoginPage() {
           <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
               width="80px"
-              aria-label="Login with Google"
+              aria-label="Login with Guest"
               icon={<FaGhost size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}
@@ -169,11 +169,11 @@ export function LoginPage() {
             </Button>
           </ButtonGroup>
 
-          {/* Guest Auth Service */}
-          <ButtonGroup isAttached size="lg" width="100%">
+          {/* Spectator Auth Service */}
+          {/* <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
               width="80px"
-              aria-label="Login with Google"
+              aria-label="Login with Spectator"
               icon={<FaEye size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}
@@ -182,7 +182,7 @@ export function LoginPage() {
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('spectator')} justifyContent="left" onClick={spectatorLogin}>
               Login as Spectator
             </Button>
-          </ButtonGroup>
+          </ButtonGroup> */}
         </VStack>
       </Box>
     </Box>
