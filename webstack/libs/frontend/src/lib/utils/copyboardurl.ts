@@ -16,5 +16,5 @@ export function getSAGE3BoardUrl(roomId: string, boardId: string): string {
 
 export function copyBoardUrlToClipboard(roomId: string, boardId: string): void {
   const link = getSAGE3BoardUrl(roomId, boardId);
-  navigator.clipboard.writeText(link);
+  if (navigator.clipboard) navigator.clipboard.writeText(link);
 }
