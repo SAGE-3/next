@@ -192,7 +192,7 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-            <Tooltip placement="top" hasArrow={true} label={previousLocation.set ? 'Restore Position' : 'Zoom to App'} openDelay={400} ml="1">
+            <Tooltip placement="top" hasArrow={true} label={previousLocation.set ? 'Zoom Back' : 'Zoom to App'} openDelay={400} ml="1">
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
