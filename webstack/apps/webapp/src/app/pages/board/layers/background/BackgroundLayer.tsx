@@ -6,12 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAbility, useAppStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useAppStore, useUIStore } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
 
@@ -22,7 +22,6 @@ type BackgroundLayerProps = {
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
   // Abilities
-  const { user } = useUser();
   const canLasso = useAbility('lasso', 'apps');
 
   // Apps Store

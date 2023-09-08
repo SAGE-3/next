@@ -22,7 +22,6 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
-  useUser,
   useAbility,
 } from '@sage3/frontend';
 
