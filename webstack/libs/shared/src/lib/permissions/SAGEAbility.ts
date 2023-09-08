@@ -10,7 +10,19 @@ import { User, UserSchema } from '@sage3/shared/types';
 
 // Actions
 export type Action = ActionArg | 'all';
-export type ActionArg = 'create' | 'read' | 'update' | 'delete' | 'upload' | 'download' | 'resize' | 'move' | 'lasso' | 'execute';
+export type ActionArg =
+  | 'create'
+  | 'read'
+  | 'update'
+  | 'delete'
+  | 'upload'
+  | 'download'
+  | 'resize'
+  | 'move'
+  | 'lasso'
+  | 'execute'
+  | 'sub'
+  | 'unsub';
 
 // Roles
 export type Role = RoleArg | 'all';
@@ -31,11 +43,15 @@ const config: AbilityConfig = {
   abilites: [
     { role: ['admin'], resource: ['all'], action: ['all'] },
     { role: ['user'], resource: ['all'], action: ['all'] },
-    { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update'] },
+    { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update', 'sub', 'unsub'] },
     { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
-    { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugins', 'rooms'], action: ['read'] },
+    { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugins', 'rooms'], action: ['read', 'sub', 'unsub'] },
     { role: ['guest'], resource: ['assets'], action: ['upload', 'download'] },
-    { role: ['spectator'], resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users'], action: ['read'] },
+    {
+      role: ['spectator'],
+      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users'],
+      action: ['read', 'sub', 'unsub'],
+    },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },
   ],
 };
