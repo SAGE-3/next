@@ -7,12 +7,8 @@
  */
 
 import * as passport from 'passport';
-//import { Strategy, VerifyCallback } from 'passport-openidconnect';
+import { Strategy, VerifyCallback } from 'passport-openidconnect';
 import { Issuer, custom } from 'openid-client';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const Strategy = require('passport-openidconnect').Strategy;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const VerifyCallback = require('passport-openidconnect').VerifyCallback;
 import { SBAuthDB } from '../SBAuthDatabase';
 
 export type SBAuthCILogonConfig = {
@@ -57,7 +53,7 @@ export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
       'openidconnect',
       new Strategy(
         cilongconfig,
-        async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: typeof VerifyCallback) => {
+        async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: VerifyCallback) => {
           const displayName = profile.displayName;
           const email = profile.emails ? profile.emails[0].value : '';
           const picture = profile.photos ? profile.photos[0].value : '';

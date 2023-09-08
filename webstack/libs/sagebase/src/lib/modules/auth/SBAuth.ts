@@ -7,10 +7,10 @@
  */
 
 import { RedisClientType } from 'redis';
+import RedisStore from 'connect-redis';
+
 import * as passport from 'passport';
 import { Express, NextFunction, Request, Response } from 'express';
-
-import RedisStore from 'connect-redis';
 import * as session from 'express-session';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
