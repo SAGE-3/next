@@ -23,20 +23,25 @@ pip3 install matplotlib plotly
 pip3 install jupyterlab-lsp pyright python-language-server python-lsp-server[all] jupyter_collaboration
 # Getting All the NodeJS-based Language Servers
 jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
-# extras
+# foresight
+pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 
 # 2D extension
 # jupyter nbextension install /conf/2D-Jupyter --user
 # jupyter nbextension enable 2D-Jupyter/2D-Jupyter --user
 
 # Start jupyter: production mode equals SSL (docker will export the port)
-if [ "$ENVIRONMENT" = production ]; then
-  jupyter lab --collaborative --no-browser --IdentityProvider.token="$token" --ServerApp.port=8888 \
-    --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
-    --ServerApp.keyfile=/conf/keys/private-key.key --ServerApp.certfile=/conf/keys/certificate.crt \
-    --notebook-dir="notebooks"
-else
-  jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
-    --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
-    --notebook-dir="notebooks"
-fi
+# if [ "$ENVIRONMENT" = production ]; then
+#   jupyter lab --collaborative --no-browser --IdentityProvider.token="$token" --ServerApp.port=8888 \
+#     --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
+#     --ServerApp.keyfile=/conf/keys/private-key.key --ServerApp.certfile=/conf/keys/certificate.crt \
+#     --notebook-dir="notebooks"
+# else
+#   jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
+#     --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
+#     --notebook-dir="notebooks"
+# fi
+
+jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
+  --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
+  --notebook-dir="notebooks"

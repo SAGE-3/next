@@ -49,6 +49,7 @@ services:
       - "8888:8888"
     environment:
       - ENVIRONMENT=development
+      - SAGE3_SERVER=host.docker.internal
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
