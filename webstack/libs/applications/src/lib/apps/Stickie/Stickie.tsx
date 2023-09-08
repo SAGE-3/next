@@ -8,7 +8,7 @@
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue } from '@chakra-ui/react';
 
 import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -205,6 +205,9 @@ function ToolbarComponent(props: App): JSX.Element {
   const yours = user?._id === props._createdBy;
   const locked = s.lock;
 
+  const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
+  const fontSizeColor = useColorModeValue('white', 'black');
+
   // Larger font size
   function handleIncreaseFont() {
     const fs = s.fontSize + 8;
@@ -264,7 +267,9 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Button p={2} m={0} w={2}>{s.fontSize}</Button>
+          <Box px={2} m={0} height={'24px'} lineHeight={'24px'} fontSize="12px" background={fontSizeBackground} color={fontSizeColor}>
+            {s.fontSize}
+          </Box>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
