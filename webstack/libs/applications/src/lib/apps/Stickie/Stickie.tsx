@@ -263,7 +263,9 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdAdd />
           </Button>
         </Tooltip>
-
+        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Button p={2} m={0} w={2}>{s.fontSize}</Button>
+        </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
             <MdRemove />
@@ -374,7 +376,6 @@ const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
             <MdAdd />
           </Button>
         </Tooltip>
-
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button onClick={() => handleDecreaseFont()}>
             <MdRemove />
