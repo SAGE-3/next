@@ -256,7 +256,12 @@ export function Whiteboard(props: WhiteboardProps) {
   }, { dependencies: [whiteboardMode] }
   );
 
-  return (<div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
+  return (<div className="canvas-container"
+    style={{
+      pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none',
+      touchAction: whiteboardMode && !spacebarPressed ? 'none' : 'auto'
+    }}
+  >
     <svg
       className="canvas-layer"
       style={{

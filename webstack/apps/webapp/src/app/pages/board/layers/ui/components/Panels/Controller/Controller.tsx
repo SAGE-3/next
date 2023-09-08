@@ -52,14 +52,16 @@ export function Controller(props: ControllerProps) {
   // Copy the board id to the clipboard
   const toast = useToast();
   const handleCopyId = async () => {
-    await navigator.clipboard.writeText(props.boardId);
-    toast({
-      title: 'Success',
-      description: `BoardID Copied to Clipboard`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(props.boardId);
+      toast({
+        title: 'Success',
+        description: `BoardID Copied to Clipboard`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   // Show the various panels

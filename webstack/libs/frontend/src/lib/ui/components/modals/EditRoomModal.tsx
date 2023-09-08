@@ -165,7 +165,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Edit Room: {props.room.data.name}</ModalHeader>
         <ModalBody>
           <InputGroup mb={2}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -179,7 +179,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={props.room.data.description}
@@ -201,7 +201,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             Room Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}

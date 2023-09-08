@@ -75,14 +75,16 @@ export function BoardCard(props: BoardCardProps) {
   // Copy the board id to the clipboard
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(props.board._id);
-    toast({
-      title: 'Success',
-      description: `BoardID copied to clipboard.`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(props.board._id);
+      toast({
+        title: 'Success',
+        description: `BoardID copied to clipboard.`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   // Copy a sharable link to the user's os clipboard

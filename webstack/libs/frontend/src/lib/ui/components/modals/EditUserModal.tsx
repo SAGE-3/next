@@ -103,7 +103,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <FormLabel htmlFor="color">Name</FormLabel>
 
             <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
               <Input
                 ref={initialRef}
                 type="string"

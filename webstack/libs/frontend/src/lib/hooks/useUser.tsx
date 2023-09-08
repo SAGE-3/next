@@ -15,7 +15,7 @@
 
 import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { APIHttp } from '../api';
+import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 import { genId } from '@sage3/shared';
 
@@ -54,6 +54,26 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
 
   useEffect(() => {
     fetchUser();
+  }, [auth, fetchUser]);
+
+  useEffect(() => {
+    if (!auth) return;
+    let userSub: (() => void) | null = null;
+    async function SubtoUser() {
+      // Subscribe to user updates since user might login from multiple locations
+      const route = `/users/${auth?.id}`;
+      // Socket Listenting to updates from server about the current board
+      userSub = await SocketAPI.subscribe<User>(route, (message) => {
+        const user = message.doc as User[];
+        setUser(user[0]);
+      });
+    }
+    SubtoUser();
+    return () => {
+      if (userSub) {
+        userSub();
+      }
+    };
   }, [auth]);
 
   /**

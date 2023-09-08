@@ -55,7 +55,6 @@ export function AppWindow(props: WindowProps) {
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  // const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
@@ -249,6 +248,23 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  function handleAppTouchStart(e: PointerEvent) {
+    e.stopPropagation();
+    bringForward();
+    // Set the selected app in the UI store
+    if (appWasDragged) {
+      setAppWasDragged(false);
+    } else {
+      clearSelectedApps();
+      setSelectedApp(props.app._id);
+    }
+  }
+
+  function handleAppTouchMove(e: PointerEvent) {
+    e.stopPropagation();
+    setAppWasDragged(true);
+  }
+
   // Bring the app forward
   function bringForward() {
     if (!props.lockToBackground) {
@@ -276,6 +292,7 @@ export function AppWindow(props: WindowProps) {
       dragHandleClassName="handle"
       size={{ width: size.width, height: size.height }}
       position={pos}
+
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragStop={handleDragStop}
@@ -283,6 +300,11 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+
+      // select an app on touch
+      onPointerDown={handleAppTouchStart}
+      onPointerMove={handleAppTouchMove}
+
       enableResizing={enableResize}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{

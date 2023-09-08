@@ -97,15 +97,17 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     } else if (id === 'copy') {
       // Copy the file URL to the clipboard
       const publicUrl = window.location.origin + apiUrls.assets.getAssetById(file.filename);
-      navigator.clipboard.writeText(publicUrl);
-      // Notify the user
-      toast({
-        title: 'Success',
-        description: `URL Copied to Clipboard`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(publicUrl);
+        // Notify the user
+        toast({
+          title: 'Success',
+          description: `URL Copied to Clipboard`,
+          duration: 3000,
+          isClosable: true,
+          status: 'success',
+        });
+      }
     } else if (id === 'del') {
       if (auth?.provider !== 'guest') {
         // Delete a file
