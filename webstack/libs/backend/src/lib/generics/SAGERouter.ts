@@ -9,6 +9,7 @@
 import * as express from 'express';
 
 import { SBAuthSchema, SBJSON } from '@sage3/sagebase';
+
 import { SAGE3Collection } from './SAGECollection';
 
 // import { checkPermissionsREST, AuthSubject } from './permissions';

@@ -12,10 +12,10 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useAbility } from '@sage3/frontend';
-import { App } from '../../schema';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
+import { App } from '../../schema';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;

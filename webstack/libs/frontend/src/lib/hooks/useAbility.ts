@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ActionArg, ResourceArg, SAGE3Ability } from '@sage3/shared';
 import { useEffect, useState } from 'react';
+
+import { ActionArg, ResourceArg, SAGE3Ability } from '@sage3/shared';
 
 /**
  * React hook to check if the current user can perform an action on a resource

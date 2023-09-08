@@ -28,9 +28,9 @@ const schema = z.object({
   color: z.string(),
   // Picture of the user.
   profilePicture: z.string(),
-  // Type of the user.
+  // Type of the user: wall, client
   userType: UserType,
-  // Role of the user in SAGE3
+  // Role of the user in SAGE3: admin, user, guest, spectator
   userRole: UserRole,
 });
 

@@ -8,19 +8,17 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
-import { Plugin, PluginSchema } from '@sage3/shared/types';
+import { Plugin } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
-import { SAGE3Ability } from '@sage3/shared';
 
 interface PluginState {
   plugins: Plugin[];
@@ -45,7 +43,7 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
     },
     delete: async (id: string) => {
       if (!SAGE3Ability.canCurrentUser('delete', 'plugins')) return;
-      const res = await APIHttp.DELETE('/plugins/remove/' + id);
+      await APIHttp.DELETE('/plugins/remove/' + id);
     },
     upload: async (file: File, name: string, description: string) => {
       if (!SAGE3Ability.canCurrentUser('create', 'plugins')) return;

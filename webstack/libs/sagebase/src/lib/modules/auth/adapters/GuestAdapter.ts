@@ -7,10 +7,10 @@
  */
 
 import * as passport from 'passport';
-
-import { SBAuthDB } from '../SBAuthDatabase';
 import { Strategy } from 'passport-local';
 import { v4 } from 'uuid';
+
+import { SBAuthDB } from '../SBAuthDatabase';
 
 export type SBAuthGuestConfig = {
   routeEndpoint: string;

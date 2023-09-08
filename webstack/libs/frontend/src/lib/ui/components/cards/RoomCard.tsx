@@ -64,7 +64,7 @@ export function RoomCard(props: RoomCardProps) {
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  const handleOnEdit = (e: any) => {
+  const handleOnEdit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onOpenEdit();
   };

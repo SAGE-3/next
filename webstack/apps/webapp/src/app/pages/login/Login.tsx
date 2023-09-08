@@ -11,10 +11,9 @@ import { useEffect, useCallback, useState } from 'react';
 import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useColorModeValue } from '@chakra-ui/react';
 
 import { FcGoogle } from 'react-icons/fc';
-import { FaGhost, FaApple, FaEye } from 'react-icons/fa';
+import { FaGhost, FaApple } from 'react-icons/fa';
 
-import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
-import { GetServerInfo } from '@sage3/frontend';
+import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';

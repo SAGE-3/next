@@ -8,22 +8,19 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
-
-// The observable websocket and HTTP
-import { APIHttp, SocketAPI } from '../api';
-
-import { AppState, AppSchema, App } from '@sage3/applications/schema';
-import { Board } from '@sage3/shared/types';
-
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
+import { AppState, AppSchema, App } from '@sage3/applications/schema';
+import { Board } from '@sage3/shared/types';
 // App intial Values
 import { initialValues } from '@sage3/applications/initialValues';
 import { SAGE3Ability } from '@sage3/shared';
+
+// The observable websocket and HTTP
+import { APIHttp, SocketAPI } from '../api';
 
 interface Applications {
   apps: App[];

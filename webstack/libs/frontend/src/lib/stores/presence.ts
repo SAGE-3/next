@@ -8,17 +8,16 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Presence, PresencePartial, PresenceSchema } from '@sage3/shared/types';
-import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { SAGE3Ability } from '@sage3/shared';
+
+import { APIHttp, SocketAPI } from '../api';
 
 interface PresenceState {
   presences: Presence[];

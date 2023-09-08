@@ -6,6 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+
 import {
   useDisclosure,
   useColorMode,
@@ -20,7 +23,6 @@ import {
   Box,
   IconButton,
   Tooltip,
-  MenuOptionGroup,
   MenuGroup,
 } from '@chakra-ui/react';
 import {
@@ -55,9 +57,7 @@ import {
   UserSearchModal,
   useAbility,
 } from '@sage3/frontend';
-import { useEffect, useState } from 'react';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
-import { useParams } from 'react-router';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -143,9 +143,9 @@ export function MainButton(props: MainButtonProps) {
 
   const [boardListOpen, setBoardListOpen] = useState<boolean>(false);
 
-  const openBoardList = () => {
-    setBoardListOpen(true);
-  };
+  // const openBoardList = () => {
+  //   setBoardListOpen(true);
+  // };
 
   const closeBoardList = () => {
     if (boardListOpen) {

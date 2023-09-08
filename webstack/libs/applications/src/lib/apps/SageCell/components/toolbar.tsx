@@ -13,10 +13,11 @@ import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } f
 import dateFormat from 'date-fns/format';
 
 import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility } from '@sage3/frontend';
+import { KernelInfo } from '@sage3/shared/types';
+
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
-import { KernelInfo } from '@sage3/shared/types';
 
 /**
  * UI toolbar for the SAGEcell application

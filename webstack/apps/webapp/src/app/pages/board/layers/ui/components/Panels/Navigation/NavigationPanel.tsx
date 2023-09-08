@@ -13,8 +13,9 @@ import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove,
 
 import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
+
+import { Panel } from '../Panel';
 
 export interface NavProps {
   fitApps: () => void;

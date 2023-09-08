@@ -7,6 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+
 import { Box, useColorModeValue, Text, Image, Progress } from '@chakra-ui/react';
 
 import {
@@ -23,8 +25,6 @@ import {
   useConfigStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-
-import { useParams } from 'react-router-dom';
 
 export function HomePage() {
   // URL Params

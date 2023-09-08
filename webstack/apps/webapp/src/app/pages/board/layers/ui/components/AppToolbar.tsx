@@ -7,14 +7,14 @@
  */
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
-
 import { ErrorBoundary } from 'react-error-boundary';
+
+import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
+import { HiOutlineTrash } from 'react-icons/hi';
 
 import { useAbility, useAppStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
-import { HiOutlineTrash } from 'react-icons/hi';
 
 type AppToolbarProps = {};
 

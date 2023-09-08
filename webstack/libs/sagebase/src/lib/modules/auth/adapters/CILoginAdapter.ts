@@ -7,8 +7,9 @@
  */
 
 import * as passport from 'passport';
-import { Strategy, VerifyCallback } from 'passport-openidconnect';
 import { Issuer, custom } from 'openid-client';
+import { Strategy, VerifyCallback } from 'passport-openidconnect';
+
 import { SBAuthDB } from '../SBAuthDatabase';
 
 export type SBAuthCILogonConfig = {

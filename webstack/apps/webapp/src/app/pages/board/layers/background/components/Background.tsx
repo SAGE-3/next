@@ -8,38 +8,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Box,
-  Button,
-  useColorModeValue,
-  useToast,
-  ToastId,
-  Modal,
-  useDisclosure,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Popover,
-  PopoverContent,
-  PopoverHeader,
-  PopoverBody,
-  Portal,
-  Center,
+  Box, Button, useColorModeValue, useToast, ToastId,
+  Modal, useDisclosure, ModalOverlay, ModalContent, ModalHeader,
+  ModalBody, ModalFooter, Popover, PopoverContent, PopoverHeader,
+  PopoverBody, Portal, Center,
 } from '@chakra-ui/react';
 
-import { isValidURL, setupApp, useAbility } from '@sage3/frontend';
 import {
-  useUIStore,
-  useAppStore,
-  useUser,
-  useHexColor,
-  useMessageStore,
-  useHotkeys,
-  useCursorBoardPosition,
-  useKeyPress,
-  useAuth,
-  useFiles,
+  useUIStore, useAppStore, useUser, useHexColor, useMessageStore,
+  useHotkeys, useCursorBoardPosition, useKeyPress, useAuth,
+  useFiles, isValidURL, setupApp, useAbility
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -457,9 +435,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'50px 50px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}

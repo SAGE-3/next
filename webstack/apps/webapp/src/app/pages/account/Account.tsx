@@ -7,6 +7,7 @@
  */
 
 import { useEffect } from 'react';
+
 import { CreateUserModal, useAuth, useRouteNav, useUser } from '@sage3/frontend';
 import { UserSchema } from '@sage3/shared/types';
 
@@ -14,7 +15,7 @@ import { UserSchema } from '@sage3/shared/types';
  * Account Creation page when a user first joins the application
  */
 export function AccountPage() {
-  const { auth } = useAuth();
+  // const { auth } = useAuth();
   const { user, create } = useUser();
   const { toHome } = useRouteNav();
 

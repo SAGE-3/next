@@ -7,11 +7,11 @@
  */
 
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Box, Input, InputGroup, InputRightElement, Select, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, Input, InputGroup, InputRightElement, Select, useToast } from '@chakra-ui/react';
+import { MdSearch } from 'react-icons/md';
 
 import { User } from '@sage3/shared/types';
-import { usePresenceStore, UserCard, useRoomStore, useUsersStore } from '@sage3/frontend';
-import { MdSearch } from 'react-icons/md';
+import { UserCard, useRoomStore, useUsersStore } from '@sage3/frontend';
 
 type UserListProps = {
   onUserClick: (user: User) => void;
@@ -65,7 +65,7 @@ export function UserList(props: UserListProps) {
   }, [subToAllRooms]);
 
   // Filter boards with the search string
-  function handleFilterUsers(event: any) {
+  function handleFilterUsers(event: ChangeEvent<HTMLInputElement>) {
     // setSearch(event.target.value);
     // const filBoards = users.filter((room) => room.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
     // setFilteredUsers(filBoards);
@@ -76,10 +76,7 @@ export function UserList(props: UserListProps) {
 
   return (
     <>
-      <Box
-        overflowY="auto"
-        pr="2"
-        mb="2"
+      <Box overflowY="auto" pr="2" mb="2"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -110,9 +107,7 @@ export function UserList(props: UserListProps) {
         </Select>
       </InputGroup>
       <InputGroup>
-        <Input
-          my="2"
-          value={search}
+        <Input my="2" value={search}
           onChange={handleFilterUsers}
           placeholder="Search Users..."
           _placeholder={{ opacity: 1, color: 'gray.600' }}

@@ -10,10 +10,10 @@ import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
+import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
-import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 export interface ControllerProps {
   roomId: string;

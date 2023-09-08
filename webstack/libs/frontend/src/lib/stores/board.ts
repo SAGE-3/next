@@ -8,19 +8,17 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Board, BoardSchema } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
-import { SAGE3Ability } from '@sage3/shared';
 
 interface BoardState {
   boards: Board[];

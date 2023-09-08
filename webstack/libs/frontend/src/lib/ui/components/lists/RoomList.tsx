@@ -8,23 +8,16 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
-  Box,
-  Button,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Select,
-  Text,
-  Tooltip,
-  useColorModeValue,
-  useDisclosure,
-  useToast,
+  Box, Button, Input, InputGroup, InputRightElement, Select,
+  Text, Tooltip, useColorModeValue, useDisclosure, useToast,
 } from '@chakra-ui/react';
-
-import { Board, Room } from '@sage3/shared/types';
-import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
-import { useUser, useAbility } from '@sage3/frontend';
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
+
+import {
+  CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor,
+  usePresenceStore, useRoomStore, useUser, useAbility
+} from '@sage3/frontend';
+import { Board, Room } from '@sage3/shared/types';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -73,7 +66,7 @@ export function RoomList(props: RoomListProps) {
         block: 'start',
       });
     }
-  }, [selRoomCardRef.current]);
+  }, [selRoomCardRef]);
 
   function sortByName(a: Room, b: Room) {
     return a.data.name.localeCompare(b.data.name);
@@ -108,7 +101,7 @@ export function RoomList(props: RoomListProps) {
   }, [storeError]);
 
   // Filter boards with the search string
-  function handleFilterBoards(event: any) {
+  function handleFilterBoards(event: ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value);
     const filBoards = props.rooms.filter(
       (room) =>
@@ -167,12 +160,9 @@ export function RoomList(props: RoomListProps) {
       </Box>
 
       <Box
-        overflowY="scroll"
-        overflowX="hidden"
-        pr="2"
+        overflowY="scroll" overflowX="hidden"
+        pr="2" mt="6" height="100%"
         borderColor={borderColor}
-        mt="6"
-        height="100%"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',

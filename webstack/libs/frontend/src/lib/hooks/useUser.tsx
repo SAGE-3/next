@@ -13,12 +13,13 @@
  * @version 1.0.0
  */
 
-import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+import { User, UserSchema } from '@sage3/shared/types';
+import { genId, SAGE3Ability } from '@sage3/shared';
+
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
-import { SAGE3Ability } from '@sage3/shared';
-import { genId } from '@sage3/shared';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
