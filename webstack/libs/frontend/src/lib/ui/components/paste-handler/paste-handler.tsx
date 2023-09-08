@@ -11,10 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  useToast, useDisclosure,
-  Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center
-} from '@chakra-ui/react';
+import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { isValidURL, setupApp } from '@sage3/frontend';
@@ -37,14 +34,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // User information
   const { user } = useUser();
   const { auth } = useAuth();
-  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+  const { boardCursor: cursorPosition, cursor: mousePosition } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const [validURL, setValidURL] = useState('');
   // Popover
-  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure()
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -209,30 +206,55 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
 
   const createWeblink = () => {
-    createApp(setupApp('WebpageLink', 'WebpageLink', cursorPosition.x, cursorPosition.y, props.roomId, props.boardId,
-      { w: 400, h: 400 }, { url: validURL }));
+    createApp(
+      setupApp(
+        'WebpageLink',
+        'WebpageLink',
+        cursorPosition.x,
+        cursorPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 400, h: 400 },
+        { url: validURL }
+      )
+    );
     popOnClose();
   };
   const createWebview = () => {
-    createApp(setupApp('Webview', 'Webview', cursorPosition.x, cursorPosition.y, props.roomId, props.boardId,
-      { w: 800, h: 1000 }, { webviewurl: validURL }));
+    createApp(
+      setupApp(
+        'Webview',
+        'Webview',
+        cursorPosition.x,
+        cursorPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 800, h: 1000 },
+        { webviewurl: validURL }
+      )
+    );
     popOnClose();
   };
 
-  return <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-    <Portal >
-      <PopoverContent w={"250px"} style={{ position: "absolute", left: dropCursor.x - 125 + "px", top: dropCursor.y - 45 + "px" }}>
-        <PopoverHeader fontSize={"sm"} fontWeight={"bold"}><Center>Create a Link or open URL</Center></PopoverHeader>
-        <PopoverBody>
-          <Center>
-            <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
-              Create Link
-            </Button>
-            <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
-              Open URL
-            </Button></Center>
-        </PopoverBody>
-      </PopoverContent>
-    </Portal>
-  </Popover>;
+  return (
+    <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+      <Portal>
+        <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+          <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+            <Center>Create a Link or open URL</Center>
+          </PopoverHeader>
+          <PopoverBody>
+            <Center>
+              <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
+                Create Link
+              </Button>
+              <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
+                Open URL
+              </Button>
+            </Center>
+          </PopoverBody>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  );
 };

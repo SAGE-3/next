@@ -10,7 +10,18 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
 import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
-import { theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId, SocketAPI, useHexColor, useData } from '@sage3/frontend';
+import {
+  theme,
+  UserProvider,
+  useUser,
+  AuthProvider,
+  useAuth,
+  CheckUrlForBoardId,
+  SocketAPI,
+  useHexColor,
+  useData,
+  CursorBoardPositionProvider,
+} from '@sage3/frontend';
 
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
 import { OpenConfiguration } from '@sage3/shared/types';
@@ -128,7 +139,9 @@ export function App() {
                 element={
                   <ProtectedAuthRoute>
                     <ProtectedUserRoute>
-                      <BoardPage />
+                      <CursorBoardPositionProvider>
+                        <BoardPage />
+                      </CursorBoardPositionProvider>
                     </ProtectedUserRoute>
                   </ProtectedAuthRoute>
                 }

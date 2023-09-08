@@ -87,7 +87,7 @@ export function Alfred(props: props) {
 
   // User
   const { user, accessId } = useUser();
-  const presences = usePresenceStore((state) => state.presences);
+  const { boardCursor } = useCursorBoardPosition();
 
   // Function to create a new app
   const newApplication = (appName: AppName) => {
@@ -127,8 +127,8 @@ export function Alfred(props: props) {
       if (!user) return;
 
       // Get the position of the cursor
-      const me = presences.find((el) => el.data.userId === user._id && el.data.boardId === props.boardId);
-      const pos = me?.data.cursor || { x: 100, y: 100, z: 0 };
+      const cursor = { ...boardCursor, z: 0 };
+      const pos = cursor || { x: 100, y: 100, z: 0 };
       const width = 400;
       const height = 420;
       pos.x -= width / 2;
@@ -209,7 +209,7 @@ export function Alfred(props: props) {
         deleteApp(ids);
       }
     },
-    [user, apps, props.boardId, presences, colorMode]
+    [user, apps, props.boardId, boardCursor, colorMode]
   );
 
   return <AlfredComponent onAction={alfredAction} roomId={props.roomId} boardId={props.boardId} />;
@@ -245,7 +245,7 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   const users = useUsersStore((state) => state.users);
   // check if user is a guest
   const { user } = useUser();
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { cursor: cursorPosition } = useCursorBoardPosition();
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
 

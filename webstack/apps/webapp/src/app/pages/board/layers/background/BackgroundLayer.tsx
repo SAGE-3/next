@@ -21,9 +21,6 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
-  // Apps Store
-  const apps = useAppStore((state) => state.apps);
-  const appsFetched = useAppStore((state) => state.fetched);
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -32,26 +29,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
-  const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
+  const lassoMode = useUIStore((state) => state.lassoMode);
 
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
-
-  // Position board when entering board
-  useEffect(() => {
-    if (appsFetched) {
-      if (apps.length > 0) {
-        fitApps(apps);
-      } else {
-        setBoardPosition({ x: -boardWidth / 2, y: -boardHeight / 2 });
-        setScale(1);
-      }
-    }
-  }, [appsFetched]);
 
   // Drag start of the board
   function handleDragBoardStart() {
@@ -107,7 +91,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
         {/*Lasso */}
-        <Lasso boardId={props.boardId} />
+        {lassoMode && <Lasso boardId={props.boardId} />}
         {/* The board's apps */}
         <Apps />
         {/* Presence of the users */}

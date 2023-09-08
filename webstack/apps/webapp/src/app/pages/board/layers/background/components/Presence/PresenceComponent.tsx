@@ -11,7 +11,7 @@ import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 import { Cursors } from './Cursors';
 import { Viewports } from './Viewports';
-import { User, Presence } from '@sage3/shared/types';
+import { User, Presence, Position, Size } from '@sage3/shared/types';
 
 const SlowUpdateRate = 1000 / 3;
 const MediumUpdateRate = 1000 / 7;
@@ -56,7 +56,7 @@ export function PresenceComponent(props: PresenceProps) {
 
   // Window resize hook
   const { width: winWidth, height: winHeight } = useWindowResize();
-  const { mouseToBoard } = useCursorBoardPosition();
+  const { boardCursor } = useCursorBoardPosition();
 
   // Throttle the Update
   const throttleCursorUpdate = throttle(MediumUpdateRate, (cx: number, cy: number) => {
@@ -64,11 +64,11 @@ export function PresenceComponent(props: PresenceProps) {
       updatePresence(user?._id, { cursor: { x: cx, y: cy, z: 0 } });
     }
   });
-  const throttleViewportUpdate = throttle(MediumUpdateRate, (vx: number, vy: number, vw: number, vh: number) => {
+  const throttleViewportUpdate = throttle(MediumUpdateRate, (viewport: { position: Position; size: Size }) => {
     if (user) {
-      const viewport = { position: { x: vx, y: vy, z: 0 }, size: { width: vw, height: vh, depth: 0 } };
       updatePresence(user?._id, { viewport });
     }
+    setViewport(viewport.position, viewport.size);
   });
 
   // Keep the throttlefunc reference
@@ -77,22 +77,19 @@ export function PresenceComponent(props: PresenceProps) {
 
   // Board Pan, zoom, or Window resize
   useEffect(() => {
-    // Update the local user's viewport value as fast as possible
     const viewport = {
-      position: { x: -boardPosition.x, y: -boardPosition.y },
-      size: { width: winWidth / scale, height: winHeight / scale },
+      position: { x: -boardPosition.x, y: -boardPosition.y, z: 0 },
+      size: { width: winWidth / scale, height: winHeight / scale, depth: 0 },
     };
-    setViewport(viewport.position, viewport.size);
-    throttleViewportUpdateFunc(-boardPosition.x, -boardPosition.y, winWidth / scale, winHeight / scale);
+    throttleViewportUpdateFunc(viewport);
   }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight]);
 
   // Mouse Move
   useEffect(() => {
     if (!boardDragging) {
-      const { x, y } = mouseToBoard();
-      throttleCursorUpdateFunc(x, y);
+      throttleCursorUpdateFunc(boardCursor.x, boardCursor.y);
     }
-  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight, boardDragging, mouseToBoard]);
+  }, [boardCursor.x, boardCursor.y]);
 
   return (
     <>

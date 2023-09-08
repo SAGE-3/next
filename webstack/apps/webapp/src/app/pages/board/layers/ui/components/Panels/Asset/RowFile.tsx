@@ -76,7 +76,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { boardCursor: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
 

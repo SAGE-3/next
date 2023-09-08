@@ -292,7 +292,6 @@ export function AppWindow(props: WindowProps) {
       dragHandleClassName="handle"
       size={{ width: size.width, height: size.height }}
       position={pos}
-
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragStop={handleDragStop}
@@ -300,11 +299,9 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-
       enableResizing={enableResize}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{

@@ -144,6 +144,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
   fitApps: (apps: App[]) => {
+    console.log('fitApps', apps.length);
     if (apps.length <= 0) {
       return;
     }

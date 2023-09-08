@@ -37,7 +37,7 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
-  const userCursor = useCursorBoardPosition();
+  const { boardCursor } = useCursorBoardPosition();
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
@@ -58,7 +58,7 @@ export function Lasso(props: LassoProps) {
 
   // Get initial position
   const mouseDown = () => {
-    const position = userCursor.position;
+    const position = boardCursor;
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
@@ -77,7 +77,7 @@ export function Lasso(props: LassoProps) {
 
   // Get last position
   const mouseMove = () => {
-    const position = userCursor.position;
+    const position = boardCursor;
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);

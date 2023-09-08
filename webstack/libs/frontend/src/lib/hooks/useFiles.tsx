@@ -31,7 +31,7 @@ import {
 import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 
 import { useAssetStore, useAppStore } from '../stores';
-import { useUser } from './useUser';
+import { useUser } from '../providers';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
@@ -74,7 +74,14 @@ export function setupApp(
 
 type UseFiles = {
   uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string) => void;
-  openAppForFile: (fileID: string, fileType: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppSchema | null>;
+  openAppForFile: (
+    fileID: string,
+    fileType: string,
+    xDrop: number,
+    yDrop: number,
+    roomId: string,
+    boardId: string
+  ) => Promise<AppSchema | null>;
 };
 
 /**
@@ -115,7 +122,7 @@ export function useFiles(): UseFiles {
           }
         }
         createBatch(batch);
-        setUploadSuccess([])
+        setUploadSuccess([]);
       }
     }
     openApps();
@@ -187,28 +194,30 @@ export function useFiles(): UseFiles {
             });
           }
         },
-      }).finally(() => {
-        // Some errors with the files
-        if (!filenames) {
-          toast({
-            title: 'Upload with Errors',
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
-          });
-        }
-      }).catch((error: AxiosError) => {
-        // Big error in file handling in backend
-        if (toastIdRef.current) {
-          toast.update(toastIdRef.current, {
-            title: 'Upload',
-            description: 'Upload failed: ' + (error.response?.data || error.code),
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        }
-      });
+      })
+        .finally(() => {
+          // Some errors with the files
+          if (!filenames) {
+            toast({
+              title: 'Upload with Errors',
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          }
+        })
+        .catch((error: AxiosError) => {
+          // Big error in file handling in backend
+          if (toastIdRef.current) {
+            toast.update(toastIdRef.current, {
+              title: 'Upload',
+              description: 'Upload failed: ' + (error.response?.data || error.code),
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          }
+        });
       if (response) {
         // Save the list of uploaded files
         setUploadSuccess(response.data.map((a: any) => a.id));
@@ -226,7 +235,14 @@ export function useFiles(): UseFiles {
   }
 
   // Create an app for a file
-  async function openAppForFile(fileID: string, fileType: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
+  async function openAppForFile(
+    fileID: string,
+    fileType: string,
+    xDrop: number,
+    yDrop: number,
+    roomId: string,
+    boardId: string
+  ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
     if (isGIF(fileType)) {
@@ -353,16 +369,7 @@ export function useFiles(): UseFiles {
             const res = await response.json();
             console.log('Jupyter> notebook created', res);
             // Create a note from the json
-            return setupApp(
-              '',
-              'JupyterLab',
-              xDrop,
-              yDrop,
-              roomId,
-              boardId,
-              { w: 700, h: 700 },
-              { notebook: a.data.originalfilename }
-            );
+            return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
           }
         }
       }

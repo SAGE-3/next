@@ -14,8 +14,9 @@ import { SBDocument } from '@sage3/sagebase';
 import { BoardSchema, Board } from '@sage3/shared/types';
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
-import { useHexColor, useUser, useAuth } from '../../../hooks';
+import { useHexColor } from '../../../hooks';
 import { copyBoardUrlToClipboard } from '@sage3/frontend';
+import { useUser, useAuth } from '../../../providers';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;

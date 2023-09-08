@@ -12,10 +12,11 @@ import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from
 import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 
 import { Board, Room } from '@sage3/shared/types';
-import { useHexColor, useUser } from '../../../hooks';
+import { useHexColor } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 import { EnterRoomModal } from '../modals/EnterRoomModal';
 import { BoardList } from '../lists/BoardList';
+import { useUser } from '../../../providers';
 
 export type RoomCardProps = {
   room: Room;
@@ -43,7 +44,6 @@ export function RoomCard(props: RoomCardProps) {
   useEffect(() => {
     setYours(user?._id === props.room.data.ownerId);
   }, [props.room.data.ownerId, user?._id]);
-
 
   // Can I list the boards: is it mine or not private?
   const [canList, setCanList] = useState(!props.room.data.isPrivate || yours);
@@ -80,7 +80,7 @@ export function RoomCard(props: RoomCardProps) {
   const handleOnEnter = () => {
     // success with password
     setCanList(true);
-  }
+  };
 
   return (
     <>
