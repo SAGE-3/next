@@ -11,7 +11,7 @@ import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, Butto
 
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useThrottledApps, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
@@ -24,7 +24,7 @@ export interface NavProps {
 
 export function NavigationPanel(props: NavProps) {
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottledApps(250);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);

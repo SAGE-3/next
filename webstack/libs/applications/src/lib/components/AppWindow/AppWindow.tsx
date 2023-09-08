@@ -11,7 +11,7 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps } from '@sage3/frontend';
 import { App } from '../../schema';
 
 // Window Components
@@ -35,7 +35,7 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottledApps(250);
   const update = useAppStore((state) => state.update);
   // const updateBatch = useAppStore((state) => state.updateBatch);
 

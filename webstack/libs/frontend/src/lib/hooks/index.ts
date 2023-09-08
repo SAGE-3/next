@@ -16,3 +16,4 @@ export * from './useRouteNav';
 export * from './useWindowResize';
 export * from './usePluginListener';
 export * from './useFiles';
+export * from './useThrottledApps';

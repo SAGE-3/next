@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useThrottledApps, useUIStore } from '@sage3/frontend';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { Applications } from '@sage3/applications/apps';
 
@@ -23,7 +23,7 @@ import { Applications } from '@sage3/applications/apps';
  */
 export function LassoToolbar() {
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottledApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
 

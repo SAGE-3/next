@@ -39,13 +39,22 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
 
+  const [clientCursor, setClientCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const handleCursorUpdate = useCallback((ev: MouseEvent) => setClientCursor({ x: ev.clientX, y: ev.clientY }), []);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleCursorUpdate);
+    return () => window.removeEventListener('mousemove', handleCursorUpdate);
+  }, [handleCursorUpdate]);
+
   // Throttle the Update
-  const throttleUpdate = throttle(30, (mx: number, my: number, cx: number, cy: number) => {
-    setCursor({ x: mx, y: my });
+  const throttleUpdate = throttle(100, (cx: number, cy: number, bx: number, by: number) => {
+    setCursor({ x: cx, y: cy });
     setBoardCursor({
-      x: cx,
-      y: cy,
+      x: bx,
+      y: by,
     });
+    console.log('CursorBoardPositionProvider: window resize');
   });
 
   // Keep the throttlefunc reference
@@ -58,17 +67,11 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     [boardPosition.x, boardPosition.y, scale]
   );
 
-  // Oberver for window resize
   useEffect(() => {
-    console.log('CursorBoardPositionProvider: window resize');
-    const updateCursorPosition = (event: MouseEvent) => {
-      const x = Math.floor(event.clientX / scale - boardPosition.x);
-      const y = Math.floor(event.clientY / scale - boardPosition.y);
-      throttleUpdateFunc(event.clientX, event.clientY, x, y);
-    };
-    window.addEventListener('mousemove', updateCursorPosition);
-    return () => window.removeEventListener('mousemove', updateCursorPosition);
-  }, [boardPosition.x, boardPosition.y, scale, throttleUpdateFunc]);
+    const boardX = Math.floor(clientCursor.x / scale - boardPosition.x);
+    const boardY = Math.floor(clientCursor.y / scale - boardPosition.y);
+    throttleUpdateFunc(clientCursor.x, clientCursor.y, boardX, boardY);
+  }, [boardPosition.x, boardPosition.y, scale, clientCursor.x, clientCursor.y, throttleUpdateFunc]);
 
   return (
     <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>

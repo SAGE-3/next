@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useThrottledApps, useUIStore } from '@sage3/frontend';
 import { Position, Rotation, Size } from '@sage3/shared/types';
 import { App } from '@sage3/applications/schema';
 
@@ -138,7 +138,7 @@ const DrawBox = (props: BoxProps) => {
   const height = Math.abs(props.mousey - props.last_mousey);
 
   // App store
-  const boardApps = useAppStore((state) => state.apps);
+  const boardApps = useThrottledApps(250);
 
   // UI store
   const scale = useUIStore((state) => state.scale);

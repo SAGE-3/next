@@ -13,7 +13,7 @@ import { useParams } from 'react-router';
 import { Box, useToast, Text, Icon } from '@chakra-ui/react';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
-import { useAppStore, useCursorBoardPosition, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useCursorBoardPosition, useHexColor, useHotkeys, useThrottledApps, useUIStore } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppState } from '@sage3/applications/schema';
@@ -22,29 +22,11 @@ import { MdError } from 'react-icons/md';
 import { set } from 'date-fns';
 import { th } from 'date-fns/locale';
 
-function throttledApps(delay: number) {
-  const [apps, setApps] = useState(useAppStore.getState().apps);
-  const updateAppsDebounce = throttle(250, (apps: App[]) => {
-    setApps(apps);
-  });
-  // Keep the reference
-  const updateAppsRef = useCallback(updateAppsDebounce, []);
-  // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
-  useEffect(
-    () =>
-      useAppStore.subscribe((state) => {
-        updateAppsRef(state.apps);
-      }),
-    []
-  );
-  return apps;
-}
-
 // Renders all the apps
 export function Apps() {
   // Apps Store
   // Throttle Apps Update
-  const apps = throttledApps(250);
+  const apps = useThrottledApps(250);
   const appsFetched = useAppStore((state) => state.fetched);
 
   // const deleteApp = useAppStore((state) => state.delete);

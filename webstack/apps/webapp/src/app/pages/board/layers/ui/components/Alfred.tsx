@@ -52,6 +52,7 @@ import {
   useAssetStore,
   useUsersStore,
   useConfigStore,
+  useThrottledApps,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -81,7 +82,7 @@ export function Alfred(props: props) {
   const { colorMode, toggleColorMode } = useColorMode();
 
   // Apps
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottledApps(250);
   const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
 

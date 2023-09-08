@@ -12,7 +12,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { ErrorBoundary } from 'react-error-boundary';
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useThrottledApps, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { duplicate } from 'vega-lite';
 import { BsTrash } from 'react-icons/bs';
@@ -29,7 +29,7 @@ type AppToolbarProps = {};
  */
 export function AppToolbar(props: AppToolbarProps) {
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottledApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
 
@@ -202,11 +202,13 @@ export function AppToolbar(props: AppToolbarProps) {
       );
     } else {
       // just the delete button
-      return <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-        <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
-          <HiOutlineTrash size="18px" color={buttonTextColor} />
-        </Button>
-      </Tooltip>;
+      return (
+        <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+          <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+            <HiOutlineTrash size="18px" color={buttonTextColor} />
+          </Button>
+        </Tooltip>
+      );
     }
   }
 
