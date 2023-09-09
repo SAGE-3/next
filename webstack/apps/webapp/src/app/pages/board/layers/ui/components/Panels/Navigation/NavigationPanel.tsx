@@ -11,7 +11,16 @@ import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, Butto
 
 import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useThrottledApps, useUIStore, useUser } from '@sage3/frontend';
+import {
+  ConfirmModal,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  useScaleThrottle,
+  useThrottledApps,
+  useUIStore,
+  useUser,
+} from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
@@ -29,7 +38,8 @@ export function NavigationPanel(props: NavProps) {
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);
   // UI Store
-  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom, scale } = useUIStore((state) => state);
+  const scale = useScaleThrottle(250);
+  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
 
   // user's viewport

@@ -11,6 +11,11 @@ import { throttle } from 'throttle-debounce';
 import { useState, useCallback, useEffect } from 'react';
 import { useAppStore } from '../stores';
 
+/**
+ * Throttle hook for the apps store to reduce the amount of updates to react
+ * @param delay Delay to the amount of updates from the apps store
+ * @returns
+ */
 export function useThrottledApps(delay: number) {
   const [apps, setApps] = useState(useAppStore.getState().apps);
   const updateAppsDebounce = throttle(250, (apps: App[]) => {

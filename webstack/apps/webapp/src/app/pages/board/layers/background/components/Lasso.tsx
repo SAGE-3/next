@@ -9,7 +9,15 @@
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import { useAppStore, useCursorBoardPosition, useHexColor, useKeyPress, useThrottledApps, useUIStore } from '@sage3/frontend';
+import {
+  useAppStore,
+  useCursorBoardPosition,
+  useHexColor,
+  useKeyPress,
+  useScaleThrottle,
+  useThrottledApps,
+  useUIStore,
+} from '@sage3/frontend';
 import { Position, Rotation, Size } from '@sage3/shared/types';
 import { App } from '@sage3/applications/schema';
 
@@ -141,7 +149,7 @@ const DrawBox = (props: BoxProps) => {
   const boardApps = useThrottledApps(250);
 
   // UI store
-  const scale = useUIStore((state) => state.scale);
+  const scale = useScaleThrottle(250);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
 

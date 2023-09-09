@@ -8,7 +8,7 @@
 
 import React from 'react';
 import { Tag } from '@chakra-ui/react';
-import { useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useHexColor, useScaleThrottle, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
 import { useEffect } from 'react';
@@ -23,7 +23,7 @@ type CursorProps = {
 // Render the User Cursors that belong to the board
 export function Cursors(props: CursorProps) {
   // UI Scale
-  const scale = useUIStore((state) => state.scale);
+  const scale = useScaleThrottle(50);
 
   // Render the cursors
   return (

@@ -54,7 +54,6 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
       x: bx,
       y: by,
     });
-    console.log('CursorBoardPositionProvider: window resize');
   });
 
   // Keep the throttlefunc reference

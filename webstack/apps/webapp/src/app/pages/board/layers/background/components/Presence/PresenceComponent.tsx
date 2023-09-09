@@ -6,7 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCursorBoardPosition, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import {
+  useCursorBoardPosition,
+  usePresenceStore,
+  useScaleThrottle,
+  useUIStore,
+  useUser,
+  useUsersStore,
+  useWindowResize,
+} from '@sage3/frontend';
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 import { Cursors } from './Cursors';
@@ -48,7 +56,7 @@ export function PresenceComponent(props: PresenceProps) {
   });
 
   // UI Store
-  const scale = useUIStore((state) => state.scale);
+  const scale = useScaleThrottle(250);
   const showPresence = useUIStore((state) => state.showPresence);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardDragging = useUIStore((state) => state.boardDragging);

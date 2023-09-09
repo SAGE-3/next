@@ -13,7 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import { useBoardStore, useHotkeys, useKeyPress, useScaleThrottle, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 
 type WhiteboardProps = {
@@ -23,10 +23,10 @@ type WhiteboardProps = {
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
+  const scale = useScaleThrottle(250);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const scale = useUIStore((state) => state.scale);
   const whiteboardMode = useUIStore((state) => state.whiteboardMode);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
@@ -251,38 +251,44 @@ export function Whiteboard(props: WhiteboardProps) {
   });
 
   // Deselect all apps
-  useHotkeys('shift+w', () => {
-    setWhiteboardMode(!whiteboardMode);
-  }, { dependencies: [whiteboardMode] }
+  useHotkeys(
+    'shift+w',
+    () => {
+      setWhiteboardMode(!whiteboardMode);
+    },
+    { dependencies: [whiteboardMode] }
   );
 
-  return (<div className="canvas-container"
-    style={{
-      pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none',
-      touchAction: whiteboardMode && !spacebarPressed ? 'none' : 'auto'
-    }}
-  >
-    <svg
-      className="canvas-layer"
+  return (
+    <div
+      className="canvas-container"
       style={{
-        position: 'absolute',
-        width: boardWidth + 'px',
-        height: boardHeight + 'px',
-        left: 0,
-        top: 0,
-        zIndex: 200,
-        cursor: 'crosshair',
+        pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none',
+        touchAction: whiteboardMode && !spacebarPressed ? 'none' : 'auto',
       }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
     >
-      <g>
-        {/* Lines */}
-        {lines.map((line, i) => (
-          <Line key={i} line={line} scale={scale} />
-        ))}
-      </g>
-    </svg>
-  </div>);
+      <svg
+        className="canvas-layer"
+        style={{
+          position: 'absolute',
+          width: boardWidth + 'px',
+          height: boardHeight + 'px',
+          left: 0,
+          top: 0,
+          zIndex: 200,
+          cursor: 'crosshair',
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <g>
+          {/* Lines */}
+          {lines.map((line, i) => (
+            <Line key={i} line={line} scale={scale} />
+          ))}
+        </g>
+      </svg>
+    </div>
+  );
 }

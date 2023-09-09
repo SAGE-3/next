@@ -6,14 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useState } from 'react';
 
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useUIStore } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
+import { Box } from '@chakra-ui/react';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -68,7 +69,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }
 
   return (
-    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <Box transform={`scale(${scale})`} transformOrigin={'top left'}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd
@@ -100,6 +101,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
       </Rnd>
-    </div>
+    </Box>
   );
 }

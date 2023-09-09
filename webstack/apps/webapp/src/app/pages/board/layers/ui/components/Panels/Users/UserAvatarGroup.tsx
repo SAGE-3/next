@@ -16,7 +16,7 @@ import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-i
 import { MdPerson, MdStop } from 'react-icons/md';
 
 // Sage
-import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore, useScaleThrottle } from '@sage3/frontend';
 import { PresencePartial, User } from '@sage3/shared/types';
 import { useParams } from 'react-router';
 
@@ -25,7 +25,7 @@ function usePresenceCursor() {
   // Me and my current state
   const { user } = useUser();
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useScaleThrottle(250);
 
   // Presences
   const presences = usePresenceStore((state) => state.presences);

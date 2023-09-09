@@ -22,7 +22,7 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const { setBoardPosition, setScale, scale } = useUIStore((state) => state);
+  const { setBoardPosition, setScale } = useUIStore((state) => state);
 
   // Presences
   const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
