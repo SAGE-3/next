@@ -14,6 +14,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
+import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -104,6 +105,7 @@ interface UIState {
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
   fitApps: (apps: App[]) => void;
+  fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
 }
@@ -144,7 +146,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
   fitApps: (apps: App[]) => {
-    console.log('fitApps', apps.length);
     if (apps.length <= 0) {
       return;
     }
@@ -184,6 +185,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       scale: sm,
       boardPosition: { x: bx, y: by },
     }));
+  },
+  fitAllApps: () => {
+    const apps = useAppStore.getState().apps;
+    if (apps.length > 0) {
+      get().fitApps(apps);
+    } else {
+      get().resetBoardPosition();
+    }
   },
   fitArea: (x: number, y: number, w: number, h: number) => {
     // Fit the smaller dimension into the browser size
@@ -247,6 +256,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (!get().boardLocked)
       set((state) => ({ ...state, scale: 1, boardPosition: { x: -get().boardWidth / 2, y: -get().boardHeight / 2 } }));
   },
+
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
   },

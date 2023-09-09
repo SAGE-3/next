@@ -35,7 +35,6 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  if (!selectedApp) return null;
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');

@@ -11,7 +11,7 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps, useScaleThrottle } from '@sage3/frontend';
 import { App } from '../../schema';
 
 // Window Components
@@ -44,7 +44,7 @@ export function AppWindow(props: WindowProps) {
   const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
-  const scale = useUIStore((state) => state.scale);
+  const scale = useScaleThrottle(250);
   const zindex = useUIStore((state) => state.zIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
