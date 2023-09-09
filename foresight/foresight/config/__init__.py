@@ -27,8 +27,8 @@ else:
 config = {
     "production": {
         "seer_server": None,
-        "jupyter_server": f"https://{server}:4443",
-        "jupyter_ws": f"wss://{server}:4443",
+        "jupyter_server": f"http://{server}:8888",
+        "jupyter_ws": f"ws://{server}:8888",
         "redis_server": "redis-server",
         "web_server": f"https://{server}",
         "ws_server": f"wss://{server}",
@@ -43,12 +43,11 @@ config = {
     },
     "development": {
         "seer_server": "http://127.0.0.1:5002",
-        "jupyter_server": "http://localhost",
-        "jupyter_ws": "ws://localhost",
+        "jupyter_server": "http://localhost:8888",
+        "jupyter_ws": "ws://localhost:8888",
         "redis_server": "localhost",
         "web_server": f"http://{server}:3333",
         "ws_server": f"ws://{server}:3333",
-        "flask_server": "http://127.0.0.1:5000/exec"
     },
     "local": {
         "seer_server": "http://127.0.0.1:5002",
