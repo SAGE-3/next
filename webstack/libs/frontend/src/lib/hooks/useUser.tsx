@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -13,15 +13,18 @@
  * @version 1.0.0
  */
 
-import { User, UserSchema } from '@sage3/shared/types';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+
+import { User, UserSchema } from '@sage3/shared/types';
+import { genId, SAGE3Ability } from '@sage3/shared';
+
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
-import { genId } from '@sage3/shared';
 
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
+  exists: false,
   accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
@@ -31,24 +34,34 @@ export function useUser() {
   return useContext(UserContext);
 }
 
+function setAbilityUser(user: User) {
+  SAGE3Ability.setUser(user);
+}
+
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
+  const [exists, setExists] = useState(false);
   const [accessId, setAccessId] = useState(genId());
 
   const fetchUser = useCallback(async () => {
     if (auth) {
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
-        setUser(userResponse.data[0]);
+        const user = userResponse.data[0];
+        setUser(user);
+        setAbilityUser(user);
+        setExists(true);
       } else {
         setUser(undefined);
         setLoading(false);
+        setExists(false);
       }
     } else {
       setUser(undefined);
       setLoading(false);
+      setExists(false);
     }
   }, [auth]);
 
@@ -86,6 +99,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         const userResponse = await APIHttp.POST<User>('/users/create', user);
         if (userResponse.data) {
           setUser(userResponse.data[0]);
+          setExists(true);
         }
       }
     },
@@ -111,5 +125,5 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, update, create, accessId }}>{props.children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ user, loading, exists, update, create, accessId }}>{props.children}</UserContext.Provider>;
 }

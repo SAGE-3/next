@@ -12,7 +12,7 @@ import { v4 } from 'uuid';
 
 import { SBAuthDB } from '../SBAuthDatabase';
 
-export type SBAuthGuestConfig = {
+export type SBAuthSpectatorConfig = {
   routeEndpoint: string;
 };
 
@@ -20,14 +20,14 @@ export type SBAuthGuestConfig = {
  * Setup function of the Local Passport Strategy.
  * @param router The express router
  */
-export function passportGuestSetup(): boolean {
+export function passportSpectatorSetup(): boolean {
   try {
     passport.use(
-      'guest',
+      'spectator',
       new Strategy(async (username: string, password: string, done) => {
         const providerId = v4();
         const extras = { displayName: '', email: '', picture: '' };
-        const authRecord = await SBAuthDB.findOrAddAuth('guest', providerId, extras);
+        const authRecord = await SBAuthDB.findOrAddAuth('spectator', providerId, extras);
         if (authRecord) {
           done(null, authRecord);
         } else {
@@ -35,11 +35,11 @@ export function passportGuestSetup(): boolean {
         }
       })
     );
-    console.log('Guest Login> Setup done');
+    console.log('Spectator Login> Setup done');
     return true;
   } catch (error) {
     console.log(error);
-    console.log('Guest Login> Failed to Connect');
+    console.log('Spectator Login> Failed to Connect');
     return false;
   }
 }

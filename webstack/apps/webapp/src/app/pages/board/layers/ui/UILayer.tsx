@@ -22,6 +22,7 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
+  useAbility,
 } from '@sage3/frontend';
 
 import {
@@ -49,6 +50,9 @@ type UILayerProps = {
 };
 
 export function UILayer(props: UILayerProps) {
+  // Abilities
+  const canLasso = useAbility('lasso', 'apps');
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
@@ -228,7 +232,7 @@ export function UILayer(props: UILayerProps) {
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
-      <LassoToolbar />
+      {canLasso && <LassoToolbar />}
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />

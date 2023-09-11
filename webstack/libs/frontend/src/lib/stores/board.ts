@@ -8,18 +8,17 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Board, BoardSchema } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface BoardState {
   boards: Board[];
@@ -45,18 +44,21 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       set({ error: null });
     },
     create: async (newBoard: BoardSchema) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     update: async (id: string, updates: Partial<BoardSchema>) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -64,6 +66,7 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // TO DO Delete all apps belonging to the board
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'boards')) return;
       set({ boards: [], fetched: false });
       const boards = await APIHttp.QUERY<Board>('/boards', { roomId });
       if (boards.success) {

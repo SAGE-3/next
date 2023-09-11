@@ -58,6 +58,23 @@ async function guestLogin(): Promise<void> {
 }
 
 /**
+ * Endpoint to login with Guest
+ */
+async function spectatorLogin(): Promise<void> {
+  const res = await fetch('/auth/spectator', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username: 'spectator-username', password: 'spectator-pass' }),
+  });
+  if (res.status === 200) {
+    window.location.reload();
+  }
+}
+
+/**
  * Logout the user out of the current session and user
  */
 async function logout(): Promise<void> {
@@ -102,6 +119,7 @@ type AuthenticatedType = {
   appleLogin: () => void;
   ciLogin: () => void;
   guestLogin: () => Promise<void>;
+  spectatorLogin: () => Promise<void>;
 };
 
 const AuthContext = createContext({
@@ -113,15 +131,37 @@ export function useAuth() {
 }
 
 export function AuthProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [auth, setAuth] = useState<AuthenticatedType>({ auth: null, loading: true, expire: 0, verify, logout, googleLogin, appleLogin, ciLogin, guestLogin });
+  const [auth, setAuth] = useState<AuthenticatedType>({
+    auth: null,
+    loading: true,
+    expire: 0,
+    verify,
+    logout,
+    googleLogin,
+    appleLogin,
+    ciLogin,
+    guestLogin,
+    spectatorLogin,
+  });
 
   useEffect(() => {
     async function fetchAuth() {
       const verifyRes = await verify();
       if (verifyRes.auth) {
-        setAuth({ auth: verifyRes.auth, loading: false, expire: verifyRes.expire, verify, logout, googleLogin, appleLogin, ciLogin, guestLogin });
+        setAuth({
+          auth: verifyRes.auth,
+          loading: false,
+          expire: verifyRes.expire,
+          verify,
+          logout,
+          googleLogin,
+          appleLogin,
+          ciLogin,
+          guestLogin,
+          spectatorLogin,
+        });
       } else {
-        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, guestLogin });
+        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin });
       }
     }
 

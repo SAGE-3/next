@@ -8,18 +8,17 @@
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
-import { Asset, AssetSchema } from '@sage3/shared/types';
+import { Asset } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket
 import { AssetHTTPService, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface AssetState {
   assets: Asset[];
@@ -48,6 +47,7 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       }
     },
     subscribe: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'assets')) return;
       const files = await AssetHTTPService.readAll();
       if (files) {
         set({ assets: files });

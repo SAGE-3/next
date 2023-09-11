@@ -10,10 +10,10 @@ import { HStack, useToast } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
-
-import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav } from '@sage3/frontend';
-import { IconButtonPanel, Panel } from '../Panel';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
+
+import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
+import { IconButtonPanel, Panel } from '../Panel';
 
 export interface ControllerProps {
   roomId: string;
@@ -25,6 +25,13 @@ export function Controller(props: ControllerProps) {
   // Rooms Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
+
+  // Can Annotate
+  const { user } = useUser();
+  const canAnnotate = useAbility('update', 'boards');
+  const canCreateApps = useAbility('create', 'apps');
+  const canDownload = useAbility('download', 'assets');
+  const canCreateKernels = useAbility('create', 'kernels');
 
   // Panel Store
   const { updatePanel, getPanel, bringPanelForward } = usePanelStore((state) => state);
@@ -82,7 +89,10 @@ export function Controller(props: ControllerProps) {
   return (
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
-        <IconButtonPanel icon={<MdArrowBack />} isActive={false} onClick={handleHomeClick}
+        <IconButtonPanel
+          icon={<MdArrowBack />}
+          isActive={false}
+          onClick={handleHomeClick}
           description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
         />
 
@@ -91,6 +101,7 @@ export function Controller(props: ControllerProps) {
           icon={<MdApps />}
           description={'Applications'}
           isActive={applications?.show}
+          isDisabled={!canCreateApps}
           onClick={() => handleShowPanel(applications)}
         />
         {props.plugins && (
@@ -98,13 +109,25 @@ export function Controller(props: ControllerProps) {
             icon={<HiPuzzle size="32px" />}
             description="Plugins"
             isActive={plugins?.show}
+            isDisabled={!canCreateApps}
             onClick={() => handleShowPanel(plugins)}
           />
         )}
 
-        <IconButtonPanel icon={<HiChip />} description="Kernels" isActive={kernels?.show} onClick={() => handleShowPanel(kernels)} />
-
-        <IconButtonPanel icon={<MdFolder />} description="Assets" isActive={assets?.show} onClick={() => handleShowPanel(assets)} />
+        <IconButtonPanel
+          icon={<HiChip />}
+          description="Kernels"
+          isActive={kernels?.show}
+          isDisabled={!canCreateKernels}
+          onClick={() => handleShowPanel(kernels)}
+        />
+        <IconButtonPanel
+          icon={<MdFolder />}
+          description="Assets"
+          isActive={assets?.show}
+          onClick={() => handleShowPanel(assets)}
+          isDisabled={!canDownload}
+        />
         <IconButtonPanel
           icon={<MdMap />}
           description="Navigation"
@@ -115,6 +138,7 @@ export function Controller(props: ControllerProps) {
           icon={<BiPencil size="32px" />}
           description="Annotation"
           isActive={annotations?.show}
+          isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
         />
       </HStack>

@@ -11,3 +11,4 @@ export * from './GuestAdapter';
 export * from './JWTAdapter';
 export * from './CILoginAdapter';
 export * from './AppleAdapter';
+export * from './SpectatorAdapter';

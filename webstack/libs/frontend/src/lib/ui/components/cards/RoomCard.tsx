@@ -44,7 +44,6 @@ export function RoomCard(props: RoomCardProps) {
     setYours(user?._id === props.room.data.ownerId);
   }, [props.room.data.ownerId, user?._id]);
 
-
   // Can I list the boards: is it mine or not private?
   const [canList, setCanList] = useState(!props.room.data.isPrivate || yours);
 
@@ -65,7 +64,7 @@ export function RoomCard(props: RoomCardProps) {
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  const handleOnEdit = (e: any) => {
+  const handleOnEdit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     onOpenEdit();
   };
@@ -80,7 +79,7 @@ export function RoomCard(props: RoomCardProps) {
   const handleOnEnter = () => {
     // success with password
     setCanList(true);
-  }
+  };
 
   return (
     <>
@@ -94,7 +93,6 @@ export function RoomCard(props: RoomCardProps) {
         onEnter={handleOnEnter}
       />
       <EditRoomModal isOpen={isOpenEdit} onClose={onCloseEdit} onOpen={onOpenEdit} room={props.room} boards={props.boards} />
-
       <Box
         boxShadow={'md'}
         borderRadius="md"

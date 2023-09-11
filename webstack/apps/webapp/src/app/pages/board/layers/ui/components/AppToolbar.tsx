@@ -13,7 +13,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -60,6 +60,10 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
+
+  //Abilities
+  const canDeleteApp = useAbility('delete', 'apps');
+  const canDuplicateApp = useAbility('create', 'apps');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -191,18 +195,38 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-            <Tooltip placement="top" hasArrow={true} label={(previousLocation.set && previousLocation.app === app._id) ? 'Zoom Back' : 'Zoom to App'} openDelay={400} ml="1">
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
+              openDelay={400}
+              ml="1"
+            >
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
-              <Button onClick={() => duplicate([app._id])} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+              <Button
+                onClick={() => duplicate([app._id])}
+                backgroundColor={commonButtonColors}
+                size="xs"
+                mx="1"
+                p={0}
+                isDisabled={!canDuplicateApp}
+              >
                 <MdCopyAll size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-              <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+              <Button
+                onClick={() => deleteApp(app._id)}
+                backgroundColor={commonButtonColors}
+                size="xs"
+                mr="1"
+                p={0}
+                isDisabled={!canDeleteApp}
+              >
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
@@ -211,11 +235,13 @@ export function AppToolbar(props: AppToolbarProps) {
       );
     } else {
       // just the delete button
-      return <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-        <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
-          <HiOutlineTrash size="18px" color={buttonTextColor} />
-        </Button>
-      </Tooltip>;
+      return (
+        <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+          <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
+            <HiOutlineTrash size="18px" color={buttonTextColor} />
+          </Button>
+        </Tooltip>
+      );
     }
   }
 

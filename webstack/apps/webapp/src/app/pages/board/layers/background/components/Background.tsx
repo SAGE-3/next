@@ -9,22 +9,15 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Box, Button, useColorModeValue, useToast, ToastId,
-  Modal, useDisclosure, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  Popover, PopoverContent, PopoverHeader, PopoverBody, Portal, Center,
+  Modal, useDisclosure, ModalOverlay, ModalContent, ModalHeader,
+  ModalBody, ModalFooter, Popover, PopoverContent, PopoverHeader,
+  PopoverBody, Portal, Center,
 } from '@chakra-ui/react';
 
-import { isValidURL, setupApp } from '@sage3/frontend';
 import {
-  useUIStore,
-  useAppStore,
-  useUser,
-  useHexColor,
-  useMessageStore,
-  useHotkeys,
-  useCursorBoardPosition,
-  useKeyPress,
-  useAuth,
-  useFiles,
+  useUIStore, useAppStore, useUser, useHexColor, useMessageStore,
+  useHotkeys, useCursorBoardPosition, useKeyPress, useAuth,
+  useFiles, isValidURL, setupApp, useAbility
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -51,7 +44,7 @@ export function Background(props: BackgroundProps) {
   // Modal for opening lots of files
   const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
   // Popover
-  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure()
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
   // Hooks
   const { uploadFiles, openAppForFile } = useFiles();
@@ -69,6 +62,9 @@ export function Background(props: BackgroundProps) {
   const { user, accessId } = useUser();
   const { auth } = useAuth();
   const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+
+  // Abilities
+  const canDrop = useAbility('upload', 'assets');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -146,6 +142,15 @@ export function Background(props: BackgroundProps) {
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
+    if (!canDrop) {
+      toast({
+        title: 'Guests and Spectators cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -156,16 +161,6 @@ export function Background(props: BackgroundProps) {
       event.preventDefault();
       event.stopPropagation();
 
-      // Block guests from uploading assets
-      if (auth?.provider === 'guest') {
-        toast({
-          title: 'Guests cannot upload assets',
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {
@@ -348,13 +343,33 @@ export function Background(props: BackgroundProps) {
   }, [isShiftPressed]);
 
   const createWeblink = () => {
-    createApp(setupApp('WebpageLink', 'WebpageLink', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
-      { w: 400, h: 400 }, { url: validURL }));
+    createApp(
+      setupApp(
+        'WebpageLink',
+        'WebpageLink',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 400, h: 400 },
+        { url: validURL }
+      )
+    );
     popOnClose();
   };
   const createWebview = () => {
-    createApp(setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
-      { w: 800, h: 1000 }, { webviewurl: validURL }));
+    createApp(
+      setupApp(
+        'Webview',
+        'Webview',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 800, h: 1000 },
+        { webviewurl: validURL }
+      )
+    );
     popOnClose();
   };
 
@@ -451,9 +466,11 @@ export function Background(props: BackgroundProps) {
       </Modal>
 
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-        <Portal >
-          <PopoverContent w={"250px"} style={{ position: "absolute", left: dropCursor.x - 125 + "px", top: dropCursor.y - 45 + "px" }}>
-            <PopoverHeader fontSize={"sm"} fontWeight={"bold"}><Center>Create a Link or open URL</Center></PopoverHeader>
+        <Portal>
+          <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+            <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+              <Center>Create a Link or open URL</Center>
+            </PopoverHeader>
             <PopoverBody>
               <Center>
                 <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
@@ -461,7 +478,8 @@ export function Background(props: BackgroundProps) {
                 </Button>
                 <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
                   Open URL
-                </Button></Center>
+                </Button>
+              </Center>
             </PopoverBody>
           </PopoverContent>
         </Portal>
