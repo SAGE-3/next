@@ -18,11 +18,11 @@ import { useAppStore } from '../stores';
  */
 export function useThrottledApps(delay: number) {
   const [apps, setApps] = useState(useAppStore.getState().apps);
-  const updateAppsDebounce = throttle(250, (apps: App[]) => {
+  const updateAppsThrottle = throttle(delay, (apps: App[]) => {
     setApps(apps);
   });
   // Keep the reference
-  const updateAppsRef = useCallback(updateAppsDebounce, []);
+  const updateAppsRef = useCallback(updateAppsThrottle, []);
   // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
   useEffect(
     () =>
@@ -31,5 +31,6 @@ export function useThrottledApps(delay: number) {
       }),
     []
   );
+
   return apps;
 }

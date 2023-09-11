@@ -17,7 +17,7 @@ import { useUIStore } from '../stores';
  */
 export function useScaleThrottle(delay: number) {
   const [scale, setScale] = useState(useUIStore.getState().scale);
-  const updateScaleThrottle = throttle(250, (apps: number) => {
+  const updateScaleThrottle = throttle(delay, (apps: number) => {
     setScale(apps);
   });
   // Keep the reference
