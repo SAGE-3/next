@@ -46,7 +46,7 @@ const config: AbilityConfig = {
     { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update', 'sub', 'unsub'] },
     { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
     { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugins', 'rooms'], action: ['read', 'sub', 'unsub'] },
-    { role: ['guest'], resource: ['assets'], action: ['upload', 'download'] },
+    { role: ['guest'], resource: ['assets'], action: ['download'] },
     {
       role: ['spectator'],
       resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users'],

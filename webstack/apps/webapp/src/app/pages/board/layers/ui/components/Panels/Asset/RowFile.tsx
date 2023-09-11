@@ -11,7 +11,6 @@ import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService } from '@sage3/frontend';
 
 import {
   Modal,
@@ -34,7 +33,17 @@ import {
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
-import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
+import {
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition,
+  AssetHTTPService,
+  useAbility,
+} from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
@@ -80,6 +89,11 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   const scale = useUIStore((state) => state.scale);
 
+  // Abilities
+  const canCreateApp = useAbility('create', 'apps');
+  const canDelete = useAbility('delete', 'assets');
+  const canDownload = useAbility('download', 'assets');
+
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
     // @ts-expect-error
@@ -99,8 +113,18 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
     const id = e.currentTarget.id;
     if (id === 'down') {
-      // download a file
-      downloadFile('api/assets/static/' + file.filename, file.originalfilename);
+      if (!canDownload) {
+        toast({
+          title: 'You do not have the permission to download this file',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      } else {
+        // download a file
+        downloadFile('api/assets/static/' + file.filename, file.originalfilename);
+      }
     } else if (id === 'copy') {
       // Copy the file URL to the clipboard
       const publicUrl = window.location.origin + '/api/assets/static/' + file.filename;
@@ -116,12 +140,12 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         });
       }
     } else if (id === 'del') {
-      if (auth?.provider !== 'guest') {
+      if (canDelete) {
         // Delete a file
         onDeleteOpen();
       } else {
         toast({
-          title: 'Guests cannot delete assets',
+          title: 'You do not have the permission to delete this file',
           status: 'warning',
           duration: 3000,
           isClosable: true,
@@ -207,7 +231,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   // Create an app for a file
   const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!user) return;
+    if (!user || !canCreateApp) return;
     // Get around  the center of the board
     const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
     const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
