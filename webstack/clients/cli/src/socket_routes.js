@@ -18,7 +18,6 @@ import { v1 } from 'uuid';
  * @returns
  */
 export function socketConnection(server, cookies) {
-  // socketio options with login info
   const wsopts = {
     withCredentials: true,
     headers: {
@@ -26,23 +25,14 @@ export function socketConnection(server, cookies) {
     },
   };
 
-  // socketio v4 api
   const socket = new WebSocket(server, wsopts);
-
-  // socket.addEventListener('open', (event) => {
-  //   console.log('Connection Open');
-  // });
-
-  // socket.addEventListener('message', (ev) => this.processServerMessage(ev));
 
   socket.addEventListener('close', (event) => {
     console.log('Connection Closed');
-    // this._socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
   });
 
   socket.addEventListener('error', (event) => {
     console.log('Connection Error', event.message);
-    // socket.removeEventListener('message', (ev) => this.processServerMessage(ev));
   });
 
   return socket;
@@ -56,27 +46,23 @@ export function socketConnection(server, cookies) {
  * @returns
  */
 export function socketConnectionJWT(server, token) {
-  // socketio options with token as query parameter in the url: /api/connect-ws/?token=xxx
+  console.log('JWT> socketConnectionJWT', server);
   const wsopts = {
-    path: '/api/connect-ws',
     withCredentials: true,
     // JWT token
-    auth: { token: token },
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
   };
 
-  // socketio v4 api
-  const socket = io(server, wsopts);
+  const socket = new WebSocket(server, wsopts);
 
-  socket.on('disconnect', (e) => {
-    console.log('Socket> disconnect', e);
-    // and quit
-    process.exit(1);
+  socket.addEventListener('close', (event) => {
+    console.log('Connection Closed');
   });
 
-  socket.on('connect_error', (e) => {
-    console.log('Socket> connect_error', e);
-    // and quit
-    process.exit(1);
+  socket.addEventListener('error', (event) => {
+    console.log('Connection Error', event.message);
   });
 
   return socket;

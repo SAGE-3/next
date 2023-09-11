@@ -86,6 +86,7 @@ async function start() {
   };
 
   const me = await loginCreateUser('http://' + params.server, userData);
+  console.log('CLI> Created user', me);
   myID = me._id;
 
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
@@ -96,9 +97,9 @@ async function start() {
   const roomId = params.room;
 
   const boardData = await getBoardsInfo();
-  console.log('CLI> boards', boardData);
+  // console.log('CLI> boards', boardData);
   const roomData = await getRoomsInfo();
-  console.log('CLI> rooms', roomData);
+  // console.log('CLI> rooms', roomData);
 
   // Create a websocket with the auth cookies
   const socket = socketConnection('ws://' + params.server + '/api', cookies);
@@ -108,7 +109,7 @@ async function start() {
     console.log('socket> connected');
 
     // Connect to a specific board
-    console.log('socket> connecting to board', roomId, boardId);
+    // console.log('socket> connecting to board', roomId, boardId);
     boardConnect(socket, myID, roomId, boardId);
 
     // Default size of the board

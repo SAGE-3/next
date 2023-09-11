@@ -36,9 +36,11 @@ export async function loginJWT(server, token) {
       // Store the same token in the axios instance for next requests
       axiosInstance.defaults.headers['Authorization'] = `Bearer ${token}`;
     }
+    return response.data;
   } catch (e) {
     // handle error
     console.log('Error> login', e.message);
+    return null;
   }
 }
 
@@ -69,86 +71,6 @@ export async function getBoards() {
     if (response.data) {
       return response.data.boards;
     }
-  } catch (e) {
-    // handle error
-    console.log('Error>', e.message);
-  }
-}
-
-/**
- * perform an action inside a board
- *
- * @export
- * @param {string} boardId
- * @param {Object} payload
- * @returns
- */
-export async function boardAct(boardId, payload) {
-  try {
-    const response = await axiosInstance.post('/api/boards/act/' + boardId, payload);
-    // handle success
-    console.log('CLI> boardAct:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
-    if (response.data) {
-      console.log('Act>', response.data);
-      return response.data;
-    }
-  } catch (e) {
-    // handle error
-    console.log('Error>', e.message);
-  }
-}
-
-/**
- * move an app
- *
- * @export
- * @param {string} boardId
- * @param {string} appId
- * @param {number} x
- * @param {number} y
- * @returns
- */
-export async function moveApp(boardId, appId, x, y) {
-  try {
-    return await boardAct(boardId, { id: appId, type: 'move', position: { x: x, y: y } });
-  } catch (e) {
-    // handle error
-    console.log('Error>', e.message);
-  }
-}
-
-/**
- * resize an app
- *
- * @export
- * @param {string} boardId
- * @param {string} appId
- * @param {number} x
- * @param {number} y
- * @param {number} width
- * @param {number} height
- * @returns
- */
-export async function resizeApp(boardId, appId, x, y, w, h) {
-  try {
-    return await boardAct(boardId, { id: appId, type: 'resize', position: { x: x, y: y, width: w, height: h } });
-  } catch (e) {
-    // handle error
-    console.log('Error>', e.message);
-  }
-}
-
-/**
- * close an app
- *
- * @export
- * @param {string} boardId
- * @param {string} appId
- * @returns
- */
-export async function closeApp(boardId, appId, x, y) {
-  try {
-    return await boardAct(boardId, { id: appId, type: 'close' });
   } catch (e) {
     // handle error
     console.log('Error>', e.message);
