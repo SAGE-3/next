@@ -13,7 +13,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { useAbility, useAppStore, useHexColor, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -55,6 +55,8 @@ export function AppToolbar(props: AppToolbarProps) {
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
+
+  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
@@ -138,7 +140,8 @@ export function AppToolbar(props: AppToolbarProps) {
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   function moveToApp() {
-    if (app) {
+    if (!app) return;
+    if (previousLocation.app !== app._id || !previousLocation.set) {
       // Scale
       const aW = app.data.size.width + 60; // Border Buffer
       const aH = app.data.size.height + 100; // Border Buffer
@@ -163,6 +166,14 @@ export function AppToolbar(props: AppToolbarProps) {
 
       setBoardPosition({ x, y });
       setScale(zoom);
+
+      // save the previous location
+      setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, app: app._id }));
+    } else {
+      // if action is pressed again, restore the previous location
+      setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
+      setScale(previousLocation.s);
+      setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
     }
   }
 
@@ -184,7 +195,13 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-            <Tooltip placement="top" hasArrow={true} label={'Zoom to App'} openDelay={400} ml="1">
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
+              openDelay={400}
+              ml="1"
+            >
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
