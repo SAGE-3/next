@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useUIStore } from '@sage3/frontend';
+import { useUIStore, useAbility } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
 import { Box } from '@chakra-ui/react';
@@ -22,6 +22,9 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
+  // Abilities
+  const canLasso = useAbility('lasso', 'apps');
+
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -92,7 +95,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
         {/*Lasso */}
-        {lassoMode && <Lasso boardId={props.boardId} />}
+        {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
         {/* The board's apps */}
         <Apps />
         {/* Presence of the users */}

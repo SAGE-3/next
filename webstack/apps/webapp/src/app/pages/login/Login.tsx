@@ -13,14 +13,13 @@ import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost, FaApple } from 'react-icons/fa';
 
-import { isElectron, useAuth, useRouteNav } from '@sage3/frontend';
-import { GetServerInfo } from '@sage3/frontend';
+import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';
 
 export function LoginPage() {
-  const { auth, googleLogin, appleLogin, ciLogin, guestLogin } = useAuth();
+  const { auth, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin } = useAuth();
   const { toHome } = useRouteNav();
   // Server name and list
   const [serverName, setServerName] = useState<string>('');
@@ -158,7 +157,7 @@ export function LoginPage() {
           <ButtonGroup isAttached size="lg" width="100%">
             <IconButton
               width="80px"
-              aria-label="Login with Google"
+              aria-label="Login with Guest"
               icon={<FaGhost size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}

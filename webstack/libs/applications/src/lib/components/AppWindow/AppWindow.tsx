@@ -11,11 +11,11 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps, useScaleThrottle } from '@sage3/frontend';
-import { App } from '../../schema';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps, useScaleThrottle, useAbility } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
+import { App } from '../../schema';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -34,6 +34,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // Can update
+  const canMove = useAbility('move', 'apps');
+  const canResize = useAbility('resize', 'apps');
+
   // App Store
   const apps = useThrottledApps(250);
   const update = useAppStore((state) => state.update);
@@ -302,11 +306,12 @@ export function AppWindow(props: WindowProps) {
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize}
+      enableResizing={enableResize && canResize}
+      disableDragging={!canMove}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
+        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -328,7 +333,6 @@ export function AppWindow(props: WindowProps) {
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      disableDragging={false}
     >
       {/* Title Above app */}
       <WindowTitle size={size} scale={scale} title={props.app.data.title} />

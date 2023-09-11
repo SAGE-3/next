@@ -28,7 +28,6 @@ import {
   Center,
 } from '@chakra-ui/react';
 
-import { isValidURL, setupApp } from '@sage3/frontend';
 import {
   useUIStore,
   useAppStore,
@@ -40,6 +39,9 @@ import {
   useKeyPress,
   useAuth,
   useFiles,
+  isValidURL,
+  setupApp,
+  useAbility,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -84,6 +86,9 @@ export function Background(props: BackgroundProps) {
   const { user, accessId } = useUser();
   const { auth } = useAuth();
   const { cursor, boardCursor } = useCursorBoardPosition();
+
+  // Abilities
+  const canDrop = useAbility('upload', 'assets');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -161,6 +166,15 @@ export function Background(props: BackgroundProps) {
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
+    if (!canDrop) {
+      toast({
+        title: 'Guests and Spectators cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -171,16 +185,6 @@ export function Background(props: BackgroundProps) {
       event.preventDefault();
       event.stopPropagation();
 
-      // Block guests from uploading assets
-      if (auth?.provider === 'guest') {
-        toast({
-          title: 'Guests cannot upload assets',
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {

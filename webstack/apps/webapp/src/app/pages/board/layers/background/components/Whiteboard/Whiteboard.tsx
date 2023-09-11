@@ -13,7 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useBoardStore, useHotkeys, useKeyPress, useScaleThrottle, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useBoardStore, useHotkeys, useKeyPress, useScaleThrottle, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 
 type WhiteboardProps = {
@@ -24,6 +24,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
   const scale = useScaleThrottle(250);
+  // Can annotate
+  const canAnnotate = useAbility('update', 'boards');
+
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -125,7 +128,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc) {
+      if (yLines && yDoc && canAnnotate) {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -254,7 +257,9 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'shift+w',
     () => {
-      setWhiteboardMode(!whiteboardMode);
+      if (canAnnotate) {
+        setWhiteboardMode(!whiteboardMode);
+      }
     },
     { dependencies: [whiteboardMode] }
   );

@@ -13,17 +13,18 @@ import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove,
 
 import {
   ConfirmModal,
-  useAppStore,
+  useAbility,
   useBoardStore,
-  useHexColor,
   useScaleThrottle,
   useThrottledApps,
+  useHexColor,
   useUIStore,
   useUser,
 } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
+
+import { Panel } from '../Panel';
 
 export interface NavProps {
   fitApps: () => void;
@@ -42,8 +43,14 @@ export function NavigationPanel(props: NavProps) {
   const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
 
-  // user's viewport
+  // User viewport
   const { user } = useUser();
+
+  // Abilities
+  const canOrganize = useAbility('update', 'apps');
+  const canDelete = useAbility('delete', 'apps');
+
+  // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
   const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
   const userViewport = useUIStore((state) => state.viewport);
@@ -229,14 +236,29 @@ export function NavigationPanel(props: NavProps) {
                 />
               </Tooltip>
               <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+                <IconButton
+                  icon={<MdDelete />}
+                  colorScheme="teal"
+                  size="sm"
+                  aria-label="clear"
+                  onClick={props.clearBoard}
+                  isDisabled={!canDelete}
+                />
               </Tooltip>
             </Box>
 
             {/* Organize Apps and Fit View */}
             <Box display="flex" mb="2">
               <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
+                <IconButton
+                  icon={<MdGridView />}
+                  onClick={organizeOnOpen}
+                  colorScheme="teal"
+                  mr="2"
+                  size="sm"
+                  aria-label="clear"
+                  isDisabled={!canOrganize}
+                />
               </Tooltip>
               <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
                 <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />

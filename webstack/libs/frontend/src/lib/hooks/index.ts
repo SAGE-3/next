@@ -18,3 +18,4 @@ export * from './usePluginListener';
 export * from './useFiles';
 export * from './useThrottledApps';
 export * from './useScaleThrottle';
+export * from './useAbility';
