@@ -167,21 +167,6 @@ export function LoginPage() {
               Login as Guest
             </Button>
           </ButtonGroup>
-
-          {/* Spectator Auth Service */}
-          {/* <ButtonGroup isAttached size="lg" width="100%">
-            <IconButton
-              width="80px"
-              aria-label="Login with Spectator"
-              icon={<FaEye size="30" width="50px" />}
-              pointerEvents="none"
-              borderRight={`3px solid`}
-              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
-            />
-            <Button width="100%" isDisabled={shouldDisable || !logins.includes('spectator')} justifyContent="left" onClick={spectatorLogin}>
-              Login as Spectator
-            </Button>
-          </ButtonGroup> */}
         </VStack>
       </Box>
     </Box>

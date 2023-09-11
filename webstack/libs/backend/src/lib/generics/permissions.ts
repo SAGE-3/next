@@ -76,7 +76,6 @@ export function checkPermissionsREST(subj: AuthSubject): Middleware {
     const action = convertMethodToAction(req.method as AuthAction);
     // Convert Subject to Resource
     const resource = subj.toLowerCase() as ResourceArg;
-    console.log(role, action, resource);
     if (SAGE3Ability.can(role, action, resource)) {
       // role is allowed, so continue on the next middleware
       next();
@@ -95,7 +94,6 @@ export function checkPermissionsWS(auth: SBAuthSchema, act: AuthAction, subj: Au
   const action = convertMethodToAction(act);
   // Convert Subject to Resource
   const resource = subj.toLowerCase() as ResourceArg;
-  console.log(role, action, resource);
 
   //  Check permissions for ws
   const perm = SAGE3Ability.can(role, action, resource);

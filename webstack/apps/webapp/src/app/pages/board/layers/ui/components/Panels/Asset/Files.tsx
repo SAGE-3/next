@@ -31,7 +31,7 @@ import {
   ModalOverlay,
 } from '@chakra-ui/react';
 
-import { SAGE3Ability, getExtension } from '@sage3/shared';
+import { getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
 import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
 import { FileEntry } from './types';
