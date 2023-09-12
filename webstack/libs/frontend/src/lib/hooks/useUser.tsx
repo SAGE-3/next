@@ -73,6 +73,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       // Socket Listenting to updates from server about the current board
       userSub = await SocketAPI.subscribe<User>(route, (message) => {
         const user = message.doc as User[];
+        setAbilityUser(user[0]);
         setUser(user[0]);
       });
     }
