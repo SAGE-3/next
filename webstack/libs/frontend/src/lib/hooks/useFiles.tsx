@@ -8,6 +8,8 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
+// Upload with axios and progress event
+import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 
 // File information
 import {
@@ -26,16 +28,13 @@ import {
   isGIF,
   isPythonNotebook,
 } from '@sage3/shared';
-
-// Upload with axios and progress event
-import axios, { AxiosProgressEvent, AxiosError } from 'axios';
-
-import { useAssetStore, useAppStore } from '../stores';
-import { useUser } from '../providers';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+
+import { useAssetStore, useAppStore } from '../stores';
 import { GetConfiguration } from '../config';
+import { useUser } from '../providers';
 
 /**
  * Setup data structure to open an application

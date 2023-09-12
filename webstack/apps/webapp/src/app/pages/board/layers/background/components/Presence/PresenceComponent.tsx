@@ -6,12 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCursorBoardPosition, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
+
+import { useCursorBoardPosition, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import { User, Presence, Position, Size } from '@sage3/shared/types';
+
 import { Cursors } from './Cursors';
 import { Viewports } from './Viewports';
-import { User, Presence, Position, Size } from '@sage3/shared/types';
 
 const SlowUpdateRate = 1000 / 3;
 const MediumUpdateRate = 1000 / 7;

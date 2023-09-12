@@ -16,8 +16,6 @@ import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { isValidURL, setupApp } from '@sage3/frontend';
 
-import { initialValues } from '@sage3/applications/initialValues';
-
 type PasteProps = {
   boardId: string;
   roomId: string;
@@ -149,19 +147,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
-          // Create a webpagelink app
-          // createApp({
-          //   title: 'WebpageLink',
-          //   roomId: props.roomId,
-          //   boardId: props.boardId,
-          //   position: { x: xDrop, y: yDrop, z: 0 },
-          //   size: { width: 400, height: 400, depth: 0 },
-          //   rotation: { x: 0, y: 0, z: 0 },
-          //   type: 'WebpageLink',
-          //   state: { ...initialValues['WebpageLink'], url: isValid },
-          //   raised: true,
-          //   dragging: false,
-          // });
           setValidURL(isValid);
           popOnOpen();
         } else if (pastedText.startsWith('sage3://')) {

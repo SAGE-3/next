@@ -8,11 +8,12 @@
 
 // React
 import { useEffect } from 'react';
+import { useParams } from 'react-router';
+
+import { Button, useToast } from '@chakra-ui/react';
 
 // Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
-import { useParams } from 'react-router';
-import { Button, useToast } from '@chakra-ui/react';
 
 export function PresenceFollow() {
   // BoardId

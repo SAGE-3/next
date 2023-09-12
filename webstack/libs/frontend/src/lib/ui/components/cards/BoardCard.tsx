@@ -10,12 +10,13 @@ import { useState, useEffect } from 'react';
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
 import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
-import { SBDocument } from '@sage3/sagebase';
+import { copyBoardUrlToClipboard } from '@sage3/frontend';
 import { BoardSchema, Board } from '@sage3/shared/types';
+import { SBDocument } from '@sage3/sagebase';
+
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
 import { useHexColor } from '../../../hooks';
-import { copyBoardUrlToClipboard } from '@sage3/frontend';
 import { useUser, useAuth } from '../../../providers';
 
 export type BoardCardProps = {

@@ -6,11 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { throttle } from 'throttle-debounce';
 import { useState, useCallback, useEffect } from 'react';
-import { usePresenceStore, useUsersStore } from '../stores';
+import { throttle } from 'throttle-debounce';
+
 import { Presence, User } from '@sage3/shared/types';
-import { useUser } from '@sage3/frontend';
+
+import { usePresenceStore, useUsersStore } from '../stores';
 
 type UserAndPresence = { presence: Presence; user: User };
 

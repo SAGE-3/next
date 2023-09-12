@@ -6,9 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { App } from '@sage3/applications/schema';
-import { throttle } from 'throttle-debounce';
 import { useState, useCallback, useEffect } from 'react';
+import { throttle } from 'throttle-debounce';
+
+import { App } from '@sage3/applications/schema';
+
 import { useAppStore } from '../stores';
 
 /**

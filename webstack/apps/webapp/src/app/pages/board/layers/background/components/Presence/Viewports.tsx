@@ -6,10 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import React from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
+
 import { useHexColor, useThrottleScale } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
-import React from 'react';
+
 import { Awareness } from './PresenceComponent';
 
 type ViewportProps = {

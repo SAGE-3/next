@@ -27,6 +27,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { RoomSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+
 import { useRoomStore, useConfigStore } from '../../../stores';
 import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';

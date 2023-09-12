@@ -8,12 +8,13 @@
 
 // The React version of Zustand
 import create from 'zustand';
-
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
+
 import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%

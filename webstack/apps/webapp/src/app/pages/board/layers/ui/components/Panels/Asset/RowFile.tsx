@@ -44,7 +44,9 @@ import {
   AssetHTTPService,
   useAbility,
 } from '@sage3/frontend';
+
 import { getExtension } from '@sage3/shared';
+
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 import './menu.scss';

@@ -8,6 +8,7 @@
 
 // React
 import { useCallback } from 'react';
+import { useParams } from 'react-router';
 
 // Theme and icons
 import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
@@ -17,7 +18,6 @@ import { MdPerson, MdStop } from 'react-icons/md';
 
 // Sage
 import { usePresenceStore, useUser, initials, useHexColor, useUIStore, useThrottlePresenceUsers } from '@sage3/frontend';
-import { useParams } from 'react-router';
 import { Presence, User } from '@sage3/shared/types';
 
 // Hook to change your view to another user's viewport

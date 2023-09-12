@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { Box } from '@chakra-ui/react';
 
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
@@ -14,7 +15,6 @@ import { DraggableData, Rnd } from 'react-rnd';
 import { useUIStore, useAbility } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
-import { Box } from '@chakra-ui/react';
 
 type BackgroundLayerProps = {
   boardId: string;

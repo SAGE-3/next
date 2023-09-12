@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { useParams } from 'react-router';
 import {
   Modal,
   ModalOverlay,
@@ -23,9 +24,9 @@ import {
 } from '@chakra-ui/react';
 
 import { KernelInfo } from '@sage3/shared/types';
+
 import { useKernelStore } from '../../../stores';
 import { useUser } from '../../../providers';
-import { useParams } from 'react-router';
 
 interface CreateKernelModalProps {
   isOpen: boolean;

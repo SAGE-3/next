@@ -6,11 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
+import { throttle } from 'throttle-debounce';
 
 import { Box, useToast, Text, Icon } from '@chakra-ui/react';
+import { MdError } from 'react-icons/md';
 
 import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
 import {
@@ -25,10 +27,6 @@ import {
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppState } from '@sage3/applications/schema';
-import { throttle } from 'throttle-debounce';
-import { MdError } from 'react-icons/md';
-import { set } from 'date-fns';
-import { th } from 'date-fns/locale';
 
 // Renders all the apps
 export function Apps() {

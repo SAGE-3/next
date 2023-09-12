@@ -23,7 +23,7 @@ import {
 
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAbility, useThrottlePresenceUsers } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, useAbility, useThrottlePresenceUsers } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {

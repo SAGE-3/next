@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { throttle } from 'throttle-debounce';
 import { useState, useCallback, useEffect } from 'react';
+import { throttle } from 'throttle-debounce';
+
 import { useUIStore } from '../stores';
 
 /**

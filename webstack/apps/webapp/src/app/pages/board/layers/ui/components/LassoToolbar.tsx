@@ -9,10 +9,9 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
+import { HiOutlineTrash } from 'react-icons/hi';
 
 import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
-import { HiOutlineTrash } from 'react-icons/hi';
-import { Applications } from '@sage3/applications/apps';
 
 /**
  * Lasso Toolbar Component

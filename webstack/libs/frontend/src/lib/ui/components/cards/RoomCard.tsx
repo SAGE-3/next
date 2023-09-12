@@ -8,10 +8,10 @@
 
 import { useEffect, useState } from 'react';
 import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
-
 import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 
 import { Board, Room } from '@sage3/shared/types';
+
 import { useHexColor } from '../../../hooks';
 import { EditRoomModal } from '../modals/EditRoomModal';
 import { EnterRoomModal } from '../modals/EnterRoomModal';

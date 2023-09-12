@@ -6,13 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tag } from '@chakra-ui/react';
-import { useHexColor, useThrottleScale, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
-import { useEffect } from 'react';
 import { GiArrowCursor } from 'react-icons/gi';
+
+import { useHexColor, useThrottleScale } from '@sage3/frontend';
+import { PresenceSchema } from '@sage3/shared/types';
+
 import { Awareness } from './PresenceComponent';
 
 type CursorProps = {
