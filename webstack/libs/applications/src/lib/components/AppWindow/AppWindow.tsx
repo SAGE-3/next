@@ -62,11 +62,13 @@ export function AppWindow(props: WindowProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
-  const isGrouped = selectedApps.includes(props.app._id);
 
+  // Lasso Information
   const lassoMode = useUIStore((state) => state.lassoMode);
   const deltaPosition = useUIStore((state) => state.deltaPos);
   const setDeltaPosition = useUIStore((state) => state.setDeltaPostion);
+  const isGrouped = selectedApps.includes(props.app._id);
+  const isGroupLeader = props.app._id == deltaPosition.id;
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
@@ -115,14 +117,13 @@ export function AppWindow(props: WindowProps) {
     }
   }, [storeError]);
 
-  // Group Delta Change
+  // Lasso Group Delta Change
   useEffect(() => {
-    if (isGrouped) {
-      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
-        const x = props.app.data.position.x + deltaPosition.p.x;
-        const y = props.app.data.position.y + deltaPosition.p.y;
-        setPos({ x, y });
-      }
+    // If the delta position changes, update the local state if you are grouped and not the leader
+    if (isGrouped && !isGroupLeader) {
+      const x = props.app.data.position.x + deltaPosition.p.x;
+      const y = props.app.data.position.y + deltaPosition.p.y;
+      setPos({ x, y });
     }
   }, [deltaPosition]);
 
@@ -142,7 +143,7 @@ export function AppWindow(props: WindowProps) {
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
     setAppWasDragged(true);
-    if (isGrouped) {
+    if (isGrouped && isGroupLeader) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
       setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
@@ -160,7 +161,9 @@ export function AppWindow(props: WindowProps) {
     setPos({ x, y });
     setAppDragging(false);
 
-    if (isGrouped) {
+    // Update the position of the app in the server and all the other apps in the group
+    // If the app is grouped and the leader, update all the apps in the group
+    if (isGrouped && isGroupLeader) {
       // Array of update to batch at once
       const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
       // Iterate through all the selected apps
