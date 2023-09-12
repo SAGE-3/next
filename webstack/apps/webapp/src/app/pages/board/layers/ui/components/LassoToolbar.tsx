@@ -11,7 +11,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, Men
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { ConfirmModal, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
 
 /**
  * Lasso Toolbar Component
@@ -47,6 +47,10 @@ export function LassoToolbar() {
 
   // Modal disclosure for the Close selected apps
   const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
+
+  // Abiities
+  const canDeleteApp = useAbility('delete', 'apps');
+  const canDuplicateApp = useAbility('create', 'apps');
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -122,14 +126,14 @@ export function LassoToolbar() {
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps'} openDelay={400}>
-                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDuplicateApp}>
                   <MdCopyAll />
                 </Button>
               </Tooltip>
 
               <Menu preventOverflow={false} placement={'top'}>
                 <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
-                  <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'}>
+                  <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'} isDisabled={!canDuplicateApp}>
                     <MdSend />
                   </MenuButton>
                 </Tooltip>
@@ -145,7 +149,7 @@ export function LassoToolbar() {
               </Menu>
 
               <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
