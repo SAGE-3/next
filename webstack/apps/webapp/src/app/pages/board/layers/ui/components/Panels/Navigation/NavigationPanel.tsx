@@ -15,8 +15,8 @@ import {
   ConfirmModal,
   useAbility,
   useBoardStore,
-  useScaleThrottle,
-  useThrottledApps,
+  useThrottleScale,
+  useThrottleApps,
   useHexColor,
   useUIStore,
   useUser,
@@ -34,12 +34,12 @@ export interface NavProps {
 
 export function NavigationPanel(props: NavProps) {
   // App Store
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);
   // UI Store
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
 

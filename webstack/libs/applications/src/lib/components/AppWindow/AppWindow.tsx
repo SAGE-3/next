@@ -11,7 +11,7 @@ import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps, useScaleThrottle, useAbility } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
@@ -39,7 +39,7 @@ export function AppWindow(props: WindowProps) {
   const canResize = useAbility('resize', 'apps');
 
   // App Store
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const update = useAppStore((state) => state.update);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
@@ -48,7 +48,7 @@ export function AppWindow(props: WindowProps) {
   const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   const zindex = useUIStore((state) => state.zIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
@@ -162,13 +162,13 @@ export function AppWindow(props: WindowProps) {
 
     if (isGrouped) {
       // Array of update to batch at once
-      const ps: Array<{ id: string, updates: Partial<AppSchema> }> = [];
+      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
       // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
         const p = app.data.position;
-        ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z, } } });
+        ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
       });
       // Update all the apps at once
       updateBatch(ps);

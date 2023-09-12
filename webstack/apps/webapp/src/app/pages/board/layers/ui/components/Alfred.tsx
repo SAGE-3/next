@@ -52,8 +52,8 @@ import {
   useAssetStore,
   useUsersStore,
   useConfigStore,
-  useThrottledApps,
-  useScaleThrottle,
+  useThrottleApps,
+  useThrottleScale,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -75,7 +75,7 @@ export function Alfred(props: props) {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // UI
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
@@ -83,7 +83,7 @@ export function Alfred(props: props) {
   const { colorMode, toggleColorMode } = useColorMode();
 
   // Apps
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
 

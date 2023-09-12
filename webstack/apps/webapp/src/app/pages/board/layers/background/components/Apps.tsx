@@ -18,8 +18,8 @@ import {
   useCursorBoardPosition,
   useHexColor,
   useHotkeys,
-  useScaleThrottle,
-  useThrottledApps,
+  useThrottleScale,
+  useThrottleApps,
   useUIStore,
 } from '@sage3/frontend';
 
@@ -34,7 +34,7 @@ import { th } from 'date-fns/locale';
 export function Apps() {
   // Apps Store
   // Throttle Apps Update
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const appsFetched = useAppStore((state) => state.fetched);
 
   const deleteApp = useAppStore((state) => state.delete);
@@ -43,7 +43,7 @@ export function Apps() {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
   // Save the previous location and scale when zoming to an application
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);

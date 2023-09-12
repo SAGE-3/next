@@ -15,7 +15,7 @@ import { useUIStore } from '../stores';
  * @param delay Delay to the amount of updates from the ui store
  * @returns
  */
-export function useScaleThrottle(delay: number) {
+export function useThrottleScale(delay: number) {
   const [scale, setScale] = useState(useUIStore.getState().scale);
   const updateScaleThrottle = throttle(delay, (apps: number) => {
     setScale(apps);

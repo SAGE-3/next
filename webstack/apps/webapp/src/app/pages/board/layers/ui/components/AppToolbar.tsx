@@ -13,7 +13,7 @@ import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react'
 import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { useAbility, useAppStore, useHexColor, useThrottledApps, useUIStore } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -27,7 +27,7 @@ type AppToolbarProps = {};
  */
 export function AppToolbar(props: AppToolbarProps) {
   // App Store
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
 
