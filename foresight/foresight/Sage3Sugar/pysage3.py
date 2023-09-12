@@ -26,8 +26,8 @@ from foresight.json_templates.templates import create_app_template
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
 
-class PySage3:
 
+class PySage3:
     def __init__(self, conf, prod_type):
         print("Configuring ps3 client ... ")
 
@@ -44,14 +44,13 @@ class PySage3:
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
 
-        self.socket.subscribe(['/api/apps', '/api/rooms', '/api/boards'])
+        self.socket.subscribe(["/api/apps", "/api/rooms", "/api/boards"])
         # Grab and load info already on the board
         self.__populate_existing()
         self.room = None
         self.board = None
         self.done_init = True
         print("Completed configuring Sage3 Client")
-
 
     def __populate_existing(self):
         rooms_info = self.s3_comm.get_rooms()
@@ -77,16 +76,16 @@ class PySage3:
                 raise Exception("Smartbit not supported in interactive mode")
 
             # just try to create to see if it's going to raise an error
-            _ = SmartBitFactory.create_smartbit({
-                "_id":str(uuid.uuid4()),
-                "data": create_app_template,
-                "state": create_app_template["state"]
-            })
+            _ = SmartBitFactory.create_smartbit(
+                {
+                    "_id": str(uuid.uuid4()),
+                    "data": create_app_template,
+                    "state": create_app_template["state"],
+                }
+            )
             self.s3_comm.create_app(create_app_template)
         except Exception as e:
             print(f"Err or during creation of app {e}")
-
-
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
@@ -100,13 +99,16 @@ class PySage3:
                 self.rooms[new_board.roomId].boards[new_board.id] = new_board
         elif collection == "APPS":
             doc["state"] = doc["data"]["state"]
-            del (doc["data"]["state"])
+            del doc["data"]["state"]
             smartbit = SmartBitFactory.create_smartbit(doc)
             room_id = doc["data"]["roomId"]
             board_id = doc["data"]["boardId"]
             if room_id in self.rooms:
-                if board_id in self.rooms[room_id].boards:
-                    self.rooms[room_id].boards[board_id].smartbits[smartbit.app_id] = smartbit
+                if board_id in self.rooms[room_id].boards and smartbit:
+                    print(f"Adding app", smartbit)
+                    self.rooms[room_id].boards[board_id].smartbits[
+                        smartbit.app_id
+                    ] = smartbit
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
@@ -117,17 +119,16 @@ class PySage3:
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
         elif collection == "BOARDS":
-            room_id = doc['data']['roomId']
+            room_id = doc["data"]["roomId"]
             # TODO: proceed to BOARD update with the updates field passed as param
         elif collection == "APPS":
-            board_id = doc['data']["boardId"]
-            room_id = doc['data']['roomId']
+            board_id = doc["data"]["boardId"]
+            room_id = doc["data"]["roomId"]
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if sb is not None and type(sb) is not GenericSmartBit:
                 # Note that set_data_form_update clear touched field
                 sb.refresh_data_form_update(doc, updates)
-
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
@@ -137,12 +138,12 @@ class PySage3:
         message = json.loads(msg)
         # Duplicate messages for the time being to allow python to work
         # event.doc is now an array of docs
-        for doc in message['event']['doc']:
+        for doc in message["event"]["doc"]:
             msg = message.copy()
-            msg['event']['doc'] = doc
-        # End of duplicating messages so old code can work
-            collection = msg["event"]['col']
-            doc = msg['event']['doc']
+            msg["event"]["doc"] = doc
+            # End of duplicating messages so old code can work
+            collection = msg["event"]["col"]
+            doc = msg["event"]["doc"]
             msg_type = msg["event"]["type"]
             app_id = doc["_id"]
 
@@ -155,16 +156,20 @@ class PySage3:
             # Its an update message
             elif msg_type == "UPDATE":
                 # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
-                all_updates = msg['event']['updates']
+                all_updates = msg["event"]["updates"]
                 msg_updates = {}
                 # find the updates for this specific app
                 for u in all_updates:
-                    if u['id'] == app_id:
-                        msg_updates = u['updates']
+                    if u["id"] == app_id:
+                        msg_updates = u["updates"]
                         break
-                msg['event']['updates'] = msg_updates
+                msg["event"]["updates"] = msg_updates
 
-                if "updates" in msg['event'] and 'raised' in msg['event']['updates'] and msg['event']['updates']["raised"]:
+                if (
+                    "updates" in msg["event"]
+                    and "raised" in msg["event"]["updates"]
+                    and msg["event"]["updates"]["raised"]
+                ):
                     pass
 
                 self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
@@ -203,7 +208,7 @@ class PySage3:
         if y is not None:
             app.data.position.y = y
         if z is not None:
-            app.data.position.z = z # changed from depth
+            app.data.position.z = z  # changed from depth
         app.send_updates()
 
     def update_rotation(self, app, x=None, y=None, z=None):
@@ -227,12 +232,14 @@ class PySage3:
             assets = [x for x in assets if x["data"]["room"] == room_id]
         assets_info = []
         for asset in assets:
-            assets_info.append({
-                "_id": asset["_id"],
-                "filename": asset["data"]["originalfilename"],
-                "mimetype": asset["data"]["mimetype"],
-                "size":  asset["data"]["size"]
-            })
+            assets_info.append(
+                {
+                    "_id": asset["_id"],
+                    "filename": asset["data"]["originalfilename"],
+                    "mimetype": asset["data"]["mimetype"],
+                    "size": asset["data"]["size"],
+                }
+            )
         return assets_info
 
     def get_public_url(self, asset_id):
@@ -290,7 +297,7 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-    def get_smartbits(self, room_id: str=None, board_id: str=None) -> dict:
+    def get_smartbits(self, room_id: str = None, board_id: str = None) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
@@ -306,14 +313,16 @@ class PySage3:
     #     smartbits = self.get_smartbits(room_id, board_id)
     #     return [smartbits[app_id] for app_id in app_ids]
 
-    def get_smartbits_by_type(self, app_type: str, room_id: str = None, board_id: str = None) -> list:
+    def get_smartbits_by_type(
+        self, app_type: str, room_id: str = None, board_id: str = None
+    ) -> list:
         if room_id is None or board_id is None:
             print("listing apps requires room and board ids")
             return
         if app_type is None:
             print("Please provide an app type to filter by")
         smartbits = self.get_smartbits(room_id, board_id)
-        return [v for k, v in smartbits.items() if v.data.type == 'Stickie']
+        return [v for k, v in smartbits.items() if v.data.type == "Stickie"]
 
     # def sort_apps_by_creation_date(self, apps: list = None) -> dict:
     #     if apps is None:
@@ -345,13 +354,15 @@ class PySage3:
             apps = self.get_apps()
         count = {}
         for app in apps:
-            if app['data']['type'] in count:
-                count[app['data']['type']] += 1
+            if app["data"]["type"] in count:
+                count[app["data"]["type"]] += 1
             else:
-                count[app['data']['type']] = 1
+                count[app["data"]["type"]] = 1
         return count
 
-    def align_selected_apps(self, smartbits: List[SmartBit] = None, align: str = '', gap = 20, **kwargs) -> None:
+    def align_selected_apps(
+        self, smartbits: List[SmartBit] = None, align: str = "", gap=20, **kwargs
+    ) -> None:
         """
         Aligns the apps in the list according to the given align_type
 
@@ -362,24 +373,24 @@ class PySage3:
         # sort smartbits by the word in parentheses in the state.text field
         # smartbits = sorted(smartbits, key=lambda sb: (sb.state.text.split('(')[1].split(')')[0]))
 
-        by_dim = kwargs.get("by_dim", 1) # number of rows or columns to use
+        by_dim = kwargs.get("by_dim", 1)  # number of rows or columns to use
 
         if smartbits is None:
             return
 
-        if align == 'left':
+        if align == "left":
             align_to_left(smartbits)
-        elif align == 'right':
+        elif align == "right":
             align_to_right(smartbits)
-        elif align == 'top':
+        elif align == "top":
             align_to_top(smartbits)
-        elif align == 'bottom':
+        elif align == "bottom":
             align_to_bottom(smartbits)
-        elif 'column' in align:
+        elif "column" in align:
             align_by_col(smartbits, num_cols=by_dim)
-        elif 'row' in align:
+        elif "row" in align:
             align_by_row(smartbits, num_rows=by_dim)
-        elif align == 'stack':
+        elif align == "stack":
             align_stack(smartbits)
 
     def clean_up(self):
@@ -390,9 +401,7 @@ class PySage3:
                     app_info[1].clean_up()
 
 
-
 class RoomBoardInputs(BaseModel):
     """Input for Stock price check."""
 
     stockticker: str = Field(..., description="Asset")
-
