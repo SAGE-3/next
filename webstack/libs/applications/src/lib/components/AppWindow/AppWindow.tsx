@@ -15,7 +15,7 @@ import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottledApps, us
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
-import { App } from '../../schema';
+import { App, AppSchema } from '../../schema';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -41,7 +41,7 @@ export function AppWindow(props: WindowProps) {
   // App Store
   const apps = useThrottledApps(250);
   const update = useAppStore((state) => state.update);
-  // const updateBatch = useAppStore((state) => state.updateBatch);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Error Display Handling
   const storeError = useAppStore((state) => state.error);
@@ -97,17 +97,6 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
 
-  // Group Delta Change
-  useEffect(() => {
-    if (isGrouped) {
-      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
-        const x = props.app.data.position.x + deltaPosition.p.x;
-        const y = props.app.data.position.y + deltaPosition.p.y;
-        setPos({ x, y });
-      }
-    }
-  }, [deltaPosition]);
-
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
@@ -126,17 +115,27 @@ export function AppWindow(props: WindowProps) {
     }
   }, [storeError]);
 
+  // Group Delta Change
+  useEffect(() => {
+    if (isGrouped) {
+      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
+        const x = props.app.data.position.x + deltaPosition.p.x;
+        const y = props.app.data.position.y + deltaPosition.p.y;
+        setPos({ x, y });
+      }
+    }
+  }, [deltaPosition]);
+
   // If size or position change, update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
-  }, [props.app.data.size, props.app.data.position]);
+  }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y]);
 
   // Handle when the window starts to drag
   function handleDragStart() {
     setAppDragging(true);
     bringForward();
-    // setDragStartPosition(props.app.data.position);
     setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
   }
 
@@ -160,26 +159,26 @@ export function AppWindow(props: WindowProps) {
     const dy = y - props.app.data.position.y;
     setPos({ x, y });
     setAppDragging(false);
-    update(props.app._id, {
-      position: {
-        x,
-        y,
-        z: props.app.data.position.z,
-      },
-    });
+
     if (isGrouped) {
+      // Array of update to batch at once
+      const ps: Array<{ id: string, updates: Partial<AppSchema> }> = [];
+      // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
-        if (appId === props.app._id) return;
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
         const p = app.data.position;
-        update(appId, {
-          position: {
-            x: p.x + dx,
-            y: p.y + dy,
-            z: p.z,
-          },
-        });
+        ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z, } } });
+      });
+      // Update all the apps at once
+      updateBatch(ps);
+    } else {
+      update(props.app._id, {
+        position: {
+          x,
+          y,
+          z: props.app.data.position.z,
+        },
       });
     }
   }
