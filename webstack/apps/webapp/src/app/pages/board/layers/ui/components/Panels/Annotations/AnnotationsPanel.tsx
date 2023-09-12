@@ -25,7 +25,7 @@ import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 import { MdGraphicEq } from 'react-icons/md';
 
-import { useUIStore, useAppStore, usePanelStore, useUser, isElectron, useHexColor, useThrottledApps } from '@sage3/frontend';
+import { useUIStore, useAppStore, usePanelStore, useUser, isElectron, useHexColor, useThrottleApps } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
 import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
@@ -36,7 +36,7 @@ export function AnnotationsPanel() {
   const hideUI = useUIStore((state) => state.hideUI);
   const showUI = useUIStore((state) => state.displayUI);
   const fitApps = useUIStore((state) => state.fitApps);
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   // User
   const { user } = useUser();
 

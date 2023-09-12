@@ -7,7 +7,7 @@
  */
 
 import { Box, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor, useScaleThrottle } from '@sage3/frontend';
+import { useHexColor, useThrottleScale } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
 import { Awareness } from './PresenceComponent';
@@ -19,7 +19,7 @@ type ViewportProps = {
 
 export function Viewports(props: ViewportProps) {
   // UI Scale
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
 
   // Render the Viewports
   return (

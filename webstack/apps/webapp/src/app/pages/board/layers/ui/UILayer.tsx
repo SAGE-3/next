@@ -22,7 +22,7 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
-  useThrottledApps,
+  useThrottleApps,
   useAbility,
 } from '@sage3/frontend';
 
@@ -71,7 +71,7 @@ export function UILayer(props: UILayerProps) {
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
   // Apps
-  const apps = useThrottledApps(250);
+  const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
 
   // Logo

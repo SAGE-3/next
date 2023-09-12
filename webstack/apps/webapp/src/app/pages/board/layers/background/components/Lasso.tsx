@@ -14,8 +14,8 @@ import {
   useCursorBoardPosition,
   useHexColor,
   useKeyPress,
-  useScaleThrottle,
-  useThrottledApps,
+  useThrottleScale,
+  useThrottleApps,
   useUIStore,
 } from '@sage3/frontend';
 import { Position, Rotation, Size } from '@sage3/shared/types';
@@ -146,10 +146,10 @@ const DrawBox = (props: BoxProps) => {
   const height = Math.abs(props.mousey - props.last_mousey);
 
   // App store
-  const boardApps = useThrottledApps(250);
+  const boardApps = useThrottleApps(250);
 
   // UI store
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
 

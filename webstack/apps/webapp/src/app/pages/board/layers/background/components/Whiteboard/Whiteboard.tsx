@@ -13,7 +13,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useAbility, useBoardStore, useHotkeys, useKeyPress, useScaleThrottle, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 
 type WhiteboardProps = {
@@ -23,7 +23,7 @@ type WhiteboardProps = {
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   // Can annotate
   const canAnnotate = useAbility('update', 'boards');
 

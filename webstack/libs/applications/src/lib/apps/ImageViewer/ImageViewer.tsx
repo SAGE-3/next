@@ -13,7 +13,7 @@ import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { downloadFile, isUUIDv4, useScaleThrottle } from '@sage3/frontend';
+import { downloadFile, isUUIDv4, useThrottleScale } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { useAssetStore, useAppStore, useMeasure } from '@sage3/frontend';
 
@@ -41,7 +41,7 @@ function AppComponent(props: App): JSX.Element {
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
-  const scale = useScaleThrottle(250);
+  const scale = useThrottleScale(250);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes

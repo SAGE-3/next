@@ -20,7 +20,7 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useScaleThrottle, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useThrottleScale, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '@sage3/applications/schema';
 // import { state as AppState } from '../index';

@@ -16,7 +16,7 @@ import { useAppStore } from '../stores';
  * @param delay Delay to the amount of updates from the apps store
  * @returns
  */
-export function useThrottledApps(delay: number) {
+export function useThrottleApps(delay: number) {
   const [apps, setApps] = useState(useAppStore.getState().apps);
   const updateAppsThrottle = throttle(delay, (apps: App[]) => {
     setApps(apps);

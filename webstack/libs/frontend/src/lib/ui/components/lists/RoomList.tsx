@@ -8,14 +8,29 @@
 
 import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
-  Box, Button, Input, InputGroup, InputRightElement, Select,
-  Text, Tooltip, useColorModeValue, useDisclosure, useToast,
+  Box,
+  Button,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Select,
+  Text,
+  Tooltip,
+  useColorModeValue,
+  useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
 import {
-  CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor,
-  usePresenceStore, useRoomStore, useUser, useAbility
+  CreateRoomModal,
+  EnterBoardByIdModal,
+  RoomCard,
+  useHexColor,
+  useRoomStore,
+  useUser,
+  useAbility,
+  useThrottlePresenceUsers,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
@@ -40,7 +55,7 @@ export function RoomList(props: RoomListProps) {
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
-  const presences = usePresenceStore((state) => state.partialPrescences);
+  const presences = useThrottlePresenceUsers(5000, '');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
@@ -73,8 +88,8 @@ export function RoomList(props: RoomListProps) {
   }
 
   function sortByUsers(a: Room, b: Room) {
-    const aUsers = presences.filter((p) => p.data.roomId === a._id).length;
-    const bUsers = presences.filter((p) => p.data.roomId === b._id).length;
+    const aUsers = presences.filter((p) => p.presence.data.roomId === a._id).length;
+    const bUsers = presences.filter((p) => p.presence.data.roomId === b._id).length;
     return bUsers - aUsers;
   }
 
@@ -160,8 +175,11 @@ export function RoomList(props: RoomListProps) {
       </Box>
 
       <Box
-        overflowY="scroll" overflowX="hidden"
-        pr="2" mt="6" height="100%"
+        overflowY="scroll"
+        overflowX="hidden"
+        pr="2"
+        mt="6"
+        height="100%"
         borderColor={borderColor}
         css={{
           '&::-webkit-scrollbar': {
@@ -191,7 +209,7 @@ export function RoomList(props: RoomListProps) {
                     key={room._id}
                     room={room}
                     boards={props.boards.filter((board) => board.data.roomId === room._id)}
-                    userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                    userCount={presences.filter((user) => user.presence.data.roomId === room._id).length}
                     selected={selected}
                     onEnter={() => props.onRoomClick(room)}
                     onDelete={() => deleteRoom(room._id)}
