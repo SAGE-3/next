@@ -157,7 +157,7 @@ const DrawBox = (props: BoxProps) => {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Used only to update store once # of selected apps change
-  const [localSelctedApps, setLocalSelectedApps] = useState<string[]>([]);
+  const [localSelectedApps, setLocalSelectedApps] = useState<string[]>([]);
 
   // Color state
   const strokeColor = useHexColor('teal');
@@ -176,18 +176,18 @@ const DrawBox = (props: BoxProps) => {
 
       // Add apps as they are overlap the box area
       if (checkOverlap(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
-        if (!localSelctedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
+        if (!localSelectedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
       } else {
         // Remove apps if not in box area
-        if (localSelctedApps.includes(app._id)) {
-          const newArray = localSelctedApps;
+        if (localSelectedApps.includes(app._id)) {
+          const newArray = localSelectedApps;
           const index = newArray.indexOf(app._id);
           newArray.splice(index, 1);
           setLocalSelectedApps([...newArray]);
         }
       }
     }
-  }, [width, height, rx, ry, localSelctedApps, boardApps]);
+  }, [width, height, rx, ry, localSelectedApps, boardApps]);
 
   useEffect(() => {
     // If app is selected while starting lasso mode, clear app that is selected
@@ -195,8 +195,8 @@ const DrawBox = (props: BoxProps) => {
       setSelectedApp('');
     }
     // Only update UI store when local state changes
-    setSelectedApps(localSelctedApps);
-  }, [localSelctedApps]);
+    setSelectedApps(localSelectedApps);
+  }, [localSelectedApps]);
 
   return (
     <rect
