@@ -105,7 +105,6 @@ class PySage3:
             board_id = doc["data"]["boardId"]
             if room_id in self.rooms:
                 if board_id in self.rooms[room_id].boards and smartbit:
-                    print(f"Adding app", smartbit)
                     self.rooms[room_id].boards[board_id].smartbits[
                         smartbit.app_id
                     ] = smartbit
