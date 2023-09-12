@@ -24,7 +24,6 @@ import { useAuth } from './useAuth';
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
-  exists: false,
   accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
@@ -42,7 +41,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   const { auth } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
-  const [exists, setExists] = useState(false);
   const [accessId, setAccessId] = useState(genId());
 
   const fetchUser = useCallback(async () => {
@@ -50,18 +48,15 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         const user = userResponse.data[0];
-        setUser(user);
         setAbilityUser(user);
-        setExists(true);
+        setUser(user);
       } else {
         setUser(undefined);
         setLoading(false);
-        setExists(false);
       }
     } else {
       setUser(undefined);
       setLoading(false);
-      setExists(false);
     }
   }, [auth]);
 
@@ -70,7 +65,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   }, [auth, fetchUser]);
 
   useEffect(() => {
-    if (!auth) return;
+    if (!user) return;
     let userSub: (() => void) | null = null;
     async function SubtoUser() {
       // Subscribe to user updates since user might login from multiple locations
@@ -78,6 +73,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       // Socket Listenting to updates from server about the current board
       userSub = await SocketAPI.subscribe<User>(route, (message) => {
         const user = message.doc as User[];
+        setAbilityUser(user[0]);
         setUser(user[0]);
       });
     }
@@ -87,7 +83,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         userSub();
       }
     };
-  }, [auth]);
+  }, [user]);
 
   /**
    * Create a new user account
@@ -98,8 +94,8 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       if (auth) {
         const userResponse = await APIHttp.POST<User>('/users/create', user);
         if (userResponse.data) {
+          setAbilityUser(userResponse.data[0]);
           setUser(userResponse.data[0]);
-          setExists(true);
         }
       }
     },
@@ -116,6 +112,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       if (user) {
         const response = await APIHttp.PUT<User>(`/users/${user._id}`, updates);
         if (response.success && response.data) {
+          setAbilityUser(response.data[0]);
           setUser(response.data[0]);
         }
         return;
@@ -125,5 +122,5 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, exists, update, create, accessId }}>{props.children}</UserContext.Provider>;
+  return <UserContext.Provider value={{ user, loading, update, create, accessId }}>{props.children}</UserContext.Provider>;
 }
