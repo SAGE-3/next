@@ -97,9 +97,9 @@ export function PresenceComponent(props: PresenceProps) {
       {showPresence && (
         <>
           {/* User Cursors */}
-          <Cursors users={awareness} rate={MediumUpdateRate} />
+          <Cursors users={awareness} rate={FastUpdateRate} />
           {/* User Viewports */}
-          <Viewports users={awareness} rate={MediumUpdateRate} />
+          <Viewports users={awareness} rate={SlowUpdateRate} />
         </>
       )}
     </>
