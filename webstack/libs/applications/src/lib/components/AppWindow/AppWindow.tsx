@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
@@ -118,14 +118,14 @@ export function AppWindow(props: WindowProps) {
   }, [storeError]);
 
   // Lasso Group Delta Change
-  useEffect(() => {
+  useMemo(() => {
     // If the delta position changes, update the local state if you are grouped and not the leader
     if (isGrouped && !isGroupLeader) {
       const x = props.app.data.position.x + deltaPosition.p.x;
       const y = props.app.data.position.y + deltaPosition.p.y;
       setPos({ x, y });
     }
-  }, [deltaPosition]);
+  }, [deltaPosition.p.x, deltaPosition.p.y]);
 
   // If size or position change, update the local state.
   useEffect(() => {
@@ -158,6 +158,7 @@ export function AppWindow(props: WindowProps) {
     y = Math.round(y / gridSize) * gridSize;
     const dx = x - props.app.data.position.x;
     const dy = y - props.app.data.position.y;
+    setDeltaPosition({ x: dx, y: dy, z: 0 }, '');
     setPos({ x, y });
     setAppDragging(false);
 
