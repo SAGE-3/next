@@ -22,6 +22,7 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
+  useThrottleApps,
   useAbility,
 } from '@sage3/frontend';
 
@@ -57,6 +58,8 @@ export function UILayer(props: UILayerProps) {
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -68,7 +71,7 @@ export function UILayer(props: UILayerProps) {
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
   // Apps
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
 
   // Logo
@@ -196,7 +199,7 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
-      <AppToolbar></AppToolbar>
+      {selectedApp && <AppToolbar></AppToolbar>}
 
       <ContextMenu divId="board">
         <BoardContextMenu

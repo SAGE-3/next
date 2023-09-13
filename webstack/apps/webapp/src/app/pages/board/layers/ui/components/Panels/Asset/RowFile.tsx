@@ -44,7 +44,9 @@ import {
   AssetHTTPService,
   useAbility,
 } from '@sage3/frontend';
+
 import { getExtension } from '@sage3/shared';
+
 import { FileEntry } from './types';
 import { setupAppForFile } from './CreateApp';
 import './menu.scss';
@@ -85,7 +87,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { boardCursor: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
 

@@ -163,7 +163,7 @@ function AppComponent(props: App): JSX.Element {
           aria-label="Note text"
           placeholder="Type here..."
           fontFamily="Arial"
-          focusBorderColor={s.color}
+          focusBorderColor={backgroundColor}
           overflow={fontSize !== 10 ? 'hidden' : 'auto'}
           fontSize={fontSize + 'px'}
           lineHeight="1em"

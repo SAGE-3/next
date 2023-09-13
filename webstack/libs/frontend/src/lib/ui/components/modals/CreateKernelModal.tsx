@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { useParams } from 'react-router';
 import {
   Modal,
   ModalOverlay,
@@ -23,9 +24,9 @@ import {
 } from '@chakra-ui/react';
 
 import { KernelInfo } from '@sage3/shared/types';
+
 import { useKernelStore } from '../../../stores';
-import { useUser } from '../../../hooks';
-import { useParams } from 'react-router';
+import { useUser } from '../../../providers';
 
 interface CreateKernelModalProps {
   isOpen: boolean;
@@ -111,8 +112,7 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
   };
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
-      initialFocusRef={initialRef}>
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Create New Kernel</ModalHeader>
@@ -173,8 +173,7 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
           <Button colorScheme="red" mr="2" onClick={props.onClose}>
             Cancel
           </Button>
-          <Button colorScheme="teal" onClick={hanldeCreateKernel}
-            isDisabled={kernelAlias.length === 0}>
+          <Button colorScheme="teal" onClick={hanldeCreateKernel} isDisabled={kernelAlias.length === 0}>
             Create
           </Button>
         </ModalFooter>

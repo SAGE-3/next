@@ -32,7 +32,7 @@ import { UserSchema } from '@sage3/shared/types';
 import { SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
 
-import { useUser } from '../../../hooks';
+import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
@@ -107,7 +107,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               <Input
                 ref={initialRef}
                 type="string"
-                placeholder={"Enter a username"}
+                placeholder={'Enter a username'}
                 _placeholder={{ opacity: 1, color: 'gray.600' }}
                 mr={4}
                 value={name}
@@ -124,17 +124,23 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           </FormControl>
           <FormControl mt="2">
             <FormLabel htmlFor="type">Type</FormLabel>
-            <RadioGroup onChange={handleTypeChange} value={type} colorScheme='green'>
+            <RadioGroup onChange={handleTypeChange} value={type} colorScheme="green">
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
-                  <Radio value={value} key={i}> {value[0].toUpperCase() + value.substring(1)} </Radio>
+                  <Radio value={value} key={i}>
+                    {' '}
+                    {value[0].toUpperCase() + value.substring(1)}{' '}
+                  </Radio>
                 ))}
               </Stack>
             </RadioGroup>
           </FormControl>
 
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth?.provider} {!isGuest && <>- {auth?.email}</>}</em>
+            Authentication:{' '}
+            <em>
+              {auth?.provider} {!isGuest && <>- {auth?.email}</>}
+            </em>
           </Text>
           <Text fontSize={'md'}>
             Login expiration: <em>{formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}</em>

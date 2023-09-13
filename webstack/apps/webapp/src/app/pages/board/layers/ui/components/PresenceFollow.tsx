@@ -8,11 +8,12 @@
 
 // React
 import { useEffect } from 'react';
+import { useParams } from 'react-router';
+
+import { Button, useToast } from '@chakra-ui/react';
 
 // Sage
 import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
-import { useParams } from 'react-router';
-import { Button, useToast } from '@chakra-ui/react';
 
 export function PresenceFollow() {
   // BoardId
@@ -22,7 +23,7 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const { setBoardPosition, setScale, scale } = useUIStore((state) => state);
+  const { setBoardPosition, setScale } = useUIStore((state) => state);
 
   // Presences
   const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);

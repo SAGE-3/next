@@ -13,14 +13,13 @@ import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { downloadFile, isUUIDv4 } from '@sage3/frontend';
+import { downloadFile, isUUIDv4, useThrottleScale } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useMeasure } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { App } from '../../schema';
-
 
 /**
  * ImageViewer app
@@ -42,12 +41,11 @@ function AppComponent(props: App): JSX.Element {
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
-  const [origSizes, setOrigSizes] = useState({ 'width': 0, 'height': 0 })
-
+  const [origSizes, setOrigSizes] = useState({ width: 0, height: 0 });
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -76,8 +74,8 @@ function AppComponent(props: App): JSX.Element {
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
         // TODO Extract image size
-        const localOrigSizes = { 'width': extra.width, 'height': extra.height }
-        setOrigSizes(localOrigSizes)
+        const localOrigSizes = { width: extra.width, height: extra.height };
+        setOrigSizes(localOrigSizes);
 
         if (extra) {
           // find the smallest image for this page (multi-resolution)
@@ -121,32 +119,25 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {
-            Object.keys(s.boxes).map((label, idx) => {
-              // TODO Need to handle text overflow for labels
-              return (
-                <Box
-                  key={label + idx}
-                  position="absolute"
-                  left={s.boxes[label].xmin * (displaySize.width / origSizes.width) + 'px'}
-                  top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
-                  style={{ display: s.annotations === true ? 'block' : 'none' }}
-                >
-                  <Box
-                    position="relative"
-                    top={'-1.5rem'}
-                    fontWeight={'bold'}
-                    textColor={"black"}
-                  >
-                    {label}
-                  </Box>
+          {Object.keys(s.boxes).map((label, idx) => {
+            // TODO Need to handle text overflow for labels
+            return (
+              <Box
+                key={label + idx}
+                position="absolute"
+                left={s.boxes[label].xmin * (displaySize.width / origSizes.width) + 'px'}
+                top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
+                width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
+                height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
+                border="2px solid red"
+                style={{ display: s.annotations === true ? 'block' : 'none' }}
+              >
+                <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                  {label}
                 </Box>
-              );
-            })
-          }
+              </Box>
+            );
+          })}
         </>
       </div>
     </AppWindow>
@@ -195,7 +186,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
-        <div style={{ display: Object.keys(s.boxes).length !== 0 ? "flex" : "none" }}>
+        <div style={{ display: Object.keys(s.boxes).length !== 0 ? 'flex' : 'none' }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
