@@ -277,7 +277,7 @@ export function Apps() {
 
 function AppRender(props: { app: App }) {
   const [hasType] = useState(props.app.data.type in Applications);
-  const [AppComponent] = useState(() => Applications[props.app.data.type].AppComponent);
+  const [AppComponent] = useState(() => hasType ? Applications[props.app.data.type].AppComponent : null);
   const iconSize = Math.min(500, Math.max(40, props.app.data.size.height - 200));
   const fontSize = 15 + props.app.data.size.height / 100;
   const iconColorAppNotFound = useHexColor('red');
@@ -291,7 +291,7 @@ function AppRender(props: { app: App }) {
             <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={props.app} />
           )}
         >
-          <AppComponent {...(props.app as any)}></AppComponent>
+          {AppComponent && <AppComponent {...(props.app as any)}></AppComponent>}
         </ErrorBoundary>
       ) : (
         <AppWindow key={props.app._id} app={props.app}>
