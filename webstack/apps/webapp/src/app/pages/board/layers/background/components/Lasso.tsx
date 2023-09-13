@@ -9,14 +9,7 @@
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import {
-  useCursorBoardPosition,
-  useHexColor,
-  useKeyPress,
-  useThrottleScale,
-  useThrottleApps,
-  useUIStore,
-} from '@sage3/frontend';
+import { useCursorBoardPosition, useHexColor, useKeyPress, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
 
 type LassoProps = {
@@ -43,7 +36,7 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
-  const { boardCursor } = useCursorBoardPosition();
+  const { uiToBoard } = useCursorBoardPosition();
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
@@ -63,8 +56,8 @@ export function Lasso(props: LassoProps) {
   }, [lassoMode]);
 
   // Get initial position
-  const mouseDown = () => {
-    const position = boardCursor;
+  const mouseDown = (ev: any) => {
+    const position = uiToBoard(ev.clientX, ev.clientY);
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
@@ -82,8 +75,8 @@ export function Lasso(props: LassoProps) {
   };
 
   // Get last position
-  const mouseMove = () => {
-    const position = boardCursor;
+  const mouseMove = (ev: any) => {
+    const position = uiToBoard(ev.clientX, ev.clientY);
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
