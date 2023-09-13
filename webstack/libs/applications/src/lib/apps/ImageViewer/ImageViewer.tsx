@@ -119,7 +119,7 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {Object.keys(s.boxes).map((label, idx) => {
+          {s.boxes ? Object.keys(s.boxes).map((label, idx) => {
             // TODO Need to handle text overflow for labels
             return (
               <Box
@@ -137,7 +137,7 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               </Box>
             );
-          })}
+          }) : null}
         </>
       </div>
     </AppWindow>
@@ -186,7 +186,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
-        <div style={{ display: Object.keys(s.boxes).length !== 0 ? 'flex' : 'none' }}>
+        <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
