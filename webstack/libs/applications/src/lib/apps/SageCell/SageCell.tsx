@@ -622,7 +622,6 @@ function AppComponent(props: App): JSX.Element {
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
       const count = users.size;
-      console.log(count);
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
         // Does the board have lines?
@@ -631,7 +630,6 @@ function AppComponent(props: App): JSX.Element {
           yText.delete(0, yText.length);
           // Set the lines from the database
           yText.insert(0, s.code);
-          console.log('synced with database');
         }
       }
     });
