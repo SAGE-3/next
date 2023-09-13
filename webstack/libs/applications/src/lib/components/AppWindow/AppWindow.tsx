@@ -23,6 +23,15 @@ const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
 
+function clampWidth(val: number): number {
+  val = Math.round(val);
+  return val > APP_MAX_WIDTH ? APP_MAX_WIDTH : val < APP_MIN_WIDTH ? APP_MIN_WIDTH : val;
+}
+function clampHeight(val: number): number {
+  val = Math.round(val);
+  return val > APP_MAX_HEIGHT ? APP_MAX_HEIGHT : val < APP_MIN_HEIGHT ? APP_MIN_HEIGHT : val;
+}
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
@@ -216,19 +225,59 @@ export function AppWindow(props: WindowProps) {
     setSize({ width, height });
     setAppDragging(false);
 
+    // Calculate the scale of the resize
+    const scalex = width / props.app.data.size.width;
+    const scaley = height / props.app.data.size.height;
+
     // Update the size and position of the app in the server
-    update(props.app._id, {
-      position: {
-        ...props.app.data.position,
-        x: position.x,
-        y: position.y,
-      },
-      size: {
-        ...props.app.data.size,
-        width,
-        height,
-      },
-    });
+    if (isGrouped && isGroupLeader) {
+      // Array of update to batch at once
+      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+      // Iterate through all the selected apps
+      selectedApps.forEach((appId) => {
+        const app = apps.find((el) => el._id == appId);
+        if (!app) return;
+        if (e.ctrlKey) {
+          // All the same size
+          ps.push({
+            id: appId, updates: {
+              size: {
+                ...app.data.size,
+                width,
+                height,
+              },
+            }
+          });
+        } else {
+          // Scaled by the same amount
+          ps.push({
+            id: appId, updates: {
+              size: {
+                ...app.data.size,
+                width: clampWidth(scalex * app.data.size.width),
+                height: clampHeight(scaley * app.data.size.height),
+              },
+            }
+          });
+        }
+      });
+      // Update all the apps at once
+      updateBatch(ps);
+    } else {
+      update(props.app._id, {
+        position: {
+          ...props.app.data.position,
+          x: position.x,
+          y: position.y,
+        },
+        size: {
+          ...props.app.data.size,
+          width,
+          height,
+        },
+      });
+    }
+
   }
 
   // Track raised state
