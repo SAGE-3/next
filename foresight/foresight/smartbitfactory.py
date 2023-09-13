@@ -58,8 +58,8 @@ class SmartBitFactory:
                     smartbit_class = import_cls(cls_path, smartbit_type)
                     smartbit_instance = smartbit_class(**doc)
                 else:
-                    logger.error(
-                        f"Couldn't convert following doc to actual smartbit: {doc}"
+                    logger.info(
+                        f"Couldn't convert doc to actual smartbit: {smartbit_class} {smartbit_type}"
                     )
                     # raise Exception("Couldn't conver doc to actual smartbit")
             except Exception as e:
