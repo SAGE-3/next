@@ -158,7 +158,7 @@ export function AppWindow(props: WindowProps) {
     y = Math.round(y / gridSize) * gridSize;
     const dx = x - props.app.data.position.x;
     const dy = y - props.app.data.position.y;
-    setDeltaPosition({ x: dx, y: dy, z: 0 }, '');
+
     setPos({ x, y });
     setAppDragging(false);
 
@@ -176,6 +176,8 @@ export function AppWindow(props: WindowProps) {
       });
       // Update all the apps at once
       updateBatch(ps);
+      // Reset the delta position
+      setDeltaPosition({ x: dx, y: dy, z: 0 }, '');
     } else {
       update(props.app._id, {
         position: {
