@@ -422,6 +422,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   useEffect(() => {
+    if (!s.history) return;
     if (s.history.length === 0 || s.streaming || s.msgId) return;
     const msgId = s.history[s.history.length - 1];
     getResults(msgId);
