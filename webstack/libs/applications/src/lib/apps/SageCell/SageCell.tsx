@@ -771,18 +771,18 @@ function AppComponent(props: App): JSX.Element {
   /**
    * Needs to be reset every time the kernel changes
    */
-  // useEffect(() => {
-  //   if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
-  //     editorRef.current.addAction({
-  //       id: 'execute',
-  //       label: 'Cell Execute',
-  //       contextMenuOrder: 0,
-  //       contextMenuGroupId: "2_sage3",
-  //       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-  //       run: handleExecute,
-  //     });
-  //   }
-  // }, [s.kernel]);
+  useEffect(() => {
+    if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
+      editorRef.current.addAction({
+        id: 'execute',
+        label: 'Cell Execute',
+        contextMenuOrder: 0,
+        contextMenuGroupId: "2_sage3",
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: handleExecute,
+      });
+    }
+  }, [s.kernel]);
 
   useEffect(() => {
     if (!editorRef.current) return;
