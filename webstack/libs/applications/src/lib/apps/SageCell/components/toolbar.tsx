@@ -191,6 +191,11 @@ export function ToolbarComponent(props: App): JSX.Element {
             <MdRemove />
           </Button>
         </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Button _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            {s.fontSize}
+          </Button>
+        </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />

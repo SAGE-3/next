@@ -72,8 +72,8 @@ import { Vega, VisualizationSpec } from 'react-vega';
 import { VegaLite } from 'react-vega';
 
 import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
-
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 type YjsClientState = {
   name: string;
@@ -118,6 +118,7 @@ function AppComponent(props: App): JSX.Element {
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
   const [content, setContent] = useState<ContentItem[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
+  const [fontSize, setFontSize] = useState<number>(s.fontSize);
 
   // Toast
   const toast = useToast();
@@ -270,14 +271,7 @@ function AppComponent(props: App): JSX.Element {
     } as editor.IDimension);
   }, [props.data.size.width, editorHeight]);
 
-  useEffect(() => {
-    if (!editorRef.current) return;
-    editorRef.current.updateOptions({
-      fontSize: s.fontSize,
-    });
-  }, [s.fontSize]);
-
-  // // Debounce Updates
+  // Debounce Updates
   const throttleUpdate = throttle(1000, () => {
     if (!editorRef.current) return;
     updateState(props._id, { code: editorRef.current.getValue() });
@@ -291,7 +285,8 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const handleExecute = async () => {
-    if (!user || !editorRef.current || !apiStatus || !access || !canExecuteCode) return;
+    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+    if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
     updateState(props._id, { code: editorRef.current.getValue() });
     if (!s.kernel) {
       if (toastRef.current) return;
@@ -380,6 +375,13 @@ function AppComponent(props: App): JSX.Element {
       msgId: '',
       streaming: false,
     });
+  };
+  // Inset room/board info into the editor
+  const handleInsertInfo = (ed: editor.ICodeEditor) => {
+    console.log('Inserting info', ed);
+    const info = `\nroom_id = '${roomId}'\nboard_id = '${boardId}'\n\n`;
+    ed.focus()
+    ed.trigger('keyboard', 'type', { text: info });
   };
 
   async function getResults(msgId: string) {
@@ -636,32 +638,22 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const handleFontIncrease = useCallback(() => {
-    updateState(props._id, { fontSize: s.fontSize + 1 });
-  }, [s.fontSize]);
-
-  const handleFontDecrease = useCallback(() => {
-    updateState(props._id, { fontSize: s.fontSize - 1 });
-  }, [s.fontSize]);
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({ fontSize });
+    updateState(props._id, { fontSize });
+  }, [fontSize]);
 
   useEffect(() => {
-    if (!editorRef.current || !monaco) return;
-    editorRef.current.updateOptions({
-      fontSize: s.fontSize,
-    });
-    editorRef.current.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: handleFontIncrease,
-    });
-    editorRef.current.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: handleFontDecrease,
-    });
-  }, [s.fontSize, editorRef.current, monaco]);
+    setFontSize(s.fontSize);
+  }, [s.fontSize]);
+
+  const handleFontIncrease = () => {
+    setFontSize((prev) => Math.min(48, prev + 2));
+  };
+  const handleFontDecrease = () => {
+    setFontSize((prev) => Math.max(8, prev - 2));
+  };
 
   /**
    *
@@ -707,24 +699,55 @@ function AppComponent(props: App): JSX.Element {
     });
     editor.addAction({
       id: 'execute',
-      label: 'Execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
       run: handleExecute,
     });
     editor.addAction({
       id: 'clear',
-      label: 'Clear',
+      label: 'Cell Clear',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
       run: handleClear,
     });
     editor.addAction({
       id: 'interrupt',
-      label: 'Interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 2,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
+    editor.addAction({
+      id: 'insert',
+      label: 'Cell Insert Board Info',
+      contextMenuOrder: 3,
+      contextMenuGroupId: "2_sage3",
+      run: handleInsertInfo,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "3_font",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "3_font",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
     // Update database on key up
-    editor.onKeyUp((e) => {
+    editor.onKeyUp(() => {
       throttleFunc();
     });
   };
@@ -732,16 +755,18 @@ function AppComponent(props: App): JSX.Element {
   /**
    * Needs to be reset every time the kernel changes
    */
-  useEffect(() => {
-    if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
-      editorRef.current.addAction({
-        id: 'execute',
-        label: 'Execute',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-        run: handleExecute,
-      });
-    }
-  }, [s.kernel]);
+  // useEffect(() => {
+  //   if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
+  //     editorRef.current.addAction({
+  //       id: 'execute',
+  //       label: 'Cell Execute',
+  //       contextMenuOrder: 0,
+  //       contextMenuGroupId: "2_sage3",
+  //       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+  //       run: handleExecute,
+  //     });
+  //   }
+  // }, [s.kernel]);
 
   useEffect(() => {
     if (!editorRef.current) return;
