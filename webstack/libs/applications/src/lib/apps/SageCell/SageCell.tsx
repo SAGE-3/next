@@ -376,12 +376,20 @@ function AppComponent(props: App): JSX.Element {
       streaming: false,
     });
   };
-  // Inset room/board info into the editor
+
+  // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
-    console.log('Inserting info', ed);
-    const info = `\nroom_id = '${roomId}'\nboard_id = '${boardId}'\n\n`;
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
     ed.focus()
     ed.trigger('keyboard', 'type', { text: info });
+  };
+  const handleInsertAPI = (ed: editor.ICodeEditor) => {
+    let code = "from foresight.config import config as conf, prod_type\n"
+    code += "from foresight.Sage3Sugar.pysage3 import PySage3\n"
+    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    code += "ps3 = PySage3(conf, prod_type)\n\n"
+    ed.focus()
+    ed.setValue(code);
   };
 
   async function getResults(msgId: string) {
@@ -721,11 +729,19 @@ function AppComponent(props: App): JSX.Element {
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
+
     editor.addAction({
-      id: 'insert',
-      label: 'Cell Insert Board Info',
-      contextMenuOrder: 3,
-      contextMenuGroupId: "2_sage3",
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "3_sagecell",
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "3_sagecell",
       run: handleInsertInfo,
     });
 
@@ -733,7 +749,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'increaseFontSize',
       label: 'Increase Font Size',
       contextMenuOrder: 0,
-      contextMenuGroupId: "3_font",
+      contextMenuGroupId: "4_font",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
       run: handleFontIncrease,
     });
@@ -741,7 +757,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'decreaseFontSize',
       label: 'Decrease Font Size',
       contextMenuOrder: 1,
-      contextMenuGroupId: "3_font",
+      contextMenuGroupId: "4_font",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
       run: handleFontDecrease,
     });
