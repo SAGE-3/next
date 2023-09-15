@@ -8,26 +8,25 @@
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
+import { useParams } from 'react-router';
 import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue } from '@chakra-ui/react';
-
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { App, AppGroup } from '../../schema';
-
-import { state as AppState } from './';
+import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
-import { AppWindow } from '../../components';
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
+// SAGE3 store hooks and utility functions
+import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
+
+import { state as AppState } from './';
+import { App, AppGroup, AppSchema } from '../../schema';
+import { AppWindow } from '../../components';
+
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
-import { useParams } from 'react-router';
-import { SAGEColors } from '@sage3/shared';
 
 /**
  * NoteApp SAGE3 application
@@ -261,9 +260,9 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
-            <MdAdd />
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
+            <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
@@ -271,9 +270,9 @@ function ToolbarComponent(props: App): JSX.Element {
             {s.fontSize}
           </Box>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
-            <MdRemove />
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
+            <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -334,60 +333,97 @@ function ToolbarComponent(props: App): JSX.Element {
  * @returns JSX.Element | null
  */
 const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
-  const updateState = useAppStore((state) => state.updateState);
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
   const { user } = useUser();
 
   const handleColorChange = (color: string) => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    // Iterate through all the selected apps
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
-      updateState(app._id, { color: color });
+      ps.push({ id: app._id, updates: { color: color } });
     });
+    // Update all the apps at once
+    updateStateBatch(ps);
   };
 
   const handleIncreaseFont = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
-
       const size = app.data.state.fontSize + 8;
       if (size > 128) return;
-      updateState(app._id, { fontSize: app.data.state.fontSize + 8 });
+      ps.push({ id: app._id, updates: { fontSize: size } });
     });
+    // Update all the apps at once
+    updateStateBatch(ps);
   };
 
   const handleDecreaseFont = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
       const size = app.data.state.fontSize - 8;
       if (size <= 8) return;
-      updateState(app._id, { fontSize: app.data.state.fontSize - 8 });
+      ps.push({ id: app._id, updates: { fontSize: size } });
     });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleSetFont = () => {
+    const min = Math.min(...(props.apps.map((app) => app.data.state.fontSize)));
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      ps.push({ id: app._id, updates: { fontSize: min } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
   };
 
   const handleLock = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app._createdBy !== user?._id) return;
-      updateState(app._id, { lock: true });
+      ps.push({ id: app._id, updates: { lock: true } });
     });
+    // Update all the apps at once
+    updateStateBatch(ps);
   };
 
   const handleUnlock = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app._createdBy !== user?._id) return;
-      updateState(app._id, { lock: false });
+      ps.push({ id: app._id, updates: { lock: true } });
     });
+    // Update all the apps at once
+    updateStateBatch(ps);
   };
 
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button onClick={() => handleIncreaseFont()}>
-            <MdAdd />
-          </Button>
-        </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button onClick={() => handleDecreaseFont()}>
             <MdRemove />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Set Font Size'} openDelay={400}>
+          <Button onClick={() => handleSetFont()}>
+            {Math.min(...(props.apps.map((app) => app.data.state.fontSize)))}
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button onClick={() => handleIncreaseFont()}>
+            <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
