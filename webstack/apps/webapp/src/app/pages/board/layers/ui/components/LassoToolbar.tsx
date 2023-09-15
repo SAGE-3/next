@@ -12,6 +12,7 @@ import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { Applications } from '@sage3/applications/apps';
 
 /**
  * Lasso Toolbar Component
