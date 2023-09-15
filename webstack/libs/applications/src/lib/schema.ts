@@ -26,3 +26,4 @@ export type AppSchema = {
 };
 
 export type App = SBDoc & { data: AppSchema };
+export type AppGroup = Array<App>;

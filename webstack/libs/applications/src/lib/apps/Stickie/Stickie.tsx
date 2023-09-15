@@ -11,7 +11,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip } from '@chakra-ui/react';
 
 import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { App } from '../../schema';
+import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './';
 
@@ -322,7 +322,11 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
 

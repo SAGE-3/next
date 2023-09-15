@@ -75,8 +75,8 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `import ${it} from './apps/${it}/${it}';\n`;
   }
-  output += `import { App } from './schema';\n`;
   output += `import React from 'react';\n`;
+  output += `import { App, AppGroup } from './schema';\n`;
 
   output += `\n`;
   output += `\n`;
@@ -85,7 +85,7 @@ async function updateApps(root: string) {
     const it = apps[i];
     output += `  [${it}Name]: { AppComponent: React.memo(${it}.AppComponent), ToolbarComponent: ${it}.ToolbarComponent, GroupedToolbarComponent: ${it}.GroupedToolbarComponent },\n`;
   }
-  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;\n`;
+  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;\n`;
 
   output += `\n`;
   output += `export * from './components';\n`;

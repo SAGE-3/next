@@ -439,10 +439,11 @@ async function waitForOpenSocket(socket: WebSocket): Promise<void> {
   });
 }
 
-/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
-  return <></>;
-};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -218,8 +218,8 @@ function AppComponent(props: App): JSX.Element {
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
                 : checkAppType() === 1
-                ? 'File type accepted'
-                : 'Error. More than 1 app type on board'}
+                  ? 'File type accepted'
+                  : 'Error. More than 1 app type on board'}
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (
@@ -331,10 +331,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
-
-const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
-  return <></>;
-};
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
