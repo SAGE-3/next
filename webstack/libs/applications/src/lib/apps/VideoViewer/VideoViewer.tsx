@@ -49,7 +49,7 @@ import { format as formatTime } from 'date-fns';
 import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, downloadFile, useHexColor } from '@sage3/frontend';
 
-import { App, AppSchema } from '../../schema';
+import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { initialValues } from '../../initialValues';
@@ -524,7 +524,132 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
+
+  const handleRewind = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    // Iterate through all the selected apps
+    props.apps.forEach((app) => {
+      ps.push({ id: app._id, updates: { currentTime: 0.0, paused: true } });
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) {
+        v.currentTime = 0;
+        v.pause();
+      }
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handlePlay = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    // Iterate through all the selected apps
+    props.apps.forEach((app) => {
+      ps.push({ id: app._id, updates: { paused: false } });
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) v.play();
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleStop = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      ps.push({ id: app._id, updates: { paused: true } });
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) v.pause();
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleLoop = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      ps.push({ id: app._id, updates: { loop: true } });
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) v.loop = true;
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleNoLoop = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      ps.push({ id: app._id, updates: { loop: false } });
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) v.loop = false;
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleSyncOnMe = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
+      if (v) {
+        ps.push({ id: app._id, updates: { currentTime: v.currentTime, loop: v.loop, paused: v.paused } });
+      }
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  return (
+    <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Rewind To Begining'} openDelay={400}>
+        <Button onClick={handleRewind}>
+          <MdFastRewind />
+        </Button>
+      </Tooltip>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Play Videos'} openDelay={400}>
+        <Button onClick={handlePlay}>
+          <MdPlayArrow />
+        </Button>
+      </Tooltip>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Pause Videos'} openDelay={400}>
+        <Button onClick={handleStop}>
+          <MdPause />
+        </Button>
+      </Tooltip>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
+        <Button onClick={handleLoop}>
+          <MdLoop />
+        </Button>
+      </Tooltip>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'No Loop'} openDelay={400}>
+        <Button onClick={handleNoLoop}>
+          <MdArrowRightAlt />
+        </Button>
+      </Tooltip>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
+        <Button onClick={handleSyncOnMe}>
+          <MdAccessTime />
+        </Button>
+      </Tooltip>
+
+    </ButtonGroup>
+  );
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
