@@ -402,7 +402,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app._createdBy !== user?._id) return;
-      ps.push({ id: app._id, updates: { lock: true } });
+      ps.push({ id: app._id, updates: { lock: false } });
     });
     // Update all the apps at once
     updateStateBatch(ps);
