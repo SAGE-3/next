@@ -190,17 +190,20 @@ function AppComponent(props: App): JSX.Element {
                       p={0}
                       ml={1}
                       onChange={onKernelSelected}
-                    /> <b>Kernel: {session.name}</b>
+                    />{' '}
+                    <b>Kernel: {session.name}</b>
                     <UnorderedList pl={'8'}>
                       <ListItem>
                         Kernel: {session.kernel.name}, {session.kernel.execution_state}
                       </ListItem>
                       <ListItem>Notebook: {session.path}</ListItem>
                       <ListItem>
-                        Links: <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                        Links:{' '}
+                        <span onClick={() => openCell(session.kernel.id)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
                           new cell
                         </span>
-                        &nbsp; <span onClick={() => openJupyter()} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
+                        &nbsp;{' '}
+                        <span onClick={() => openJupyter()} style={{ textDecoration: 'underline', cursor: 'pointer' }}>
                           open jupyter
                         </span>
                       </ListItem>
@@ -418,4 +421,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

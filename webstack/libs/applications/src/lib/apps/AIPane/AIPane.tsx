@@ -331,4 +331,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

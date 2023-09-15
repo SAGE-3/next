@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Button, Input, useDisclosure, } from '@chakra-ui/react';
+import { Button, Input, useDisclosure } from '@chakra-ui/react';
 
 import { EnterBoardModal, isElectron, useAppStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
@@ -18,7 +18,6 @@ import { AppWindow } from '../../components';
 
 import { OtherServerCard } from './components/OtherServerCard';
 import { BoardCard } from './components/BoardCard';
-
 
 /* App component for BoardLink */
 
@@ -125,5 +124,10 @@ function ToolbarComponent(props: App): JSX.Element {
     </>
   );
 }
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
 
-export default { AppComponent, ToolbarComponent };
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

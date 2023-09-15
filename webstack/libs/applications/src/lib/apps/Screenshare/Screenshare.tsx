@@ -32,7 +32,7 @@ function AppComponent(props: App): JSX.Element {
   const msgHandler = (id: string, data: any) => {
     const remoteUser = id.split('-')[0];
     console.log('RTC> Callback', remoteUser, data);
-  }
+  };
 
   //  Events from RTC clients
   const evtHandler = (type: string, data: any) => {
@@ -42,7 +42,7 @@ function AppComponent(props: App): JSX.Element {
         mePeer.current.call(data, localStream.current);
       }
     }
-  }
+  };
 
   //  Events from RTC clients
   const callHandler = (stream: MediaStream) => {
@@ -58,7 +58,7 @@ function AppComponent(props: App): JSX.Element {
       };
       selfView.current.srcObject = stream;
     }
-  }
+  };
 
   // Use the web RTC hook and pass some data handlers
   const { me, connections } = usePeer({
@@ -78,14 +78,14 @@ function AppComponent(props: App): JSX.Element {
       if (mine) {
         handleStop();
       }
-    }
+    };
   }, [mine]);
 
   // Monitor  the number of connections
   useEffect(() => {
     const numclients = connections.length + 1;
     if (user) {
-      const newInfo = "Screenshare> " + numclients + " clients";
+      const newInfo = 'Screenshare> ' + numclients + ' clients';
       update(props._id, { description: newInfo });
     }
   }, [connections]);
@@ -101,23 +101,26 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.running]);
 
-
   //  Call all RTC clients
-  const rtcCall = useCallback((data: MediaStream) => {
-    for (const c in connections) {
-      if (me) {
-        me.call(connections[c].peer, data);
+  const rtcCall = useCallback(
+    (data: MediaStream) => {
+      for (const c in connections) {
+        if (me) {
+          me.call(connections[c].peer, data);
+        }
       }
-    }
-  }, [connections]);
+    },
+    [connections]
+  );
 
   function handleStart() {
     let selectedDevice = '';
-    window.navigator.mediaDevices.enumerateDevices()
+    window.navigator.mediaDevices
+      .enumerateDevices()
       .then(function (devices) {
         devices.forEach(function (device: MediaDeviceInfo, idx: number) {
-          if (device.kind === "videoinput") {
-            console.log('>' + idx + ': ' + device.kind + ": " + device.label + " id = " + device.deviceId);
+          if (device.kind === 'videoinput') {
+            console.log('>' + idx + ': ' + device.kind + ': ' + device.label + ' id = ' + device.deviceId);
             // Select the first camera
             if (!selectedDevice) {
               selectedDevice = device.deviceId;
@@ -127,8 +130,9 @@ function AppComponent(props: App): JSX.Element {
         });
       })
       .catch(function (err) {
-        console.log('mediaDevices>', err.name + ": " + err.message);
-      }).finally(function () {
+        console.log('mediaDevices>', err.name + ': ' + err.message);
+      })
+      .finally(function () {
         console.log('mediaDevices> device selected', selectedDevice);
 
         // For video camera, we need to specify the video source
@@ -156,45 +160,45 @@ function AppComponent(props: App): JSX.Element {
         } as MediaStreamConstraints;
 
         // window.navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
-        window.navigator.mediaDevices.getDisplayMedia(constraints).then((stream) => {
-          const track = stream.getVideoTracks()[0];
+        window.navigator.mediaDevices.getDisplayMedia(constraints).then(
+          (stream) => {
+            const track = stream.getVideoTracks()[0];
 
-          // track.applyConstraints({ frameRate: { max: 5 } });
+            // track.applyConstraints({ frameRate: { max: 5 } });
 
-          console.log('Before> track', track.contentHint);
-          if ('contentHint' in track) {
-            const hint = 'text';
-            track.contentHint = hint;
-            if (track.contentHint !== hint) {
-              console.log('Stream> Invalid video track contentHint:', hint);
+            console.log('Before> track', track.contentHint);
+            if ('contentHint' in track) {
+              const hint = 'text';
+              track.contentHint = hint;
+              if (track.contentHint !== hint) {
+                console.log('Stream> Invalid video track contentHint:', hint);
+              } else {
+                console.log('Stream> Video track contentHint:', hint);
+              }
             } else {
-              console.log('Stream> Video track contentHint:', hint);
+              console.log('Stream> MediaStreamTrack contentHint attribute not supported');
             }
-          } else {
-            console.log('Stream> MediaStreamTrack contentHint attribute not supported');
-          }
 
-          const settings = track.getSettings();
-          const w = settings.width;
-          const h = settings.height;
-          const fps = settings.frameRate;
-          setStatus('Stream> ' + w + 'x' + h + '@' + fps + 'fps');
-          if (me) {
-            rtcCall(stream);
-            if (selfView.current) {
-              selfView.current.srcObject = stream;
+            const settings = track.getSettings();
+            const w = settings.width;
+            const h = settings.height;
+            const fps = settings.frameRate;
+            setStatus('Stream> ' + w + 'x' + h + '@' + fps + 'fps');
+            if (me) {
+              rtcCall(stream);
+              if (selfView.current) {
+                selfView.current.srcObject = stream;
+              }
+              updateState(props._id, { running: true });
             }
-            updateState(props._id, { running: true });
-          }
-          // Save the stream to the local state
-          localStream.current = stream;
-        },
-          (err) => {
-            console.error("Failed to get local stream", err);
+            // Save the stream to the local state
+            localStream.current = stream;
           },
+          (err) => {
+            console.error('Failed to get local stream', err);
+          }
         );
-      }
-      );
+      });
   }
 
   /**
@@ -206,46 +210,49 @@ function AppComponent(props: App): JSX.Element {
       if (selfView.current.srcObject) {
         const stream = selfView.current.srcObject as MediaStream;
         const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop());
+        tracks.forEach((track) => track.stop());
       }
       selfView.current.srcObject = null;
     }
   }
 
-
   return (
-    <AppWindow app={props} >
+    <AppWindow app={props}>
       <VStack h="100%" w="100%">
-        <Box bgColor="black" color="white" w={"100%"} minH={"75%"} p={0}>
-          <video ref={selfView} autoPlay={true} width={"100%"} height={"100%"} />
+        <Box bgColor="black" color="white" w={'100%'} minH={'75%'} p={0}>
+          <video ref={selfView} autoPlay={true} width={'100%'} height={'100%'} />
         </Box>
-        <HStack w="100%" >
-          <Code fontSize={"xs"}>{status}</Code>
+        <HStack w="100%">
+          <Code fontSize={'xs'}>{status}</Code>
         </HStack>
-        <HStack w="100%" >
-          {mine && <>
-            <Button onClick={handleStart} disabled={s.running} colorScheme="green">
-              Start
-            </Button>
-            <Button onClick={handleStop} disabled={!s.running} colorScheme="red">
-              Stop
-            </Button></>
-          }
-          <Tag p={3}>{s.running ? "Started" : "Stopped"} </Tag>
+        <HStack w="100%">
+          {mine && (
+            <>
+              <Button onClick={handleStart} disabled={s.running} colorScheme="green">
+                Start
+              </Button>
+              <Button onClick={handleStop} disabled={!s.running} colorScheme="red">
+                Stop
+              </Button>
+            </>
+          )}
+          <Tag p={3}>{s.running ? 'Started' : 'Stopped'} </Tag>
         </HStack>
       </VStack>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
 function ToolbarComponent(props: App): JSX.Element {
-
   const s = props.data.state as AppState;
 
-  return (
-    <>
-    </>
-  )
+  return <></>;
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

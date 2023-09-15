@@ -399,13 +399,14 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
-          <Button onClick={() => {
-            if (file) {
-              const url = file?.data.file;
-              const filename = file?.data.originalfilename;
-              downloadFile('api/assets/static/' + url, filename);
-            }
-          }}
+          <Button
+            onClick={() => {
+              if (file) {
+                const url = file?.data.file;
+                const filename = file?.data.originalfilename;
+                downloadFile('api/assets/static/' + url, filename);
+              }
+            }}
           >
             <MdFileDownload />
           </Button>
@@ -420,7 +421,7 @@ function ToolbarComponent(props: App): JSX.Element {
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px" fontSize={"sm"}>
+          <MenuList minWidth="150px" fontSize={'sm'}>
             <MenuItem
               icon={<MdFileDownload />}
               onClick={() => {
@@ -452,7 +453,7 @@ function ToolbarComponent(props: App): JSX.Element {
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px" fontSize={"sm"}>
+          <MenuList minWidth="150px" fontSize={'sm'}>
             <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
               Analyze
             </MenuItem>
@@ -463,4 +464,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

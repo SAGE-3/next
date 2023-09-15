@@ -9,9 +9,24 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
 import {
-  Box, Button, ButtonGroup, Tooltip, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack,
-  Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger,
-  UnorderedList, ListItem,
+  Box,
+  Button,
+  ButtonGroup,
+  Tooltip,
+  Slider,
+  SliderFilledTrack,
+  SliderMark,
+  SliderThumb,
+  SliderTrack,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  UnorderedList,
+  ListItem,
 } from '@chakra-ui/react';
 import {
   MdAccessTime,
@@ -185,7 +200,6 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [divRef, handleUserKeyPress]);
 
-
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio}>
       <div
@@ -317,7 +331,6 @@ function ToolbarComponent(props: App): JSX.Element {
       downloadFile(video_url, filename);
     }
   };
-
 
   // Screenshot the video and open an image viewer
   const handleScreenshot = async () => {
@@ -477,19 +490,21 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdScreenshotMonitor />
           </Button>
         </Tooltip>
-        <Popover placement='top-start' trigger="hover" >
+        <Popover placement="top-start" trigger="hover">
           <PopoverTrigger>
             <Button isDisabled={!videoRef}>
               <MdInfoOutline />
             </Button>
           </PopoverTrigger>
-          <PopoverContent fontSize={"sm"}>
+          <PopoverContent fontSize={'sm'}>
             <PopoverArrow />
             <PopoverCloseButton />
             <PopoverHeader>File: {file?.data.originalfilename}</PopoverHeader>
             <PopoverBody>
               <UnorderedList>
-                <ListItem>Resolution: {extras?.width} x {extras?.height}</ListItem>
+                <ListItem>
+                  Resolution: {extras?.width} x {extras?.height}
+                </ListItem>
                 <ListItem>Duration: {extras?.duration}</ListItem>
                 <ListItem>Bit Rate: {extras?.birate}</ListItem>
                 <ListItem>Audio: {extras?.audioFormat}</ListItem>
@@ -505,8 +520,13 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
 
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
 /**
  * Draw a video into a canvas and return the image
@@ -516,10 +536,10 @@ export default { AppComponent, ToolbarComponent };
 async function captureFrame(video: HTMLVideoElement) {
   if (video) {
     // Create a canvas
-    const canvas = document.createElement("canvas");
+    const canvas = document.createElement('canvas');
     canvas.width = 1280; // video.videoWidth;
     canvas.height = canvas.width / (video.videoWidth / video.videoHeight);
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (ctx) {
       // Draw the video into the canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);

@@ -224,11 +224,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <ElectronRequired
-          appName={props.data.type}
-          link={url || ''}
-          title={"Jupyter URL"}
-        />
+        <ElectronRequired appName={props.data.type} link={url || ''} title={'Jupyter URL'} />
       )}
     </AppWindow>
   );
@@ -304,11 +300,19 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-          <Button onClick={handleOpen}><MdOpenInNew /></Button>
+          <Button onClick={handleOpen}>
+            <MdOpenInNew />
+          </Button>
         </Tooltip>
       </ButtonGroup>
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

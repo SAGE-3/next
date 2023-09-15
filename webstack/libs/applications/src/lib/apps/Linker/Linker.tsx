@@ -133,19 +133,19 @@ function AppComponent(props: App): JSX.Element {
                     {/* Display state names */}
                     {app1
                       ? Object.keys(app1.data.state).map((propName: string, index: number) => {
-                        //@ts-ignore
-                        let type = typeof app1.data.state[propName];
-                        // Only display primitive types. No Objects
-                        if (type == 'object') {
-                          return null;
-                        } else {
-                          return (
-                            <Radio checked={true} key={index} value={propName}>
-                              {propName}
-                            </Radio>
-                          );
-                        }
-                      })
+                          //@ts-ignore
+                          let type = typeof app1.data.state[propName];
+                          // Only display primitive types. No Objects
+                          if (type == 'object') {
+                            return null;
+                          } else {
+                            return (
+                              <Radio checked={true} key={index} value={propName}>
+                                {propName}
+                              </Radio>
+                            );
+                          }
+                        })
                       : null}
                   </Stack>
                 </RadioGroup>
@@ -187,19 +187,19 @@ function AppComponent(props: App): JSX.Element {
                     {/* Display state names */}
                     {app2
                       ? Object.keys(app2.data.state).map((propName: string, index: number) => {
-                        //@ts-ignore
-                        let type = typeof app2.data.state[propName];
-                        // Only display primitive types. No Objects
-                        if (type == 'object') {
-                          return null;
-                        } else {
-                          return (
-                            <Radio key={index} value={propName}>
-                              {propName}
-                            </Radio>
-                          );
-                        }
-                      })
+                          //@ts-ignore
+                          let type = typeof app2.data.state[propName];
+                          // Only display primitive types. No Objects
+                          if (type == 'object') {
+                            return null;
+                          } else {
+                            return (
+                              <Radio key={index} value={propName}>
+                                {propName}
+                              </Radio>
+                            );
+                          }
+                        })
                       : null}
                   </Stack>
                 </RadioGroup>
@@ -230,4 +230,10 @@ function ToolbarComponent(props: App): JSX.Element {
   return <>{/* <Button colorScheme="green">Action</Button> */}</>;
 }
 
-export default { AppComponent, ToolbarComponent };
+/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
+
+const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+  return <></>;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
