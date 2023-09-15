@@ -75,7 +75,7 @@ export function LassoToolbar() {
     // If they are all of same type
     if (isAllOfSameType) {
       const firstApp = selectedApps[0];
-      //Check if that type has a GroupedToolbarComponent
+      // Check if that type has a GroupedToolbarComponent
       if (firstApp && firstApp.data.type in Applications) {
         const Component = Applications[firstApp.data.type].GroupedToolbarComponent;
         if (Component) component = <Component key={firstApp._id} apps={selectedApps}></Component>;
