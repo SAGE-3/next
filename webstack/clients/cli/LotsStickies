@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# URL
+#server="traoumad.evl.uic.edu"
+server="127.0.0.1:3333"
+
+# runtime in sec
+length=120
+
+# which board
+room="2b76bde6-a33b-4b20-9064-d6683732a221"
+board="d7b2b142-7e5c-4138-9f96-7626f5e5157a"
+
+node stickies.js -d 2 -r 20 -t $length -e 10 -b $board -m $room -s $server

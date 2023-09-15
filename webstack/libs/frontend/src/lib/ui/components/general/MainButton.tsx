@@ -6,6 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+
 import {
   useDisclosure,
   useColorMode,
@@ -20,7 +23,6 @@ import {
   Box,
   IconButton,
   Tooltip,
-  MenuOptionGroup,
   MenuGroup,
 } from '@chakra-ui/react';
 import {
@@ -53,10 +55,9 @@ import {
   EnterBoardModal,
   useHexColor,
   UserSearchModal,
+  useAbility,
 } from '@sage3/frontend';
-import { useEffect, useState } from 'react';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
-import { useParams } from 'react-router';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -72,6 +73,11 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
+
+  // Abilties
+  const canCreatePlugins = useAbility('create', 'plugins');
+  const canUpdateAccount = useAbility('update', 'users');
+
   const { logout } = useAuth();
   const { toggleColorMode, colorMode } = useColorMode();
   // Modal panels
@@ -137,9 +143,9 @@ export function MainButton(props: MainButtonProps) {
 
   const [boardListOpen, setBoardListOpen] = useState<boolean>(false);
 
-  const openBoardList = () => {
-    setBoardListOpen(true);
-  };
+  // const openBoardList = () => {
+  //   setBoardListOpen(true);
+  // };
 
   const closeBoardList = () => {
     if (boardListOpen) {
@@ -175,7 +181,7 @@ export function MainButton(props: MainButtonProps) {
           {user ? user.data.name : ''}
         </MenuButton>
         <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip">
-          <MenuItem onClick={editOnOpen} icon={<MdManageAccounts fontSize="24px" />}>
+          <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
           {isAdmin && (
@@ -189,7 +195,7 @@ export function MainButton(props: MainButtonProps) {
           </MenuItem>
 
           {props.config?.features?.plugins && (
-            <MenuItem onClick={pluginOnOpen} icon={<HiPuzzle fontSize="24px" />}>
+            <MenuItem onClick={pluginOnOpen} isDisabled={!canCreatePlugins} icon={<HiPuzzle fontSize="24px" />}>
               Plugins
             </MenuItem>
           )}
@@ -296,8 +302,7 @@ export function MainButton(props: MainButtonProps) {
 
       {
         // The test forces the recreation of the modal when the userSearchIsOpen state changes
-        userSearchIsOpen &&
-        <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
+        userSearchIsOpen && <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
       }
     </>
   );

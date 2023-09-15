@@ -10,12 +10,14 @@ import { useState, useEffect } from 'react';
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
 import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
-import { SBDocument } from '@sage3/sagebase';
+import { copyBoardUrlToClipboard } from '@sage3/frontend';
 import { BoardSchema, Board } from '@sage3/shared/types';
+import { SBDocument } from '@sage3/sagebase';
+
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
-import { useHexColor, useUser, useAuth } from '../../../hooks';
-import { copyBoardUrlToClipboard } from '@sage3/frontend';
+import { useHexColor } from '../../../hooks';
+import { useUser, useAuth } from '../../../providers';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -75,14 +77,16 @@ export function BoardCard(props: BoardCardProps) {
   // Copy the board id to the clipboard
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(props.board._id);
-    toast({
-      title: 'Success',
-      description: `BoardID copied to clipboard.`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(props.board._id);
+      toast({
+        title: 'Success',
+        description: `BoardID copied to clipboard.`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   // Copy a sharable link to the user's os clipboard

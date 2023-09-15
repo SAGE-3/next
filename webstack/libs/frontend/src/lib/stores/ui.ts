@@ -8,12 +8,14 @@
 
 // The React version of Zustand
 import create from 'zustand';
-
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
+
+import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -104,6 +106,7 @@ interface UIState {
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
   fitApps: (apps: App[]) => void;
+  fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
 }
@@ -184,6 +187,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       boardPosition: { x: bx, y: by },
     }));
   },
+  fitAllApps: () => {
+    const apps = useAppStore.getState().apps;
+    if (apps.length > 0) {
+      get().fitApps(apps);
+    } else {
+      get().resetBoardPosition();
+    }
+  },
   fitArea: (x: number, y: number, w: number, h: number) => {
     // Fit the smaller dimension into the browser size
     const sm = Math.min(window.innerWidth / w, window.innerHeight / h);
@@ -246,6 +257,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (!get().boardLocked)
       set((state) => ({ ...state, scale: 1, boardPosition: { x: -get().boardWidth / 2, y: -get().boardHeight / 2 } }));
   },
+
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
   },
@@ -261,7 +273,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   zoomIn: () => {
-    const zoomInVal = Math.min(get().scale + 0.1 * get().scale, MaxZoom);
+    const zoomInVal = Math.min(get().scale + 0.02 * get().scale, MaxZoom);
     if (!get().boardLocked) {
       const b = get().boardPosition;
       const s = get().scale;
@@ -272,7 +284,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     }
   },
   zoomOut: () => {
-    const zoomOutVal = Math.max(get().scale - 0.1 * get().scale, MinZoom);
+    const zoomOutVal = Math.max(get().scale - 0.02 * get().scale, MinZoom);
     if (!get().boardLocked) {
       const b = get().boardPosition;
       const s = get().scale;

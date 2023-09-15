@@ -62,14 +62,13 @@
     // Enable Plugins
     "plugins": true,
     // Which Apps to enable.  Available Apps: 
-    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, KernelDashboard, Stickie, Screenshare, Webview
+    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, Stickie, Screenshare, Webview
     "apps": [
       "Chat",
       "ChartMaker",
       "MapGL",
       "Notepad",
       "SageCell",
-      "KernelDashboard",
       "Stickie",
       "Screenshare",
       "Webview"
@@ -88,6 +87,7 @@
       "guest",
       "jwt",
       "google",
+      "spectator",
       "cilogon"
     ],
     // A List of emails to enable those users to be admins.
@@ -96,6 +96,11 @@
     "guestConfig": {
        // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/guest"
+    },
+    // Spectator configuration
+    "spectatorConfig": {
+      // Endpoint for the spectator login. No need to change this
+      "routeEndpoint": "/auth/spectator"
     },
     // Google configuration
     "googleConfig": {

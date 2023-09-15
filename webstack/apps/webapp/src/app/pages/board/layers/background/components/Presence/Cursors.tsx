@@ -6,13 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tag } from '@chakra-ui/react';
-import { useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { PresenceSchema } from '@sage3/shared/types';
 import { motion, useAnimation } from 'framer-motion';
-import { useEffect } from 'react';
 import { GiArrowCursor } from 'react-icons/gi';
+
+import { useHexColor, useThrottleScale } from '@sage3/frontend';
+import { PresenceSchema } from '@sage3/shared/types';
+
 import { Awareness } from './PresenceComponent';
 
 type CursorProps = {
@@ -23,7 +24,7 @@ type CursorProps = {
 // Render the User Cursors that belong to the board
 export function Cursors(props: CursorProps) {
   // UI Scale
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(50);
 
   // Render the cursors
   return (

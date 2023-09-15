@@ -6,16 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor } from '@sage3/frontend';
-import { App } from '../../schema';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
+import { App, AppSchema } from '../../schema';
+
+// Consraints on the app window size
+const APP_MIN_WIDTH = 200;
+const APP_MIN_HEIGHT = 100;
+const APP_MAX_WIDTH = 8 * 1024;
+const APP_MAX_HEIGHT = 8 * 1024;
 
 type WindowProps = {
   app: App;
@@ -28,17 +34,21 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // Can update
+  const canMove = useAbility('move', 'apps');
+  const canResize = useAbility('resize', 'apps');
+
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottleApps(250);
   const update = useAppStore((state) => state.update);
-  // const updateBatch = useAppStore((state) => state.updateBatch);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // Error Display Handling
   const storeError = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const zindex = useUIStore((state) => state.zIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
@@ -49,15 +59,16 @@ export function AppWindow(props: WindowProps) {
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  // const setSelectedAppsSnapshot = useUIStore((state) => state.setSelectedAppSnapshot);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
-  const isGrouped = selectedApps.includes(props.app._id);
 
+  // Lasso Information
   const lassoMode = useUIStore((state) => state.lassoMode);
   const deltaPosition = useUIStore((state) => state.deltaPos);
   const setDeltaPosition = useUIStore((state) => state.setDeltaPostion);
+  const isGrouped = selectedApps.includes(props.app._id);
+  const isGroupLeader = props.app._id == deltaPosition.id;
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
@@ -88,17 +99,6 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
 
-  // Group Delta Change
-  useEffect(() => {
-    if (isGrouped) {
-      if (selectedApps.includes(props.app._id) && props.app._id != deltaPosition.id) {
-        const x = props.app.data.position.x + deltaPosition.p.x;
-        const y = props.app.data.position.y + deltaPosition.p.y;
-        setPos({ x, y });
-      }
-    }
-  }, [deltaPosition]);
-
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
@@ -117,24 +117,33 @@ export function AppWindow(props: WindowProps) {
     }
   }, [storeError]);
 
+  // Lasso Group Delta Change
+  useMemo(() => {
+    // If the delta position changes, update the local state if you are grouped and not the leader
+    if (isGrouped && !isGroupLeader) {
+      const x = props.app.data.position.x + deltaPosition.p.x;
+      const y = props.app.data.position.y + deltaPosition.p.y;
+      setPos({ x, y });
+    }
+  }, [deltaPosition.p.x, deltaPosition.p.y]);
+
   // If size or position change, update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
-  }, [props.app.data.size, props.app.data.position]);
+  }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y]);
 
   // Handle when the window starts to drag
   function handleDragStart() {
     setAppDragging(true);
     bringForward();
-    // setDragStartPosition(props.app.data.position);
     setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
   }
 
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
     setAppWasDragged(true);
-    if (isGrouped) {
+    if (isGrouped && isGroupLeader) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
       setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
@@ -149,28 +158,33 @@ export function AppWindow(props: WindowProps) {
     y = Math.round(y / gridSize) * gridSize;
     const dx = x - props.app.data.position.x;
     const dy = y - props.app.data.position.y;
+
     setPos({ x, y });
     setAppDragging(false);
-    update(props.app._id, {
-      position: {
-        x,
-        y,
-        z: props.app.data.position.z,
-      },
-    });
-    if (isGrouped) {
+
+    // Update the position of the app in the server and all the other apps in the group
+    // If the app is grouped and the leader, update all the apps in the group
+    if (isGrouped && isGroupLeader) {
+      // Array of update to batch at once
+      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+      // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
-        if (appId === props.app._id) return;
         const app = apps.find((el) => el._id == appId);
         if (!app) return;
         const p = app.data.position;
-        update(appId, {
-          position: {
-            x: p.x + dx,
-            y: p.y + dy,
-            z: p.z,
-          },
-        });
+        ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
+      });
+      // Update all the apps at once
+      updateBatch(ps);
+      // Reset the delta position
+      setDeltaPosition({ x: dx, y: dy, z: 0 }, '');
+    } else {
+      update(props.app._id, {
+        position: {
+          x,
+          y,
+          z: props.app.data.position.z,
+        },
       });
     }
   }
@@ -243,6 +257,23 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  function handleAppTouchStart(e: PointerEvent) {
+    e.stopPropagation();
+    bringForward();
+    // Set the selected app in the UI store
+    if (appWasDragged) {
+      setAppWasDragged(false);
+    } else {
+      clearSelectedApps();
+      setSelectedApp(props.app._id);
+    }
+  }
+
+  function handleAppTouchMove(e: PointerEvent) {
+    e.stopPropagation();
+    setAppWasDragged(true);
+  }
+
   // Bring the app forward
   function bringForward() {
     if (!props.lockToBackground) {
@@ -277,11 +308,15 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-      enableResizing={enableResize}
+      // select an app on touch
+      onPointerDown={handleAppTouchStart}
+      onPointerMove={handleAppTouchMove}
+      enableResizing={enableResize && canResize}
+      disableDragging={!canMove}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode ? 'none' : 'auto',
+        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -293,15 +328,16 @@ export function AppWindow(props: WindowProps) {
         topLeft: { transform: `scale(${handleScale})` },
         topRight: { transform: `scale(${handleScale})` },
       }}
-      // minimum size of the app: 200 px
-      minWidth={200}
-      minHeight={100}
+      // min/max app window dimensions
+      minWidth={APP_MIN_WIDTH}
+      minHeight={APP_MIN_HEIGHT}
+      maxWidth={APP_MAX_WIDTH}
+      maxHeight={APP_MAX_HEIGHT}
       // Scaling of the board
       scale={scale}
       // resize and move snapping to grid
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
-      disableDragging={false}
     >
       {/* Title Above app */}
       <WindowTitle size={size} scale={scale} title={props.app.data.title} />

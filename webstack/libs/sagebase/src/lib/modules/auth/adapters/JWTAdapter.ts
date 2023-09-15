@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as passport from 'passport';
 import { readFileSync } from 'fs';
-
+import * as passport from 'passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
+
 import { SBAuthDB } from '../SBAuthDatabase';
 
 // Return payload from JWT check
@@ -46,7 +46,7 @@ export function passportJWTSetup(config: SBAuthJWTConfig): boolean {
     };
     passport.use(
       'jwt',
-      new Strategy(opts, async (payload: JWTPayload, done: any) => {
+      new Strategy(opts, async (payload: JWTPayload, done) => {
         if (opts.audience === payload.aud && opts.issuer === payload.iss) {
           const now = new Date();
           const expiration = new Date(payload.exp * 1000);

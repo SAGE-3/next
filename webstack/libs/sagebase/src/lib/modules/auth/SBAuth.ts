@@ -7,11 +7,11 @@
  */
 
 import { RedisClientType } from 'redis';
-import * as passport from 'passport';
-import { Express, NextFunction, Request, Response } from 'express';
-
 import RedisStore from 'connect-redis';
+
+import { Express, NextFunction, Request, Response } from 'express';
 import * as session from 'express-session';
+import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
@@ -27,17 +27,20 @@ import {
   SBAuthGuestConfig,
   passportCILogonSetup,
   SBAuthCILogonConfig,
+  passportSpectatorSetup,
+  SBAuthSpectatorConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator')[];
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
+  spectatorConfig?: SBAuthSpectatorConfig;
 };
 
 /**
@@ -120,6 +123,16 @@ export class SBAuth {
       if (config.strategies.includes('guest') && config.guestConfig) {
         if (passportGuestSetup()) {
           express.post(config.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
+        }
+      }
+
+      // Spectator Setup
+      if (config.strategies.includes('spectator') && config.spectatorConfig) {
+        if (passportSpectatorSetup()) {
+          express.post(
+            config.spectatorConfig.routeEndpoint,
+            passport.authenticate('spectator', { successRedirect: '/', failureRedirect: '/' })
+          );
         }
       }
 

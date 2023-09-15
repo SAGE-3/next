@@ -59,6 +59,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   description: string;
+  isDisabled?: boolean;
 }
 
 // Button with a title and using the font size from parent panel
@@ -83,6 +84,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           transition={'all 0.2s'}
           variant="ghost"
           onClick={props.onClick}
+          isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
         />
       </Tooltip>
@@ -325,7 +327,7 @@ export function Panel(props: PanelProps) {
                 {!panel.minimized ? (
                   <IconButton
                     size="xs"
-                    icon={<MdExpandLess size="1.5rem" />}
+                    icon={<MdExpandLess size="24px" />}
                     aria-label="show less"
                     onClick={handleMinimizeClick}
                     mx="1"
@@ -334,7 +336,7 @@ export function Panel(props: PanelProps) {
                 ) : (
                   <IconButton
                     size="xs"
-                    icon={<MdExpandMore size="1.5rem" />}
+                    icon={<MdExpandMore size="24px" />}
                     aria-label="show more"
                     onClick={handleMinimizeClick}
                     mx="1"
@@ -343,7 +345,7 @@ export function Panel(props: PanelProps) {
                 )}
                 {panel.name !== 'controller' ? (
                   <IconButton
-                    icon={<MdClose size="1.25rem" />}
+                    icon={<MdClose size="20px" />}
                     aria-label="close panel"
                     size="xs"
                     mx="1"

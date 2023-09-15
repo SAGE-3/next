@@ -27,8 +27,9 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { RoomSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+
 import { useRoomStore, useConfigStore } from '../../../stores';
-import { useUser } from '../../../hooks';
+import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
 
 interface CreateRoomModalProps {
@@ -142,7 +143,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -156,7 +157,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Room Description'}
@@ -178,7 +179,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             Room Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}

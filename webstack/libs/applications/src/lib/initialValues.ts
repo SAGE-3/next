@@ -3,17 +3,19 @@
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
+import { name as ChartMakerName, init as defaultChartMaker } from './apps/ChartMaker';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DataTableName, init as defaultDataTable } from './apps/DataTable';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
+import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
-import { name as KernelDashboardName, init as defaultKernelDashboard } from './apps/KernelDashboard';
-import { name as KernelsName, init as defaultKernels } from './apps/Kernels';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
@@ -37,17 +39,19 @@ export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
+  [ChartGeneratorName]: defaultChartGenerator,
+  [ChartMakerName]: defaultChartMaker,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [CounterName]: defaultCounter,
   [DataTableName]: defaultDataTable,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
+  [HCDPName]: defaultHCDP,
   [ImageViewerName]: defaultImageViewer,
   [JupyterLabName]: defaultJupyterLab,
-  [KernelDashboardName]: defaultKernelDashboard,
-  [KernelsName]: defaultKernels,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,

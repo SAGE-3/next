@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Icon, Image, Spacer } from '@chakra-ui/react';
 import { MdLock, MdPerson, MdRefresh } from 'react-icons/md';
 
-import { APIHttp, useHexColor, usePresenceStore } from '@sage3/frontend';
+import { APIHttp, useThrottlePresenceUsers } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
 
 import { App, AppName, AppState } from '../../../schema';
@@ -27,8 +27,8 @@ export function BoardCard(props: App): JSX.Element {
   const logoUrl = useColorModeValue('/assets/background-boardlink-dark.png', '/assets/background-boardlink.png');
 
   // Get presences of users
-  let presences = usePresenceStore((state) => state.partialPrescences);
-  presences = presences.filter((el) => el.data.boardId === boardId);
+  let presences = useThrottlePresenceUsers(5000, '', boardId);
+  presences = presences.filter((el) => el.presence.data.boardId === boardId);
 
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');

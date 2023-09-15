@@ -13,9 +13,9 @@ import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { downloadFile, isUUIDv4 } from '@sage3/frontend';
+import { downloadFile, isUUIDv4, useThrottleScale } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { useAssetStore, useAppStore, useUIStore, useMeasure } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useMeasure } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -41,7 +41,7 @@ function AppComponent(props: App): JSX.Element {
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
@@ -119,7 +119,7 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {Object.keys(s.boxes).map((label, idx) => {
+          {s.boxes ? Object.keys(s.boxes).map((label, idx) => {
             // TODO Need to handle text overflow for labels
             return (
               <Box
@@ -137,10 +137,10 @@ function AppComponent(props: App): JSX.Element {
                 </Box>
               </Box>
             );
-          })}
+          }) : null}
         </>
-      </div>
-    </AppWindow>
+      </div >
+    </AppWindow >
   );
 }
 
@@ -186,7 +186,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
-        <div style={{ display: Object.keys(s.boxes).length !== 0 ? 'flex' : 'none' }}>
+        <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {

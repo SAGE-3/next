@@ -71,10 +71,9 @@ import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
 
-import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
-
+import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
-import e from 'express';
+import { SAGE3Ability } from '@sage3/shared';
 
 type YjsClientState = {
   name: string;
@@ -91,6 +90,9 @@ type YjsClientState = {
 function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   if (!user) return <></>;
+
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
 
   // App state
   const s = props.data.state as AppState;
@@ -116,6 +118,7 @@ function AppComponent(props: App): JSX.Element {
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
   const [content, setContent] = useState<ContentItem[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
+  const [fontSize, setFontSize] = useState<number>(s.fontSize);
 
   // Toast
   const toast = useToast();
@@ -268,14 +271,7 @@ function AppComponent(props: App): JSX.Element {
     } as editor.IDimension);
   }, [props.data.size.width, editorHeight]);
 
-  useEffect(() => {
-    if (!editorRef.current) return;
-    editorRef.current.updateOptions({
-      fontSize: s.fontSize,
-    });
-  }, [s.fontSize]);
-
-  // // Debounce Updates
+  // Debounce Updates
   const throttleUpdate = throttle(1000, () => {
     if (!editorRef.current) return;
     updateState(props._id, { code: editorRef.current.getValue() });
@@ -289,7 +285,8 @@ function AppComponent(props: App): JSX.Element {
    * @returns void
    */
   const handleExecute = async () => {
-    if (!user || !editorRef.current || !apiStatus || !access) return;
+    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+    if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
     updateState(props._id, { code: editorRef.current.getValue() });
     if (!s.kernel) {
       if (toastRef.current) return;
@@ -380,6 +377,21 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  // Insert room/board info into the editor
+  const handleInsertInfo = (ed: editor.ICodeEditor) => {
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    ed.focus()
+    ed.trigger('keyboard', 'type', { text: info });
+  };
+  const handleInsertAPI = (ed: editor.ICodeEditor) => {
+    let code = "from foresight.config import config as conf, prod_type\n"
+    code += "from foresight.Sage3Sugar.pysage3 import PySage3\n"
+    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    code += "ps3 = PySage3(conf, prod_type)\n\n"
+    ed.focus()
+    ed.setValue(code);
+  };
+
   async function getResults(msgId: string) {
     if (s.streaming || s.msgId) return;
     const response = await fetchResults(msgId);
@@ -420,6 +432,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   useEffect(() => {
+    if (!s.history) return;
     if (s.history.length === 0 || s.streaming || s.msgId) return;
     const msgId = s.history[s.history.length - 1];
     getResults(msgId);
@@ -620,7 +633,6 @@ function AppComponent(props: App): JSX.Element {
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
       const count = users.size;
-      console.log(count);
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
         // Does the board have lines?
@@ -629,38 +641,27 @@ function AppComponent(props: App): JSX.Element {
           yText.delete(0, yText.length);
           // Set the lines from the database
           yText.insert(0, s.code);
-          console.log('synced with database');
         }
       }
     });
   };
 
-  const handleFontIncrease = useCallback(() => {
-    updateState(props._id, { fontSize: s.fontSize + 1 });
-  }, [s.fontSize]);
-
-  const handleFontDecrease = useCallback(() => {
-    updateState(props._id, { fontSize: s.fontSize - 1 });
-  }, [s.fontSize]);
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({ fontSize });
+    updateState(props._id, { fontSize });
+  }, [fontSize]);
 
   useEffect(() => {
-    if (!editorRef.current || !monaco) return;
-    editorRef.current.updateOptions({
-      fontSize: s.fontSize,
-    });
-    editorRef.current.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: handleFontIncrease,
-    });
-    editorRef.current.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: handleFontDecrease,
-    });
-  }, [s.fontSize, editorRef.current, monaco]);
+    setFontSize(s.fontSize);
+  }, [s.fontSize]);
+
+  const handleFontIncrease = () => {
+    setFontSize((prev) => Math.min(48, prev + 2));
+  };
+  const handleFontDecrease = () => {
+    setFontSize((prev) => Math.max(8, prev - 2));
+  };
 
   /**
    *
@@ -706,24 +707,63 @@ function AppComponent(props: App): JSX.Element {
     });
     editor.addAction({
       id: 'execute',
-      label: 'Execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
       run: handleExecute,
     });
     editor.addAction({
       id: 'clear',
-      label: 'Clear',
+      label: 'Cell Clear',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
       run: handleClear,
     });
     editor.addAction({
       id: 'interrupt',
-      label: 'Interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 2,
+      contextMenuGroupId: "2_sage3",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
+
+    editor.addAction({
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "3_sagecell",
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "3_sagecell",
+      run: handleInsertInfo,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: "4_font",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: "4_font",
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
     // Update database on key up
-    editor.onKeyUp((e) => {
+    editor.onKeyUp(() => {
       throttleFunc();
     });
   };
@@ -735,7 +775,9 @@ function AppComponent(props: App): JSX.Element {
     if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
       editorRef.current.addAction({
         id: 'execute',
-        label: 'Execute',
+        label: 'Cell Execute',
+        contextMenuOrder: 0,
+        contextMenuGroupId: "2_sage3",
         keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: handleExecute,
       });
@@ -797,7 +839,7 @@ function AppComponent(props: App): JSX.Element {
               <Editor
                 // defaultValue={s.code}
                 loading={<Spinner />}
-                options={monacoOptions}
+                options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
                 onMount={handleMount}
                 height={editorHeight && editorHeight > 150 ? editorHeight : 150}
                 width={props.data.size.width - 60}
@@ -817,14 +859,14 @@ function AppComponent(props: App): JSX.Element {
                     onClick={handleExecute}
                     aria-label={''}
                     icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
-                    isDisabled={!s.kernel}
+                    isDisabled={!s.kernel || !canExecuteCode}
                   />
                 </Tooltip>
                 <Tooltip hasArrow label="Stop" placement="right-start">
                   <IconButton
                     onClick={handleInterrupt}
                     aria-label={''}
-                    isDisabled={!s.msgId}
+                    isDisabled={!s.msgId || !canExecuteCode}
                     icon={<MdStop size={'1.5em'} color="#008080" />}
                   />
                 </Tooltip>

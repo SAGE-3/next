@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useLayoutEffect, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 import './style.scss';
@@ -50,6 +50,15 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
 
+  const handleClick = useCallback(() => {
+    // timeout to allow button click to fire before hiding menu
+    if (showContextMenu) {
+      // setShowContextMenu(false);
+      setTimeout(() => setShowContextMenu(false));
+    }
+  }, [showContextMenu]);
+
+
   const handleContextMenu = useCallback(
     (event: any) => {
       event.preventDefault();
@@ -72,26 +81,17 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     [setContextMenuPos, props.divId, setContextMenuPosition]
   );
 
-  const handleClick = useCallback(() => {
-    // timeout to allow button click to fire before hiding menu
-    // return (showContextMenu ? setTimeout(() => setShowContextMenu(false)) : null);
-    if (showContextMenu) setTimeout(() => setShowContextMenu(false));
-  }, [showContextMenu]);
-
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
+      // console.log('ContextMenuHandler> type', type, event.type, showContextMenu);
       if (type === 'contextmenu') {
-        // safari ios
-        // setContextMenuPos({ x: event.pageX, y: event.pageY, });
-        // setContextMenuPosition({ x: event.pageX, y: event.pageY, });
-        // Convert touch position to mouse position
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
         setContextMenuPosition({ x: pos.x, y: pos.y });
         setTimeout(() => setShowContextMenu(true));
       } else {
-        if (event.type === 'touchstart') {
-          if (event.target.id === 'board') {
+        if (event.type === 'touchstart' && showContextMenu) {
+          if (event.target.id === 'board' || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false));
           }
         }
@@ -101,21 +101,21 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
-    document.addEventListener('touchstart', ctx.onTouchStart);
-    document.addEventListener('touchcancel', ctx.onTouchCancel);
-    document.addEventListener('touchend', ctx.onTouchEnd);
-    document.addEventListener('touchmove', ctx.onTouchMove);
+    // document.addEventListener('touchstart', ctx.onTouchStart);
+    // document.addEventListener('touchcancel', ctx.onTouchCancel);
+    // document.addEventListener('touchend', ctx.onTouchEnd);
+    // document.addEventListener('touchmove', ctx.onTouchMove);
 
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
-      document.removeEventListener('touchstart', ctx.onTouchStart);
-      document.removeEventListener('touchcancel', ctx.onTouchCancel);
-      document.removeEventListener('touchend', ctx.onTouchEnd);
-      document.removeEventListener('touchmove', ctx.onTouchMove);
+      // document.removeEventListener('touchstart', ctx.onTouchStart);
+      // document.removeEventListener('touchcancel', ctx.onTouchCancel);
+      // document.removeEventListener('touchend', ctx.onTouchEnd);
+      // document.removeEventListener('touchmove', ctx.onTouchMove);
     };
-  });
+  }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
 

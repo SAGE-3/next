@@ -6,14 +6,29 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 import {
-  Box, Button, useColorModeValue, useToast, ToastId,
-  Modal, useDisclosure, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
-  Popover, PopoverContent, PopoverHeader, PopoverBody, Portal, Center,
+  Box,
+  Button,
+  useColorModeValue,
+  useToast,
+  ToastId,
+  Modal,
+  useDisclosure,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  Portal,
+  Center,
 } from '@chakra-ui/react';
 
-import { isValidURL, setupApp } from '@sage3/frontend';
 import {
   useUIStore,
   useAppStore,
@@ -25,6 +40,9 @@ import {
   useKeyPress,
   useAuth,
   useFiles,
+  isValidURL,
+  setupApp,
+  useAbility,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -36,6 +54,10 @@ type BackgroundProps = {
   boardId: string;
 };
 
+// Global vars to cache event state
+const evCache = new Array();
+let prevDiff = -1;
+
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
@@ -46,7 +68,7 @@ export function Background(props: BackgroundProps) {
   // Modal for opening lots of files
   const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
   // Popover
-  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure()
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
   // Hooks
   const { uploadFiles, openAppForFile } = useFiles();
@@ -63,11 +85,16 @@ export function Background(props: BackgroundProps) {
   // User
   const { user, accessId } = useUser();
   const { auth } = useAuth();
-  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+  const { cursor, boardCursor } = useCursorBoardPosition();
+
+  // Abilities
+  const canDrop = useAbility('upload', 'assets');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const zoomIn = useUIStore((state) => state.zoomIn);
+  const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -139,6 +166,15 @@ export function Background(props: BackgroundProps) {
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
     if (!user) return;
 
+    if (!canDrop) {
+      toast({
+        title: 'Guests and Spectators cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
@@ -149,16 +185,6 @@ export function Background(props: BackgroundProps) {
       event.preventDefault();
       event.stopPropagation();
 
-      // Block guests from uploading assets
-      if (auth?.provider === 'guest') {
-        toast({
-          title: 'Guests cannot upload assets',
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {
@@ -261,15 +287,13 @@ export function Background(props: BackgroundProps) {
     'shift+/',
     (event: KeyboardEvent): void | boolean => {
       if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
       // Open the help panel
       helpOnOpen();
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    { dependencies: [] }
   );
 
   // Move the board with the arrow keys
@@ -291,7 +315,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
+    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
   // Zoom in/out of the board with the -/+ keys
@@ -300,15 +324,15 @@ export function Background(props: BackgroundProps) {
     (event: KeyboardEvent): void | boolean => {
       if (selectedAppId !== '') return;
       if (event.key === '-') {
-        zoomOutDelta(-10, mousePosition);
+        zoomOutDelta(-10, cursor);
       } else if (event.key === '=') {
-        zoomInDelta(10, mousePosition);
+        zoomInDelta(10, cursor);
       }
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
+    { dependencies: [selectedAppId] }
   );
 
   // Stickies Shortcut
@@ -316,8 +340,8 @@ export function Background(props: BackgroundProps) {
     'shift+s',
     (event: KeyboardEvent): void | boolean => {
       if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
+      const x = boardCursor.x;
+      const y = boardCursor.y;
       createApp(
         setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
       );
@@ -326,7 +350,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    { dependencies: [] }
   );
 
   useEffect(() => {
@@ -341,14 +365,105 @@ export function Background(props: BackgroundProps) {
   }, [isShiftPressed]);
 
   const createWeblink = () => {
-    createApp(setupApp('WebpageLink', 'WebpageLink', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
-      { w: 400, h: 400 }, { url: validURL }));
+    createApp(
+      setupApp(
+        'WebpageLink',
+        'WebpageLink',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 400, h: 400 },
+        { url: validURL }
+      )
+    );
     popOnClose();
   };
   const createWebview = () => {
-    createApp(setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId,
-      { w: 800, h: 1000 }, { webviewurl: validURL }));
+    createApp(
+      setupApp(
+        'Webview',
+        'Webview',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 800, h: 1000 },
+        { webviewurl: validURL }
+      )
+    );
     popOnClose();
+  };
+
+  // Functions for zooming with touch events
+  function remove_event(ev: any) {
+    // Remove this event from the target's cache
+    for (var i = 0; i < evCache.length; i++) {
+      if (evCache[i].pointerId == ev.pointerId) {
+        evCache.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  const onPointerDown = (ev: any) => {
+    evCache.push(ev);
+  };
+
+  /**
+   * This function implements a 2-pointer horizontal pinch/zoom gesture.
+   * If the distance between the two pointers has increased (zoom in),
+   * and if the distance is decreasing (zoom out)
+   *
+   * @param ev
+   */
+  const onPointerMove = (ev: any) => {
+    // Find this event in the cache and update its record with this event
+    for (var i = 0; i < evCache.length; i++) {
+      if (ev.pointerId == evCache[i].pointerId) {
+        evCache[i] = ev;
+        break;
+      }
+    }
+
+    // If two pointers are down, check for pinch gestures
+    if (evCache.length == 2) {
+      // Calculate the distance between the two pointers
+      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
+      if (prevDiff > 0) {
+        if (curDiff > prevDiff) {
+          // The distance between the two pointers has increased
+          zoomIn();
+        }
+        if (curDiff < prevDiff) {
+          // The distance between the two pointers has decreased
+          zoomOut();
+        }
+      }
+      // Cache the distance for the next move event
+      prevDiff = curDiff;
+    }
+  };
+  const onPointerUp = (ev: any) => {
+    // Remove this pointer from the cache
+    remove_event(ev);
+    // If the number of pointers down is less than two then reset diff tracker
+    if (evCache.length < 2) prevDiff = -1;
+  };
+
+  // Throttle The wheel event
+  const throttleWheel = throttle(50, (evt: any) => {
+    evt.stopPropagation();
+    const cursor = { x: evt.clientX, y: evt.clientY };
+    if (evt.deltaY < 0) {
+      zoomInDelta(evt.deltaY, cursor);
+    } else if (evt.deltaY > 0) {
+      zoomOutDelta(evt.deltaY, cursor);
+    }
+  });
+  const throttleWheelRef = useCallback(throttleWheel, []);
+  const onWheelEvent = (ev: any) => {
+    throttleWheelRef(ev);
   };
 
   return (
@@ -366,32 +481,34 @@ export function Background(props: BackgroundProps) {
       onScroll={(evt) => {
         evt.stopPropagation();
       }}
-      onWheel={(evt: any) => {
-        evt.stopPropagation();
-        const cursor = { x: evt.clientX, y: evt.clientY };
-        if (evt.deltaY < 0) {
-          zoomInDelta(evt.deltaY, cursor);
-        } else if (evt.deltaY > 0) {
-          zoomOutDelta(evt.deltaY, cursor);
-        }
-      }}
+      onWheel={onWheelEvent}
+      // Zoom touch events
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onPointerOut={onPointerUp}
+      onPointerLeave={onPointerUp}
     >
       <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
         <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       </Modal>
 
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-        <Portal >
-          <PopoverContent w={"250px"} style={{ position: "absolute", left: dropCursor.x - 125 + "px", top: dropCursor.y - 45 + "px" }}>
-            <PopoverHeader fontSize={"sm"} fontWeight={"bold"}>Create a WebLink or a WebView</PopoverHeader>
+        <Portal>
+          <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+            <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+              <Center>Create a Link or open URL</Center>
+            </PopoverHeader>
             <PopoverBody>
               <Center>
                 <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
-                  WebLink
+                  Create Link
                 </Button>
                 <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
-                  WebView
-                </Button></Center>
+                  Open URL
+                </Button>
+              </Center>
             </PopoverBody>
           </PopoverContent>
         </Portal>

@@ -461,16 +461,18 @@ function AppComponent(props: App): JSX.Element {
                           maxWidth="70%"
                           userSelect={'none'}
                           onDoubleClick={() => {
-                            // Copy into clipboard
-                            navigator.clipboard.writeText(message.query);
-                            // Notify the user
-                            toast({
-                              title: 'Success',
-                              description: `Content Copied to Clipboard`,
-                              duration: 3000,
-                              isClosable: true,
-                              status: 'success',
-                            });
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.query);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
                           }}
                           draggable={true}
                           // Store the query into the drag/drop events to create stickies
@@ -529,20 +531,20 @@ function AppComponent(props: App): JSX.Element {
                           m={3}
                           fontFamily="arial"
                           onDoubleClick={() => {
-                            // Copy into clipboard
-                            navigator.clipboard.writeText(message.response);
-                            // Notify the user
-                            toast({
-                              title: 'Success',
-                              description: `Content Copied to Clipboard`,
-                              duration: 3000,
-                              isClosable: true,
-                              status: 'success',
-                            });
-                          }}
-                        >
-                          <Box
-                            pl={3}
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.response);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
+                          }}>
+                          <Box pl={3}
                             draggable={true}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
@@ -598,43 +600,31 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
         <HStack>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
-            <IconButton
-              aria-label="Messages"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={newMessages ? 'green' : 'blue'}
-              variant="ghost"
-              icon={<MdExpandCircleDown size="1.5rem" />}
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
+            <IconButton aria-label='Messages' size={"xs"}
+              p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
+              icon={<MdExpandCircleDown size="24px" />}
               isDisabled={!newMessages}
               isLoading={processing}
               onClick={() => goToBottom('instant')}
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
-            <IconButton
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdStopCircle size="1.5rem" />}
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={"Stop Geppetto"} openDelay={400}>
+            <IconButton aria-label='stop' size={"xs"}
+              p={0} m={0} colorScheme={"blue"} variant='ghost'
+              icon={<MdStopCircle size="24px" />}
               onClick={stopGeppetto}
               width="34%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
-            <IconButton
-              aria-label="reset"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdChangeCircle size="1.5rem" />}
+          <Tooltip fontSize={"xs"}
+            placement="top" hasArrow={true} label={"Reset Chat"} openDelay={400}>
+            <IconButton aria-label='reset' size={"xs"}
+              p={0} m={0} colorScheme={"blue"} variant='ghost'
+              icon={<MdChangeCircle size="24px" />}
               onClick={resetGepetto}
               width="33%"
             />

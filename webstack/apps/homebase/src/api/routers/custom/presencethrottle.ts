@@ -38,10 +38,11 @@ class PresenceThrottleClass {
    * Initialize the Presence Throttle
    */
   async init() {
-    const p = await PresenceCollection.getAll();
-    if (p) {
-      this._presences = p;
+    const presences = await PresenceCollection.getAll();
+    if (presences) {
+      this._presences = presences;
     }
+
     // Throttle Function
     const throttleUpdate = throttle(this._tickRate, () => this.sendUpdates());
 
@@ -90,10 +91,6 @@ class PresenceThrottleClass {
    */
   addSubscription(id: string, socket: WebSocket) {
     this._subscriptions.set(id, socket);
-    // On Disconnect remove from client list
-    socket.on('close', () => {
-      this.removeClient(id);
-    });
   }
 
   /**
@@ -109,10 +106,21 @@ class PresenceThrottleClass {
    */
   sendUpdates(): void {
     if (!this._initialized) return;
+    // Remove the clients that are no longer alive
+    const removeClients = [] as string[];
+    // Filter out the presences that are offline
+    const filteredPresences = this._presences.filter((p) => p.data.status === 'online');
     this._subscriptions.forEach((socket, key) => {
-      const msg = { id: key, event: { doc: this._presences } };
+      // Check if socket is still alive
+      if (socket.readyState !== WebSocket.OPEN) {
+        removeClients.push(key);
+        return;
+      }
+      const msg = { id: key, event: { doc: filteredPresences } };
       socket.send(JSON.stringify(msg));
     });
+    // Remove the clients that are no longer alive
+    removeClients.forEach((id) => this.removeClient(id));
   }
 }
 
