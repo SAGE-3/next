@@ -645,8 +645,6 @@ function ToolbarComponent(props: App): JSX.Element {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
-            console.log('Here selected');
-
             if (s.stationNames.includes(a['STID'])) {
               return -1;
             } else {
@@ -665,8 +663,6 @@ function ToolbarComponent(props: App): JSX.Element {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
-            console.log('Here selected');
-
             if (s.stationNames.includes(a['STID'])) {
               return 1;
             } else {
