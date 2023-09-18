@@ -15,7 +15,6 @@ import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
 import { MdOutlineArrowUpward } from 'react-icons/md';
-import { getFormattedTimePeriod } from '../../SensorOverview/SensorOverview';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -90,7 +89,7 @@ type VariableProps = {
   color: string;
 };
 
-export default function StatisticCard(
+export default function VariableCard(
   props: {
     isLoaded: boolean;
     stationNames: string[];
@@ -100,7 +99,6 @@ export default function StatisticCard(
     size?: { width: number; height: number; depth: number };
     generateAllVariables?: boolean;
     isCustomizeWidgetMenu: boolean;
-    widget: any;
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
@@ -111,7 +109,7 @@ export default function StatisticCard(
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
-    if (props.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
+    if (s.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
     for (let i = 0; i < props.stationMetadata.length; i++) {
       props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
       props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
@@ -125,26 +123,24 @@ export default function StatisticCard(
     for (let i = 0; i < props.stationMetadata.length; i++) {
       // Check here if generating all the variable names for a station
       if (props.generateAllVariables) {
-        props.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
+        s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
       }
-      for (let j = 0; j < props.widget.yAxisNames.length; j++) {
-        let sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
+      for (let j = 0; j < s.widget.yAxisNames.length; j++) {
+        const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
           let images: string[] = [];
           let color = '#ffffff';
           for (let i = 0; i < VariableUnits.length; i++) {
-            if (props.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
+            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
               unit = VariableUnits[i].unit;
               images = VariableUnits[i].images;
               color = variableUnits[i].color;
             }
           }
-
-          sensorValues = sensorValues.filter((value: number) => Number(value) !== 0);
           if (sensorValues.length !== 0) {
             values.push({
-              variableName: props.widget.yAxisNames[j],
+              variableName: s.widget.yAxisNames[j],
               stationName: props.stationMetadata[i].NAME,
               value: sensorValues[sensorValues.length - 1],
               average: calculateMean(sensorValues),
@@ -160,7 +156,7 @@ export default function StatisticCard(
             });
           } else {
             values.push({
-              variableName: props.widget.yAxisNames[j],
+              variableName: s.widget.yAxisNames[j],
               stationName: props.stationMetadata[i].NAME,
               value: 0,
               average: 0,
@@ -177,7 +173,7 @@ export default function StatisticCard(
           }
 
           // Air Temperature has Celius and Fahrenheit to display as "secondary"
-          if (props.widget.yAxisNames[0] === 'air_temp_set_1') {
+          if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
             secondaryValues = celsiusToFahrenheit(sensorValues);
             setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
           }
@@ -185,7 +181,7 @@ export default function StatisticCard(
       }
     }
     setVariablesToDisplay(values);
-  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.widget)]);
+  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.state.widget)]);
   return (
     <>
       {props.size ? (
@@ -213,7 +209,6 @@ export default function StatisticCard(
                       key={index}
                       variable={variable}
                       isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                      timePeriod={props.widget.timePeriod}
                     />
                   </React.Fragment>
                 );
@@ -245,7 +240,6 @@ export default function StatisticCard(
                       key={index}
                       variable={variable}
                       isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                      timePeriod={props.widget.timePeriod}
                     />
                   </React.Fragment>
                 );
@@ -280,7 +274,6 @@ export default function StatisticCard(
                     images: [],
                   }
             }
-            timePeriod={props.widget.timePeriod}
           />
         </Box>
       )}
@@ -298,7 +291,6 @@ const Content = (props: {
   secondaryValuesToDisplay?: number;
   variable: VariableProps;
   isCustomizeWidgetMenu: boolean;
-  timePeriod: string;
 }) => {
   const variableName = props.variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   // delete variableName[variableName.length - 1];
@@ -313,8 +305,8 @@ const Content = (props: {
     } else {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
+    console.log(props.size.width, props.size.height);
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
-
   return (
     <>
       <Box
@@ -352,22 +344,36 @@ const Content = (props: {
         alignContent="center"
         textAlign={'center'}
       >
-        <Box>
-          <Text textAlign={'center'} fontSize={scaleToFontSize / 12}>
+        <Box bg="#2D62D2">
+          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 10}>
             {props.variable.stationName}
           </Text>
         </Box>
 
         <Box>
-          <Text textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 12}>
+          <Text mt={scaleToFontSize / 6} textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 8}>
             {variableName.join(' ')}
           </Text>
         </Box>
 
-        <Box display="flex" flexDir="column" justifyContent="center" alignItems="center">
+        <Box>
           {props.isLoaded ? (
             <>
-              <Text fontSize={scaleToFontSize / 7} fontWeight="bold">
+              {/* <Box display="flex" justifyContent={'center'}>
+                {' '}
+                {props.variable.variableName === 'wind_direction_set_1' ? (
+                  <Icon fontSize={200} as={MdOutlineArrowUpward} transform={`rotate(${props.variable.value}deg)`} />
+                ) : null}
+              </Box> */}
+
+              <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                overflow="hidden"
+                fontSize={scaleToFontSize / 6}
+                fontWeight="bold"
+              >
                 {isNaN(props.variable.value)
                   ? props.variable.value
                   : props.variable.value % 1
@@ -375,54 +381,16 @@ const Content = (props: {
                   : props.variable.value}
                 <span>&nbsp;{props.variable.unit}</span>
               </Text>
-              <Box
-                fontSize={scaleToFontSize / 20}
-                w={scaleToFontSize + 200}
-                p={scaleToFontSize / 30}
-                px={scaleToFontSize / 15}
-                // borderRadius={'lg'}
-                borderRadius={'40px'}
-                boxShadow={'lg'}
-                overflow="visible"
-                // color="white"
-                // bg="#2A2A2A"
-                border={`${scaleToFontSize / 100}px solid grey`}
-                style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
-              >
-                <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>
-                <Box mt={scaleToFontSize / 25} display="flex" flexDir="row" justifyContent="space-between">
-                  <Box>
-                    <Text>Low</Text>
-                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
-                      {props.variable.low} {props.variable.unit}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text>Average</Text>
-                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
-                      {props.variable.average.toFixed(1)} {props.variable.unit}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text>High</Text>
-                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
-                      {props.variable.high} {props.variable.unit}
-                    </Text>
-                  </Box>
-                </Box>
-              </Box>
             </>
           ) : (
             <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
           )}
-        </Box>
 
-        <Box>
           <Text
             overflow="hidden"
             color="gray.400"
             transform={`translateY(${scaleToFontSize / 20}px)`}
-            fontSize={scaleToFontSize / 30}
+            fontSize={scaleToFontSize / 20}
             fontWeight="semibold"
             // lineHeight={'48px'}
           >
@@ -434,6 +402,6 @@ const Content = (props: {
   );
 };
 
-StatisticCard.defaultProps = {
+VariableCard.defaultProps = {
   generateAllVariables: false,
 };

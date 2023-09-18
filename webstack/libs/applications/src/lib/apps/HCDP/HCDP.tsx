@@ -157,23 +157,23 @@ function AppComponent(props: App): JSX.Element {
           />
           {s.getDataFrom === 'mesonet'
             ? s.stationData.map((data: SensorTypes, index: number) => {
-              return (
-                <div key={index}>
-                  <SVGOverlay
-                    bounds={[
-                      [data.lat - 0.17, data.lon - 0.05],
-                      [data.lat + 0.15, data.lon + 0.05],
-                    ]}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                      <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
-                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                          {data[s.variableToDisplay]}
-                        </text>
-                      </g>
-                    </svg>
-                    {/* {s.variableToDisplay === 'windSpeed' ? (
+                return (
+                  <div key={index}>
+                    <SVGOverlay
+                      bounds={[
+                        [data.lat - 0.17, data.lon - 0.05],
+                        [data.lat + 0.15, data.lon + 0.05],
+                      ]}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                        <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
+                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                          <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                            {data[s.variableToDisplay]}
+                          </text>
+                        </g>
+                      </svg>
+                      {/* {s.variableToDisplay === 'windSpeed' ? (
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                           <g transform={`translate(100, 100) scale(${(1 / s.zoom) * 150 - 12}) translate(-100, -100)`}>
                             <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
@@ -186,43 +186,43 @@ function AppComponent(props: App): JSX.Element {
                       ) : (
 null
                       )} */}
-                  </SVGOverlay>
-                </div>
-              );
-            })
+                    </SVGOverlay>
+                  </div>
+                );
+              })
             : hcdpStationData.map((station: any, index: number) => {
-              if (station.value.island !== 'OA') return null;
-              return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
-              return (
-                <div key={index}>
-                  <SVGOverlay
-                    bounds={[
-                      [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
-                      [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
-                    ]}
-                    eventHandlers={{
-                      click: () => {
-                        console.log(station);
-                      },
-                    }}
-                  >
-                    {s.variableToDisplay === 'windSpeed' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                        </g>
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                        </g>
-                      </svg>
-                    )}
-                  </SVGOverlay>
-                </div>
-              );
-            })}
+                if (station.value.island !== 'OA') return null;
+                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
+                return (
+                  <div key={index}>
+                    <SVGOverlay
+                      bounds={[
+                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
+                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
+                      ]}
+                      eventHandlers={{
+                        click: () => {
+                          console.log(station);
+                        },
+                      }}
+                    >
+                      {s.variableToDisplay === 'windSpeed' ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                          </g>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                          </g>
+                        </svg>
+                      )}
+                    </SVGOverlay>
+                  </div>
+                );
+              })}
         </LayersControl.BaseLayer>
       </LeafletWrapper>
     </AppWindow>
@@ -259,146 +259,15 @@ const hawaiiLatLngCoordinates = [
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  // BoardInfo
-  const { boardId, roomId } = useParams();
-  const createApp = useAppStore((state) => state.create);
 
-  const { isOpen, onOpen, onClose } = useDisclosure();
-
-  const background = useColorModeValue('gray.50', 'gray.700');
-
-  const apiKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  const geocoder = new esriLeafletGeocoder.geocode({
-    apikey: apiKey,
-  });
-
-  // Zoom in on the map
-  const incZoom = () => {
-    const zoom = s.zoom + 1;
-    const limitZoom = Math.min(zoom, maxZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
-
-  // Zoom out on the map
-  const decZoom = () => {
-    const zoom = s.zoom - 1;
-    const limitZoom = Math.max(zoom, minZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
-
-  const handleChangePosition = (location: any) => {
-    updateState(props._id, { location: [location.lat, location.lng] });
-  };
-
-  const handleCreateDashboard = () => {
-    const listOfSelectedStations = [];
-    for (let i = 0; i < s.stationData.length; i++) {
-      if (s.stationData[i].selected) {
-        listOfSelectedStations.push(s.stationData[i].name);
-      }
-    }
-    createApp({
-      title: 'Hawaii Mesonet',
-      roomId: roomId!,
-      boardId: boardId!,
-      position: { x: props.data.position.x + props.data.size.width * 1 + 20, y: props.data.position.y, z: 0 },
-      size: { width: 1000, height: 1000, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'Hawaii Mesonet',
-      state: {
-        listOfStationNames: listOfSelectedStations,
-        widget: {
-          visualizationType: 'variableCard',
-          yAxisNames: ['wind_speed_set_1'],
-          xAxisNames: [''],
-          layout: { x: 0, y: 0, w: 11, h: 130 },
-        },
-      },
-      raised: true,
-      dragging: false,
-    });
-  };
-
-  const handleChangeToMesonetData = () => {
-    updateState(props._id, { getDataFrom: 'mesonet' });
-  };
-
-  const handleChangeToHcdpData = () => {
-    updateState(props._id, { getDataFrom: 'hcdp' });
-  };
-
-  const incremenetStationScale = () => {
-    updateState(props._id, { stationScale: s.stationScale + 1 });
-  };
-
-  const decrementStationScale = () => {
-    updateState(props._id, { stationScale: s.stationScale - 1 });
-  };
-
-  return (
-    <HStack>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        {hawaiiLatLngCoordinates.map((location, index) => {
-          return (
-            <Tooltip key={index} placement="top-start" hasArrow={true} label={location.name} openDelay={400}>
-              <Button onClick={() => handleChangePosition(location)} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-                {location.name}
-              </Button>
-            </Tooltip>
-          );
-        })}
-      </ButtonGroup>
-
-      {/**TODO uncomment this when showing the HCDP datasets */}
-      {/* <Button size="xs" onClick={handleChangeToMesonetData} colorScheme={'yellow'}>
-        Mesonet
-      </Button> */}
-      {/* <Button size="xs" onClick={handleChangeToHcdpData} colorScheme={'yellow'}>
-        hcdp
-      </Button> */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdOutlineZoomIn fontSize="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 9} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdOutlineZoomOut fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Station Size'} openDelay={400}>
-          <Button isDisabled={s.stationScale > 4} onClick={incremenetStationScale} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Station Size'} openDelay={400}>
-          <Button isDisabled={s.stationScale <= 1} onClick={decrementStationScale} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-            <MdMinimize fontSize="16px" style={{ transform: 'translate(0px, -5px)' }} />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-
-      <Button colorScheme={'green'} size="xs" onClick={onOpen}>
-        Create Visualization
-      </Button>
-      {s.getDataFrom === 'mesonet' ? (
-        <CustomizeWidgets {...props} isOpen={isOpen} onClose={onClose} />
-      ) : (
-        <CustomizeWidgetsHCDP {...props} />
-      )}
-    </HStack>
-  );
+  return <HStack></HStack>;
 }
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
