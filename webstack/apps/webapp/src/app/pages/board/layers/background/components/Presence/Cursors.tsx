@@ -101,10 +101,8 @@ function UserCursor(props: UserCursorProps) {
         transform: `scale(${1 / props.scale})`,
       }}
     >
-      <Box position={"absolute"} top='-14px' left="-14px">
-        <BsCursorFill color={color} style={{ transform: "rotate(-90deg) scale(1.3)" }} />
-      </Box>
-      <Tag variant="solid" borderRadius="md" color="white">
+      <BsCursorFill color={color} style={{ transform: "rotate(-90deg) scale(1.3)" }} />
+      <Tag variant="solid" borderRadius="md" color="white" position="relative" top='12px' left="1px">
         {props.name}
       </Tag>
     </motion.div>
