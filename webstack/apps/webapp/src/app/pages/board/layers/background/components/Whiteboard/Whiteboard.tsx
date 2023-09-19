@@ -15,13 +15,15 @@ import { WebsocketProvider } from 'y-websocket';
 // SAGE Imports
 import { useAbility, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
+import { useParams } from 'react-router';
 
-type WhiteboardProps = {
-  boardId: string;
-};
+type WhiteboardProps = {};
 
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
+
+  // Params
+  const { boardId } = useParams();
 
   const scale = useThrottleScale(250);
   // Can annotate
@@ -44,7 +46,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === props.boardId);
+  const board = boards.find((el) => el._id === boardId);
 
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
@@ -56,9 +58,9 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
-    if (yLines) {
+    if (yLines && boardId) {
       const lines = yLines.toJSON();
-      updateBoard(props.boardId, { whiteboardLines: lines });
+      updateBoard(boardId, { whiteboardLines: lines });
     }
   }
 
@@ -68,7 +70,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // WS Provider
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + props.boardId, ydoc);
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + boardId, ydoc);
 
     // Lines array
     const yLines = ydoc.getArray('lines') as Y.Array<Y.Map<any>>;
@@ -114,7 +116,7 @@ export function Whiteboard(props: WhiteboardProps) {
       if (ydoc) ydoc.destroy();
       if (provider) provider.disconnect();
     };
-  }, []);
+  }, [boardId]);
 
   const getPoint = useCallback(
     (x: number, y: number) => {
@@ -280,7 +282,7 @@ export function Whiteboard(props: WhiteboardProps) {
           height: boardHeight + 'px',
           left: 0,
           top: 0,
-          zIndex: 200,
+          zIndex: 1000,
           cursor: 'crosshair',
         }}
         onPointerDown={handlePointerDown}

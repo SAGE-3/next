@@ -92,6 +92,7 @@ function UserViewport(props: UserViewportProps) {
       pl="2"
       background={`linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`}
       textColor={textColor}
+      zIndex={3000}
     >
       Viewport for {props.name}
     </Box>

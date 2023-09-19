@@ -96,7 +96,7 @@ function UserCursor(props: UserCursorProps) {
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',
-        zIndex: 100000,
+        zIndex: 3000,
         transform: `scale(${1 / props.scale})`,
       }}
     >
