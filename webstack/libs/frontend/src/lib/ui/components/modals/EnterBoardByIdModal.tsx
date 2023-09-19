@@ -25,7 +25,8 @@ import {
 } from '@chakra-ui/react';
 
 import { Board } from '@sage3/shared/types';
-import { isUUIDv4, useData } from '@sage3/frontend';
+import { apiUrls, isUUIDv4 } from '@sage3/frontend';
+
 import { EnterBoardModal } from './EnterBoardModal';
 
 // Props
@@ -63,7 +64,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
     // Update local state
     setSubmitStatus('submitted');
     // Fetch board from the server
-    const response = await fetch(`/api/boards/${boardId}`);
+    const response = await fetch(apiUrls.boards.getBoard(boardId));
     const results = await response.json() as { success: boolean; data: Board[] };
     // Check the data we got back
     if (results.success) {
