@@ -31,7 +31,7 @@ import { useAssetStore, useAppStore, useUser, downloadFile } from '@sage3/fronte
 import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 // App components
-import { App } from '../../schema';
+import { App, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
@@ -468,6 +468,124 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+  const { updateStateBatch } = useAppStore((state) => state);
+
+  const handleAddPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.displayPages >= app.data.state.numPages) return;
+      const displayPages = app.data.state.displayPages + 1;
+      ps.push({ id: app._id, updates: { displayPages } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleRemovePage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.displayPages <= 1) return;
+      const displayPages = app.data.state.displayPages - 1;
+      ps.push({ id: app._id, updates: { displayPages } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleFirstPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      const currentPage = 0;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleLastPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      const currentPage = app.data.state.numPages - app.data.state.displayPages;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handlePrev = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.currentPage === 0) return;
+      const currentPage = app.data.state.currentPage - 1 >= 0 ? app.data.state.currentPage - 1 : 0;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleNext = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.currentPage === app.data.state.numPages - app.data.state.displayPages) return;
+      const currentPage =
+        app.data.state.currentPage + 1 < app.data.state.numPages
+          ? app.data.state.currentPage + 1
+          : app.data.state.numPages - app.data.state.displayPages;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
+          <Button onClick={() => handleRemovePage()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
+          <Button onClick={() => handleAddPage()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'1st Page'} openDelay={400}>
+          <Button onClick={() => handleFirstPage()}>
+            <MdSkipPrevious />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Previous Page'} openDelay={400}>
+          <Button onClick={() => handlePrev()}>
+            <MdNavigateBefore />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
+          <Button onClick={() => handleNext()}>
+            <MdNavigateNext />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
+          <Button onClick={() => handleLastPage()}>
+            <MdSkipNext />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
