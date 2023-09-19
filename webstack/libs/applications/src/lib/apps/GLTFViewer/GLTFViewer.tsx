@@ -134,7 +134,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the URL from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       setUrl(localurl);
     }
   }, [file]);

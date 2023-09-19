@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { apiUrls } from '@sage3/frontend';
+
 import findHeaderType from '../findHeaderType';
 import switchHeaders from './helperFunctions/switchHeaders';
 
@@ -41,7 +43,7 @@ export default function createLineChart(extractedHeaders: string[], fileName: st
   extractedHeaders = organizeLineChartHeaders(extractedHeaders, data);
 
   if (extractedHeaders.length == 2) {
-    lineChartSpec.data.url = '/api/assets/static/' + fileName;
+    lineChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
 
     lineChartSpec.encoding.x.field = extractedHeaders[1];
     lineChartSpec.encoding.x.type = 'temporal';
@@ -51,7 +53,7 @@ export default function createLineChart(extractedHeaders: string[], fileName: st
     lineChartSpec.encoding.y.aggregate = 'sum';
     specifications.push(lineChartSpec);
   } else if (extractedHeaders.length == 3) {
-    lineChartSpec.data.url = '/api/assets/static/' + fileName;
+    lineChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
     lineChartSpec.encoding.x.field = extractedHeaders[1];
     lineChartSpec.encoding.x.type = 'nominal';
 

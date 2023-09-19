@@ -9,13 +9,7 @@
 /**
  * Node Built-in Modules
  */
-import * as path from 'path';
 import * as fs from 'fs';
-
-/**
- * Application modules
- */
-// import { config } from '@sage3/homebase/config';
 
 /**
  * Return the URL for a given asset
@@ -27,18 +21,6 @@ import * as fs from 'fs';
 export function getStaticAssetUrl(filename: string): string {
   return `api/assets/static/${filename}`;
 }
-
-/**
- * Return the path to a given asset
- *
- * @export
- * @param {string} filename
- * @returns {string}
- */
-// export function getFullFilePath(filename: string): string {
-//   // Prefix the path with the asset folder
-//   return path.join(config.root, config.public, filename);
-// }
 
 /**
  * Test if a given file exists
