@@ -20,11 +20,19 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
+import {
+  CreateRoomModal,
+  EnterBoardByIdModal,
+  RoomCard,
+  useHexColor,
+  useRoomStore,
+  useUser,
+  useAbility,
+  useThrottlePresenceUsers,
+} from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-import { CreateRoomModal, EnterBoardByIdModal, RoomCard, useHexColor, usePresenceStore, useRoomStore } from '@sage3/frontend';
-import { useUser, useAuth } from '@sage3/frontend';
-import { MdAdd, MdExitToApp, MdSearch, MdSort } from 'react-icons/md';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -40,20 +48,14 @@ export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
 
-  const { auth } = useAuth();
-  const [isGuest, setIsGuest] = useState(true);
-  // Are you a guest?
-  useEffect(() => {
-    if (auth) {
-      setIsGuest(auth.provider === 'guest');
-    }
-  }, [auth]);
+  // Abilities
+  const canCreateRoom = useAbility('create', 'rooms');
 
   // Data stores
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
-  const presences = usePresenceStore((state) => state.partialPrescences);
+  const presences = useThrottlePresenceUsers(5000, '');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
@@ -79,15 +81,15 @@ export function RoomList(props: RoomListProps) {
         block: 'start',
       });
     }
-  }, [selRoomCardRef.current]);
+  }, [selRoomCardRef]);
 
   function sortByName(a: Room, b: Room) {
     return a.data.name.localeCompare(b.data.name);
   }
 
   function sortByUsers(a: Room, b: Room) {
-    const aUsers = presences.filter((p) => p.data.roomId === a._id).length;
-    const bUsers = presences.filter((p) => p.data.roomId === b._id).length;
+    const aUsers = presences.filter((p) => p.presence.data.roomId === a._id).length;
+    const bUsers = presences.filter((p) => p.presence.data.roomId === b._id).length;
     return bUsers - aUsers;
   }
 
@@ -114,7 +116,7 @@ export function RoomList(props: RoomListProps) {
   }, [storeError]);
 
   // Filter boards with the search string
-  function handleFilterBoards(event: any) {
+  function handleFilterBoards(event: ChangeEvent<HTMLInputElement>) {
     setSearch(event.target.value);
     const filBoards = props.rooms.filter(
       (room) =>
@@ -140,13 +142,8 @@ export function RoomList(props: RoomListProps) {
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
               <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label="create room" borderRadius="md" mr="2" fontSize="3xl" isDisabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create room" borderRadius="md" mr="2" fontSize="3xl" isDisabled={!canCreateRoom} onClick={onOpen}>
                   <MdAdd />
-                </Button>
-              </Tooltip>
-              <Tooltip label="Enter Board by ID" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label="enter board" borderRadius="md" fontSize="3xl" onClick={onOpenEnterBoard}>
-                  <MdExitToApp />
                 </Button>
               </Tooltip>
             </Box>
@@ -181,9 +178,9 @@ export function RoomList(props: RoomListProps) {
         overflowY="scroll"
         overflowX="hidden"
         pr="2"
-        borderColor={borderColor}
         mt="6"
         height="100%"
+        borderColor={borderColor}
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -212,7 +209,7 @@ export function RoomList(props: RoomListProps) {
                     key={room._id}
                     room={room}
                     boards={props.boards.filter((board) => board.data.roomId === room._id)}
-                    userCount={presences.filter((p) => p.data.roomId === room._id).length}
+                    userCount={presences.filter((user) => user.presence.data.roomId === room._id).length}
                     selected={selected}
                     onEnter={() => props.onRoomClick(room)}
                     onDelete={() => deleteRoom(room._id)}

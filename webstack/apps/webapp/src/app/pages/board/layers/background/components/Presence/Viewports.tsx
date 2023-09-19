@@ -6,10 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor, usePresenceStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { PresenceSchema } from '@sage3/shared/types';
 import React from 'react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
+
+import { useHexColor, useThrottleScale } from '@sage3/frontend';
+import { PresenceSchema } from '@sage3/shared/types';
+
 import { Awareness } from './PresenceComponent';
 
 type ViewportProps = {
@@ -19,7 +21,7 @@ type ViewportProps = {
 
 export function Viewports(props: ViewportProps) {
   // UI Scale
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
 
   // Render the Viewports
   return (

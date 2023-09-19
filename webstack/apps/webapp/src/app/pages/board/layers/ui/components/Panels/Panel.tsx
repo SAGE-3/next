@@ -59,6 +59,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
 export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   description: string;
+  isDisabled?: boolean;
 }
 
 // Button with a title and using the font size from parent panel
@@ -83,6 +84,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           transition={'all 0.2s'}
           variant="ghost"
           onClick={props.onClick}
+          isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
         />
       </Tooltip>

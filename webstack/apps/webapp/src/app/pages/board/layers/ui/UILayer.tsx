@@ -22,6 +22,8 @@ import {
   useRoomStore,
   useConfigStore,
   Clock,
+  useThrottleApps,
+  useAbility,
   apiUrls,
 } from '@sage3/frontend';
 
@@ -50,10 +52,15 @@ type UILayerProps = {
 };
 
 export function UILayer(props: UILayerProps) {
+  // Abilities
+  const canLasso = useAbility('lasso', 'apps');
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
@@ -65,7 +72,7 @@ export function UILayer(props: UILayerProps) {
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
   // Apps
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
 
   // Logo
@@ -195,7 +202,7 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
-      <AppToolbar></AppToolbar>
+      {selectedApp && <AppToolbar></AppToolbar>}
 
       <ContextMenu divId="board">
         <BoardContextMenu
@@ -231,7 +238,7 @@ export function UILayer(props: UILayerProps) {
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
-      <LassoToolbar />
+      {canLasso && <LassoToolbar />}
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} />

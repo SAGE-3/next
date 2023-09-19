@@ -4779,6 +4779,16 @@
     "@types/oauth" "*"
     "@types/passport" "*"
 
+"@types/passport-openidconnect@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@types/passport-openidconnect/-/passport-openidconnect-0.1.0.tgz#68dfcac455540981ec918c97a119f008e5a4b6d5"
+  integrity sha512-D1wdXZNS0Uu20BZ+NSRKT2bHlvP0y3aL5vdLLBM7gsP3GLeGVmqaA1ytGNMID5sB3nDJSqbI4Vfm1rpSBbjQOA==
+  dependencies:
+    "@types/express" "*"
+    "@types/oauth" "*"
+    "@types/passport" "*"
+    "@types/passport-strategy" "*"
+
 "@types/passport-strategy@*":
   version "0.2.35"
   resolved "https://registry.yarnpkg.com/@types/passport-strategy/-/passport-strategy-0.2.35.tgz#e52f5212279ea73f02d9b06af67efe9cefce2d0c"

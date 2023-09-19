@@ -68,9 +68,9 @@ export async function loginCreateUser(server, data) {
       data: data,
     });
     // handle success
-    console.log('CLI> login success', response.status, '-', response.statusText, response.data);
+    console.log('CLI> login success', response.status, '-', response.statusText);
     if (response.data) {
-      console.log('Create user', response.data.data);
+      // console.log('Create user', response.data.data);
       return response.data.data[0];
     }
   } catch (err) {

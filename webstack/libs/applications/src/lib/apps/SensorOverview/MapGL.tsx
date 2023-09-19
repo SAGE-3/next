@@ -20,7 +20,7 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useThrottleScale, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '@sage3/applications/schema';
 // import { state as AppState } from '../index';
@@ -70,7 +70,6 @@ const MapGL = (
   const stationDataRef = React.useRef(stationData);
   // Assets store
   const assets = useAssetStore((state) => state.assets);
-  const scale = useUIStore((state) => state.scale);
   const [file, setFile] = useState<Asset>();
 
   // Source

@@ -16,7 +16,7 @@ import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
 // SAGE3
 import {
   theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId,
-  SocketAPI, useHexColor, useData, apiUrls
+  SocketAPI, useHexColor, useData, CursorBoardPositionProvider, apiUrls
 } from '@sage3/frontend';
 import { OpenConfiguration } from '@sage3/shared/types';
 // Pages
@@ -135,7 +135,9 @@ export function App() {
                 element={
                   <ProtectedAuthRoute>
                     <ProtectedUserRoute>
-                      <BoardPage />
+                      <CursorBoardPositionProvider>
+                        <BoardPage />
+                      </CursorBoardPositionProvider>
                     </ProtectedUserRoute>
                   </ProtectedAuthRoute>
                 }

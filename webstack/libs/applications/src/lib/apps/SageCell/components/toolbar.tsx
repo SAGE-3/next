@@ -12,11 +12,12 @@ import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } f
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal } from '@sage3/frontend';
+import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility } from '@sage3/frontend';
+import { KernelInfo } from '@sage3/shared/types';
+
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
-import { KernelInfo } from '@sage3/shared/types';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -28,6 +29,9 @@ export function ToolbarComponent(props: App): JSX.Element {
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+
+  // Abilities
+  const canCreateKernels = useAbility('create', 'kernels');
 
   // User state
   const { user } = useUser();
@@ -139,7 +143,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   return (
     <HStack>
       {myKernels.length === 0 ? (
-        <Button onClick={onOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal" isDisabled={!apiStatus}>
+        <Button onClick={onOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal" isDisabled={!apiStatus || !canCreateKernels}>
           Create Kernel <MdAdd />
         </Button>
       ) : (
@@ -154,7 +158,7 @@ export function ToolbarComponent(props: App): JSX.Element {
           onChange={(e) => selectKernel(e as React.ChangeEvent<HTMLSelectElement>)}
           value={selected?.kernel_id}
           variant={'outline'}
-          isDisabled={selected?.is_private && !access}
+          isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
           {
             //show my kernels
@@ -185,6 +189,11 @@ export function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Button _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            {s.fontSize}
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
