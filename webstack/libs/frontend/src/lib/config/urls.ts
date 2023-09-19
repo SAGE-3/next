@@ -31,7 +31,9 @@ export const apiUrls = {
     statusKernel: (id: string) => `/api/fastapi/status/${id}`,
     interruptKernel: (id: string) => `/api/fastapi/interrupt/${id}`,
   },
-  plugins: {},
+  plugins: {
+    upload: '/api/plugins/upload',
+  },
   boards: {
     getBoard: (id: string) => `/api/boards/${id}`,
   },
