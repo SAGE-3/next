@@ -93,7 +93,7 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            zIndex: 70,
+            zIndex: 2000,
             cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}
