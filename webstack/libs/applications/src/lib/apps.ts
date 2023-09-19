@@ -14,6 +14,7 @@ import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
+import { name as HTMLViewerName } from './apps/HTMLViewer';
 import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
@@ -50,6 +51,7 @@ import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
+import HTMLViewer from './apps/HTMLViewer/HTMLViewer';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
@@ -88,6 +90,7 @@ export const Applications = {
   [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent },
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent },
+  [HTMLViewerName]: { AppComponent: React.memo(HTMLViewer.AppComponent), ToolbarComponent: HTMLViewer.ToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent },
   [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent },
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent },

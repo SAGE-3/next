@@ -63,7 +63,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         });
         return;
       }
-
       // Get the user cursor position
       const xDrop = cursorPosition.x;
       const yDrop = cursorPosition.y;
@@ -137,46 +136,80 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           });
         }
       }
+      // Get the types of data in the clipboard
+      const clipTypes = event.clipboardData?.types;
+      // Copying from RTF content: instead of converting to HTML, just copy the HTML content
+      if (clipTypes && clipTypes.includes('text/rtf') && clipTypes.includes('text/html')) {
+        const rtf = event.clipboardData?.getData('text/html');
+        createApp({
+          title: 'RTF',
+          roomId: props.roomId,
+          boardId: props.boardId,
+          position: { x: xDrop, y: yDrop, z: 0 },
+          size: { width: 600, height: 300, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'HTMLViewer',
+          state: { content: rtf },
+          raised: true,
+          dragging: false,
+        });
+      } else if (clipTypes && clipTypes.includes('vscode-editor-data') && clipTypes.includes('text/html')) {
+        // Copying from VSCode
+        // Get the HTML content
+        const html = event.clipboardData?.getData('text/html');
+        createApp({
+          title: 'VSCode',
+          roomId: props.roomId,
+          boardId: props.boardId,
+          position: { x: xDrop, y: yDrop, z: 0 },
+          size: { width: 600, height: 300, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'HTMLViewer',
+          state: { content: html },
+          raised: true,
+          dragging: false,
+        });
+      } else {
+        // Get content of clipboard
+        const pastedText = event.clipboardData?.getData('Text');
 
-      // Get content of clipboard
-      const pastedText = event.clipboardData?.getData('Text');
-
-      // if there's content
-      if (pastedText) {
-        // check and validate the URL
-        const isValid = isValidURL(pastedText.trim());
-        // If the start of pasted text is http, can assume is a url
-        if (isValid) {
-          setValidURL(isValid);
-          popOnOpen();
-        } else if (pastedText.startsWith('sage3://')) {
-          // Create a board link app
-          createApp({
-            title: user.data.name,
-            roomId: props.roomId,
-            boardId: props.boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 375, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'BoardLink',
-            state: { url: pastedText.trim() },
-            raised: true,
-            dragging: false,
-          });
-        } else {
-          // Create a new stickie
-          createApp({
-            title: user.data.name,
-            roomId: props.roomId,
-            boardId: props.boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
-            raised: true,
-            dragging: false,
-          });
+        // if there's content
+        if (pastedText) {
+          // check and validate the URL
+          const isValid = isValidURL(pastedText.trim());
+          // If the start of pasted text is http, can assume is a url
+          if (isValid) {
+            setValidURL(isValid);
+            popOnOpen();
+          } else if (pastedText.startsWith('sage3://')) {
+            // Create a board link app
+            createApp({
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 400, height: 375, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'BoardLink',
+              state: { url: pastedText.trim() },
+              raised: true,
+              dragging: false,
+            });
+          } else {
+            // Create a new stickie
+            createApp({
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 600, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Stickie',
+              state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
+              raised: true,
+              dragging: false,
+            });
+          }
         }
       }
     };
