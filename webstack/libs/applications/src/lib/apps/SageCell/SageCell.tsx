@@ -321,7 +321,7 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
     if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
-      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
+      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)\nprint('app_id = ' + app_id)`;
       editorRef.current.setValue(info);
     }
     try {
@@ -379,14 +379,14 @@ function AppComponent(props: App): JSX.Element {
 
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
-    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();
     ed.setValue(code);
