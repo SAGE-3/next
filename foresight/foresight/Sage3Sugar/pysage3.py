@@ -90,6 +90,13 @@ class PySage3:
             print(f"Err or during creation of app {e}")
             return None
 
+    def delete_app(self, app_id):
+        try:
+            return self.s3_comm.delete_app(app_id)
+        except Exception as e:
+            print(f"Err or during delete of app {e}")
+            return None
+
     # Handle Create Messages
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data

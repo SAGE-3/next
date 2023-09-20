@@ -44,6 +44,7 @@ class SageCommunication(Borg):
             "get_apps": "/api/apps/",
             "get_boards": "/api/boards/",
             "send_update": "/api/apps/{}",
+            "delete_app": "/api/apps/{}",
             "send_batch_update": "/api/apps/",
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
@@ -96,6 +97,14 @@ class SageCommunication(Borg):
             self.conf[self.prod_type]["web_server"] + self.routes["create_app"],
             headers=self.__headers,
             json=data,
+        )
+        return r
+
+    def delete_app(self, app_id):
+        r = self.httpx_client.delete(
+            self.conf[self.prod_type]["web_server"]
+            + self.routes["delete_app"].format(app_id),
+            headers=self.__headers,
         )
         return r
 
