@@ -712,13 +712,12 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent() { return null; }
 
-  return <></>;
-}
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default {
-  AppComponent,
-  ToolbarComponent,
-};
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

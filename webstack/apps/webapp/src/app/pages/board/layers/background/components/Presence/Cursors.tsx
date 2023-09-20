@@ -7,9 +7,10 @@
  */
 
 import React, { useEffect } from 'react';
-import { Tag } from '@chakra-ui/react';
+import { Tag, Box } from '@chakra-ui/react';
 import { motion, useAnimation } from 'framer-motion';
 import { GiArrowCursor } from 'react-icons/gi';
+import { BsCursorFill } from 'react-icons/bs';
 
 import { useHexColor, useThrottleScale } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
@@ -96,12 +97,12 @@ function UserCursor(props: UserCursorProps) {
         pointerEvents: 'none',
         display: 'flex',
         transformOrigin: 'top left',
-        zIndex: 100000,
+        zIndex: 3000,
         transform: `scale(${1 / props.scale})`,
       }}
     >
-      <GiArrowCursor color={color}></GiArrowCursor>
-      <Tag variant="solid" borderRadius="md" color="white">
+      <BsCursorFill color={color} style={{ transform: "rotate(-90deg) scale(1.3)" }} />
+      <Tag variant="solid" borderRadius="md" color="white" position="relative" top='12px' left="1px">
         {props.name}
       </Tag>
     </motion.div>

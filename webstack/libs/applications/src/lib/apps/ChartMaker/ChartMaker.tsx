@@ -493,7 +493,13 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
 // Convert the csv to an array using the csv-parse library
 async function csvToArray(str: string): Promise<Record<string, string>[]> {

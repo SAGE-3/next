@@ -7,20 +7,7 @@
  */
 
 // React
-import {
-  useColorModeValue,
-  Tooltip,
-  Box,
-  Text,
-  useToast,
-  Flex,
-  IconButton,
-  Divider,
-  useDisclosure,
-  Button,
-  Spacer,
-  HStack,
-} from '@chakra-ui/react';
+import { Tooltip, Box, Text, useToast, Flex, IconButton, Divider, useDisclosure, Button, Spacer, HStack } from '@chakra-ui/react';
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
@@ -63,7 +50,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const toast = useToast();
 
   // Kernel Store
-  const { kernels, createKernel, deleteKernel, restartKernel, interruptKernel, apiStatus } = useKernelStore((state) => state);
+  const { kernels, fetchKernels, deleteKernel, restartKernel, apiStatus } = useKernelStore((state) => state);
 
   // Local kernel state
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
@@ -159,6 +146,21 @@ export function KernelsPanel(props: KernelsPanelProps) {
     });
   };
 
+  /**
+   * Refresh the list of kernels
+   */
+  const handleRefreshList = async () => {
+    const response = await fetchKernels();
+    console.log(response);
+    toast({
+      title: response ? 'Success' : 'Error',
+      description: response ? 'The kernel list has been refreshed' : 'Encountered an error while refreshing the kernel list',
+      status: response ? 'success' : 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
   return (
     <Panel title={'Kernels'} name="kernels" width={0} showClose={false}>
       <Box display="flex" flexDirection="column" fontSize={'xs'}>
@@ -240,6 +242,9 @@ export function KernelsPanel(props: KernelsPanelProps) {
             </Text>
           </HStack>
           <Spacer />
+          <Button colorScheme="gray" width="100px" size={'xs'} mr="2" onClick={handleRefreshList}>
+            Refresh List
+          </Button>
           <Button colorScheme="green" width="100px" size={'xs'} onClick={onOpen}>
             Create Kernel
           </Button>

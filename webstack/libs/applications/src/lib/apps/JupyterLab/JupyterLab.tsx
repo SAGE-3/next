@@ -155,11 +155,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <ElectronRequired
-          appName={props.data.type}
-          link={url || ''}
-          title={"Jupyter URL"}
-        />
+        <ElectronRequired appName={props.data.type} link={url || ''} title={'Jupyter URL'} />
       )}
     </AppWindow>
   );
@@ -224,11 +220,19 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-          <Button onClick={handleOpen}><MdOpenInNew /></Button>
+          <Button onClick={handleOpen}>
+            <MdOpenInNew />
+          </Button>
         </Tooltip>
       </ButtonGroup>
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

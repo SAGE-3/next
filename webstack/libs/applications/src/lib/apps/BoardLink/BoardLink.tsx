@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Button, Input, useDisclosure, } from '@chakra-ui/react';
+import { Button, Input, useDisclosure } from '@chakra-ui/react';
 
 import { EnterBoardModal, apiUrls, isElectron, useAppStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
@@ -18,7 +18,6 @@ import { AppWindow } from '../../components';
 
 import { OtherServerCard } from './components/OtherServerCard';
 import { BoardCard } from './components/BoardCard';
-
 
 /* App component for BoardLink */
 
@@ -125,5 +124,10 @@ function ToolbarComponent(props: App): JSX.Element {
     </>
   );
 }
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -435,4 +435,10 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

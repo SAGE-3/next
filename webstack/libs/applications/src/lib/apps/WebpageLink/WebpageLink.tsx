@@ -7,8 +7,22 @@
  */
 import { useRef, useCallback, useState, useEffect } from 'react';
 import {
-  ButtonGroup, Box, Button, useColorModeValue, Text, Heading, Tooltip, Image, useToast,
-  useDisclosure, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton, DrawerHeader, DrawerBody,
+  ButtonGroup,
+  Box,
+  Button,
+  useColorModeValue,
+  Text,
+  Heading,
+  Tooltip,
+  Image,
+  useToast,
+  useDisclosure,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+  DrawerHeader,
+  DrawerBody,
 } from '@chakra-ui/react';
 import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
 
@@ -78,7 +92,6 @@ function AppComponent(props: App): JSX.Element {
       rtcSock.current.addEventListener('open', () => {
         setConnected(true);
         if (rtcSock.current) {
-
           const processRTCMessage = (ev: MessageEvent<any>) => {
             const msg = JSON.parse(ev.data);
             if (msg.type === 'data' && msg.params.room === props._id) {
@@ -156,9 +169,10 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             </Box>
           </Box>
-        </Tooltip>) :
-        <Image id={'image' + props._id} w={"100%"} h={"auto"} alt={"webview streaming"} background={"white"} />
-      }
+        </Tooltip>
+      ) : (
+        <Image id={'image' + props._id} w={'100%'} h={'auto'} alt={'webview streaming'} background={'white'} />
+      )}
     </AppWindow>
   );
 }
@@ -270,7 +284,6 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [streaming, sock, attached, domReady]);
 
-
   const openUrl = () => {
     if (!s.url) return;
     if (isElectron()) {
@@ -351,7 +364,7 @@ function ToolbarComponent(props: App): JSX.Element {
     setStreaming(false);
     setDomReady(false);
     setAttached(false);
-    update(props._id, { size: { width: 400, height: 400, depth: props.data.size.depth, } });
+    update(props._id, { size: { width: 400, height: 400, depth: props.data.size.depth } });
     onClose();
   };
 
@@ -368,14 +381,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Drawer placement='right' size='xl' variant="fifty" finalFocusRef={btnRef}
-        isOpen={isOpen} onClose={closing}>
+      <Drawer placement="right" size="xl" variant="fifty" finalFocusRef={btnRef} isOpen={isOpen} onClose={closing}>
         <DrawerOverlay />
         <DrawerContent p={0} m={0}>
           <DrawerCloseButton />
           <DrawerHeader>{title}</DrawerHeader>
           <DrawerBody p={0} m={0}>
-            <webview ref={setWebviewRef} allowpopups={'true' as any} style={{ width: "50vw", height: "100%" }}></webview>
+            <webview ref={setWebviewRef} allowpopups={'true' as any} style={{ width: '50vw', height: '100%' }}></webview>
           </DrawerBody>
         </DrawerContent>
       </Drawer>
@@ -429,5 +441,11 @@ async function waitForOpenSocket(socket: WebSocket): Promise<void> {
   });
 }
 
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

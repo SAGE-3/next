@@ -92,12 +92,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         dragHandleClassName={'board-handle'}
         disableDragging={boardLocked}
       >
-        {/*Whiteboard */}
-        <Whiteboard boardId={props.boardId} />
-        {/*Lasso */}
-        {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
         {/* The board's apps */}
         <Apps />
+        {/*Whiteboard */}
+        <Whiteboard />
+        {/*Lasso */}
+        {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
 
