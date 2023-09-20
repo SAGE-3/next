@@ -21,6 +21,8 @@ COPY webstack/libs libs
 # Increase RAM for node to build the app
 ENV NODE_OPTIONS=--max-old-space-size=8192
 # Build the app
-RUN yarn install && yarn prod && yarn cache clean
+RUN yarn install
+RUN yarn prod
+RUN yarn cache clean
 
 CMD ["node", "dist/apps/homebase/main.js"]
