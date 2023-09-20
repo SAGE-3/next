@@ -60,7 +60,7 @@ import { AppWindow } from '../../components';
 import { App } from '../../schema';
 
 // Component imports
-import { ToolbarComponent, PdfViewer, Markdown } from './components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
 
 // Ansi library
 import Ansi from 'ansi-to-react';
@@ -380,15 +380,15 @@ function AppComponent(props: App): JSX.Element {
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
     const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
-    ed.focus()
+    ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
-    let code = "from foresight.config import config as conf, prod_type\n"
-    code += "from foresight.Sage3Sugar.pysage3 import PySage3\n"
+    let code = 'from foresight.config import config as conf, prod_type\n';
+    code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
     code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
-    code += "ps3 = PySage3(conf, prod_type)\n\n"
-    ed.focus()
+    code += 'ps3 = PySage3(conf, prod_type)\n\n';
+    ed.focus();
     ed.setValue(code);
   };
 
@@ -709,7 +709,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'execute',
       label: 'Cell Execute',
       contextMenuOrder: 0,
-      contextMenuGroupId: "2_sage3",
+      contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
       run: handleExecute,
     });
@@ -717,7 +717,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'clear',
       label: 'Cell Clear',
       contextMenuOrder: 1,
-      contextMenuGroupId: "2_sage3",
+      contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
       run: handleClear,
     });
@@ -725,7 +725,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'interrupt',
       label: 'Cell Interrupt',
       contextMenuOrder: 2,
-      contextMenuGroupId: "2_sage3",
+      contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
@@ -734,14 +734,14 @@ function AppComponent(props: App): JSX.Element {
       id: 'setup_sage3',
       label: 'Setup SAGE API',
       contextMenuOrder: 0,
-      contextMenuGroupId: "3_sagecell",
+      contextMenuGroupId: '3_sagecell',
       run: handleInsertAPI,
     });
     editor.addAction({
       id: 'insert_vars',
       label: 'Insert Board Variables',
       contextMenuOrder: 1,
-      contextMenuGroupId: "3_sagecell",
+      contextMenuGroupId: '3_sagecell',
       run: handleInsertInfo,
     });
 
@@ -749,7 +749,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'increaseFontSize',
       label: 'Increase Font Size',
       contextMenuOrder: 0,
-      contextMenuGroupId: "4_font",
+      contextMenuGroupId: '4_font',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
       run: handleFontIncrease,
     });
@@ -757,7 +757,7 @@ function AppComponent(props: App): JSX.Element {
       id: 'decreaseFontSize',
       label: 'Decrease Font Size',
       contextMenuOrder: 1,
-      contextMenuGroupId: "4_font",
+      contextMenuGroupId: '4_font',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
       run: handleFontDecrease,
     });
@@ -777,7 +777,7 @@ function AppComponent(props: App): JSX.Element {
         id: 'execute',
         label: 'Cell Execute',
         contextMenuOrder: 0,
-        contextMenuGroupId: "2_sage3",
+        contextMenuGroupId: '2_sage3',
         keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
         run: handleExecute,
       });
@@ -949,4 +949,4 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

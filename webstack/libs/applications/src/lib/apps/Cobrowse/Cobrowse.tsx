@@ -193,8 +193,7 @@ function AppComponent(props: App): JSX.Element {
             ref={setWebviewRef}
             style={nodeStyle}
             allowpopups={'true' as any}
-          >
-          </webview>
+          ></webview>
         ) : (
           <img id={'image' + props._id}></img>
         )
@@ -210,7 +209,11 @@ function AppComponent(props: App): JSX.Element {
               <br />
               <Center>
                 <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
-                  Current URL <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank"> {s.sharedurl}</a>
+                  Current URL{' '}
+                  <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank">
+                    {' '}
+                    {s.sharedurl}
+                  </a>
                 </Box>
               </Center>
             </Box>
@@ -260,4 +263,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
