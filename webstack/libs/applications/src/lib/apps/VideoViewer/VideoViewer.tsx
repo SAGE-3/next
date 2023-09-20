@@ -110,8 +110,10 @@ function AppComponent(props: App): JSX.Element {
     if (videoRef.current) {
       if (s.paused) {
         videoRef.current.pause();
+        videoRef.current.currentTime = s.currentTime;
       } else {
         videoRef.current.play();
+        videoRef.current.currentTime = s.currentTime;
       }
     }
   }, [s.paused, videoRef]);
@@ -286,8 +288,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (videoRef) {
       const paused = !s.paused;
       const time = videoRef.currentTime;
-      updateState(props._id, { currentTime: time });
-      updateState(props._id, { paused: paused });
+      updateState(props._id, { currentTime: time, paused: paused });
     }
   };
 
@@ -393,9 +394,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const handleSyncOnMe = () => {
     if (videoRef) {
-      updateState(props._id, { currentTime: videoRef.currentTime });
-      updateState(props._id, { loop: videoRef.loop });
-      updateState(props._id, { paused: videoRef.paused });
+      updateState(props._id, { currentTime: videoRef.currentTime, loop: videoRef.loop, paused: videoRef.paused });
     }
   };
 
@@ -539,8 +538,9 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       ps.push({ id: app._id, updates: { currentTime: 0.0, paused: true } });
       const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
       if (v) {
-        v.currentTime = 0;
         v.pause();
+        v.currentTime = 0.0;
+        v.load();
       }
     });
     // Update all the apps at once
@@ -552,9 +552,11 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     // Iterate through all the selected apps
     props.apps.forEach((app) => {
-      ps.push({ id: app._id, updates: { paused: false } });
       const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) v.play();
+      if (v) {
+        v.play();
+        ps.push({ id: app._id, updates: { paused: false, currentTime: v.currentTime } });
+      }
     });
     // Update all the apps at once
     updateStateBatch(ps);
@@ -564,9 +566,11 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
-      ps.push({ id: app._id, updates: { paused: true } });
       const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) v.pause();
+      if (v) {
+        v.pause();
+        ps.push({ id: app._id, updates: { paused: true, currentTime: v.currentTime } });
+      }
     });
     // Update all the apps at once
     updateStateBatch(ps);
