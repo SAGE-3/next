@@ -121,7 +121,8 @@
   },
   "resolutions": {
     "react-rnd/react-draggable": "4.4.5",
-    "**/oauth": "0.10.0"
+    "**/oauth": "0.10.0",
+    "@parcel/watcher": "2.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
