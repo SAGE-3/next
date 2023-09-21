@@ -258,6 +258,28 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [props.data.size.width, props.data.size.height, map]);
 
+  useEffect(() => {
+    if (map) {
+      map.on('style.load', () => {
+        map.addSource('geotiff-source', {
+          type: 'raster',
+          tiles: ['/assets/temp/6/4/35.png'],
+          tileSize: 256,
+        });
+        // Add a layer using the raster source
+        map.addLayer({
+          id: 'geotiff-layer',
+          type: 'raster',
+          source: 'geotiff-source',
+          paint: {
+            'raster-opacity': 1, // Adjust the opacity as needed
+            'raster-hue-rotate': 0, // Rotate hue to 0 degrees (red)
+          },
+        });
+      });
+    }
+  }, [map]);
+
   return (
     <AppWindow app={props}>
       {/* One box for map, one box for container */}
@@ -390,6 +412,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

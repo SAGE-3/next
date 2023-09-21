@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -6,17 +8,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
+import { HStack, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
-import { MdAdd, MdMinimize } from 'react-icons/md';
 
 // Leaflet plus React
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
@@ -27,14 +28,13 @@ import { SensorTypes } from './data/stationData';
 
 import { hcdpStationData } from './data/hcdpStationData';
 
+import GeoTIFF, { fromUrl, fromUrls, fromArrayBuffer, fromBlob } from 'geotiff';
+
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
-// Icon imports
-import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
-import { useParams } from 'react-router';
-import CustomizeWidgets from './menu/CustomizeWidgets';
-import CustomizeWidgetsHCDP from './menu/CustomizeWidgetsHCDP';
+import * as plotty from 'plotty';
+
 import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
@@ -56,6 +56,34 @@ function AppComponent(props: App): JSX.Element {
   // The map: any, I kown, should be Leaflet.Map but don't work
   const [map, setMap] = useState<any>();
   const [, setStationMetadata] = useState([]);
+  const plotRef = useRef(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const url = '/assets/HCDPTestData.tif';
+
+      const tiff = await fromUrl(url);
+      const image = await tiff.getImage();
+      const data = await image.readRasters();
+      const resolution = image.getResolution();
+      const bbox = image.getBoundingBox();
+      const { width, height } = data;
+      const tiepoint = image.getTiePoints()[0];
+      const [xScale, yScale] = image.getFileDirectory().ModelPixelScale;
+
+      const HCDPData = {
+        nCols: width,
+        nRows: height,
+        xllCorner: tiepoint.x,
+        yllCorner: tiepoint.y - height * yScale,
+        cellXSize: resolution[0],
+        cellYSize: resolution[1],
+      };
+
+      console.log(HCDPData, bbox, data);
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -108,123 +136,8 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <LeafletWrapper map={map} setMap={setMap} {...props}>
-        <Box
-          w="26rem"
-          h="21.5rem"
-          position="absolute"
-          bg="white"
-          zIndex="500"
-          top="1rem"
-          left="1rem"
-          border="3px solid gray"
-          rounded={10}
-          boxShadow={'0 0 10px 5px rgba(0, 0, 0, 0.2)'}
-          // margin="auto"
-          color="black"
-          padding="1rem"
-          fontWeight={'bold'}
-          fontSize="xl"
-        >
-          <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
-            <Stack direction="column">
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureC">
-                <p style={{ fontSize: 30 }}>Temperature (C)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureF">
-                <p style={{ fontSize: 30 }}>Temperature (F)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="soilMoisture">
-                <p style={{ fontSize: 30 }}>Soil Moisture(%)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="windSpeed">
-                <p style={{ fontSize: 30 }}>Wind Speed (m/s)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="relativeHumidity">
-                <p style={{ fontSize: 30 }}>Relative Humidity (%)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="solarRadiation">
-                <p style={{ fontSize: 30 }}>Solar Radiation {'(W/m\u00B2)'}</p>
-              </Radio>
-            </Stack>
-          </RadioGroup>
-        </Box>
-
-        <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {s.getDataFrom === 'mesonet'
-            ? s.stationData.map((data: SensorTypes, index: number) => {
-                return (
-                  <div key={index}>
-                    <SVGOverlay
-                      bounds={[
-                        [data.lat - 0.17, data.lon - 0.05],
-                        [data.lat + 0.15, data.lon + 0.05],
-                      ]}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                          <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                            {data[s.variableToDisplay]}
-                          </text>
-                        </g>
-                      </svg>
-                      {/* {s.variableToDisplay === 'windSpeed' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(${(1 / s.zoom) * 150 - 12}) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-
-                            <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                              {data[s.variableToDisplay]}
-                            </text>
-                          </g>
-                        </svg>
-                      ) : (
-null
-                      )} */}
-                    </SVGOverlay>
-                  </div>
-                );
-              })
-            : hcdpStationData.map((station: any, index: number) => {
-                if (station.value.island !== 'OA') return null;
-                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
-                return (
-                  <div key={index}>
-                    <SVGOverlay
-                      bounds={[
-                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
-                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
-                      ]}
-                      eventHandlers={{
-                        click: () => {
-                          console.log(station);
-                        },
-                      }}
-                    >
-                      {s.variableToDisplay === 'windSpeed' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      )}
-                    </SVGOverlay>
-                  </div>
-                );
-              })}
-        </LayersControl.BaseLayer>
-      </LeafletWrapper>
+      <h1>Hello World</h1>
+      <div ref={plotRef}></div>
     </AppWindow>
   );
 }
