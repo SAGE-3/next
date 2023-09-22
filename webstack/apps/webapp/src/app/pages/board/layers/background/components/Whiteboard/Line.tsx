@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -11,15 +11,29 @@ import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
 import { useHexColor } from '@sage3/frontend';
+import { useColorModeValue } from '@chakra-ui/react';
 
 export interface LineProps {
   line: Y.Map<any>;
   scale: number;
+  onClick: (id: string) => void;
 }
 
-export const Line = memo(function Line({ line, scale }: LineProps) {
+export const Line = memo(function Line({ line, scale, onClick }: LineProps) {
   const { points, color, isComplete, alpha, size } = useLine(line);
   const c = useHexColor(color ? color : 'red');
+  const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
+  const hoverC = useHexColor(hoverColor);
+  const id = line.get('id') as string;
+  const [hover, setHover] = useState(false);
+
+  const handleClick = (ev: any) => {
+    // If Right Click
+    if (ev.button === 2) {
+      onClick(id);
+    }
+  };
+
   const pathData = getSvgPathFromStroke(
     getStroke(points, {
       size: size,
@@ -30,7 +44,19 @@ export const Line = memo(function Line({ line, scale }: LineProps) {
     })
   );
 
-  return (<g fill={color}> <path className="canvas-line" d={pathData} fill={c} fillOpacity={alpha} /> </g>);
+  return (
+    <g>
+      <path
+        className="canvas-line"
+        d={pathData}
+        fill={hover ? hoverC : c}
+        fillOpacity={alpha}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onMouseDown={handleClick}
+      />{' '}
+    </g>
+  );
 });
 
 export function getSvgPathFromStroke(stroke: number[][]) {
