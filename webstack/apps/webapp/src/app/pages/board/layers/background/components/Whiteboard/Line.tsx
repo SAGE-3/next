@@ -7,11 +7,11 @@
  */
 
 import { useEffect, useState, memo } from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
 import { useHexColor } from '@sage3/frontend';
-import { useColorModeValue } from '@chakra-ui/react';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -54,7 +54,7 @@ export const Line = memo(function Line({ line, scale, onClick }: LineProps) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onMouseDown={handleClick}
-      />{' '}
+      />
     </g>
   );
 });
