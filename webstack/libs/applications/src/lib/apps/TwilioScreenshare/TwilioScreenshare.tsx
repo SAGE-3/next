@@ -94,15 +94,9 @@ function AppComponent(props: App): JSX.Element {
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
 
-  // UIStore
-  // const scale = useUIStore((state) => state.scale);
-  // const setScale = useUIStore((state) => state.setScale);
-  // const boardPosition = useUIStore((state) => state.boardPosition);
-  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
-    const updateDimensions = (track: any) => {
+    const updateDimensions = (track: LocalVideoTrack) => {
       if (track.dimensions.width && track.dimensions.height) {
         const aspect = track.dimensions.width / track.dimensions.height;
         let w = props.data.size.width;
@@ -250,7 +244,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
-      if (track.name === s.videoId && videoRef.current) {
+      if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
         // Zoom to the window
         goToScreenshare();

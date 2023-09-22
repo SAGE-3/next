@@ -7,11 +7,11 @@
  */
 
 import { PresenceSchema, TwilioConfiguration } from '@sage3/shared/types';
-import { SAGE3Collection } from '../generics';
 import { AppSchema } from '@sage3/applications/schema';
+import { SAGE3Collection } from '../generics';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AccessToken = require('twilio').jwt.AccessToken;
+import { Twilio } from 'twilio/lib';
+const AccessToken = Twilio.jwt.AccessToken;
 const VideoGrant = AccessToken.VideoGrant;
 
 /**
