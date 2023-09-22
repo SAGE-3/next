@@ -10,8 +10,8 @@ import { PresenceSchema, TwilioConfiguration } from '@sage3/shared/types';
 import { AppSchema } from '@sage3/applications/schema';
 import { SAGE3Collection } from '../generics';
 
-import { Twilio } from 'twilio/lib';
-const AccessToken = Twilio.jwt.AccessToken;
+import { jwt } from 'twilio/lib';
+const AccessToken = jwt.AccessToken;
 const VideoGrant = AccessToken.VideoGrant;
 
 /**
