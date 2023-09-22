@@ -8,27 +8,21 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Box,
-  Button,
-  useToast,
-  Tooltip,
-  HStack,
-  VStack,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  Text,
+  Box, Button, useToast, Tooltip, Text, HStack, VStack,
+  Slider, SliderFilledTrack, SliderThumb, SliderTrack, useDisclosure,
+  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay
 } from '@chakra-ui/react';
 
+import { MdGraphicEq } from 'react-icons/md';
 import { BsPencilFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
-import { MdGraphicEq } from 'react-icons/md';
 
-import { useUIStore, useAppStore, usePanelStore, useUser, isElectron, useHexColor, useThrottleApps } from '@sage3/frontend';
+import {
+  ColorPicker, useUIStore, usePanelStore, useUser, isElectron,
+  useHexColor, useThrottleApps
+} from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
-import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
 
 export function AnnotationsPanel() {
@@ -110,94 +104,155 @@ export function AnnotationsPanel() {
     }
   };
 
+  // eraseYourLines modal
+  const { isOpen: myIsOpen, onOpen: myOnOpen, onClose: myOnClose } = useDisclosure();
+  // eraseAllines modal
+  const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
+
+  const eraseYourLines = () => {
+    setClearMarkers(true);
+  };
+  const eraseAllines = () => {
+    setClearAllMarkers(true);
+  };
+
   return (
-    <Panel title="Annotations" name="annotations" width={600} showClose={false}>
-      <Box alignItems="center" pb="1" width="100%" display="flex">
-        <VStack width="100%" alignItems="left" spacing="0">
-          <HStack m={0} p={0} spacing={'inherit'}>
-            <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
-              <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
-                <BsPencilFill />
-              </Button>
-            </Tooltip>
-
-            <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
-
-            <Tooltip placement="top" hasArrow label="Undo Last Line">
-              <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
-                <FaUndo />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow label="Erase Your Lines">
-              <Button onClick={() => setClearMarkers(true)} ml="2" size="sm">
-                <FaEraser />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow label="Erase All">
-              <Button onClick={() => setClearAllMarkers(true)} ml="2" size="sm">
-                <FaTrash />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
-              <Button onClick={screenshot} ml="2" size="sm" isDisabled={!isElectron()}>
-                <FaCamera />
-              </Button>
-            </Tooltip>
-          </HStack>
-          <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
-            <Text>Opacity</Text>
-            <Slider
-              defaultValue={markerOpacity}
-              min={0.1}
-              max={1}
-              step={0.1}
-              size={'md'}
-              onChangeEnd={(v) => setMarkerOpacity(v)}
-              onChange={(v) => setSliderValue1(v)}
-              onMouseEnter={() => setShowTooltip1(true)}
-              onMouseLeave={() => setShowTooltip1(false)}
-            >
-              <SliderTrack bg={sliderBackground}>
-                <Box position="relative" right={10} />
-                <SliderFilledTrack bg={sliderColor} />
-              </SliderTrack>
-              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
-                <SliderThumb boxSize={4}>
-                  <Box color={thumbColor} as={MdGraphicEq} />
-                </SliderThumb>
+    <>
+      <Panel title="Annotations" name="annotations" width={600} showClose={false}>
+        <Box alignItems="center" pb="1" width="100%" display="flex">
+          <VStack width="100%" alignItems="left" spacing="0">
+            <HStack m={0} p={0} spacing={'inherit'}>
+              <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
+                <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
+                  <BsPencilFill />
+                </Button>
               </Tooltip>
-            </Slider>
-            <Text> Width</Text>
-            <Slider
-              defaultValue={markerSize}
-              min={1}
-              max={80}
-              step={1}
-              size={'md'}
-              onChangeEnd={(v) => setMarkerSize(v)}
-              onChange={(v) => setSliderValue2(v)}
-              onMouseEnter={() => setShowTooltip2(true)}
-              onMouseLeave={() => setShowTooltip2(false)}
-            >
-              <SliderTrack bg={sliderBackground}>
-                <Box position="relative" right={10} />
-                <SliderFilledTrack bg={sliderColor} />
-              </SliderTrack>
-              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
-                <SliderThumb boxSize={4}>
-                  <Box color={thumbColor} as={MdGraphicEq} />
-                </SliderThumb>
+
+              <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
+
+              <Tooltip placement="top" hasArrow label="Undo Last Line">
+                <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
+                  <FaUndo />
+                </Button>
               </Tooltip>
-            </Slider>
-          </HStack>
-          <Text fontSize={'xs'} alignSelf={'center'} mt={'3px'}>
-            While drawing, use the arrow keys or spacebar+mouse to navigate
-          </Text>
-        </VStack>
-      </Box>
-    </Panel>
+
+              <Tooltip placement="top" hasArrow label="Erase Your Lines">
+                <Button onClick={myOnOpen} ml="2" size="sm">
+                  <FaEraser />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow label="Erase All">
+                <Button onClick={allOnOpen} ml="2" size="sm">
+                  <FaTrash />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
+                <Button onClick={screenshot} ml="2" size="sm" isDisabled={!isElectron()}>
+                  <FaCamera />
+                </Button>
+              </Tooltip>
+            </HStack>
+            <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
+              <Text>Opacity</Text>
+              <Slider
+                defaultValue={markerOpacity}
+                min={0.1}
+                max={1}
+                step={0.1}
+                size={'md'}
+                onChangeEnd={(v) => setMarkerOpacity(v)}
+                onChange={(v) => setSliderValue1(v)}
+                onMouseEnter={() => setShowTooltip1(true)}
+                onMouseLeave={() => setShowTooltip1(false)}
+              >
+                <SliderTrack bg={sliderBackground}>
+                  <Box position="relative" right={10} />
+                  <SliderFilledTrack bg={sliderColor} />
+                </SliderTrack>
+                <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
+                  <SliderThumb boxSize={4}>
+                    <Box color={thumbColor} as={MdGraphicEq} />
+                  </SliderThumb>
+                </Tooltip>
+              </Slider>
+              <Text> Width</Text>
+              <Slider
+                defaultValue={markerSize}
+                min={1}
+                max={80}
+                step={1}
+                size={'md'}
+                onChangeEnd={(v) => setMarkerSize(v)}
+                onChange={(v) => setSliderValue2(v)}
+                onMouseEnter={() => setShowTooltip2(true)}
+                onMouseLeave={() => setShowTooltip2(false)}
+              >
+                <SliderTrack bg={sliderBackground}>
+                  <Box position="relative" right={10} />
+                  <SliderFilledTrack bg={sliderColor} />
+                </SliderTrack>
+                <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
+                  <SliderThumb boxSize={4}>
+                    <Box color={thumbColor} as={MdGraphicEq} />
+                  </SliderThumb>
+                </Tooltip>
+              </Slider>
+            </HStack>
+            <Text fontSize={'xs'} alignSelf={'center'} mt={'3px'}>
+              While drawing, use the arrow keys or spacebar+mouse to navigate
+            </Text>
+          </VStack>
+        </Box>
+      </Panel>
+      <ConfirmModal
+        isOpen={myIsOpen}
+        onClose={myOnClose}
+        onClick={eraseYourLines}
+        header="Erase Your Lines"
+        body="Are you sure you want to erase your lines?"
+        cancel="Cancel"
+        confirm="Erase" />
+      <ConfirmModal
+        isOpen={allIsOpen}
+        onClose={allOnClose}
+        onClick={eraseAllines}
+        header="Erase All Lines"
+        body="CAUTION: Are you sure you want to erase ALL lines?"
+        cancel="Cancel"
+        confirm="Erase" />
+    </>
+  );
+}
+
+
+type ModalProps = {
+  onClick: () => void;
+  onClose: () => void;
+  isOpen: boolean;
+  header: string;
+  body: string;
+  cancel: string;
+  confirm: string;
+};
+
+export function ConfirmModal(props: ModalProps) {
+  return (
+    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>{props.header}</ModalHeader>
+        <ModalBody>{props.body}</ModalBody>
+        <ModalFooter>
+          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
+            {props.cancel}
+          </Button>
+          <Button colorScheme="red" size="sm" onClick={props.onClick}>
+            {props.confirm}
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
