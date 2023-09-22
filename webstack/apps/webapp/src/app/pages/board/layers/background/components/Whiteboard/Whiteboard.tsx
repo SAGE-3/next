@@ -266,6 +266,18 @@ export function Whiteboard(props: WhiteboardProps) {
     { dependencies: [whiteboardMode] }
   );
 
+  // Delete a line when it is clicked
+  const lineClicked = (id: string) => {
+    if (yLines) {
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('id') === id) {
+          yLines.delete(index, 1);
+        }
+      }
+    }
+  };
+
   return (
     <div
       className="canvas-container"
@@ -292,7 +304,7 @@ export function Whiteboard(props: WhiteboardProps) {
         <g>
           {/* Lines */}
           {lines.map((line, i) => (
-            <Line key={i} line={line} scale={scale} />
+            <Line key={i} line={line} scale={scale} onClick={lineClicked} />
           ))}
         </g>
       </svg>
