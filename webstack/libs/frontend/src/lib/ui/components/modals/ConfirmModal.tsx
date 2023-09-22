@@ -17,6 +17,7 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  size?: string;
   cancelText?: string;
   confirmText?: string;
   cancelColor?: SAGEColors;
@@ -33,10 +34,11 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
   const confirmText = props.confirmText || 'Confirm';
   const cancelButtonColor = props.cancelColor || 'gray';
   const confirmButtonColor = props.confirmColor || 'teal';
+  const size = props.size || 'md';
   const initialRef = useRef(null);
 
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
+    <Modal size={size} isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{props.title}</ModalHeader>

@@ -10,7 +10,6 @@ import { useEffect, useState } from 'react';
 import {
   Box, Button, useToast, Tooltip, Text, HStack, VStack,
   Slider, SliderFilledTrack, SliderThumb, SliderTrack, useDisclosure,
-  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay
 } from '@chakra-ui/react';
 
 import { MdGraphicEq } from 'react-icons/md';
@@ -19,7 +18,7 @@ import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 
 import {
   ColorPicker, useUIStore, usePanelStore, useUser, isElectron,
-  useHexColor, useThrottleApps
+  useHexColor, useThrottleApps, ConfirmModal,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -212,50 +211,23 @@ export function AnnotationsPanel() {
       <ConfirmModal
         isOpen={myIsOpen}
         onClose={myOnClose}
-        onClick={eraseYourLines}
-        header="Erase Your Annotations"
-        body="Are you sure you want to erase your annotations?"
-        cancel="Cancel"
-        confirm="Erase" />
+        onConfirm={eraseYourLines}
+        title="Erase Your Annotations"
+        message="Are you sure you want to erase your annotations?"
+        cancelText="Cancel"
+        confirmText="Erase"
+        cancelColor="green"
+        confirmColor="red" size="lg" />
       <ConfirmModal
         isOpen={allIsOpen}
         onClose={allOnClose}
-        onClick={eraseAllines}
-        header="Erase All Annotations"
-        body="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
-        cancel="Cancel"
-        confirm="Erase" />
+        onConfirm={eraseAllines}
+        title="Erase All Annotations"
+        message="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
+        cancelText="Cancel"
+        confirmText="Erase"
+        cancelColor="green"
+        confirmColor="red" size="lg" />
     </>
-  );
-}
-
-
-type ModalProps = {
-  onClick: () => void;
-  onClose: () => void;
-  isOpen: boolean;
-  header: string;
-  body: string;
-  cancel: string;
-  confirm: string;
-};
-
-export function ConfirmModal(props: ModalProps) {
-  return (
-    <Modal size="lg" isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>{props.header}</ModalHeader>
-        <ModalBody>{props.body}</ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
-            {props.cancel}
-          </Button>
-          <Button colorScheme="red" size="sm" onClick={props.onClick}>
-            {props.confirm}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
   );
 }
