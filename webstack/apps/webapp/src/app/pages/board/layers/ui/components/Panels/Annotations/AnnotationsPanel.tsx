@@ -63,6 +63,11 @@ export function AnnotationsPanel() {
   const sliderBackground = useHexColor(`${markerColor}.100`);
   const sliderColor = useHexColor(markerColor);
 
+  // eraseYourLines modal
+  const { isOpen: myIsOpen, onOpen: myOnOpen, onClose: myOnClose } = useDisclosure();
+  // eraseAllines modal
+  const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
+
   // Set user's color to the pen color
   useEffect(() => {
     if (user && markerColor !== user.data.color) setMarkerColor(user.data.color as SAGEColors);
@@ -104,16 +109,14 @@ export function AnnotationsPanel() {
     }
   };
 
-  // eraseYourLines modal
-  const { isOpen: myIsOpen, onOpen: myOnOpen, onClose: myOnClose } = useDisclosure();
-  // eraseAllines modal
-  const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
-
+  // Modals to delete annotations
   const eraseYourLines = () => {
     setClearMarkers(true);
+    myOnClose();
   };
   const eraseAllines = () => {
     setClearAllMarkers(true);
+    allOnClose();
   };
 
   return (
@@ -210,16 +213,16 @@ export function AnnotationsPanel() {
         isOpen={myIsOpen}
         onClose={myOnClose}
         onClick={eraseYourLines}
-        header="Erase Your Lines"
-        body="Are you sure you want to erase your lines?"
+        header="Erase Your Annotations"
+        body="Are you sure you want to erase your annotations?"
         cancel="Cancel"
         confirm="Erase" />
       <ConfirmModal
         isOpen={allIsOpen}
         onClose={allOnClose}
         onClick={eraseAllines}
-        header="Erase All Lines"
-        body="CAUTION: Are you sure you want to erase ALL lines?"
+        header="Erase All Annotations"
+        body="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
         cancel="Cancel"
         confirm="Erase" />
     </>
@@ -239,7 +242,7 @@ type ModalProps = {
 
 export function ConfirmModal(props: ModalProps) {
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
+    <Modal size="lg" isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{props.header}</ModalHeader>
