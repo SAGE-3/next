@@ -72,7 +72,8 @@
       "SageCell",
       "Stickie",
       "Screenshare",
-      "Webview"
+      "Webview",
+      "JupyterLab"
     ]
   },
 
