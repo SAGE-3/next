@@ -81,6 +81,7 @@ type UseFiles = {
     roomId: string,
     boardId: string
   ) => Promise<AppSchema | null>;
+  uploadInProgress: boolean;
 };
 
 /**
@@ -102,6 +103,8 @@ export function useFiles(): UseFiles {
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
   // Save the drop position
   const [configDrop, setConfigDrop] = useState({ xDrop: 0, yDrop: 0, roomId: '', boardId: '' });
+  // Upload in progress
+  const [uploadInProgress, setUploadInProgress] = useState(false);
 
   // When uplaod is done, open the apps
   useEffect(() => {
@@ -177,6 +180,7 @@ export function useFiles(): UseFiles {
 
       // Save the drop position
       setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+      setUploadInProgress(true);
 
       // Upload with a POST request
       const response = await axios({
@@ -204,6 +208,7 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           }
+          setUploadInProgress(false);
         })
         .catch((error: AxiosError) => {
           // Big error in file handling in backend
@@ -216,6 +221,7 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           }
+          setUploadInProgress(false);
         });
       if (response) {
         // Save the list of uploaded files
@@ -229,6 +235,7 @@ export function useFiles(): UseFiles {
             isClosable: true,
           });
         }
+        setUploadInProgress(false);
       }
     }
   }
@@ -408,5 +415,5 @@ export function useFiles(): UseFiles {
     return null;
   }
 
-  return { uploadFiles, openAppForFile };
+  return { uploadFiles, openAppForFile, uploadInProgress };
 }
