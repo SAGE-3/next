@@ -19,6 +19,7 @@ import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
+import { apiUrls } from '../config';
 
 interface PluginState {
   plugins: Plugin[];
@@ -52,7 +53,7 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
       fd.append('plugins', file);
       fd.append('description', description);
       fd.append('name', name);
-      const res = await fetch('/api/plugins/upload', {
+      const res = await fetch(apiUrls.plugins.upload, {
         method: 'POST',
         body: fd,
       });

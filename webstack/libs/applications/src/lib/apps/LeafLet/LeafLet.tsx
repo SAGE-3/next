@@ -9,7 +9,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 
@@ -35,7 +35,7 @@ export const useStore = create((set: any) => ({
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
+  return apiUrls.assets.getAssetById(filename);
 }
 
 const maxZoom = 18;

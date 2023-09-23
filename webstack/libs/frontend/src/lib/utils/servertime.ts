@@ -6,8 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { apiUrls } from '../config';
+
 export async function serverTime(): Promise<{ epoch: number }> {
-  const response = await fetch('/api/time');
+  const response = await fetch(apiUrls.misc.getTime);
   const time = await response.json();
   return time;
 }

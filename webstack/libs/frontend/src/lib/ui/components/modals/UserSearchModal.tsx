@@ -28,7 +28,7 @@ import {
 import { MdSearch } from 'react-icons/md';
 
 import { Board, User } from '@sage3/shared/types';
-import { EnterBoardModal, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
+import { EnterBoardModal, apiUrls, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // User Search Modal Props
 interface UserSearchProps {
@@ -171,7 +171,7 @@ function UserCard(props: UserCardProps) {
 
   // Get the board information for the user
   async function getBoardInfo(boardId: string) {
-    const res = await fetch(`/api/boards/${boardId}`);
+    const res = await fetch(apiUrls.boards.getBoard(boardId));
     const data = await res.json();
     if (data.success) {
       setBoard(data.data[0]);

@@ -6,45 +6,27 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
 
+// Chakra UI
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  Box,
-  Button,
-  Flex,
-  useEventListener,
-  useDisclosure,
-  Portal,
-  useColorModeValue,
-  useToast,
-  Tooltip,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
+  Box, Button, Flex, useEventListener, useDisclosure, Portal, useColorModeValue,
+  useToast, Tooltip,
 } from '@chakra-ui/react';
 
 // Icons for file types
 import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
 import {
-  humanFileSize,
-  downloadFile,
-  useUser,
-  useAuth,
-  useAppStore,
-  useUIStore,
-  useCursorBoardPosition,
-  AssetHTTPService,
-  useAbility,
+  humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
+  useCursorBoardPosition, AssetHTTPService, useAbility, apiUrls
 } from '@sage3/frontend';
-
 import { getExtension } from '@sage3/shared';
 
 import { FileEntry } from './types';
@@ -125,11 +107,12 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         return;
       } else {
         // download a file
-        downloadFile('api/assets/static/' + file.filename, file.originalfilename);
+        const url = apiUrls.assets.getAssetById(file.filename);
+        downloadFile(url, file.originalfilename);
       }
     } else if (id === 'copy') {
       // Copy the file URL to the clipboard
-      const publicUrl = window.location.origin + '/api/assets/static/' + file.filename;
+      const publicUrl = window.location.origin + apiUrls.assets.getAssetById(file.filename);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(publicUrl);
         // Notify the user

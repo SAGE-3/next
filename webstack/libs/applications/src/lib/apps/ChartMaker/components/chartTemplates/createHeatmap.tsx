@@ -41,7 +41,7 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
   let specifications = [];
   extractedHeaders = organizeHeatmapHeaders(extractedHeaders, data);
 
-  lineChartSpec.data.url = '/api/assets/static/' + fileName;
+  lineChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
   lineChartSpec.encoding.x.field = extractedHeaders[1];
   lineChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 

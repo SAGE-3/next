@@ -32,8 +32,8 @@ import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
+import { GetConfiguration, apiUrls } from '../config';
 import { useAssetStore, useAppStore } from '../stores';
-import { GetConfiguration } from '../config';
 import { useUser } from '../providers';
 
 /**
@@ -181,7 +181,7 @@ export function useFiles(): UseFiles {
       // Upload with a POST request
       const response = await axios({
         method: 'post',
-        url: '/api/assets/upload',
+        url: apiUrls.assets.upload,
         data: fd,
         onUploadProgress: (p: AxiosProgressEvent) => {
           if (toastIdRef.current && p.progress) {
@@ -256,7 +256,7 @@ export function useFiles(): UseFiles {
             roomId,
             boardId,
             { w: w, h: w },
-            { assetid: '/api/assets/static/' + a.data.file }
+            { assetid: apiUrls.assets.getAssetById(a.data.file) }
           );
         }
       }
@@ -305,7 +305,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -322,7 +322,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -339,7 +339,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -354,7 +354,7 @@ export function useFiles(): UseFiles {
             // Create a new notebook
             const base = `http://${window.location.hostname}:8888`;
             // Talk to the jupyter server API
-            const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
             const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
             // Create a new notebook
             const response = await fetch(j_url, {
@@ -376,7 +376,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
