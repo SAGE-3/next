@@ -47,7 +47,7 @@ services:
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
-    working_dir: /app
+    working_dir: /app/foresight
     command: python proxy.py
     depends_on:
       node-server:
