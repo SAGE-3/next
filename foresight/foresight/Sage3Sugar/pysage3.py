@@ -294,13 +294,16 @@ class PySage3:
     # def get_current_board(self):
     #     return self.board
 
-    def get_apps(self):
-        return self.s3_comm.get_apps()
+    def get_app(self, app_id: str = None) -> dict:
+        return self.s3_comm.get_app(app_id)
+
+    def get_apps(self, room_id: str = None, board_id: str = None) -> List[dict]:
+        return self.s3_comm.get_apps(room_id, board_id)
 
     def get_apps_by_room(self, room_id: str = None) -> List[dict]:
         if room_id is None:
             print("Please provide a room id to filter by")
-        return self.get_apps(room_id)
+        return self.get_apps(room_id=room_id)
 
     def get_apps_by_board(self, board_id: str = None) -> List[dict]:
         if board_id is None:
