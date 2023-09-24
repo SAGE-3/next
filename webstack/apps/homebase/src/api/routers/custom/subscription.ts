@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -28,6 +28,7 @@ import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collect
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
+import { PresenceThrottle } from './presencethrottle';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
@@ -90,9 +91,16 @@ export async function subscriptionWSRouter(
         if (appsSub) subs.push(appsSub);
         if (subs) cache.add(message.id, subs);
       }
+      // Subscribe to the presence collection
+      // Presence collection is unique in that it is throttled
+      else if (message.route === '/api/subscription/presence') {
+        PresenceThrottle.addSubscription(message.id, socket);
+      }
       break;
     }
     case 'UNSUB': {
+      // Attempt to remove the subscription from presence. It might not be for presence but have to check to avoid memory leak
+      PresenceThrottle.removeClient(message.id);
       // Unsubscribe Message
       cache.delete(message.id);
       break;

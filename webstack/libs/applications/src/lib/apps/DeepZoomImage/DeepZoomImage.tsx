@@ -1,22 +1,22 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState, useRef } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
+import OpenSeadragon from 'openseadragon';
 
-import { App } from '../../schema';
+import { useAssetStore, useAppStore, useUser, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useAssetStore, useAppStore, useUser } from '@sage3/frontend';
-
-import OpenSeadragon from 'openseadragon';
+import { App } from '../../schema';
 
 /* App component for DeepZoomImage */
 
@@ -101,7 +101,7 @@ function AppComponent(props: App): JSX.Element {
         // At least half in the window
         visibilityRatio: 0.5,
         // change tileSources for your dataset
-        tileSources: '/api/assets/static/' + file.data.file,
+        tileSources: apiUrls.assets.getAssetById(file.data.file),
         // setup for CORS
         crossOriginPolicy: 'Anonymous',
       });
@@ -132,9 +132,12 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app DeepZoomImage */
+function ToolbarComponent() { return null; }
 
-function ToolbarComponent(props: App): JSX.Element {
-  return <></>;
-}
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

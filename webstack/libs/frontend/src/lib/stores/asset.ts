@@ -1,25 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
-import { Asset, AssetSchema } from '@sage3/shared/types';
+import { Asset } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket
 import { AssetHTTPService, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface AssetState {
   assets: Asset[];
@@ -48,6 +47,7 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       }
     },
     subscribe: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'assets')) return;
       const files = await AssetHTTPService.readAll();
       if (files) {
         set({ assets: files });
@@ -65,29 +65,31 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
       // Socket Subscribe Message
       const route = '/assets';
       // Socket Listenting to updates from server about the current assets
-      assetSub = await SocketAPI.subscribe<AssetSchema>(route, (message) => {
-        const doc = message.doc as Asset;
+      assetSub = await SocketAPI.subscribe<Asset>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ assets: [...get().assets, doc] });
+            const docs = message.doc as Asset[];
+            set({ assets: [...get().assets, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const files = [...get().assets];
-            const idx = files.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              files[idx] = doc;
-            }
-            set({ assets: files });
+            const docs = message.doc as Asset[];
+            const assets = [...get().assets];
+            docs.forEach((doc) => {
+              const idx = assets.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                assets[idx] = doc;
+              }
+            });
+            set({ assets });
             break;
           }
           case 'DELETE': {
-            const files = [...get().assets];
-            const idx = files.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              files.splice(idx, 1);
-            }
-            set({ assets: files });
+            const docs = message.doc as Asset[];
+            const ids = docs.map((d) => d._id);
+            const assets = [...get().assets];
+            const remainingAssets = assets.filter((a) => !ids.includes(a._id));
+            set({ assets: remainingAssets });
           }
         }
       });

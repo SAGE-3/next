@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
@@ -15,9 +15,9 @@ import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 // Icons
-import { MdFileDownload } from 'react-icons/md';
+import { MdFileDownload, MdOpenInNew } from 'react-icons/md';
 
-import { downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
+import { apiUrls, downloadFile, GetConfiguration, useAppStore, useBoardStore } from '@sage3/frontend';
 
 import { AppWindow, ElectronRequired } from '../../components';
 import { state as AppState } from './index';
@@ -46,16 +46,9 @@ function AppComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token) {
         // Create a new notebook
-        let base: string;
-        if (conf.production) {
-          base = `https://${window.location.hostname}:4443`;
-        } else {
-          base = `http://${window.location.hostname}`;
-        }
+        const base = `http://${window.location.hostname}:8888`;
         // Talk to the jupyter server API
-        let j_url: string;
         if (s.notebook) {
-          j_url = base + '/api/contents/notebooks/' + `${s.notebook}`;
           // Create a new kernel
           const k_url = base + '/api/kernels';
           const kpayload = { name: 'python3', path: '/' };
@@ -99,86 +92,9 @@ function AppComponent(props: App): JSX.Element {
                 .then((res) => {
                   console.log('Juypyter> session created', res);
                   //  Open the notebook in a separate workspace
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
+                  const base = `http://${window.location.hostname}:8888`;
                   const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
                   setUrl(newUrl);
-                });
-            })
-            .catch((err) => {
-              console.log('Jupyter> error', err);
-            });
-        } else {
-          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb`;
-          const payload = { type: 'notebook', path: '/boards', format: 'text' };
-          // Create a new notebook
-          fetch(j_url, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Token ' + conf.token,
-            },
-            body: JSON.stringify(payload),
-          })
-            .then((response) => response.json())
-            .then((res) => {
-              console.log('Jupyter> notebook created', res);
-              // Create a new kernel
-              const k_url = base + '/api/kernels';
-              const kpayload = { name: 'python3', path: '/' };
-              // Creating a new kernel with HTTP POST
-              fetch(k_url, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Token ' + conf.token,
-                },
-                body: JSON.stringify(kpayload),
-              })
-                .then((response) => response.json())
-                .then((res) => {
-                  console.log('Jupyter> kernel created', res);
-                  const kernel = res;
-                  // Create a new session
-                  const s_url = base + '/api/sessions';
-                  const sid = uuidv1();
-                  const spayload = {
-                    id: sid.replace(/-/g, ''),
-                    kernel: kernel,
-                    name: boardId,
-                    path: `boards/${boardId}.ipynb`,
-                    notebook: {
-                      name: `${boardId}.ipynb`,
-                      path: `boards/${boardId}.ipynb`,
-                    },
-                    type: 'notebook',
-                  };
-                  // Creating a new session with HTTP POST
-                  fetch(s_url, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(spayload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Juypyter> session created', res);
-                      //  Open the notebook in a separate workspace
-                      let base: string;
-                      if (conf.production) {
-                        base = `https://${window.location.hostname}:4443`;
-                      } else {
-                        base = `http://${window.location.hostname}`;
-                      }
-                      const newUrl = `${base}/doc/workspaces/${roomId}/tree/boards/${boardId}.ipynb?token=${conf.token}&reset`;
-                      setUrl(newUrl);
-                    });
                 });
             })
             .catch((err) => {
@@ -239,11 +155,7 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
       ) : (
-        <ElectronRequired
-          appName={props.data.type}
-          link={url || ''}
-          title={"Jupyter URL"}
-        />
+        <ElectronRequired appName={props.data.type} link={url || ''} title={'Jupyter URL'} />
       )}
     </AppWindow>
   );
@@ -253,31 +165,20 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // const updateState = useAppStore((state) => state.updateState);
 
   // Board store
   const boards = useBoardStore((state) => state.boards);
 
   // Room and board
-  const { boardId } = useParams();
+  const { boardId, roomId } = useParams();
 
   // Download the notebook for this board
   function downloadNotebook() {
     GetConfiguration().then((conf) => {
-      if (conf.token) {
+      if (conf.token && s.notebook) {
         // Create a new notebook
-        let base: string;
-        if (conf.production) {
-          base = `https://${window.location.hostname}:4443`;
-        } else {
-          base = `http://${window.location.hostname}`;
-        }
-        let j_url: string;
-        if (s.notebook) {
-          j_url = base + '/api/contents/notebooks/' + `${s.notebook}?token=${conf.token}`;
-        } else {
-          j_url = base + '/api/contents/boards/' + `${boardId}.ipynb?token=${conf.token}`;
-        }
+        const base = `http://${window.location.hostname}:8888`;
+        const j_url = base + apiUrls.assets.getNotebookByName(s.notebook) + `?token=${conf.token}`;
         fetch(j_url)
           .then((response) => response.json())
           .then((note) => {
@@ -298,6 +199,18 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
+  const handleOpen = () => {
+    if (isElectron()) {
+      GetConfiguration().then((conf) => {
+        if (conf.token && s.notebook) {
+          const base = `http://${window.location.hostname}:8888`;
+          const j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
+          window.electron.send('open-external-url', { url: j_url });
+        }
+      });
+    }
+  };
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -306,9 +219,20 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={handleOpen}>
+            <MdOpenInNew />
+          </Button>
+        </Tooltip>
       </ButtonGroup>
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

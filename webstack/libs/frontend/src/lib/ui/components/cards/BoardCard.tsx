@@ -1,20 +1,23 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
+import { useState, useEffect } from 'react';
 import { Box, Tooltip, Text, useDisclosure, useColorModeValue, IconButton, useToast } from '@chakra-ui/react';
 import { MdLock, MdSettings, MdLockOpen, MdOutlineCopyAll, MdLink } from 'react-icons/md';
 
-import { SBDocument } from '@sage3/sagebase';
+import { copyBoardUrlToClipboard } from '@sage3/frontend';
 import { BoardSchema, Board } from '@sage3/shared/types';
+import { SBDocument } from '@sage3/sagebase';
+
 import { EnterBoardModal } from '../modals/EnterBoardModal';
 import { EditBoardModal } from '../modals/EditBoardModal';
-import { useHexColor, useUser, useAuth } from '../../../hooks';
-import { copyBoardUrlToClipboard } from '@sage3/frontend';
+import { useHexColor } from '../../../hooks';
+import { useUser, useAuth } from '../../../providers';
 
 export type BoardCardProps = {
   board: SBDocument<BoardSchema>;
@@ -32,11 +35,20 @@ export type BoardCardProps = {
 export function BoardCard(props: BoardCardProps) {
   const { user } = useUser();
   const { auth } = useAuth();
-  // Guest mode disabled for now
-  const isGuest = false; // auth?.provider === 'guest';
+  const [yours, setYours] = useState(false);
+  const [isGuest, setIsGuest] = useState(true);
 
   // Is it my board?
-  const yours = user?._id === props.board.data.ownerId;
+  useEffect(() => {
+    setYours(user?._id === props.board.data.ownerId);
+  }, [props.board.data.ownerId, user?._id]);
+
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   // Custom color
   const boardColor = useHexColor(props.board.data.color);
@@ -65,14 +77,16 @@ export function BoardCard(props: BoardCardProps) {
   // Copy the board id to the clipboard
   const handleCopyId = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(props.board._id);
-    toast({
-      title: 'Success',
-      description: `BoardID copied to clipboard.`,
-      duration: 3000,
-      isClosable: true,
-      status: 'success',
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(props.board._id);
+      toast({
+        title: 'Success',
+        description: `BoardID copied to clipboard.`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   // Copy a sharable link to the user's os clipboard
@@ -155,7 +169,7 @@ export function BoardCard(props: BoardCardProps) {
               variant="unstlyed"
               ml="-3"
               onClick={handleCopyLink}
-              disabled={isGuest}
+              isDisabled={isGuest}
               icon={<MdLink />}
             />
           </Tooltip>
@@ -166,7 +180,7 @@ export function BoardCard(props: BoardCardProps) {
               aria-label="Board Edit"
               fontSize="2xl"
               variant="unstlyed"
-              disabled={!yours}
+              isDisabled={!yours}
               marginLeft={-3} // Weird margin on the icon
               icon={<MdSettings />}
             />

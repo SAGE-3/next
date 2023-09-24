@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -18,6 +18,9 @@
 import * as fsModule from 'fs';
 // Declare fs with Promises
 const fs = fsModule.promises;
+
+import * as dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
 
 // parsing command-line arguments
 import * as commander from 'commander';
@@ -48,7 +51,8 @@ commander.program
   .option('-m, --room <s>', 'room id (string))')
   .option('-t, --timeout <n>', 'runtime in sec (number)', 10)
   .option('-r, --rate <n>', 'framerate (number)', 20)
-  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333');
+  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333')
+  .option('-e, --sensitivity <n>', 'sensitivity (number)', 5);
 
 // Parse the arguments
 commander.program.parse(args);
@@ -82,6 +86,7 @@ async function start() {
   };
 
   const me = await loginCreateUser('http://' + params.server, userData);
+  console.log('CLI> Created user', me);
   myID = me._id;
 
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
@@ -92,9 +97,9 @@ async function start() {
   const roomId = params.room;
 
   const boardData = await getBoardsInfo();
-  console.log('CLI> boards', boardData);
+  // console.log('CLI> boards', boardData);
   const roomData = await getRoomsInfo();
-  console.log('CLI> rooms', roomData);
+  // console.log('CLI> rooms', roomData);
 
   // Create a websocket with the auth cookies
   const socket = socketConnection('ws://' + params.server + '/api', cookies);
@@ -104,7 +109,7 @@ async function start() {
     console.log('socket> connected');
 
     // Connect to a specific board
-    console.log('socket> connecting to board', roomId, boardId);
+    // console.log('socket> connecting to board', roomId, boardId);
     boardConnect(socket, myID, roomId, boardId);
 
     // Default size of the board
@@ -116,7 +121,7 @@ async function start() {
     var py = randomNumber(1500000, 1501000);
     var incx = randomNumber(1, 2) % 2 ? 1 : -1;
     var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    var sensitivity = 2;
+    var sensitivity = params.sensitivity;
 
     // intial position
     sendCursor(socket, myID, px, py);

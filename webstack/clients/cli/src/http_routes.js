@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Web request
@@ -68,9 +68,9 @@ export async function loginCreateUser(server, data) {
       data: data,
     });
     // handle success
-    console.log('CLI> login success', response.status, '-', response.statusText, response.data);
+    console.log('CLI> login success', response.status, '-', response.statusText);
     if (response.data) {
-      console.log('Create user', response.data.data);
+      // console.log('Create user', response.data.data);
       return response.data.data[0];
     }
   } catch (err) {

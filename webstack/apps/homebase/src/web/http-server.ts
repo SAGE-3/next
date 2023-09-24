@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Node modules
@@ -42,16 +42,14 @@ export function createApp(assetPath: string): express.Express {
   // http://expressjs.com/en/api.html#app.settings.table for more details.
   app.enable('trust proxy');
 
-  // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
-
   // Cookies
   app.use(cookieParser());
+  // using express to parse JSON bodies into JS objects
+  app.use(express.json({ limit: '5mb' }));
+  app.use(express.urlencoded({ extended: true }));
 
   // adding Helmet to enhance your API's security
-  // All options
-  // app.use(helmet());
-  // Disabling a few for now, easier during development
+  // Disabling a few rules for now, easier during development
   app.use(
     helmet({
       // Content-Security-Policy

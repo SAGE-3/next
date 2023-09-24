@@ -36,7 +36,8 @@ def createUser(payload):
     """Create a user
     """
     head = {'Authorization': 'Bearer {}'.format(token)}
-    r = requests.post(web_server + '/api/users', headers=head, json=payload)
+    #r = requests.post(web_server + '/api/users', headers=head, json=payload)
+    r = requests.post(web_server + '/api/users/create', headers=head, json=payload)
     return r
 
 
@@ -121,9 +122,9 @@ def connect():
         user = response['user']
         print('Login> user', user)
         # Create a new user for that token
-        u = createUser({'name': user['providerId'],
-                       'email': user['providerId']})
-        print('User>', u.json())
+        # u = createUser({'name': user['providerId'],
+        #                'email': user['providerId']})
+        # print('User>', u.json())
 
 
 def processMessage(msg):

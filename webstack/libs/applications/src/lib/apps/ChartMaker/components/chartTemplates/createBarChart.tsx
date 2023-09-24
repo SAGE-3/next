@@ -1,13 +1,14 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import findHeaderType from '../findHeaderType';
 import switchHeaders from './helperFunctions/switchHeaders';
+import { apiUrls } from '@sage3/frontend';
 
 export interface barChartProps {
   description: string;
@@ -25,7 +26,7 @@ export interface barChartProps {
 }
 
 export default function createBarChart(extractedHeaders: string[], fileName: string, data: string[]) {
-  let barChartSpec: barChartProps = {
+  const barChartSpec: barChartProps = {
     description: "A bar chart with highlighting on hover and selecting on click. (Inspired by Tableau's interaction style.)",
     title: '',
     data: {
@@ -39,11 +40,11 @@ export default function createBarChart(extractedHeaders: string[], fileName: str
     },
     transform: [] as any,
   };
-  let specifications = [];
+  const specifications: barChartProps[] = [];
   extractedHeaders = organizeBarChartHeaders(extractedHeaders, data);
 
   if (extractedHeaders.length == 2) {
-    barChartSpec.data.url = '/api/assets/static/' + fileName;
+    barChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
     barChartSpec.encoding.x.field = extractedHeaders[1];
     barChartSpec.encoding.x.type = 'nominal';
 
@@ -52,7 +53,7 @@ export default function createBarChart(extractedHeaders: string[], fileName: str
     barChartSpec.encoding.y.aggregate = 'sum';
     specifications.push(barChartSpec);
   } else if (extractedHeaders.length == 3) {
-    barChartSpec.data.url = '/api/assets/static/' + fileName;
+    barChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
     barChartSpec.encoding.x.field = extractedHeaders[1];
     barChartSpec.encoding.x.type = 'nominal';
 
@@ -97,17 +98,3 @@ function organizeBarChartHeaders(extractedHeaders: string[], data: string[]) {
     throw 'You did not provide enough details to generate a chart';
   }
 }
-
-// for (let i = 1; i < extractedHeaders.length; i++) {
-//   let barChartSpec = {
-//     ...barSpecificationTemplate,
-//   };
-//   barChartSpec.data.url = '/api/assets/static/' + fileName;
-//   barChartSpec.encoding.x.field = extractedHeaders[i];
-//   barChartSpec.encoding.x.type = 'nominal';
-
-//   barChartSpec.encoding.y.field = extractedHeaders[0];
-//   barChartSpec.encoding.y.type = 'quantitative';
-//   barChartSpec.encoding.y.aggregate = 'sum';
-//   specifications.push(barChartSpec);
-// }

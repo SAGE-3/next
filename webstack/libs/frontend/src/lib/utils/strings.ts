@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -134,6 +134,35 @@ export function processContentURL(view_url: string): string {
     if (twitch_id) {
       view_url = 'https://player.twitch.tv/?!autoplay&video=v' + twitch_id;
     }
+  } else if (
+    // TLDraw regex
+    // eslint-disable-next-line no-useless-escape
+    view_url.match(/https:\/\/([\w\.-]+\.)?figma.com\/(file|proto)\/([0-9a-zA-Z]{22,128})(?:\/.*)?$/) &&
+    !view_url.includes('figma.com/embed')
+  ) {
+    view_url = `https://www.figma.com/embed?embed_host=share&url=${view_url}`;
+  } else if (view_url.includes('docs.google.')) {
+    // slides in presentation mode when published
+    const urlObj = new URL(view_url);
+    if (urlObj?.pathname.match(/^\/presentation/) && urlObj?.pathname.match(/\/pub\/?$/)) {
+      urlObj.pathname = urlObj.pathname.replace(/\/pub$/, '/embed');
+      const keys = Array.from(urlObj.searchParams.keys());
+      for (const key of keys) {
+        urlObj.searchParams.delete(key);
+      }
+      view_url = urlObj.href;
+    }
+  } else if (view_url.includes('observablehq.com')) {
+    const urlObj = new URL(view_url);
+    if (urlObj && urlObj.pathname.match(/^\/@([^/]+)\/([^/]+)\/?$/)) {
+      view_url = `${urlObj.origin}/embed${urlObj.pathname}?cell=*`;
+    }
+    if (urlObj && urlObj.pathname.match(/^\/d\/([^/]+)\/?$/)) {
+      const pathName = urlObj.pathname.replace(/^\/d/, '');
+      view_url = `${urlObj.origin}/embed${pathName}?cell=*`;
+    }
+  } else if (view_url.includes('twitter.com/')) {
+    view_url = `https://oembed.link/${view_url}`;
   }
   return view_url;
 }
@@ -146,4 +175,89 @@ export function processContentURL(view_url: string): string {
 export function isUUIDv4(uuid: string): boolean {
   const v4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[4][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   return v4Regex.test(uuid);
+}
+
+/**
+ * Validate a URL string
+ * From github.com/ogt/valid-url but not maintained
+ * @param {string} value
+ * @returns {(string | undefined)}
+ */
+export function isValidURL(value: string): string | undefined {
+  if (!value) {
+    return;
+  }
+
+  // check for illegal characters
+  // eslint-disable-next-line no-useless-escape
+  if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\ʻ\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value)) return;
+
+  // check for hex escapes that aren't complete
+  if (/%[^0-9a-f]/i.test(value)) return;
+  if (/%[0-9a-f](:?[^0-9a-f]|$)/i.test(value)) return;
+
+  let scheme = '';
+  let authority = '';
+  let path = '';
+  let query = '';
+  let fragment = '';
+  let out = '';
+
+  // from RFC 3986
+  const splitted = splitUri(value);
+  if (!splitted) return;
+  scheme = splitted[1];
+  authority = splitted[2];
+  path = splitted[3];
+  query = splitted[4];
+  fragment = splitted[5];
+
+  // scheme and path are required, though the path can be empty
+  if (!(scheme && scheme.length && path.length >= 0)) return;
+
+  // if authority is present, the path must be empty or begin with a /
+  if (authority && authority.length) {
+    if (!(path.length === 0 || /^\//.test(path))) return;
+  } else {
+    // if authority is not present, the path must not start with //
+    if (/^\/\//.test(path)) return;
+  }
+
+  // scheme must begin with a letter, then consist of letters, digits, +, ., or -
+  // eslint-disable-next-line no-useless-escape
+  if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
+
+  // Disable some protocols: chrome sage3
+  if (scheme === 'sage3' || scheme === 'chrome') {
+    return;
+  }
+
+  // re-assemble the URL per section 5.3 in RFC 3986
+  out += scheme + ':';
+  if (authority && authority.length) {
+    out += '//' + authority;
+  }
+
+  out += path;
+
+  if (query && query.length) {
+    out += '?' + query;
+  }
+
+  if (fragment && fragment.length) {
+    out += '#' + fragment;
+  }
+
+  return out;
+}
+
+/**
+ * URI spitter method - direct from RFC 3986
+ * @param {string} uri
+ * @returns RegExpMatchArray
+ */
+function splitUri(uri: string) {
+  // eslint-disable-next-line no-useless-escape
+  const splitted = uri.match(/(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/);
+  return splitted;
 }

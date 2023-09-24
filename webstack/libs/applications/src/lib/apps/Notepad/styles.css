@@ -1,16 +1,15 @@
 .ql-editor {
   color: black;
   width: 100%;
-  z-index: 0;
+  z-index: 1;
   border: 0px !important;
 }
 .ql-toolbar {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 3;
   background-color: white;
-  z-index: 2;
+  z-index: 0;
   border: 0px !important;
 }
 .ql-container {

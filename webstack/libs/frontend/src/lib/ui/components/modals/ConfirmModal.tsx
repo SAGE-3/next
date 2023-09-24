@@ -1,11 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
+import { useRef } from 'react';
 import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, ModalCloseButton } from '@chakra-ui/react';
 
 import { SAGEColors } from '@sage3/shared';
@@ -16,6 +17,7 @@ interface ConfirmModalProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  size?: string;
   cancelText?: string;
   confirmText?: string;
   cancelColor?: SAGEColors;
@@ -32,8 +34,11 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
   const confirmText = props.confirmText || 'Confirm';
   const cancelButtonColor = props.cancelColor || 'gray';
   const confirmButtonColor = props.confirmColor || 'teal';
+  const size = props.size || 'md';
+  const initialRef = useRef(null);
+
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered>
+    <Modal size={size} isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{props.title}</ModalHeader>
@@ -41,7 +46,7 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
         <ModalBody>{props.message}</ModalBody>
 
         <ModalFooter>
-          <Button colorScheme={cancelButtonColor} mr={3} onClick={props.onClose}>
+          <Button colorScheme={cancelButtonColor} mr={3} ref={initialRef} onClick={props.onClose}>
             {cancelText}
           </Button>
           <Button colorScheme={confirmButtonColor} onClick={props.onConfirm}>

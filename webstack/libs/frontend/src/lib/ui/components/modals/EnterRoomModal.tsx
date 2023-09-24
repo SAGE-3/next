@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useState, useRef, useEffect } from 'react';
@@ -21,9 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-
+import { useConfigStore } from '@sage3/frontend';
 export interface EnterRoomProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,8 +33,8 @@ export interface EnterRoomProps {
 }
 
 export const EnterRoomModal = (props: EnterRoomProps) => {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();

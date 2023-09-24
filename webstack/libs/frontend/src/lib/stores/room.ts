@@ -1,25 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Room, RoomSchema } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface RoomState {
   rooms: Room[];
@@ -45,18 +44,21 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       set({ error: null });
     },
     create: async (newRoom: RoomSchema) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'rooms')) return;
       const res = await SocketAPI.sendRESTMessage(`/rooms/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -64,9 +66,10 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // TO DO Delete all boards belonging to the room
     },
     subscribeToAllRooms: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'rooms')) return;
       set({ ...get(), rooms: [], fetched: false });
 
-      const rooms = await APIHttp.GET<RoomSchema, Room>('/rooms');
+      const rooms = await APIHttp.GET<Room>('/rooms');
       if (rooms.success) {
         set({ rooms: rooms.data, fetched: true });
       } else {
@@ -82,29 +85,31 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       // Socket Subscribe Message
       const route = '/rooms';
       // Socket Listenting to updates from server about the current rooms
-      roomSub = await SocketAPI.subscribe<RoomSchema>(route, (message) => {
-        const doc = message.doc as Room;
+      roomSub = await SocketAPI.subscribe<Room>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ rooms: [...get().rooms, doc] });
+            const docs = message.doc as Room[];
+            set({ rooms: [...get().rooms, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as Room[];
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              rooms[idx] = doc;
-            }
-            set({ rooms: rooms });
+            docs.forEach((doc) => {
+              const idx = rooms.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                rooms[idx] = doc;
+              }
+            });
+            set({ rooms });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Room[];
+            const ids = docs.map((d) => d._id);
             const rooms = [...get().rooms];
-            const idx = rooms.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              rooms.splice(idx, 1);
-            }
-            set({ rooms: rooms });
+            const remainingRooms = rooms.filter((a) => !ids.includes(a._id));
+            set({ rooms: remainingRooms });
           }
         }
       });

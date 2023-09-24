@@ -1,60 +1,62 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
-import { useEffect, useRef, useState } from 'react';
+// React imports
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
+
+// Chakra Imports
 import {
-  Box,
-  Button,
-  HStack,
-  useColorModeValue,
-  Tooltip,
-  ButtonGroup,
-  Select,
-  Badge,
-  Text,
-  Image,
-  Alert,
-  AlertIcon,
-  Toast,
-  useToast,
-  IconButton,
-  VStack,
-  Flex,
-  Spinner,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
 } from '@chakra-ui/react';
+import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh } from 'react-icons/md';
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-python';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-tomorrow_night_bright';
-import 'ace-builds/src-noconflict/theme-xcode';
-import 'ace-builds/src-noconflict/keybinding-vscode';
-
-// UUID generation
-import { v4 as getUUID } from 'uuid';
-
-// Needed to help render the trace
+// Ansi library
 import Ansi from 'ansi-to-react';
+// Plotly library
+import Plot, { PlotParams } from 'react-plotly.js';
+// Vega library
+import { Vega, VisualizationSpec } from 'react-vega';
+// VegaLite library
+import { VegaLite } from 'react-vega';
+// Monaco Imports
+import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
+import { monacoOptions } from './components/monacoOptions';
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { MonacoBinding } from 'y-monaco';
+// Throttle
+import { throttle } from 'throttle-debounce';
 
-// Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+// SAGE3 Component imports
+import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
-// SAGE3 imports
-import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
-import { User } from '@sage3/shared/types';
-
+// App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
 import { App } from '../../schema';
 
-const MARGIN = 2;
+// Styling
+import './SageCell.css';
+
+type YjsClientState = {
+  name: string;
+  color: string;
+};
 
 /**
  * SageCell - SAGE3 application
@@ -62,293 +64,211 @@ const MARGIN = 2;
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-const AppComponent = (props: App): JSX.Element => {
+
+function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
+  if (!user) return <></>;
+
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
+
+  // App state
   const s = props.data.state as AppState;
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
-  const [access, setAccess] = useState(true);
-  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
 
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+  // Styling
+  const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
-  function getKernels() {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
-      },
-    });
-  }
+  // Users
+  const users = useUsersStore((state) => state.users);
+  const userId = user?._id;
+  const userInfo = users.find((u) => u._id === userId)?.data;
+  const userName = userInfo?.name;
+  const userColor = useHexColor(userInfo?.color as string);
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
-  // Set the title on start
-  useEffect(() => {
-    // update the title of the app
-    if (props.data.title !== 'SageCell') {
-      update(props._id, { title: 'SageCell' });
-    }
-    getKernels();
-  }, []);
+  // Room and Board info
+  const roomId = props.data.roomId;
+  const boardId = props.data.boardId;
 
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.availableKernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
-        }
-      } else {
-        kernels.push(kernel);
-      }
-    });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.availableKernels)]);
+  // Local state
+  const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
+  const [content, setContent] = useState<ContentItem[] | null>(null);
+  const [executionCount, setExecutionCount] = useState<number>(0);
+  const [fontSize, setFontSize] = useState<number>(s.fontSize);
 
-  useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key === s.kernel);
-      setAccess(access ? true : false);
-      if (access) {
-        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
-        // update the title of the app
-        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
-      }
-    }
-  }, [s.kernel, myKernels]);
-
-  return (
-    <AppWindow app={props}>
-      <Box
-        id="sc-container"
-        w={'100%'}
-        h={'100%'}
-        bg={access ? bgColor : accessDeniedColor}
-        overflowY={'scroll'}
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '.1em',
-          },
-          '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'teal',
-            outline: '2px solid teal',
-          },
-        }}
-        pointerEvents={access ? 'auto' : 'none'}
-      >
-        <InputBox app={props} access={access} />
-        {!s.output ? null : <OutputBox output={s.output} app={props} user={user!} />}
-      </Box>
-    </AppWindow>
-  );
-};
-
-/**
- * UI toolbar for the SageCell application
- *
- * @param {App} props
- * @returns {JSX.Element}
- */
-function ToolbarComponent(props: App): JSX.Element {
-  // Access the global app state
-  const s = props.data.state as AppState;
-  const { user } = useUser();
-  // Update functions from the store
-  const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
-  const [selected, setSelected] = useState<string>('');
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
-  const [access, setAccess] = useState(true);
-
-  function getKernels() {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
-      },
-    });
-  }
-
-  useEffect(() => {
-    getKernels();
-  }, []);
-
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.availableKernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
-        }
-      } else {
-        kernels.push(kernel);
-      }
-    });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.availableKernels)]);
-
-  useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
-      setAccess(access ? true : false);
-    }
-  }, [s.kernel, myKernels]);
-
-  // Update from the props
-  useEffect(() => {
-    s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
-  }, [s.kernel]);
-
-  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value) {
-      // save local state
-      setSelected(e.target.value);
-      // updae the app
-      updateState(props._id, { kernel: e.target.value });
-      // update the app description
-      update(props._id, { title: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
-    }
-  }
-
-  // Download the stickie as a text file
-  const downloadPy = () => {
-    // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    const content = `${s.code}`;
-    // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
-    // Go for download
-    downloadFile(txturl, filename);
-  };
-
-  return (
-    <HStack>
-      {
-        <>
-          {/* check if there are any available kernels and if one is selected */}
-          {!myKernels || !s.kernel ? (
-            // show a red light if the kernel is not running
-            <Badge colorScheme="red" rounded="sm" size="lg">
-              Offline
-            </Badge>
-          ) : (
-            // show a green light if the kernel is running
-            <Badge colorScheme="green" rounded="sm" size="lg">
-              Online
-            </Badge>
-          )}
-          <Select
-            placeholder="Select Kernel"
-            rounded="lg"
-            size="sm"
-            width="150px"
-            ml={2}
-            px={0}
-            colorScheme="teal"
-            icon={<MdArrowDropDown />}
-            onChange={selectKernel}
-            value={selected ?? undefined}
-            variant={'outline'}
-          >
-            {myKernels.map((kernel) => (
-              <option value={kernel.key} key={kernel.key}>
-                {kernel.value.kernel_alias} (
-                {
-                  // show kernel name as Python, R, or Julia
-                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
-                }
-                )
-              </option>
-            ))}
-          </Select>
-
-          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
-              <MdRefresh />
-            </Button>
-          </Tooltip>
-
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize <= 8}
-                onClick={() => updateState(props._id, { fontSize: Math.max(24, s.fontSize - 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
-                <MdRemove />
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button
-                isDisabled={s.fontSize > 42}
-                onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
-                _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-              >
-                <MdAdd />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-              <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-                <MdFileDownload />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-        </>
-      }
-    </HStack>
-  );
-}
-
-export default { AppComponent, ToolbarComponent };
-
-type InputBoxProps = {
-  app: App;
-  access: boolean; //Does this user have access to the sagecell's selected kernel
-};
-
-/**
- *
- * @param props
- * @returns
- */
-const InputBox = (props: InputBoxProps): JSX.Element => {
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const ace = useRef<AceEditor>(null);
-  const [code, setCode] = useState<string>(s.code);
-  const { user } = useUser();
-  const [fontSize, setFontSize] = useState(s.fontSize);
+  // Toast
   const toast = useToast();
+  const toastRef = useRef(false);
+
+  // YJS and Monaco
+  const monaco = useMonaco();
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const [binding, setBinding] = useState<MonacoBinding | null>(null);
+
+  const [yProvider, setYProvider] = useState<WebsocketProvider | null>(null);
+  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
+  const [yText, setYText] = useState<Y.Text | null>(null);
+
+  const [peers, setPeers] = useState<Map<number, YjsClientState>>(new Map());
+
+  // Local state
+  const [access, setAccess] = useState(true);
+
+  // Styles
+  const [editorHeight, setEditorHeight] = useState(150);
+  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
+  const green = useHexColor('green');
+  const yellow = useHexColor('yellow');
+  const red = useHexColor('red');
+  const executionCountColor = useHexColor('red');
+  const accessDeniedColor = useHexColor('red');
+  const accessAllowColor = useHexColor('green');
+
+  // Kernel Store
+  const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  // Memos and errors
+  const renderedContent = useMemo(() => processedContent(content || []), [content]);
+  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
   useEffect(() => {
-    if (ace.current) {
-      ace.current.editor.commands.removeCommand('Execute');
-      ace.current.editor.commands.addCommand({
-        name: 'Execute',
-        bindKey: { win: 'Shift-Enter', mac: 'Shift-Enter' },
-        exec: () => handleExecute(s.kernel),
+    if (!yProvider) return;
+    yProvider.awareness.on('change', () => {
+      const states = yProvider.awareness.getStates();
+      const peers = new Map(states) as Map<number, YjsClientState>;
+      for (const [clientId, state] of states.entries()) {
+        if (clientId !== yProvider.awareness.clientID) {
+          const style = document.createElement('style');
+          style.id = `style-${clientId}`;
+          const css = `
+              .yRemoteSelection-${clientId} {
+                background-color: ${state.user.color} !important;
+                margin-left: -1px;
+                margin-right: -1px;
+                pointer-events: none;
+                position: relative;
+                word-break: normal;
+              }
+
+              .yRemoteSelection-${clientId} {
+                border-left: 1px solid ${state.user.color} !important;
+                border-right: 1px solid ${state.user.color} !important;
+              }
+            `;
+          style.appendChild(document.createTextNode(css));
+          const oldStyle = document.getElementById(`style-${clientId}`);
+          if (oldStyle) {
+            document.head.removeChild(oldStyle);
+          }
+          document.head.appendChild(style);
+        }
+      }
+      if (yDoc) {
+        peers.delete(yDoc.clientID);
+      }
+      setPeers(peers);
+    });
+
+    return () => {
+      if (yProvider) yProvider.disconnect();
+      if (yProvider && peers.size < 1) yProvider.destroy();
+    };
+  }, [yProvider]);
+
+  useEffect(() => {
+    // If the API Status is down, set the publicKernels to empty array
+    if (!apiStatus) {
+      setAccess(false);
+      return;
+    } else {
+      const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+      setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
+      const isPrivate = selectedKernel?.is_private;
+      const owner = selectedKernel?.owner;
+      if (!isPrivate) setAccess(true);
+      else if (isPrivate && owner === userId) setAccess(true);
+      else setAccess(false);
+    }
+  }, [access, apiStatus, kernels, s.kernel]);
+
+  /**
+   * Update local state if the online status changes
+   * @param {boolean} online
+   */
+  useEffect(() => {
+    if (!apiStatus) {
+      updateState(props._id, {
+        streaming: false,
+        kernel: '',
+        msgId: '',
       });
     }
-  }, [s.kernel, ace.current]);
+  }, [apiStatus]);
 
-  const handleExecute = (kernel: string) => {
-    const code = ace.current?.editor?.getValue();
-    if (!kernel) {
+  // handle mouse move event
+  const handleMouseMove = (e: MouseEvent) => {
+    const deltaY = e.movementY;
+    handleEditorResize(deltaY);
+  };
+
+  // handle mouse up event
+  const handleMouseUp = () => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleEditorResize = (deltaY: number) => {
+    setEditorHeight((prevHeight) => {
+      const newHeight = prevHeight + deltaY;
+      // set the minimum height of the editor to 150px
+      if (newHeight < 150) return 150;
+      // set the maximum height of the editor to 50% of the window height
+      if (newHeight > props.data.size.height * 0.8) return props.data.size.height * 0.8;
+      return newHeight;
+    }); // update the Monaco editor height
+  };
+
+  useEffect(() => {
+    handleEditorResize(0);
+  }, [props.data.size.height]);
+
+  /**
+   * Resizes the editor when the window is resized
+   * or when the editorHeight changes.
+   */
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+  }, [props.data.size.width, editorHeight]);
+
+  // Debounce Updates
+  const throttleUpdate = throttle(1000, () => {
+    if (!editorRef.current) return;
+    updateState(props._id, { code: editorRef.current.getValue() });
+  });
+
+  // Keep a copy of the function
+  const throttleFunc = useCallback(throttleUpdate, [editorRef.current]);
+
+  /**
+   * Executes the code in the editor
+   * @returns void
+   */
+  const handleExecute = async () => {
+    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+    if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
+    updateState(props._id, { code: editorRef.current.getValue() });
+    if (!s.kernel) {
+      if (toastRef.current) return;
+      toastRef.current = true;
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -356,323 +276,659 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         duration: 4000,
         isClosable: true,
         position: 'bottom',
+        onCloseComplete: () => {
+          toastRef.current = false;
+        },
       });
       return;
     }
-    if (code) {
-      updateState(props.app._id, {
-        code: code,
-        output: '',
-        executeInfo: { executeFunc: 'execute', params: { uuid: getUUID() } },
+    if (s.kernel && !access) {
+      if (toastRef.current) return;
+      toastRef.current = true;
+      toast({
+        title: 'You do not have access to this kernel',
+        description: 'Please select a different kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+        onCloseComplete: () => {
+          toastRef.current = false;
+        },
+      });
+      return;
+    }
+    if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
+      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)\nprint('app_id = ' + app_id)`;
+      editorRef.current.setValue(info);
+    }
+    try {
+      const response = await executeCode(editorRef.current.getValue(), s.kernel, user._id);
+      if (response.ok) {
+        const msgId = response.msg_id;
+        updateState(props._id, {
+          msgId: msgId,
+          session: user._id,
+        });
+      } else {
+        // console.log('Error executing code');
+        updateState(props._id, {
+          streaming: false,
+          msgId: '',
+        });
+      }
+    } catch (error) {
+      if (error instanceof TypeError) {
+        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+        updateState(props._id, {
+          streaming: false,
+          kernel: '',
+          kernels: [],
+          msgId: '',
+        });
+      }
+    }
+  };
+
+  /**
+   * Clears the code and the msgId from the state
+   * and resets the editor to an empty string
+   * @returns void
+   */
+  const handleClear = () => {
+    if (!editorRef.current) return;
+    updateState(props._id, {
+      code: '',
+      msgId: '',
+      streaming: false,
+    });
+    editorRef.current?.setValue('');
+  };
+
+  // Handle interrupt
+  const handleInterrupt = () => {
+    // send signal to interrupt the kernel via http request
+    interruptKernel(s.kernel);
+    updateState(props._id, {
+      msgId: '',
+      streaming: false,
+    });
+  };
+
+  // Insert room/board info into the editor
+  const handleInsertInfo = (ed: editor.ICodeEditor) => {
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    ed.focus();
+    ed.trigger('keyboard', 'type', { text: info });
+  };
+  const handleInsertAPI = (ed: editor.ICodeEditor) => {
+    let code = 'from foresight.config import config as conf, prod_type\n';
+    code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
+    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    code += 'ps3 = PySage3(conf, prod_type)\n\n';
+    ed.focus();
+    ed.setValue(code);
+  };
+
+  async function getResults(msgId: string) {
+    if (s.streaming || s.msgId) return;
+    const response = await fetchResults(msgId);
+    if (response.ok) {
+      const result = response.execOutput;
+      if (result.msg_type === 'error') {
+        setContent(null);
+        setExecutionCount(0);
+        const error = result.content.reduce((acc, item) => {
+          if ('traceback' in item) {
+            acc.traceback = item.traceback;
+          }
+          if ('ename' in item) {
+            acc.ename = item.ename;
+          }
+          if ('evalue' in item) {
+            acc.evalue = item.evalue;
+          }
+          return acc;
+        }, {} as { traceback?: string[]; ename?: string; evalue?: string });
+        setError(error);
+        return;
+      }
+      if (result.completed) {
+        setError(null);
+        setContent(result.content);
+        setExecutionCount(result.execution_count);
+      }
+    } else {
+      setError({
+        traceback: ['Error fetching results'],
+        ename: 'Error',
+        evalue: 'Error fetching results',
+      });
+      setContent(null);
+      setExecutionCount(0);
+    }
+  }
+
+  useEffect(() => {
+    if (!s.history) return;
+    if (s.history.length === 0 || s.streaming || s.msgId) return;
+    const msgId = s.history[s.history.length - 1];
+    getResults(msgId);
+  }, [s.history]);
+
+  useEffect(() => {
+    function setEventSource() {
+      // Controller to stop the event source if needed
+      const ctrl = new AbortController();
+      // Get the URL of the stream
+      const streamURL = apiUrls.fastapi.getMessageStream(s.msgId);
+      // Fetch the evet source
+      fetchEventSource(streamURL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+        signal: ctrl.signal,
+        onmessage(event) {
+          setError(null);
+          if (!event.data) return;
+          try {
+            const parsedData = JSON.parse(event.data);
+            setContent(parsedData.content);
+            if (parsedData.execution_count) {
+              setExecutionCount(parsedData.execution_count);
+            }
+          } catch (error) {
+            console.log('EventSource> error', error);
+            ctrl.abort();
+          }
+        },
+        onclose() {
+          updateState(props._id, { streaming: false, history: [...s.history, s.msgId], msgId: '' });
+        },
       });
     }
-  };
 
-  const handleClear = () => {
-    updateState(props.app._id, {
-      code: '',
-      output: '',
-      executeInfo: { executeFunc: '', params: {} },
-    });
-    ace.current?.editor?.setValue('');
-  };
-
-  useEffect(() => {
-    if (s.code !== code) {
-      setCode(s.code);
+    if (s.msgId && s.session === user?._id) {
+      setEventSource();
     }
-  }, [s.code]);
+  }, [s.msgId]);
 
-  // Update from Ace Editor
-  const updateCode = (c: string) => {
-    setCode(c);
+  function processedContent(content: ContentItem[]) {
+    if (!content) return <></>;
+    return content.map((item) => {
+      return Object.keys(item).map((key) => {
+        const value = item[key];
+        switch (key) {
+          // error messages are handled above
+          case 'traceback':
+          case 'ename':
+          case 'evalue':
+            return null;
+          case 'stdout':
+          case 'stderr':
+            return <Ansi key={key}>{value as string}</Ansi>;
+          case 'text/html':
+            if (!value) return null; // hides other outputs if html is present
+            // remove extra \n from html
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/plain':
+            if (item['text/html']) return null;
+            return <Ansi key={key}>{value as string}</Ansi>;
+          case 'image/png':
+            return <Image key={key} src={`data:image/png;base64,${value}`} />;
+          case 'image/jpeg':
+            return <Image key={key} src={`data:image/jpeg;base64,${value}`} />;
+          case 'image/svg+xml':
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/markdown':
+            return <Markdown key={key} data={value} openInWebview={openInWebview} />;
+          case 'application/vnd.vegalite.v4+json':
+          case 'application/vnd.vegalite.v3+json':
+          case 'application/vnd.vegalite.v2+json':
+            return <VegaLite key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+          case 'application/vnd.vega.v5+json':
+          case 'application/vnd.vega.v4+json':
+          case 'application/vnd.vega.v3+json':
+          case 'application/vnd.vega.v2+json':
+          case 'application/vnd.vega.v1+json':
+            return <Vega key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+          case 'application/vnd.plotly.v1+json': {
+            // Configure plotly
+            const value = item[key] as unknown as PlotParams;
+            const config = value.config || {};
+            const layout = value.layout || {};
+            config.displaylogo = false;
+            config.displayModeBar = false;
+            config.scrollZoom = false;
+            config.showTips = false;
+            config.showLink = false;
+            config.linkText = 'Edit in Chart Studio';
+            config.plotlyServerURL = `https://chart-studio.plotly.com`;
+            config.responsive = true;
+            config.autosizable = true;
+            layout.dragmode = 'pan';
+            layout.hovermode = 'closest';
+            layout.showlegend = true;
+            layout.font = { size: s.fontSize };
+            layout.hoverlabel = {
+              font: { size: s.fontSize },
+            };
+            layout.xaxis = {
+              title: { font: { size: s.fontSize } },
+              tickfont: { size: s.fontSize },
+            };
+            layout.yaxis = {
+              title: { font: { size: s.fontSize } },
+              tickfont: { size: s.fontSize },
+            };
+            layout.legend ? (layout.legend.font = { size: s.fontSize }) : (layout.legend = { font: { size: s.fontSize } });
+            layout.margin = { l: 2, r: 2, b: 2, t: 2, pad: 2 };
+            layout.paper_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+            layout.plot_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+            layout.height = window.innerHeight * 0.5;
+            layout.width = window.innerWidth * 0.5;
+            return (
+              <>
+                <Plot key={key} data={value.data} layout={layout} config={config} />
+              </>
+            );
+          }
+          case 'application/pdf':
+            return <PdfViewer key={key} data={value as string} />;
+          case 'application/json':
+            return <pre key={key}>{JSON.stringify(value as string, null, 2)}</pre>;
+          default:
+            return (
+              <Box key={key}>
+                <Accordion allowToggle>
+                  <AccordionItem>
+                    <AccordionButton>
+                      <Box flex="1" textAlign="left">
+                        <Text color={executionCountColor} fontSize={s.fontSize}>
+                          Error: {key} is not supported in this version of SAGECell.
+                        </Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                    <AccordionPanel pb={4}>
+                      <pre>{JSON.stringify(value as string, null, 2)}</pre>
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
+              </Box>
+            );
+        }
+      });
+    });
+  }
+
+  // Get the color of the kernel owner
+  useEffect(() => {
+    if (s.kernel && users) {
+      const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
+      const ownerColor = users.find((el) => el._id === owner)?.data.color;
+      setOwnerColor(ownerColor || '#000000');
+    }
+  }, [s.kernel, kernels, users]);
+
+  /**
+   * This function will create a new webview app
+   * with the url provided
+   *
+   * @param url
+   */
+  const openInWebview = (url: string): void => {
+    createApp({
+      title: 'Webview',
+      roomId: props.data.roomId,
+      boardId: props.data.boardId,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: 600, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: { webviewurl: url },
+      raised: true,
+      dragging: false,
+    });
+  };
+
+  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const doc = new Y.Doc();
+    const yText = doc.getText('monaco');
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    const binding = new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+    setBinding(binding);
+    setYProvider(provider);
+    setYDoc(doc);
+    setYText(yText);
+
+    provider.awareness.setLocalStateField('user', {
+      name: userName,
+      color: userColor,
+    });
+
+    provider.on('sync', () => {
+      const users = provider.awareness.getStates();
+      const count = users.size;
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count == 1) {
+        // Does the board have lines?
+        if (s.code) {
+          // Clear any existing lines
+          yText.delete(0, yText.length);
+          // Set the lines from the database
+          yText.insert(0, s.code);
+        }
+      }
+    });
   };
 
   useEffect(() => {
-    // update local state from global state
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({ fontSize });
+    updateState(props._id, { fontSize });
+  }, [fontSize]);
+
+  useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  const handleFontIncrease = () => {
+    setFontSize((prev) => Math.min(48, prev + 2));
+  };
+  const handleFontDecrease = () => {
+    setFontSize((prev) => Math.max(8, prev - 2));
+  };
+
+  /**
+   *
+   * @param editor
+   * @param monaco
+   * @returns
+   */
+  const handleMount: OnMount = (editor, monaco) => {
+    // set the editorRef
+    editorRef.current = editor;
+
+    // Connect to Yjs
+    connectToYjs(editor);
+
+    // set the editor options
+    editor.updateOptions({
+      fontSize: s.fontSize,
+      readOnly: !access || !apiStatus || !s.kernel,
+    });
+    // set the editor theme
+    monaco.editor.setTheme(defaultTheme);
+    // set the editor language
+    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
+    // set the editor cursor position
+    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
+    // set the editor cursor selection
+    editor.setSelection({
+      startLineNumber: cursorPosition.r,
+      startColumn: cursorPosition.c,
+      endLineNumber: cursorPosition.r,
+      endColumn: cursorPosition.c,
+    });
+    // set the editor layout
+    editor.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
+    });
+    editor.addAction({
+      id: 'execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: handleExecute,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Cell Clear',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
+    });
+    editor.addAction({
+      id: 'interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+      run: handleInterrupt,
+    });
+
+    editor.addAction({
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertInfo,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
+    // Update database on key up
+    editor.onKeyUp(() => {
+      throttleFunc();
+    });
+  };
+
+  /**
+   * Needs to be reset every time the kernel changes
+   */
+  useEffect(() => {
+    if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
+      editorRef.current.addAction({
+        id: 'execute',
+        label: 'Cell Execute',
+        contextMenuOrder: 0,
+        contextMenuGroupId: '2_sage3',
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+        run: handleExecute,
+      });
+    }
+  }, [s.kernel]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({
+      readOnly: !access || !apiStatus || !s.kernel,
+    });
+  }, [access, apiStatus, s.kernel]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({
+      fontSize: s.fontSize,
+    });
+  }, [s.fontSize]);
+
   return (
-    <Box>
-      <HStack>
-        <AceEditor
-          ref={ace}
-          name="ace"
-          value={code}
-          onChange={updateCode}
-          fontSize={`${fontSize}px`}
-          minLines={4}
-          maxLines={20}
-          placeholder="Enter code here"
-          mode={s.language}
-          theme={useColorModeValue('xcode', 'tomorrow_night_bright')}
-          editorProps={{ $blockScrolling: true }}
-          setOptions={{
-            hasCssTransforms: true,
-            showGutter: true,
-            showPrintMargin: false,
-            highlightActiveLine: true,
-            showLineNumbers: true,
-          }}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            marginTop: '0.5rem',
-            marginLeft: '0.5rem',
-            marginRight: '0rem',
-            marginBottom: 10,
-            padding: 0,
-            overflow: 'hidden',
-            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-            boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-            borderRadius: '4px',
-          }}
-        />
-        <VStack pr={2}>
-          {props.access ? (
-            <Tooltip hasArrow label="Execute" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={() => handleExecute(s.kernel)}
-                aria-label={''}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={
-                  s.executeInfo?.executeFunc === 'execute' ? (
-                    <Spinner size="sm" color="teal.500" />
-                  ) : (
-                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
-                  )
-                }
-              />
-            </Tooltip>
-          ) : null}
+    <AppWindow app={props}>
+      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
+        <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
+          <Stack direction="row" p={1}>
+            {!apiStatus ? (
+              <></>
+            ) : (
+              <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
+                {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
+              </Badge>
+            )}
 
-          {props.access ? (
-            <Tooltip hasArrow label="Clear All" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleClear}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-        </VStack>
-      </HStack>
-      {/* <Stack px={4}> */}
-      {/* <Text color={useColorModeValue('#000000', '#FFFFFF')}> */}
-      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().row + 1 : 1}, Col:{' '}
-        {ace.current?.editor.getCursorPosition() ? ace.current?.editor.getCursorPosition().column + 1 : 1}
-      </Flex>
-      {/* </Text> */}
-      {/* </Stack> */}
-    </Box>
-  );
-};
-
-type OutputBoxProps = {
-  output: string;
-  app: App;
-  user: User;
-};
-/**
- * This function is used to render the output box
- * The output is a string from a python script that
- * is executed in the kernel, serialized using JSON.dumps(),
- * and then sent back to the client.
- * The output is then parsed using JSON.parse() and displayed
- * in the output box.
- *
- * @param props OutputBoxProps
- * @returns {JSX.Element}
- */
-const OutputBox = (props: OutputBoxProps): JSX.Element => {
-  const parsedJSON = JSON.parse(props.output);
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  if (!props.output) return <></>;
-  if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
-  return (
-    <Box
-      p={MARGIN}
-      m={MARGIN}
-      hidden={!parsedJSON ? true : false}
-      className="sc-output"
-      style={{
-        overflow: 'auto',
-        backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-        boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: s.fontSize + 'px',
-        color: useColorModeValue('#000000', '#FFFFFF'),
-        whiteSpace: 'pre-wrap',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-      }}
-    >
-      {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
-        <Text
-          fontSize="xs"
-          color="gray.500"
-          style={{
-            fontFamily: 'monospace',
-          }}
+            <Spacer />
+            {apiStatus ? ( // no kernel selected and no access
+              <Badge variant="ghost" color={green}>
+                Online
+              </Badge>
+            ) : (
+              <Badge variant="ghost" color={red}>
+                Offline
+              </Badge>
+            )}
+          </Stack>
+        </Box>
+        <Box
+          w={'100%'}
+          h={'100%'}
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          whiteSpace={'pre-wrap'}
+          overflowWrap="break-word"
+          overflowY="auto"
         >
-          {`Out [${parsedJSON.execute_result.execution_count}]`}
-        </Text>
-      )}
-      {parsedJSON.request_id ? null : null}
-      {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
-        <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
-      ) : (
-        <Alert status="error" variant="left-accent">
-          <AlertIcon />
-          <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
-        </Alert>
-      )}
-
-      {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-        <Text id="sc-stdout">{parsedJSON.stream.text}</Text>
-      ) : (
-        <Text id="sc-stderr" color="red">
-          {parsedJSON.stream.text}
-        </Text>
-      )}
-
-      {!parsedJSON.display_data
-        ? null
-        : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
-
-      {!parsedJSON.execute_result
-        ? null
-        : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
-      {!s.privateMessage
-        ? null
-        : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
+          <Flex direction={'row'}>
+            {/* The editor status info (bottom) */}
+            <Flex direction={'column'}>
+              <Editor
+                // defaultValue={s.code}
+                loading={<Spinner />}
+                options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
+                onMount={handleMount}
+                height={editorHeight && editorHeight > 150 ? editorHeight : 150}
+                width={props.data.size.width - 60}
+                theme={defaultTheme}
+                language={s.language}
               />
-            );
-          })}
-    </Box>
+              <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
+                {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+                <Spacer />
+              </Flex>
+            </Flex>
+            {/* The editor action panel (right side) */}
+            <Box p={1}>
+              <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+                <Tooltip hasArrow label="Execute" placement="right-start">
+                  <IconButton
+                    onClick={handleExecute}
+                    aria-label={''}
+                    icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                    isDisabled={!s.kernel || !canExecuteCode}
+                  />
+                </Tooltip>
+                <Tooltip hasArrow label="Stop" placement="right-start">
+                  <IconButton
+                    onClick={handleInterrupt}
+                    aria-label={''}
+                    isDisabled={!s.msgId || !canExecuteCode}
+                    icon={<MdStop size={'1.5em'} color="#008080" />}
+                  />
+                </Tooltip>
+                <Tooltip hasArrow label="Clear Cell" placement="right-start">
+                  <IconButton
+                    onClick={handleClear}
+                    aria-label={''}
+                    isDisabled={!s.kernel}
+                    icon={<MdClearAll size={'1.5em'} color="#008080" />}
+                  />
+                </Tooltip>
+              </ButtonGroup>
+            </Box>
+          </Flex>
+          {/* The grab bar */}
+          <Box
+            className="grab-bar"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          />
+          {/* The output area */}
+          <Box
+            height={window.innerHeight - editorHeight - 20 + 'px'}
+            overflow={'scroll'}
+            css={{
+              '&::-webkit-scrollbar': {
+                background: `${bgColor}`,
+                width: '6px',
+                height: '6px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: 'teal',
+                borderRadius: '24px',
+              },
+            }}
+          >
+            <Flex align="start">
+              {!executionCount || executionCount < 1 ? null : (
+                <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
+                  [{executionCount}]:
+                </Text>
+              )}
+              <Box
+                flex="1"
+                borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
+                p={1}
+                className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
+                fontSize={s.fontSize}
+              >
+                {error && (
+                  <Alert status="error">
+                    <Icon as={MdError} />
+                    <Code
+                      style={{
+                        fontFamily: 'monospace',
+                        display: 'inline-block',
+                        marginLeft: '0.5em',
+                        marginRight: '0.5em',
+                        fontWeight: 'bold',
+                        background: 'transparent',
+                        fontSize: s.fontSize,
+                      }}
+                    >
+                      {error.ename}: <Ansi>{error.evalue}</Ansi>
+                    </Code>
+                  </Alert>
+                )}
+                {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
+                {renderedContent}
+              </Box>
+            </Flex>
+            {/* End of Flex container */}
+          </Box>
+        </Box>
+      </Box>
+    </AppWindow>
   );
-};
+}
 
-/**
- * Recursively map the object and display the output
- * This is used to display the output similar to JSON
- * when the output is an unhandled type
- * @param {Object} obj
- */
-const MapJSONObject = (obj: any): JSX.Element => {
-  if (!obj) return <></>;
-  if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
-  return (
-    <Box
-      pl={2}
-      ml={2}
-      bg={useColorModeValue('#FFFFFF', '#000000')}
-      boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-      rounded={'md'}
-      fontSize={'16px'}
-      color={useColorModeValue('#000000', '#FFFFFF')}
-    >
-      {typeof obj === 'object'
-        ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
-                </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
-                </Box>
-              );
-            }
-          })
-        : null}
-    </Box>
-  );
-};
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

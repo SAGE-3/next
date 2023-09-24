@@ -1,22 +1,23 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { createClient, RedisClientType } from 'redis';
 import { Express } from 'express';
 
 // SAGEBase Module Imports
-import { SBDatabase, SBPubSub } from '../modules';
+import { SBDatabase, SBLogConfig, SBLogger, SBPubSub } from '../modules';
 import { SBAuth, SBAuthConfig } from '../modules/auth/SBAuth';
 
 export type SAGEBaseConfig = {
   redisUrl?: string;
   projectName: string;
   authConfig?: SBAuthConfig;
+  logConfig?: SBLogConfig;
 };
 
 // The core SAGEBase class that allows access to the various modules. (Database, PubSub, Auth...etc)
@@ -35,7 +36,7 @@ class SAGEBaseCore {
     if (config.redisUrl) {
       this._redisUrl = config.redisUrl;
     } else {
-      this._redisUrl = 'redis://localhost:6379';
+      this._redisUrl = 'redis://127.0.0.1:6379';
     }
 
     // SAGEBase prefix stuff for Redis keys
@@ -57,6 +58,10 @@ class SAGEBaseCore {
     if (config.authConfig && express) {
       this._auth = new SBAuth();
       await this._auth.init(this._client, this._redisPrefix, config.authConfig, express);
+    }
+    // Init the SBLogger
+    if (config.logConfig) {
+      SBLogger.init(config.logConfig);
     }
   }
 

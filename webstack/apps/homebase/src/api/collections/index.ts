@@ -1,11 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
+import { URLMetadata } from '@sage3/backend';
 import {
   AppsCollection,
   BoardsCollection,
@@ -14,6 +15,7 @@ import {
   AssetsCollection,
   PresenceCollection,
   MessageCollection,
+  PluginsCollection,
 } from '../collections';
 
 export * from './apps';
@@ -23,6 +25,7 @@ export * from './users';
 export * from './assets';
 export * from './presence';
 export * from './message';
+export * from './plugins';
 
 /**
  * Load the various models at startup.
@@ -35,6 +38,7 @@ export async function loadCollections(): Promise<void> {
   await AssetsCollection.initialize();
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
+  await PluginsCollection.initialize();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {
@@ -65,6 +69,7 @@ export async function loadCollections(): Promise<void> {
               ownerId: '-',
               isPrivate: false,
               privatePin: '',
+              executeInfo: { executeFunc: '', params: {} },
             },
             '-'
           );
@@ -73,6 +78,19 @@ export async function loadCollections(): Promise<void> {
           }
         }
       }
+    }
+  });
+
+  // Listen for apps changes
+  AppsCollection.subscribeAll((message) => {
+    if (message.type === 'CREATE') {
+      message.doc.forEach((doc) => {
+        if (doc.data.type === 'WebpageLink') {
+          URLMetadata(doc.data.state.url).then((metadata) => {
+            AppsCollection.update(doc._id, 'NODE_SERVER', { state: { ...doc.data.state, meta: metadata } });
+          });
+        }
+      });
     }
   });
 }

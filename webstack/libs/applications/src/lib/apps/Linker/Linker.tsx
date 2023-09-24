@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // React
@@ -133,19 +133,19 @@ function AppComponent(props: App): JSX.Element {
                     {/* Display state names */}
                     {app1
                       ? Object.keys(app1.data.state).map((propName: string, index: number) => {
-                          //@ts-ignore
-                          let type = typeof app1.data.state[propName];
-                          // Only display primitive types. No Objects
-                          if (type == 'object') {
-                            return null;
-                          } else {
-                            return (
-                              <Radio checked={true} key={index} value={propName}>
-                                {propName}
-                              </Radio>
-                            );
-                          }
-                        })
+                        //@ts-ignore
+                        let type = typeof app1.data.state[propName];
+                        // Only display primitive types. No Objects
+                        if (type == 'object') {
+                          return null;
+                        } else {
+                          return (
+                            <Radio checked={true} key={index} value={propName}>
+                              {propName}
+                            </Radio>
+                          );
+                        }
+                      })
                       : null}
                   </Stack>
                 </RadioGroup>
@@ -187,19 +187,19 @@ function AppComponent(props: App): JSX.Element {
                     {/* Display state names */}
                     {app2
                       ? Object.keys(app2.data.state).map((propName: string, index: number) => {
-                          //@ts-ignore
-                          let type = typeof app2.data.state[propName];
-                          // Only display primitive types. No Objects
-                          if (type == 'object') {
-                            return null;
-                          } else {
-                            return (
-                              <Radio key={index} value={propName}>
-                                {propName}
-                              </Radio>
-                            );
-                          }
-                        })
+                        //@ts-ignore
+                        let type = typeof app2.data.state[propName];
+                        // Only display primitive types. No Objects
+                        if (type == 'object') {
+                          return null;
+                        } else {
+                          return (
+                            <Radio key={index} value={propName}>
+                              {propName}
+                            </Radio>
+                          );
+                        }
+                      })
                       : null}
                   </Stack>
                 </RadioGroup>
@@ -222,12 +222,12 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app LinkerApp */
+function ToolbarComponent(props: App) { return null; }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-  return <>{/* <Button colorScheme="green">Action</Button> */}</>;
-}
-
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

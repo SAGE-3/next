@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import React, { useEffect, useState } from 'react';
@@ -26,13 +26,11 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
 
 import { BoardSchema } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
-import { useBoardStore } from '../../../stores';
+import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
 
 interface CreateBoardModalProps {
@@ -42,8 +40,8 @@ interface CreateBoardModalProps {
 }
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const { user } = useUser();
   const toast = useToast();
@@ -127,6 +125,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           color: color,
           isPrivate: isProtected,
           privatePin: isProtected ? key : '',
+          executeInfo: { executeFunc: '', params: {} },
         });
         props.onClose();
       }
@@ -148,7 +147,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -162,7 +161,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Board Description'}
@@ -181,7 +180,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             Board Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}
@@ -190,12 +189,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || (isProtected && !password)}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description || (isProtected && !password)}>
             Create
           </Button>
         </ModalFooter>

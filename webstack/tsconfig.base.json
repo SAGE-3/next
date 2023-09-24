@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
+    "resolveJsonModule": true,
     "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
@@ -16,7 +17,7 @@
     "target": "es2015",
     "module": "esnext",
     "typeRoots": ["node_modules/@types", "libs/shared/src/lib/types"],
-    "lib": ["es2017", "dom", "es2018", "es2019", "es2020"],
+    "lib": ["es2017", "dom", "es2018", "es2019", "es2020", "es2021"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
@@ -27,8 +28,10 @@
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],
       "@sage3/sagebase": ["libs/sagebase/src/index.ts"],
+      "@sage3/sageplugin": ["libs/sageplugin/src/index.ts"],
       "@sage3/shared": ["libs/shared/src/index.ts"],
-      "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"]
+      "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"],
+      "@sage3/workers": ["libs/workers/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

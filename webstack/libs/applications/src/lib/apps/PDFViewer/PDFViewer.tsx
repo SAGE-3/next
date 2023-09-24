@@ -1,22 +1,16 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams } from 'react-router';
+
+// Chakra UI
 import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
-
-import { App } from '../../schema';
-import { Asset, ExtraPDFType } from '@sage3/shared/types';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { useAssetStore, useAppStore } from '@sage3/frontend';
-
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
 // Icons
 import {
   MdFileDownload,
@@ -29,7 +23,17 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
+  MdTipsAndUpdates,
 } from 'react-icons/md';
+
+// Utility functions from SAGE3
+import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls } from '@sage3/frontend';
+import { Asset, ExtraPDFType } from '@sage3/shared/types';
+
+// App components
+import { App, AppGroup } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
 
 function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
@@ -39,6 +43,13 @@ function AppComponent(props: App): JSX.Element {
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // App functions
+  const createApp = useAppStore((state) => state.create);
+  // User information
+  const { user } = useUser();
+  const { boardId, roomId } = useParams();
+  // Set the processing UI state
+  const [processing, setProcessing] = useState(false);
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -50,22 +61,28 @@ function AppComponent(props: App): JSX.Element {
       // Update the state of the app
       if (asset.data.derived) {
         const pages = asset.data.derived as ExtraPDFType;
-        updateState(props._id, { numPages: pages.length });
+        if (pages.length !== s.numPages) {
+          updateState(props._id, { numPages: pages.length });
+        }
         // Update the app title
         const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-        update(props._id, { title: asset?.data.originalfilename + pageInfo });
+        const newTitle = asset?.data.originalfilename + pageInfo;
+        if (newTitle !== props.data.title) {
+          update(props._id, { title: newTitle });
+        }
       } else {
         // Update the app title
-        update(props._id, { title: asset?.data.originalfilename });
+        if (asset?.data.originalfilename !== props.data.title) {
+          update(props._id, { title: asset?.data.originalfilename });
+        }
       }
     }
-  }, [s.assetid, assets]);
+  }, [s.assetid, assets, user]);
 
   useEffect(() => {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
-        // setAllPagesInfo(pages);
         const allurls = pages.map((page) => {
           // find the largest image for this page (multi-resolution)
           const res = page.reduce(function (p, v) {
@@ -85,13 +102,49 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const pages = file.data.derived as ExtraPDFType;
       if (pages) {
-        if (pages.length > 1) {
+        if (pages.length > 1 && props._updatedBy === user?._id) {
           const pageInfo = ' - ' + (s.currentPage + 1) + ' of ' + pages.length;
-          update(props._id, { title: file.data.originalfilename + pageInfo });
+          const newTitle = file.data.originalfilename + pageInfo;
+          if (newTitle !== props.data.title) {
+            update(props._id, { title: newTitle });
+          }
         }
       }
     }
   }, [s.currentPage]);
+
+  // Display the processing UI
+  useEffect(() => {
+    // Only show the processing UI if the user is the one who clicked the button
+    if (s.executeInfo.executeFunc && s.client === user?._id) setProcessing(true);
+    else setProcessing(false);
+  }, [s.executeInfo.executeFunc, s.client]);
+
+  // Return from the remote python function
+  useEffect(() => {
+    if (!user) return;
+    if (s.analyzed && s.client === user._id) {
+      // Clear the client id after a response
+      updateState(props._id, { client: '' });
+      // Parse the result we got back
+      const result = JSON.parse(s.analyzed);
+      // Create a new stickie to show resuls (temporary, should be a new app for this purpose)
+      createApp({
+        title: 'Analysis - ' + file?.data.originalfilename,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 700, height: props.data.size.height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'PDFResult',
+        state: {
+          result: JSON.stringify(result, null, 4),
+        },
+        raised: true,
+        dragging: false,
+      });
+    }
+  }, [s.analyzed]);
 
   // Event handler
   const handleUserKeyPress = useCallback(
@@ -159,7 +212,8 @@ function AppComponent(props: App): JSX.Element {
           if (file) {
             const url = file?.data.file;
             const filename = file?.data.originalfilename;
-            downloadFile('api/assets/static/' + url, filename);
+            const dl = apiUrls.assets.getAssetById(url);
+            downloadFile(dl, filename);
           }
           break;
         }
@@ -178,7 +232,7 @@ function AppComponent(props: App): JSX.Element {
         div.blur();
       });
       div.addEventListener('mouseenter', () => {
-        // Focus on the div for jeyboard events
+        // Focus on the div for keyboard events
         div.focus({ preventScroll: true });
       });
     }
@@ -188,7 +242,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} processing={processing}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
@@ -217,6 +271,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspecRatio] = useState(1);
+  // User information
+  const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -291,77 +347,95 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
+  // Analyze the PDF
+  function analyzePDF() {
+    if (file && user) {
+      updateState(props._id, {
+        client: user._id,
+        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
+      });
+    }
+  }
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}>
             <MdRemove />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button
-            isDisabled={s.displayPages >= s.numPages}
-            onClick={() => handleAddPage()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}>
             <MdAdd />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}>
             <MdSkipPrevious />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}>
             <MdNavigateBefore />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button
-            isDisabled={s.currentPage === length - 1}
-            onClick={() => handleNext()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleNext()}>
             <MdNavigateNext />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button
-            isDisabled={s.currentPage === length - 1}
-            onClick={() => handleLast()}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button isDisabled={s.currentPage === length - 1} onClick={() => handleLast()}>
             <MdSkipNext />
           </Button>
         </Tooltip>
       </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
+          <Button onClick={() => {
+            if (file) {
+              const url = file?.data.file;
+              const filename = file?.data.originalfilename;
+              const dl = apiUrls.assets.getAssetById(url);
+              downloadFile(dl, filename);
+            }
+          }}
+          >
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      {/* Extra Actions */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="teal" aria-label="layout" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout">
               <MdMenu />
             </MenuButton>
           </Tooltip>
-          <MenuList minWidth="150px">
+          <MenuList minWidth="150px" fontSize={'sm'}>
             <MenuItem
               icon={<MdFileDownload />}
               onClick={() => {
                 if (file) {
                   const url = file?.data.file;
-                  const filename = file?.data.originalfilename;
-                  downloadFile('api/assets/static/' + url, filename);
+                  const parts = url.split('.');
+                  const filename = file?.data.originalfilename + '.json';
+                  const dl = apiUrls.assets.getAssetById(parts[0] + '-text.json');
+                  downloadFile(dl, filename);
                 }
               }}
             >
-              Download
+              Download Text
             </MenuItem>
             <MenuItem icon={<MdOutlineFastRewind />} onClick={() => handlePrev(10)}>
               Back 10 pages
@@ -372,8 +446,148 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
+
+      {/* Remote Action in Python */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
+              Analyze
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+  const { updateStateBatch } = useAppStore((state) => state);
+
+  const handleAddPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.displayPages >= app.data.state.numPages) return;
+      const displayPages = app.data.state.displayPages + 1;
+      ps.push({ id: app._id, updates: { displayPages } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleRemovePage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.displayPages <= 1) return;
+      const displayPages = app.data.state.displayPages - 1;
+      ps.push({ id: app._id, updates: { displayPages } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleFirstPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      const currentPage = 0;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleLastPage = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      const currentPage = app.data.state.numPages - app.data.state.displayPages;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handlePrev = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.currentPage === 0) return;
+      const currentPage = app.data.state.currentPage - 1 >= 0 ? app.data.state.currentPage - 1 : 0;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleNext = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.currentPage === app.data.state.numPages - app.data.state.displayPages) return;
+      const currentPage =
+        app.data.state.currentPage + 1 < app.data.state.numPages
+          ? app.data.state.currentPage + 1
+          : app.data.state.numPages - app.data.state.displayPages;
+      ps.push({ id: app._id, updates: { currentPage } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Remove Page'} openDelay={400}>
+          <Button onClick={() => handleRemovePage()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Add Page'} openDelay={400}>
+          <Button onClick={() => handleAddPage()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'1st Page'} openDelay={400}>
+          <Button onClick={() => handleFirstPage()}>
+            <MdSkipPrevious />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Previous Page'} openDelay={400}>
+          <Button onClick={() => handlePrev()}>
+            <MdNavigateBefore />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Next Page'} openDelay={400}>
+          <Button onClick={() => handleNext()}>
+            <MdNavigateNext />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Last Page'} openDelay={400}>
+          <Button onClick={() => handleLastPage()}>
+            <MdSkipNext />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+    </>
+  );
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

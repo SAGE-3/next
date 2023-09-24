@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
@@ -25,11 +25,9 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
 import { Room, RoomSchema, Board } from '@sage3/shared/types';
-import { useRoomStore, useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
+import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { useData } from 'libs/frontend/src/lib/hooks';
 import { ColorPicker } from '../general';
 
 interface EditRoomModalProps {
@@ -41,8 +39,8 @@ interface EditRoomModalProps {
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
   const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);
@@ -167,7 +165,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Edit Room: {props.room.data.name}</ModalHeader>
         <ModalBody>
           <InputGroup mb={2}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -181,7 +179,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={props.room.data.description}
@@ -203,7 +201,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             Room Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}
@@ -212,7 +210,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
@@ -221,7 +219,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

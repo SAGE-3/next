@@ -1,18 +1,17 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Box, Input, InputGroup, InputRightElement, Select, useColorModeValue, useToast } from '@chakra-ui/react';
+import { Box, Input, InputGroup, InputRightElement, Select, useToast } from '@chakra-ui/react';
+import { MdSearch } from 'react-icons/md';
 
 import { User } from '@sage3/shared/types';
-import { usePresenceStore, UserCard, useRoomStore, useUsersStore } from '@sage3/frontend';
-import { useUser, useAuth } from '@sage3/frontend';
-import { MdSearch } from 'react-icons/md';
+import { UserCard, useRoomStore, useUsersStore } from '@sage3/frontend';
 
 type UserListProps = {
   onUserClick: (user: User) => void;
@@ -20,23 +19,14 @@ type UserListProps = {
 };
 
 export function UserList(props: UserListProps) {
-  // Me
-  const { user } = useUser();
-  const { auth } = useAuth();
-
   // Data stores
   const users = useUsersStore((state) => state.users);
-  console.log(users);
-  const presences = usePresenceStore((state) => state.presences);
   const storeError = useRoomStore((state) => state.error);
   const clearError = useRoomStore((state) => state.clearError);
-  const deleteRoom = useRoomStore((state) => state.delete);
   const subToAllRooms = useRoomStore((state) => state.subscribeToAllRooms);
 
   // UI elements
-  const borderColor = useColorModeValue('#718096', '#A0AEC0');
   const toast = useToast();
-  const [filteredUsers, setFilteredUsers] = useState<User[] | null>(null);
   const [search, setSearch] = useState('');
 
   const [sortBy, setSortBy] = useState<'Name' | 'Updated' | 'Created'>('Name');
@@ -75,7 +65,7 @@ export function UserList(props: UserListProps) {
   }, [subToAllRooms]);
 
   // Filter boards with the search string
-  function handleFilterUsers(event: any) {
+  function handleFilterUsers(event: ChangeEvent<HTMLInputElement>) {
     // setSearch(event.target.value);
     // const filBoards = users.filter((room) => room.data.name.toLowerCase().includes(event.target.value.toLowerCase()));
     // setFilteredUsers(filBoards);
@@ -86,10 +76,7 @@ export function UserList(props: UserListProps) {
 
   return (
     <>
-      <Box
-        overflowY="auto"
-        pr="2"
-        mb="2"
+      <Box overflowY="auto" pr="2" mb="2"
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -120,9 +107,7 @@ export function UserList(props: UserListProps) {
         </Select>
       </InputGroup>
       <InputGroup>
-        <Input
-          my="2"
-          value={search}
+        <Input my="2" value={search}
           onChange={handleFilterUsers}
           placeholder="Search Users..."
           _placeholder={{ opacity: 1, color: 'gray.600' }}

@@ -1,13 +1,20 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 // import {SBPrimitive} from "../../../../../sagebase/src/lib/modules";
 
 type exec = {
   executeFunc: string;
   params: { [key: string]: any };
-}
+};
 
 //TODO, Replace any datatypes
 export type state = {
-
   // Python
   executeInfo: exec;
   viewData: any;
@@ -20,21 +27,16 @@ export type state = {
   pageNumbers: number[];
   indexOfFirstRow: number;
   indexOfLastRow: number;
-
   selectedCols: string[];
   selectedCol: string;
-
   selectedRows: string[];
   selectedRow: string;
-
   messages: string;
-
   timestamp: number;
 };
 
-
 export const init: Partial<state> = {
-  executeInfo: {"executeFunc": "", "params": {}},
+  executeInfo: { executeFunc: '', params: {} },
 
   viewData: {},
 
@@ -46,13 +48,12 @@ export const init: Partial<state> = {
   indexOfLastRow: 0,
 
   selectedCols: [],
-  selectedCol: "",
+  selectedCol: '',
 
   selectedRows: [],
-  selectedRow: "",
+  selectedRow: '',
 
   timestamp: 0.0,
 };
 
-
-export const name = "DataTable";
+export const name = 'DataTable';

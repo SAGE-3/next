@@ -1,24 +1,26 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
+// React
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
 
+// Chakra UI
 import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
-import { theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId, SocketAPI, useHexColor, useData } from '@sage3/frontend';
 
-import { serverConfiguration } from '@sage3/frontend';
-
-import { LoginPage } from './pages/Login';
-import { HomePage } from './pages/Home';
-import { BoardPage } from './pages/Board';
-import { AccountPage } from './pages/Account';
-import { AdminPage } from './pages/Admin';
+// SAGE3
+import {
+  theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId,
+  SocketAPI, useHexColor, useData, CursorBoardPositionProvider, apiUrls
+} from '@sage3/frontend';
+import { OpenConfiguration } from '@sage3/shared/types';
+// Pages
+import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -133,7 +135,9 @@ export function App() {
                 element={
                   <ProtectedAuthRoute>
                     <ProtectedUserRoute>
-                      <BoardPage />
+                      <CursorBoardPositionProvider>
+                        <BoardPage />
+                      </CursorBoardPositionProvider>
                     </ProtectedUserRoute>
                   </ProtectedAuthRoute>
                 }
@@ -194,12 +198,12 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
 export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const { user, loading } = useUser();
   const { auth } = useAuth();
-  const data = useData('/api/configuration');
+  const data = useData(apiUrls.config.getConfig);
 
   if (!user || loading || !data) {
     return <div>Loading...</div>;
   } else {
-    const config = data as serverConfiguration;
+    const config = data as OpenConfiguration;
     // in dev mode, everybody can access the route
     if (!config.production) {
       return <> {props.children}</>;

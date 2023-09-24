@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import findHeaderType from '../findHeaderType';
@@ -41,7 +41,7 @@ export default function createHeatmap(extractedHeaders: string[], fileName: stri
   let specifications = [];
   extractedHeaders = organizeHeatmapHeaders(extractedHeaders, data);
 
-  lineChartSpec.data.url = '/api/assets/static/' + fileName;
+  lineChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
   lineChartSpec.encoding.x.field = extractedHeaders[1];
   lineChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 

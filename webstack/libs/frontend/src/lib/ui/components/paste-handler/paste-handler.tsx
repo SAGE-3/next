@@ -1,20 +1,20 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
  * Handling copy/paste events on a board
  */
 
-import { useEffect } from 'react';
-import { useToast } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
-import { useUser, useUIStore, useAppStore, useCursorBoardPosition } from '@sage3/frontend';
-import { processContentURL } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
+import { isValidURL, setupApp } from '@sage3/frontend';
 
 type PasteProps = {
   boardId: string;
@@ -31,67 +31,137 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const toast = useToast();
   // User information
   const { user } = useUser();
-  const { position: cursorPosition } = useCursorBoardPosition();
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const { auth } = useAuth();
+  const { boardCursor: cursorPosition, cursor: mousePosition } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
+  // UI Store
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+  const [validURL, setValidURL] = useState('');
+  // Popover
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
+  const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!user) return;
 
-    const pasteHandlerReachingDocumentBody = (event: ClipboardEvent) => {
+    const pasteHandlerBoard = (event: ClipboardEvent) => {
       // get the target element and make sure it is the background board
       const elt = event.target as HTMLElement;
-      if (elt.id !== 'board') return;
+      if (elt.tagName === 'INPUT' || elt.tagName === 'TEXTAREA') return;
+
+      // Not on a selected app
+      if (selectedApp) return;
+
+      // Block guests from uploading assets
+      if (auth?.provider === 'guest') {
+        toast({
+          title: 'Guests cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      // Get the user cursor position
+      const xDrop = cursorPosition.x;
+      const yDrop = cursorPosition.y;
+      setDropCursor({ x: mousePosition.x, y: mousePosition.y });
 
       // Open webview if url, otherwise, open a sticky
       if (event.clipboardData?.files) {
         if (event.clipboardData.files.length > 0) {
-          toast({
-            title: 'Copy/Paste Handler',
-            description: 'Pasting file not supported yet',
-            status: 'error',
-            duration: 2 * 1000,
-            isClosable: true,
+          // Iterate over all pasted files.
+          Array.from(event.clipboardData.files).forEach(async (file) => {
+            if (file.type.startsWith('image/')) {
+              // Images not supported yet
+              toast({
+                title: 'Copy/Paste Handler',
+                description: 'Image clipboard not supported yet',
+                status: 'error',
+                duration: 2 * 1000,
+                isClosable: true,
+              });
+
+              // Works but slow
+              // For images, create an image and append it to the `body`.
+              // const reader = new FileReader();
+              // reader.readAsDataURL(file);
+              // reader.onloadend = function () {
+              //   const base64data = reader.result;
+              //   if (base64data && typeof base64data === 'string') {
+              //     if (base64data.length < 100000) {
+              //       // it's a base64 image
+              //       createApp({
+              //         title: file.name,
+              //         roomId: props.roomId,
+              //         boardId: props.boardId,
+              //         position: { x: xDrop, y: yDrop, z: 0 },
+              //         size: { width: 800, height: 600, depth: 0 },
+              //         rotation: { x: 0, y: 0, z: 0 },
+              //         type: 'ImageViewer',
+              //         state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
+              //         raised: true,
+              //         dragging: false,
+              //       });
+              //     }
+              //   }
+              // };
+            } else if (file.type.startsWith('text/')) {
+              // Read the text
+              const textcontent = await file.text();
+              // Create a new stickie with the text
+              createApp({
+                title: user.data.name,
+                roomId: props.roomId,
+                boardId: props.boardId,
+                position: { x: xDrop, y: yDrop, z: 0 },
+                size: { width: 400, height: 400, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'Stickie',
+                state: { text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
+                raised: true,
+                dragging: false,
+              });
+            } else {
+              // Not supported file format
+              toast({
+                title: 'Copy/Paste Handler',
+                description: 'File format not supported yet',
+                status: 'error',
+                duration: 2 * 1000,
+                isClosable: true,
+              });
+            }
           });
-          return;
         }
       }
 
       // Get content of clipboard
       const pastedText = event.clipboardData?.getData('Text');
 
-      // Get the user cursor position
-      const xDrop = cursorPosition.x;
-      const yDrop = cursorPosition.y;
-
       // if there's content
       if (pastedText) {
         // check and validate the URL
-        const isValid = isValidURL(pastedText);
+        const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
-          let w = 800;
-          let h = 800;
-          const final_url = processContentURL(isValid);
-          if (isValid !== final_url) {
-            // it has been changed, it must be a video
-            w = 1280;
-            h = 720;
-          }
-          // Create a webview
+          setValidURL(isValid);
+          popOnOpen();
+        } else if (pastedText.startsWith('sage3://')) {
+          // Create a board link app
           createApp({
-            title: final_url,
+            title: user.data.name,
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: w, height: h, depth: 0 },
+            size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
-            type: 'Webview',
-            state: { webviewurl: final_url },
+            type: 'BoardLink',
+            state: { url: pastedText.trim() },
             raised: true,
+            dragging: false,
           });
         } else {
           // Create a new stickie
@@ -105,96 +175,71 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             type: 'Stickie',
             state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
+            dragging: false,
           });
         }
       }
     };
 
     // Add the handler to the whole page
-    document.addEventListener('paste', pasteHandlerReachingDocumentBody);
+    document.addEventListener('paste', pasteHandlerBoard);
 
     return () => {
       // Remove function during cleanup to prevent multiple additions
-      document.removeEventListener('paste', pasteHandlerReachingDocumentBody);
+      document.removeEventListener('paste', pasteHandlerBoard);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
 
-  return <></>;
+  const createWeblink = () => {
+    createApp(
+      setupApp(
+        'WebpageLink',
+        'WebpageLink',
+        cursorPosition.x,
+        cursorPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 400, h: 400 },
+        { url: validURL }
+      )
+    );
+    popOnClose();
+  };
+  const createWebview = () => {
+    createApp(
+      setupApp(
+        'Webview',
+        'Webview',
+        cursorPosition.x,
+        cursorPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 800, h: 1000 },
+        { webviewurl: validURL }
+      )
+    );
+    popOnClose();
+  };
+
+  return (
+    <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+      <Portal>
+        <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+          <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+            <Center>Create a Link or open URL</Center>
+          </PopoverHeader>
+          <PopoverBody>
+            <Center>
+              <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
+                Create Link
+              </Button>
+              <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
+                Open URL
+              </Button>
+            </Center>
+          </PopoverBody>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  );
 };
-
-/**
- * Validate a URL string
- * From github.com/ogt/valid-url but not maintained
- * @param {string} value
- * @returns {(string | undefined)}
- */
-function isValidURL(value: string): string | undefined {
-  if (!value) {
-    return;
-  }
-
-  // check for illegal characters
-  if (/[^a-z0-9\:\/\?\#\[\]\@\!\$\&\'\ʻ\(\)\*\+\,\;\=\.\-\_\~\%]/i.test(value)) return;
-
-  // check for hex escapes that aren't complete
-  if (/%[^0-9a-f]/i.test(value)) return;
-  if (/%[0-9a-f](:?[^0-9a-f]|$)/i.test(value)) return;
-
-  let scheme = '';
-  let authority = '';
-  let path = '';
-  let query = '';
-  let fragment = '';
-  let out = '';
-
-  // from RFC 3986
-  const splitted = splitUri(value);
-  if (!splitted) return;
-  scheme = splitted[1];
-  authority = splitted[2];
-  path = splitted[3];
-  query = splitted[4];
-  fragment = splitted[5];
-
-  // scheme and path are required, though the path can be empty
-  if (!(scheme && scheme.length && path.length >= 0)) return;
-
-  // if authority is present, the path must be empty or begin with a /
-  if (authority && authority.length) {
-    if (!(path.length === 0 || /^\//.test(path))) return;
-  } else {
-    // if authority is not present, the path must not start with //
-    if (/^\/\//.test(path)) return;
-  }
-
-  // scheme must begin with a letter, then consist of letters, digits, +, ., or -
-  if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
-
-  // re-assemble the URL per section 5.3 in RFC 3986
-  out += scheme + ':';
-  if (authority && authority.length) {
-    out += '//' + authority;
-  }
-
-  out += path;
-
-  if (query && query.length) {
-    out += '?' + query;
-  }
-
-  if (fragment && fragment.length) {
-    out += '#' + fragment;
-  }
-
-  return out;
-}
-
-/**
- * URI spitter method - direct from RFC 3986
- * @param {string} uri
- * @returns RegExpMatchArray
- */
-function splitUri(uri: string) {
-  const splitted = uri.match(/(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/);
-  return splitted;
-}

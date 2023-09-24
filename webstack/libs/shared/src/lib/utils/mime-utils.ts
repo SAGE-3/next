@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Mime type definitions
@@ -80,7 +80,8 @@ export function isPDF(mimeType: string): boolean {
  */
 export function isVideo(mimeType: string): boolean {
   // return mimeType.startsWith('video/');
-  return mimeType === 'video/mp4' || mimeType === 'video/webm' || mimeType === 'video/ogg';
+  // video/quicktime is for .mov files, hoping it contains an mp4 video track
+  return mimeType === 'video/mp4' || mimeType === 'video/webm' || mimeType === 'video/ogg' || mimeType === 'video/quicktime';
 }
 /**
  * Test if a given mime type is an audio file
@@ -120,7 +121,8 @@ export function isText(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isZip(mimeType: string): boolean {
-  return mimeType === 'application/zip';
+  const formats = ['application/zip', 'application/zip-compressed', 'application/x-zip-compressed', 'application/x-compressed'];
+  return formats.includes(mimeType);
 }
 /**
  * Test if a given mime type is a JSON file

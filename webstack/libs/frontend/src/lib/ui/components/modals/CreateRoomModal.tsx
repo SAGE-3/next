@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useEffect, useState, useRef } from 'react';
@@ -25,13 +25,11 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-
 import { RoomSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
-import { useRoomStore } from '../../../stores';
-import { useUser } from '../../../hooks';
+
+import { useRoomStore, useConfigStore } from '../../../stores';
+import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
 
 interface CreateRoomModalProps {
@@ -40,8 +38,8 @@ interface CreateRoomModalProps {
 }
 
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const toast = useToast();
 
@@ -145,7 +143,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -159,7 +157,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Room Description'}
@@ -181,7 +179,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             Room Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Set Password'}
@@ -190,12 +188,12 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description}>
             Create
           </Button>
         </ModalFooter>

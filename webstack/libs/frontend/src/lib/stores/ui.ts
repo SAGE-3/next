@@ -1,18 +1,21 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // The React version of Zustand
 import create from 'zustand';
-
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
+import { Position, Size } from '@sage3/shared/types';
+
+import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -22,34 +25,6 @@ const StepZoom = 0.1;
 // When using mouse wheel, repeated events
 const WheelStepZoom = 0.008;
 
-export enum StuckTypes {
-  Controller, // 0
-  None, // 1
-  Top, // 2
-  Bottom, // 3
-  Left, // 4
-  Right, // 5
-  TopRight, // 6
-  TopLeft, // 7
-  BottomRight, // 8
-  BottomLeft, // 9
-}
-
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'whiteboard';
-
-// Typescript interface defining the store
-interface PanelUI {
-  position: { x: number; y: number };
-  setPosition: (pos: { x: number; y: number }) => void;
-  opened: boolean; // whether the actions are open (otherwise, just title)
-  setOpened: (opened: boolean) => void;
-  show: boolean; // whether the panel is visible
-  setShow: (show: boolean) => void;
-  stuck: StuckTypes; // if the panel is stuck, says direction, otherwise, None or Controller
-  setStuck: (show: StuckTypes) => void;
-  name: PanelNames;
-}
-
 interface UIState {
   scale: number;
   boardWidth: number;
@@ -58,31 +33,53 @@ interface UIState {
   zIndex: number;
   showUI: boolean;
   showAppTitle: boolean;
+  showPresence: boolean;
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
 
+  // The user's local viewport.
+  viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => void;
+
+  // Selected Apps
+  selectedAppsIds: string[];
+  selectedAppsSnapshot: { [id: string]: Position };
+  deltaPos: { p: Position; id: string };
+  setDeltaPostion: (position: Position, id: string) => void;
+  setSelectedAppsIds: (appId: string[]) => void;
+  setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
+  addSelectedApp: (appId: string) => void;
+  removeSelectedApp: (appId: string) => void;
+  clearSelectedApps: () => void;
+
   // whiteboard
   whiteboardMode: boolean; // marker mode enabled
   clearMarkers: boolean;
   clearAllMarkers: boolean;
+  undoLastMarker: boolean;
   markerColor: SAGEColors;
+  markerSize: number;
+  markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
   setWhiteboardMode: (enable: boolean) => void;
   setClearMarkers: (clear: boolean) => void;
+  setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
+  setMarkerSize: (size: number) => void;
+  setMarkerOpacity: (opacity: number) => void;
 
-  // Panels & Context Menu
-  applicationsPanel: PanelUI;
-  navigationPanel: PanelUI;
-  usersPanel: PanelUI;
-  controller: PanelUI;
-  assetsPanel: PanelUI;
-  whiteboardPanel: PanelUI;
-  panelZ: string[];
-  bringPanelForward: (panel: PanelNames) => void;
+  // lasso
+  lassoMode: boolean; // marker mode enabled
+  clearLassos: boolean;
+  clearAllLassos: boolean;
+  lassoColor: SAGEColors;
+  setLassoColor: (color: SAGEColors) => void;
+  setLassoMode: (enable: boolean) => void;
+  setClearLassos: (clear: boolean) => void;
+  setClearAllLassos: (clear: boolean) => void;
 
   appToolbarPanelPosition: { x: number; y: number };
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
@@ -97,16 +94,19 @@ interface UIState {
   setSelectedApp: (appId: string) => void;
   flipUI: () => void;
   toggleTitle: () => void;
+  togglePresence: () => void;
   displayUI: () => void;
   hideUI: () => void;
   incZ: () => void;
   resetZIndex: () => void;
   setScale: (z: number) => void;
+  resetZoom: () => void;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
   fitApps: (apps: App[]) => void;
+  fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
 }
@@ -123,96 +123,29 @@ export const useUIStore = create<UIState>((set, get) => ({
   zIndex: 1,
   showUI: true,
   showAppTitle: false,
+  showPresence: true,
   boardDragging: false,
   appDragging: false,
+  selectedAppsIds: [],
+  selectedAppsSnapshot: {},
+  lassoMode: false,
+  lassoColor: 'red',
+  clearLassos: false,
+  clearAllLassos: false,
   whiteboardMode: false,
   markerColor: 'red',
+  markerSize: 8,
+  markerOpacity: 0.6,
   clearMarkers: false,
   clearAllMarkers: false,
+  undoLastMarker: false,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
+  setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
-  panelZ: ['assets', 'applications', 'navigation', 'users', 'whiteboard'], // List of panels that have zordering
-  bringPanelForward: (panel: string) => {
-    const z = get().panelZ;
-    const i = z.indexOf(panel);
-    if (i >= 0) {
-      z.splice(i, 1);
-      z.push(panel);
-      set((state) => ({ ...state, panelZ: z }));
-    }
-  },
-  controller: {
-    position: { x: 5, y: 5 },
-    name: 'controller',
-    stuck: StuckTypes.TopLeft,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, controller: { ...state.controller, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, controller: { ...state.controller, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, controller: { ...state.controller, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, controller: { ...state.controller, show: show } })),
-    show: true,
-  },
-  assetsPanel: {
-    position: { x: 220, y: 130 },
-    name: 'assets',
-    stuck: StuckTypes.Controller,
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, assetsPanel: { ...state.assetsPanel, show: show } })),
-    show: false,
-  },
-  applicationsPanel: {
-    position: { x: 20, y: 325 },
-    stuck: StuckTypes.Controller,
-    name: 'applications',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, stuck: stuck } })),
-    opened: true,
-    setOpened: (op: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, opened: op } })),
-    show: false,
-    setShow: (show: boolean) => set((state) => ({ ...state, applicationsPanel: { ...state.applicationsPanel, show: show } })),
-  },
-  navigationPanel: {
-    position: { x: 20, y: 690 },
-    stuck: StuckTypes.Controller,
-    name: 'navigation',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, navigationPanel: { ...state.navigationPanel, show: show } })),
-    show: false,
-  },
-  usersPanel: {
-    position: { x: 20, y: 20 },
-    stuck: StuckTypes.Controller,
-    name: 'users',
-    setPosition: (pos: { x: number; y: number }) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, usersPanel: { ...state.usersPanel, show: show } })),
-    show: false,
-  },
-  whiteboardPanel: {
-    position: { x: 20, y: 400 },
-    stuck: StuckTypes.Controller,
-    name: 'whiteboard',
-    setPosition: (pos: { x: number; y: number }) =>
-      set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, position: pos } })),
-    setStuck: (stuck: StuckTypes) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, stuck: stuck } })),
-    setOpened: (opened: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, opened: opened } })),
-    opened: true,
-    setShow: (show: boolean) => set((state) => ({ ...state, whiteboardPanel: { ...state.whiteboardPanel, show: show } })),
-    show: false,
-  },
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
       return;
@@ -254,6 +187,14 @@ export const useUIStore = create<UIState>((set, get) => ({
       boardPosition: { x: bx, y: by },
     }));
   },
+  fitAllApps: () => {
+    const apps = useAppStore.getState().apps;
+    if (apps.length > 0) {
+      get().fitApps(apps);
+    } else {
+      get().resetBoardPosition();
+    }
+  },
   fitArea: (x: number, y: number, w: number, h: number) => {
     // Fit the smaller dimension into the browser size
     const sm = Math.min(window.innerWidth / w, window.innerHeight / h);
@@ -274,14 +215,40 @@ export const useUIStore = create<UIState>((set, get) => ({
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
   toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
+  togglePresence: () => set((state) => ({ ...state, showPresence: !state.showPresence })),
   displayUI: () => set((state) => ({ ...state, showUI: true })),
   hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
+  setLassoMode: (enable: boolean) => set((state) => ({ ...state, lassoMode: enable })),
+  setClearLassos: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
+  setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
+  setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+
+  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
+  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
+  setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds })),
+  setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
+    snapshot = structuredClone(snapshot);
+    set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
+  },
+  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedAppsIds, appId] })),
+  removeSelectedApp: (appId: string) =>
+    set((state) => {
+      const newArray = state.selectedAppsIds;
+      const index = state.selectedAppsIds.indexOf(appId);
+      newArray.splice(index, 1);
+      return { ...state, selectedApps: newArray };
+    }),
+  clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
+
   setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+  setUndoLastMarker: (undo: boolean) => set((state) => ({ ...state, undoLastMarker: undo })),
+  setMarkerSize: (size: number) => set((state) => ({ ...state, markerSize: size })),
+  setMarkerOpacity: (opacity: number) => set((state) => ({ ...state, markerOpacity: opacity })),
   lockBoard: (lock: boolean) => set((state) => ({ ...state, boardLocked: lock })),
   setBoardPosition: (pos: { x: number; y: number }) => {
     if (!get().boardLocked) set((state) => ({ ...state, boardPosition: pos }));
@@ -290,14 +257,43 @@ export const useUIStore = create<UIState>((set, get) => ({
     if (!get().boardLocked)
       set((state) => ({ ...state, scale: 1, boardPosition: { x: -get().boardWidth / 2, y: -get().boardHeight / 2 } }));
   },
+
   setScale: (z: number) => {
     if (!get().boardLocked) set((state) => ({ ...state, scale: z }));
   },
+  resetZoom: () => {
+    const zoomVal = 1;
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomVal);
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomVal }));
+    }
+  },
   zoomIn: () => {
-    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale * (1 + StepZoom) }));
+    const zoomInVal = Math.min(get().scale + 0.02 * get().scale, MaxZoom);
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomInVal);
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomInVal }));
+    }
   },
   zoomOut: () => {
-    if (!get().boardLocked) set((state) => ({ ...state, scale: state.scale / (1 + StepZoom) }));
+    const zoomOutVal = Math.max(get().scale - 0.02 * get().scale, MinZoom);
+    if (!get().boardLocked) {
+      const b = get().boardPosition;
+      const s = get().scale;
+      const wx = window.innerWidth / 2;
+      const wy = window.innerHeight / 2;
+      const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomOutVal);
+
+      set((state) => ({ ...state, boardPosition: pos, scale: zoomOutVal }));
+    }
   },
   zoomInDelta: (d, cursor) => {
     if (!get().boardLocked)
@@ -307,15 +303,8 @@ export const useUIStore = create<UIState>((set, get) => ({
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;
-          const x1 = b.x - cursor.x / s;
-          const y1 = b.y - cursor.y / s;
-          const x2 = b.x - cursor.x / zoomInVal;
-          const y2 = b.y - cursor.y / zoomInVal;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const newX = b.x - dx;
-          const newY = b.y - dy;
-          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomInVal };
+          const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomInVal);
+          return { ...state, boardPosition: pos, scale: zoomInVal };
         } else {
           return { ...state, scale: zoomInVal };
         }
@@ -329,21 +318,39 @@ export const useUIStore = create<UIState>((set, get) => ({
         if (cursor) {
           const b = get().boardPosition;
           const s = get().scale;
-          const x1 = b.x - cursor.x / s;
-          const y1 = b.y - cursor.y / s;
-          const x2 = b.x - cursor.x / zoomOutVal;
-          const y2 = b.y - cursor.y / zoomOutVal;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const newX = b.x - dx;
-          const newY = b.y - dy;
-          return { ...state, boardPosition: { x: newX, y: newY }, scale: zoomOutVal };
+          const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomOutVal);
+          return { ...state, boardPosition: pos, scale: zoomOutVal };
         } else {
           return { ...state, scale: zoomOutVal };
         }
       });
   },
 }));
+
+/**
+ * Used to get the new position of the board when zooming towards a new position.
+ * @param fromPosition The position you currently are
+ * @param towardsPos Toward what position. (Cursor, center of screen)
+ * @param currentZoom (current zoom level)
+ * @param newZoom (new zoom level)
+ * @returns New Position
+ */
+function zoomOnLocationNewPosition(
+  fromPosition: { x: number; y: number },
+  towardsPos: { x: number; y: number },
+  currentZoom: number,
+  newZoom: number
+): { x: number; y: number } {
+  const x1 = fromPosition.x - towardsPos.x / currentZoom;
+  const y1 = fromPosition.y - towardsPos.y / currentZoom;
+  const x2 = fromPosition.x - towardsPos.x / newZoom;
+  const y2 = fromPosition.y - towardsPos.y / newZoom;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const x = fromPosition.x - dx;
+  const y = fromPosition.y - dy;
+  return { x, y };
+}
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('UIStore', useUIStore);

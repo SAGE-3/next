@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
@@ -193,9 +193,7 @@ function AppComponent(props: App): JSX.Element {
             ref={setWebviewRef}
             style={nodeStyle}
             allowpopups={'true' as any}
-          >
-            {' '}
-          </webview>
+          ></webview>
         ) : (
           <img id={'image' + props._id}></img>
         )
@@ -213,7 +211,8 @@ function AppComponent(props: App): JSX.Element {
                 <Box as="span" color="white" fontSize="2xl" fontWeight="bold" p="2rem">
                   Current URL{' '}
                   <a style={{ color: '#13a89e' }} href={s.sharedurl} rel="noreferrer" target="_blank">
-                    {s.sharedurl}{' '}
+                    {' '}
+                    {s.sharedurl}
                   </a>
                 </Box>
               </Center>
@@ -246,19 +245,17 @@ function ToolbarComponent(props: App): JSX.Element {
     if (isElectron()) {
       console.log('Cobrowse> startStream');
       // Load electron and the IPCRender
-      const electron = window.require('electron');
-      const ipcRenderer = electron.ipcRenderer;
-      ipcRenderer.send('streamview', { url: s.sharedurl, id: s.frame });
-      ipcRenderer.on('paint', (_evt: any, arg: any) => {
+      window.electron.on('paint', (arg: any) => {
         sock.send(JSON.stringify({ type: 'paint', data: arg.buf }));
       });
+      window.electron.send('streamview', { url: s.sharedurl, id: s.frame });
     }
   };
 
   return (
     <ButtonGroup isAttached size="xs">
       <Tooltip placement="top-start" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
-        <Button colorScheme="green" disabled={!mine} onClick={startStream}>
+        <Button colorScheme="green" isDisabled={!mine} onClick={startStream}>
           Stream
         </Button>
       </Tooltip>
@@ -266,4 +263,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

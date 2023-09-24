@@ -1,10 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
+import { apiUrls } from '@sage3/frontend';
 
 import findHeaderType from '../findHeaderType';
 import switchHeaders from './helperFunctions/switchHeaders';
@@ -43,7 +45,7 @@ export default function createPointChart(extractedHeaders: string[], fileName: s
   extractedHeaders = organizePointChartHeaders(extractedHeaders, data);
 
   if (extractedHeaders.length == 2) {
-    pointChartSpec.data.url = '/api/assets/static/' + fileName;
+    pointChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
     pointChartSpec.encoding.x.field = extractedHeaders[1];
     pointChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 
@@ -51,7 +53,7 @@ export default function createPointChart(extractedHeaders: string[], fileName: s
     pointChartSpec.encoding.y.type = findHeaderType(extractedHeaders[0], data);
     specifications.push(pointChartSpec);
   } else if (extractedHeaders.length == 3) {
-    pointChartSpec.data.url = '/api/assets/static/' + fileName;
+    pointChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
     pointChartSpec.encoding.x.field = extractedHeaders[1];
     pointChartSpec.encoding.x.type = findHeaderType(extractedHeaders[1], data);
 
@@ -101,7 +103,7 @@ function organizePointChartHeaders(extractedHeaders: string[], data: string[]) {
 //   let barChartSpec = {
 //     ...barSpecificationTemplate,
 //   };
-//   barChartSpec.data.url = '/api/assets/static/' + fileName;
+//   barChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
 //   barChartSpec.encoding.x.field = extractedHeaders[i];
 //   barChartSpec.encoding.x.type = 'nominal';
 

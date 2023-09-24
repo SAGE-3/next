@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 //
@@ -29,5 +29,41 @@ const styles = {
   }),
 };
 
+const components = {
+  Drawer: {
+    variants: {
+      fifty: {
+        dialog: {
+          maxW: '50vw',
+        },
+      },
+      alwaysOpen: {
+        dialog: {
+          pointerEvents: 'auto',
+        },
+        dialogContainer: {
+          pointerEvents: 'none',
+        },
+      },
+    },
+  },
+  Radio: {
+    variants: {
+      primary: ({ colorScheme = 'primary' }) => ({
+        color: `${colorScheme}.500`,
+        control: {
+          _checked: {
+            color: 'secondary.500',
+          },
+        },
+      }),
+    },
+    defaultProps: {
+      variant: 'primary',
+      colorScheme: 'primary',
+    },
+  },
+};
+
 // Extend the theme
-export const theme = extendTheme({ config, colors, styles });
+export const theme = extendTheme({ config, colors, styles, components });

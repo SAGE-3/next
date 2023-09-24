@@ -1,14 +1,15 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
 
-import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 
@@ -34,7 +35,7 @@ export const useStore = create((set: any) => ({
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
+  return apiUrls.assets.getAssetById(filename);
 }
 
 const maxZoom = 18;
@@ -367,33 +368,25 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom >= 18} onClick={incZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom >= 18} onClick={incZoom}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.zoom <= 1} onClick={decZoom}>
             <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'OpenStreetMap' ? `solid ${panelBackground} 2px` : 'teal'}
-            onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}>
             <MdMap fontSize="20px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button
-            border={s.baseLayer !== 'World Imagery' ? `solid ${panelBackground} 2px` : ''}
-            onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-          >
+          <Button onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}>
             <MdTerrain fontSize="20px" />
           </Button>
         </Tooltip>
@@ -402,4 +395,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -1,0 +1,14 @@
+{
+  "name": "puppet",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "puppeteer": {
+    "experiments": {
+      "macArmChromiumEnabled": true
+    }
+  },
+  "devDependencies": {
+    "puppeteer": "^19.2.2"
+  }
+}

@@ -1,13 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { RedisClientType, SchemaFieldTypes, SearchOptions } from 'redis';
-import { generateSBDocumentTemplate, SBDocument, SBDocumentMessage, SBDocumentRef, SBJSON } from './SBDocument';
+import {
+  generateSBDocumentTemplate,
+  SBDocument,
+  SBDocumentCreateMessage,
+  SBDocumentDeleteMessage,
+  SBDocumentMessage,
+  SBDocumentRef,
+  SBDocumentUpdate,
+  SBDocumentUpdateMessage,
+  SBDocWriteResult,
+  SBJSON,
+} from './SBDocument';
 
 /**
  * Conversion from JS primitive names to RedisSearch SchmeField Types
@@ -67,6 +78,50 @@ export class SBCollectionRef<Type extends SBJSON> {
   }
 
   /**
+   * Add an array of documents to the collection.
+   * Send only one publish event for all added documents.
+   */
+  public async addDocs(data: Type[], by: string): Promise<SBDocument<Type>[] | undefined> {
+    try {
+      const promises = data.map(async (d) => {
+        const doc = generateSBDocumentTemplate<Type>(d, by);
+        const docPath = `${this._path}:${doc._id}`;
+        const docRef = new SBDocumentRef<Type>(doc._id, this._name, docPath, this._redisClient);
+        return await docRef.set(d, by, this._ttl, false);
+      });
+      const res = await Promise.all(promises);
+      // Filter out the docs that were successfully added and publish to subscribers
+      const publishDocs = res.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
+      this.publishCreateAction(publishDocs);
+      return publishDocs;
+    } catch (error) {
+      this.ERRORLOG(error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Update an array of documents in the collection.
+   * Send only one publish event for all updated documents.
+   */
+  public async updateDocs(updates: { id: string; updates: SBDocumentUpdate<Type> }[], by: string): Promise<SBDocument<Type>[] | undefined> {
+    try {
+      // Create a promise for each update
+      const promises = updates.map((u) => this.docRef(u.id).update(u.updates, by, false));
+      // Wait for all promises to resolve
+      const responses = await Promise.all(promises);
+      // Filter out the docs that were successfully updated and publish to subscribers
+      const publishDocs = responses.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
+      const publishUpdates = updates.filter((u) => publishDocs.find((d) => d._id === u.id));
+      this.publishUpdateAction(publishDocs, publishUpdates);
+      return publishDocs;
+    } catch (error) {
+      this.ERRORLOG(error);
+      return undefined;
+    }
+  }
+
+  /**
    * Get a document refernce from the collection by id.
    * @param {string} id The id of the document within the collection
    * @returns {SBDocumentRef<Type>} A SBDocumentRef that points to the newly added document
@@ -115,9 +170,9 @@ export class SBCollectionRef<Type extends SBJSON> {
 
     await subscriber.pSubscribe(`${this._path}:*`, (message: string) => {
       const parseMsg = JSON.parse(message) as SBDocumentMessage<Type>;
-      parseMsg.col = this._name;
-      const propValue = parseMsg.doc.data[propertyName];
-      if (propValue === value) {
+      const queryDocs = parseMsg.doc.filter((doc) => doc.data[propertyName] === value);
+      if (queryDocs.length > 0) {
+        parseMsg.doc = queryDocs;
         callback(parseMsg);
       }
     });
@@ -165,6 +220,20 @@ export class SBCollectionRef<Type extends SBJSON> {
       this.ERRORLOG(error);
       return [];
     }
+  }
+
+  /**
+   * Delete an array of documents from the collection.
+   * Send only one publish event for all the documents.
+   */
+  public async deleteDocs(ids: string[]): Promise<SBDocWriteResult<Type>[]> {
+    const docRefs = ids.map((id) => this.docRef(id));
+    const promises = docRefs.map((docRef) => docRef.delete(false));
+    const res = await Promise.all(promises);
+    // Filter out the docs that were successfully deleted and publish to subscribers
+    const publishDocs = res.filter((el) => el.success === true && el.doc).map((el) => el.doc) as SBDocument<Type>[];
+    this.publishDeleteAction(publishDocs);
+    return res;
   }
 
   /**
@@ -255,6 +324,40 @@ export class SBCollectionRef<Type extends SBJSON> {
       this.ERRORLOG(error);
       return [];
     }
+  }
+
+  // publish the delete action to the subscribers
+  private async publishCreateAction(docs: SBDocument<Type>[]): Promise<void> {
+    const action = {
+      type: 'CREATE',
+      col: this._name,
+      doc: docs,
+    } as SBDocumentCreateMessage<Type>;
+    await this._redisClient.publish(`${this._path}:`, JSON.stringify(action));
+    return;
+  }
+
+  // publish the delete action to the subscribers
+  private async publishUpdateAction(docs: SBDocument<Type>[], updates: { id: string; updates: Partial<Type> }[]): Promise<void> {
+    const action = {
+      type: 'UPDATE',
+      col: this._name,
+      doc: docs,
+      updates,
+    } as SBDocumentUpdateMessage<Type>;
+    await this._redisClient.publish(`${this._path}:`, JSON.stringify(action));
+    return;
+  }
+
+  // publish the delete action to the subscribers
+  private async publishDeleteAction(docs: SBDocument<Type>[]): Promise<void> {
+    const action = {
+      type: 'DELETE',
+      col: this._name,
+      doc: docs,
+    } as SBDocumentDeleteMessage<Type>;
+    await this._redisClient.publish(`${this._path}:`, JSON.stringify(action));
+    return;
   }
 
   /**

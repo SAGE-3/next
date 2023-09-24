@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { ChangeEvent, useEffect, useState } from 'react';
@@ -23,7 +23,7 @@ import {
 
 import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
 
-import { BoardCard, CreateBoardModal, useBoardStore, usePresenceStore, useAuth } from '@sage3/frontend';
+import { BoardCard, CreateBoardModal, useBoardStore, useAbility, useThrottlePresenceUsers } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {
@@ -45,15 +45,16 @@ export function BoardList(props: BoardListProps) {
   const subByRoomId = useBoardStore((state) => state.subscribeByRoomId);
   const storeError = useBoardStore((state) => state.error);
   const clearError = useBoardStore((state) => state.clearError);
-  const presences = usePresenceStore((state) => state.presences);
+  const presences = useThrottlePresenceUsers(5000, '');
 
   // Create board dialog
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [filterBoards, setFilterBoards] = useState<Board[] | null>(null);
   const [search, setSearch] = useState('');
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+
+  // Abilities
+  const canCreateBoards = useAbility('create', 'boards');
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.500');
@@ -65,8 +66,8 @@ export function BoardList(props: BoardListProps) {
   }
 
   function sortByUsers(a: Board, b: Board) {
-    const aUsers = presences.filter((p) => p.data.boardId === a._id).length;
-    const bUsers = presences.filter((p) => p.data.boardId === b._id).length;
+    const aUsers = presences.filter((p) => p.presence.data.boardId === a._id).length;
+    const bUsers = presences.filter((p) => p.presence.data.boardId === b._id).length;
     return bUsers - aUsers;
   }
 
@@ -137,7 +138,7 @@ export function BoardList(props: BoardListProps) {
           <Box flexGrow={1} mr="4" display="flex" alignItems={'center'}>
             <Box>
               <Tooltip label="Create a New Board" placement="top" hasArrow={true} openDelay={400}>
-                <Button borderRadius="md" fontSize="3xl" disabled={isGuest} onClick={onOpen}>
+                <Button aria-label="create a board" borderRadius="md" fontSize="3xl" isDisabled={!canCreateBoards} onClick={onOpen}>
                   <MdAdd />
                 </Button>
               </Tooltip>
@@ -151,6 +152,7 @@ export function BoardList(props: BoardListProps) {
                   onChange={handleFilterBoards}
                   placeholder="Find Board..."
                   _placeholder={{ opacity: 1 }}
+                  name="findBoard"
                 />
                 <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
               </InputGroup>
@@ -159,7 +161,7 @@ export function BoardList(props: BoardListProps) {
           <Box>
             <Box mr="4">
               <InputGroup>
-                <Select mt="2" onChange={handleSortChange} icon={<MdSort />}>
+                <Select name="sortBoard" mt="2" onChange={handleSortChange} icon={<MdSort />}>
                   <option value="Name"> Name</option>
                   <option value="Users">Users</option>
                   <option value="Created">Created</option>
@@ -183,7 +185,7 @@ export function BoardList(props: BoardListProps) {
                   <BoardCard
                     key={board._id}
                     board={board}
-                    userCount={presences.filter((presence) => presence.data.boardId === board._id).length}
+                    userCount={presences.filter((user) => user.presence.data.boardId === board._id).length}
                     onSelect={() => props.onBoardClick(board)}
                   />
                 );

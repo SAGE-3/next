@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -13,16 +13,11 @@
  * @version 1.0.0
  */
 
-import { Asset, AssetSchema } from '@sage3/shared/types';
+import { Asset } from '@sage3/shared/types';
 import { APIHttp } from './api-http';
 
-// async function read(id: Asset['_id']): Promise<AssetType[] | undefined> {
-//   const response = await httpGET('/api/assets/' + id);
-//   return response.data;
-// }
-
 async function readAll(): Promise<Asset[] | undefined> {
-  const response = await APIHttp.GET<AssetSchema, Asset>('/assets');
+  const response = await APIHttp.GET<Asset>('/assets');
   return response.data;
 }
 
@@ -36,7 +31,6 @@ async function del(id: Asset['_id']): Promise<boolean> {
  * Provides POST, GET, DELETE requests to the backend.
  */
 export const AssetHTTPService = {
-  // read,
   readAll,
   del,
 };

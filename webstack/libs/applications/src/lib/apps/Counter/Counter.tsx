@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { useAppStore } from '@sage3/frontend';
@@ -62,17 +62,17 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
-          <Button onClick={handleSubClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="red">
+          <Button onClick={handleSubClick} colorScheme="red">
             <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Count'} openDelay={400}>
-          <Button onClick={handleAddClick} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button onClick={handleAddClick}>
             <MdAdd />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Reset to Zero'} openDelay={400}>
-          <Button onClick={handleReset} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }} colorScheme="blue">
+          <Button onClick={handleReset} colorScheme="blue">
             <MdRefresh />
           </Button>
         </Tooltip>
@@ -81,4 +81,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

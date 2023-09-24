@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -12,15 +12,15 @@
  * @export
  * @interface serverConfiguration
  */
-export interface serverConfiguration {
+export interface ServerConfiguration {
   // Production of development
   production: boolean;
 
-  // version from the package.json file
-  version: string;
-
   // Pretty name of the server to show in the UI
   serverName?: string;
+
+  // version from the package.json file
+  version: string;
 
   // HTTP settings
   port: number;
@@ -30,18 +30,36 @@ export interface serverConfiguration {
   root: string;
   public: string;
   assets: string;
-  // Server list
-  servers: { name: string; url: string }[];
-  // Services
+
+  // Redis
   redis: { url: string };
+
+  // Fluentd log configuration
+  fluentd: {
+    server: string;
+    port: number;
+    // dbLevel controls the level of logs sent to fluentd from the database
+    // all : all logs are sent to fluentd
+    // partial (default): all collections except user stuff (user, presence)
+    // none: no logs are sent to fluentd
+    databaseLevel: 'all' | 'partial' | 'none';
+  };
+
+  // FastAPI
+  fastapi: { url: string };
+
+  // External Services
+  services: {
+    twilio: TwilioConfiguration;
+    openai: OpenAIConfiguration;
+  };
+
   // Feature flags
   features: {
-    twilio: boolean;
-    ai: boolean;
-    jupyter: boolean;
-    cell: boolean;
-    articulate: boolean;
+    plugins: boolean;
+    apps: string[];
   };
+
   // ID management API keys
   auth: AuthConfiguration;
   // SSL/HTTPS certificates
@@ -50,11 +68,25 @@ export interface serverConfiguration {
     certificateKeyFile: string;
     certificateChainFile: string;
   };
-  // Twilio service
-  twilio: TwilioConfiguration;
+
   // Namespace for signing uuid v5 keys
   namespace: string;
 }
+
+// Public to everyone response from server to the configuration request, for security reasons
+export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
+  isSage3: boolean;
+  logins: ServerConfiguration['auth']['strategies'];
+};
+
+// Public to authenticated users from server to the configuration request, for security reasons
+export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features'> & {
+  token: string;
+  admins: ServerConfiguration['auth']['admins'];
+  logins: ServerConfiguration['auth']['strategies'];
+  features: ServerConfiguration['features'];
+  openai: ServerConfiguration['services']['openai'];
+};
 
 /**
  * Credentials for user autentification APIs (passport, cilogon, ...)
@@ -106,4 +138,10 @@ export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
+}
+
+// The OpenAI Configuration
+export interface OpenAIConfiguration {
+  apiKey: string; // API Key
+  model: string; // LLM model
 }

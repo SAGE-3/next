@@ -1,33 +1,32 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Import the React library
 import { useState, useRef, useEffect } from 'react';
-import { Box, Button, ButtonGroup, HStack, Textarea, Tooltip } from '@chakra-ui/react';
-
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
-import { App } from '../../schema';
-
-import { state as AppState } from './';
+import { useParams } from 'react-router';
+import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
-import { AppWindow } from '../../components';
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
+// SAGE3 store hooks and utility functions
+import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
+
+import { state as AppState } from './';
+import { App, AppGroup } from '../../schema';
+import { AppWindow } from '../../components';
+
 // Styling for the placeholder text
 import './styling.css';
-import { MdRemove, MdAdd, MdFileDownload, MdOutlineBlock } from 'react-icons/md';
-import { useParams } from 'react-router';
-import { SAGEColors } from '@sage3/shared';
 
 /**
  * NoteApp SAGE3 application
@@ -39,19 +38,20 @@ function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
 
+  const { boardId, roomId } = useParams();
+
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
-  const { boardId, roomId } = useParams();
-  const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
-  const selected = selectedAppId === props._id;
+  const locked = s.lock;
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
@@ -80,7 +80,9 @@ function AppComponent(props: App): JSX.Element {
         // change local number of rows
         setRows(numlines);
         // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        if (props.data.size.height !== numlines * s.fontSize) {
+          update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+        }
       }
     }
   }, [s.fontSize]);
@@ -115,21 +117,33 @@ function AppComponent(props: App): JSX.Element {
   // Key down handler: Tab creates another stickie
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (!user) return;
-    if (e.shiftKey && e.code === 'Tab') {
-      // Create a new stickie
-      createApp({
-        title: user.data.name,
-        roomId: roomId!,
-        boardId: boardId!,
-        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-        size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'Stickie',
-        // keep the same color, like a clone operation except for the text
-        state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
-        raised: true,
-      });
+    if (e.repeat) return;
+    // if not selected, don't do anything
+    if (props._id !== selectedApp) return;
+
+    if (e.code === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        // Create a new stickie
+        createApp({
+          title: user.data.name,
+          roomId: roomId!,
+          boardId: boardId!,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'Stickie',
+          // keep the same color, like a clone operation except for the text
+          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          raised: true,
+          dragging: false,
+        });
+      }
     }
+  };
+
+  const unlock = () => {
+    updateState(props._id, { lock: false });
   };
 
   // React component
@@ -148,20 +162,29 @@ function AppComponent(props: App): JSX.Element {
           aria-label="Note text"
           placeholder="Type here..."
           fontFamily="Arial"
-          focusBorderColor={s.color}
+          focusBorderColor={backgroundColor}
           overflow={fontSize !== 10 ? 'hidden' : 'auto'}
           fontSize={fontSize + 'px'}
           lineHeight="1em"
           value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          readOnly={!yours} // Only the creator can edit
+          readOnly={locked} // Only the creator can edit
           zIndex={1}
+          name={'stickie' + props._id}
+          css={{
+            // Balance the text, improve text layouts
+            textWrap: 'balance',
+          }}
         />
-        {!yours && selected && (
+        {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
-            <Tooltip label="Not your Stickie" shouldWrapChildren placement="top" hasArrow>
-              <MdOutlineBlock color="red" fontSize="32px" />
+            <Tooltip label={`Locked by ${yours ? 'you' : props.data.title}`} shouldWrapChildren placement="top" hasArrow>
+              {yours ? (
+                <MdLock color="red" fontSize="32px" onClick={unlock} style={{ cursor: 'pointer' }} />
+              ) : (
+                <MdLock color="red" fontSize="32px" />
+              )}
             </Tooltip>
           </Box>
         )}
@@ -179,6 +202,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const { user } = useUser();
 
   const yours = user?._id === props._createdBy;
+  const locked = s.lock;
+
+  const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
+  const fontSizeColor = useColorModeValue('white', 'black');
 
   // Larger font size
   function handleIncreaseFont() {
@@ -226,51 +253,200 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { color: color });
   };
 
+  const lockUnlock = () => {
+    updateState(props._id, { lock: !locked });
+  };
+
   return (
     <>
-      <HStack>
-        {yours && (
-          <>
-            <ButtonGroup isAttached size="xs" colorScheme="teal">
-              <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize > 128}
-                  onClick={() => handleIncreaseFont()}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdAdd />
-                </Button>
-              </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Box px={2} m={0} height={'24px'} lineHeight={'24px'} fontSize="12px" background={fontSizeBackground} color={fontSizeColor}>
+            {s.fontSize}
+          </Box>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      {yours && (
+        <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
+          <Button onClick={lockUnlock} colorScheme="teal" size="xs" mx={1}>
+            {locked ? <MdLock /> : <MdLockOpen />}
+          </Button>
+        </Tooltip>
+      )}
+      <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
-              <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-                <Button
-                  isDisabled={s.fontSize <= 8}
-                  onClick={() => handleDecreaseFont()}
-                  _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
-                >
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-            <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" />
-          </>
-        )}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
+          <Button onClick={downloadTxt}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
-        <ButtonGroup isAttached size="xs" colorScheme="teal">
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-            <Button onClick={downloadTxt} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-              <MdFileDownload />
-            </Button>
+      {/* Extra Actions */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
           </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-            <Button onClick={downloadMd} colorScheme="pink" _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
-              <MdFileDownload />
-            </Button>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            <MenuItem icon={<MdFileDownload />} onClick={downloadMd}>
+              Download as Markdown
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
+      {/* Remote Action in Python */}
+      {/* <ButtonGroup isAttached size="xs" colorScheme="orange" mr={0}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
           </Tooltip>
-        </ButtonGroup>
-      </HStack>
+          <MenuList minWidth="150px" fontSize={"sm"}>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={summarizeText}>
+              Summary
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup> */}
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
+  const { user } = useUser();
+
+  const handleColorChange = (color: string) => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    // Iterate through all the selected apps
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      ps.push({ id: app._id, updates: { color: color } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleIncreaseFont = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      const size = app.data.state.fontSize + 8;
+      if (size > 128) return;
+      ps.push({ id: app._id, updates: { fontSize: size } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleDecreaseFont = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      const size = app.data.state.fontSize - 8;
+      if (size <= 8) return;
+      ps.push({ id: app._id, updates: { fontSize: size } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleSetFont = () => {
+    const min = Math.min(...props.apps.map((app) => app.data.state.fontSize));
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app.data.state.lock) return;
+      ps.push({ id: app._id, updates: { fontSize: min } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleLock = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app._createdBy !== user?._id) return;
+      ps.push({ id: app._id, updates: { lock: true } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  const handleUnlock = () => {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    props.apps.forEach((app) => {
+      if (app._createdBy !== user?._id) return;
+      ps.push({ id: app._id, updates: { lock: false } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+  };
+
+  return (
+    <>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button onClick={() => handleDecreaseFont()}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Set Font Size'} openDelay={400}>
+          <Button onClick={() => handleSetFont()}>{Math.min(...props.apps.map((app) => app.data.state.fontSize))}</Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button onClick={() => handleIncreaseFont()}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Lock Stickies'} openDelay={400}>
+          <Button onClick={() => handleLock()}>
+            <MdLock />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
+          <Button onClick={() => handleUnlock()}>
+            <MdLockOpen />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ColorPicker
+        onChange={handleColorChange}
+        selectedColor={props.apps[0].data.state.color as SAGEColors}
+        size="xs"
+        style={{ marginRight: 4 }}
+      />
+    </>
+  );
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -14,32 +14,19 @@ import { z } from 'zod';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
-  params: z.record(z.any()),
+  params: z.any(),
 });
 
 export const schema = z.object({
   code: z.string(),
+  msgId: z.string(),
+  history: z.array(z.string()),
+  streaming: z.boolean(),
   language: z.string(),
   fontSize: z.number(),
-  theme: z.string(),
   kernel: z.string(),
-  privateMessage: z.array(
-    z.object({
-      userId: z.string(),
-      message: z.string(),
-    })
-  ),
-  availableKernels: z.array(
-    z.object({
-      key: z.string(),
-      value: z.record(z.string(), z.any()),
-    })
-  ),
-  output: z.string(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.record(z.any()),
-  }),
+  session: z.string(),
+  executeInfo: executeInfoSchema,
 });
 
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
@@ -47,13 +34,13 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   code: '',
+  msgId: '',
+  history: [],
+  streaming: false,
   language: 'python',
-  fontSize: 24,
-  theme: 'xcode',
+  fontSize: 16,
   kernel: '',
-  output: '',
-  privateMessage: [],
-  availableKernels: [],
+  session: '',
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 

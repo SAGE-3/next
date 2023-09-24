@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -18,26 +18,20 @@
 
 // Node modules
 const path = require('path');
-const { join } = path;
-const fs = require('fs');
-const url = require('url');
+const dns = require('node:dns');
+
 // Get platform and hostname
 var os = require('os');
-const { platform, homedir } = os;
 
 // NPM modules
 const electron = require('electron');
-// Persistent storage for electron app: used for window position
-const Store = require('electron-store');
+
 // parsing command-line arguments
 var program = require('commander');
 
 // URL received from protocol sage3://
 var gotoURL = '';
 
-// Application modules in 'src'
-// Hashing function
-var md5 = require('./src/md5');
 // update system
 const updater = require('./src/updater');
 // Get the version from the package file
@@ -45,9 +39,25 @@ var version = require('./package.json').version;
 // First run
 var firstRun = true;
 
-//
+// Utilities
+const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = require('./src/utils');
+
+// MenuBuilder
+const { buildMenu } = require('./src/menuBuilder');
+
+// Stores
+const windowStore = require('./src/windowstore');
+const windowState = windowStore.getWindow();
+const bookmarkStore = require('./src/bookmarkstore');
+
+// Analytics
+var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
+var analytics_enabled = true;
+// random user id
+const userId = genUserId();
+
 // handle install/update for Windows
-//
+const { handleSquirrelEvent } = require('./src/squirrelEvent');
 if (require('electron-squirrel-startup')) {
   return;
 }
@@ -57,64 +67,63 @@ if (handleSquirrelEvent()) {
   return;
 }
 
-function handleSquirrelEvent() {
-  if (process.argv.length === 1) {
-    return false;
-  }
-
-  const ChildProcess = require('child_process');
-  const path = require('path');
-
-  const appFolder = path.resolve(process.execPath, '..');
-  const rootAtomFolder = path.resolve(appFolder, '..');
-  const updateDotExe = path.resolve(path.join(rootAtomFolder, 'Update.exe'));
-  const exeName = path.basename(process.execPath);
-
-  const spawn = function (command, args) {
-    let spawnedProcess;
-
-    try {
-      spawnedProcess = ChildProcess.spawn(command, args, { detached: true });
-    } catch (error) {
-      // pass
-    }
-
-    return spawnedProcess;
-  };
-
-  const spawnUpdate = function (args) {
-    return spawn(updateDotExe, args);
-  };
-
-  const squirrelEvent = process.argv[1];
-  switch (squirrelEvent) {
-    case '--squirrel-install':
-    case '--squirrel-updated':
-      // Install desktop and start menu shortcuts
-      spawnUpdate(['--createShortcut', exeName]);
-      setTimeout(app.quit, 1000);
-      return true;
-    case '--squirrel-uninstall':
-      // Remove desktop and start menu shortcuts
-      spawnUpdate(['--removeShortcut', exeName]);
-      setTimeout(app.quit, 1000);
-      return true;
-    case '--squirrel-obsolete':
-      app.quit();
-      return true;
-  }
-}
-
 // Module to control application life.
 const app = electron.app;
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
-const Menu = electron.Menu;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
+const autoUpdater = electron.autoUpdater;
+
+// Restore the network order
+dns.setDefaultResultOrder('ipv4first');
+
+/////////////////////////////////////////////////////////////////
+// Auto updater
+/////////////////////////////////////////////////////////////////
+console.log('APP Updater> current version', app.getVersion());
+
+// autoUpdater.on('error', (error) => {
+//   console.log('APP Updater> error', error);
+// });
+// autoUpdater.on('checking-for-update', (e) => {
+//   console.log('APP Updater> checking-for-update', e);
+// });
+// autoUpdater.on('update-available', (e) => {
+//   console.log('APP Updater> update-available', e);
+// });
+// autoUpdater.on('update-not-available', (e) => {
+//   console.log('APP Updater> update-not-available', e);
+// });
+// autoUpdater.on('before-quit-for-update', (e) => {
+//   console.log('APP Updater> before-quit-for-update', e);
+// });
+// autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+//   const dialogOpts = {
+//     type: 'info',
+//     buttons: ['Restart', 'Later'],
+//     title: 'Application Update',
+//     message: process.platform === 'win32' ? releaseNotes : releaseName,
+//     detail: 'A new version has been downloaded. Restart the application to apply the updates.',
+//   };
+//   dialog.showMessageBox(dialogOpts).then((returnValue) => {
+//     if (returnValue.response === 0) autoUpdater.quitAndInstall();
+//   });
+// });
+
+// autoUpdater.setFeedURL({
+//   url: 'https://update.electronjs.org/SAGE-3/next/darwin-arm64/client-1.0.0-beta.31',
+//   requestHeaders: { 'User-Agent': 'update-electron-app/2.0.1 (darwin: arm64)' },
+// });
+// autoUpdater.checkForUpdates();
+
+// Auto update
+require('update-electron-app')({ repo: 'SAGE-3/next' });
+
+/////////////////////////////////////////////////////////////////
 
 // Registering a custom protocol sage3://
 if (process.defaultApp) {
@@ -130,20 +139,6 @@ var currentDomain;
 var currentServer;
 var isAtBoard = false;
 
-// Persistent data store to store window postion/size
-// stored by default in app.getPath('userData')
-// Create a store
-const store = new Store({ name: 'sage3' });
-// Store values in a key called 'window-state'
-const defaults = store.get('window-state', {
-  server: 'https://sage3.app',
-  fullscreen: false,
-  x: 0,
-  y: 0,
-  width: 1280,
-  height: 720,
-});
-
 /**
  * Setup the command line argument parsing (commander module)
  */
@@ -153,12 +148,12 @@ var args = process.argv;
 program
   .version(version)
   .option('-d, --display <n>', 'Display client ID number (int)', parseInt, 0)
-  .option('-f, --fullscreen', 'Fullscreen (boolean)', defaults.fullscreen)
+  .option('-f, --fullscreen', 'Fullscreen (boolean)', windowState.fullscreen)
   .option('-m, --monitor <n>', 'Select a monitor (int)', myParseInt, null)
   .option('-n, --no_decoration', 'Remove window decoration (boolean)', false)
-  .option('-s, --server <s>', 'Server URL (string)', defaults.server || 'https://sage3.app')
-  .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, defaults.x)
-  .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, defaults.y)
+  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'file://html/landing.html')
+  .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
+  .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
   .option('--allowDisplayingInsecure', 'Allow displaying of insecure content (http on https)', true)
   .option('--allowRunningInsecure', 'Allow running insecure content (scripts accessed on http vs https)', true)
@@ -166,11 +161,11 @@ program
   .option('--console', 'Open the devtools console', false)
   .option('--debug', 'Open the port debug protocol (port number is 9222 + clientID)', false)
   .option('--experimentalFeatures', 'Enable experimental features', false)
-  .option('--height <n>', 'Window height (int)', myParseInt, defaults.height)
+  .option('--height <n>', 'Window height (int)', myParseInt, windowState.height)
   .option('--disable-hardware', 'Disable hardware acceleration', false)
   .option('--show-fps', 'Display the Chrome FPS counter', false)
   .option('--profile <s>', 'Create a profile (string)')
-  .option('--width <n>', 'Window width (int)', myParseInt, defaults.width);
+  .option('--width <n>', 'Window width (int)', myParseInt, windowState.width);
 // Parse the arguments
 program.parse(args);
 // Get the results
@@ -190,7 +185,14 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  store.clear();
+  windowStore.default();
+  bookmarkStore.clear();
+
+  // clear the caches, useful to remove password cookies
+  const session = electron.session.defaultSession;
+  session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+    console.log('Electron>	Caches cleared');
+  });
 }
 
 if (process.platform === 'win32') {
@@ -214,10 +216,6 @@ if (process.platform === 'win32') {
 //   const screenAccess = electron.systemPreferences.getMediaAccessStatus('screen');
 //   console.log('Screen access', screenAccess);
 // }
-
-// SAGE2 Google maps APIKEY
-// needed for user geo-location service
-process.env.GOOGLE_API_KEY = 'AIzaSyANE6rJqcfc7jH-bDOwhXQZK_oYq9BWRDY';
 
 // As of 2019, video elements with sound will no longer autoplay unless user interacted with page.
 // switch found from: https://github.com/electron/electron/issues/13525/
@@ -266,23 +264,32 @@ if (commander.debug) {
 app.setAboutPanelOptions({
   applicationName: 'SAGE3',
   applicationVersion: version,
-  copyright: 'Copyright © 2021 Project SAGE3',
+  copyright: 'Copyright © 2023 Project SAGE3',
   website: 'https://www.sage3.app/',
 });
-
-// Filename of favorite sites file
-const favorites_file_name = 'sage3_favorite_sites.json';
-// Object containing list of favorites sites
-var favorites = {
-  list: [],
-};
 
 /**
  * Keep a global reference of the window object, if you don't, the window will
  * be closed automatically when the JavaScript object is garbage collected.
  */
 var mainWindow;
-var remoteSiteInputWindow;
+
+function showHidingWindow() {
+  const res = electron.dialog.showMessageBoxSync(mainWindow, {
+    title: 'Notification from SAGE3',
+    message: 'Do you want to hide the SAGE3 window ?',
+    detail: 'SAGE3 will keep running in the menu bar during screen sharing.',
+    type: 'question',
+    defaultId: 0,
+    cancelId: 1,
+    // icon: path.join(__dirname, 'images/s3.png'),
+    buttons: ['OK', 'Cancel'],
+  });
+  if (!res) {
+    // Hide the window
+    mainWindow.blur();
+  }
+}
 
 /**
  * Opens a window.
@@ -316,74 +323,6 @@ function openWindow() {
 }
 
 /**
- * Gets the windows path to a temporary folder to store data
- *
- * @return {String} the path
- */
-function getWindowPath() {
-  return join(homedir(), 'AppData');
-}
-
-/**
- * Gets the Mac path to a temporary folder to store data (/tmp)
- *
- * @return {String} the path
- */
-function getMacPath() {
-  return '/tmp';
-}
-
-/**
- * Gets the Linux path to a temporary folder to store data
- *
- * @return {String} the path
- */
-function getLinuxPath() {
-  return join(homedir(), '.config');
-}
-
-/**
- * In case the platform is among the known ones (for the potential
- * future os platforms)
- *
- * @return {String} the path
- */
-function getFallback() {
-  if (platform().startsWith('win')) {
-    return getWindowPath();
-  }
-  return getLinuxPath();
-}
-
-/**
- * Creates the path to the file in a platform-independent way
- *
- * @param  {String} file_name the name of the file
- * @return the path to the file
- */
-function getAppDataPath(file_name) {
-  let appDataPath = '';
-  switch (platform()) {
-    case 'win32':
-      appDataPath = getWindowPath();
-      break;
-    case 'darwin':
-      appDataPath = getMacPath();
-      break;
-    case 'linux':
-      appDataPath = getLinuxPath();
-      break;
-    default:
-      appDataPath = getFallback();
-  }
-  if (file_name === undefined) {
-    return appDataPath;
-  } else {
-    return join(appDataPath, file_name);
-  }
-}
-
-/**
  * Disable geolocation because of Electron v13 bug
  * @param {any} session
  */
@@ -406,50 +345,84 @@ function disableGeolocation(session) {
   }
 }
 
-/**
- * Take a Screenshot of the visible part of the window
- */
-function TakeScreenshot() {
-  if (mainWindow) {
-    // Capture the Electron window
-    mainWindow.capturePage().then(function (img) {
-      // convert to JPEG
-      const imageData = img.toJPEG(90);
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = now.getMonth() + 1;
-      const day = now.getDate();
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const second = now.getSeconds();
-      const dt = `-${year}-${month}-${day}-${hour}-${minute}-${second}`;
-      // dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-      const options = {
-        title: 'Save current board as a JPEG file',
-        defaultPath: app.getPath('downloads') + '/screenshot' + dt + '.jpg',
-      };
-      // Open the save dialog
-      electron.dialog.showSaveDialog(mainWindow, options).then((obj) => {
-        if (!obj.canceled) {
-          // write the file
-          fs.writeFile(obj.filePath.toString(), imageData, 'base64', function (err) {
-            if (err) throw err;
-          });
-        }
-      });
+// Size and position of the window
+let state = {};
+const defaultSize = {
+  frame: !commander.no_decoration,
+  fullscreen: commander.fullscreen,
+  x: commander.xorigin,
+  y: commander.yorigin,
+  width: commander.width,
+  height: commander.height,
+};
+
+// Function to save the state in the data store
+const saveState = async () => {
+  if (!mainWindow.isMinimized()) {
+    Object.assign(state, getCurrentPosition());
+  }
+  state.fullscreen = mainWindow.isFullScreen();
+
+  // Save the board URL in a format that can be used to re-enter the board
+  var boardURL = mainWindow.webContents.getURL();
+  boardURL = boardURL.replace('/board/', '/enter/');
+  state.server = boardURL;
+
+  // Save the state
+  windowStore.setWindow(state);
+
+  if (commander.clear) {
+    console.log('Preferences> clear all');
+    windowStore.default();
+    bookmarkStore.clear();
+
+    // clear the caches, useful to remove password cookies
+    const session = electron.session.defaultSession;
+    session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+      console.log('Electron>	Caches cleared');
     });
   }
-}
+};
+
+// Function to get values back from the store
+const restore = () => windowStore.getWindow();
+// Function to get the current position and size
+const getCurrentPosition = () => {
+  const position = mainWindow.getPosition();
+  const size = mainWindow.getSize();
+  return {
+    x: position[0],
+    y: position[1],
+    width: size[0],
+    height: size[1],
+  };
+};
+
+// Function to check if window is within some bounds
+const windowWithinBounds = (windowState, bounds) => {
+  return (
+    windowState.x >= bounds.x &&
+    windowState.y >= bounds.y &&
+    windowState.x + windowState.width <= bounds.x + bounds.width &&
+    windowState.y + windowState.height <= bounds.y + bounds.height
+  );
+};
+
+// Function to return default values: center of primary screen
+const resetToDefaults = () => {
+  const bounds = electron.screen.getPrimaryDisplay().bounds;
+  return Object.assign({}, defaultSize, {
+    x: (bounds.width - defaultSize.width) / 2,
+    y: (bounds.height - defaultSize.height) / 2,
+  });
+};
+
 /**
  * Creates an electron window.
  *
  * @method     createWindow
  */
 function createWindow() {
-  // Build a menu
-  var menu = buildMenu();
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-
   // Create option data structure
   var options = {
     width: commander.width,
@@ -473,59 +446,18 @@ function createWindow() {
       // nodeIntegration: true,
       // contextIsolation: false,
       nodeIntegration: true,
-      contextIsolation: false,
+      contextIsolation: true,
       webSecurity: true,
       backgroundThrottling: false,
       allowDisplayingInsecureContent: commander.allowDisplayingInsecure,
       allowRunningInsecureContent: commander.allowRunningInsecure,
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
-      // Hack to preload jquery for broken sites
+      // Hack to preload some js
       preload: path.resolve(path.join(__dirname, 'preload.js')),
     },
   };
 
-  // Size and position of the window
-  let state = {};
-  const defaultSize = {
-    frame: !commander.no_decoration,
-    fullscreen: commander.fullscreen,
-    x: commander.xorigin,
-    y: commander.yorigin,
-    width: commander.width,
-    height: commander.height,
-  };
-
-  // Function to get values back from the store
-  const restore = () => store.get('window-state', defaultSize);
-  // Function to get the current position and size
-  const getCurrentPosition = () => {
-    const position = mainWindow.getPosition();
-    const size = mainWindow.getSize();
-    return {
-      x: position[0],
-      y: position[1],
-      width: size[0],
-      height: size[1],
-    };
-  };
-  // Function to check if window is within some bounds
-  const windowWithinBounds = (windowState, bounds) => {
-    return (
-      windowState.x >= bounds.x &&
-      windowState.y >= bounds.y &&
-      windowState.x + windowState.width <= bounds.x + bounds.width &&
-      windowState.y + windowState.height <= bounds.y + bounds.height
-    );
-  };
-  // Function to return default values: center of primary screen
-  const resetToDefaults = () => {
-    const bounds = electron.screen.getPrimaryDisplay().bounds;
-    return Object.assign({}, defaultSize, {
-      x: (bounds.width - defaultSize.width) / 2,
-      y: (bounds.height - defaultSize.height) / 2,
-    });
-  };
   // Function to calculate if window is visible
   const ensureVisibleOnSomeDisplay = (windowState) => {
     const visible = electron.screen.getAllDisplays().some((display) => {
@@ -538,19 +470,7 @@ function createWindow() {
     }
     return windowState;
   };
-  // Function to save the state in the data store
-  const saveState = () => {
-    if (!mainWindow.isMinimized()) {
-      Object.assign(state, getCurrentPosition());
-    }
-    state.fullscreen = mainWindow.isFullScreen();
-    state.server = mainWindow.webContents.getURL();
-    store.set('window-state', state);
-    if (commander.clear) {
-      console.log('Preferences> clear all');
-      store.clear();
-    }
-  };
+
   // Restore the state
   state = ensureVisibleOnSomeDisplay(restore());
 
@@ -578,12 +498,15 @@ function createWindow() {
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
 
-  // Build a warning view in case of load failing
-  let warningView = new electron.BrowserView({
-    webPreferences: { nodeIntegration: false },
-  });
-  warningView.setAutoResize({ width: true, height: true });
-  warningView.webContents.loadFile('./warning.html');
+  // Build a menu
+  buildMenu(mainWindow, commander);
+
+  // Analytics on start
+  if (!commander.server.includes('localhost') && analytics_enabled) {
+    analyticsOnStart(userId, state.server);
+  } else {
+    analytics_enabled = false;
+  }
 
   if (commander.cache) {
     // clear the caches, useful to remove password cookies
@@ -631,14 +554,28 @@ function createWindow() {
       if (state === 'completed') {
         // Send a message to the renderer process to show a notification
         mainWindow.webContents.send('download', {
-          filename: evt.sender.getFilename(),
-          bytes: evt.sender.getTotalBytes(),
+          filename: item.getFilename(),
+          bytes: item.getTotalBytes(),
           completed: true,
         });
       } else {
         console.log(`Download failed: ${state}`);
       }
     });
+  });
+
+  ipcMain.on('store-interface', (event, args) => {
+    const request = args.request;
+    switch (request) {
+      case 'redirect':
+        const url = args.url;
+        if (!checkServerIsSage(url)) return;
+        mainWindow.loadURL(url);
+        break;
+      case 'get-list':
+        updateLandingPage(mainWindow);
+        break;
+    }
   });
 
   // Mute the audio (just in case)
@@ -650,7 +587,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  mainWindow.on('close', saveState);
+  // mainWindow.on('close', saveState);
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     // Dereference the window object
@@ -664,6 +601,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
+  // mainWindow.on('blur', function () {
+  //   console.log('Electron>	Window blurred');
+  // });
+  // mainWindow.on('focus', function () {
+  //   console.log('Electron>	Window show');
+  // });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {
@@ -675,7 +618,7 @@ function createWindow() {
     if (firstRun) {
       const currentURL = mainWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
-      updater.checkForUpdates(parsedURL.origin, false);
+      // updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
@@ -694,28 +637,8 @@ function createWindow() {
   // If the window opens before the server is ready,
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
-  let tries = 4;
   mainWindow.webContents.on('did-fail-load', function () {
-    // Get the current window size
-    const [width, height] = mainWindow.getContentSize();
-    // Show the warning view
-    mainWindow.setBrowserView(warningView);
-    warningView.setBounds({ x: 0, y: 0, width, height });
-
-    // Since the window has buttons, I don't think we should try to reload the page anymore. People get stuck in a infiinite loop
-    // // Retry to load the original URL
-    // if (tries) {
-    //   setTimeout(function () {
-    //     tries--;
-    //     mainWindow.reload();
-    //   }, 1000);
-    // } else {
-    //   // When failed to load, redirect to the main server
-    //   mainWindow.loadURL('https://sage3.app/');
-    //   mainWindow.setBrowserView(null);
-    //   // Reset the counter
-    //   tries = 4;
-    // }
+    mainWindow.loadFile('./html/landing.html');
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -739,34 +662,44 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    const sender = event.sender;
-    sender.on('ipc-message', function (evt, channel, args) {
-      console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      // console.log('Webview>    message', channel, args);
+    ipcMain.on('streamview_stop', (e, args) => {
       // Message for the webview pixel streaming
-      if (channel === 'streamview') {
-        const viewContent = electron.webContents.fromId(args.id);
-        viewContent.beginFrameSubscription(true, (image, dirty) => {
-          let dataenc;
-          let neww, newh;
-          const devicePixelRatio = 2;
-          const quality = 50;
-          if (devicePixelRatio > 1) {
-            neww = dirty.width / devicePixelRatio;
-            newh = dirty.height / devicePixelRatio;
-            const resizedimage = image.resize({ width: neww, height: newh });
-            dataenc = resizedimage.toJPEG(quality);
-          } else {
-            dataenc = image.toJPEG(quality);
-            neww = dirty.width;
-            newh = dirty.height;
-          }
-          evt.reply('paint', {
-            buf: dataenc.toString('base64'),
-            dirty: { ...dirty, width: neww, height: newh },
-          });
+      const viewContent = electron.webContents.fromId(args.id);
+      if (viewContent) viewContent.endFrameSubscription();
+    });
+    ipcMain.on('streamview', (e, args) => {
+      // console.log('Webview>    message', channel, args);
+      // console.log('Webview> IPC Message', args.id, args.width, args.height);
+
+      // Message for the webview pixel streaming
+      const viewContent = electron.webContents.fromId(args.id);
+
+      viewContent.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: args.width, height: args.height },
+      });
+
+      viewContent.beginFrameSubscription(false, (image, dirty) => {
+        let dataenc;
+        let neww, newh;
+        const devicePixelRatio = 2;
+        const quality = 60;
+        if (devicePixelRatio > 1) {
+          neww = dirty.width / devicePixelRatio;
+          newh = dirty.height / devicePixelRatio;
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
+          dataenc = resizedimage.toJPEG(quality);
+        } else {
+          dataenc = image.toJPEG(quality);
+          neww = dirty.width;
+          newh = dirty.height;
+        }
+        mainWindow.webContents.send('paint', {
+          id: args.id,
+          buf: dataenc.toString('base64'),
+          dirty: { ...dirty, width: neww, height: newh },
         });
-      }
+      });
     });
 
     // Override the UserAgent variable: make websites behave better
@@ -777,11 +710,36 @@ function createWindow() {
 
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
-      contents.on('new-window', function (newWindowEvent, url) {
-        console.log('block');
-        newWindowEvent.preventDefault();
+      // OLD API
+      // contents.on('new-window', function (newWindowEvent, url) {
+      //   console.log('Webview> New window', url);
+      //   newWindowEvent.preventDefault();
+      // });
+
+      // NEW API
+      contents.on('dom-ready', () => {
+        // Block creating new windows from webviews
+        contents.setWindowOpenHandler((details) => {
+          // tell the renderer to create another webview
+          mainWindow.webContents.send('open-webview', { url: details.url });
+          // do nothing in the main process
+          return { action: 'deny' };
+        });
       });
+
+      // Block automatic download from webviews (seems to block all downloads)
+      // contents.session.on('will-download', (event, item, webContents) => {
+      //   event.preventDefault();
+      // });
     }
+  });
+
+  // Handle the new window event now
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    if (details.frameName === 'sage3') {
+      shell.openExternal(details.url);
+    }
+    return { action: 'deny' };
   });
 
   // New webview added
@@ -792,12 +750,6 @@ function createWindow() {
   // Block the zoom limits
   // i.e. pinch-to-zoom events now scale the board like a scroll event
   mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
-
-  // Catch the close connection page event
-  ipcMain.on('close-connect-page', (e, value) => {
-    // remoteSiteInputWindow.close();
-    // remoteSiteInputWindow = undefined;
-  });
 
   // Request from the renderer process
   ipcMain.on('asynchronous-message', (event, arg) => {
@@ -812,11 +764,7 @@ function createWindow() {
     currentServer = parsedURL.host;
     // Update current domain
     currentDomain = parsedURL.hostname;
-    // Close input window
-    // if (remoteSiteInputWindow) {
-    //   remoteSiteInputWindow.close();
-    //   remoteSiteInputWindow = undefined;
-    // }
+
     if (mainWindow) {
       mainWindow.loadURL(location);
     }
@@ -855,9 +803,46 @@ function createWindow() {
     });
   });
 
+  ipcMain.on('load-landing', () => {
+    mainWindow.loadFile('./html/landing.html');
+  });
+
+  // Request from the renderer process
+  ipcMain.on('hide-main-window', () => {
+    showHidingWindow();
+  });
+  ipcMain.on('show-main-window', () => {
+    mainWindow.show();
+  });
+  ipcMain.on('request-current-display', () => {
+    const winBounds = mainWindow.getBounds();
+    const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
+    mainWindow.webContents.send('current-display', whichScreen.id);
+  });
+
+  // Open external links in the default browser
+  ipcMain.on('open-external-url', (event, arg) => {
+    if (arg && arg.url) shell.openExternal(arg.url);
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
-    TakeScreenshot();
+    takeScreenshot(mainWindow);
+  });
+
+  // Request from user for Client Info
+  ipcMain.on('client-info-request', () => {
+    const info = {
+      version: version,
+    };
+    mainWindow.webContents.send('client-info-response', info);
+  });
+
+  // Request from user to check for updates to the client
+  ipcMain.on('client-update-check', () => {
+    const currentURL = mainWindow.webContents.getURL();
+    const parsedURL = new URL(currentURL);
+    // updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process
@@ -868,16 +853,6 @@ function createWindow() {
   //   //   console.log('web>', web.id, web);
   //   // });
   // });
-}
-
-/**
- * Writes favorites in a persistent way on local machine
- *
- * @method writeFavoritesOnFile
- * @param {Object} favorites_obj the object containing the list of favorites
- */
-function writeFavoritesOnFile(favorites_obj) {
-  fs.writeFile(getAppDataPath(favorites_file_name), JSON.stringify(favorites_obj, null, 4), 'utf8', () => {});
 }
 
 /**
@@ -954,8 +929,12 @@ if (process.platform === 'win32') {
 // Protocol handler for osx while application is not running in the background.
 app.on('open-url', (event, url) => {
   event.preventDefault();
+  // Parsing the URL to find if there is a port number
+  // Asuming that if there is a port number, it is a local server with http
+  // Otherwise, it is a remote server with https
+  const parsedURL = new URL(url);
   // make it a valid URL
-  const newurl = url.replace('sage3://', 'https://');
+  const newurl = url.replace('sage3://', parsedURL.port ? 'http://' : 'https://');
   if (mainWindow) {
     mainWindow.loadURL(newurl);
   } else {
@@ -986,360 +965,18 @@ app.on('activate', function () {
   }
 });
 
+app.on('before-quit', async function (event) {
+  event.preventDefault();
+  saveState();
+  // Analytics on stop
+  if (analytics_enabled) {
+    await analyticsOnStop(userId);
+  }
+  process.exit(0);
+});
+
 /**
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
  */
 app.on('ready', createWindow);
-
-/**
- * Utiltiy function to parse command line arguments as number
- *
- * @method     myParseInt
- * @param      {String}    str           the argument
- * @param      {Number}    defaultValue  The default value
- * @return     {Number}    return an numerical value
- */
-function myParseInt(str, defaultValue) {
-  var int = parseInt(str, 10);
-  if (typeof int == 'number') {
-    return int;
-  }
-  return defaultValue;
-}
-
-/**
- * Opens a SAGE2 interface in browser.
- *
- * @method     openInterfaceInBrowser
- */
-function openInterfaceInBrowser() {
-  // function to start a process
-  var exec = require('child_process').exec;
-  // build the URL
-  let uiURL = 'https://' + currentServer + '/index.html';
-  // How to open an URL on each platform
-  let opener;
-
-  switch (process.platform) {
-    case 'darwin':
-      opener = 'open -a "Google Chrome"';
-      break;
-    case 'win32':
-      opener = 'start "" "Chrome"';
-      break;
-    default:
-      opener = 'xdg-open';
-      break;
-  }
-  // Lets go
-  exec(opener + ' "' + uiURL + '"', (error, stdout, stderr) => {
-    if (error) {
-      // In case of error, use the OS default app
-      electron.shell.openExternal(uiURL);
-    }
-  });
-}
-
-function buildMenu() {
-  const template = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Go to Chicago server',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('https://sage3.app/');
-            }
-          },
-        },
-        {
-          label: 'Go to Hawaii server',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('https://manoa.sage3.app');
-            }
-          },
-        },
-        {
-          label: 'Go to Development server',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('https://mini.sage3.app');
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Check for Updates...',
-          // accelerator: 'CommandOrControl+U',
-          click() {
-            if (mainWindow) {
-              const currentURL = mainWindow.webContents.getURL();
-              const parsedURL = new URL(currentURL);
-              updater.checkForUpdates(parsedURL.origin, true);
-            }
-          },
-        },
-        {
-          label: 'Clear Preferences',
-          click: function () {
-            // clear on quit
-            commander.clear = true;
-          },
-        },
-        {
-          label: 'Take Screenshot',
-          click() {
-            TakeScreenshot();
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Quit',
-          accelerator: 'CommandOrControl+Q',
-          click: function () {
-            app.quit();
-          },
-        },
-      ],
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        {
-          label: 'Undo',
-          accelerator: 'CommandOrControl+Z',
-          role: 'undo',
-        },
-        {
-          label: 'Redo',
-          accelerator: 'Shift+CommandOrControl+Z',
-          role: 'redo',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Cut',
-          accelerator: 'CommandOrControl+X',
-          role: 'cut',
-        },
-        {
-          label: 'Copy',
-          accelerator: 'CommandOrControl+C',
-          role: 'copy',
-        },
-        {
-          label: 'Paste',
-          accelerator: 'CommandOrControl+V',
-          role: 'paste',
-        },
-        {
-          label: 'Select All',
-          accelerator: 'CommandOrControl+A',
-          role: 'selectall',
-        },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        {
-          label: 'Reload Site',
-          accelerator: 'CommandOrControl+R',
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              focusedWindow.reload();
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Actual Size',
-          accelerator: 'CommandOrControl+0',
-          // role: 'resetZoom',
-          click() {
-            if (mainWindow) {
-              mainWindow.webContents.setZoomLevel(0);
-            }
-          },
-        },
-        {
-          label: 'Zoom In',
-          accelerator: 'CommandOrControl+=',
-          // role: 'zoomIn',
-          click() {
-            if (mainWindow) {
-              const zl = mainWindow.webContents.getZoomLevel();
-              if (zl < 10) {
-                mainWindow.webContents.setZoomLevel(zl + 1);
-              }
-            }
-          },
-        },
-        {
-          label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-',
-          // role: 'zoomOut',
-          click() {
-            if (mainWindow) {
-              const zl = mainWindow.webContents.getZoomLevel();
-              if (zl > -8) {
-                mainWindow.webContents.setZoomLevel(zl - 1);
-              }
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Toggle Full Screen',
-          accelerator: (function () {
-            if (process.platform === 'darwin') {
-              return 'Ctrl+Command+F';
-            } else {
-              return 'F11';
-            }
-          })(),
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              // focusedWindow.fullScreenable = !focusedWindow.isFullScreen();
-              focusedWindow.fullScreenable = true;
-              if (focusedWindow.isFullScreen()) {
-                focusedWindow.setFullScreen(false);
-                mainWindow.setMenuBarVisibility(true);
-              } else {
-                focusedWindow.setFullScreen(true);
-                mainWindow.setMenuBarVisibility(false);
-              }
-            }
-          },
-        },
-        {
-          label: 'Toggle Developer Tools',
-          accelerator: (function () {
-            if (process.platform === 'darwin') {
-              return 'Alt+Command+I';
-            } else {
-              return 'Ctrl+Shift+I';
-            }
-          })(),
-          click: function (item, focusedWindow) {
-            if (focusedWindow) {
-              focusedWindow.toggleDevTools();
-            }
-          },
-        },
-        {
-          label: 'Open local server (http://localhost:4200)',
-          click() {
-            if (mainWindow) {
-              mainWindow.loadURL('http://localhost:4200/');
-            }
-          },
-        },
-      ],
-    },
-    {
-      label: 'Window',
-      role: 'window',
-      submenu: [
-        {
-          label: 'Minimize',
-          accelerator: 'CommandOrControl+M',
-          role: 'minimize',
-        },
-        {
-          label: 'Close',
-          accelerator: 'CommandOrControl+W',
-          role: 'close',
-        },
-      ],
-    },
-    {
-      label: 'Help',
-      role: 'help',
-      submenu: [
-        {
-          label: 'Learn More',
-          click: function () {
-            shell.openExternal('http://sage3.sagecommons.org/');
-          },
-        },
-      ],
-    },
-  ];
-
-  if (process.platform === 'darwin') {
-    const name = app.name;
-    template.unshift({
-      label: name,
-      submenu: [
-        {
-          label: 'About ' + name,
-          role: 'about',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Services',
-          role: 'services',
-          submenu: [],
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Hide ' + name,
-          accelerator: 'Command+H',
-          role: 'hide',
-        },
-        {
-          label: 'Hide Others',
-          accelerator: 'Command+Shift+H',
-          role: 'hideothers',
-        },
-        {
-          label: 'Show All',
-          role: 'unhide',
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Quit',
-          accelerator: 'Command+Q',
-          click: function () {
-            app.quit();
-          },
-        },
-      ],
-    });
-    const windowMenu = template.find(function (m) {
-      return m.role === 'window';
-    });
-    if (windowMenu) {
-      windowMenu.submenu.push(
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Bring All to Front',
-          role: 'front',
-        }
-      );
-    }
-  }
-
-  return template;
-}

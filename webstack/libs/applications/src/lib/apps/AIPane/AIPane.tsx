@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import {
@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 
 import { FaPlay } from 'react-icons/fa';
-import { BiErrorCircle, BiRun, BiEnvelope } from 'react-icons/bi';
+import { BiErrorCircle, BiRun } from 'react-icons/bi';
 import { HiMail } from 'react-icons/hi';
 import { FiChevronDown } from 'react-icons/fi';
 
@@ -42,11 +42,6 @@ import './styles.css';
 import { useEffect, useState, useRef } from 'react';
 
 import { v4 as getUUID } from 'uuid';
-
-type UpdateFunc = (id: string, state: Partial<AppState>) => Promise<void>;
-
-// Heatbeat copied from KernelDashboard
-// const heartBeatTimeCheck = 1000 * 10; // 1 min
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -124,7 +119,6 @@ function AppComponent(props: App): JSX.Element {
     const yDiff = props.data.position.y - prevY.current;
 
     for (const app of boardApps) {
-      const client = { [app._id]: app.data.type };
       if (Object.keys(hostedCopy).includes(app._id)) {
         update(app._id, {
           position: {
@@ -145,21 +139,6 @@ function AppComponent(props: App): JSX.Element {
       updateState(props._id, { supportedTasks: {} });
     }
   }, [Object.keys(s.hostedApps).length]);
-
-  // Heartbeat checker copied from KernelDashboard
-  // Interval to check if the proxy is still alive
-  // useEffect(() => {
-  //   const checkHeartBeat = setInterval(async () => {
-  //     const response = await fetch('/api/time');
-  //     const time = await response.json();
-  //     const delta = Math.abs(time.epoch - s.lastHeartBeat);
-  //     console.log('Heartbeat Check', time.epoch, s.lastHeartBeat, delta, s.runStatus);
-  //     if (delta > heartBeatTimeCheck && s.runStatus) {
-  //       updateState(props._id, {runStatus: false});
-  //     }
-  //   }, 15 * 1000); // 15 Seconds
-  //   return () => clearInterval(checkHeartBeat);
-  // }, [s.lastHeartBeat, s.runStatus]);
 
   // If more than 1 app added to pane, checks that all hosted apps are of the same type
   // @return error and disables pane if there is more than 1 hosted app types.
@@ -218,8 +197,8 @@ function AppComponent(props: App): JSX.Element {
               {checkAppType() === 0
                 ? 'Error. Unsupported file type'
                 : checkAppType() === 1
-                ? 'File type accepted'
-                : 'Error. More than 1 app type on board'}
+                  ? 'File type accepted'
+                  : 'Error. More than 1 app type on board'}
             </PopoverBody>
 
             {Object.keys(s.messages)?.map((message: string) => (
@@ -320,7 +299,6 @@ function ToolbarComponent(props: App): JSX.Element {
           <IconButton
             aria-label="Run AI"
             icon={s.runStatus === 0 ? <FaPlay /> : s.runStatus === 1 ? <BiRun /> : <BiErrorCircle />}
-            _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}
             isDisabled={aiModel === 'Models' || s.runStatus !== 0 ? true : false}
             onClick={() => {
               runFunction(aiModel);
@@ -332,4 +310,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

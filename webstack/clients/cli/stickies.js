@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -18,6 +18,10 @@
 import * as fsModule from 'fs';
 // Declare fs with Promises
 const fs = fsModule.promises;
+import { v4 } from 'uuid';
+
+import * as dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first');
 
 // parsing command-line arguments
 import * as commander from 'commander';
@@ -26,10 +30,13 @@ import * as commander from 'commander';
 const pkg = JSON.parse(await fs.readFile(new URL('./package.json', import.meta.url)));
 const version = pkg.version;
 
-// HTTP protocol
-import { loginGuestUser, getUserInfo, getInstance, getBoardsInfo } from './src/http_routes.js';
+// Some utitlity functions
+import { randomNumber, clamp } from './src/utils.js';
 // WS protocol
-import { socketConnection } from './src/socket_routes.js';
+import { loginJWT, loadToken } from './src/jwt_routes.js';
+import { boardConnect, boardDisconnect, socketConnectionJWT } from './src/socket_routes.js';
+
+import { faker } from '@faker-js/faker';
 
 /**
  * Setup the command line argument parsing (commander module)
@@ -39,11 +46,13 @@ var args = process.argv;
 // Generate the command line handler
 commander.program
   .version(version)
-  .option('-b, --board <n>', 'board id (int)', 0)
-  .option('-s, --server <s>', 'Server URL (string)', 'http://localhost:3333')
-  .option('-x, --positionx <n>', 'Position X (number)', 300)
-  .option('-y, --positiony <n>', 'Position Y (number)', 300)
-  .option('-t, --text <s>', 'Text (string)', 'Bla bla bla');
+  .option('-b, --board <s>', 'board id (string))')
+  .option('-m, --room <s>', 'room id (string))')
+  .option('-t, --timeout <n>', 'runtime in sec (number)', 10)
+  .option('-r, --rate <n>', 'framerate (number)', 2)
+  .option('-d, --delay <n>', 'delay between stickies in sec (number)', 2)
+  .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333')
+  .option('-e, --sensitivity <n>', 'sensitivity (number)', 5);
 
 // Parse the arguments
 commander.program.parse(args);
@@ -52,62 +61,100 @@ const params = commander.program.opts();
 
 console.log('CLI>', params);
 
+let myID;
+var FPS = params.rate;
+var updateRate = 1000 / FPS;
+
+const colors = ['green', 'blue', 'gray', 'orange', 'purple', 'yellow', 'red', 'cyan', 'teal', 'pink'];
+
+function createStickie(socket, roomId, boardId, title, x, y) {
+  console.log('CLI> create stickie', roomId, boardId, title, x, y);
+  const c = Math.floor(Math.random() * colors.length);
+  const text = faker.lorem.sentence();
+  const body = {
+    boardId: boardId,
+    dragging: false,
+    position: { x: x, y: y, z: 0 },
+    raised: true,
+    roomId: roomId,
+    rotation: { x: 0, y: 0, z: 0 },
+    size: { width: 400, height: 420, depth: 0 },
+    state: { text: text, fontSize: 36, color: colors[c], lock: false },
+    title: title,
+    type: 'Stickie',
+  };
+
+  socket.send(
+    JSON.stringify({
+      id: v4(),
+      route: '/api/apps/',
+      method: 'POST',
+      body: body,
+    })
+  );
+}
+
 async function start() {
-  // Login through HTTP
-  const cookies = await loginGuestUser(params.server);
-  console.log('CLI> Logged in');
+  // Test login through HTTP and set token to the axios instance
+  const token = loadToken('token.json');
+  console.log('JWT> got token');
 
-  // Get my own info: uid, name, email, color, emailVerified, profilePicture
-  const userData = await getUserInfo();
-  console.log('CLI> user:', userData.name, userData.color, userData.id);
-  // save my ID for later
-  const myID = userData.id;
+  const me = await loginJWT('http://' + params.server, token);
+  console.log('CLI> user', me.user);
+  myID = me.user.id;
 
-  // board id derived from index parameter (default 0)
-  let boardId;
-
-  // Get some data
-  const boards = await getBoardsInfo();
-  if (boards) {
-    console.log('CLI> boards:', boards);
-    const aboard = boards[params.board];
-    boardId = aboard.id;
-    console.log('My board>', boardId);
-  }
+  // board name from command argument (or board0)
+  const boardId = params.board;
+  const roomId = params.room;
 
   // Create a websocket with the auth cookies
-  const socket = socketConnection(params.server, cookies);
+  const socket = socketConnectionJWT('ws://' + params.server + '/api', token);
 
   // When socket connected
-  socket.on('connect', () => {
+  socket.on('open', () => {
     console.log('socket> connected');
 
-    const x = parseInt(params.positionx);
-    const y = parseInt(params.positiony);
-    const stickieText = params.text;
+    // Default size of the board
+    const totalWidth = 3000;
+    const totalHeight = 3000;
 
-    getInstance()
-      .request({
-        method: 'post',
-        url: '/api/boards/act/' + boardId,
-        baseURL: params.server,
-        withCredentials: true,
-        data: {
-          type: 'create',
-          appName: 'stickies',
-          id: '',
-          position: { x: x, y: y },
-          optionalData: { value: { text: stickieText, color: '#ffff97' } },
-        },
-      })
-      .then(() => {
-        // Wait 1 sec and leave
-        setTimeout(() => {
-          console.log('CLI> All done');
-          // and quit
-          process.exit(1);
-        }, 1000);
-      });
+    // Random position within a safe margin
+    var px = randomNumber(1500000, 1501000);
+    var py = randomNumber(1500000, 1501000);
+    var incx = randomNumber(1, 2) % 2 ? 1 : -1;
+    var incy = randomNumber(1, 2) % 2 ? 1 : -1;
+    var sensitivity = params.sensitivity;
+
+    // Set a limit on runtime
+    setTimeout(() => {
+      console.log('CLI> done');
+      // Leave the board
+      boardDisconnect(socket, boardId);
+      // and quit
+      process.exit(1);
+    }, params.timeout * 1000);
+
+    // Calculate cursor position
+    setInterval(() => {
+      // step between 0 and 10 pixels
+      const movementX = randomNumber(1, 20);
+      const movementY = randomNumber(1, 20);
+      // scaled up for wall size
+      const dx = Math.round(movementX * sensitivity);
+      const dy = Math.round(movementY * sensitivity);
+      // detect wall size limits and reverse course
+      if (px >= totalWidth + 1500000) incx *= -1;
+      if (px <= 1500000) incx *= -1;
+      if (py >= totalHeight + 1500000) incy *= -1;
+      if (py <= 1500000) incy *= -1;
+      // update global position
+      px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
+      py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
+    }, updateRate);
+
+    setInterval(() => {
+      createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
+    }, params.delay * 1000);
   });
 }
 

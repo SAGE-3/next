@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -13,26 +13,29 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
 import { AddressInfo } from 'net';
+// Nodejs crypto module to analyze the certificate
+import * as crypto from 'crypto';
+// Date management
+import { formatDistance } from 'date-fns';
 
 // Express web server framework
 import * as express from 'express';
 
 // Web server configuraton type
-import { serverConfiguration } from '@sage3/shared/types';
+import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
  * Load SSL keys
  *
  * @export
- * @param {serverConfiguration} config
+ * @param {ServerConfiguration} config
  * @returns {https.ServerOptions}
  */
-export function loadCredentials(config: serverConfiguration): https.ServerOptions {
+export function loadCredentials(config: ServerConfiguration): https.ServerOptions {
   // SSL certificate imports for HTTPS
   const basePath = path.join(config.root, 'keys');
   const privateKeyFile = path.join(basePath, config.ssl.certificateKeyFile);
   const certificateFile = path.join(basePath, config.ssl.certificateFile);
-  const caFile = path.join(basePath, config.ssl.certificateChainFile);
   try {
     fs.accessSync(privateKeyFile, fs.constants.R_OK);
   } catch (err) {
@@ -43,21 +46,64 @@ export function loadCredentials(config: serverConfiguration): https.ServerOption
   } catch (err) {
     throw new Error(`Certificate file ${certificateFile} not found or unreadable.`);
   }
-  try {
-    fs.accessSync(caFile, fs.constants.R_OK);
-  } catch (err) {
-    throw new Error(`Certificate file ${caFile} not found or unreadable.`);
-  }
   // load all the certificates
   const privateKey = fs.readFileSync(privateKeyFile, 'utf8');
-  const certificate = fs.readFileSync(certificateFile, 'utf8');
-  const ca = fs.readFileSync(caFile).toString();
+  const certificates = fs.readFileSync(certificateFile, 'utf8');
+
+  console.log('CERT> =====================================');
+
+  // Split the certificate chain
+  const listCERTS: Array<string> = [];
+  const lines = certificates.toString().split('\n');
+  let tempcert = [];
+  for (const ln of lines) {
+    if (ln) {
+      tempcert.push(ln);
+      if (ln.includes('END CERTIFICATE')) {
+        const acert = tempcert.join('\n');
+        listCERTS.push(acert);
+        tempcert = [];
+      }
+    }
+  }
+  console.log('CERT> chain length:', listCERTS.length);
+
+  // Analyze the certificates (array of certs)
+  for (let idx = 0; idx < listCERTS.length; idx++) {
+    // Get the next one
+    const c = listCERTS[idx];
+    // Build a cert object
+    const acert = new crypto.X509Certificate(c);
+    const subject = acert.subject.replaceAll('\n', '-');
+    console.log('CERT> subject', subject);
+    const issuer = acert.issuer.replaceAll('\n', '-');
+    console.log('CERT> issuer', issuer);
+    if (acert.infoAccess) {
+      const infoAccess = acert.infoAccess.replaceAll('\n', '-');
+      console.log('CERT> infoAccess', infoAccess);
+    }
+    // Show the validity period
+    const dateFrom = new Date(acert.validFrom).toLocaleDateString();
+    const validTo = new Date(acert.validTo).toLocaleDateString();
+    const expires = formatDistance(new Date(acert.validTo), new Date(), { addSuffix: true });
+    console.log('CERT> Valid: from->', dateFrom, '-- to->', validTo, '-- Expires->', expires);
+
+    // First one should be the host certificate
+    if (idx === 0) {
+      // Check the consistency of the certificate with the private key
+      const pubKeyObject = crypto.createPrivateKey({ key: privateKey, format: 'pem' });
+      const valid = acert.checkPrivateKey(pubKeyObject);
+      console.log('CERT> Is consistent with private key', valid);
+    }
+  }
+  console.log('CERT> =====================================');
+
   // Build an http server option structure
   const credentials = {
     // Keys
     key: privateKey,
-    cert: certificate,
-    ca: ca,
+    cert: certificates,
+    // ca: ca,
     // Control the supported version of TLS
     minVersion: config.tlsVersion,
     maxVersion: config.tlsVersion,

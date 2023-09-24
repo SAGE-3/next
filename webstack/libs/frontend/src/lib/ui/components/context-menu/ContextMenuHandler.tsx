@@ -1,12 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
-const longPressDuration = 610;
+const longPressDuration = 500;
 
 export default class ContextMenuHandler {
   longPressCountdown: number | undefined;
@@ -20,7 +20,6 @@ export default class ContextMenuHandler {
   }
 
   onTouchStart = (e: any) => {
-    // console.log('touchstart');
     this.contextMenuPossible = true;
     this.callback(e.type, e);
     this.longPressCountdown = window.setTimeout(() => {
@@ -30,25 +29,21 @@ export default class ContextMenuHandler {
   };
 
   onTouchMove = (_e: any) => {
-    // console.log('touchmove');
     window.clearTimeout(this.longPressCountdown);
   };
 
   onTouchCancel = (_e: any) => {
-    // console.log('touchcancel');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
   };
 
   onTouchEnd = (e: any) => {
-    // console.log('touchend');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
     this.callback(e.type, e);
   };
 
   onContextMenu = (e: any) => {
-    // console.log('contextmenu');
     this.contextMenuPossible = false;
     window.clearTimeout(this.longPressCountdown);
     this.callback("contextmenu", e);

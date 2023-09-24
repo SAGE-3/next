@@ -1,26 +1,36 @@
 {
   "/api": {
-    "target": "http://localhost:3333",
+    "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
   },
   "/auth": {
-    "target": "http://localhost:3333",
+    "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
   },
   "/yjs": {
-    "target": "http://localhost:3333",
+    "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
   },
   "/rtc": {
-    "target": "http://localhost:3333",
+    "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
   },
   "/twilio": {
-    "target": "http://localhost:3333",
+    "target": "http://127.0.0.1:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/logs": {
+    "target": "http://127.0.0.1:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/plugins": {
+    "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
   }

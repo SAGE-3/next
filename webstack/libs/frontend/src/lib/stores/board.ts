@@ -1,26 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // The JS version of Zustand
 import createVanilla from 'zustand/vanilla';
-
 // The React Version of Zustand
 import createReact from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
-import { Board, BoardSchema, RoomSchema } from '@sage3/shared/types';
+import { Board, BoardSchema } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
-import { AppSchema } from '@sage3/applications/schema';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface BoardState {
   boards: Board[];
@@ -46,18 +44,21 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       set({ error: null });
     },
     create: async (newBoard: BoardSchema) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     update: async (id: string, updates: Partial<BoardSchema>) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'boards')) return;
       const res = await SocketAPI.sendRESTMessage(`/boards/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -65,8 +66,9 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
       // TO DO Delete all apps belonging to the board
     },
     subscribeByRoomId: async (roomId: BoardSchema['roomId']) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'boards')) return;
       set({ boards: [], fetched: false });
-      const boards = await APIHttp.GET<BoardSchema, Board>('/boards', { roomId });
+      const boards = await APIHttp.QUERY<Board>('/boards', { roomId });
       if (boards.success) {
         set({ boards: boards.data, fetched: true });
       } else {
@@ -82,32 +84,35 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
 
       // Socket Subscribe Message
       // Subscribe to the boards with property 'roomId' matching the given id
-      const route = `/subscription/rooms/${roomId}`;
-      // Socket Listenting to updates from server about the current user
-      boardsSub = await SocketAPI.subscribe<RoomSchema | BoardSchema | AppSchema>(route, (message) => {
+      // const route = `/subscription/rooms/${roomId}`;
+      const route = `/boards?roomId=${roomId}`;
+      // Socket Listenting to updates from server about the current board
+      boardsSub = await SocketAPI.subscribe<Board>(route, (message) => {
         if (message.col !== 'BOARDS') return;
-        const doc = message.doc as Board;
         switch (message.type) {
           case 'CREATE': {
-            set({ boards: [...get().boards, doc] });
+            const docs = message.doc as Board[];
+            set({ boards: [...get().boards, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as Board[];
             const boards = [...get().boards];
-            const idx = boards.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              boards[idx] = doc;
-            }
-            set({ boards: boards });
+            docs.forEach((doc) => {
+              const idx = boards.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                boards[idx] = doc;
+              }
+            });
+            set({ boards });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as Board[];
+            const ids = docs.map((d) => d._id);
             const boards = [...get().boards];
-            const idx = boards.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              boards.splice(idx, 1);
-            }
-            set({ boards: boards });
+            const remainingBoards = boards.filter((a) => !ids.includes(a._id));
+            set({ boards: remainingBoards });
           }
         }
       });

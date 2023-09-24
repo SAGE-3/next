@@ -1,6 +1,15 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import { SBDocumentMessage, SBJSON } from '@sage3/sagebase';
 import { genId } from '@sage3/shared';
 import { APIClientWSMessage } from '@sage3/shared/types';
+import { CollectionDocs } from '../index';
 
 class SocketAPISingleton {
   private _socketType: string;
@@ -45,7 +54,7 @@ class SocketAPISingleton {
   public async sendRESTMessage(
     route: APIClientWSMessage['route'],
     method: Exclude<APIClientWSMessage['method'], 'SUB' | 'UNSUB'>,
-    body?: Record<string, unknown>
+    body?: Record<string, unknown> | { batch: Record<string, unknown> | string[] }
   ): Promise<any> {
     await this.init();
     const message = {
@@ -63,7 +72,10 @@ class SocketAPISingleton {
     return promise;
   }
 
-  public async subscribe<T extends SBJSON>(route: string, callback: (message: SBDocumentMessage<T>) => void): Promise<() => void> {
+  public async subscribe<T extends CollectionDocs>(
+    route: string,
+    callback: (message: SBDocumentMessage<T['data']>) => void
+  ): Promise<() => void> {
     const subMessage = {
       id: genId(),
       route: '/api' + route,

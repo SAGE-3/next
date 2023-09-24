@@ -1,15 +1,15 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // The React version of Zustand
 import create from 'zustand';
 
-import { Room, Participant, connect, ConnectOptions, RemoteVideoTrack } from 'twilio-video';
+import { Room, Participant, connect, ConnectOptions, RemoteTrack, RemoteParticipant } from 'twilio-video';
 
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -28,10 +28,10 @@ async function fetchToken(userId: string, roomName: string) {
 // Typescript interface defining the store
 interface TwilioState {
   room: Room | undefined;
-  participants: Participant[];
-  tracks: RemoteVideoTrack[];
+  participants: RemoteParticipant[];
+  tracks: RemoteTrack[];
   stopStreamId: string;
-  joinRoom: (userId: string, roomName: string) => Promise<boolean>;
+  joinRoom: (userId: string, accessId: string, roomName: string) => Promise<boolean>;
   leaveRoom: () => void;
   setStopStream: (streamId: string) => void;
 }
@@ -48,7 +48,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
   tracks: [],
   stopStreamId: '',
   setStopStream: (streamId: string) => set((state) => ({ ...state, stopStreamId: streamId })),
-  joinRoom: async (userId: string, roomName: string) => {
+  joinRoom: async (userId: string, accessId: string, roomName: string) => {
     console.log('Twilio> Joining room');
 
     if (get().room?.name === roomName) {
@@ -56,14 +56,14 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
       return true;
     }
     // Get the token from the SAGE3 server
-    const token = await fetchToken(userId, roomName);
+    const token = await fetchToken(`${userId}--${accessId}`, roomName);
 
     // Reset the state of the store
     get().leaveRoom();
 
     try {
       // Connect to the room with the token
-      const room = await connect(token, { audio: false } as ConnectOptions);
+      const room = await connect(token, { audio: false, preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }] } as ConnectOptions);
       set((state) => ({ ...state, room }));
 
       console.log('Twilio> Connected to room: ', room.name);
@@ -72,19 +72,20 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
       window.addEventListener('beforeunload', () => get().leaveRoom());
 
       // Start with an empty array of participants
-      const participants = [] as Participant[];
+      // const participants = [] as Participant[];
 
       // Add all current participants to the participants array
-      room.participants.forEach((participant: Participant) => {
+      room.participants.forEach((participant) => {
         console.log(`Twilio> Participant "${participant.identity}" is connected to the Room`);
 
         // Add the participant to the array
         set((state) => ({ ...state, participants: [...state.participants, participant] }));
 
         // For each participant, add all their tracks to the tracks array
-        participant.tracks.forEach((publication: any) => {
-          if (publication.track) {
-            set((state) => ({ ...state, tracks: [...state.tracks, publication.track] }));
+        participant.tracks.forEach((publication) => {
+          const t = publication.track;
+          if (t) {
+            set((state) => ({ ...state, tracks: [...state.tracks, t] }));
           }
         });
 
@@ -95,7 +96,7 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
       });
 
       // New Participant connected
-      room.on('participantConnected', (participant: Participant) => {
+      room.on('participantConnected', (participant) => {
         console.log(`Twilio> Participant "${participant.identity}" has connected`);
 
         // Check if this participant is already in the list
@@ -106,9 +107,10 @@ export const useTwilioStore = create<TwilioState>((set, get) => ({
         }
 
         // For the participant, add all their tracks to the tracks array
-        participant.tracks.forEach((publication: any) => {
-          if (publication.track) {
-            set((state) => ({ ...state, tracks: [...state.tracks, publication.track] }));
+        participant.tracks.forEach((publication) => {
+          const t = publication.track;
+          if (t) {
+            set((state) => ({ ...state, tracks: [...state.tracks, t] }));
           }
         });
 

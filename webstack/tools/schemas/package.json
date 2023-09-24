@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "json-schema-md-doc": "^1.0.0",
-    "zod": "^3.17.3",
-    "zod-to-json-schema": "^3.17.0"
+    "zod": "^3.22.2",
+    "zod-to-json-schema": "^3.21.4"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "ts-node": "^10.8.1",
-    "typescript": "^4.7.4"
+    "@types/node": "18",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
   }
 }

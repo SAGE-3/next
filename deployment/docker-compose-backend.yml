@@ -9,16 +9,54 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+  fluentd-server:
+    image: "fluent/fluentd:edge-debian"
+    ports:
+      - "127.0.0.1:24224:24224"
+    volumes:
+      - ./configurations/fluentd/log:/fluentd/log
+      - ./configurations/fluentd/conf:/fluentd/etc
+  fastapi:
+    image: "ghcr.io/mahdi-b/sagekernelserver:latest"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: python src/main.py --url http://jupyter:8888
+    depends_on:
+      jupyter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   jupyter:
-    image: "jupyter/datascience-notebook"
+    image: "jupyter/datascience-notebook:ed2908bbb62e"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
-      - "80:8888"
+      - "8888:8888"
     environment:
       - ENVIRONMENT=development
+      - SAGE3_SERVER=host.docker.internal
+      - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
     command: /conf/start.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s

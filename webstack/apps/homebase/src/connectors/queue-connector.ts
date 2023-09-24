@@ -1,17 +1,21 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
+import * as path from 'path';
 
 /**
  * NPM modules
  */
 
 // Queue package for handling distributed jobs and messages
-import * as Bull from 'bull';
+import { Queue, QueueEvents, Worker } from 'bullmq';
+// REDIS connection used by bullmq
+import IORedis from 'ioredis';
 
 /**
  * Abstraction of queue for tasks
@@ -20,26 +24,22 @@ import * as Bull from 'bull';
  * @class SBQueue
  */
 export class SBQueue {
-  private aQueue: Bull.Queue;
+  private aQueue: Queue;
+  private connection: IORedis;
+  private queueEvents: QueueEvents;
 
   constructor(redisInfo: string, queueName: string) {
-    // Create the Bull queue, based on REDIS
-    this.aQueue = new Bull(queueName, redisInfo, {
+    // Create a REDIS connection object
+    this.connection = new IORedis(redisInfo, { maxRetriesPerRequest: null });
+    // Create the BullMQ queue
+    this.aQueue = new Queue(queueName, {
+      connection: this.connection,
       defaultJobOptions: { removeOnComplete: true },
-      settings: { lockDuration: 60000 },
     });
-    // Event handler, not really used (because using promises)
-    this.aQueue.on('completed', function (job, _result) {
-      // Job done
-      console.log('Queue> task completed for', job.id);
-    });
-
-    // this.aQueue.on("progress", (d, p) => {
-    //   console.log("Progress>", d.queue.name, d.id, p);
-    // });
-
-    this.aQueue.on('completed', function (job) {
-      console.log('Job completed> data:', queueName, job.id);
+    // Create the BullMQ queue events: completed, waiting, drained, active, completed
+    this.queueEvents = new QueueEvents(queueName, { connection: this.connection });
+    this.queueEvents.on('failed', ({ jobId, failedReason }) => {
+      console.log('Queue> job failed', queueName, jobId, failedReason);
     });
   }
 
@@ -51,8 +51,24 @@ export class SBQueue {
    * @memberOf SBQueue
    */
   addProcessor(job: (j: any) => Promise<any>): void {
-    // Task to be done, return a promise
-    this.aQueue.process(job);
+    // Create a worker to process the tasks
+    const worker = new Worker(this.getName(), job, { connection: this.connection });
+    // Worker events: completed, progress, failed
+    worker.on('failed', (j, err) => {
+      if (j) console.log('Worker>', this.getName(), `${j.id} has failed with ${err.message}`);
+    });
+  }
+
+  addProcessorSandboxed(file: string): void {
+    const processorFile = path.resolve(file);
+    const worker = new Worker(this.getName(), processorFile, {
+      connection: this.connection,
+      concurrency: 4,
+    });
+    // Worker events: completed, progress, failed
+    worker.on('failed', (j, err) => {
+      if (j) console.log('Worker>', this.getName(), `${j.id} has failed with ${err.message}`);
+    });
   }
 
   /**
@@ -63,9 +79,11 @@ export class SBQueue {
    *
    * @memberOf SBQueue
    */
-  addTask(task: any): Promise<any> {
-    console.log('Queue> adding task', task.id);
-    return this.aQueue.add(task);
+  async addTask(task: any) {
+    // Add the task to the queue
+    const t = await this.aQueue.add(this.getName(), task);
+    // Return a promise to the result of the task
+    return t.waitUntilFinished(this.queueEvents);
   }
 
   /**

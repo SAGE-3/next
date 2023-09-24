@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 /**
@@ -17,16 +17,26 @@
 import * as express from 'express';
 
 // Asset imports
-import { assetExpressRouter } from './custom/asset';
-import { FilesRouter } from './custom/files';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, PresenceCollection, RoomsCollection, UsersCollection, MessageCollection } from '../collections';
-import { ConfigRouter, InfoRouter, TimeRouter } from './config';
+import {
+  AssetsCollection,
+  AppsCollection,
+  BoardsCollection,
+  PresenceCollection,
+  RoomsCollection,
+  UsersCollection,
+  MessageCollection,
+  PluginsCollection,
+} from '../collections';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
-import { NLPRouter } from './custom/nlp';
+
+// Custom Routes
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, FastAPIRouter, PresenceThrottle } from './custom';
+
+import { config } from '../../config';
 
 /**
  * API Loader function
@@ -41,32 +51,40 @@ export function expressAPIRouter(): express.Router {
   // Before auth, so can be accessed by anyone
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
+  router.use('/logs', LogsRouter());
 
-  // Download the file from an Asset
-  // public route with a UUIDv5 token
+  // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token
   router.use('/files', FilesRouter());
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
+  // FastAPI Routes
+  router.use('/fastapi', FastAPIRouter());
+
+  // Collections
   router.use('/users', UsersCollection.router());
-
-  router.use('/assets', assetExpressRouter());
-
+  router.use('/assets', AssetsCollection.router());
   router.use('/apps', AppsCollection.router());
-
   router.use('/boards', BoardsCollection.router());
-
   router.use('/rooms', RoomsCollection.router());
-
   router.use('/presence', PresenceCollection.router());
-
   router.use('/message', MessageCollection.router());
 
+  // Check to see if plugins module is enabled.
+  if (config.features.plugins) {
+    router.use('/plugins', PluginsCollection.router());
+  }
+
+  // Configuration Route
   router.use('/configuration', ConfigRouter());
 
+  // Experimental NLP route
   router.use('/nlp', NLPRouter());
+
+  // Initialize Custom Presence Throttle
+  PresenceThrottle.init();
 
   return router;
 }

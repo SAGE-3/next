@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import { ChangeEvent, useState } from 'react';
@@ -25,7 +25,8 @@ import {
 } from '@chakra-ui/react';
 
 import { Board } from '@sage3/shared/types';
-import { isUUIDv4, useData, timeout } from '@sage3/frontend';
+import { apiUrls, isUUIDv4 } from '@sage3/frontend';
+
 import { EnterBoardModal } from './EnterBoardModal';
 
 // Props
@@ -45,8 +46,6 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   const [boardId, setBoardId] = useState('');
   // Status of the request
   const [submitStatus, setSubmitStatus] = useState<'pending' | 'submitted' | 'success'>('pending');
-  // Fetch board from the server
-  const results = useData(`/api/boards/${boardId}`) as { success: boolean; data: Board[] };
 
   // Chakra Toast
   const toast = useToast();
@@ -64,6 +63,9 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   const handleSubmit = async () => {
     // Update local state
     setSubmitStatus('submitted');
+    // Fetch board from the server
+    const response = await fetch(apiUrls.boards.getBoard(boardId));
+    const results = await response.json() as { success: boolean; data: Board[] };
     // Check the data we got back
     if (results.success) {
       // Update local state
@@ -133,7 +135,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
             <Button colorScheme="blue" mr={4} onClick={props.onClose}>
               Cancel
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} disabled={!isUUIDv4(boardId)}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!isUUIDv4(boardId)}>
               Enter
             </Button>
           </ModalFooter>

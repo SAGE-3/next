@@ -1,26 +1,24 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
-import {useEffect, useState} from 'react';
-import {Image, Button, ButtonGroup, Tooltip, Box} from '@chakra-ui/react';
+
+import { useEffect, useState } from 'react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
-import {MdFileDownload} from 'react-icons/md';
-import {HiPencilAlt} from 'react-icons/hi';
+import { MdFileDownload } from 'react-icons/md';
+import { HiPencilAlt } from 'react-icons/hi';
+
 // Utility functions from SAGE3
-import {downloadFile, isUUIDv4} from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, } from '@sage3/frontend';
+import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
-import {AppWindow} from '../../components';
-
-import {App} from '../../schema';
-import {Asset, ExtraImageType, ImageInfoType} from '@sage3/shared/types';
-import {useAssetStore, useAppStore, useUIStore, useMeasure} from '@sage3/frontend';
-import {state as AppState} from './index';
-
-// import { dimensions } from './data_types';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { App } from '../../schema';
 
 /**
  * ImageViewer app
@@ -32,7 +30,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
 
   // Asset data structure
   const [file, setFile] = useState<Asset>();
@@ -43,12 +40,11 @@ function AppComponent(props: App): JSX.Element {
   // Array of URLs for the image with multiple resolutions
   const [sizes, setSizes] = useState<ImageInfoType[]>([]);
   // Scale of the board
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   // Track the size of the image tag on the screen
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
-  const [origSizes, setOrigSizes] = useState({'width': 0, 'height': 0})
-
+  const [origSizes, setOrigSizes] = useState({ width: 0, height: 0 });
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -58,7 +54,7 @@ function AppComponent(props: App): JSX.Element {
       if (myasset) {
         setFile(myasset);
         // Update the app title
-        update(props._id, {title: myasset?.data.originalfilename});
+        update(props._id, { title: myasset?.data.originalfilename });
       }
     } else {
       // Assume it is a URL
@@ -76,9 +72,9 @@ function AppComponent(props: App): JSX.Element {
         setSizes(extra.sizes);
         // Save the aspect ratio
         setAspectRatio(extra.aspectRatio);
-        //TODO Extract image size
-        const localOrigSizes = {'width': extra.width, 'height': extra.height}
-        setOrigSizes(localOrigSizes)
+        // TODO Extract image size
+        const localOrigSizes = { width: extra.width, height: extra.height };
+        setOrigSizes(localOrigSizes);
 
         if (extra) {
           // find the smallest image for this page (multi-resolution)
@@ -122,35 +118,28 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {
-            Object.keys(s.boxes).map((label, idx) => {
-              // TODO Need to handle text overflow for labels
-              return (
-                <Box
-                  key={label + idx}
-                  position="absolute"
-                  left={s.boxes[label].xmin * (displaySize.width / origSizes.width ) + 'px'}
-                  top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
-                  style={{display: s.annotations === true ? 'block' : 'none'}}
-                >
-                  <Box
-                    position="relative"
-                    top={'-1.5rem'}
-                    fontWeight={'bold'}
-                    textColor={"black"}
-                  >
-                    {label}
-                  </Box>
+          {s.boxes ? Object.keys(s.boxes).map((label, idx) => {
+            // TODO Need to handle text overflow for labels
+            return (
+              <Box
+                key={label + idx}
+                position="absolute"
+                left={s.boxes[label].xmin * (displaySize.width / origSizes.width) + 'px'}
+                top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
+                width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
+                height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
+                border="2px solid red"
+                style={{ display: s.annotations === true ? 'block' : 'none' }}
+              >
+                <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                  {label}
                 </Box>
-              );
-            })
-          }
+              </Box>
+            );
+          }) : null}
         </>
-      </div>
-    </AppWindow>
+      </div >
+    </AppWindow >
   );
 }
 
@@ -184,7 +173,8 @@ function ToolbarComponent(props: App): JSX.Element {
               if (file) {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
-                downloadFile('api/assets/static/' + url, filename);
+                const dl = apiUrls.assets.getAssetById(url);
+                downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
                 const filename = s.assetid.split('/').pop();
@@ -193,17 +183,17 @@ function ToolbarComponent(props: App): JSX.Element {
               }
             }}
           >
-            <MdFileDownload/>
+            <MdFileDownload />
           </Button>
         </Tooltip>
-        <div style={{display: Object.keys(s.boxes).length !== 0 ? "flex" : "none"}}>
+        <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               onClick={() => {
-                updateState(props._id, {annotations: !s.annotations});
+                updateState(props._id, { annotations: !s.annotations });
               }}
             >
-              <HiPencilAlt/>
+              <HiPencilAlt />
             </Button>
           </Tooltip>
         </div>
@@ -235,4 +225,10 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
   return src;
 }
 
-export default {AppComponent, ToolbarComponent};
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

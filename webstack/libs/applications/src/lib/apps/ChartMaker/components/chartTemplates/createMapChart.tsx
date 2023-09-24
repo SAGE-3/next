@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import findHeaderType from '../findHeaderType';
@@ -167,7 +167,7 @@ export default function createMapChart(extractedHeaders: string[], fileName: str
 //   console.log(mapChartSpec);
 
 //   let encoding = {
-//     data: { url: '/api/assets/static/' + fileName },
+//     data: { url: apiUrls.assets.getAssetById(fileName) },
 //     mark: { type: 'geoshape', stroke: 'black' },
 //     transform: [
 //       {
@@ -218,7 +218,7 @@ function organizeMapChartHeaders(extractedHeaders: string[], data: string[]) {
 //   let barChartSpec = {
 //     ...barSpecificationTemplate,
 //   };
-//   barChartSpec.data.url = '/api/assets/static/' + fileName;
+//   barChartSpec.data.url = apiUrls.assets.getAssetById(fileName);
 //   barChartSpec.encoding.x.field = extractedHeaders[i];
 //   barChartSpec.encoding.x.type = 'nominal';
 

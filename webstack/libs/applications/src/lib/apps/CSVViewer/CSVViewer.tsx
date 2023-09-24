@@ -1,20 +1,21 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
+
 import { useState, useEffect } from 'react';
-import { useAppStore, useAssetStore } from '@sage3/frontend';
-import { App } from '../../schema';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { Asset } from '@sage3/shared/types';
-
 import { TableVirtuoso } from 'react-virtuoso';
 import { parse } from 'csv-parse/browser/esm';
+
+import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+import { Asset } from '@sage3/shared/types';
+
+import { state as AppState } from './index';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
@@ -47,7 +48,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the data from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       if (localurl) {
         fetch(localurl, {
           headers: {
@@ -113,14 +114,15 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent() { return null; }
 
-  return <></>;
-}
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
-
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 // Convert the csv to an array using the csv-parse library
 async function csvToArray(str: string): Promise<Record<string, string>[]> {
   // use the csv parser library to parse the csv

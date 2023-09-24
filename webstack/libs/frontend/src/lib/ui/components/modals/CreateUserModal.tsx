@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 import React, { useCallback, useState } from 'react';
@@ -67,10 +67,10 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
   function createAccount() {
     if (name) {
       const newUser = {
-        name,
+        name: name.trim(),
         email: auth?.email ? auth.email : '',
         color: color,
-        userRole: 'user',
+        userRole: auth?.provider === 'guest' ? 'guest' : 'user',
         userType: type,
         profilePicture: '',
       } as UserSchema;
@@ -95,7 +95,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           <FormControl isRequired mb={4}>
             <FormLabel htmlFor="htmlFor">Username</FormLabel>
             <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
               <Input
                 ref={initialRef}
                 type="string"
@@ -110,28 +110,34 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
           </FormControl>
           <FormControl isRequired mt="2">
             <FormLabel htmlFor="color">Color</FormLabel>
-            <ColorPicker selectedColor={randomSAGEColor()} onChange={handleColorChange}></ColorPicker>
+            <ColorPicker selectedColor={color as SAGEColors} onChange={handleColorChange}></ColorPicker>
           </FormControl>
           <FormControl mt="2">
             <FormLabel htmlFor="type">User Type</FormLabel>
             <RadioGroup onChange={handleTypeChange} value={type}>
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
-                  <Radio value={value} key={i}>{value[0].toUpperCase() + value.substring(1)}</Radio>
+                  <Radio value={value} key={i}>
+                    {value[0].toUpperCase() + value.substring(1)}
+                  </Radio>
                 ))}
               </Stack>
-            </RadioGroup>{' '}
+            </RadioGroup>
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth?.provider} {auth?.provider !== "guest" && <>- {auth?.email}</>}</em>
+            Authentication: <em>{auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}</em>
           </Text>
-          {auth?.provider === "guest" && <Text mt={1} fontSize={'md'}>Limited functionality as Guest</Text>}
+          {auth?.provider === 'guest' && (
+            <Text mt={1} fontSize={'md'}>
+              Limited functionality as Guest
+            </Text>
+          )}
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mx={2} onClick={logout}>
             Cancel
           </Button>
-          <Button colorScheme="green" onClick={() => createAccount()} disabled={!name}>
+          <Button colorScheme="green" onClick={() => createAccount()} isDisabled={!name.trim()}>
             Create Account
           </Button>
         </ModalFooter>

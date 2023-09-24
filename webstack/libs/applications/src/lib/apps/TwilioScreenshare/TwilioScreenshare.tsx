@@ -1,9 +1,9 @@
 /**
- * Copyright (c) SAGE3 Development Team
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
- *
  */
 
 // Chakra and React imports
@@ -21,19 +21,27 @@ import {
   TabPanel,
   Image,
   ButtonGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  useToast,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton } from '@chakra-ui/react';
 
+// Twilio Imports
+import { LocalVideoTrack } from 'twilio-video';
+
+// SAGE imports
+import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron, apiUrls } from '@sage3/frontend';
+import { genId } from '@sage3/shared';
+
+// App
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-// SAGE imports
-import { useAppStore, useUser, useTwilioStore, useUsersStore, useHexColor } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
-
-// Twilio Imports
-import { LocalVideoTrack } from 'twilio-video';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -42,15 +50,17 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
+  const toast = useToast();
+
   // Current User
-  const { user } = useUser();
-  const yours = user?._id === props._createdBy;
+  const { user, accessId } = useUser();
+  const yours = user?._id === props._createdBy && accessId === s.accessId;
 
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
@@ -68,10 +78,13 @@ function AppComponent(props: App): JSX.Element {
   // UI
   const red = useHexColor('red');
   const teal = useHexColor('teal');
+  const fitApps = useUIStore((state) => state.fitApps);
+  const boardLocked = useUIStore((state) => state.boardLocked);
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
+  // const [currentDisplay, setCurrentDisplay] = useState<string | null>(null);
 
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -85,7 +98,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
-    const updateDimensions = (track: any) => {
+    const updateDimensions = (track: LocalVideoTrack) => {
       if (track.dimensions.width && track.dimensions.height) {
         const aspect = track.dimensions.width / track.dimensions.height;
         let w = props.data.size.width;
@@ -118,7 +131,7 @@ function AppComponent(props: App): JSX.Element {
   // Get server time
   useEffect(() => {
     async function getServerTime() {
-      const response = await fetch('/api/time');
+      const response = await fetch(apiUrls.misc.getTime);
       const time = await response.json();
       setServerTimeDifference(Date.now() - time.epoch);
     }
@@ -149,10 +162,13 @@ function AppComponent(props: App): JSX.Element {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
-          const electron = window.require('electron');
-          const ipcRenderer = electron.ipcRenderer;
+          // window.electron.on('current-display', (display: number) => {
+          //   setCurrentDisplay(display.toString());
+          // });
+          // window.electron.send('request-current-display');
+
           // Get sources from the main process
-          ipcRenderer.on('set-source', async (evt: any, sources: any) => {
+          window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {
@@ -161,7 +177,7 @@ function AppComponent(props: App): JSX.Element {
             setElectronSources(allSources);
             onOpen();
           });
-          ipcRenderer.send('request-sources');
+          window.electron.send('request-sources');
         } catch (err) {
           deleteApp(props._id);
         }
@@ -177,6 +193,14 @@ function AppComponent(props: App): JSX.Element {
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
+
+          // Show a notification
+          toast({
+            title: 'Screensharing started for ' + props.data.title,
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
         } catch (err) {
           deleteApp(props._id);
         }
@@ -199,6 +223,8 @@ function AppComponent(props: App): JSX.Element {
       });
       videoRef.current.srcObject = null;
     }
+    // Hide Electron window
+    // if (isElectron()) window.electron.send('show-main-window', {});
   };
 
   useEffect(() => {
@@ -208,11 +234,29 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
+  const goToScreenshare = () => {
+    if (!boardLocked) {
+      // Close the popups
+      toast.closeAll();
+      // Zoom in
+      fitApps([props]);
+    }
+  };
+
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
-      if (track.name === s.videoId && videoRef.current) {
+      if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
+        // Zoom to the window
+        goToScreenshare();
+        // Show a notification
+        toast({
+          title: 'Screensharing started for ' + props.data.title,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
       }
     });
   }, [tracks, s.videoId]);
@@ -221,6 +265,13 @@ function AppComponent(props: App): JSX.Element {
     stopStream();
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
+      // Show a notification
+      toast({
+        title: 'Screensharing stopped',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
       stopStream();
     };
   }, []);
@@ -257,6 +308,20 @@ function AppComponent(props: App): JSX.Element {
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();
+
+      // Hide Electron window if on same screen
+      // if (selectedSource.display_id === currentDisplay) {
+      //   if (isElectron()) window.electron.send('hide-main-window', {});
+      // }
+
+      // Show a notification
+      goToScreenshare();
+      toast({
+        title: 'Your screensharing started, ' + props.data.title,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -346,7 +411,7 @@ function AppComponent(props: App): JSX.Element {
               <Button colorScheme="red" mr="2" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button colorScheme="teal" disabled={!selectedSource} onClick={electronShareHandle}>
+              <Button colorScheme="teal" isDisabled={!selectedSource} onClick={electronShareHandle}>
                 Share
               </Button>
             </ModalFooter>
@@ -355,17 +420,6 @@ function AppComponent(props: App): JSX.Element {
       </>
     </AppWindow>
   );
-}
-
-/**
- * Check if browser is Electron based on the userAgent.
- * NOTE: this does a require check, UNLIKE web view app.
- *
- * @returns true or false.
- */
-function isElectron() {
-  const w = window as any; // eslint-disable-line
-  return typeof navigator === 'object' && typeof navigator.userAgent === 'string' && navigator.userAgent.includes('Electron') && w.require;
 }
 
 /* App toolbar component for the app Twilio */
@@ -390,4 +444,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
