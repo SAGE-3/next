@@ -219,6 +219,29 @@ function startServerSentEventsStream(
   return eventSource;
 }
 
+/**
+ * restart the kernel with the given id
+ * @param kernelId the id of the kernel to restart
+ * @returns
+ */
+async function sendPrompt(textPrompt: string, kernelId: string, userId: string): Promise<{ ok: boolean; code: string }> {
+  const response = await fetch(`${fastAPIRoute}/nl2python/${kernelId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      textPrompt,
+      session: userId,
+    }),
+  });
+  const ok = response.ok;
+  if (!ok) {
+    return { ok, code: 'x=1' };
+  } else {
+    const data = await response.json();
+    return { ok, code: data.code };
+  }
+}
+
 export const FastAPI = {
   interruptKernel,
   executeCode,
@@ -231,4 +254,5 @@ export const FastAPI = {
   fetchKernelTypes,
   fetchResults,
   startServerSentEventsStream,
+  sendPrompt,
 };

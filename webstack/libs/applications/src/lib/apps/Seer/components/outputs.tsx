@@ -44,9 +44,9 @@ import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-import { KernelInfo } from '@sage3/shared/types';
 
-import { ContentItemType } from '../index';
+// import { ContentItemType } from '../index';
+import { KernelInfo, ContentItem } from '@sage3/shared/types';
 
 interface OutputsProps {
   app: App;
@@ -56,10 +56,10 @@ interface OutputsProps {
 export function Outputs(props: OutputsProps): JSX.Element {
   const s = props.app.data.state as AppState;
   // Data stores
-  const users = useUsersStore((state) => state.users);
+  // const users = useUsersStore((state) => state.users);
   const createApp = useAppStore((state) => state.create);
   // Local state
-  const [content, setContent] = useState<ContentItemType[] | null>(null);
+  const [content, setContent] = useState<ContentItem[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const [msgType, setMsgType] = useState<string>('');
   const [msgId, setMsgId] = useState<string>();
@@ -104,7 +104,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
         updateState(props.app._id, {
           streaming: false,
         });
-        setContent(result.content as ContentItemType[]);
+        setContent(result.content as ContentItem[]);
         setExecutionCount(result.execution_count);
         setMsgType(result.msg_type);
         console.log('Finished execution before starting stream');
@@ -141,9 +141,9 @@ export function Outputs(props: OutputsProps): JSX.Element {
     // console.log('Starting stream...for msg_id: ', msg_id);
     eventSource.addEventListener('new_message', function (event) {
       const result = JSON.parse(event.data);
-      setContent(result.content as ContentItemType[]);
+      setContent(result.content as ContentItem[]);
       if (result.completed) {
-        setContent(result.content as ContentItemType[]);
+        setContent(result.content as ContentItem[]);
         setExecutionCount(result.execution_count);
         setMsgType(result.msg_type);
         updateState(props.app._id, {
@@ -175,18 +175,18 @@ export function Outputs(props: OutputsProps): JSX.Element {
     });
   };
 
-  // Get the color of the kernel owner
-  useEffect(() => {
-    if (s.kernel && users) {
-      const kernels = s.kernels;
-      const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
-      const ownerColor = users.find((el) => el._id === owner)?.data.color;
-      setOwnerColor(ownerColor || '#000000');
-    }
-    return () => {
-      setOwnerColor('#000000');
-    };
-  }, [s.kernel, users]);
+  // // Get the color of the kernel owner
+  // useEffect(() => {
+  //   if (s.kernel && users) {
+  //     const kernels = s.kernels;
+  //     const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
+  //     const ownerColor = users.find((el) => el._id === owner)?.data.color;
+  //     setOwnerColor(ownerColor || '#000000');
+  //   }
+  //   return () => {
+  //     setOwnerColor('#000000');
+  //   };
+  // }, [s.kernel, users]);
 
   // Get the error message and put it back together since it streamed in parts
   const error =

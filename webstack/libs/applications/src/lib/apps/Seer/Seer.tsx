@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { truncateWithEllipsis, useAppStore, useHexColor, useUser } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore, truncateWithEllipsis } from '@sage3/frontend';
 import {
   Badge,
   Box,
@@ -19,13 +19,16 @@ import {
   Textarea,
   Tooltip,
   useColorModeValue,
-  useToast,
+  // useToast,
   useDisclosure,
-  Code,
+  // Code,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
+
+// import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // Styling
 import './styles.css';
@@ -33,14 +36,12 @@ import './styles.css';
 import { MdClearAll, MdHelp, MdPlayArrow, MdStop } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 
-import { v4 as getUUID } from 'uuid';
+// import { v4 as getUUID } from 'uuid';
 
 import { ToolbarComponent } from './components/toolbar';
 import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
-import { KernelInfo } from '@sage3/shared/types';
-// import { BiHide, BiShow } from 'react-icons/bi';
 
 /**
  * Seer App
@@ -49,49 +50,95 @@ import { KernelInfo } from '@sage3/shared/types';
 /* App component for Seer */
 function AppComponent(props: App): JSX.Element {
   // Make a toast to show errors
-  const toast = useToast();
+  // const toast = useToast();
+
+  // Users
+  // const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+  const userId = user?._id;
+  // const userInfo = users.find((u) => u._id === userId)?.data;
+  // const userName = userInfo?.name;
+  // const userColor = useHexColor(userInfo?.color as string);
+  // const [ownerColor, setOwnerColor] = useState<string>('#000000');
+
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   // const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
-  const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
-  const [access, setAccess] = useState<boolean>(false);
-  const boardId = props.data.boardId;
+  // const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
+
+  // Local state
+  const [access, setAccess] = useState(true);
+
+  // Styles
+  // const [editorHeight, setEditorHeight] = useState(140);
+  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
+  // const green = useHexColor('green');
+  // const yellow = useHexColor('yellow');
+  // const red = useHexColor('red');
+  // const executionCountColor = useHexColor('red');
+  // const accessDeniedColor = useHexColor('red');
+  // const accessAllowColor = useHexColor('green');
+
+  // Kernel Store
+  const { apiStatus, kernels, sendPrompt } = useKernelStore((state) => state);
+  // const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  // const boardId = props.data.boardId;
   // Needed for Div resizing
   // const [editorHeight, setEditorHeight] = useState(150); // not beign used?
   // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = '#EE4B2B';
-  const green = useHexColor('green');
-  const [online, setOnline] = useState(false);
-  const [kernel, setKernel] = useState<string>(s.kernel);
+  // const accessDeniedColor = '#EE4B2B';
+  // const green = useHexColor('green');
+  // const [online, setOnline] = useState(false);
+  // const [kernel, setKernel] = useState<string>(s.kernel);
 
-  /**
-   * Populate the user's kernels and check if the user has access to the kernel
-   */
   useEffect(() => {
-    let kernelId = '';
-    if (s.kernels) {
-      const myKernels = s.kernels.reduce((kernels, kernel) => {
-        if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === user?._id))) {
-          kernels.push(kernel);
-        }
-        return kernels;
-      }, [] as KernelInfo[]);
-      if (s.kernel) {
-        const kernel = myKernels.find((kernel: KernelInfo) => kernel.kernel_id === s.kernel);
-        setAccess(kernel ? true : false);
-        kernelId = kernel ? kernel.kernel_id : 'restricted';
-      }
-      setKernel(kernelId);
+    // If the API Status is down, set the publicKernels to empty array
+    if (!apiStatus) {
+      setAccess(false);
+      return;
+    } else {
+      const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+      // setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
+      const isPrivate = selectedKernel?.is_private;
+      const owner = selectedKernel?.owner;
+      if (!isPrivate) setAccess(true);
+      else if (isPrivate && owner === userId) setAccess(true);
+      else setAccess(false);
     }
-  }, [JSON.stringify(s.kernels), s.kernel]);
+  }, [access, apiStatus, kernels, s.kernel]);
 
-  useEffect(() => {
-    setOnline(s.online);
-  }, [s.online]);
+  // useEffect(() => {
+  //   setOnline(s.online);
+  // }, [s.online]);
+
+  const handleGenerate = async () => {
+    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+    if (!user || !apiStatus || !access || !canExec) return;
+    if (prompt) {
+      try {
+        const response = await sendPrompt(s.prompt, s.kernel, user?._id);
+        if (response.ok) {
+          console.log('Response', response);
+        } else {
+          console.log('Error generating code');
+        }
+      } catch (error) {
+        if (error instanceof TypeError) {
+          console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+          updateState(props._id, {
+            streaming: false,
+            kernel: '',
+            kernels: [],
+            msgId: '',
+          });
+        }
+      }
+    }
+  };
 
   // const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
   // const [showCode, setShowCode] = useState<boolean>(false);
@@ -100,65 +147,6 @@ function AppComponent(props: App): JSX.Element {
   const SPACE = 2;
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
-  // const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
-
-  // useEffect(() => {
-  //   if (!s.output) return;
-  //   // set the parsed output if execute_result or display_data is present
-  //   const parsed = JSON.parse(s.output);
-  //   parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
-  //     ? setShowCode(true)
-  //     : setShowCode(false);
-  //   console.log('markdown', isMarkdown);
-  // }, [s.output]);
-
-  // function getKernels() {
-  //   if (!user) return;
-  //   updateState(props._id, {
-  //     executeInfo: {
-  //       executeFunc: 'get_available_kernels',
-  //       params: { _uuid: user._id },
-  //     },
-  //   });
-  // }
-
-  // Set the title on start
-  // useEffect(() => {
-  //   // update the title of the app
-  //   if (props.data.title !== 'Seer') {
-  //     update(props._id, { title: 'Seer' });
-  //   }
-  //   getKernels();
-  // }, []);
-
-  // useEffect(() => {
-  //   // Get all kernels that I'm available to see
-  //   const kernels: { value: Record<string, any>; key: string }[] = [];
-  //   s.availableKernels.forEach((kernel) => {
-  //     if (kernel.value.is_private) {
-  //       if (kernel.value.owner_uuid == user?._id) {
-  //         kernels.push(kernel);
-  //       }
-  //     } else {
-  //       kernels.push(kernel);
-  //     }
-  //   });
-  //   setMyKernels(kernels);
-  // }, [JSON.stringify(s.availableKernels)]);
-
-  // useEffect(() => {
-  //   if (s.kernel == '') {
-  //     setAccess(true); // need to check this...it's weird
-  //   } else {
-  //     const access = myKernels.find((kernel) => kernel.key === s.kernel);
-  //     setAccess(access ? true : false);
-  //     if (access) {
-  //       const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
-  //       // update the title of the app
-  //       update(props._id, { title: 'Seer: kernel [' + name + ']' });
-  //     }
-  //   }
-  // }, [s.kernel, myKernels]);
 
   const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -170,41 +158,19 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.prompt]);
 
-  const handleGenerate = (kernel: string) => {
-    if (!kernel) {
-      toast({
-        title: 'No kernel selected',
-        description: 'Please select a kernel from the toolbar',
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-        position: 'bottom',
-      });
-      return;
-    }
-    if (prompt) {
-      updateState(props._id, {
-        prompt: prompt,
-        code: '',
-        output: '',
-        executeInfo: { executeFunc: 'generate', params: { _uuid: getUUID() } },
-      });
-    }
-  };
-  // handle interrupt
-  const handleInterrupt = () => {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: { executeFunc: 'interrupt', params: {} },
-    });
-  };
-  const handleClear = () => {
-    updateState(props._id, {
-      prompt: '',
-      output: '',
-      executeInfo: { executeFunc: '', params: {} },
-    });
-  };
+  // // handle interrupt
+  // const handleInterrupt = () => {
+  //   updateState(props._id, {
+  //     executeInfo: { executeFunc: 'interrupt', params: {} },
+  //   });
+  // };
+  // const handleClear = () => {
+  //   updateState(props._id, {
+  //     prompt: '',
+  //     output: '',
+  //     executeInfo: { executeFunc: '', params: {} },
+  //   });
+  // };
 
   return (
     <AppWindow app={props}>
@@ -319,7 +285,7 @@ function AppComponent(props: App): JSX.Element {
               <Textarea
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
-                    handleGenerate(s.kernel);
+                    handleGenerate();
                   }
                 }}
                 value={prompt}
@@ -350,7 +316,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Generate" placement="right-start">
                     <IconButton
-                      onClick={() => handleGenerate(s.kernel)}
+                      onClick={handleGenerate}
                       aria-label={''}
                       icon={
                         s.executeInfo?.executeFunc === 'generate' ? (
@@ -366,7 +332,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Stop" placement="right-start">
                     <IconButton
-                      onClick={handleInterrupt}
+                      // onClick={handleInterrupt}
                       aria-label={''}
                       isDisabled={!s.kernel || s.executeInfo?.executeFunc !== 'generate'}
                       icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -376,7 +342,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Clear All" placement="right-start">
                     <IconButton
-                      onClick={handleClear}
+                      // onClick={handleClear}
                       aria-label={''}
                       isDisabled={!s.kernel}
                       icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -403,20 +369,12 @@ function AppComponent(props: App): JSX.Element {
             }}
             hidden={false}
           >
-            <CodeEditor app={props} access={access} editorHeight={150} online={online} />
+            <CodeEditor app={props} access={access} editorHeight={150} online={apiStatus} />
           </Box>
           <Stack direction="row" hidden={false}>
             <Badge variant="outline" colorScheme="red" mb={-1}>
               Outputs
             </Badge>
-            {/* <Tooltip label="Show/Hide Output" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
-                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
-              </Badge>
-            </Tooltip> */}
-            {/* <Badge variant="ghost" colorScheme="facebook" onClick={() => setShowOutput(!showOutput)}>
-              {showOutput ? <BiShow aria-label="Show Output Editor" size="16px" /> : <BiHide aria-label="Hide Output" size="16px" />}
-            </Badge> */}
           </Stack>
           <Box // output section container
             style={{
@@ -427,7 +385,7 @@ function AppComponent(props: App): JSX.Element {
             }}
             hidden={false}
           >
-            {!s.msgId ? <></> : <Outputs app={props} online={online} />}
+            {!s.msgId ? <></> : <Outputs app={props} online={apiStatus} />}
           </Box>
         </Stack>
       </Box>
