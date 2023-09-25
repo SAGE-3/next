@@ -331,6 +331,7 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, {
           msgId: msgId,
           session: user._id,
+          streaming: true,
         });
       } else {
         // console.log('Error executing code');

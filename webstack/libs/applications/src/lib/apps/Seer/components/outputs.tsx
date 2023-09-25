@@ -48,10 +48,10 @@ import { state as AppState } from '../index';
 
 // import { ContentItemType } from '../index';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
-import { set } from 'date-fns';
 
 interface OutputsProps {
   app: App;
+  msgId: string;
   online: boolean;
 }
 
@@ -113,8 +113,50 @@ export function Outputs(props: OutputsProps): JSX.Element {
     }
   }, [apiStatus]);
 
+  /**
+   * This effect will fetch the results of the last
+   * executed cell if the app is online and the
+   * msgId is not empty.
+   */
+  useEffect(() => {
+    if (!s.streaming) return;
+    function setEventSource() {
+      const ctrl = new AbortController();
+      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+        signal: ctrl.signal,
+        onmessage(event) {
+          setError(null);
+          if (!event.data) return;
+          try {
+            const parsedData = JSON.parse(event.data);
+            setContent(parsedData.content);
+            if (parsedData.execution_count) {
+              setExecutionCount(parsedData.execution_count);
+            }
+          } catch (error) {
+            console.log('EventSource> error', error);
+            ctrl.abort();
+          }
+        },
+        onclose() {
+          updateState(props.app._id, { streaming: false, history: [...s.history, props.msgId], msgId: '' });
+        },
+      });
+    }
+
+    if (s.msgId && s.session === user?._id) {
+      setEventSource();
+    }
+  }, [props.msgId]);
+
   async function getResults() {
-    if (!history || history.length === 0 || s.streaming || s.msgId) return;
+    if (!history || history.length === 0 || s.streaming) return;
     const msgId = history[history.length - 1];
     console.log('Attempting to fetch results');
     const response = await fetchResults(msgId);
@@ -154,54 +196,12 @@ export function Outputs(props: OutputsProps): JSX.Element {
     }
   }
 
-  /**
-   * This effect will fetch the results of the last
-   * executed cell if the app is online and the
-   * msgId is not empty.
-   */
-  useEffect(() => {
-    if (!s.msgId) return;
-    function setEventSource() {
-      const ctrl = new AbortController();
-      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'text/event-stream',
-          Connection: 'keep-alive',
-          'Cache-Control': 'no-cache',
-        },
-        signal: ctrl.signal,
-        onmessage(event) {
-          setError(null);
-          if (!event.data) return;
-          try {
-            const parsedData = JSON.parse(event.data);
-            setContent(parsedData.content);
-            if (parsedData.execution_count) {
-              setExecutionCount(parsedData.execution_count);
-            }
-          } catch (error) {
-            console.log('EventSource> error', error);
-            ctrl.abort();
-          }
-        },
-        onclose() {
-          updateState(props.app._id, { streaming: false, history: [...s.history, s.msgId], msgId: '' });
-        },
-      });
-    }
-
-    if (s.msgId && s.session === user?._id) {
-      setEventSource();
-    }
-  }, [s.msgId]);
-
   useEffect(() => {
     getResults();
-  }, [JSON.stringify(s.history)]);
+  }, [history.length]);
 
   function processedContent(content: ContentItem[]) {
-    if (!content) return <></>;
+    // if (!content) return <></>;
     return content.map((item) => {
       return Object.keys(item).map((key) => {
         const value = item[key];
@@ -333,8 +333,9 @@ export function Outputs(props: OutputsProps): JSX.Element {
   return (
     <Box
       p={1}
-      height={140}
       w={'100%'}
+      h={'100%'}
+      minHeight="150px"
       // border={`1px solid ${useHexColor(ownerColor)}`}
       overflow={'auto'}
       css={{

@@ -255,6 +255,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         updateState(props.app._id, {
           msgId: msgId,
           session: user._id,
+          streaming: true,
         });
       } else {
         // console.log('Error executing code');
@@ -521,7 +522,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
               <IconButton
                 onClick={handleInterrupt}
                 aria-label={''}
-                isDisabled={!s.kernel || s.streaming}
+                isDisabled={!s.kernel || !s.streaming}
                 icon={<MdStop size={'1.5em'} color="#008080" />}
               />
             </Tooltip>

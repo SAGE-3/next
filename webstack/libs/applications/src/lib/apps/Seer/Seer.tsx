@@ -353,13 +353,16 @@ function AppComponent(props: App): JSX.Element {
           <Box // output section container
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
-              minHeight: '150px',
+              width: '100%',
+              height: '100%',
+              // minHeight: 'calc(100vh - 475px)',
+              // height: 'calc(100vh - 475px)',
               border: '2px solid',
               borderColor: '#008080',
             }}
             hidden={false}
           >
-            {!s.msgId ? <></> : <Outputs app={props} online={apiStatus} />}
+            {s.history && <Outputs app={props} online={apiStatus} msgId={s.msgId} />}
           </Box>
         </Stack>
       </Box>
@@ -371,6 +374,8 @@ function AppComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
