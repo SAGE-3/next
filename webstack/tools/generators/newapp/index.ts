@@ -67,6 +67,8 @@ async function updateApps(root: string) {
   // Parse it as an array
   const apps = Array.from(JSON.parse(filedata.toString())) as string[];
   let output = '// SAGE3 Generated from apps.json file\n\n';
+
+  output += `import { App } from './schema';\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `import { name as ${it}Name } from './apps/${it}';\n`;
@@ -85,9 +87,9 @@ async function updateApps(root: string) {
   output += `export const Applications = {\n`;
   for (let i in apps) {
     const it = apps[i];
-    output += `  [${it}Name]: { AppComponent: React.memo(${it}.AppComponent), ToolbarComponent: ${it}.ToolbarComponent },\n`;
+    output += `  [${it}Name]: { AppComponent: React.memo(${it}.AppComponent), ToolbarComponent: ${it}.ToolbarComponent, GroupedToolbarComponent: ${it}.GroupedToolbarComponent },\n`;
   }
-  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element }>;\n`;
+  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;\n`;
 
   output += `\n`;
   output += `export * from './components';\n`;

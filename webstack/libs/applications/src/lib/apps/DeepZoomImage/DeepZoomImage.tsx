@@ -132,9 +132,12 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app DeepZoomImage */
+function ToolbarComponent() { return null; }
 
-function ToolbarComponent(props: App): JSX.Element {
-  return <></>;
-}
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

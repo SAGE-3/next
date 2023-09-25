@@ -65,13 +65,15 @@ class PySage3:
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
 
-    def create_app(self, room_id, board_id, app_type, state):
+    def create_app(self, room_id, board_id, app_type, state, app=None):
         try:
-            create_app_template["state"].update(state)
-            create_app_template["type"] = app_type
-
-            create_app_template["roomId"] = room_id
-            create_app_template["boardId"] = board_id
+            obj = create_app_template
+            if app:
+                obj.update(app)
+            obj["type"] = app_type
+            obj["roomId"] = room_id
+            obj["boardId"] = board_id
+            obj["state"].update(state)
             if app_type not in SmartBitFactory.class_names:
                 raise Exception("Smartbit not supported in interactive mode")
 
@@ -79,13 +81,14 @@ class PySage3:
             _ = SmartBitFactory.create_smartbit(
                 {
                     "_id": str(uuid.uuid4()),
-                    "data": create_app_template,
-                    "state": create_app_template["state"],
+                    "data": obj,
+                    "state": obj["state"],
                 }
             )
-            self.s3_comm.create_app(create_app_template)
+            return self.s3_comm.create_app(obj)
         except Exception as e:
             print(f"Err or during creation of app {e}")
+            return None
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
@@ -131,7 +134,8 @@ class PySage3:
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
-        print("Delete not yet supported through API")
+        """Delete not yet supported through API"""
+        pass
 
     def __process_messages(self, ws, msg):
         message = json.loads(msg)

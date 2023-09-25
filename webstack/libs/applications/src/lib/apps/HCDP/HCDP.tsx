@@ -157,23 +157,23 @@ function AppComponent(props: App): JSX.Element {
           />
           {s.getDataFrom === 'mesonet'
             ? s.stationData.map((data: SensorTypes, index: number) => {
-                return (
-                  <div key={index}>
-                    <SVGOverlay
-                      bounds={[
-                        [data.lat - 0.17, data.lon - 0.05],
-                        [data.lat + 0.15, data.lon + 0.05],
-                      ]}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                          <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                            {data[s.variableToDisplay]}
-                          </text>
-                        </g>
-                      </svg>
-                      {/* {s.variableToDisplay === 'windSpeed' ? (
+              return (
+                <div key={index}>
+                  <SVGOverlay
+                    bounds={[
+                      [data.lat - 0.17, data.lon - 0.05],
+                      [data.lat + 0.15, data.lon + 0.05],
+                    ]}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                      <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
+                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
+                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
+                          {data[s.variableToDisplay]}
+                        </text>
+                      </g>
+                    </svg>
+                    {/* {s.variableToDisplay === 'windSpeed' ? (
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
                           <g transform={`translate(100, 100) scale(${(1 / s.zoom) * 150 - 12}) translate(-100, -100)`}>
                             <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
@@ -186,43 +186,43 @@ function AppComponent(props: App): JSX.Element {
                       ) : (
 null
                       )} */}
-                    </SVGOverlay>
-                  </div>
-                );
-              })
+                  </SVGOverlay>
+                </div>
+              );
+            })
             : hcdpStationData.map((station: any, index: number) => {
-                if (station.value.island !== 'OA') return null;
-                return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
-                return (
-                  <div key={index}>
-                    <SVGOverlay
-                      bounds={[
-                        [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
-                        [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
-                      ]}
-                      eventHandlers={{
-                        click: () => {
-                          console.log(station);
-                        },
-                      }}
-                    >
-                      {s.variableToDisplay === 'windSpeed' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                          </g>
-                        </svg>
-                      )}
-                    </SVGOverlay>
-                  </div>
-                );
-              })}
+              if (station.value.island !== 'OA') return null;
+              return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
+              return (
+                <div key={index}>
+                  <SVGOverlay
+                    bounds={[
+                      [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
+                      [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
+                    ]}
+                    eventHandlers={{
+                      click: () => {
+                        console.log(station);
+                      },
+                    }}
+                  >
+                    {s.variableToDisplay === 'windSpeed' ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                        </g>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
+                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
+                        </g>
+                      </svg>
+                    )}
+                  </SVGOverlay>
+                </div>
+              );
+            })}
         </LayersControl.BaseLayer>
       </LeafletWrapper>
     </AppWindow>
@@ -395,5 +395,10 @@ function ToolbarComponent(props: App): JSX.Element {
     </HStack>
   );
 }
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -139,8 +139,8 @@ function AppComponent(props: App): JSX.Element {
             );
           }) : null}
         </>
-      </div>
-    </AppWindow>
+      </div >
+    </AppWindow >
   );
 }
 
@@ -225,4 +225,10 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
   return src;
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

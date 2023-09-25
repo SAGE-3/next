@@ -8,8 +8,22 @@
 
 import { useRef, useState, Fragment, useEffect } from 'react';
 import {
-  ButtonGroup, Button, useToast, IconButton, Box, Text, Flex, useColorModeValue,
-  Input, Tooltip, InputGroup, InputRightElement, HStack, Divider, Center, AbsoluteCenter
+  ButtonGroup,
+  Button,
+  useToast,
+  IconButton,
+  Box,
+  Text,
+  Flex,
+  useColorModeValue,
+  Input,
+  Tooltip,
+  InputGroup,
+  InputRightElement,
+  HStack,
+  Divider,
+  Center,
+  AbsoluteCenter,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 
@@ -43,7 +57,6 @@ let OPENAI_API_KEY = '';
 let OPENAI_ENGINE = '';
 const OPENAI_TOKENS = 300;
 const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
-
 
 /* App component for Chat */
 
@@ -125,7 +138,7 @@ function AppComponent(props: App): JSX.Element {
     const isGeppettoQuestion = new_input.startsWith('@G');
     const isOpenAIQuestion = new_input.startsWith('@O');
     const isQuestion = isGeppettoQuestion || isOpenAIQuestion;
-    const name = isQuestion ? isOpenAIQuestion ? 'OpenAI' : 'Geppetto' : user?.data.name;
+    const name = isQuestion ? (isOpenAIQuestion ? 'OpenAI' : 'Geppetto') : user?.data.name;
     // Add messages
     const initialAnswer = {
       id: genId(),
@@ -151,16 +164,16 @@ function AppComponent(props: App): JSX.Element {
 
       if (isOpenAIQuestion && openai) {
         const messages = [
-          { "role": "system", "content": OPENAI_SYSTEM_PROMPT },
-          { "role": "user", "content": request }
+          { role: 'system', content: OPENAI_SYSTEM_PROMPT },
+          { role: 'user', content: request },
         ];
         let complete_request;
         if (previousQuestion && previousAnswer) {
           complete_request = [
-            { "role": "system", "content": OPENAI_SYSTEM_PROMPT },
-            { "role": "user", "content": previousQuestion },
-            { "role": "assistant", "content": previousAnswer },
-            { "role": "user", "content": request }
+            { role: 'system', content: OPENAI_SYSTEM_PROMPT },
+            { role: 'user', content: previousQuestion },
+            { role: 'assistant', content: previousAnswer },
+            { role: 'user', content: request },
           ];
         } else {
           complete_request = messages;
@@ -179,7 +192,7 @@ function AppComponent(props: App): JSX.Element {
           if (text) {
             tempText += part.choices[0]?.delta?.content;
             setStreamText(tempText);
-            goToBottom("auto");
+            goToBottom('auto');
           }
         }
         setProcessing(false);
@@ -193,7 +206,8 @@ function AppComponent(props: App): JSX.Element {
           previousQ: request,
           previousA: tempText,
           messages: [
-            ...s.messages, initialAnswer,
+            ...s.messages,
+            initialAnswer,
             {
               id: genId(),
               userId: user._id,
@@ -206,7 +220,6 @@ function AppComponent(props: App): JSX.Element {
           ],
         });
       } else {
-
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
           /*
@@ -226,10 +239,10 @@ function AppComponent(props: App): JSX.Element {
         // Build the body of the request
         const modelBody = {
           inputs: complete_request || request,
-          parameters: { "max_new_tokens": LLAMA2_TOKENS },
+          parameters: { max_new_tokens: LLAMA2_TOKENS },
         };
         const modelHeaders: Record<string, string> = {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         };
         // Post the request and handle server-sent events
         fetchEventSource(modelURL, {
@@ -258,7 +271,8 @@ function AppComponent(props: App): JSX.Element {
                   previousQ: request,
                   previousA: message.generated_text,
                   messages: [
-                    ...s.messages, initialAnswer,
+                    ...s.messages,
+                    initialAnswer,
                     {
                       id: genId(),
                       userId: user._id,
@@ -274,7 +288,7 @@ function AppComponent(props: App): JSX.Element {
                 if (message.token.text) {
                   tempText += message.token.text;
                   setStreamText(tempText);
-                  goToBottom("auto");
+                  goToBottom('auto');
                 }
               }
             }
@@ -289,10 +303,11 @@ function AppComponent(props: App): JSX.Element {
     }, 100);
   };
 
-  const goToBottom = (mode: ScrollBehavior = "smooth") => {
+  const goToBottom = (mode: ScrollBehavior = 'smooth') => {
     // Scroll to bottom of chat box smoothly
     chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight, behavior: mode,
+      top: chatBox.current?.scrollHeight,
+      behavior: mode,
     });
   };
 
@@ -335,7 +350,8 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight, behavior: "instant",
+      top: chatBox.current?.scrollHeight,
+      behavior: 'instant',
     });
     // Control the scrolling of the chat box
     chatBox.current?.addEventListener('scrollend', () => {
@@ -373,7 +389,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Flex gap={2} p={2} minHeight={"max-content"} direction={"column"} h="100%" w="100%">
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
         {/* Display Messages */}
         <Box
           flex={1}
@@ -400,8 +416,8 @@ function AppComponent(props: App): JSX.Element {
             const time = getDateString(message.creationDate);
             const previousTime = message.creationDate;
             const now = Date.now();
-            const diff = (now - previousTime) - (30 * 60 * 1000); // minus 30 minutes
-            const when = (diff > 0) ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
+            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
             const last = index === sortedMessages.length - 1;
 
             return (
@@ -409,33 +425,41 @@ function AppComponent(props: App): JSX.Element {
                 {/* Start of User Messages */}
                 {message.query.length ? (
                   <Box position="relative" my={1}>
-                    {isMe ?
-                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={"right"}>
+                    {isMe ? (
+                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
                           Me
                         </Text>
                       </Box>
-                      :
-                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={"right"}>
+                    ) : (
+                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
                           {message.userName}
                         </Text>
                       </Box>
-                    }
+                    )}
 
-                    <Box display={'flex'} justifyContent={isMe ? "right" : "left"}>
-                      <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
-                        placement="top" hasArrow={true} label={time} openDelay={400}>
+                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
+                      <Tooltip
+                        whiteSpace={'nowrap'}
+                        textOverflow="ellipsis"
+                        fontSize={'xs'}
+                        placement="top"
+                        hasArrow={true}
+                        label={time}
+                        openDelay={400}
+                      >
                         <Box
                           color="white"
                           rounded={'md'}
                           boxShadow="md"
                           fontFamily="arial"
-                          textAlign={isMe ? "right" : "left"}
+                          textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
-                          p={1} m={3}
+                          p={1}
+                          m={3}
                           maxWidth="70%"
-                          userSelect={"none"}
+                          userSelect={'none'}
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -457,11 +481,18 @@ function AppComponent(props: App): JSX.Element {
                             // Will create a new sticky
                             e.dataTransfer.setData('app', 'Stickie');
                             // Get the color of the user
-                            const colorMessage = isMe ? user?.data.color : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                            const colorMessage = isMe
+                              ? user?.data.color
+                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
                             // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData('app_state', JSON.stringify({
-                              color: colorMessage, text: message.query, fontSize: 24,
-                            }));
+                            e.dataTransfer.setData(
+                              'app_state',
+                              JSON.stringify({
+                                color: colorMessage,
+                                text: message.query,
+                                fontSize: 24,
+                              })
+                            );
                           }}
                         >
                           {message.query}
@@ -472,7 +503,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
 
                 {/* Start of Geppetto Messages */}
-                {message.response.length ?
+                {message.response.length ? (
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
@@ -480,10 +511,25 @@ function AppComponent(props: App): JSX.Element {
                       </Text>
                     </Box>
 
-                    <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
-                      <Tooltip whiteSpace={'nowrap'} textOverflow="ellipsis" fontSize={"xs"}
-                        placement="top" hasArrow={true} label={time} openDelay={400}>
-                        <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor} p={1} m={3} fontFamily="arial"
+                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                      <Tooltip
+                        whiteSpace={'nowrap'}
+                        textOverflow="ellipsis"
+                        fontSize={'xs'}
+                        placement="top"
+                        hasArrow={true}
+                        label={time}
+                        openDelay={400}
+                      >
+                        <Box
+                          boxShadow="md"
+                          color="white"
+                          rounded={'md'}
+                          textAlign={'left'}
+                          bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
+                          p={1}
+                          m={3}
+                          fontFamily="arial"
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -504,37 +550,40 @@ function AppComponent(props: App): JSX.Element {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
                               e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData('app_state', JSON.stringify({
-                                color: message.userName === 'OpenAI' ? "green" : "purple",
-                                text: message.response,
-                                fontSize: 24,
-                              }));
-                            }}>
-                            <Markdown style={{ marginLeft: "15px", textIndent: "4px", userSelect: "none" }}>
-                              {message.response}
-                            </Markdown>
+                              e.dataTransfer.setData(
+                                'app_state',
+                                JSON.stringify({
+                                  color: message.userName === 'OpenAI' ? 'green' : 'purple',
+                                  text: message.response,
+                                  fontSize: 24,
+                                })
+                              );
+                            }}
+                          >
+                            <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
                           </Box>
                         </Box>
                       </Tooltip>
                     </Box>
                   </Box>
-                  : null}
+                ) : null}
 
-                {when && !last ? <Box position='relative' padding='4'>
-                  <Center>
-                    <Divider width={"80%"} borderColor={"ActiveBorder"} />
-                    <AbsoluteCenter bg={bgColor} px='4'>
-                      {when}
-                    </AbsoluteCenter>
-                  </Center>
-                </Box> : null}
-
+                {when && !last ? (
+                  <Box position="relative" padding="4">
+                    <Center>
+                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
+                      <AbsoluteCenter bg={bgColor} px="4">
+                        {when}
+                      </AbsoluteCenter>
+                    </Center>
+                  </Box>
+                ) : null}
               </Fragment>
             );
           })}
 
           {/* In progress Geppetto Messages */}
-          {streamText &&
+          {streamText && (
             <Box position="relative" my={1} maxWidth={'70%'}>
               <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                 <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
@@ -542,14 +591,13 @@ function AppComponent(props: App): JSX.Element {
                 </Text>
               </Box>
 
-              <Box display={'flex'} justifyContent="left" position={"relative"} top={"15px"} mb={"15px"}>
+              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
                 <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
                   {streamText}
                 </Box>
               </Box>
             </Box>
-          }
-
+          )}
         </Box>
         <HStack>
           <Tooltip fontSize={"xs"}
@@ -559,7 +607,7 @@ function AppComponent(props: App): JSX.Element {
               icon={<MdExpandCircleDown size="24px" />}
               isDisabled={!newMessages}
               isLoading={processing}
-              onClick={() => goToBottom("instant")}
+              onClick={() => goToBottom('instant')}
               width="33%"
             />
           </Tooltip>
@@ -582,19 +630,23 @@ function AppComponent(props: App): JSX.Element {
             />
           </Tooltip>
         </HStack>
-        <InputGroup bg={"blackAlpha.100"}>
-          <Input placeholder='Chat, @G ask Geppetto or @A ask OpenAI' size='md' variant='outline' _placeholder={{ color: 'inherit' }}
+        <InputGroup bg={'blackAlpha.100'}>
+          <Input
+            placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
+            size="md"
+            variant="outline"
+            _placeholder={{ color: 'inherit' }}
             onChange={handleChange}
             onKeyDown={onSubmit}
             value={input}
             ref={inputRef}
           />
           <InputRightElement onClick={send}>
-            <MdSend color='green.500' />
+            <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>
       </Flex>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -645,10 +697,9 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-    </>);
+    </>
+  );
 }
-
-
 
 function getDateString(epoch: number): string {
   const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
@@ -656,5 +707,10 @@ function getDateString(epoch: number): string {
   return `${date} - ${time}`;
 }
 
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
-export default { AppComponent, ToolbarComponent };
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

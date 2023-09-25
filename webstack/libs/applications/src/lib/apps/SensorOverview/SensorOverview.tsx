@@ -168,9 +168,8 @@ function AppComponent(props: App): JSX.Element {
           new Date()
         )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
       } else {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-          props.data.state.widget.startDate
-        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${props.data.state.widget.startDate
+          }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
       }
 
       const response = await fetch(url);
@@ -371,8 +370,8 @@ function AppComponent(props: App): JSX.Element {
                   />
                 ) : null}
                 {props.data.state.widget.visualizationType === 'line' ||
-                props.data.state.widget.visualizationType === 'bar' ||
-                props.data.state.widget.visualizationType === 'scatter' ? (
+                  props.data.state.widget.visualizationType === 'bar' ||
+                  props.data.state.widget.visualizationType === 'scatter' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
                     isLoaded={isLoaded}
@@ -490,9 +489,8 @@ function ToolbarComponent(props: App): JSX.Element {
         new Date()
       )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     } else {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-        props.data.state.widget.startDate
-      }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${props.data.state.widget.startDate
+        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     }
 
     const response = await fetch(url);
@@ -644,8 +642,6 @@ function ToolbarComponent(props: App): JSX.Element {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
-            console.log('Here selected');
-
             if (s.stationNames.includes(a['STID'])) {
               return -1;
             } else {
@@ -664,8 +660,6 @@ function ToolbarComponent(props: App): JSX.Element {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
-            console.log('Here selected');
-
             if (s.stationNames.includes(a['STID'])) {
               return 1;
             } else {
@@ -782,25 +776,25 @@ function ToolbarComponent(props: App): JSX.Element {
                   {!isLoaded
                     ? null
                     : stationMetadata.map((station: any, index: number) => {
-                        const isSelected = s.stationNames.includes(station.STID);
-                        return (
-                          <tr key={index}>
-                            <td style={{ textAlign: 'center', width: '10px' }}>
-                              <Checkbox
-                                colorScheme="teal"
-                                isChecked={isSelected}
-                                onChange={(e) => handleChangeSelectedStation(e, station.STID)}
-                              />
-                            </td>
-                            <td>{station.NAME}</td>
-                            <td>{station.COUNTY}</td>
-                            <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
-                            {/* <td>variable</td> */}
-                          </tr>
-                        );
-                      })}
+                      const isSelected = s.stationNames.includes(station.STID);
+                      return (
+                        <tr key={index}>
+                          <td style={{ textAlign: 'center', width: '10px' }}>
+                            <Checkbox
+                              colorScheme="teal"
+                              isChecked={isSelected}
+                              onChange={(e) => handleChangeSelectedStation(e, station.STID)}
+                            />
+                          </td>
+                          <td>{station.NAME}</td>
+                          <td>{station.COUNTY}</td>
+                          <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
+                          <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
+                          <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
+                          {/* <td>variable</td> */}
+                        </tr>
+                      );
+                    })}
                 </table>
                 {!isLoaded ? (
                   <Box width="100%" height="100%" position="relative">
@@ -912,9 +906,11 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-/* Grouped App toolbar component for the app Sensor Overview, this component will display when a group of apps are Lasso'ed are a Sensor Overview app. */
-
-const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = (props: { apps: App[] }) => {
   const updateState = useAppStore((state) => state.updateState);
   const [variableNames, setVariableNames] = useState<string[]>([]);
 
@@ -967,7 +963,7 @@ const GroupedToolbarComponent = (props: { apps: App[] }): JSX.Element => {
         mr="1rem"
         // value={widget.visualizationType}
         onChange={handleVisualizationChange}
-        // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+      // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
       >
         {availableVisualizations().map((visualization: { value: string; name: string }, index: number) => {
           return (
