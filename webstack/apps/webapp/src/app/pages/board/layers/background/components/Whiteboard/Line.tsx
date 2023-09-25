@@ -11,25 +11,26 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor } from '@sage3/frontend';
+import { useHexColor, useUIStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
-  scale: number;
   onClick: (id: string) => void;
 }
 
-export const Line = memo(function Line({ line, scale, onClick }: LineProps) {
+export const Line = memo(function Line({ line, onClick }: LineProps) {
   const { points, color, isComplete, alpha, size } = useLine(line);
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
+  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
 
   const handleClick = (ev: any) => {
+    console.log('click', ev.button, whiteboardMode);
     // If Right Click
-    if (ev.button === 2) {
+    if ((ev.button === 2 && whiteboardMode === 'pen') || (ev.button === 0 && whiteboardMode === 'eraser')) {
       onClick(id);
     }
   };
