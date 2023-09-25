@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore, useKernelStore, useUser } from '@sage3/frontend';
+import { useAppStore, useKernelStore, useUser, useHexColor } from '@sage3/frontend';
 import {
   Badge,
   Box,
@@ -58,6 +58,12 @@ function AppComponent(props: App): JSX.Element {
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  // Styles
+  const green = useHexColor('green');
+  const yellow = useHexColor('yellow');
+  // const red = useHexColor('red');
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -71,7 +77,8 @@ function AppComponent(props: App): JSX.Element {
       setAccess(false);
       return;
     } else {
-      const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+      const selectedKernel = kernels.find((kernel: { kernel_id: string }) => kernel.kernel_id === s.kernel);
+      setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
       const isPrivate = selectedKernel?.is_private;
       const owner = selectedKernel?.owner;
       if (!isPrivate) setAccess(true);
@@ -201,6 +208,9 @@ function AppComponent(props: App): JSX.Element {
               onMouseLeave={() => setPlaceHolderValue(defaultPlaceHolderValue)}
             >
               Create a visualization
+            </Badge>
+            <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
+              {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
             </Badge>
             <Spacer />
             <Tooltip label="Click for help" placement="top">

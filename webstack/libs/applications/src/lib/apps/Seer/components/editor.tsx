@@ -25,7 +25,7 @@ import { throttle } from 'throttle-debounce';
 import { state as AppState } from '../index';
 import { App } from '../../../schema';
 
-import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 import { SAGE3Ability } from '@sage3/shared';
 
 type YjsClientState = {
@@ -52,9 +52,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const { user } = useUser();
   if (!user) return <></>;
 
-  // Abilties
-  // const canExecuteCode = useAbility('execute', 'kernels');
-
   // App state
   const s = props.app.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -75,8 +72,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
-  // const [content, setContent] = useState<ContentItem[] | null>(null);
-  // const [executionCount, setExecutionCount] = useState<number>(0);
   const [fontSize, setFontSize] = useState<number>(s.fontSize);
 
   // Toast
@@ -90,7 +85,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const monacoOptions: editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
     glyphMargin: false,
-    automaticLayout: false,
+    automaticLayout: true,
     wordWrap: 'off',
     lineNumbers: 'on',
     lineDecorationsWidth: 0,
@@ -110,13 +105,14 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       horizontalScrollbarSize: 18,
       arrowSize: 30,
     },
-    readOnly: !props.access,
   };
 
   const [yProvider, setYProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
-  // const [yText, setYText] = useState<Y.Text | null>(null);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [yText, setYText] = useState<Y.Text | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [binding, setBinding] = useState<MonacoBinding | null>(null);
   const [peers, setPeers] = useState<Map<number, YjsClientState>>(new Map());
 
   // Local state
@@ -124,7 +120,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   // Kernel Store
   const { apiStatus, kernels, executeCode, interruptKernel } = useKernelStore((state) => state);
-  // const [selectedKernelName, setSelectedKernelName] = useState<string>('');
 
   useEffect(() => {
     if (!yProvider) return;
@@ -264,18 +259,19 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       } else {
         // console.log('Error executing code');
         updateState(props.app._id, {
-          streaming: false,
           msgId: '',
+          streaming: false,
         });
       }
     } catch (error) {
       if (error instanceof TypeError) {
         console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
         updateState(props.app._id, {
+          msgId: '',
           streaming: false,
           kernel: '',
           kernels: [],
-          msgId: '',
+          history: [],
         });
       }
     }
@@ -312,6 +308,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
+
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
@@ -321,15 +318,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     ed.setValue(code);
   };
 
-  // Get the color of the kernel owner
-  // useEffect(() => {
-  //   if (s.kernel && users) {
-  //     const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
-  //     const ownerColor = users.find((el) => el._id === owner)?.data.color;
-  //     setOwnerColor(ownerColor || '#000000');
-  //   }
-  // }, [s.kernel, kernels, users]);
-
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
@@ -338,10 +326,10 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props.app._id, doc);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const binding = new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
-    // setBinding(binding);
+    setBinding(binding);
     setYProvider(provider);
     setYDoc(doc);
-    // setYText(yText);
+    setYText(yText);
 
     provider.awareness.setLocalStateField('user', {
       name: userName,
@@ -419,14 +407,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       endLineNumber: cursorPosition.r,
       endColumn: cursorPosition.c,
     });
-    // set the editor layout
-    // editor.layout({
-    //   width: props.data.size.width - 75,
-    //   height: editorHeight && editorHeight > 140 ? editorHeight : 140,
-    //   minHeight: '100%',
-    //   minWidth: '100%',
-    // } as editor.IDimension);
-
     editor.onDidChangeCursorPosition((e) => {
       setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
     });
@@ -520,7 +500,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     <>
       <Flex direction={'row'}>
         <Editor
-          defaultValue={s.code} // code to initialize the editor with
           language={s.language} // language of the editor
           options={monacoOptions}
           height={150}

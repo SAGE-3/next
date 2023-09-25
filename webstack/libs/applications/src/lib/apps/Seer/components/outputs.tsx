@@ -41,13 +41,14 @@ import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
 
-import { useAppStore, useUser, useAbility, useHexColor, useUsersStore, useKernelStore } from '@sage3/frontend';
+import { useAppStore, useUser, useHexColor, useUsersStore, useKernelStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
 
 // import { ContentItemType } from '../index';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import { set } from 'date-fns';
 
 interface OutputsProps {
   app: App;
@@ -70,6 +71,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
   const [content, setContent] = useState<ContentItem[] | null>(null);
   const [executionCount, setExecutionCount] = useState<number>(0);
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
+  const [history, setHistory] = useState<string[]>(s.history || []);
 
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
@@ -91,6 +93,10 @@ export function Outputs(props: OutputsProps): JSX.Element {
     }
   }, [s.kernel, kernels, users]);
 
+  useEffect(() => {
+    setHistory(s.history);
+  }, [s.history]);
+
   /**
    * Update local state if the online status changes
    * @param {boolean} online
@@ -99,15 +105,18 @@ export function Outputs(props: OutputsProps): JSX.Element {
     if (!apiStatus) {
       updateState(props.app._id, {
         streaming: false,
-        history: [],
         kernel: '',
         msgId: '',
+        history: [],
       });
+      console.log('kernel store is not available');
     }
   }, [apiStatus]);
 
-  async function getResults(msgId: string) {
-    if (s.streaming || s.msgId === msgId) return;
+  async function getResults() {
+    if (!history || history.length === 0 || s.streaming || s.msgId) return;
+    const msgId = history[history.length - 1];
+    console.log('Attempting to fetch results');
     const response = await fetchResults(msgId);
     if (response.ok) {
       const result = response.execOutput;
@@ -145,8 +154,13 @@ export function Outputs(props: OutputsProps): JSX.Element {
     }
   }
 
+  /**
+   * This effect will fetch the results of the last
+   * executed cell if the app is online and the
+   * msgId is not empty.
+   */
   useEffect(() => {
-    if (!s.msgId || !s.streaming) return;
+    if (!s.msgId) return;
     function setEventSource() {
       const ctrl = new AbortController();
       fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
@@ -183,10 +197,8 @@ export function Outputs(props: OutputsProps): JSX.Element {
   }, [s.msgId]);
 
   useEffect(() => {
-    if (!s.history || s.history.length === 0 || s.streaming || s.msgId) return;
-    const msgId = s.history[s.history.length - 1];
-    getResults(msgId);
-  }, [s.history]);
+    getResults();
+  }, [JSON.stringify(s.history)]);
 
   function processedContent(content: ContentItem[]) {
     if (!content) return <></>;
