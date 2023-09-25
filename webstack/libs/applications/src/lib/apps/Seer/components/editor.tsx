@@ -90,7 +90,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const monacoOptions: editor.IStandaloneEditorConstructionOptions = {
     minimap: { enabled: false },
     glyphMargin: false,
-    automaticLayout: true,
+    automaticLayout: false,
     wordWrap: 'off',
     lineNumbers: 'on',
     lineDecorationsWidth: 0,
@@ -121,16 +121,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   // Local state
   const [access, setAccess] = useState(true);
-
-  // Styles
-  // const [editorHeight, setEditorHeight] = useState(140);
-  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
-  // const green = useHexColor('green');
-  // const yellow = useHexColor('yellow');
-  // const red = useHexColor('red');
-  // const executionCountColor = useHexColor('red');
-  // const accessDeniedColor = useHexColor('red');
-  // const accessAllowColor = useHexColor('green');
 
   // Kernel Store
   const { apiStatus, kernels, executeCode, interruptKernel } = useKernelStore((state) => state);

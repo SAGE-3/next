@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore, truncateWithEllipsis } from '@sage3/frontend';
+import { useAppStore, useKernelStore, useUser } from '@sage3/frontend';
 import {
   Badge,
   Box,
@@ -49,51 +49,21 @@ import { CodeEditor } from './components/editor';
 
 /* App component for Seer */
 function AppComponent(props: App): JSX.Element {
-  // Make a toast to show errors
-  // const toast = useToast();
-
   // Users
-  // const users = useUsersStore((state) => state.users);
   const { user } = useUser();
   const userId = user?._id;
-  // const userInfo = users.find((u) => u._id === userId)?.data;
-  // const userName = userInfo?.name;
-  // const userColor = useHexColor(userInfo?.color as string);
-  // const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  // const update = useAppStore((state) => state.update);
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
-  // const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
 
   // Local state
   const [access, setAccess] = useState(true);
 
-  // Styles
-  // const [editorHeight, setEditorHeight] = useState(140);
-  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
-  // const green = useHexColor('green');
-  // const yellow = useHexColor('yellow');
-  // const red = useHexColor('red');
-  // const executionCountColor = useHexColor('red');
-  // const accessDeniedColor = useHexColor('red');
-  // const accessAllowColor = useHexColor('green');
-
   // Kernel Store
   const { apiStatus, kernels, sendPrompt } = useKernelStore((state) => state);
-  // const [selectedKernelName, setSelectedKernelName] = useState<string>('');
-
-  // const boardId = props.data.boardId;
-  // Needed for Div resizing
-  // const [editorHeight, setEditorHeight] = useState(150); // not beign used?
-  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  // const accessDeniedColor = '#EE4B2B';
-  // const green = useHexColor('green');
-  // const [online, setOnline] = useState(false);
-  // const [kernel, setKernel] = useState<string>(s.kernel);
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -102,7 +72,6 @@ function AppComponent(props: App): JSX.Element {
       return;
     } else {
       const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
-      // setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
       const isPrivate = selectedKernel?.is_private;
       const owner = selectedKernel?.owner;
       if (!isPrivate) setAccess(true);
@@ -111,18 +80,21 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [access, apiStatus, kernels, s.kernel]);
 
-  // useEffect(() => {
-  //   setOnline(s.online);
-  // }, [s.online]);
-
   const handleGenerate = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !apiStatus || !access || !canExec) return;
     if (prompt) {
       try {
-        const response = await sendPrompt(s.prompt, s.kernel, user?._id);
+        const response = await sendPrompt(prompt, s.kernel, user?._id);
         if (response.ok) {
           console.log('Response', response);
+          // const data = await response.json();
+          // updateState(props._id, {
+          //  code: data.code,
+          //  prompt: data.prompt,
+          //  streaming: data.streaming,
+          //  kernel: data.kernel,
+          // }
         } else {
           console.log('Error generating code');
         }
@@ -131,8 +103,10 @@ function AppComponent(props: App): JSX.Element {
           console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
           updateState(props._id, {
             streaming: false,
+            prompt: '',
             kernel: '',
             kernels: [],
+            history: [],
             msgId: '',
           });
         }
@@ -158,19 +132,19 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.prompt]);
 
-  // // handle interrupt
-  // const handleInterrupt = () => {
-  //   updateState(props._id, {
-  //     executeInfo: { executeFunc: 'interrupt', params: {} },
-  //   });
-  // };
-  // const handleClear = () => {
-  //   updateState(props._id, {
-  //     prompt: '',
-  //     output: '',
-  //     executeInfo: { executeFunc: '', params: {} },
-  //   });
-  // };
+  // handle interrupt
+  const handleInterrupt = () => {
+    console.log('Interrupting...');
+    updateState(props._id, { streaming: false });
+  };
+  const handleClear = () => {
+    updateState(props._id, {
+      prompt: '',
+      output: '',
+      streaming: false,
+      msgId: '',
+    });
+  };
 
   return (
     <AppWindow app={props}>
@@ -229,16 +203,6 @@ function AppComponent(props: App): JSX.Element {
               Create a visualization
             </Badge>
             <Spacer />
-            {/* <Tooltip label="Show/Hide Code" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowCode(!showCode)}>
-                {showCode ? 'Show Code' : 'Hide Code'}
-              </Badge>
-            </Tooltip>
-            <Tooltip label="Show/Hide Output" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
-                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
-              </Badge>
-            </Tooltip> */}
             <Tooltip label="Click for help" placement="top">
               <IconButton
                 onClick={() => helpOnOpen()}
@@ -332,7 +296,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Stop" placement="right-start">
                     <IconButton
-                      // onClick={handleInterrupt}
+                      onClick={handleInterrupt}
                       aria-label={''}
                       isDisabled={!s.kernel || s.executeInfo?.executeFunc !== 'generate'}
                       icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
@@ -342,7 +306,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Clear All" placement="right-start">
                     <IconButton
-                      // onClick={handleClear}
+                      onClick={handleClear}
                       aria-label={''}
                       isDisabled={!s.kernel}
                       icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
