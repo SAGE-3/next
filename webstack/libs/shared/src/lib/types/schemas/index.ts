@@ -16,3 +16,4 @@ export * from './message';
 export * from './plugin';
 export * from './kernelinfo';
 export * from './output';
+export * from './insight';

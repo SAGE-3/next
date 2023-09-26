@@ -6,13 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { UserRole, UserType } from "../schemas";
-import { Position } from "./position";
-import { Size } from "./size";
-import { TimeZone } from "./timezone";
+import { UserRole, UserType } from '../schemas';
+import { Position } from './position';
+import { Size } from './size';
+import { TimeZone } from './timezone';
 
 /**
- * Used for UserPrsesnce within SAGE3.
+ * Used for UserPresence within SAGE3.
  */
 export type UserPresence = {
   id: string;
@@ -26,4 +26,3 @@ export type UserPresence = {
   userType: UserRole;
   userRole: UserType;
 };
-
