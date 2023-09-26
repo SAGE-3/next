@@ -14,6 +14,7 @@ type WindowTitleProps = {
   size: { width: number; height: number };
   scale: number;
   title: string;
+  selected: boolean;
 };
 
 /**
@@ -24,13 +25,14 @@ export function WindowTitle(props: WindowTitleProps) {
   const size = props.size;
   const scale = props.scale;
   const title = props.title;
+  const selected = props.selected;
   const titleBackground = useColorModeValue('#00000000', '#ffffff26');
   const titleBrightness = useColorModeValue('85%', '65%');
   const titleColor = useColorModeValue('white', 'white');
 
   const appTitles = useUIStore((state) => state.showAppTitle);
 
-  if (!appTitles) return null;
+  if (!appTitles && !selected) return null;
 
   return <Box
     position="absolute"
