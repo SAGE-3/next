@@ -20,10 +20,10 @@ import { useAppStore } from './app';
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
 const MaxZoom = 3;
-// Zoom step of 10%
-const StepZoom = 0.1;
 // When using mouse wheel, repeated events
 const WheelStepZoom = 0.008;
+
+type DrawingMode = 'none' | 'pen' | 'eraser';
 
 interface UIState {
   scale: number;
@@ -56,7 +56,7 @@ interface UIState {
   clearSelectedApps: () => void;
 
   // whiteboard
-  whiteboardMode: boolean; // marker mode enabled
+  whiteboardMode: DrawingMode;
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
@@ -64,7 +64,7 @@ interface UIState {
   markerSize: number;
   markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
-  setWhiteboardMode: (enable: boolean) => void;
+  setWhiteboardMode: (mode: DrawingMode) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
@@ -132,7 +132,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   lassoColor: 'red',
   clearLassos: false,
   clearAllLassos: false,
-  whiteboardMode: false,
+  whiteboardMode: 'none',
   markerColor: 'red',
   markerSize: 8,
   markerOpacity: 0.6,
@@ -242,7 +242,7 @@ export const useUIStore = create<UIState>((set, get) => ({
     }),
   clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
 
-  setWhiteboardMode: (enable: boolean) => set((state) => ({ ...state, whiteboardMode: enable })),
+  setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),

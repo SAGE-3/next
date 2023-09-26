@@ -150,7 +150,7 @@ export function BoardPage() {
       function openDesktopApp() {
         if (!boardId || !roomId) return;
         // Get the board link
-        const link = getSAGE3BoardUrl(boardId, roomId);
+        const link = getSAGE3BoardUrl(roomId, boardId);
         // Close the toast
         toast.closeAll();
         // Open the link in the sage3 app
