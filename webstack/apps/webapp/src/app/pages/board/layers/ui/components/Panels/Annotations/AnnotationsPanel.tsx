@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 
 import { MdGraphicEq } from 'react-icons/md';
-import { BsPencilFill } from 'react-icons/bs';
+import { BsPencilFill, BsEraserFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 
 import {
@@ -75,13 +75,13 @@ export function AnnotationsPanel() {
   // Track the panel state to enable/disable the pen
   useEffect(() => {
     if (panel) {
-      if (panel.show) setWhiteboardMode(true);
-      else setWhiteboardMode(false);
+      if (panel.show) setWhiteboardMode('pen');
+      else setWhiteboardMode('none');
     }
   }, [panel, panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
-    setWhiteboardMode(true);
+    setWhiteboardMode('pen');
     setMarkerColor(color);
   };
 
@@ -118,15 +118,31 @@ export function AnnotationsPanel() {
     allOnClose();
   };
 
+  useEffect(() => {
+    // Disable marker on entry
+    setWhiteboardMode('none');
+    return () => {
+      // Disable marker on leave
+      setWhiteboardMode('none');
+    }
+  }, []);
+
+
   return (
     <>
       <Panel title="Annotations" name="annotations" width={600} showClose={false}>
         <Box alignItems="center" pb="1" width="100%" display="flex">
           <VStack width="100%" alignItems="left" spacing="0">
             <HStack m={0} p={0} spacing={'inherit'}>
-              <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
-                <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
+              <Tooltip placement="top" hasArrow label={whiteboardMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
+                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' ? 'none' : 'pen')} size="sm" mr="2" colorScheme={whiteboardMode === 'pen' ? 'green' : 'gray'}>
                   <BsPencilFill />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow label={whiteboardMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
+                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' || whiteboardMode === 'none' ? 'eraser' : 'none')} size="sm" mr="2" colorScheme={whiteboardMode === 'eraser' ? 'green' : 'gray'}>
+                  <BsEraserFill />
                 </Button>
               </Tooltip>
 
