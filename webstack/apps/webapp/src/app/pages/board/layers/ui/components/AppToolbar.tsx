@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { Box, useColorModeValue, Text, Button, Tooltip, ListItem, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, UnorderedList } from '@chakra-ui/react';
+import { Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, UnorderedList } from '@chakra-ui/react';
 import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
@@ -63,18 +63,23 @@ export function AppToolbar(props: AppToolbarProps) {
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
 
   // Insight labels
-  const [labels, setLabels] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+  // Convert to string for input element
+  const [inputLabel, setInputLabel] = useState<string>(tags.join(', '));
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
 
-  if (app) {
-    APIHttp.GET<Insight>(`/insight/${app._id}`).then((response) => {
-      if (response.success && response.data) {
-        setLabels(response.data[0].data.labels);
-      }
-    });
-  }
+  useEffect(() => {
+    if (app) {
+      APIHttp.GET<Insight>(`/insight/${app._id}`).then((response) => {
+        if (response.success && response.data) {
+          setTags(response.data[0].data.labels);
+          setInputLabel(response.data[0].data.labels.join(', '));
+        }
+      });
+    }
+  }, [app]);
 
   // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
@@ -194,12 +199,29 @@ export function AppToolbar(props: AppToolbarProps) {
 
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
+      // Get the component from the app definition
       const Component = Applications[app.data.type].ToolbarComponent;
+      // Get some application information
       const ownerName = users.find((el) => el._id === app._createdBy)?.data.name;
       const now = new Date();
       const when = formatDistance(new Date(app._createdAt), now, { addSuffix: true });
-      const whenUpdated = formatDistance(new Date(app._updatedAt), now, { addSuffix: true });
-      const tags = labels.join(', ');
+      // Input to edit the tags
+      const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setInputLabel(event.target.value.trim());
+      };
+      // Press Enter to update
+      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+          // cleanup the input
+          const localTags = inputLabel.split(',').map((el) => el.trim());
+          setInputLabel(localTags.join(', '));
+          // Updating the backend
+          APIHttp.PUT<Insight>(`/insight/${app._id}`, {
+            app_id: app._id,
+            labels: localTags,
+          });
+        }
+      };
 
       return (
         <ErrorBoundary
@@ -234,8 +256,16 @@ export function AppToolbar(props: AppToolbarProps) {
                     <ListItem><b>Type</b>: {app.data.type}</ListItem>
                     <ListItem><b>Owner</b>: {ownerName}</ListItem>
                     <ListItem><b>Created</b>: {when}</ListItem>
-                    <ListItem><b>Updated</b>: {whenUpdated}</ListItem>
-                    <ListItem><b>Tags</b>: {tags}</ListItem>
+                    <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
+                      width="300px" m={0} p={0} size="xs" variant='filled'
+                      value={inputLabel}
+                      placeholder="Enter tags here"
+                      _placeholder={{ opacity: 1, color: 'gray.400' }}
+                      focusBorderColor="gray.500"
+                      onChange={handleChange}
+                      onKeyDown={onSubmit}
+                    />
+                    </ListItem>
                   </UnorderedList>
                 </PopoverBody>
               </PopoverContent>
