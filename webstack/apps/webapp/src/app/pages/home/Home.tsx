@@ -23,12 +23,14 @@ import {
   Clock,
   usePluginStore,
   useConfigStore,
+  useRouteNav,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
 export function HomePage() {
   // URL Params
   const { roomId } = useParams();
+  const { toHome } = useRouteNav();
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -72,6 +74,8 @@ export function HomePage() {
       setSelectedRoom(room);
       setSelectedBoard(undefined);
       if (user) updatePresence(user._id, { roomId: room._id, boardId: '', following: '' });
+      // update the URL, helps with history
+      toHome(room._id);
     } else {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
@@ -99,7 +103,7 @@ export function HomePage() {
   // To handle the case where the user is redirected to the home page from a board
   useEffect(() => {
     function goToMainRoom() {
-      // Go to Main RoomS hould be the oldest room on the server.
+      // Go to Main Room, should be the oldest room on the server.
       const room = rooms.reduce((prev, curr) => (prev._createdAt < curr._createdAt ? prev : curr));
       handleRoomClick(room);
     }

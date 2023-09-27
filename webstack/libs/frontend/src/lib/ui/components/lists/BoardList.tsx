@@ -28,7 +28,6 @@ import { Board, Room } from '@sage3/shared/types';
 
 type BoardListProps = {
   onBoardClick: (board: Board) => void;
-  onBackClick: () => void;
   selectedRoom: Room | undefined;
   boards: Board[];
 };
@@ -128,6 +127,7 @@ export function BoardList(props: BoardListProps) {
       setScrollPos(Math.min(0, scrollPos - 30));
     }
   };
+
   return (
     <Box m="4" mt="0" pt="1" borderTop="solid 1px" borderColor={borderColor}>
       <Box textAlign="center" display="flex" flexDir="column" justifyContent="space-between" height="100%">
