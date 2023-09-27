@@ -150,7 +150,6 @@ export function RoomCard(props: RoomCardProps) {
             {props.selected && canList ? (
               <BoardList
                 onBoardClick={props.onBackClick}
-                onBackClick={() => props.onBackClick()}
                 selectedRoom={props.room}
                 boards={props.boards}
               ></BoardList>
