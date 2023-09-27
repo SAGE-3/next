@@ -9,11 +9,14 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
+import { Box, useColorModeValue, Text, Button, Tooltip, ListItem, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, UnorderedList } from '@chakra-ui/react';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { formatDistance } from 'date-fns';
+
+import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore, useUsersStore, APIHttp } from '@sage3/frontend';
+import { Insight } from '@sage3/shared/types';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -51,17 +54,29 @@ export function AppToolbar(props: AppToolbarProps) {
   const appDragging = useUIStore((state) => state.appDragging);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
-
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+
+  // Insight labels
+  const [labels, setLabels] = useState<string[]>([]);
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
 
-  //Abilities
+  if (app) {
+    APIHttp.GET<Insight>(`/insight/${app._id}`).then((response) => {
+      if (response.success && response.data) {
+        setLabels(response.data[0].data.labels);
+      }
+    });
+  }
+
+  // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
 
@@ -180,6 +195,12 @@ export function AppToolbar(props: AppToolbarProps) {
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       const Component = Applications[app.data.type].ToolbarComponent;
+      const ownerName = users.find((el) => el._id === app._createdBy)?.data.name;
+      const now = new Date();
+      const when = formatDistance(new Date(app._createdAt), now, { addSuffix: true });
+      const whenUpdated = formatDistance(new Date(app._updatedAt), now, { addSuffix: true });
+      const tags = labels.join(', ');
+
       return (
         <ErrorBoundary
           fallbackRender={({ error, resetErrorBoundary }) => (
@@ -195,6 +216,32 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
+
+            {/* Application Information Popover */}
+            <Popover trigger="hover">
+              <PopoverTrigger>
+                <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                  <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent fontSize={'sm'} width={'375px'}>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverHeader>Application Information</PopoverHeader>
+                <PopoverBody userSelect={"text"}>
+                  <UnorderedList>
+                    <ListItem><b>ID</b>: {app._id}</ListItem>
+                    <ListItem><b>Type</b>: {app.data.type}</ListItem>
+                    <ListItem><b>Owner</b>: {ownerName}</ListItem>
+                    <ListItem><b>Created</b>: {when}</ListItem>
+                    <ListItem><b>Updated</b>: {whenUpdated}</ListItem>
+                    <ListItem><b>Tags</b>: {tags}</ListItem>
+                  </UnorderedList>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+
+            {/* Common Actions */}
             <Tooltip
               placement="top"
               hasArrow={true}
@@ -202,7 +249,7 @@ export function AppToolbar(props: AppToolbarProps) {
               openDelay={400}
               ml="1"
             >
-              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
