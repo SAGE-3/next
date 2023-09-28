@@ -6,14 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { Box, useColorModeValue, Text, Button, Tooltip } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdZoomOutMap } from 'react-icons/md';
+import {
+  Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem,
+  Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent,
+  PopoverHeader, PopoverTrigger, UnorderedList
+} from '@chakra-ui/react';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
-import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { formatDistance } from 'date-fns';
+
+import {
+  useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore,
+  useUsersStore, useInsightStore
+} from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -51,17 +60,39 @@ export function AppToolbar(props: AppToolbarProps) {
   const appDragging = useUIStore((state) => state.appDragging);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  // Access the list of users
+  const users = useUsersStore((state) => state.users);
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
-
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+
+  // Insight labels
+  const [tags, setTags] = useState<string[]>([]);
+  // Convert to string for input element
+  const [inputLabel, setInputLabel] = useState<string>(tags.join(' '));
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
 
-  //Abilities
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const updateInsight = useInsightStore((state) => state.update);
+
+  useEffect(() => {
+    if (insights && insights.length > 0 && app) {
+      // Match the app with the insight
+      const insight = insights.find((el) => el._id === app._id);
+      if (insight) {
+        // if found, update the tags
+        setTags(insight.data.labels);
+        setInputLabel(insight.data.labels.join(' '));
+      }
+    }
+  }, [app, insights]);
+
+  // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
 
@@ -179,7 +210,28 @@ export function AppToolbar(props: AppToolbarProps) {
 
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
+      // Get the component from the app definition
       const Component = Applications[app.data.type].ToolbarComponent;
+      // Get some application information
+      const ownerName = users.find((el) => el._id === app._createdBy)?.data.name;
+      const now = new Date();
+      const when = formatDistance(new Date(app._createdAt), now, { addSuffix: true });
+      // Input to edit the tags
+      const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setInputLabel(event.target.value);
+      };
+      // Press Enter to update
+      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+          // cleanup the input
+          const clean = inputLabel.replace(/\s+/g, ' ');
+          const localTags = clean.split(' ').map((el) => el.trim());
+          setInputLabel(localTags.join(' '));
+          // Updating the backend
+          updateInsight(app._id, { labels: localTags });
+        }
+      };
+
       return (
         <ErrorBoundary
           fallbackRender={({ error, resetErrorBoundary }) => (
@@ -195,6 +247,40 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
+
+            {/* Application Information Popover */}
+            <Popover trigger="hover">
+              <PopoverTrigger>
+                <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                  <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent fontSize={'sm'} width={'375px'}>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverHeader>Application Information</PopoverHeader>
+                <PopoverBody userSelect={"text"}>
+                  <UnorderedList>
+                    <ListItem><b>ID</b>: {app._id}</ListItem>
+                    <ListItem><b>Type</b>: {app.data.type}</ListItem>
+                    <ListItem><b>Owner</b>: {ownerName}</ListItem>
+                    <ListItem><b>Created</b>: {when}</ListItem>
+                    <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
+                      width="300px" m={0} p={0} size="xs" variant='filled'
+                      value={inputLabel}
+                      placeholder="Enter tags here separated by spaces"
+                      _placeholder={{ opacity: 1, color: 'gray.400' }}
+                      focusBorderColor="gray.500"
+                      onChange={handleChange}
+                      onKeyDown={onSubmit}
+                    />
+                    </ListItem>
+                  </UnorderedList>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+
+            {/* Common Actions */}
             <Tooltip
               placement="top"
               hasArrow={true}
@@ -202,7 +288,7 @@ export function AppToolbar(props: AppToolbarProps) {
               openDelay={400}
               ml="1"
             >
-              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>

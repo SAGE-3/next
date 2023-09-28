@@ -13,11 +13,10 @@ import { Code, Box, useColorModeValue, Text, Image, Heading, Button, Tab, TabLis
 // Collection specific schemas
 import { App } from '@sage3/applications/schema';
 import { JoinBoardCheck, useConfigStore, MainButton, Clock, APIHttp } from '@sage3/frontend';
-import { Board, Asset, User, Room, Message, Presence } from '@sage3/shared/types';
+import { Board, Asset, User, Room, Message, Presence, Insight } from '@sage3/shared/types';
 
 // Styles
 import './adminStyle.css';
-
 
 export function AdminPage() {
   // SAGE3 Image
@@ -34,6 +33,7 @@ export function AdminPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [presences, setPresences] = useState<Presence[]>([]);
+  const [insights, setInsights] = useState<Insight[]>([]);
 
   // Pre element for displaying messages
   const preRef = useRef<HTMLPreElement>(null);
@@ -73,6 +73,11 @@ export function AdminPage() {
       if (bb.success && bb.data) setPresences(bb.data);
     });
   };
+  const fetchInsights = () => {
+    APIHttp.GET<Insight>('/insight').then((bb) => {
+      if (bb.success && bb.data) setInsights(bb.data);
+    });
+  };
 
   // Get all collections
   const fetchAll = () => {
@@ -83,6 +88,7 @@ export function AdminPage() {
     fetchRooms();
     fetchMessages();
     fetchPresences();
+    fetchInsights();
   };
 
   const toast = useToast();
@@ -188,7 +194,14 @@ export function AdminPage() {
       }
     });
   };
-
+  const delInsight = (id: string) => {
+    APIHttp.DELETE('/insight/' + id).then((resp) => {
+      if (resp.success) {
+        toast({ title: 'Insight Deleted', status: 'info', duration: 2000, isClosable: true });
+        fetchInsights();
+      }
+    });
+  };
   return (
     // Main Container
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
@@ -234,6 +247,7 @@ export function AdminPage() {
             <Tab>Assets</Tab>
             <Tab>Users</Tab>
             <Tab>Presences</Tab>
+            <Tab>Insight</Tab>
             <Tab>Messages</Tab>
             <Tab>Logs</Tab>
           </TabList>
@@ -259,7 +273,7 @@ export function AdminPage() {
                         <td> {room.data.description}</td>
                         <td>
                           <Button mx={3} colorScheme="red" size="xs" onClick={() => delRoom(room._id)}>
-                            del
+                            Delete
                           </Button>
                         </td>
                       </tr>
@@ -272,110 +286,122 @@ export function AdminPage() {
               <Heading>Boards</Heading>
 
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Actions</th>
-                </tr>
-
-                {boards.map((board) => {
-                  return (
-                    <tr key={board._id}>
-                      <td>{board._id}</td>
-                      <td>{board.data.name}</td>
-                      <td> {board.data.description}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delBoard(board._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {boards.map((board) => {
+                    return (
+                      <tr key={board._id}>
+                        <td>{board._id}</td>
+                        <td>{board.data.name}</td>
+                        <td> {board.data.description}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delBoard(board._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
             <TabPanel>
               <Heading>Apps</Heading>
 
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>Title</th>
-                  <th>Type</th>
-                  <th>Actions</th>
-                </tr>
-
-                {apps.map((app) => {
-                  return (
-                    <tr key={app._id}>
-                      <td>{app._id}</td>
-                      <td>{app.data.title}</td>
-                      <td>{app.data.type}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delApp(app._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apps.map((app) => {
+                    return (
+                      <tr key={app._id}>
+                        <td>{app._id}</td>
+                        <td>{app.data.title}</td>
+                        <td>{app.data.type}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delApp(app._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
             <TabPanel>
               <Heading>Assets</Heading>
 
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>Name</th>
-                  <th>Actions</th>
-                </tr>
-
-                {assets.map((asset) => {
-                  return (
-                    <tr key={asset._id}>
-                      <td>{asset._id}</td>
-                      <td>{asset.data.originalfilename}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delAsset(asset._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Name</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assets.map((asset) => {
+                    return (
+                      <tr key={asset._id}>
+                        <td>{asset._id}</td>
+                        <td>{asset.data.originalfilename}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delAsset(asset._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
             <TabPanel>
               <Heading>Users</Heading>
 
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Type</th>
-                  <th>Actions</th>
-                </tr>
-
-                {users.map((user) => {
-                  return (
-                    <tr key={user._id}>
-                      <td>{user._id}</td>
-                      <td>{user.data.name}</td>
-                      <td>{user.data.email}</td>
-                      <td>{user.data.userRole}</td>
-                      <td>{user.data.userType}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delUser(user._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => {
+                    return (
+                      <tr key={user._id}>
+                        <td>{user._id}</td>
+                        <td>{user.data.name}</td>
+                        <td>{user.data.email}</td>
+                        <td>{user.data.userRole}</td>
+                        <td>{user.data.userType}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delUser(user._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
 
@@ -383,54 +409,91 @@ export function AdminPage() {
               <Heading>Presences</Heading>
 
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>RoomId</th>
-                  <th>BoardId</th>
-                  <th>Actions</th>
-                </tr>
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>RoomId</th>
+                    <th>BoardId</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {presences.map((p) => {
+                    return (
+                      <tr key={p._id}>
+                        <td>{p._id}</td>
+                        <td>{p.data.roomId}</td>
+                        <td>{p.data.boardId}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delPresence(p._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </TabPanel>
 
-                {presences.map((p) => {
-                  return (
-                    <tr key={p._id}>
-                      <td>{p._id}</td>
-                      <td>{p.data.roomId}</td>
-                      <td>{p.data.boardId}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delPresence(p._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+            <TabPanel>
+              <Heading>Insights</Heading>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>app_id</th>
+                    <th>labels</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {insights.map((p) => {
+                    return (
+                      <tr key={p._id}>
+                        <td>{p._id}</td>
+                        <td>{p.data.app_id}</td>
+                        <td>{p.data.labels.join(', ')}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delInsight(p._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
 
             <TabPanel>
               <Heading>Messages</Heading>
               <table>
-                <tr>
-                  <th>id</th>
-                  <th>Type</th>
-                  <th>Payload</th>
-                  <th>Actions</th>
-                </tr>
-
-                {messages.map((message) => {
-                  return (
-                    <tr key={message._id}>
-                      <td>{message._id}</td>
-                      <td>{message.data.type}</td>
-                      <td>{message.data.payload}</td>
-                      <td>
-                        <Button mx={3} colorScheme="red" size="xs" onClick={() => delMessage(message._id)}>
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                <thead>
+                  <tr>
+                    <th>id</th>
+                    <th>Type</th>
+                    <th>Payload</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {messages.map((message) => {
+                    return (
+                      <tr key={message._id}>
+                        <td>{message._id}</td>
+                        <td>{message.data.type}</td>
+                        <td>{message.data.payload}</td>
+                        <td>
+                          <Button mx={3} colorScheme="red" size="xs" onClick={() => delMessage(message._id)}>
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </TabPanel>
 
