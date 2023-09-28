@@ -19,4 +19,4 @@ cp configurations/fluentd/conf/fluent-prod.conf configurations/fluentd/conf/flue
 VERSION=1.1-linux-amd64
 rm -f SAGE3-${VERSION}.tgz
 
-tar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.0\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env
+tar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.1\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env
