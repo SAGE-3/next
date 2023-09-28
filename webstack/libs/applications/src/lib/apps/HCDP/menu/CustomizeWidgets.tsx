@@ -29,9 +29,7 @@ import {
   IconButton,
 } from '@chakra-ui/react';
 import React, { useEffect, useState } from 'react';
-import LeafletWrapper from '../LeafletWrapper';
 import { App } from '@sage3/applications/schema';
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
 
 import { useAppStore } from '@sage3/frontend';
 import VariableCard from '../viewers/VariableCard';
@@ -679,79 +677,6 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
                 </Accordion>
               </Box>
 
-              {/********** Leaflet map *****************/}
-              <Box border="3px solid" borderColor={accentColor} boxShadow="lg" overflow="hidden" mx="3" rounded="lg" width="40rem">
-                <Box background={headerBackgroundColor} p="1rem" borderBottom={`3px solid ${accentColor}`}>
-                  <Heading color={textColor} size="md">
-                    Map
-                  </Heading>
-                </Box>
-
-                <LeafletWrapper map={map} setMap={setMap} {...props}>
-                  <LayersControl.BaseLayer checked={props.data.state.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {stationData.map((station: { lat: number; lon: number; name: string; selected: boolean }, index: number) => {
-                      if (props.data.state.stationNames.includes(station.name)) {
-                        station.selected = true;
-                      } else {
-                        station.selected = false;
-                      }
-                      return (
-                        <div key={index}>
-                          <CircleMarker
-                            key={index}
-                            center={{ lat: station.lat - 0.01, lng: station.lon }}
-                            fillColor={station.selected ? 'blue' : 'red'}
-                            stroke={false}
-                            radius={20}
-                            fillOpacity={0}
-                            eventHandlers={{
-                              click: (e) => {
-                                if (station.selected) {
-                                  if (props.data.state.stationNames.length >= 2) {
-                                    handleRemoveSelectedStation(station);
-                                  }
-                                } else {
-                                  if (props.data.state.stationNames.length <= 8) {
-                                    handleAddSelectedStation(station);
-                                  }
-                                }
-                              },
-                            }}
-                          >
-                            {props.data.state.stationNames.length >= 9 ? (
-                              <LeafletTooltip>'You have reached the max number of selected stations' </LeafletTooltip>
-                            ) : null}
-                          </CircleMarker>
-
-                          <SVGOverlay
-                            bounds={[
-                              [station.lat - 0.17, station.lon - 0.05],
-                              [station.lat + 0.15, station.lon + 0.05],
-                            ]}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                              <g transform={`translate(100, 100) scale(3) translate(-100, -100)`}>
-                                <circle
-                                  cx="100"
-                                  cy="100"
-                                  r="20"
-                                  fill={station.selected ? '#2e3f8f' : '#E1BB78'}
-                                  stroke={'black'}
-                                  strokeWidth="3"
-                                />
-                              </g>
-                            </svg>
-                          </SVGOverlay>
-                        </div>
-                      );
-                    })}
-                  </LayersControl.BaseLayer>
-                </LeafletWrapper>
-              </Box>
               <Box
                 border="3px solid"
                 borderColor={accentColor}

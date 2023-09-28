@@ -95,8 +95,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  location: [21.297, -157.816],
-  zoom: 8,
+  location: [-157.816, 21.297], // Lng, Lat
+  zoom: 13,
   bearing: 0,
   pitch: 0,
   baseLayer: 'OpenStreetMap',

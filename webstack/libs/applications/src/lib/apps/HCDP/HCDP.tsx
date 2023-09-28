@@ -19,16 +19,7 @@ import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
-// Leaflet plus React
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay } from 'react-leaflet';
-import LeafletWrapper from './LeafletWrapper';
-
-import { SensorTypes } from './data/stationData';
-
-import { hcdpStationData } from './data/hcdpStationData';
-
-import GeoTIFF, { fromUrl, fromUrls, fromArrayBuffer, fromBlob } from 'geotiff';
+import MapLibreWrapper from './MapLibreWrapper';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
@@ -42,10 +33,6 @@ const convertToFahrenheit = (tempInCelcius: number) => {
   return tempInFahrenheit;
 };
 
-// Max and min zoom for leaflet app
-const maxZoom = 18;
-const minZoom = 1;
-
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
@@ -53,37 +40,34 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  // The map: any, I kown, should be Leaflet.Map but don't work
-  const [map, setMap] = useState<any>();
   const [, setStationMetadata] = useState([]);
-  const plotRef = useRef(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const url = '/assets/HCDPTestData.tif';
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const url = '/assets/HCDPTestData.tif';
 
-      const tiff = await fromUrl(url);
-      const image = await tiff.getImage();
-      const data = await image.readRasters();
-      const resolution = image.getResolution();
-      const bbox = image.getBoundingBox();
-      const { width, height } = data;
-      const tiepoint = image.getTiePoints()[0];
-      const [xScale, yScale] = image.getFileDirectory().ModelPixelScale;
+  //     const tiff = await fromUrl(url);
+  //     const image = await tiff.getImage();
+  //     const data = await image.readRasters();
+  //     const resolution = image.getResolution();
+  //     const bbox = image.getBoundingBox();
+  //     const { width, height } = data;
+  //     const tiepoint = image.getTiePoints()[0];
+  //     const [, yScale] = image.getFileDirectory().ModelPixelScale;
 
-      const HCDPData = {
-        nCols: width,
-        nRows: height,
-        xllCorner: tiepoint.x,
-        yllCorner: tiepoint.y - height * yScale,
-        cellXSize: resolution[0],
-        cellYSize: resolution[1],
-      };
+  //     const HCDPData = {
+  //       nCols: width,
+  //       nRows: height,
+  //       xllCorner: tiepoint.x,
+  //       yllCorner: tiepoint.y - height * yScale,
+  //       cellXSize: resolution[0],
+  //       cellYSize: resolution[1],
+  //     };
 
-      console.log(HCDPData, bbox, data);
-    };
-    fetchData();
-  }, []);
+  //     console.log(HCDPData, bbox, data);
+  //   };
+  //   fetchData();
+  // }, []);
 
   useEffect(() => {
     const fetchStationData = async () => {
@@ -136,8 +120,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <h1>Hello World</h1>
-      <div ref={plotRef}></div>
+      <MapLibreWrapper {...props} />
     </AppWindow>
   );
 }

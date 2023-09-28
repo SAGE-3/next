@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain, Md3DRotation } from 'react-icons/md';
+import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
 import create from 'zustand';
@@ -19,8 +19,9 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
+import { fromUrl } from 'geotiff';
 
-import { useAppStore, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
@@ -28,6 +29,7 @@ import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
+import { TypedArray } from 'd3';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -54,9 +56,25 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
+// Define the bounds
+const bounds = [
+  -159.816, // Minimum longitude
+  18.849, // Minimum latitude
+  -154.668, // Maximum longitude
+  22.269, // Maximum latitude
+];
+
+// Calculate the coordinates for the four corners of the bounding box
+const coordinates = [
+  [bounds[0], bounds[1]],
+  [bounds[0], bounds[3]],
+  [bounds[2], bounds[3]],
+  [bounds[2], bounds[1]],
+  [bounds[0], bounds[1]], // Close the polygon
+];
 /* App component for MapGL */
 
-function AppComponent(props: App): JSX.Element {
+function MapLibreWrapper(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
@@ -70,7 +88,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
-
+  const scale = useUIStore((state) => state.scale);
   // Toast to inform user about errors
   const toast = useToast();
 
@@ -258,13 +276,119 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [props.data.size.width, props.data.size.height, map]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const url = '/assets/HCDPTestData.tif';
+
+      const tiff = await fromUrl(url);
+      const image = await tiff.getImage();
+      const data: any = await image.readRasters();
+      const resolution = image.getResolution();
+      const bbox = image.getBoundingBox();
+      const { width, height } = data;
+      const tiepoint = image.getTiePoints()[0];
+      const [, yScale] = image.getFileDirectory().ModelPixelScale;
+
+      const HCDPData = {
+        nCols: width,
+        nRows: height,
+        xllCorner: tiepoint.x,
+        yllCorner: tiepoint.y - height * yScale,
+        cellXSize: resolution[0],
+        cellYSize: resolution[1],
+      };
+      function convertTo2D(dataArray: any[], nRows: number, nCols: number) {
+        const twoDArray: number[][] = [];
+        for (let i = 0; i < nRows; i++) {
+          const row = [];
+          for (let j = 0; j < nCols; j++) {
+            const index = i * nCols + j;
+            row.push(dataArray[index]);
+          }
+          twoDArray.push(row);
+        }
+        return twoDArray;
+      }
+      const dataArray = convertTo2D(data[0], HCDPData.nRows, HCDPData.nCols);
+
+      map.on('click', async (event: any) => {
+        const [longitude, latitude]: number[] = [event.lngLat.lng, event.lngLat.lat];
+        console.log(longitude * scale, latitude * scale);
+        // Corrected formulas for pixel coordinates
+        const pixelX = Math.floor((longitude - HCDPData.xllCorner) / HCDPData.cellXSize);
+        const pixelY = Math.floor((HCDPData.yllCorner - latitude) / HCDPData.cellYSize);
+        console.log(pixelX, pixelY);
+        // console.log(dataArray[pixelX][pixelY]);
+        // Ensure that the index is valid
+        if (dataArray[pixelX] && dataArray[pixelX][pixelY]) {
+          const value = dataArray[pixelX][pixelY];
+          console.log(`Value at (${longitude}, ${latitude}): ${value}`);
+        } else {
+          console.log('Clicked outside the GeoTIFF bounds or invalid index calculated');
+        }
+      });
+    };
+    if (map) {
+      fetchData();
+    }
+  }, [map]);
+
+  useEffect(() => {
+    if (map) {
+      map.on('style.load', async () => {
+        const response2 = await fetch('/assets/temp/6/3/35.png');
+        const blob2 = await response2.blob();
+        const url2 = URL.createObjectURL(blob2);
+
+        map.addSource('geotiff-source2', {
+          type: 'raster',
+          tiles: [url2],
+          tileSize: 2048, // Set the tileSize to ensure constant size
+          bounds: bounds, // Set the bounds for the source
+        });
+
+        // Add a layer using the raster source
+        map.addLayer({
+          id: 'geotiff-layer2',
+          type: 'raster',
+          source: 'geotiff-source2',
+          paint: {
+            'raster-opacity': 0.3, // Adjust the opacity as needed
+          },
+        });
+
+        const response = await fetch('/assets/temp/6/4/35.png');
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        map.addSource('geotiff-source', {
+          type: 'raster',
+          tiles: [url],
+          tileSize: 2048, // Set the tileSize to ensure constant size
+          bounds: bounds, // Set the bounds for the source
+        });
+
+        // Add a layer using the raster source
+        map.addLayer({
+          id: 'geotiff-layer',
+          type: 'raster',
+          source: 'geotiff-source',
+          paint: {
+            'raster-opacity': 0.3, // Adjust the opacity as needed
+          },
+        });
+      });
+    }
+  }, [map]);
+
   return (
-    <AppWindow app={props}>
+    <>
+      {' '}
       {/* One box for map, one box for container */}
       <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}>
         <Box id={'map' + props._id} w="100%" h="100%" />
       </Box>
-    </AppWindow>
+    </>
   );
 }
 
@@ -386,12 +510,4 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
-
-export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+export default MapLibreWrapper;
