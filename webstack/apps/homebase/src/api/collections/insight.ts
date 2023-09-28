@@ -13,8 +13,7 @@ import { AppsCollection } from './apps';
 class SAGE3InsightCollection extends SAGE3Collection<InsightSchema> {
   constructor() {
     super('INSIGHT', {
-      app_id: '',
-      labels: [],
+      roomId: '', // index to query
     });
     const router = sageRouter<InsightSchema>(this);
     this.httpRouter = router;
@@ -39,7 +38,7 @@ class SAGE3InsightCollection extends SAGE3Collection<InsightSchema> {
         case 'CREATE': {
           for (const doc of message.doc) {
             // for each new app, add an insight document
-            this.add({ app_id: doc._id, labels: [] }, doc._createdBy, doc._id);
+            this.add({ app_id: doc._id, roomId: doc.data.roomId, labels: [] }, doc._createdBy, doc._id);
           }
           break;
         }

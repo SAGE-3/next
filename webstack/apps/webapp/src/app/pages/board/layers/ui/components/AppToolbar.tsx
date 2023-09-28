@@ -6,17 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem, Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent, PopoverHeader, PopoverTrigger, UnorderedList } from '@chakra-ui/react';
+import {
+  Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem,
+  Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent,
+  PopoverHeader, PopoverTrigger, UnorderedList
+} from '@chakra-ui/react';
 import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
 
-import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore, useUsersStore, APIHttp, useInsightStore } from '@sage3/frontend';
-import { Insight } from '@sage3/shared/types';
+import {
+  useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore,
+  useUsersStore, useInsightStore
+} from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 type AppToolbarProps = {};
@@ -221,7 +227,7 @@ export function AppToolbar(props: AppToolbarProps) {
           const localTags = inputLabel.split(',').map((el) => el.trim());
           setInputLabel(localTags.join(', '));
           // Updating the backend
-          updateInsight(app._id, { app_id: app._id, labels: localTags });
+          updateInsight(app._id, { labels: localTags });
         }
       };
 

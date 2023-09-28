@@ -24,7 +24,7 @@ interface InsightState {
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<InsightSchema>) => void;
-  subscribe: () => Promise<void>;
+  subscribe: (roomdId: string) => Promise<void>;
   unsubscribe: () => void;
 }
 
@@ -59,7 +59,7 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
         insightSub = null;
       }
     },
-    subscribe: async () => {
+    subscribe: async (roomdId: string) => {
       if (!SAGE3Ability.canCurrentUser('read', 'insight')) return;
       set({ insights: [] });
       const reponse = await APIHttp.GET<Insight>('/insight');
@@ -77,7 +77,7 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/insight';
+      const route = `/insight?roomId=${roomdId}`;
       insightSub = await SocketAPI.subscribe<Insight>(route, (message) => {
         if (message.col !== 'INSIGHT') return;
         switch (message.type) {

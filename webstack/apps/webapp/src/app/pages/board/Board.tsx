@@ -125,7 +125,7 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Sub to insights
-    subToInsight();
+    subToInsight(roomId);
     // plugins
     subPlugins();
     // Update the user's presence information
