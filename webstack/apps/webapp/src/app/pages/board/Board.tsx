@@ -28,6 +28,7 @@ import {
   useAuth,
   isElectron,
   getSAGE3BoardUrl,
+  useInsightStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -65,6 +66,11 @@ export function BoardPage() {
   const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // Insights
+  const insights = useInsightStore((state) => state.insights);
+  const subToInsight = useInsightStore((state) => state.subscribe);
+  const unsubToInsight = useInsightStore((state) => state.unsubscribe);
 
   // UI Store
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -118,7 +124,8 @@ export function BoardPage() {
     // Sub to users and presence
     subscribeToPresence();
     subscribeToUsers();
-
+    // Sub to insights
+    subToInsight();
     // plugins
     subPlugins();
     // Update the user's presence information
@@ -146,7 +153,7 @@ export function BoardPage() {
     }
 
     if (!isElectron() && !development) {
-
+      // Function to open the board in the desktop app
       function openDesktopApp() {
         if (!boardId || !roomId) return;
         // Get the board link
@@ -173,7 +180,6 @@ export function BoardPage() {
           </p>
         ),
       });
-
     }
 
     // Unmounting of the board page. user must have redirected back to the homepage. Unsubscribe from the board.
@@ -184,6 +190,8 @@ export function BoardPage() {
       if (user) updatePresence(user._id, { boardId: '', roomId: '', following: '' });
       // Set Selected app to empty
       setSelectedApp('');
+      // Unsub from insights
+      unsubToInsight();
       // Remove event listeners
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);

@@ -29,6 +29,9 @@ class SAGE3InsightCollection extends SAGE3Collection<InsightSchema> {
     this.subscribeToApps();
   }
 
+  /**
+   * Subscribe to the Apps Collection to create an insight document for each app
+   */
   async subscribeToApps() {
     // Subscribe to Presence Collection
     await AppsCollection.subscribeAll((message) => {

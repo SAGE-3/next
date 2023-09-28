@@ -15,7 +15,7 @@ import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
 
-import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore, useUsersStore, APIHttp } from '@sage3/frontend';
+import { useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore, useUsersStore, APIHttp, useInsightStore } from '@sage3/frontend';
 import { Insight } from '@sage3/shared/types';
 import { Applications } from '@sage3/applications/apps';
 
@@ -70,16 +70,21 @@ export function AppToolbar(props: AppToolbarProps) {
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
 
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const updateInsight = useInsightStore((state) => state.update);
+
   useEffect(() => {
-    if (app) {
-      APIHttp.GET<Insight>(`/insight/${app._id}`).then((response) => {
-        if (response.success && response.data) {
-          setTags(response.data[0].data.labels);
-          setInputLabel(response.data[0].data.labels.join(', '));
-        }
-      });
+    if (insights && insights.length > 0 && app) {
+      // Match the app with the insight
+      const insight = insights.find((el) => el._id === app._id);
+      if (insight) {
+        // if found, update the tags
+        setTags(insight.data.labels);
+        setInputLabel(insight.data.labels.join(', '));
+      }
     }
-  }, [app]);
+  }, [app, insights]);
 
   // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
@@ -216,10 +221,7 @@ export function AppToolbar(props: AppToolbarProps) {
           const localTags = inputLabel.split(',').map((el) => el.trim());
           setInputLabel(localTags.join(', '));
           // Updating the backend
-          APIHttp.PUT<Insight>(`/insight/${app._id}`, {
-            app_id: app._id,
-            labels: localTags,
-          });
+          updateInsight(app._id, { app_id: app._id, labels: localTags });
         }
       };
 
