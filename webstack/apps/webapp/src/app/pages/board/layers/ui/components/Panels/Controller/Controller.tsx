@@ -12,7 +12,7 @@ import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 
-import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
+import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
 
 export interface ControllerProps {
@@ -27,7 +27,6 @@ export function Controller(props: ControllerProps) {
   const room = rooms.find((el) => el._id === props.roomId);
 
   // Can Annotate
-  const { user } = useUser();
   const canAnnotate = useAbility('update', 'boards');
   const canCreateApps = useAbility('create', 'apps');
   const canDownload = useAbility('download', 'assets');
