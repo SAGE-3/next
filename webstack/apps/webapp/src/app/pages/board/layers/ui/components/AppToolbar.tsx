@@ -71,7 +71,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
   // Convert to string for input element
-  const [inputLabel, setInputLabel] = useState<string>(tags.join(', '));
+  const [inputLabel, setInputLabel] = useState<string>(tags.join(' '));
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
@@ -87,7 +87,7 @@ export function AppToolbar(props: AppToolbarProps) {
       if (insight) {
         // if found, update the tags
         setTags(insight.data.labels);
-        setInputLabel(insight.data.labels.join(', '));
+        setInputLabel(insight.data.labels.join(' '));
       }
     }
   }, [app, insights]);
@@ -218,14 +218,15 @@ export function AppToolbar(props: AppToolbarProps) {
       const when = formatDistance(new Date(app._createdAt), now, { addSuffix: true });
       // Input to edit the tags
       const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setInputLabel(event.target.value.trim());
+        setInputLabel(event.target.value);
       };
       // Press Enter to update
       const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
           // cleanup the input
-          const localTags = inputLabel.split(',').map((el) => el.trim());
-          setInputLabel(localTags.join(', '));
+          const clean = inputLabel.replace(/\s+/g, ' ');
+          const localTags = clean.split(' ').map((el) => el.trim());
+          setInputLabel(localTags.join(' '));
           // Updating the backend
           updateInsight(app._id, { labels: localTags });
         }
@@ -267,7 +268,7 @@ export function AppToolbar(props: AppToolbarProps) {
                     <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
                       width="300px" m={0} p={0} size="xs" variant='filled'
                       value={inputLabel}
-                      placeholder="Enter tags here"
+                      placeholder="Enter tags here separated by spaces"
                       _placeholder={{ opacity: 1, color: 'gray.400' }}
                       focusBorderColor="gray.500"
                       onChange={handleChange}

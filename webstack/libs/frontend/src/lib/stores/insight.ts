@@ -34,7 +34,6 @@ interface InsightState {
 const InsightStore = createVanilla<InsightState>((set, get) => {
   APIHttp.GET<Insight>('/insight').then((response) => {
     if (response.success) {
-      console.log('InsightStore', response.data);
       set({ insights: response.data });
     }
   });
