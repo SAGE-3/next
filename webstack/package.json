@@ -98,7 +98,7 @@
     "redis": "^4.6.6",
     "resize-observer-polyfill": "^1.5.1",
     "serve-favicon": "^2.5.0",
-    "sharp": "^0.32.1",
+    "sharp": "^0.32.6",
     "three": "^0.156.0",
     "throttle-debounce": "^5.0.0",
     "tslib": "^2.4.0",
