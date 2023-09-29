@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
@@ -253,42 +253,9 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   // Local kernel info
   const myk = filterMyKernels(kernels);
   const [myKernels, setMyKernels] = useState<KernelInfo[]>(myk);
-  // Is every sagecell using the same kernel..?
-  const selectedKernel = props.apps.every((app) => app.data.state.kernel === props.apps[0].data.state.kernel)
-    ? kernels.find((kernel) => kernel.kernel_id === props.apps[0].data.state.kernel)
-    : undefined;
 
-  const [selected, setSelected] = useState<KernelInfo | undefined>(selectedKernel);
-
-  // Checking Acccess
-  useEffect(() => {
-    // If the API Status is down, set the publicKernels to empty array
-    if (!apiStatus) {
-      setAccess(false);
-      return;
-    } else {
-      const selectedKernel = props.apps.every((app) => app.data.state.kernel === props.apps[0].data.state.kernel)
-        ? kernels.find((kernel) => kernel.kernel_id === props.apps[0].data.state.kernel)
-        : undefined;
-      if (!selectedKernel) return;
-      const isPrivate = selectedKernel?.is_private;
-      const owner = selectedKernel?.owner;
-      if (!isPrivate) setAccess(true);
-      else if (isPrivate && owner === user?._id) setAccess(true);
-      else setAccess(false);
-    }
-  }, [apiStatus, JSON.stringify(kernels), user]);
-
-  // Set Selected Kernel
-  useEffect(() => {
-    if (kernels.length === 0) return;
-    else {
-      const selectedKernel = props.apps.every((app) => app.data.state.kernel === props.apps[0].data.state.kernel)
-        ? kernels.find((kernel) => kernel.kernel_id === props.apps[0].data.state.kernel)
-        : undefined;
-      setSelected(selectedKernel);
-    }
-  }, [kernels]);
+  const [selected, setSelected] = useState<KernelInfo | undefined>(undefined);
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   // Set My Kernels
   useEffect(() => {
@@ -329,12 +296,13 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
    * @returns {void}
    */
   function selectKernel(e: React.ChangeEvent<HTMLSelectElement>): void {
+    setSelected(myKernels.find((kernel) => kernel.kernel_id === e.target.value));
     const newKernelValue = e.target.value;
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
-      if (!myKernels.find((kernel) => kernel.kernel_id === app.data.state.kernel)) return;
+      // if (!myKernels.find((kernel) => kernel.kernel_id === app.data.state.kernel)) return;
       ps.push({ id: app._id, updates: { kernel: newKernelValue } });
     });
     // Update all the apps at once
@@ -349,6 +317,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         </Button>
       ) : (
         <Select
+          ref={selectRef}
           placeholder={'Select Kernel'}
           rounded="lg"
           size="sm"
@@ -361,6 +330,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           variant={'outline'}
           isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
+          {
+            // Deselect Kernel
+            <option value={''} key={''}>
+              **Deselect Kernels**
+            </option>
+          }
           {
             //show my kernels
             myKernels
