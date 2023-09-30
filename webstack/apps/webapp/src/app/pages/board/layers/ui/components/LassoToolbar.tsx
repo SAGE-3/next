@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSaveAs, HiOutlineStop } from 'react-icons/hi';
 
 import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
@@ -31,6 +31,10 @@ export function LassoToolbar() {
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
+
+  // Save/clear the app selection
+  const setSavedSelectedAppsIds = useUIStore((state) => state.setSavedSelectedAppsIds);
+  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -149,11 +153,23 @@ export function LassoToolbar() {
                 </MenuList>
               </Menu>
 
+              <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
+                <Button onClick={setSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDeleteApp}>
+                  <HiOutlineSaveAs size="18px" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Clear the app selection'} openDelay={400}>
+                <Button onClick={clearSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDeleteApp}>
+                  <HiOutlineStop size="18px" />
+                </Button>
+              </Tooltip>
+
               <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
                 <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
+
             </Box>
           </Box>
         </Box>

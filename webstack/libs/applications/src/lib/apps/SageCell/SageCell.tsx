@@ -40,7 +40,7 @@ import { MonacoBinding } from 'y-monaco';
 import { throttle } from 'throttle-debounce';
 
 // SAGE3 Component imports
-import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore, useUIStore } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -357,10 +357,18 @@ function AppComponent(props: App): JSX.Element {
 
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
-    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    let info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    const savedSelectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
+    if (savedSelectedAppsIds.length > 0) {
+      info += 'selected_apps = ' + JSON.stringify(savedSelectedAppsIds) + '\n';
+    } else {
+      info += 'selected_apps = None\n';
+    }
+    // selectedApps
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
+
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
