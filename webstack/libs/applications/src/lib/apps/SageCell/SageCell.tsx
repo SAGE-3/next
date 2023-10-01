@@ -357,14 +357,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
-    let info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
-    const savedSelectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
-    if (savedSelectedAppsIds.length > 0) {
-      info += 'selected_apps = ' + JSON.stringify(savedSelectedAppsIds) + '\n';
-    } else {
-      info += 'selected_apps = None\n';
-    }
-    // selectedApps
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };

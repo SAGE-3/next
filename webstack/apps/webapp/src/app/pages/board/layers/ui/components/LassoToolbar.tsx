@@ -7,11 +7,18 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
-import { MdCopyAll, MdSend, MdZoomOutMap } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSaveAs, HiOutlineStop } from 'react-icons/hi';
+import { useParams } from 'react-router';
 
-import { ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
+
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, } from 'react-icons/md';
+import { HiOutlineTrash } from 'react-icons/hi';
+import { FaPython } from 'react-icons/fa';
+
+import {
+  ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor,
+  useThrottleApps, useUIStore, setupApp, useCursorBoardPosition,
+} from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
 /**
@@ -22,19 +29,24 @@ import { Applications } from '@sage3/applications/apps';
  * @returns
  */
 export function LassoToolbar() {
+  const { roomId, boardId } = useParams();
+
   // App Store
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
+  const createApp = useAppStore((state) => state.create);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
 
-  // Save/clear the app selection
-  const setSavedSelectedAppsIds = useUIStore((state) => state.setSavedSelectedAppsIds);
-  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
+  // Apps selection
+  const selectedAppsIds = useUIStore((state) => state.selectedAppsIds);
+
+  // Position
+  const { boardCursor } = useCursorBoardPosition();
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -91,6 +103,43 @@ export function LassoToolbar() {
     }
     // Return the component
     return component;
+  };
+
+  const openInChat = () => {
+    const x = boardCursor.x - 200;
+    const y = boardCursor.y - 700;
+    if (roomId && boardId) {
+      // Check if all of same type
+      const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+      let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+      let context = '';
+      if (isAllOfSameType) {
+        if (selectedApps[0].data.type === 'Stickie') {
+          context = selectedApps.reduce((acc, el) => { acc += el.data.state.text + '\n'; return acc; }, '');
+          console.log('All', context);
+        }
+      }
+      createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
+    }
+  };
+
+  const openInCell = () => {
+    const x = boardCursor.x - 200;
+    const y = boardCursor.y - 700;
+    if (roomId && boardId) {
+      const code = `# About apps
+from foresight.config import config as conf, prod_type
+from foresight.Sage3Sugar.pysage3 import PySage3
+room_id = '${roomId}'
+board_id = '${boardId}'
+selected_apps = ${JSON.stringify(selectedAppsIds)}
+ps3 = PySage3(conf, prod_type)
+smartbits = ps3.get_smartbits(room_id, board_id)
+bits = [smartbits[a] for a in selected_apps]
+for b in bits:
+    print(b)`;
+      createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 900, h: 620 }, { fontSize: 24, code }));
+    }
   };
 
   return (
@@ -153,14 +202,14 @@ export function LassoToolbar() {
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
-                <Button onClick={setSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDeleteApp}>
-                  <HiOutlineSaveAs size="18px" />
+              <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
+                <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <MdChat size="18px" />
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Clear the app selection'} openDelay={400}>
-                <Button onClick={clearSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDeleteApp}>
-                  <HiOutlineStop size="18px" />
+              <Tooltip placement="top" hasArrow={true} label={'Open in SageCell'} openDelay={400}>
+                <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <FaPython size="18px" />
                 </Button>
               </Tooltip>
 
