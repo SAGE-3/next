@@ -23,6 +23,7 @@ class SmartBitFactory:
         "Note": "note",
         "Stickie": "stickie",
         "DataTable": "data_table",
+        "CSVViewer": "csvviewer",
         "SageCell": "sagecell",
         "VegaLite": "vegalite",
         "PDFViewer": "pdfviewer",
