@@ -42,7 +42,6 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-
 type ElectronSource = {
   appIcon: null | string;
   display_id: string;
@@ -183,7 +182,7 @@ function AppComponent(props: App): JSX.Element {
         }
       } else {
         try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
 
           videoRef.current.srcObject = stream;
           videoRef.current.play();
@@ -448,6 +447,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
