@@ -7,3 +7,40 @@
  */
 
 /* CSS definitions for the app CSVViewer */
+
+.hoverTable tr:nth-child(even) {background-color: #DCDCDC;}
+.hoverTable tr:nth-child(odd) {background-color: #F5F5F5;}
+
+.hoverTable tr{
+  background: #F5F5F5;
+}
+
+
+/* Define the hover highlight color for the table row */
+.hoverTable tr:hover {
+  background-color: #ffff99;
+}
+/* Define the hover highlight color for the table row */
+.hoverTable td:hover {
+  background-color: #ffff99;
+}
+
+
+
+
+.hoverTableDark tr:nth-child(even) {background-color: #808080;}
+.hoverTableDark tr:nth-child(odd) {background-color: #696969;}
+
+.hoverTableDark tr{
+  background: #F5F5F5;
+}
+
+
+/* Define the hover highlight color for the table row */
+.hoverTableDark tr:hover {
+  background-color: #2a2b33;
+}
+/* Define the hover highlight color for the table row */
+.hoverTableDark td:hover {
+  background-color: #2a2b33;
+}
