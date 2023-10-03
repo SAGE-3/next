@@ -90,6 +90,45 @@ class PySage3:
             print(f"Err or during creation of app {e}")
             return None
 
+    def get_tags(self, app_id):
+        try:
+            res = self.s3_comm.get_tags(app_id)
+            info = res.json()
+            if info["success"]:
+                tags = info["data"][0]["data"]["labels"]
+                return tags
+            else:
+                return []
+        except Exception as e:
+            print(f"Err or during getting tags {e}")
+            return []
+
+    def update_tags(self, app_id, tags):
+        try:
+            return self.s3_comm.update_tags(app_id, {"labels": tags})
+        except Exception as e:
+            print(f"Err or during updating tags {e}")
+            return None
+
+    def get_alltags(self):
+        try:
+            res = self.s3_comm.get_alltags()
+            info = res.json()
+            if info["success"]:
+                return info["data"]
+            else:
+                return []
+        except Exception as e:
+            print(f"Err or during getting tags {e}")
+            return []
+
+    def delete_app(self, app_id):
+        try:
+            return self.s3_comm.delete_app(app_id)
+        except Exception as e:
+            print(f"Err or during delete of app {e}")
+            return None
+
     # Handle Create Messages
     def __handle_create(self, collection, doc):
         # we need state to be at the same level as data
@@ -287,13 +326,16 @@ class PySage3:
     # def get_current_board(self):
     #     return self.board
 
-    def get_apps(self):
-        return self.s3_comm.get_apps()
+    def get_app(self, app_id: str = None) -> dict:
+        return self.s3_comm.get_app(app_id)
+
+    def get_apps(self, room_id: str = None, board_id: str = None) -> List[dict]:
+        return self.s3_comm.get_apps(room_id, board_id)
 
     def get_apps_by_room(self, room_id: str = None) -> List[dict]:
         if room_id is None:
             print("Please provide a room id to filter by")
-        return self.get_apps(room_id)
+        return self.get_apps(room_id=room_id)
 
     def get_apps_by_board(self, board_id: str = None) -> List[dict]:
         if board_id is None:

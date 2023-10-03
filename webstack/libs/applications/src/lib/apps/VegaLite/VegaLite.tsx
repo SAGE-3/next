@@ -86,7 +86,7 @@ function AppComponent(props: App): JSX.Element {
           height={'95%'}
           language={'json'}
           options={{
-            // fontSize: '10px',
+            fontSize: 18,
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
             overviewRulerBorder: false,

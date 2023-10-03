@@ -30,16 +30,18 @@ import {
   useToast,
 } from '@chakra-ui/react';
 
+// Twilio Imports
+import { LocalVideoTrack } from 'twilio-video';
+
+// SAGE imports
+import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron, apiUrls } from '@sage3/frontend';
+import { genId } from '@sage3/shared';
+
+// App
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-// SAGE imports
-import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
-
-// Twilio Imports
-import { LocalVideoTrack } from 'twilio-video';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -94,15 +96,9 @@ function AppComponent(props: App): JSX.Element {
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
 
-  // UIStore
-  // const scale = useUIStore((state) => state.scale);
-  // const setScale = useUIStore((state) => state.setScale);
-  // const boardPosition = useUIStore((state) => state.boardPosition);
-  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
-    const updateDimensions = (track: any) => {
+    const updateDimensions = (track: LocalVideoTrack) => {
       if (track.dimensions.width && track.dimensions.height) {
         const aspect = track.dimensions.width / track.dimensions.height;
         let w = props.data.size.width;
@@ -135,7 +131,7 @@ function AppComponent(props: App): JSX.Element {
   // Get server time
   useEffect(() => {
     async function getServerTime() {
-      const response = await fetch('/api/time');
+      const response = await fetch(apiUrls.misc.getTime);
       const time = await response.json();
       setServerTimeDifference(Date.now() - time.epoch);
     }
@@ -250,7 +246,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
-      if (track.name === s.videoId && videoRef.current) {
+      if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
         // Zoom to the window
         goToScreenshare();

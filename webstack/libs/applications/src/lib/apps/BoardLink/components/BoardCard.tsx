@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Icon, Image, Spacer } from '@chakra-ui/react';
 import { MdLock, MdPerson, MdRefresh } from 'react-icons/md';
 
-import { APIHttp, useThrottlePresenceUsers } from '@sage3/frontend';
+import { APIHttp, apiUrls, useThrottlePresenceUsers } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
 
 import { App, AppName, AppState } from '../../../schema';
@@ -83,7 +83,7 @@ export function BoardCard(props: App): JSX.Element {
   }
 
   async function updateBoardInfo() {
-    const res = await fetch(`/api/boards/${boardId}`);
+    const res = await fetch(apiUrls.boards.getBoard(boardId));
     const data = await res.json();
     if (data.success) {
       setBoard(data.data[0]);

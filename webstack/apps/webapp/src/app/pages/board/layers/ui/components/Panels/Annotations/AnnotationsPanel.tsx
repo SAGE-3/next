@@ -8,27 +8,20 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Box,
-  Button,
-  useToast,
-  Tooltip,
-  HStack,
-  VStack,
-  Slider,
-  SliderFilledTrack,
-  SliderThumb,
-  SliderTrack,
-  Text,
+  Box, Button, useToast, Tooltip, Text, HStack, VStack,
+  Slider, SliderFilledTrack, SliderThumb, SliderTrack, useDisclosure,
 } from '@chakra-ui/react';
 
-import { BsPencilFill } from 'react-icons/bs';
-import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 import { MdGraphicEq } from 'react-icons/md';
+import { BsPencilFill, BsEraserFill } from 'react-icons/bs';
+import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 
-import { useUIStore, useAppStore, usePanelStore, useUser, isElectron, useHexColor, useThrottleApps } from '@sage3/frontend';
+import {
+  ColorPicker, useUIStore, usePanelStore, useUser, isElectron,
+  useHexColor, useThrottleApps, ConfirmModal,
+} from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
-import { ColorPicker } from 'libs/frontend/src/lib/ui/components/general';
 import { Panel } from '../Panel';
 
 export function AnnotationsPanel() {
@@ -69,6 +62,11 @@ export function AnnotationsPanel() {
   const sliderBackground = useHexColor(`${markerColor}.100`);
   const sliderColor = useHexColor(markerColor);
 
+  // eraseYourLines modal
+  const { isOpen: myIsOpen, onOpen: myOnOpen, onClose: myOnClose } = useDisclosure();
+  // eraseAllines modal
+  const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
+
   // Set user's color to the pen color
   useEffect(() => {
     if (user && markerColor !== user.data.color) setMarkerColor(user.data.color as SAGEColors);
@@ -77,13 +75,13 @@ export function AnnotationsPanel() {
   // Track the panel state to enable/disable the pen
   useEffect(() => {
     if (panel) {
-      if (panel.show) setWhiteboardMode(true);
-      else setWhiteboardMode(false);
+      if (panel.show) setWhiteboardMode('pen');
+      else setWhiteboardMode('none');
     }
   }, [panel, panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
-    setWhiteboardMode(true);
+    setWhiteboardMode('pen');
     setMarkerColor(color);
   };
 
@@ -110,94 +108,142 @@ export function AnnotationsPanel() {
     }
   };
 
+  // Modals to delete annotations
+  const eraseYourLines = () => {
+    setClearMarkers(true);
+    myOnClose();
+  };
+  const eraseAllines = () => {
+    setClearAllMarkers(true);
+    allOnClose();
+  };
+
+  useEffect(() => {
+    // Disable marker on entry
+    setWhiteboardMode('none');
+    return () => {
+      // Disable marker on leave
+      setWhiteboardMode('none');
+    }
+  }, []);
+
+
   return (
-    <Panel title="Annotations" name="annotations" width={600} showClose={false}>
-      <Box alignItems="center" pb="1" width="100%" display="flex">
-        <VStack width="100%" alignItems="left" spacing="0">
-          <HStack m={0} p={0} spacing={'inherit'}>
-            <Tooltip placement="top" hasArrow label={whiteboardMode ? 'Disable Marker' : 'Enable Marker'}>
-              <Button onClick={() => setWhiteboardMode(!whiteboardMode)} size="sm" mr="2" colorScheme={whiteboardMode ? 'green' : 'gray'}>
-                <BsPencilFill />
-              </Button>
-            </Tooltip>
-
-            <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
-
-            <Tooltip placement="top" hasArrow label="Undo Last Line">
-              <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
-                <FaUndo />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow label="Erase Your Lines">
-              <Button onClick={() => setClearMarkers(true)} ml="2" size="sm">
-                <FaEraser />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow label="Erase All">
-              <Button onClick={() => setClearAllMarkers(true)} ml="2" size="sm">
-                <FaTrash />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
-              <Button onClick={screenshot} ml="2" size="sm" isDisabled={!isElectron()}>
-                <FaCamera />
-              </Button>
-            </Tooltip>
-          </HStack>
-          <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
-            <Text>Opacity</Text>
-            <Slider
-              defaultValue={markerOpacity}
-              min={0.1}
-              max={1}
-              step={0.1}
-              size={'md'}
-              onChangeEnd={(v) => setMarkerOpacity(v)}
-              onChange={(v) => setSliderValue1(v)}
-              onMouseEnter={() => setShowTooltip1(true)}
-              onMouseLeave={() => setShowTooltip1(false)}
-            >
-              <SliderTrack bg={sliderBackground}>
-                <Box position="relative" right={10} />
-                <SliderFilledTrack bg={sliderColor} />
-              </SliderTrack>
-              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
-                <SliderThumb boxSize={4}>
-                  <Box color={thumbColor} as={MdGraphicEq} />
-                </SliderThumb>
+    <>
+      <Panel title="Annotations" name="annotations" width={600} showClose={false}>
+        <Box alignItems="center" pb="1" width="100%" display="flex">
+          <VStack width="100%" alignItems="left" spacing="0">
+            <HStack m={0} p={0} spacing={'inherit'}>
+              <Tooltip placement="top" hasArrow label={whiteboardMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
+                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' ? 'none' : 'pen')} size="sm" mr="2" colorScheme={whiteboardMode === 'pen' ? 'green' : 'gray'}>
+                  <BsPencilFill />
+                </Button>
               </Tooltip>
-            </Slider>
-            <Text> Width</Text>
-            <Slider
-              defaultValue={markerSize}
-              min={1}
-              max={80}
-              step={1}
-              size={'md'}
-              onChangeEnd={(v) => setMarkerSize(v)}
-              onChange={(v) => setSliderValue2(v)}
-              onMouseEnter={() => setShowTooltip2(true)}
-              onMouseLeave={() => setShowTooltip2(false)}
-            >
-              <SliderTrack bg={sliderBackground}>
-                <Box position="relative" right={10} />
-                <SliderFilledTrack bg={sliderColor} />
-              </SliderTrack>
-              <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
-                <SliderThumb boxSize={4}>
-                  <Box color={thumbColor} as={MdGraphicEq} />
-                </SliderThumb>
+
+              <Tooltip placement="top" hasArrow label={whiteboardMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
+                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' || whiteboardMode === 'none' ? 'eraser' : 'none')} size="sm" mr="2" colorScheme={whiteboardMode === 'eraser' ? 'green' : 'gray'}>
+                  <BsEraserFill />
+                </Button>
               </Tooltip>
-            </Slider>
-          </HStack>
-          <Text fontSize={'xs'} alignSelf={'center'} mt={'3px'}>
-            While drawing, use the arrow keys or spacebar+mouse to navigate
-          </Text>
-        </VStack>
-      </Box>
-    </Panel>
+
+              <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
+
+              <Tooltip placement="top" hasArrow label="Undo Last Line">
+                <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
+                  <FaUndo />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow label="Erase Your Lines">
+                <Button onClick={myOnOpen} ml="2" size="sm">
+                  <FaEraser />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow label="Erase All">
+                <Button onClick={allOnOpen} ml="2" size="sm">
+                  <FaTrash />
+                </Button>
+              </Tooltip>
+
+              <Tooltip placement="top" hasArrow openDelay={1600} label="Screenshot in SAGE3 client (maximize your window for high-quality)">
+                <Button onClick={screenshot} ml="2" size="sm" isDisabled={!isElectron()}>
+                  <FaCamera />
+                </Button>
+              </Tooltip>
+            </HStack>
+            <HStack mt={4} mb={0} p={0} pr={2} spacing={'4'} w={'100%'}>
+              <Text>Opacity</Text>
+              <Slider
+                defaultValue={markerOpacity}
+                min={0.1}
+                max={1}
+                step={0.1}
+                size={'md'}
+                onChangeEnd={(v) => setMarkerOpacity(v)}
+                onChange={(v) => setSliderValue1(v)}
+                onMouseEnter={() => setShowTooltip1(true)}
+                onMouseLeave={() => setShowTooltip1(false)}
+              >
+                <SliderTrack bg={sliderBackground}>
+                  <Box position="relative" right={10} />
+                  <SliderFilledTrack bg={sliderColor} />
+                </SliderTrack>
+                <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
+                  <SliderThumb boxSize={4}>
+                    <Box color={thumbColor} as={MdGraphicEq} />
+                  </SliderThumb>
+                </Tooltip>
+              </Slider>
+              <Text> Width</Text>
+              <Slider
+                defaultValue={markerSize}
+                min={1}
+                max={80}
+                step={1}
+                size={'md'}
+                onChangeEnd={(v) => setMarkerSize(v)}
+                onChange={(v) => setSliderValue2(v)}
+                onMouseEnter={() => setShowTooltip2(true)}
+                onMouseLeave={() => setShowTooltip2(false)}
+              >
+                <SliderTrack bg={sliderBackground}>
+                  <Box position="relative" right={10} />
+                  <SliderFilledTrack bg={sliderColor} />
+                </SliderTrack>
+                <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
+                  <SliderThumb boxSize={4}>
+                    <Box color={thumbColor} as={MdGraphicEq} />
+                  </SliderThumb>
+                </Tooltip>
+              </Slider>
+            </HStack>
+            <Text fontSize={'xs'} alignSelf={'center'} mt={'3px'}>
+              While drawing, use the arrow keys or spacebar+mouse to navigate
+            </Text>
+          </VStack>
+        </Box>
+      </Panel>
+      <ConfirmModal
+        isOpen={myIsOpen}
+        onClose={myOnClose}
+        onConfirm={eraseYourLines}
+        title="Erase Your Annotations"
+        message="Are you sure you want to erase your annotations?"
+        cancelText="Cancel"
+        confirmText="Erase"
+        cancelColor="green"
+        confirmColor="red" size="lg" />
+      <ConfirmModal
+        isOpen={allIsOpen}
+        onClose={allOnClose}
+        onConfirm={eraseAllines}
+        title="Erase All Annotations"
+        message="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
+        cancelText="Cancel"
+        confirmText="Erase"
+        cancelColor="green"
+        confirmColor="red" size="lg" />
+    </>
   );
 }

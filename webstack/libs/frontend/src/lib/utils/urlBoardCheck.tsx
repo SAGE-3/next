@@ -14,6 +14,7 @@ import { Board } from '@sage3/shared/types';
 
 import { useRouteNav } from '../hooks';
 import { EnterBoardModal } from '../ui';
+import { apiUrls } from '../config';
 
 /**
  * Checks the url for a board id and stores it in local storage for the JoinBoardCheck component to check for later.
@@ -54,8 +55,8 @@ export function JoinBoardCheck() {
 
   // Enter a board if the url contains it
   useEffect(() => {
-    async function joinBoard() {
-      const res = await fetch(`/api/boards/${boardId}`);
+    async function joinBoard(bid: string) {
+      const res = await fetch(apiUrls.boards.getBoard(bid));
       const resjson = await res.json();
       if (resjson.success) {
         const board = resjson.data[0] as Board;
@@ -73,7 +74,7 @@ export function JoinBoardCheck() {
       }
     }
     if (boardId) {
-      joinBoard();
+      joinBoard(boardId);
     }
   }, []);
 

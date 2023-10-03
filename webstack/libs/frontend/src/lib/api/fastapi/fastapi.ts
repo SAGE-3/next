@@ -7,15 +7,14 @@
  */
 
 import { KernelInfo, ExecOutput } from '@sage3/shared/types';
-
-export const fastAPIRoute = '/api/fastapi';
+import { apiUrls } from '../../config';
 
 /**
  * Get all the kernels
  * @returns An array of all the kernels
  */
 async function fetchKernels(): Promise<KernelInfo[]> {
-  const response = await fetch(`${fastAPIRoute}/collection`, {
+  const response = await fetch(apiUrls.fastapi.getKernels, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -32,7 +31,7 @@ async function fetchKernels(): Promise<KernelInfo[]> {
  * @returns
  */
 async function fetchKernel(kernelId: string): Promise<KernelInfo | undefined> {
-  const response = await fetch(`${fastAPIRoute}/collection`, {
+  const response = await fetch(apiUrls.fastapi.getKernels, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -51,7 +50,7 @@ async function fetchKernel(kernelId: string): Promise<KernelInfo | undefined> {
 async function checkStatus(): Promise<boolean> {
   let online = true;
   try {
-    const response = await fetch(`${fastAPIRoute}/heartbeat`, {
+    const response = await fetch(apiUrls.fastapi.heartbeat, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -78,7 +77,7 @@ async function checkStatus(): Promise<boolean> {
  */
 async function createKernel(kernelInfo: KernelInfo): Promise<boolean> {
   try {
-    const response = await fetch(`${fastAPIRoute}/kernels/${kernelInfo.name}`, {
+    const response = await fetch(apiUrls.fastapi.createKernel(kernelInfo.name), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...kernelInfo }),
@@ -104,7 +103,7 @@ async function createKernel(kernelInfo: KernelInfo): Promise<boolean> {
  * @returns
  */
 async function deleteKernel(kernelId: string): Promise<boolean> {
-  const response = await fetch(`${fastAPIRoute}/kernels/${kernelId}`, {
+  const response = await fetch(apiUrls.fastapi.deleteKernel(kernelId), {
     method: 'DELETE',
   });
   return response.ok;
@@ -116,7 +115,7 @@ async function deleteKernel(kernelId: string): Promise<boolean> {
  * @returns
  */
 async function restartKernel(kernelId: string): Promise<boolean> {
-  const response = await fetch(`${fastAPIRoute}/restart/${kernelId}`, {
+  const response = await fetch(apiUrls.fastapi.restartKernel(kernelId), {
     method: 'POST',
   });
   return response.ok;
@@ -130,7 +129,7 @@ async function restartKernel(kernelId: string): Promise<boolean> {
  * @returns
  */
 async function executeCode(code: string, kernelId: string, userId: string): Promise<{ ok: boolean; msg_id: string }> {
-  const response = await fetch(`${fastAPIRoute}/execute/${kernelId}`, {
+  const response = await fetch(apiUrls.fastapi.executeKernel(kernelId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -153,7 +152,7 @@ async function executeCode(code: string, kernelId: string, userId: string): Prom
  * @returns
  */
 async function interruptKernel(kernelId: string): Promise<any> {
-  const response = await fetch(`${fastAPIRoute}/interrupt/${kernelId}`, {
+  const response = await fetch(apiUrls.fastapi.interruptKernel(kernelId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -166,7 +165,7 @@ async function interruptKernel(kernelId: string): Promise<any> {
  *
  */
 async function fetchKernelTypes(): Promise<string[]> {
-  const response = await fetch(`${fastAPIRoute}/kernelspecs`, {
+  const response = await fetch(apiUrls.fastapi.getKernelsSpecs, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -184,7 +183,7 @@ async function fetchKernelTypes(): Promise<string[]> {
  * @returns
  */
 async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> {
-  const response = await fetch(`${fastAPIRoute}/status/${msgId}`, {
+  const response = await fetch(apiUrls.fastapi.statusKernel(msgId), {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -213,7 +212,7 @@ function startServerSentEventsStream(
   messageCallback: (event: MessageEvent<unknown>) => void
   // errorCallback: (error: MessageEvent<unknown>) => void
 ): EventSource {
-  const eventSource = new EventSource(`${fastAPIRoute}/status/${msgId}/stream`);
+  const eventSource = new EventSource(apiUrls.fastapi.getMessageStream(msgId));
   eventSource.addEventListener('new_message', messageCallback);
   // eventSource.addEventListener('error', errorCallback);
   return eventSource;

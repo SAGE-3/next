@@ -75,13 +75,15 @@ export function RoomList(props: RoomListProps) {
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   useEffect(() => {
-    if (selRoomCardRef.current) {
-      selRoomCardRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    if (props.selectedRoom) {
+      if (selRoomCardRef.current) {
+        selRoomCardRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
     }
-  }, [selRoomCardRef]);
+  }, [props.selectedRoom]);
 
   function sortByName(a: Room, b: Room) {
     return a.data.name.localeCompare(b.data.name);

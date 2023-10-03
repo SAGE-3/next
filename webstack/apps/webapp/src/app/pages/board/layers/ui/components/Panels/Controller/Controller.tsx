@@ -12,7 +12,7 @@ import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 
-import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
+import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
 
 export interface ControllerProps {
@@ -27,7 +27,6 @@ export function Controller(props: ControllerProps) {
   const room = rooms.find((el) => el._id === props.roomId);
 
   // Can Annotate
-  const { user } = useUser();
   const canAnnotate = useAbility('update', 'boards');
   const canCreateApps = useAbility('create', 'apps');
   const canDownload = useAbility('download', 'assets');
@@ -48,11 +47,11 @@ export function Controller(props: ControllerProps) {
   const { toHome, back } = useRouteNav();
   function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (event.shiftKey) {
+      // Just go back to the previous room
+      back();
+    } else {
       // Back to the homepage with the room id
       toHome(props.roomId);
-    } else {
-      // Just go back to the previous page
-      back();
     }
   }
 
@@ -93,7 +92,8 @@ export function Controller(props: ControllerProps) {
           icon={<MdArrowBack />}
           isActive={false}
           onClick={handleHomeClick}
-          description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
+          // description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
+          description={`Back to ${room?.data.name} (Shift+Click to go back to previous board)`}
         />
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />

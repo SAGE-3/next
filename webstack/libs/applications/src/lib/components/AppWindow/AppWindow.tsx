@@ -340,7 +340,7 @@ export function AppWindow(props: WindowProps) {
       dragGrid={[gridSize, gridSize]}
     >
       {/* Title Above app */}
-      <WindowTitle size={size} scale={scale} title={props.app.data.title} />
+      <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />
 
       {/* Border Box around app to show it is selected */}
       <WindowBorder

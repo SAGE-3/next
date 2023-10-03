@@ -12,4 +12,4 @@ COPY foresight .
 # Install dependencies
 RUN pip install -r requirements.txt .
 
-WORKDIR /app/foresight
+WORKDIR /app/foresight/foresight
