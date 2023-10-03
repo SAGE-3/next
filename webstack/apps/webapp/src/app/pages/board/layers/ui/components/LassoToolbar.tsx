@@ -127,7 +127,27 @@ export function LassoToolbar() {
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 700;
     if (roomId && boardId) {
-      const code = `# About apps
+      let code = '';
+      // Check if all of same type
+      const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+      let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+      if (isAllOfSameType && selectedApps[0].data.type === 'CSVViewer') {
+        code = `# Load all the CSV files
+import pandas as pd
+from foresight.config import config as conf, prod_type
+from foresight.Sage3Sugar.pysage3 import PySage3
+room_id = '${roomId}'
+board_id = '${boardId}'
+selected_apps = ${JSON.stringify(selectedAppsIds)}
+ps3 = PySage3(conf, prod_type)
+smartbits = ps3.get_smartbits(room_id, board_id)
+bits = [smartbits[a] for a in selected_apps]
+for b in bits:
+    url = ps3.get_public_url(b.state.assetid)
+    frame = pd.read_csv(url)
+    print(frame)`;
+      } else {
+        code = `# About apps
 from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
 room_id = '${roomId}'
@@ -138,6 +158,7 @@ smartbits = ps3.get_smartbits(room_id, board_id)
 bits = [smartbits[a] for a in selected_apps]
 for b in bits:
     print(b)`;
+      }
       createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 900, h: 620 }, { fontSize: 24, code }));
     }
   };
