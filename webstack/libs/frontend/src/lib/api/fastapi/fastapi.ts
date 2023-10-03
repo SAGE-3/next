@@ -224,7 +224,7 @@ function startServerSentEventsStream(
  * @returns
  */
 async function sendPrompt(textPrompt: string, kernelId: string, userId: string): Promise<{ ok: boolean; code: string }> {
-  const response = await fetch(`${fastAPIRoute}/nl2python/${kernelId}`, {
+  const response = await fetch(apiUrls.fastapi.nl2code(kernelId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

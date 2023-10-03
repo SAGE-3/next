@@ -30,6 +30,7 @@ export const apiUrls = {
     executeKernel: (id: string) => `/api/fastapi/execute/${id}`,
     statusKernel: (id: string) => `/api/fastapi/status/${id}`,
     interruptKernel: (id: string) => `/api/fastapi/interrupt/${id}`,
+    nl2code: (id: string) => `/api/fastapi/nl2code/${id}`,
   },
   plugins: {
     upload: '/api/plugins/upload',
