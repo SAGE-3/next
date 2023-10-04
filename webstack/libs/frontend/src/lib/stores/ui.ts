@@ -39,6 +39,9 @@ interface UIState {
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
   boardDragging: boolean; // Is the user dragging the board?
   appDragging: boolean; // Is the user dragging an app?
+  roomlistShowFavorites: boolean;
+
+  setroomlistShowFavorites: (show: boolean) => void;
 
   // The user's local viewport.
   viewport: { position: Omit<Position, 'z'>; size: Omit<Size, 'depth'> };
@@ -139,6 +142,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   clearMarkers: false,
   clearAllMarkers: false,
   undoLastMarker: false,
+  roomlistShowFavorites: true,
   selectedAppId: '',
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
@@ -224,6 +228,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   setClearLassos: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllLassos: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
+  setroomlistShowFavorites: (show: boolean) => set((state) => ({ ...state, roomlistShowFavorites: show })),
 
   deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
   setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),

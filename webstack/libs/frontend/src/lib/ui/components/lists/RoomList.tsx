@@ -31,6 +31,7 @@ import {
   useUser,
   useAbility,
   useThrottlePresenceUsers,
+  useUIStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 
@@ -56,6 +57,7 @@ export function RoomList(props: RoomListProps) {
   const clearError = useRoomStore((state) => state.clearError);
   const deleteRoom = useRoomStore((state) => state.delete);
   const presences = useThrottlePresenceUsers(5000, '');
+  const { roomlistShowFavorites: showFavorites, setroomlistShowFavorites } = useUIStore((state) => state);
 
   // UI elements
   const borderColor = useColorModeValue('gray.300', 'gray.600');
@@ -75,12 +77,14 @@ export function RoomList(props: RoomListProps) {
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   // State of UI, saved or search
-  const [showSaved, setShowSaved] = useState(true);
+
   const handleShowSaved = () => {
-    setShowSaved(true);
+    setSearch('');
+    setroomlistShowFavorites(true);
   };
   const handleShowSearch = () => {
-    setShowSaved(false);
+    setSearch('');
+    setroomlistShowFavorites(false);
   };
 
   useEffect(() => {
@@ -150,11 +154,11 @@ export function RoomList(props: RoomListProps) {
           <Text>Rooms</Text>
         </Box>
         <Box display="flex" width="100%" justifyContent={'space-between'} pr="15px" my="4">
-          <Button width="100%" colorScheme={showSaved ? 'green' : 'gray'} onClick={handleShowSaved}>
-            Saved Rooms
+          <Button width="100%" colorScheme={showFavorites ? 'green' : 'gray'} onClick={handleShowSaved}>
+            Favorite Rooms
           </Button>
           <Box width="32px" />
-          <Button width="100%" colorScheme={!showSaved ? 'green' : 'gray'} onClick={handleShowSearch}>
+          <Button width="100%" colorScheme={!showFavorites ? 'green' : 'gray'} onClick={handleShowSearch}>
             Public Rooms
           </Button>
         </Box>
@@ -224,7 +228,7 @@ export function RoomList(props: RoomListProps) {
             .map((room, idx) => {
               const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
 
-              if (showSaved && !user?.data.savedRooms.includes(room._id)) return null;
+              if (showFavorites && !user?.data.savedRooms.includes(room._id)) return null;
 
               return (
                 <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>
