@@ -34,6 +34,7 @@ import {
   useUIStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
+import { set } from 'date-fns';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -80,10 +81,12 @@ export function RoomList(props: RoomListProps) {
 
   const handleShowSaved = () => {
     setSearch('');
+    handleFilterBoards('');
     setroomlistShowFavorites(true);
   };
   const handleShowSearch = () => {
     setSearch('');
+    handleFilterBoards('');
     setroomlistShowFavorites(false);
   };
 
@@ -130,18 +133,23 @@ export function RoomList(props: RoomListProps) {
     }
   }, [storeError]);
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value } = event.target;
+    setSearch(value);
+    handleFilterBoards(value);
+  };
+
   // Filter boards with the search string
-  function handleFilterBoards(event: ChangeEvent<HTMLInputElement>) {
-    setSearch(event.target.value);
+  function handleFilterBoards(search: string) {
     const filBoards = props.rooms.filter(
       (room) =>
         // search in room name
-        room.data.name.toLowerCase().includes(event.target.value.toLowerCase()) ||
+        room.data.name.toLowerCase().includes(search.toLowerCase()) ||
         // search in room description
-        room.data.description.toLowerCase().includes(event.target.value.toLowerCase())
+        room.data.description.toLowerCase().includes(search.toLowerCase())
     );
     setFilterBoards(filBoards);
-    if (event.target.value === '') {
+    if (search === '') {
       setFilterBoards(null);
     }
   }
@@ -178,7 +186,7 @@ export function RoomList(props: RoomListProps) {
                   my="2"
                   value={search}
                   variant="outline"
-                  onChange={handleFilterBoards}
+                  onChange={handleInputChange}
                   placeholder="Find Room..."
                   _placeholder={{ opacity: 1 }}
                   name="findRoom"
