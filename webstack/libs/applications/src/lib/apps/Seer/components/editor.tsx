@@ -41,6 +41,8 @@ type CodeEditorProps = {
   access: boolean; // Does this user have access to the sagecell's selected kernel
   editorHeight?: number;
   online: boolean;
+  generatedCode: string;
+  setGeneratedCode: (code: string) => void;
 };
 
 /**
@@ -496,6 +498,41 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       readOnly: !access || !apiStatus || !s.kernel,
     });
   }, [access, apiStatus, s.kernel]);
+
+  // Insert generated code
+  const handleInsertCode = (ed: editor.ICodeEditor) => {
+    ed.focus();
+    ed.trigger('keyboard', 'type', { text: props.generatedCode });
+  };
+
+  useEffect(() => {
+    if (props.generatedCode) {
+      handleInsertCode(editorRef.current as editor.IStandaloneCodeEditor);
+      props.setGeneratedCode('');
+    }
+  }, [props.generatedCode]);
+
+  // useEffect(() => {
+  //   if (props.generatedCode) {
+  //     console.log('Generated code inserted');
+  //     editorRef.current?.setValue(props.generatedCode);
+  //     props.setGeneratedCode('');
+  //   }
+  // }, [props.generatedCode]);
+
+  // Insert room/board info into the editor
+  // const handleInsertGeneratedInfo = (ed: editor.ICodeEditor) => {
+  //   ed.focus();
+  //   ed.trigger('keyboard', 'type', { text: prompt('Enter the variable name') });
+  // };
+  // const handleInsertAPI = (ed: editor.ICodeEditor) => {
+  //   let code = 'from foresight.config import config as conf, prod_type\n';
+  //   code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
+  //   code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+  //   code += 'ps3 = PySage3(conf, prod_type)\n\n';
+  //   ed.focus();
+  //   ed.setValue(code);
+  // };
 
   return (
     <>

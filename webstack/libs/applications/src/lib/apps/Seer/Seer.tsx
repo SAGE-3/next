@@ -28,7 +28,7 @@ import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
 // import { KernelInfo, ContentItem } from '@sage3/shared/types';
-import { SAGE3Ability } from '@sage3/shared';
+// import { SAGE3Ability } from '@sage3/shared';
 
 // Styling
 import './styles.css';
@@ -43,6 +43,9 @@ import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
 
+import type { editor } from 'monaco-editor';
+import { set } from 'date-fns';
+
 /**
  * Seer App
  */
@@ -56,6 +59,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [prompt, setPrompt] = useState<string>(s.prompt);
+  const [generatedCode, setGeneratedCode] = useState<string>('');
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
   const [selectedKernelName, setSelectedKernelName] = useState<string>('');
@@ -87,39 +91,82 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [access, apiStatus, kernels, s.kernel]);
 
+  // const ping = async () => {
+  //   await fetch('http://localhost:8090/ping', {
+  //     method: 'GET',
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       console.log('Success:', data);
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error:', error);
+  //     });
+  // };
+
   const handleGenerate = async () => {
-    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
-    if (!user || !apiStatus || !access || !canExec) return;
-    if (prompt) {
-      try {
-        const response = await sendPrompt(prompt, s.kernel, user?._id);
-        if (response.ok) {
-          console.log('Response', response);
-          // const data = await response.json();
+    const payload = {
+      kernel: s.kernel,
+      prompt: prompt,
+      user: userId,
+    };
+    console.log('Sending payload:', payload);
+    await fetch('http://localhost:8090/api/v1/seer/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Success:', data);
+        if (data.code) {
+          console.log('Updating state');
           // updateState(props._id, {
-          //  code: data.code,
-          //  prompt: data.prompt,
-          //  streaming: data.streaming,
-          //  kernel: data.kernel,
-          // }
-        } else {
-          console.log('Error generating code');
+          //   code: data.code,
+          // });
+          setGeneratedCode(data.code);
         }
-      } catch (error) {
-        if (error instanceof TypeError) {
-          console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-          updateState(props._id, {
-            streaming: false,
-            prompt: '',
-            kernel: '',
-            kernels: [],
-            history: [],
-            msgId: '',
-          });
-        }
-      }
-    }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
   };
+
+  // const handleGenerate = async () => {
+  //   const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+  //   if (!user || !apiStatus || !access || !canExec) return;
+  //   if (prompt) {
+  //     try {
+  //       const response = await sendPrompt(prompt, s.kernel, user?._id);
+  //       if (response.ok) {
+  //         console.log('Response', response);
+  //         // const data = await response.json();
+  //         // updateState(props._id, {
+  //         //  code: data.code,
+  //         //  prompt: data.prompt,
+  //         //  streaming: data.streaming,
+  //         //  kernel: data.kernel,
+  //         // }
+  //       } else {
+  //         console.log('Error generating code');
+  //       }
+  //     } catch (error) {
+  //       if (error instanceof TypeError) {
+  //         console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+  //         updateState(props._id, {
+  //           streaming: false,
+  //           prompt: '',
+  //           kernel: '',
+  //           kernels: [],
+  //           history: [],
+  //           msgId: '',
+  //         });
+  //       }
+  //     }
+  //   }
+  // };
 
   // const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
   // const [showCode, setShowCode] = useState<boolean>(false);
@@ -343,7 +390,14 @@ function AppComponent(props: App): JSX.Element {
             }}
             hidden={false}
           >
-            <CodeEditor app={props} access={access} editorHeight={150} online={apiStatus} />
+            <CodeEditor
+              app={props}
+              access={access}
+              editorHeight={150}
+              online={apiStatus}
+              generatedCode={generatedCode ? generatedCode : ''}
+              setGeneratedCode={setGeneratedCode}
+            />
           </Box>
           <Stack direction="row" hidden={false}>
             <Badge variant="outline" colorScheme="red" mb={-1}>
