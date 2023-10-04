@@ -27,6 +27,8 @@ const UserContext = createContext({
   accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
+  saveRoom: null as ((roomId: string) => void) | null,
+  removeRoom: null as ((roomId: string) => void) | null,
 });
 
 export function useUser() {
@@ -126,5 +128,27 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, update, create, accessId }}>{props.children}</UserContext.Provider>;
+  /**
+   * Save a room to the user's saved rooms
+   * @param roomId Room to save
+   */
+  const saveRoom = (roomId: string) => {
+    if (!user) return;
+    const currentRooms = user?.data.savedRooms || [];
+    update({ savedRooms: [...currentRooms, roomId] });
+  };
+
+  /**
+   * Remove a room from the user's saved rooms
+   * @param roomId Room to remove
+   */
+  const removeRoom = (roomId: string) => {
+    if (!user) return;
+    const currentRooms = user?.data.savedRooms || [];
+    update({ savedRooms: currentRooms.filter((id) => id !== roomId) });
+  };
+
+  return (
+    <UserContext.Provider value={{ user, loading, update, create, accessId, saveRoom, removeRoom }}>{props.children}</UserContext.Provider>
+  );
 }

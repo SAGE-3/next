@@ -43,7 +43,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const toast = useToast();
 
-  const { user, update } = useUser();
+  const { user, saveRoom } = useUser();
   const createRoom = useRoomStore((state) => state.create);
   const rooms = useRoomStore((state) => state.rooms);
 
@@ -127,26 +127,13 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             duration: 2 * 1000,
             isClosable: true,
           });
-          saveRoom(room._id);
+          // Save the room to the user's profile
+          if (saveRoom) {
+            saveRoom(room._id);
+          }
         }
         props.onClose();
       }
-    }
-  };
-
-  // Save the room to the user's savedRoom list
-  const saveRoom = (roomId: string) => {
-    // Current list
-    const savedRooms = user?.data.savedRooms || [];
-    // Saved rooms copy
-    const savedRoomsCopy = [...savedRooms];
-    // Add the room
-    savedRoomsCopy.push(roomId);
-    // Remove duplicates
-    const uniqueRooms = [...new Set(savedRoomsCopy)];
-    // Update the user
-    if (update) {
-      update({ savedRooms: uniqueRooms });
     }
   };
 

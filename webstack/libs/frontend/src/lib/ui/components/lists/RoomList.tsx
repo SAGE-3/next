@@ -177,11 +177,11 @@ export function RoomList(props: RoomListProps) {
           <Text>Rooms</Text>
         </Box>
         <Box display="flex" width="100%" justifyContent={'space-between'} pr="15px" my="4">
-          <Button width="100%" colorScheme={showFavorites ? 'green' : 'gray'} onClick={handleShowSaved}>
+          <Button width="100%" colorScheme={showFavorites ? 'teal' : 'gray'} variant="outline" onClick={handleShowSaved}>
             Favorite Rooms
           </Button>
           <Box width="32px" />
-          <Button width="100%" colorScheme={!showFavorites ? 'green' : 'gray'} onClick={handleShowSearch}>
+          <Button width="100%" colorScheme={!showFavorites ? 'teal' : 'gray'} variant="outline" onClick={handleShowSearch}>
             All Rooms
           </Button>
         </Box>

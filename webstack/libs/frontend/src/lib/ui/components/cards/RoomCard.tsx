@@ -38,7 +38,7 @@ export type RoomCardProps = {
  * @returns
  */
 export function RoomCard(props: RoomCardProps) {
-  const { user, update } = useUser();
+  const { user, saveRoom, removeRoom } = useUser();
   const savedRooms = user?.data.savedRooms || [];
   // Is it my board?
   const [yours, setYours] = useState(false);
@@ -86,31 +86,13 @@ export function RoomCard(props: RoomCardProps) {
     setCanList(true);
   };
 
-  const saveRoom = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleSaveRoom = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-
-    // Save the room to the user's savedRoom list
-    // Current list
-    const savedRooms = user?.data.savedRooms || [];
-
-    // Saved rooms copy
-    const savedRoomsCopy = [...savedRooms];
-    // Add the room
-    savedRoomsCopy.push(props.room._id);
-    // Remove duplicates
-    const uniqueRooms = [...new Set(savedRoomsCopy)];
-
     // Remove if the room is already saved
-    if (isFavorite) {
-      const index = uniqueRooms.indexOf(props.room._id);
-      if (index > -1) {
-        uniqueRooms.splice(index, 1);
-      }
-    }
-
-    // Update the user
-    if (update) {
-      update({ savedRooms: uniqueRooms });
+    if (isFavorite && removeRoom) {
+      removeRoom(props.room._id);
+    } else if (saveRoom) {
+      saveRoom(props.room._id);
     }
   };
 
@@ -159,7 +141,7 @@ export function RoomCard(props: RoomCardProps) {
               </Tooltip>
 
               <Tooltip label={isFavorite ? 'Unfavorite' : 'Favorite'} openDelay={400} placement="top-start" hasArrow>
-                <Box mr="2" onClick={saveRoom}>
+                <Box mr="2" onClick={handleSaveRoom}>
                   {isFavorite ? <MdFavorite fontSize="24px" /> : <MdFavoriteBorder fontSize="24px" />}
                 </Box>
               </Tooltip>
