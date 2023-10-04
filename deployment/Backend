@@ -5,7 +5,7 @@
 # For testing and development
 #
 
-SERVER_VERSION=$(docker version -f "{{.Server.Version}}")
+SERVER_VERSION=$(docker version -f "{{.Client.Version}}")
 SERVER_VERSION_MAJOR=$(echo "$SERVER_VERSION"| cut -d'.' -f 1)
 
 echo "Docker Version:" $SERVER_VERSION
