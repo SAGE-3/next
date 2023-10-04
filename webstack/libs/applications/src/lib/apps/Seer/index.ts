@@ -19,6 +19,7 @@ const executeInfoSchema = z.object({
 
 export const schema = z.object({
   prompt: z.string(),
+  markdown: z.string(),
   code: z.string(),
   msgId: z.string(),
   history: z.array(z.string()),
@@ -36,6 +37,7 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   prompt: '',
   code: '',
+  markdown: '',
   msgId: '',
   history: [],
   streaming: false,

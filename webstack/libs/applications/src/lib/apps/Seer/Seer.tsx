@@ -42,6 +42,8 @@ import { ToolbarComponent } from './components/toolbar';
 import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
+import Markdown from 'markdown-to-jsx';
+import { update } from 'plotly.js';
 
 /**
  * Seer App
@@ -57,6 +59,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [generatedMarkdown, setGeneratedMarkdown] = useState<string>('');
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
   const [selectedKernelName, setSelectedKernelName] = useState<string>('');
@@ -70,7 +73,11 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState(true);
 
   // Kernel Store
-  const { apiStatus, kernels, sendPrompt } = useKernelStore((state) => state);
+  const {
+    apiStatus,
+    kernels,
+    // sendPrompt
+  } = useKernelStore((state) => state);
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -102,6 +109,11 @@ function AppComponent(props: App): JSX.Element {
   // };
 
   const handleGenerate = async () => {
+    setGeneratedCode('');
+    updateState(props._id, {
+      prompt: prompt,
+      markdown: '',
+    });
     const payload = {
       kernel: s.kernel,
       prompt: prompt,
@@ -121,12 +133,28 @@ function AppComponent(props: App): JSX.Element {
         if (data.code) {
           console.log('Updating state');
           setGeneratedCode(data.code);
+        } else if (data.message) {
+          console.log('Message:', data.message);
+        } else if (data.markdown) {
+          setGeneratedMarkdown(data.markdown);
+          updateState(props._id, {
+            markdown: data.markdown,
+          });
+        } else if (data.error) {
+          console.error('Error:', data.error);
         }
       })
       .catch((error) => {
         console.error('Error:', error);
       });
   };
+
+  // Update everyone's local state after a state change
+  useEffect(() => {
+    if (s.markdown !== generatedMarkdown) {
+      setGeneratedMarkdown(s.markdown);
+    }
+  }, [s.markdown]);
 
   // const handleGenerate = async () => {
   //   const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
@@ -180,6 +208,8 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.prompt]);
 
+  // The prompt is local only.
+
   // handle interrupt
   const handleInterrupt = () => {
     console.log('Interrupting...');
@@ -192,6 +222,7 @@ function AppComponent(props: App): JSX.Element {
       streaming: false,
       msgId: '',
     });
+    setGeneratedCode('');
   };
 
   return (
@@ -355,7 +386,7 @@ function AppComponent(props: App): JSX.Element {
                   </Tooltip>
                 ) : null}
                 {access ? (
-                  <Tooltip hasArrow label="Clear All" placement="right-start">
+                  <Tooltip hasArrow label="Clear" placement="right-start">
                     <IconButton
                       onClick={handleClear}
                       aria-label={''}
@@ -410,7 +441,12 @@ function AppComponent(props: App): JSX.Element {
             }}
             hidden={false}
           >
-            {s.history && <Outputs app={props} online={apiStatus} msgId={s.msgId} />}
+            {generatedMarkdown && (
+              <Markdown source={generatedMarkdown} escapeHtml={false}>
+                {generatedMarkdown}
+              </Markdown>
+            )}
+            {s.history && !generatedMarkdown && <Outputs app={props} online={apiStatus} msgId={s.msgId} />}
           </Box>
         </Stack>
       </Box>

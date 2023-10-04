@@ -502,13 +502,18 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   // Insert generated code
   const handleInsertCode = (ed: editor.ICodeEditor) => {
     ed.focus();
-    ed.trigger('keyboard', 'type', { text: props.generatedCode });
+    ed.setValue(props.generatedCode);
+    // if (yText) {
+    //   yText.insert(0, props.generatedCode);
+    // }
+    // ed.trigger('keyboard', 'type', { text: props.generatedCode });
   };
 
   useEffect(() => {
     if (props.generatedCode) {
       handleInsertCode(editorRef.current as editor.IStandaloneCodeEditor);
       props.setGeneratedCode('');
+      handleExecute();
     }
   }, [props.generatedCode]);
 
@@ -563,7 +568,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
                 icon={<MdStop size={'1.5em'} color="#008080" />}
               />
             </Tooltip>
-            <Tooltip hasArrow label="Clear All" placement="right-start">
+            <Tooltip hasArrow label="Clear" placement="right-start">
               <IconButton
                 onClick={handleClear}
                 aria-label={''}
