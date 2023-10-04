@@ -43,9 +43,6 @@ import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
 
-import type { editor } from 'monaco-editor';
-import { set } from 'date-fns';
-
 /**
  * Seer App
  */
@@ -110,7 +107,7 @@ function AppComponent(props: App): JSX.Element {
       prompt: prompt,
       user: userId,
     };
-    console.log('Sending payload:', payload);
+    // console.log('Sending payload:', payload);
     await fetch('http://localhost:8090/api/v1/seer/generate', {
       method: 'POST',
       headers: {
@@ -123,9 +120,6 @@ function AppComponent(props: App): JSX.Element {
         console.log('Success:', data);
         if (data.code) {
           console.log('Updating state');
-          // updateState(props._id, {
-          //   code: data.code,
-          // });
           setGeneratedCode(data.code);
         }
       })
