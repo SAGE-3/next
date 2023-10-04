@@ -74,6 +74,15 @@ export function RoomList(props: RoomListProps) {
   // Enter Board by ID Modal
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
+  // State of UI, saved or search
+  const [showSaved, setShowSaved] = useState(true);
+  const handleShowSaved = () => {
+    setShowSaved(true);
+  };
+  const handleShowSearch = () => {
+    setShowSaved(false);
+  };
+
   useEffect(() => {
     if (props.selectedRoom) {
       if (selRoomCardRef.current) {
@@ -140,6 +149,16 @@ export function RoomList(props: RoomListProps) {
         <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
         </Box>
+        <Box display="flex" width="100%" justifyContent={'space-between'} pr="15px" my="4">
+          <Button width="100%" colorScheme={showSaved ? 'green' : 'gray'} onClick={handleShowSaved}>
+            Saved Rooms
+          </Button>
+          <Box width="32px" />
+          <Button width="100%" colorScheme={!showSaved ? 'green' : 'gray'} onClick={handleShowSearch}>
+            Public Rooms
+          </Button>
+        </Box>
+
         <Box display="flex" justifyContent={'space-between'} width="100%">
           <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
             <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
@@ -204,6 +223,8 @@ export function RoomList(props: RoomListProps) {
             .sort(sortFunction)
             .map((room, idx) => {
               const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
+
+              if (showSaved && !user?.data.savedRooms.includes(room._id)) return null;
 
               return (
                 <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>

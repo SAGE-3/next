@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, IconButton, Text, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
-import { MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
+import { MdFavorite, MdFavoriteBorder, MdLock, MdLockOpen, MdSettings } from 'react-icons/md';
 
 import { Board, Room } from '@sage3/shared/types';
 
@@ -38,7 +38,7 @@ export type RoomCardProps = {
  * @returns
  */
 export function RoomCard(props: RoomCardProps) {
-  const { user } = useUser();
+  const { user, update } = useUser();
   // Is it my board?
   const [yours, setYours] = useState(false);
   useEffect(() => {
@@ -60,6 +60,9 @@ export function RoomCard(props: RoomCardProps) {
   // const backgroundColor = useColorModeValue('whiteAlpha.500', 'gray.900');
   // const bgColor = useHexColor(backgroundColor);
 
+  // Favorited?
+  const isFavorite = user?.data.savedRooms?.includes(props.room._id);
+
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
     `linear-gradient(178deg, #303030, #252525, #262626)`
@@ -80,6 +83,34 @@ export function RoomCard(props: RoomCardProps) {
   const handleOnEnter = () => {
     // success with password
     setCanList(true);
+  };
+
+  const saveRoom = (event: any) => {
+    event.stopPropagation();
+
+    // Save the room to the user's savedRoom list
+    // Current list
+    const savedRooms = user?.data.savedRooms || [];
+
+    // Saved rooms copy
+    const savedRoomsCopy = [...savedRooms];
+    // Add the room
+    savedRoomsCopy.push(props.room._id);
+    // Remove duplicates
+    const uniqueRooms = [...new Set(savedRoomsCopy)];
+
+    // Remove if the room is already saved
+    if (isFavorite) {
+      const index = uniqueRooms.indexOf(props.room._id);
+      if (index > -1) {
+        uniqueRooms.splice(index, 1);
+      }
+    }
+
+    // Update the user
+    if (update) {
+      update({ savedRooms: uniqueRooms });
+    }
   };
 
   return (
@@ -121,9 +152,15 @@ export function RoomCard(props: RoomCardProps) {
 
             <Box width="200px" display="flex" alignItems="center" justifyContent="right" mr="2">
               <Tooltip label={props.userCount + ' connected clients'} openDelay={400} placement="top-start" hasArrow>
-                <Text fontSize="22px" mr="2" transform="translateY(1px)">
+                <Text fontSize="24px" mr="2">
                   {props.userCount}
                 </Text>
+              </Tooltip>
+
+              <Tooltip label={isFavorite ? 'Unfavorite' : 'Favorite'} openDelay={400} placement="top-start" hasArrow>
+                <Box mr="2" onClick={saveRoom}>
+                  {isFavorite ? <MdFavorite fontSize="24px" /> : <MdFavoriteBorder fontSize="24px" />}
+                </Box>
               </Tooltip>
 
               <Tooltip
@@ -148,11 +185,7 @@ export function RoomCard(props: RoomCardProps) {
           </Box>
           <Box height="100%">
             {props.selected && canList ? (
-              <BoardList
-                onBoardClick={props.onBackClick}
-                selectedRoom={props.room}
-                boards={props.boards}
-              ></BoardList>
+              <BoardList onBoardClick={props.onBackClick} selectedRoom={props.room} boards={props.boards}></BoardList>
             ) : null}
           </Box>
         </Box>

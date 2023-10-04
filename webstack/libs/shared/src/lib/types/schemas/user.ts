@@ -32,6 +32,8 @@ const schema = z.object({
   userType: UserType,
   // Role of the user in SAGE3: admin, user, guest, spectator
   userRole: UserRole,
+  // Saved Room Ides
+  savedRooms: z.array(z.string()),
 });
 
 export type UserSchema = z.infer<typeof schema>;
