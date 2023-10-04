@@ -49,6 +49,7 @@ type RoomListProps = {
 export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
+  const savedRooms = user?.data.savedRooms || [];
 
   // Abilities
   const canCreateRoom = useAbility('create', 'rooms');
@@ -236,7 +237,7 @@ export function RoomList(props: RoomListProps) {
             .map((room, idx) => {
               const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
 
-              if (showFavorites && !user?.data.savedRooms.includes(room._id)) return null;
+              if (showFavorites && !savedRooms.includes(room._id)) return null;
 
               return (
                 <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>

@@ -48,6 +48,10 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         const user = userResponse.data[0];
+        // Check for savedRooms
+        if (!user.data.savedRooms) {
+          update({ savedRooms: [] });
+        }
         setAbilityUser(user);
         setUser(user);
       } else {

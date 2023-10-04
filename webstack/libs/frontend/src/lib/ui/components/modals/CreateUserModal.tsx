@@ -73,6 +73,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
         userRole: auth?.provider === 'guest' ? 'guest' : 'user',
         userType: type,
         profilePicture: '',
+        savedRooms: [],
       } as UserSchema;
       props.createUser(newUser);
     }
@@ -125,7 +126,10 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             </RadioGroup>
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication: <em>{auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}</em>
+            Authentication:{' '}
+            <em>
+              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
+            </em>
           </Text>
           {auth?.provider === 'guest' && (
             <Text mt={1} fontSize={'md'}>

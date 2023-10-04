@@ -39,6 +39,7 @@ export type RoomCardProps = {
  */
 export function RoomCard(props: RoomCardProps) {
   const { user, update } = useUser();
+  const savedRooms = user?.data.savedRooms || [];
   // Is it my board?
   const [yours, setYours] = useState(false);
   useEffect(() => {
@@ -61,7 +62,7 @@ export function RoomCard(props: RoomCardProps) {
   // const bgColor = useHexColor(backgroundColor);
 
   // Favorited?
-  const isFavorite = user?.data.savedRooms?.includes(props.room._id);
+  const isFavorite = savedRooms.includes(props.room._id);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
