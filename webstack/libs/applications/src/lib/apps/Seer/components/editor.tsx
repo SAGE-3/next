@@ -503,18 +503,25 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const handleInsertCode = (ed: editor.ICodeEditor) => {
     ed.focus();
     ed.setValue(props.generatedCode);
-    // if (yText) {
-    //   yText.insert(0, props.generatedCode);
-    // }
-    // ed.trigger('keyboard', 'type', { text: props.generatedCode });
   };
 
   useEffect(() => {
     if (props.generatedCode) {
       handleInsertCode(editorRef.current as editor.IStandaloneCodeEditor);
-      props.setGeneratedCode('');
-      handleExecute();
+      //   if (s.kernel) {
+      //     handleExecute();
+      //   } else {
+      //     toast({
+      //       title: 'No kernel selected',
+      //       description: 'Please select a kernel from the toolbar',
+      //       status: 'error',
+      //       duration: 4000,
+      //       isClosable: true,
+      //       position: 'bottom',
+      //     });
+      //   }
     }
+    props.setGeneratedCode('');
   }, [props.generatedCode]);
 
   // useEffect(() => {
