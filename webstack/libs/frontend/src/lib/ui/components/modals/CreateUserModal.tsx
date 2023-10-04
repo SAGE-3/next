@@ -26,9 +26,12 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
+
+
 import { UserSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
+
 import { ColorPicker } from '../general';
 
 type CreateUserProps = {
@@ -126,10 +129,7 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
             </RadioGroup>
           </FormControl>
           <Text mt={5} fontSize={'md'}>
-            Authentication:{' '}
-            <em>
-              {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}
-            </em>
+            Authentication: <em> {auth?.provider} {auth?.provider !== 'guest' && <>- {auth?.email}</>}            </em>
           </Text>
           {auth?.provider === 'guest' && (
             <Text mt={1} fontSize={'md'}>

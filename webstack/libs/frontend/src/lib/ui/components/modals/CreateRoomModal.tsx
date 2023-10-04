@@ -134,18 +134,16 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     }
   };
 
+  // Save the room to the user's savedRoom list
   const saveRoom = (roomId: string) => {
-    // Save the room to the user's savedRoom list
     // Current list
     const savedRooms = user?.data.savedRooms || [];
-
     // Saved rooms copy
     const savedRoomsCopy = [...savedRooms];
     // Add the room
     savedRoomsCopy.push(roomId);
     // Remove duplicates
     const uniqueRooms = [...new Set(savedRoomsCopy)];
-
     // Update the user
     if (update) {
       update({ savedRooms: uniqueRooms });

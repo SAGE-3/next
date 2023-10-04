@@ -34,9 +34,20 @@ import {
   useUIStore,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-import { set } from 'date-fns';
-import { is } from 'date-fns/locale';
 
+// Utility functions for sorting
+function sortByName(a: Room, b: Room) {
+  return a.data.name.localeCompare(b.data.name);
+}
+
+function sortByCreated(a: Room, b: Room) {
+  return a._createdAt > b._createdAt ? -1 : 1;
+}
+
+// Type for representing the sort order
+type userSortType = 'Name' | 'Users' | 'Created';
+
+// Props for the RoomList component
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
   selectedRoom: Room | undefined;
@@ -73,15 +84,14 @@ export function RoomList(props: RoomListProps) {
   const toast = useToast();
   const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<'Name' | 'Users' | 'Created'>('Name');
+  const [sortBy, setSortBy] = useState<userSortType>('Name');
 
-  const selRoomCardRef = useRef<any>();
+  const selRoomCardRef = useRef<HTMLLIElement>(null);
 
   // Enter Board by ID Modal
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   // State of UI, saved or search
-
   const handleShowSaved = () => {
     setSearch('');
     handleFilterBoards('');
@@ -93,6 +103,7 @@ export function RoomList(props: RoomListProps) {
     setroomlistShowFavorites(false);
   };
 
+  // Scroll to selected room
   useEffect(() => {
     if (props.selectedRoom) {
       if (selRoomCardRef.current) {
@@ -105,21 +116,15 @@ export function RoomList(props: RoomListProps) {
   }, [props.selectedRoom]);
 
   useEffect(() => {
-    isGuest && setroomlistShowFavorites(false);
+    if (isGuest) {
+      setroomlistShowFavorites(false);
+    }
   }, []);
-
-  function sortByName(a: Room, b: Room) {
-    return a.data.name.localeCompare(b.data.name);
-  }
 
   function sortByUsers(a: Room, b: Room) {
     const aUsers = presences.filter((p) => p.presence.data.roomId === a._id).length;
     const bUsers = presences.filter((p) => p.presence.data.roomId === b._id).length;
     return bUsers - aUsers;
-  }
-
-  function sortByCreated(a: Room, b: Room) {
-    return a._createdAt > b._createdAt ? -1 : 1;
   }
 
   // Sorting functions
@@ -128,7 +133,7 @@ export function RoomList(props: RoomListProps) {
   if (sortBy === 'Created') sortFunction = sortByCreated;
 
   const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(event.target.value as any);
+    setSortBy(event.target.value as userSortType);
   };
 
   useEffect(() => {
@@ -141,9 +146,8 @@ export function RoomList(props: RoomListProps) {
   }, [storeError]);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    setSearch(value);
-    handleFilterBoards(value);
+    setSearch(event.target.value);
+    handleFilterBoards(event.target.value);
   };
 
   // Filter boards with the search string
@@ -163,7 +167,11 @@ export function RoomList(props: RoomListProps) {
 
   return (
     <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" borderBottom="solid 1px" borderColor={borderColor}>
+
+      {/* Modal to enter the room with a UUID */}
       <EnterBoardByIdModal isOpen={isOpenEnterBoard} onOpen={onOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardByIdModal>
+
+      {/* The room list */}
       <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%" borderColor={borderColor}>
         <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
@@ -264,7 +272,9 @@ export function RoomList(props: RoomListProps) {
         </ul>
       </Box>
 
+      {/* Modal to create a room */}
       <CreateRoomModal isOpen={isOpen} onClose={onClose} />
+
     </Box>
   );
 }

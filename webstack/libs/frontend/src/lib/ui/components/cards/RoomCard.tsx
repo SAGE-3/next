@@ -86,7 +86,7 @@ export function RoomCard(props: RoomCardProps) {
     setCanList(true);
   };
 
-  const saveRoom = (event: any) => {
+  const saveRoom = (event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
 
     // Save the room to the user's savedRoom list
