@@ -43,7 +43,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const toast = useToast();
 
-  const { user } = useUser();
+  const { user, update } = useUser();
   const createRoom = useRoomStore((state) => state.create);
   const rooms = useRoomStore((state) => state.rooms);
 
@@ -89,7 +89,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     }
   };
 
-  const create = () => {
+  const create = async () => {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
@@ -111,7 +111,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       } else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
-        createRoom({
+        const room = await createRoom({
           name: cleanedName,
           description,
           color: color,
@@ -120,8 +120,35 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           privatePin: isProtected ? key : '',
           isListed: isListed,
         });
+        if (room) {
+          toast({
+            title: 'Room created successfully',
+            status: 'success',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
+          saveRoom(room._id);
+        }
         props.onClose();
       }
+    }
+  };
+
+  const saveRoom = (roomId: string) => {
+    // Save the room to the user's savedRoom list
+    // Current list
+    const savedRooms = user?.data.savedRooms || [];
+
+    // Saved rooms copy
+    const savedRoomsCopy = [...savedRooms];
+    // Add the room
+    savedRoomsCopy.push(roomId);
+    // Remove duplicates
+    const uniqueRooms = [...new Set(savedRoomsCopy)];
+
+    // Update the user
+    if (update) {
+      update({ savedRooms: uniqueRooms });
     }
   };
 

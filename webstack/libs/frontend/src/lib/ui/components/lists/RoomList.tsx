@@ -35,6 +35,7 @@ import {
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
 import { set } from 'date-fns';
+import { is } from 'date-fns/locale';
 
 type RoomListProps = {
   onRoomClick: (room: Room | undefined) => void;
@@ -50,6 +51,7 @@ export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
   const savedRooms = user?.data.savedRooms || [];
+  const isGuest = user?.data.userRole === 'guest' || false;
 
   // Abilities
   const canCreateRoom = useAbility('create', 'rooms');
@@ -101,6 +103,10 @@ export function RoomList(props: RoomListProps) {
       }
     }
   }, [props.selectedRoom]);
+
+  useEffect(() => {
+    isGuest && setroomlistShowFavorites(false);
+  }, []);
 
   function sortByName(a: Room, b: Room) {
     return a.data.name.localeCompare(b.data.name);
@@ -168,7 +174,7 @@ export function RoomList(props: RoomListProps) {
           </Button>
           <Box width="32px" />
           <Button width="100%" colorScheme={!showFavorites ? 'green' : 'gray'} onClick={handleShowSearch}>
-            Public Rooms
+            All Rooms
           </Button>
         </Box>
 

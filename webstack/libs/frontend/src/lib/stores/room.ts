@@ -25,7 +25,7 @@ interface RoomState {
   error: string | null;
   fetched: boolean;
   clearError: () => void;
-  create: (newRoom: RoomSchema) => Promise<void>;
+  create: (newRoom: RoomSchema) => Promise<Room | undefined>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
   delete: (id: string) => Promise<void>;
   subscribeToAllRooms: () => Promise<void>;
@@ -48,6 +48,9 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
       const res = await SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
       if (!res.success) {
         set({ error: res.message });
+        return undefined;
+      } else {
+        return res.data;
       }
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
