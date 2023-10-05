@@ -31,3 +31,4 @@ webstack/package-lock.json
 webstack/keys/token.json
 webstack/keys/package-lock.json
 webstack/keys/yarn.lock
+foresight/_env.sh

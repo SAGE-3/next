@@ -47,11 +47,11 @@ export function Controller(props: ControllerProps) {
   const { toHome, back } = useRouteNav();
   function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (event.shiftKey) {
+      // Just go back to the previous room
+      back();
+    } else {
       // Back to the homepage with the room id
       toHome(props.roomId);
-    } else {
-      // Just go back to the previous page
-      back();
     }
   }
 
@@ -92,7 +92,8 @@ export function Controller(props: ControllerProps) {
           icon={<MdArrowBack />}
           isActive={false}
           onClick={handleHomeClick}
-          description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
+          // description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
+          description={`Back to ${room?.data.name} (Shift+Click to go back to previous board)`}
         />
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
