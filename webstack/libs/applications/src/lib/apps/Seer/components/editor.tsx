@@ -193,6 +193,9 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         streaming: false,
         kernel: '',
         msgId: '',
+        markdown: '',
+        kernels: [],
+        history: [],
       });
     }
   }, [apiStatus]);
@@ -213,7 +216,23 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
-    updateState(props.app._id, { code: editorRef.current.getValue() });
+    const code = editorRef.current.getValue();
+    if (!code) {
+      if (toastRef.current) return;
+      toastRef.current = true;
+      toast({
+        title: 'No code to execute',
+        description: 'Please enter some code in the editor',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+        onCloseComplete: () => {
+          toastRef.current = false;
+        },
+      });
+      return;
+    }
     if (!s.kernel) {
       if (toastRef.current) return;
       toastRef.current = true;
@@ -246,24 +265,26 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       });
       return;
     }
-    if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
+    if (code && code.slice(0, 6) === '%%info') {
       const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
       editorRef.current.setValue(info);
     }
     try {
-      const response = await executeCode(editorRef.current.getValue(), s.kernel, user._id);
+      const response = await executeCode(code, s.kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
         updateState(props.app._id, {
           msgId: msgId,
           session: user._id,
           streaming: true,
+          markdown: '',
         });
       } else {
         // console.log('Error executing code');
         updateState(props.app._id, {
           msgId: '',
           streaming: false,
+          markdown: '',
         });
       }
     } catch (error) {
@@ -272,6 +293,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
         updateState(props.app._id, {
           msgId: '',
           streaming: false,
+          markdown: '',
           kernel: '',
           kernels: [],
           history: [],
@@ -291,6 +313,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
       code: '',
       msgId: '',
       streaming: false,
+      markdown: '',
     });
     editorRef.current?.setValue('');
   };
@@ -302,6 +325,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     updateState(props.app._id, {
       msgId: '',
       streaming: false,
+      markdown: '',
     });
   };
 
@@ -508,18 +532,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   useEffect(() => {
     if (props.generatedCode) {
       handleInsertCode(editorRef.current as editor.IStandaloneCodeEditor);
-      //   if (s.kernel) {
-      //     handleExecute();
-      //   } else {
-      //     toast({
-      //       title: 'No kernel selected',
-      //       description: 'Please select a kernel from the toolbar',
-      //       status: 'error',
-      //       duration: 4000,
-      //       isClosable: true,
-      //       position: 'bottom',
-      //     });
-      //   }
     }
     props.setGeneratedCode('');
   }, [props.generatedCode]);
@@ -536,14 +548,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
   // const handleInsertGeneratedInfo = (ed: editor.ICodeEditor) => {
   //   ed.focus();
   //   ed.trigger('keyboard', 'type', { text: prompt('Enter the variable name') });
-  // };
-  // const handleInsertAPI = (ed: editor.ICodeEditor) => {
-  //   let code = 'from foresight.config import config as conf, prod_type\n';
-  //   code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-  //   code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
-  //   code += 'ps3 = PySage3(conf, prod_type)\n\n';
-  //   ed.focus();
-  //   ed.setValue(code);
   // };
 
   return (

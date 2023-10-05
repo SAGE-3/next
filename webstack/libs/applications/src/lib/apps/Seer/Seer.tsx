@@ -44,6 +44,7 @@ import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
 import Markdown from 'markdown-to-jsx';
 import { update } from 'plotly.js';
+import { set } from 'date-fns';
 
 /**
  * Seer App
@@ -109,11 +110,12 @@ function AppComponent(props: App): JSX.Element {
   // };
 
   const handleGenerate = async () => {
-    setGeneratedCode('');
-    updateState(props._id, {
-      prompt: prompt,
-      markdown: '',
-    });
+    // updateState(props._id, {
+    //   prompt: prompt,
+    //   markdown: '',
+    //   streaming: false,
+    //   msgId: '',
+    // });
     const payload = {
       kernel: s.kernel,
       prompt: prompt,
@@ -132,16 +134,28 @@ function AppComponent(props: App): JSX.Element {
         console.log('Success:', data);
         if (data.code) {
           console.log('Updating state');
+          setGeneratedMarkdown('');
           setGeneratedCode(data.code);
+          updateState(props._id, {
+            code: data.code,
+          });
         } else if (data.message) {
           console.log('Message:', data.message);
         } else if (data.markdown) {
+          setGeneratedCode('');
           setGeneratedMarkdown(data.markdown);
           updateState(props._id, {
             markdown: data.markdown,
           });
         } else if (data.error) {
           console.error('Error:', data.error);
+          updateState(props._id, {
+            markdown: data.error,
+            code: '',
+            streaming: false,
+            msgId: '',
+            history: [],
+          });
         }
       })
       .catch((error) => {
@@ -442,9 +456,11 @@ function AppComponent(props: App): JSX.Element {
             hidden={false}
           >
             {generatedMarkdown && (
-              <Markdown source={generatedMarkdown} escapeHtml={false}>
-                {generatedMarkdown}
-              </Markdown>
+              <Box p={1} mx={5}>
+                <Markdown source={generatedMarkdown} escapeHtml={false}>
+                  {generatedMarkdown}
+                </Markdown>
+              </Box>
             )}
             {s.history && !generatedMarkdown && <Outputs app={props} online={apiStatus} msgId={s.msgId} />}
           </Box>
