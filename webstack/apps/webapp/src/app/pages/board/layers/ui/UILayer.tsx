@@ -46,6 +46,9 @@ import {
   KernelsPanel,
 } from './components';
 
+import Joyride, { Step } from 'react-joyride';
+import { useEffect, useRef, useState } from 'react';
+
 type UILayerProps = {
   boardId: string;
   roomId: string;
@@ -89,6 +92,33 @@ export function UILayer(props: UILayerProps) {
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+
+  // Joyride
+  const [joyrideSteps, setJoyrideSteps] = useState<Step[]>([]);
+  const mainButtonRef = useRef<HTMLDivElement>(null);
+  const clockRef = useRef<HTMLDivElement>(null);
+  const serverNameRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (mainButtonRef.current && clockRef.current && serverNameRef.current) {
+      setJoyrideSteps([
+        {
+          target: mainButtonRef.current,
+          content: 'This is the main button.',
+          disableBeacon: true,
+        },
+        {
+          target: clockRef.current,
+          content: 'This is the clock. It shows the current time.',
+          disableBeacon: true,
+        },
+        {
+          target: serverNameRef.current,
+          content: 'This is the name of the server.',
+          disableBeacon: true,
+        },
+      ]);
+    }
+  }, []);
 
   /**
    * Clear the board confirmed
@@ -167,13 +197,14 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <>
+      <Joyride steps={joyrideSteps} continuous showProgress />
       {/* The Corner SAGE3 Image Bottom Right */}
       <Box position="absolute" bottom="2" right="2" opacity={0.7}>
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} ref={mainButtonRef}>
         <MainButton
           buttonStyle="solid"
           backToRoom={() => toHome(props.roomId)}
@@ -193,12 +224,12 @@ export function UILayer(props: UILayerProps) {
       </Box> */}
 
       {/* ServerName Top Left */}
-      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'} ref={serverNameRef}>
         <BoardTitle room={room} board={board} config={config} />
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'} ref={clockRef}>
         <Clock isBoard={true} />
       </Box>
 
