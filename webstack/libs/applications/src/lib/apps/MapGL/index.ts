@@ -31,6 +31,7 @@ export const init: Partial<state> = {
   pitch: 0,
   baseLayer: 'OpenStreetMap',
   overlay: true,
+  assetid: '',
 };
 
 export const name = 'MapGL';

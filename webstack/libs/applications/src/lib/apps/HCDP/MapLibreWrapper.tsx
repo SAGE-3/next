@@ -324,6 +324,8 @@ function MapLibreWrapper(props: App): JSX.Element {
 
         const tiff = await fromUrl(url);
         const image = await tiff.getImage();
+        const bbox = image.getBoundingBox();
+        console.log(bbox);
         const data: any = await image.readRasters();
         const fileDirectory = image.getFileDirectory();
         const width = image.getWidth();
@@ -333,7 +335,7 @@ function MapLibreWrapper(props: App): JSX.Element {
             data[0][i] = 0;
           }
         }
-
+        console.log(tiff);
         const canvas = document.createElement('canvas');
         canvas.setAttribute('id', 'canvas');
         // Example custom color scale
@@ -359,10 +361,10 @@ function MapLibreWrapper(props: App): JSX.Element {
           type: 'image',
           url: dataURL,
           coordinates: [
-            [-159.816, 22.269], // top left
-            [-154.668, 22.269], // top right
-            [-154.668, 18.849], // bottom right
-            [-159.816, 18.849], // bottom left
+            [bbox[0], bbox[3]], // top left
+            [bbox[2], bbox[3]], // top right
+            [bbox[2], bbox[1]], // bottom right
+            [bbox[0], bbox[1]], // bottom left
           ],
         });
 

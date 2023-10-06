@@ -16,6 +16,7 @@ import {
   getMime,
   isValid,
   isImage,
+  isGeotiff,
   isPDF,
   isCSV,
   isMD,
@@ -251,7 +252,23 @@ export function useFiles(): UseFiles {
   ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
-    if (isGIF(fileType)) {
+    console.log(isGeotiff(fileType), fileType);
+    if (isGeotiff(fileType)) {
+      for (const a of assets) {
+        if (a._id === fileID) {
+          return setupApp(
+            a.data.originalfilename,
+            'MapGL',
+            xDrop,
+            yDrop,
+            roomId,
+            boardId,
+            { w: w, h: w },
+            { assetid: apiUrls.assets.getAssetById(a.data.file) }
+          );
+        }
+      }
+    } else if (isGIF(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {

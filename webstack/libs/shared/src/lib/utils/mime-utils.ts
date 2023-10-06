@@ -40,6 +40,17 @@ export function getExtension(mimeType: string): string {
 }
 
 /**
+ * Test if a given mime type is a Geotiff file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isGeotiff(mimeType: string): boolean {
+  return mimeType === 'image/tiff';
+}
+
+/**
  * Test if a given mime type is an image file
  *
  * @export
@@ -225,6 +236,7 @@ export function isValid(mimeType: string): boolean {
   // isHTML(mimeType) ||
 
   return (
+    isGeotiff(mimeType) ||
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
