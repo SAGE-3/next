@@ -20,6 +20,10 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 import { fromUrl } from 'geotiff';
+//@ts-ignore
+import parseGeoraster from 'georaster';
+//@ts-ignore
+import * as Plotty from 'plotty';
 
 import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
@@ -336,45 +340,62 @@ function MapLibreWrapper(props: App): JSX.Element {
   useEffect(() => {
     if (map) {
       map.on('style.load', async () => {
-        const response2 = await fetch('/assets/temp/6/3/35.png');
-        const blob2 = await response2.blob();
-        const url2 = URL.createObjectURL(blob2);
+        const url = '/assets/HCDPTestData.tif';
 
-        map.addSource('geotiff-source2', {
-          type: 'raster',
-          tiles: [url2],
-          tileSize: 2048, // Set the tileSize to ensure constant size
-          bounds: bounds, // Set the bounds for the source
+        const response = await fetch(url);
+        const buffer = await response.arrayBuffer();
+        const georaster = await parseGeoraster(buffer);
+
+        const tiff = await fromUrl(url);
+        const image = await tiff.getImage();
+        const data: any = await image.readRasters();
+        const fileDirectory = image.getFileDirectory();
+
+        for (let i = 0; i < data[0].length; i++) {
+          if (data[0][i] == Number.parseFloat(fileDirectory.GDAL_NODATA) || isNaN(data[0][i]) || data[0][i] < 0) {
+            data[0][i] = 0;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.setAttribute('id', 'canvas');
+        console.log(georaster);
+        // Example custom color scale
+        const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
+        const customStops = [0, 0.3, 0.5, 1];
+
+        Plotty.addColorScale('custom', customColors, customStops);
+
+        const plot = new Plotty.plot({
+          canvas: canvas,
+          data: data[0],
+          width: georaster.width,
+          height: georaster.height,
+          domain: [0, 596.87255859375],
+          colorScale: 'custom',
         });
 
-        // Add a layer using the raster source
-        map.addLayer({
-          id: 'geotiff-layer2',
-          type: 'raster',
-          source: 'geotiff-source2',
-          paint: {
-            'raster-opacity': 0.3, // Adjust the opacity as needed
-          },
+        plot.render();
+
+        const dataURL = canvas.toDataURL();
+
+        map.addSource('geotiff', {
+          type: 'image',
+          url: dataURL,
+          coordinates: [
+            [-159.816, 22.269], // top left
+            [-154.668, 22.269], // top right
+            [-154.668, 18.849], // bottom right
+            [-159.816, 18.849], // bottom left
+          ],
         });
 
-        const response = await fetch('/assets/temp/6/4/35.png');
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-
-        map.addSource('geotiff-source', {
-          type: 'raster',
-          tiles: [url],
-          tileSize: 2048, // Set the tileSize to ensure constant size
-          bounds: bounds, // Set the bounds for the source
-        });
-
-        // Add a layer using the raster source
         map.addLayer({
           id: 'geotiff-layer',
           type: 'raster',
-          source: 'geotiff-source',
+          source: 'geotiff',
           paint: {
-            'raster-opacity': 0.3, // Adjust the opacity as needed
+            'raster-opacity': 0.7,
           },
         });
       });
