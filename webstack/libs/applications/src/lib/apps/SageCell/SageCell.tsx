@@ -11,27 +11,9 @@ import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
 // Chakra Imports
 import {
-  Accordion,
-  AccordionItem,
-  AccordionIcon,
-  AccordionButton,
-  AccordionPanel,
-  Alert,
-  Badge,
-  Box,
-  ButtonGroup,
-  Code,
-  Flex,
-  Icon,
-  IconButton,
-  Image,
-  Spacer,
-  Spinner,
-  Stack,
-  Tooltip,
-  Text,
-  useColorModeValue,
-  useToast,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
