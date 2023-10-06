@@ -7,22 +7,19 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import { Box, useToast } from '@chakra-ui/react';
 
 // Data store
 import create from 'zustand';
 // Map library
 import maplibregl from 'maplibre-gl';
 // Geocoding
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 import { fromUrl } from 'geotiff';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
-import parseGeoraster from 'georaster';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import * as Plotty from 'plotty';
@@ -325,15 +322,12 @@ function MapLibreWrapper(props: App): JSX.Element {
       map.on('style.load', async () => {
         const url = '/assets/HCDPTestData.tif';
 
-        const response = await fetch(url);
-        const buffer = await response.arrayBuffer();
-        const georaster = await parseGeoraster(buffer);
-
         const tiff = await fromUrl(url);
         const image = await tiff.getImage();
         const data: any = await image.readRasters();
         const fileDirectory = image.getFileDirectory();
-
+        const width = image.getWidth();
+        const height = image.getHeight();
         for (let i = 0; i < data[0].length; i++) {
           if (data[0][i] == Number.parseFloat(fileDirectory.GDAL_NODATA) || isNaN(data[0][i]) || data[0][i] < 0) {
             data[0][i] = 0;
@@ -342,7 +336,6 @@ function MapLibreWrapper(props: App): JSX.Element {
 
         const canvas = document.createElement('canvas');
         canvas.setAttribute('id', 'canvas');
-        console.log(georaster);
         // Example custom color scale
         const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
         const customStops = [0, 0.3, 0.5, 1];
@@ -352,8 +345,8 @@ function MapLibreWrapper(props: App): JSX.Element {
         const plot = new Plotty.plot({
           canvas: canvas,
           data: data[0],
-          width: georaster.width,
-          height: georaster.height,
+          width: width,
+          height: height,
           domain: [0, 596.87255859375],
           colorScale: 'custom',
         });
