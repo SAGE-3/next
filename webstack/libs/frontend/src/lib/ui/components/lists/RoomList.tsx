@@ -10,6 +10,7 @@ import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
+  Icon,
   Input,
   InputGroup,
   InputRightElement,
@@ -20,7 +21,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
-import { MdAdd, MdSearch, MdSort } from 'react-icons/md';
+import { MdAdd, MdSearch } from 'react-icons/md';
 
 import {
   CreateRoomModal,
@@ -32,20 +33,9 @@ import {
   useAbility,
   useThrottlePresenceUsers,
   useUIStore,
+  RoomSearchModal,
 } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
-
-// Utility functions for sorting
-function sortByName(a: Room, b: Room) {
-  return a.data.name.localeCompare(b.data.name);
-}
-
-function sortByCreated(a: Room, b: Room) {
-  return a._createdAt > b._createdAt ? -1 : 1;
-}
-
-// Type for representing the sort order
-type userSortType = 'Name' | 'Users' | 'Created';
 
 // Props for the RoomList component
 type RoomListProps = {
@@ -58,11 +48,22 @@ type RoomListProps = {
   onBoardClick: (board: Board) => void;
 };
 
+// Utility functions for sorting
+function sortByName(a: Room, b: Room) {
+  return a.data.name.localeCompare(b.data.name);
+}
+
 export function RoomList(props: RoomListProps) {
   // Me
   const { user } = useUser();
   const savedRooms = user?.data.savedRooms || [];
   const isGuest = user?.data.userRole === 'guest' || false;
+
+  // Room Search Discloure Modal
+  const { isOpen: roomSearchIsOpen, onOpen: roomSearchOnOpen, onClose: roomSearchOnClose } = useDisclosure();
+  const handleRoomSearchOpen = () => {
+    roomSearchOnOpen();
+  };
 
   // Abilities
   const canCreateRoom = useAbility('create', 'rooms');
@@ -82,9 +83,9 @@ export function RoomList(props: RoomListProps) {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const toast = useToast();
-  const [filterBoards, setFilterBoards] = useState<Room[] | null>(null);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<userSortType>('Name');
+
+  // Display Rooms
+  const [displayRooms, setDisplayRooms] = useState<Room[]>([]);
 
   const selRoomCardRef = useRef<HTMLLIElement>(null);
 
@@ -92,15 +93,11 @@ export function RoomList(props: RoomListProps) {
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
 
   // State of UI, saved or search
-  const handleShowSaved = () => {
-    setSearch('');
-    handleFilterBoards('');
-    setroomlistShowFavorites(true);
-  };
-  const handleShowSearch = () => {
-    setSearch('');
-    handleFilterBoards('');
+  const handleShowMyRooms = () => {
     setroomlistShowFavorites(false);
+  };
+  const handleShowFavorites = () => {
+    setroomlistShowFavorites(true);
   };
 
   // Scroll to selected room
@@ -121,21 +118,6 @@ export function RoomList(props: RoomListProps) {
     }
   }, []);
 
-  function sortByUsers(a: Room, b: Room) {
-    const aUsers = presences.filter((p) => p.presence.data.roomId === a._id).length;
-    const bUsers = presences.filter((p) => p.presence.data.roomId === b._id).length;
-    return bUsers - aUsers;
-  }
-
-  // Sorting functions
-  let sortFunction = sortByName;
-  if (sortBy === 'Users') sortFunction = sortByUsers;
-  if (sortBy === 'Created') sortFunction = sortByCreated;
-
-  const handleSortChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(event.target.value as userSortType);
-  };
-
   useEffect(() => {
     if (storeError) {
       // Display a message
@@ -145,136 +127,89 @@ export function RoomList(props: RoomListProps) {
     }
   }, [storeError]);
 
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-    handleFilterBoards(event.target.value);
-  };
-
-  // Filter boards with the search string
-  function handleFilterBoards(search: string) {
-    const filBoards = props.rooms.filter(
-      (room) =>
-        // search in room name
-        room.data.name.toLowerCase().includes(search.toLowerCase()) ||
-        // search in room description
-        room.data.description.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilterBoards(filBoards);
-    if (search === '') {
-      setFilterBoards(null);
+  useEffect(() => {
+    if (showFavorites) {
+      setDisplayRooms(props.rooms.filter((room) => savedRooms.includes(room._id)));
+    } else {
+      setDisplayRooms(props.rooms.filter((room) => room._createdBy === user?._id));
     }
-  }
+  }, [showFavorites, props.rooms]);
 
   return (
     <Box textAlign="center" display="flex" flexDir="column" height="100%" width="100%" borderBottom="solid 1px" borderColor={borderColor}>
-
       {/* Modal to enter the room with a UUID */}
       <EnterBoardByIdModal isOpen={isOpenEnterBoard} onOpen={onOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardByIdModal>
+      {/* Room Search Modal */}
+      <RoomSearchModal isOpen={roomSearchIsOpen} onClose={roomSearchOnClose} rooms={props.rooms} />
 
       {/* The room list */}
       <Box textAlign="center" display="flex" flexDir="column" alignItems="center" width="100%" borderColor={borderColor}>
         <Box whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fontSize={'3xl'}>
           <Text>Rooms</Text>
         </Box>
-        <Box display="flex" width="100%" justifyContent={'space-between'} pr="15px" my="4">
-          <Button width="100%" colorScheme={showFavorites ? 'teal' : 'gray'} variant="outline" onClick={handleShowSaved}>
+
+        <Box display="flex" width="100%" justifyContent={'space-between'} my="2">
+          <Button width="64px" mr="2" colorScheme="teal" variant="outline" onClick={onOpen}>
+            <Icon as={MdAdd} fontSize={18} />
+          </Button>
+          <Button width="64px" mx="2" colorScheme="teal" variant="outline" onClick={handleRoomSearchOpen}>
+            <Icon as={MdSearch} fontSize={18} />
+          </Button>
+          <Button width="100%" mx="2" colorScheme={showFavorites ? 'teal' : 'gray'} variant="solid" onClick={handleShowFavorites}>
             Favorite Rooms
           </Button>
-          <Box width="32px" />
-          <Button width="100%" colorScheme={!showFavorites ? 'teal' : 'gray'} variant="outline" onClick={handleShowSearch}>
-            All Rooms
-          </Button>
-        </Box>
 
-        <Box display="flex" justifyContent={'space-between'} width="100%">
-          <Box flexGrow={1} mr="4" display="flex" flexWrap={'nowrap'} alignItems={'center'}>
-            <Box display="flex" flexWrap={'nowrap'} justifyContent="left">
-              <Tooltip label="Create a New Room" placement="top" hasArrow={true} openDelay={400}>
-                <Button aria-label="create room" borderRadius="md" mr="2" fontSize="3xl" isDisabled={!canCreateRoom} onClick={onOpen}>
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-            </Box>
-            <Box flexGrow={1} ml="4">
-              <InputGroup>
-                <Input
-                  my="2"
-                  value={search}
-                  variant="outline"
-                  onChange={handleInputChange}
-                  placeholder="Find Room..."
-                  _placeholder={{ opacity: 1 }}
-                  name="findRoom"
-                />
-                <InputRightElement pointerEvents="none" transform={`translateY(8px)`} fontSize="1.4em" children={<MdSearch />} />
-              </InputGroup>
-            </Box>
-          </Box>
-          <Box pr="4">
-            <InputGroup>
-              <Select name="sortRoom" mt="2" onChange={handleSortChange} icon={<MdSort />}>
-                <option value="Name"> Name</option>
-                <option value="Users">Users</option>
-                <option value="Created">Created</option>
-              </Select>
-            </InputGroup>
-          </Box>
+          <Button width="100%" ml="2" colorScheme={!showFavorites ? 'teal' : 'gray'} variant="solid" onClick={handleShowMyRooms}>
+            My Rooms
+          </Button>
         </Box>
       </Box>
 
       <Box
         overflowY="scroll"
         overflowX="hidden"
-        pr="2"
         mt="6"
         height="100%"
         borderColor={borderColor}
         css={{
           '&::-webkit-scrollbar': {
-            width: '6px',
+            display: 'none',
           },
           '&::-webkit-scrollbar-track': {
-            width: '6px',
-            background: 'transparent',
+            display: 'none',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: borderHex,
-            borderRadius: '8px',
+            display: 'none',
           },
         }}
       >
         <ul>
-          {(filterBoards ? filterBoards : props.rooms)
-            // show only public rooms or mine
-            .filter((a) => a.data.isListed || a.data.ownerId === user?._id)
-            .sort(sortFunction)
-            .map((room, idx) => {
-              const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
+          {displayRooms.sort(sortByName).map((room, idx) => {
+            const selected = props.selectedRoom ? room._id === props.selectedRoom._id : false;
 
-              if (showFavorites && !savedRooms.includes(room._id)) return null;
+            if (showFavorites && !savedRooms.includes(room._id)) return null;
 
-              return (
-                <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>
-                  <RoomCard
-                    key={room._id}
-                    room={room}
-                    boards={props.boards.filter((board) => board.data.roomId === room._id)}
-                    userCount={presences.filter((user) => user.presence.data.roomId === room._id).length}
-                    selected={selected}
-                    onEnter={() => props.onRoomClick(room)}
-                    onDelete={() => deleteRoom(room._id)}
-                    onBackClick={() => props.onRoomClick(undefined)}
-                    onBoardClick={props.onBoardClick}
-                  ></RoomCard>
-                </li>
-              );
-            })}
+            return (
+              <li key={idx} ref={selected ? selRoomCardRef : null} style={{ marginTop: idx === 0 ? '' : '20px' }}>
+                <RoomCard
+                  key={room._id}
+                  room={room}
+                  boards={props.boards.filter((board) => board.data.roomId === room._id)}
+                  userCount={presences.filter((user) => user.presence.data.roomId === room._id).length}
+                  selected={selected}
+                  onEnter={() => props.onRoomClick(room)}
+                  onDelete={() => deleteRoom(room._id)}
+                  onBackClick={() => props.onRoomClick(undefined)}
+                  onBoardClick={props.onBoardClick}
+                ></RoomCard>
+              </li>
+            );
+          })}
         </ul>
       </Box>
 
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={isOpen} onClose={onClose} />
-
     </Box>
   );
 }
