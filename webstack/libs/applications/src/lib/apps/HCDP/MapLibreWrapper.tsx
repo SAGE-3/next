@@ -20,20 +20,20 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 import { fromUrl } from 'geotiff';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import parseGeoraster from 'georaster';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import * as Plotty from 'plotty';
 
 import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
-import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
-import { TypedArray } from 'd3';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -60,22 +60,6 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
-// Define the bounds
-const bounds = [
-  -159.816, // Minimum longitude
-  18.849, // Minimum latitude
-  -154.668, // Maximum longitude
-  22.269, // Maximum latitude
-];
-
-// Calculate the coordinates for the four corners of the bounding box
-const coordinates = [
-  [bounds[0], bounds[1]],
-  [bounds[0], bounds[3]],
-  [bounds[2], bounds[3]],
-  [bounds[2], bounds[1]],
-  [bounds[0], bounds[1]], // Close the polygon
-];
 /* App component for MapGL */
 
 function MapLibreWrapper(props: App): JSX.Element {
@@ -288,7 +272,6 @@ function MapLibreWrapper(props: App): JSX.Element {
       const image = await tiff.getImage();
       const data: any = await image.readRasters();
       const resolution = image.getResolution();
-      const bbox = image.getBoundingBox();
       const { width, height } = data;
       const tiepoint = image.getTiePoints()[0];
       const [, yScale] = image.getFileDirectory().ModelPixelScale;
@@ -415,120 +398,122 @@ function MapLibreWrapper(props: App): JSX.Element {
 
 /* App toolbar component for the app MapGL */
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const map = useStore((state: any) => state.map[props._id]);
-  const [addrValue, setAddrValue] = useState('');
-  const update = useAppStore((state) => state.update);
+// TODO: Add a toolbar component for HCDP app
 
-  // @ts-ignore
-  const geocoder = new esriLeafletGeocoder.geocode({
-    apikey: esriKey,
-  });
+// function ToolbarComponent(props: App): JSX.Element {
+//   const s = props.data.state as AppState;
+//   const updateState = useAppStore((state) => state.updateState);
+//   const map = useStore((state: any) => state.map[props._id]);
+//   const [addrValue, setAddrValue] = useState('');
+//   const update = useAppStore((state) => state.update);
 
-  // from the UI to the react state
-  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
-  const changeAddr = (evt: any) => {
-    evt.preventDefault();
+//   // @ts-ignore
+//   const geocoder = new esriLeafletGeocoder.geocode({
+//     apikey: esriKey,
+//   });
 
-    geocoder.text(addrValue).run((err: any, results: any, response: any) => {
-      if (err) {
-        console.log('MapGL> Geocoder error:', err);
-        return;
-      }
-      const res = results.results[0];
-      if (res && res.latlng) {
-        const center: [number, number] = [res.latlng.lng, res.latlng.lat];
-        // Bounds
-        const ne = res.bounds._northEast;
-        const sw = res.bounds._southWest;
-        const bbox = [sw.lng, sw.lat, ne.lng, ne.lat] as [number, number, number, number];
-        map.fitBounds(new maplibregl.LngLatBounds(bbox), { duration: 0 });
-        map.setCenter(center, { duration: 0 });
+//   // from the UI to the react state
+//   const handleAddrChange = (event: any) => setAddrValue(event.target.value);
+//   const changeAddr = (evt: any) => {
+//     evt.preventDefault();
 
-        // Sync zoom after fitting bounds
-        const newZoom = map.getZoom();
-        updateState(props._id, { location: center, zoom: newZoom, bearing: 0 });
+//     geocoder.text(addrValue).run((err: any, results: any, response: any) => {
+//       if (err) {
+//         console.log('MapGL> Geocoder error:', err);
+//         return;
+//       }
+//       const res = results.results[0];
+//       if (res && res.latlng) {
+//         const center: [number, number] = [res.latlng.lng, res.latlng.lat];
+//         // Bounds
+//         const ne = res.bounds._northEast;
+//         const sw = res.bounds._southWest;
+//         const bbox = [sw.lng, sw.lat, ne.lng, ne.lat] as [number, number, number, number];
+//         map.fitBounds(new maplibregl.LngLatBounds(bbox), { duration: 0 });
+//         map.setCenter(center, { duration: 0 });
 
-        // Update the app title
-        update(props._id, { title: res.text });
-      }
-    });
-  };
+//         // Sync zoom after fitting bounds
+//         const newZoom = map.getZoom();
+//         updateState(props._id, { location: center, zoom: newZoom, bearing: 0 });
 
-  // Zoom in on the map
-  const incZoom = () => {
-    const zoom = s.zoom + 1;
-    const limitZoom = Math.min(zoom, maxZoom);
-    map.zoomTo(limitZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
+//         // Update the app title
+//         update(props._id, { title: res.text });
+//       }
+//     });
+//   };
 
-  // Zoom out on the map
-  const decZoom = () => {
-    const zoom = s.zoom - 1;
-    const limitZoom = Math.max(zoom, minZoom);
-    map.zoomTo(limitZoom);
-    updateState(props._id, { zoom: limitZoom });
-  };
+//   // Zoom in on the map
+//   const incZoom = () => {
+//     const zoom = s.zoom + 1;
+//     const limitZoom = Math.min(zoom, maxZoom);
+//     map.zoomTo(limitZoom);
+//     updateState(props._id, { zoom: limitZoom });
+//   };
 
-  // Change Baselayer to Satellite
-  const changeToSatellite = () => {
-    updateState(props._id, { baseLayer: 'Satellite' });
-  };
+//   // Zoom out on the map
+//   const decZoom = () => {
+//     const zoom = s.zoom - 1;
+//     const limitZoom = Math.max(zoom, minZoom);
+//     map.zoomTo(limitZoom);
+//     updateState(props._id, { zoom: limitZoom });
+//   };
 
-  // Change Baselayer to OpenStreetMap
-  const changeToStreetMap = () => {
-    updateState(props._id, { baseLayer: 'OpenStreetMap' });
-  };
+//   // Change Baselayer to Satellite
+//   const changeToSatellite = () => {
+//     updateState(props._id, { baseLayer: 'Satellite' });
+//   };
 
-  return (
-    <HStack>
-      <ButtonGroup>
-        <form onSubmit={changeAddr}>
-          <InputGroup size="xs" minWidth="200px">
-            <Input
-              defaultValue={addrValue}
-              onChange={handleAddrChange}
-              onPaste={(event) => {
-                event.stopPropagation();
-              }}
-              backgroundColor="whiteAlpha.300"
-              placeholder="Enter a place or address"
-              _placeholder={{ opacity: 1, color: 'gray.400' }}
-            />
-          </InputGroup>
-        </form>
-      </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= minZoom} onClick={decZoom}>
-            <MdRemove fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+//   // Change Baselayer to OpenStreetMap
+//   const changeToStreetMap = () => {
+//     updateState(props._id, { baseLayer: 'OpenStreetMap' });
+//   };
 
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button onClick={changeToStreetMap}>
-            <MdMap fontSize="20px" />
-          </Button>
-        </Tooltip>
+//   return (
+//     <HStack>
+//       <ButtonGroup>
+//         <form onSubmit={changeAddr}>
+//           <InputGroup size="xs" minWidth="200px">
+//             <Input
+//               defaultValue={addrValue}
+//               onChange={handleAddrChange}
+//               onPaste={(event) => {
+//                 event.stopPropagation();
+//               }}
+//               backgroundColor="whiteAlpha.300"
+//               placeholder="Enter a place or address"
+//               _placeholder={{ opacity: 1, color: 'gray.400' }}
+//             />
+//           </InputGroup>
+//         </form>
+//       </ButtonGroup>
+//       <ButtonGroup isAttached size="xs" colorScheme="teal">
+//         <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
+//           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
+//             <MdAdd fontSize="16px" />
+//           </Button>
+//         </Tooltip>
+//         <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+//           <Button isDisabled={s.zoom <= minZoom} onClick={decZoom}>
+//             <MdRemove fontSize="16px" />
+//           </Button>
+//         </Tooltip>
+//       </ButtonGroup>
 
-        <Tooltip placement="top" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button onClick={changeToSatellite}>
-            <MdTerrain fontSize="20px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </HStack>
-  );
-}
+//       <ButtonGroup isAttached size="xs" colorScheme="teal">
+//         <Tooltip placement="top" hasArrow={true} label={'Street Map'} openDelay={400}>
+//           <Button onClick={changeToStreetMap}>
+//             <MdMap fontSize="20px" />
+//           </Button>
+//         </Tooltip>
+
+//         <Tooltip placement="top" hasArrow={true} label={'Satellite Map'} openDelay={400}>
+//           <Button onClick={changeToSatellite}>
+//             <MdTerrain fontSize="20px" />
+//           </Button>
+//         </Tooltip>
+//       </ButtonGroup>
+//     </HStack>
+//   );
+// }
 
 export default MapLibreWrapper;
