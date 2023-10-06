@@ -71,7 +71,7 @@ export function Background(props: BackgroundProps) {
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
   // Hooks
-  const { uploadFiles, openAppForFile } = useFiles();
+  const { uploadFiles, openAppForFile, uploadInProgress } = useFiles();
 
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
@@ -110,8 +110,6 @@ export function Background(props: BackgroundProps) {
 
   // For Lasso
   const isShiftPressed = useKeyPress('Shift');
-
-  // Perform the actual upload
 
   // Subscribe to messages
   useEffect(() => {
@@ -188,8 +186,18 @@ export function Background(props: BackgroundProps) {
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {
-          // do the actual upload
-          uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+          if (!uploadInProgress) {
+            toast.closeAll();
+            // do the actual upload
+            uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+          } else {
+            toast({
+              title: 'Upload in progress - Please wait',
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          }
         })
         .catch((err) => {
           console.log('Error> uploading files', err);

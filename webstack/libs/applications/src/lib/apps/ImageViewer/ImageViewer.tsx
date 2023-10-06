@@ -13,9 +13,8 @@ import { MdFileDownload } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { downloadFile, isUUIDv4, useThrottleScale } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { useAssetStore, useAppStore, useMeasure } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -174,7 +173,8 @@ function ToolbarComponent(props: App): JSX.Element {
               if (file) {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
-                downloadFile('api/assets/static/' + url, filename);
+                const dl = apiUrls.assets.getAssetById(url);
+                downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
                 const filename = s.assetid.split('/').pop();

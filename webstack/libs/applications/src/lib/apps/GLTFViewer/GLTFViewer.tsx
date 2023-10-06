@@ -19,9 +19,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as THREE from 'three';
 
 // SAGE3
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUIStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
-import { downloadFile } from '@sage3/frontend';
 
 // App
 import { App } from '../../schema';
@@ -135,7 +134,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the URL from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       setUrl(localurl);
     }
   }, [file]);
@@ -184,7 +183,8 @@ function ToolbarComponent(props: App): JSX.Element {
               if (file) {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
-                downloadFile('api/assets/static/' + url, filename);
+                const dl = apiUrls.assets.getAssetById(url);
+                downloadFile(dl, filename);
               }
             }}
           >

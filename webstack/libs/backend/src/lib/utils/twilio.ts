@@ -6,12 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { jwt } from 'twilio';
-
 import { PresenceSchema, TwilioConfiguration } from '@sage3/shared/types';
-import { SAGE3Collection } from '../generics';
 import { AppSchema } from '@sage3/applications/schema';
+import { SAGE3Collection } from '../generics';
 
+import { jwt } from 'twilio/lib';
 const AccessToken = jwt.AccessToken;
 const VideoGrant = AccessToken.VideoGrant;
 
@@ -48,14 +47,13 @@ export class SAGETwilio {
   public generateVideoToken(userId: string, roomId: string) {
     // Create an access token which we will sign and return to the client,
     // containing the grant we just created
-    const token = new AccessToken(this.config.accountSid, this.config.apiKey, this.config.apiSecret);
-
-    // Assign identity to the token
-    token.identity = userId;
+    const token = new AccessToken(this.config.accountSid, this.config.apiKey, this.config.apiSecret, { identity: userId });
 
     // Grant the access token Twilio Video capabilities
-    const grant = new VideoGrant();
-    grant.room = roomId;
+    const grant = new VideoGrant({
+      room: roomId,
+    });
+
     token.addGrant(grant);
 
     // Serialize the token to a JWT string

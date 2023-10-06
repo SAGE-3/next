@@ -9,8 +9,7 @@
 // File information
 import { FileEntry } from './types';
 import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
-
-import { GetConfiguration } from '@sage3/frontend';
+import { GetConfiguration, apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -45,7 +44,7 @@ export async function setupAppForFile(
       size: { width: w, height: w, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'ImageViewer',
-      state: { ...initialValues['ImageViewer'], assetid: '/api/assets/static/' + file.filename },
+      state: { ...initialValues['ImageViewer'], assetid: apiUrls.assets.getAssetById(file.filename) },
       raised: true,
       dragging: false,
     };
@@ -140,7 +139,7 @@ export async function setupAppForFile(
     };
   } else if (isMD(file.type)) {
     // Look for the file in the asset store
-    const localurl = '/api/assets/static/' + file.filename;
+    const localurl = apiUrls.assets.getAssetById(file.filename);
     // Get the content of the file
     const response = await fetch(localurl, {
       headers: {
@@ -164,7 +163,7 @@ export async function setupAppForFile(
     };
   } else if (isPython(file.type)) {
     // Look for the file in the asset store
-    const localurl = '/api/assets/static/' + file.filename;
+    const localurl = apiUrls.assets.getAssetById(file.filename);
     // Get the content of the file
     const response = await fetch(localurl, {
       headers: {
@@ -187,7 +186,7 @@ export async function setupAppForFile(
     };
   } else if (isJSON(file.type)) {
     // Look for the file in the asset store
-    const localurl = '/api/assets/static/' + file.filename;
+    const localurl = apiUrls.assets.getAssetById(file.filename);
     // Get the content of the file
     const response = await fetch(localurl, {
       headers: {
@@ -211,7 +210,7 @@ export async function setupAppForFile(
     };
   } else if (isPythonNotebook(file.type)) {
     // Look for the file in the asset store
-    const localurl = '/api/assets/static/' + file.filename;
+    const localurl = apiUrls.assets.getAssetById(file.filename);
     // Get the content of the file
     const response = await fetch(localurl, {
       headers: {
@@ -226,7 +225,7 @@ export async function setupAppForFile(
       // Create a new notebook
       const base = `http://${window.location.hostname}:8888`;
       // Talk to the jupyter server API
-      const j_url = base + '/api/contents/notebooks/' + file.originalfilename;
+      const j_url = base + apiUrls.assets.getNotebookByName(file.originalfilename);
       const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
       // Create a new notebook
       const response = await fetch(j_url, {

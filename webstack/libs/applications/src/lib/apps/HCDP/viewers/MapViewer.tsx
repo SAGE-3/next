@@ -20,7 +20,7 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
@@ -33,7 +33,7 @@ import React from 'react';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
-  return `/api/assets/static/${filename}`;
+  return apiUrls.assets.getAssetById(filename);
 }
 
 // Zustand store to communicate with toolbar
@@ -288,9 +288,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             const el = document.createElement('div');
 
             el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
-              s.stationScale
-            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${s.stationScale
+              }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
             <p  style="font-size:5px; font-weight: bold; text-align: center">
             ${Number(latestValue).toFixed(1)}</p>
             </div>

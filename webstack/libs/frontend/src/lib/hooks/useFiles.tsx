@@ -32,8 +32,8 @@ import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
+import { GetConfiguration, apiUrls } from '../config';
 import { useAssetStore, useAppStore } from '../stores';
-import { GetConfiguration } from '../config';
 import { useUser } from '../providers';
 
 /**
@@ -81,6 +81,7 @@ type UseFiles = {
     roomId: string,
     boardId: string
   ) => Promise<AppSchema | null>;
+  uploadInProgress: boolean;
 };
 
 /**
@@ -102,6 +103,8 @@ export function useFiles(): UseFiles {
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
   // Save the drop position
   const [configDrop, setConfigDrop] = useState({ xDrop: 0, yDrop: 0, roomId: '', boardId: '' });
+  // Upload in progress
+  const [uploadInProgress, setUploadInProgress] = useState(false);
 
   // When uplaod is done, open the apps
   useEffect(() => {
@@ -177,11 +180,12 @@ export function useFiles(): UseFiles {
 
       // Save the drop position
       setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+      setUploadInProgress(true);
 
       // Upload with a POST request
       const response = await axios({
         method: 'post',
-        url: '/api/assets/upload',
+        url: apiUrls.assets.upload,
         data: fd,
         onUploadProgress: (p: AxiosProgressEvent) => {
           if (toastIdRef.current && p.progress) {
@@ -204,6 +208,7 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           }
+          setUploadInProgress(false);
         })
         .catch((error: AxiosError) => {
           // Big error in file handling in backend
@@ -216,6 +221,7 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           }
+          setUploadInProgress(false);
         });
       if (response) {
         // Save the list of uploaded files
@@ -229,6 +235,7 @@ export function useFiles(): UseFiles {
             isClosable: true,
           });
         }
+        setUploadInProgress(false);
       }
     }
   }
@@ -256,7 +263,7 @@ export function useFiles(): UseFiles {
             roomId,
             boardId,
             { w: w, h: w },
-            { assetid: '/api/assets/static/' + a.data.file }
+            { assetid: apiUrls.assets.getAssetById(a.data.file) }
           );
         }
       }
@@ -305,7 +312,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -322,7 +329,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -339,7 +346,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -354,7 +361,7 @@ export function useFiles(): UseFiles {
             // Create a new notebook
             const base = `http://${window.location.hostname}:8888`;
             // Talk to the jupyter server API
-            const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
+            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
             const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
             // Create a new notebook
             const response = await fetch(j_url, {
@@ -376,7 +383,7 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
           // Get the content of the file
           const response = await fetch(localurl, {
             headers: {
@@ -408,5 +415,5 @@ export function useFiles(): UseFiles {
     return null;
   }
 
-  return { uploadFiles, openAppForFile };
+  return { uploadFiles, openAppForFile, uploadInProgress };
 }

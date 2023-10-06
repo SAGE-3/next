@@ -6,9 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React
+import React, { useEffect, useState } from 'react';
+// Libraries
+import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
+// Chakra UI
 import {
   Button,
-  useDisclosure,
   Box,
   Text,
   Drawer,
@@ -28,18 +32,17 @@ import {
   useColorModeValue,
   IconButton,
 } from '@chakra-ui/react';
-import React, { useEffect, useState } from 'react';
+import { MdDelete } from 'react-icons/md';
+// SAGE3
+import { apiUrls, useAppStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-
-import { useAppStore } from '@sage3/frontend';
+// App
 import VariableCard from '../viewers/VariableCard';
 import FriendlyVariableCard from '../viewers/FriendlyVariableCard';
 import StatisticCard from '../viewers/StatisticCard';
 import EChartsViewer from '../viewers/EChartsViewer';
-import { getColor } from '../../EChartsViewer/ChartManager';
 import CurrentConditions from '../viewers/CurrentConditions';
 import StationMetadata from '../viewers/StationMetadata';
-import { MdDelete } from 'react-icons/md';
 
 type NLPRequestResponse = {
   success: boolean;
@@ -111,7 +114,7 @@ export const checkAvailableVisualizations = (variable: string) => {
 
 // Not used for now. TODO in future, will ask ChatGPT to generate a chart
 export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
-  const response = await fetch('/api/nlp', {
+  const response = await fetch(apiUrls.misc.nlp, {
     method: 'POST',
     credentials: 'include',
     headers: {

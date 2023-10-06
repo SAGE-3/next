@@ -22,7 +22,7 @@ import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersSto
 import { SAGEColors } from '@sage3/shared';
 
 import { state as AppState } from './';
-import { App, AppGroup, AppSchema } from '../../schema';
+import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
@@ -375,7 +375,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   };
 
   const handleSetFont = () => {
-    const min = Math.min(...(props.apps.map((app) => app.data.state.fontSize)));
+    const min = Math.min(...props.apps.map((app) => app.data.state.fontSize));
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
@@ -417,9 +417,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Set Font Size'} openDelay={400}>
-          <Button onClick={() => handleSetFont()}>
-            {Math.min(...(props.apps.map((app) => app.data.state.fontSize)))}
-          </Button>
+          <Button onClick={() => handleSetFont()}>{Math.min(...props.apps.map((app) => app.data.state.fontSize))}</Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button onClick={() => handleIncreaseFont()}>

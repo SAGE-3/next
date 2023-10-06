@@ -9,7 +9,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Input, useDisclosure } from '@chakra-ui/react';
 
-import { EnterBoardModal, isElectron, useAppStore } from '@sage3/frontend';
+import { EnterBoardModal, apiUrls, isElectron, useAppStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
 
 import { state as AppState } from './index';
@@ -42,7 +42,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const [title, setTitle] = useState('');
 
-  const changeTitle = (e: any) => {
+  const changeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
   };
 
@@ -56,7 +56,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const boardId = s.url.split('/')[s.url.split('/').length - 1];
   useEffect(() => {
     async function fetchUrl() {
-      const res = await fetch(`/api/boards/${boardId}`);
+      const res = await fetch(apiUrls.boards.getBoard(boardId));
       const data = await res.json();
       if (data.success) {
         setBoard(data.data[0]);

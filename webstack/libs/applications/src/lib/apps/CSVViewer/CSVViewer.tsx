@@ -7,15 +7,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useAppStore, useAssetStore } from '@sage3/frontend';
-import { App } from '../../schema';
-
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { Asset } from '@sage3/shared/types';
-
 import { TableVirtuoso } from 'react-virtuoso';
 import { parse } from 'csv-parse/browser/esm';
+
+import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+import { Asset } from '@sage3/shared/types';
+
+import { state as AppState } from './index';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
@@ -48,7 +48,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the data from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       if (localurl) {
         fetch(localurl, {
           headers: {

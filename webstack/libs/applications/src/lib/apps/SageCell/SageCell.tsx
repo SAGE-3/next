@@ -9,12 +9,6 @@
 // React imports
 import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
-// Event Source import
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-
-// Styling
-import './SageCell.css';
-
 // Chakra Imports
 import {
   Accordion,
@@ -41,26 +35,8 @@ import {
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
-// Monaco Imports
-import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
-import { monacoOptions } from './components/monacoOptions';
-
-// Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
-import { MonacoBinding } from 'y-monaco';
-
-// Throttle
-import { throttle } from 'throttle-debounce';
-
-// App Imports
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { App } from '../../schema';
-
-// Component imports
-import { ToolbarComponent, PdfViewer, Markdown } from './components';
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
 // Ansi library
 import Ansi from 'ansi-to-react';
@@ -70,10 +46,30 @@ import Plot, { PlotParams } from 'react-plotly.js';
 import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
+// Monaco Imports
+import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
+import { monacoOptions } from './components/monacoOptions';
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { MonacoBinding } from 'y-monaco';
+// Throttle
+import { throttle } from 'throttle-debounce';
 
-import { useAbility, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+// SAGE3 Component imports
+import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
+
+// App Imports
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { App } from '../../schema';
+
+// Styling
+import './SageCell.css';
 
 type YjsClientState = {
   name: string;
@@ -321,7 +317,7 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
     if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
-      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)`;
+      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)\nprint('app_id = ' + app_id)`;
       editorRef.current.setValue(info);
     }
     try {
@@ -379,14 +375,14 @@ function AppComponent(props: App): JSX.Element {
 
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
-    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
+    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();
     ed.setValue(code);
@@ -440,8 +436,12 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     function setEventSource() {
+      // Controller to stop the event source if needed
       const ctrl = new AbortController();
-      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+      // Get the URL of the stream
+      const streamURL = apiUrls.fastapi.getMessageStream(s.msgId);
+      // Fetch the evet source
+      fetchEventSource(streamURL, {
         method: 'GET',
         headers: {
           'Content-Type': 'text/event-stream',
@@ -948,13 +948,5 @@ function AppComponent(props: App): JSX.Element {
     </AppWindow>
   );
 }
-
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

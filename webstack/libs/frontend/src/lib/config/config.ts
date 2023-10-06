@@ -7,13 +7,14 @@
  */
 
 import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
+import { apiUrls } from './urls';
 
 /**
  * Returns the whole data structure (albeit limited)
  * @returns {OpenConfiguration}
  */
 export async function GetConfiguration(): Promise<OpenConfiguration> {
-  const response = await fetch('/api/configuration', {
+  const response = await fetch(apiUrls.config.getConfig, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -30,7 +31,7 @@ export async function GetConfiguration(): Promise<OpenConfiguration> {
  * @returns {PublicInformation}
  */
 export async function GetServerInfo(): Promise<PublicInformation> {
-  const response = await fetch('/api/info', {
+  const response = await fetch(apiUrls.misc.getInfo, {
     method: 'GET',
     credentials: 'include',
     headers: {

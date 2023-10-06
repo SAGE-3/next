@@ -10,6 +10,8 @@ import { Box, Heading, Tooltip, Text, useColorModeValue, IconButton, Image, Icon
 import { MdExitToApp, MdRefresh } from 'react-icons/md';
 
 import { PublicInformation } from '@sage3/shared/types';
+import { apiUrls } from '@sage3/frontend';
+
 import { App, AppState } from '../../../schema';
 
 export function OtherServerCard(props: App): JSX.Element {
@@ -37,7 +39,7 @@ export function OtherServerCard(props: App): JSX.Element {
   );
 
   async function refreshServerInfo() {
-    const res = await fetch(serverURL + '/api/info');
+    const res = await fetch(serverURL + apiUrls.misc.getInfo);
     const data = await res.json();
     if (data) {
       setServerInfo(data);

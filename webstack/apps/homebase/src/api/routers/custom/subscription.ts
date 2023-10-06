@@ -22,7 +22,7 @@
 import { WebSocket } from 'ws';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collections';
+import { AppsCollection, BoardsCollection, InsightCollection, RoomsCollection } from '../../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
@@ -95,6 +95,8 @@ export async function subscriptionWSRouter(
       // Presence collection is unique in that it is throttled
       else if (message.route === '/api/subscription/presence') {
         PresenceThrottle.addSubscription(message.id, socket);
+      } else {
+        console.log('Subscription> Not found', message.route);
       }
       break;
     }
