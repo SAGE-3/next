@@ -886,16 +886,15 @@ function AppComponent(props: App): JSX.Element {
       run: handleFontDecrease,
     });
 
-    // // Update database on key up
-    // editor.onKeyUp((e) => {
-    //   if (e.code === 'Escape') {
-    //     // Deselect the app
-    //     setSelectedApp('');
-    //     onClose();
-    //     return;
-    //   }
-    //   // throttleFunc();
-    // });
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        closingDrawer();
+        return;
+      }
+    });
   };
 
   /**
