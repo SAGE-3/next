@@ -668,6 +668,12 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
+  const handleSaveCode = () => {
+    if (editorRef2.current) {
+      // Copy the drawer code to the editor in the board
+      editorRef.current?.setValue(editorRef2.current.getValue());
+    }
+  };
 
   /**
    *
@@ -839,6 +845,14 @@ function AppComponent(props: App): JSX.Element {
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
     });
+    editor.addAction({
+      id: 'syncForServer',
+      label: 'Cell Save',
+      contextMenuOrder: 3,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: handleSaveCode,
+    });
 
     editor.addAction({
       id: 'setup_sage3',
@@ -931,9 +945,8 @@ function AppComponent(props: App): JSX.Element {
   const closingDrawer = () => {
     setDrawer(props._id, false);
     if (editorRef2.current) {
-      console.log('Saving code');
+      // Copy the drawer code to the editor in the board
       editorRef.current?.setValue(editorRef2.current.getValue());
-      // updateState(props._id, { code: editorRef2.current.getValue() });
     }
     onClose();
   };
