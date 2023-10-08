@@ -33,7 +33,7 @@ import { VegaLite } from 'react-vega';
 // Monaco Imports
 import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { monacoOptions } from './components/monacoOptions';
+import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
 // Yjs Imports
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -941,8 +941,7 @@ function AppComponent(props: App): JSX.Element {
   const drawerEditor = <Editor
     defaultValue={editorRef.current?.getValue()}
     loading={<Spinner />}
-    options={canExecuteCode ? { ...monacoOptions, automaticLayout: true } :
-      { ...monacoOptions, automaticLayout: true, readOnly: true }}
+    options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
     onMount={handleMountDrawer}
     height={"100%"}
     width={"100%"}
