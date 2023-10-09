@@ -90,7 +90,9 @@ export function AppWindow(props: WindowProps) {
 
   // Resize Handle scale
   const enableResize = props.disableResize === undefined ? true : !props.disableResize;
-  const handleScale = Math.max(1, 1 / scale);
+  // Make the handles a little bigger when the scale is small
+  const invScale = Math.round(1 / scale);
+  const handleScale = Math.max(2, Math.min(invScale, 10));
 
   // Display messages
   const toast = useToast();

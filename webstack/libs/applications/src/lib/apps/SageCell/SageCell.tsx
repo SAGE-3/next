@@ -58,7 +58,7 @@ import { MonacoBinding } from 'y-monaco';
 import { throttle } from 'throttle-debounce';
 
 // SAGE3 Component imports
-import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore, useUIStore } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -94,6 +94,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -704,7 +705,12 @@ function AppComponent(props: App): JSX.Element {
     });
 
     // Update database on key up
-    editor.onKeyUp(() => {
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        return;
+      }
       throttleFunc();
     });
   };
