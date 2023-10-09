@@ -568,7 +568,7 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
-    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]));
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
@@ -576,7 +576,7 @@ function AppComponent(props: App): JSX.Element {
       const count = users.size;
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
-        // Does the board have lines?
+        // Does the app have code?
         if (s.code) {
           // Clear any existing lines
           yText.delete(0, yText.length);
