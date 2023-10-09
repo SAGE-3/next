@@ -59,11 +59,6 @@ import { useStore } from './components/store';
 // Styling
 import './SageCell.css';
 
-type YjsClientState = {
-  name: string;
-  color: string;
-};
-
 /**
  * SageCell - SAGE3 application
  *
@@ -96,7 +91,6 @@ function AppComponent(props: App): JSX.Element {
   const users = useUsersStore((state) => state.users);
   const userId = user?._id;
   const userInfo = users.find((u) => u._id === userId)?.data;
-  const userName = userInfo?.name;
   const userColor = useHexColor(userInfo?.color as string);
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
 

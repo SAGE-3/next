@@ -46,6 +46,7 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const { user } = useUser();
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   const backgroundColor = useHexColor(s.color + '.300');
 
@@ -121,6 +122,11 @@ function AppComponent(props: App): JSX.Element {
     // if not selected, don't do anything
     if (props._id !== selectedApp) return;
 
+    if (e.code === 'Escape') {
+      // Deselect the app
+      setSelectedApp('');
+      return;
+    }
     if (e.code === 'Tab') {
       e.preventDefault();
       if (e.shiftKey) {
