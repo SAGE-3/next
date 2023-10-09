@@ -31,7 +31,7 @@ export function WindowBorder(props: WindowBorderProps) {
   const selectColor = props.selectColor;
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
-  const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(220 220 220 / 25%)');
+  const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
 
   return (
     <Box
