@@ -122,13 +122,6 @@ function AppComponent(props: App): JSX.Element {
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const [binding, setBinding] = useState<MonacoBinding | null>(null);
-
-  const [yProvider, setYProvider] = useState<WebsocketProvider | null>(null);
-  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
-  const [yText, setYText] = useState<Y.Text | null>(null);
-
-  const [peers, setPeers] = useState<Map<number, YjsClientState>>(new Map());
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -150,50 +143,6 @@ function AppComponent(props: App): JSX.Element {
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
-
-  useEffect(() => {
-    if (!yProvider) return;
-    yProvider.awareness.on('change', () => {
-      const states = yProvider.awareness.getStates();
-      const peers = new Map(states) as Map<number, YjsClientState>;
-      for (const [clientId, state] of states.entries()) {
-        if (clientId !== yProvider.awareness.clientID) {
-          const style = document.createElement('style');
-          style.id = `style-${clientId}`;
-          const css = `
-              .yRemoteSelection-${clientId} {
-                background-color: ${state.user.color} !important;
-                margin-left: -1px;
-                margin-right: -1px;
-                pointer-events: none;
-                position: relative;
-                word-break: normal;
-              }
-
-              .yRemoteSelection-${clientId} {
-                border-left: 1px solid ${state.user.color} !important;
-                border-right: 1px solid ${state.user.color} !important;
-              }
-            `;
-          style.appendChild(document.createTextNode(css));
-          const oldStyle = document.getElementById(`style-${clientId}`);
-          if (oldStyle) {
-            document.head.removeChild(oldStyle);
-          }
-          document.head.appendChild(style);
-        }
-      }
-      if (yDoc) {
-        peers.delete(yDoc.clientID);
-      }
-      setPeers(peers);
-    });
-
-    return () => {
-      if (yProvider) yProvider.disconnect();
-      if (yProvider && peers.size < 1) yProvider.destroy();
-    };
-  }, [yProvider]);
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -624,23 +573,14 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
-    const binding = new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
-    setBinding(binding);
-    setYProvider(provider);
-    setYDoc(doc);
-    setYText(yText);
-
-    provider.awareness.setLocalStateField('user', {
-      name: userName,
-      color: userColor,
-    });
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
       const count = users.size;
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
-        // Does the board have lines?
+        // Does the app have code?
         if (s.code) {
           // Clear any existing lines
           yText.delete(0, yText.length);
