@@ -47,7 +47,7 @@ import {
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, downloadFile, useHexColor } from '@sage3/frontend';
+import { useAppStore, useAssetStore, downloadFile, useHexColor, useUIStore } from '@sage3/frontend';
 
 import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
@@ -82,6 +82,8 @@ function AppComponent(props: App): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
+  // Used to deselect the app
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Get Asset from store
   useEffect(() => {
@@ -177,6 +179,10 @@ function AppComponent(props: App): JSX.Element {
             }
           }
           break;
+        }
+        case 'Escape': {
+          // Deselect the app
+          setSelectedApp('');
         }
       }
     },

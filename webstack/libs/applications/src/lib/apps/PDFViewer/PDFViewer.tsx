@@ -27,7 +27,7 @@ import {
 } from 'react-icons/md';
 
 // Utility functions from SAGE3
-import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 // App components
@@ -50,6 +50,8 @@ function AppComponent(props: App): JSX.Element {
   const { boardId, roomId } = useParams();
   // Set the processing UI state
   const [processing, setProcessing] = useState(false);
+  // Used to deselect the app
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -216,6 +218,10 @@ function AppComponent(props: App): JSX.Element {
             downloadFile(dl, filename);
           }
           break;
+        }
+        case 'Escape': {
+          // Deselect the app
+          setSelectedApp('');
         }
       }
     },
