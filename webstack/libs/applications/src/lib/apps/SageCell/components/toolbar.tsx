@@ -7,8 +7,10 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router';
+
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
+import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdWeb, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -18,7 +20,7 @@ import { KernelInfo } from '@sage3/shared/types';
 import { App, AppGroup } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
-import { useParams } from 'react-router';
+import { useStore } from './store';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -27,6 +29,8 @@ import { useParams } from 'react-router';
  * @returns {JSX.Element}
  */
 export function ToolbarComponent(props: App): JSX.Element {
+  // Store between toolbar and appWindow
+  const setDrawer = useStore((state: any) => state.setDrawer);
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -141,6 +145,11 @@ export function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { fontSize: Math.max(8, s.fontSize - 2) });
   };
 
+  const openInDrawer = async () => {
+    // Set the drawer to open
+    setDrawer(props._id, true);
+  };
+
   return (
     <HStack>
       {myKernels.length === 0 ? (
@@ -174,11 +183,18 @@ export function ToolbarComponent(props: App): JSX.Element {
         </Select>
       )}
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
-        <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" mr="1" colorScheme="teal">
-          <MdHelp />
-        </Button>
-      </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdHelp />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
+          <Button onClick={openInDrawer}>
+            <MdWeb />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
