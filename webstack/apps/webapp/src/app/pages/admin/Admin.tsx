@@ -255,7 +255,7 @@ export function AdminPage() {
           <TabPanels>
             <TabPanel>
               <Heading>Rooms</Heading>
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -285,7 +285,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Boards</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -315,7 +315,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Apps</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -345,7 +345,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Assets</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -373,7 +373,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Users</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -408,7 +408,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Presences</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -439,7 +439,7 @@ export function AdminPage() {
             <TabPanel>
               <Heading>Insights</Heading>
 
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>
@@ -469,7 +469,7 @@ export function AdminPage() {
 
             <TabPanel>
               <Heading>Messages</Heading>
-              <table>
+              <table className='adminTable'>
                 <thead>
                   <tr>
                     <th>id</th>

@@ -130,6 +130,14 @@ function AppComponent(props: App): JSX.Element {
     setPreviousAnswer(s.previousA);
   }, [s.previousA]);
 
+  useEffect(() => {
+    if (s.context) {
+      const ctx = `@G I want to ask questions about this topic: ${s.context}`;
+      newMessage(ctx);
+      setInput('');
+    }
+  }, [s.context]);
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
     // Get server time

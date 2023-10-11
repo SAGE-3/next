@@ -235,7 +235,7 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
+      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar />}

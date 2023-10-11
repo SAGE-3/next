@@ -9,7 +9,6 @@ import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CounterName } from './apps/Counter';
-import { name as DataTableName } from './apps/DataTable';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
@@ -45,7 +44,6 @@ import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import Counter from './apps/Counter/Counter';
-import DataTable from './apps/DataTable/DataTable';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
@@ -84,7 +82,6 @@ export const Applications = {
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent, GroupedToolbarComponent: Clock.GroupedToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent, GroupedToolbarComponent: Cobrowse.GroupedToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent, GroupedToolbarComponent: Counter.GroupedToolbarComponent },
-  [DataTableName]: { AppComponent: React.memo(DataTable.AppComponent), ToolbarComponent: DataTable.ToolbarComponent, GroupedToolbarComponent: DataTable.GroupedToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent, GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent },
   [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent, GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent, GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent },
