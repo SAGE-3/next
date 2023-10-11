@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
 type WindowBorderProps = {
   size: { width: number; height: number };
@@ -31,6 +31,7 @@ export function WindowBorder(props: WindowBorderProps) {
   const selectColor = props.selectColor;
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
+  const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
 
   return (
     <Box
@@ -43,7 +44,7 @@ export function WindowBorder(props: WindowBorderProps) {
       opacity={isGrouped || dragging ? 0.6 : 1}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
       background={selected || isGrouped ? selectColor : borderColor}
-      boxShadow={'4px 4px 12px 0px rgb(0 0 0 / 25%)'}
+      boxShadow={`4px 4px 12px 0px ${shadowColor}`}
       pointerEvents={'none'}
     ></Box>
   );

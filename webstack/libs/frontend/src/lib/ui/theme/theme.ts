@@ -33,11 +33,20 @@ const components = {
   Drawer: {
     variants: {
       fifty: {
+        dialogContainer: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
         dialog: {
+          pointerEvents: 'auto',
           maxW: '50vw',
         },
       },
       alwaysOpen: {
+        overlay: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
         dialog: {
           pointerEvents: 'auto',
         },
