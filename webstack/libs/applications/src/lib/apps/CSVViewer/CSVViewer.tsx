@@ -78,15 +78,15 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file]);
 
-  const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 })
-  useEffect(() => {
-    console.log('CSVViewer> getState', visibleRange);
-    if (table.current) {
-      table.current.getState((s) => {
-        console.log('CSVViewer> getState', s)
-      });
-    }
-  }, [visibleRange, table]);
+  // const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
+  // useEffect(() => {
+  //   console.log('CSVViewer> getState', visibleRange);
+  //   if (table.current) {
+  //     table.current.getState((s) => {
+  //       console.log('CSVViewer> getState', s)
+  //     });
+  //   }
+  // }, [visibleRange, table]);
 
   return (
     <AppWindow app={props}>
@@ -126,7 +126,7 @@ function AppComponent(props: App): JSX.Element {
           </>
           );
         }}
-        rangeChanged={setVisibleRange}
+        // rangeChanged={setVisibleRange}
         // Content of the table
         itemContent={(idx, val) => (
           <>
