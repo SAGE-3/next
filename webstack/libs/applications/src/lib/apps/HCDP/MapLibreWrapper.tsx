@@ -47,9 +47,6 @@ export const useStore = create((set) => ({
 const maxZoom = 18;
 const minZoom = 1;
 
-// ArcGIS API Key
-const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
-
 // MapTiler API Key
 const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
 const baselayers = {

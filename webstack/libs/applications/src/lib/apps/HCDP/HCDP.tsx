@@ -8,25 +8,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import './styling.css';
+import { useEffect, useState } from 'react';
 
 // Chakra Imports
-import { HStack, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
+import { HStack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
+import { AppWindow } from '@sage3/applications/apps';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
 import MapLibreWrapper from './MapLibreWrapper';
 
 // Import the CSS style sheet from the node_modules folder
+import './styling.css';
 import 'leaflet/dist/leaflet.css';
 
-import * as plotty from 'plotty';
-
-import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);

@@ -7,10 +7,12 @@
  *
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Spinner, useColorMode, Text } from '@chakra-ui/react';
 import * as echarts from 'echarts';
+
 import { ChartManager } from '../../EChartsViewer/ChartManager';
+
 import '../styling.css';
 
 const EChartsViewer = (props: {

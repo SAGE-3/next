@@ -6,15 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useState } from 'react';
-
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, Icon, useColorMode } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
-
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
+import { useEffect, useState } from 'react';
+import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 import { MdCircle } from 'react-icons/md';
+
+import { AppState } from '@sage3/applications/schema';
+import variableUnits from '../data/VariableUnits';
+import VariableUnits from '../data/VariableUnits';
 
 type VariableProps = {
   stationName: string;

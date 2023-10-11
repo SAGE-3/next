@@ -6,13 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Sage Imports
-import { useAppStore, useUIStore } from '@sage3/frontend';
-import { App } from '../../schema';
-import { AppWindow } from '../../components';
-import { state as AppState } from './index';
-
 // React Imports
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   HStack,
@@ -36,14 +31,16 @@ import {
   Checkbox,
   Portal,
 } from '@chakra-ui/react';
-
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
 
-// Styling
-import './styling.css';
-import { useEffect, useRef, useState } from 'react';
+// Sage Imports
+import { useAppStore, useUIStore } from '@sage3/frontend';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
 
 // Visualization imports
+import MapGL from './MapGL';
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
 import CurrentConditions from './viewers/CurrentConditions';
@@ -52,9 +49,10 @@ import FriendlyVariableCard from './viewers/FriendlyVariableCard';
 import StatisticCard from './viewers/StatisticCard';
 import MapViewer from './viewers/MapViewer';
 import { getFormattedDateTime1MonthBefore, getFormattedDateTime1WeekBefore, getFormattedDateTime1YearBefore } from './tools/formattedTimes';
-
 import { checkAvailableVisualizations } from '../HCDP/menu/CustomizeWidgets';
-import MapGL from './MapGL';
+
+// Styling
+import './styling.css';
 
 export const getFormattedTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {

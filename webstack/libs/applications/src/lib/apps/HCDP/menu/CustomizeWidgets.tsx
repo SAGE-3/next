@@ -8,8 +8,6 @@
 
 // React
 import React, { useEffect, useState } from 'react';
-// Libraries
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay, Tooltip as LeafletTooltip } from 'react-leaflet';
 // Chakra UI
 import {
   Button,
@@ -601,82 +599,82 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
                 <Accordion allowMultiple overflowY="scroll" height="35rem">
                   {!isLoaded
                     ? props.data.state.stationNames.map((stationName: string, index: number) => {
-                        return (
-                          <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                            Loading Station...
-                          </Box>
-                        );
-                      })
+                      return (
+                        <Box p="1rem" key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          Loading Station...
+                        </Box>
+                      );
+                    })
                     : stationMetadata.map((station: any, index: number) => {
-                        return (
-                          <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
-                            <AccordionItem>
-                              <AccordionButton>
-                                <Box
-                                  as="span"
-                                  flex="1"
-                                  textAlign="left"
-                                  ml={'15px'}
-                                  width="5rem"
-                                  whiteSpace="nowrap"
-                                  overflow="hidden"
-                                  textOverflow="ellipsis"
-                                >
-                                  {station.NAME}
-                                </Box>
+                      return (
+                        <Box key={index} bg={index % 2 == 1 ? drawerBackgroundColor : accentColor}>
+                          <AccordionItem>
+                            <AccordionButton>
+                              <Box
+                                as="span"
+                                flex="1"
+                                textAlign="left"
+                                ml={'15px'}
+                                width="5rem"
+                                whiteSpace="nowrap"
+                                overflow="hidden"
+                                textOverflow="ellipsis"
+                              >
+                                {station.NAME}
+                              </Box>
 
-                                <AccordionIcon />
-                                <Tooltip
-                                  key={index}
-                                  placement="top"
-                                  label={
-                                    props.data.state.stationNames.length < 2
-                                      ? 'You must have at least one station selected'
-                                      : 'Remove station from list'
-                                  }
-                                  openDelay={300}
-                                  aria-label="A tooltip"
+                              <AccordionIcon />
+                              <Tooltip
+                                key={index}
+                                placement="top"
+                                label={
+                                  props.data.state.stationNames.length < 2
+                                    ? 'You must have at least one station selected'
+                                    : 'Remove station from list'
+                                }
+                                openDelay={300}
+                                aria-label="A tooltip"
+                              >
+                                <IconButton
+                                  icon={<MdDelete />}
+                                  aria-label="Delete Station"
+                                  ml="1rem"
+                                  colorScheme="red"
+                                  size="xs"
+                                  isDisabled={props.data.state.stationNames.length < 2}
+                                  fontWeight="bold"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (props.data.state.stationNames.length >= 2)
+                                      handleRemoveSelectedStation({
+                                        lat: station.lat as number,
+                                        lon: station.lon as number,
+                                        name: station.STID as string,
+                                        selected: true,
+                                      });
+                                  }}
                                 >
-                                  <IconButton
-                                    icon={<MdDelete />}
-                                    aria-label="Delete Station"
-                                    ml="1rem"
-                                    colorScheme="red"
-                                    size="xs"
-                                    isDisabled={props.data.state.stationNames.length < 2}
-                                    fontWeight="bold"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      if (props.data.state.stationNames.length >= 2)
-                                        handleRemoveSelectedStation({
-                                          lat: station.lat as number,
-                                          lon: station.lon as number,
-                                          name: station.STID as string,
-                                          selected: true,
-                                        });
-                                    }}
-                                  >
-                                    X
-                                  </IconButton>
-                                </Tooltip>
-                              </AccordionButton>
+                                  X
+                                </IconButton>
+                              </Tooltip>
+                            </AccordionButton>
 
-                              <AccordionPanel pb={4}>
-                                <UnorderedList>
-                                  {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
-                                    return (
-                                      <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
-                                        <ListItem key={index}>{name}</ListItem>
-                                      </Tooltip>
-                                    );
-                                  })}
-                                </UnorderedList>
-                              </AccordionPanel>
-                            </AccordionItem>
-                          </Box>
-                        );
-                      })}
+                            <AccordionPanel pb={4}>
+                              <UnorderedList>
+                                {Object.getOwnPropertyNames(station.OBSERVATIONS).map((name: string, index: number) => {
+                                  return (
+                                    <Tooltip key={index} label="Information on the attribute" openDelay={300} aria-label="A tooltip">
+                                      <ListItem key={index}>{name}</ListItem>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </UnorderedList>
+                            </AccordionPanel>
+                          </AccordionItem>
+                        </Box>
+                      );
+                    })}
                 </Accordion>
               </Box>
 
@@ -798,7 +796,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
                     placeholder={'Select Visualization Type'}
                     value={widget.visualizationType}
                     onChange={handleVisualizationTypeChange}
-                    // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+                  // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
                   >
                     {checkAvailableVisualizations(widget.yAxisNames[0]).map(
                       (visualization: { value: string; name: string }, index: number) => {
@@ -984,7 +982,7 @@ const CustomizeWidgets = React.memo((props: App & { isOpen: boolean; onClose: ()
                       isLoaded={isLoaded}
                       startDate={startDate}
                       widget={widget}
-                      // size={{ width: 700, height: 400,}}
+                    // size={{ width: 700, height: 400,}}
                     />
                   ) : null}
                   {widget.visualizationType === 'allVariables' ? (

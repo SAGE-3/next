@@ -7,9 +7,10 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Box, Text } from '@chakra-ui/react';
+
 import { AppState } from '../../../types';
 import VariableUnits from '../data/VariableUnits';
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter } from '@chakra-ui/react';
 
 type VariableProps = {
   variableName: string;
