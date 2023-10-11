@@ -252,20 +252,10 @@ export function useFiles(): UseFiles {
   ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
-    console.log(isGeotiff(fileType), fileType);
     if (isGeotiff(fileType)) {
       for (const a of assets) {
         if (a._id === fileID) {
-          return setupApp(
-            a.data.originalfilename,
-            'MapGL',
-            xDrop,
-            yDrop,
-            roomId,
-            boardId,
-            { w: w, h: w },
-            { assetid: apiUrls.assets.getAssetById(a.data.file) }
-          );
+          return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
         }
       }
     } else if (isGIF(fileType)) {

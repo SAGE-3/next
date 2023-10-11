@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain, Md3DRotation } from 'react-icons/md';
+import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
 import create from 'zustand';
@@ -16,6 +16,9 @@ import create from 'zustand';
 import maplibregl from 'maplibre-gl';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import * as Plotty from 'plotty';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
@@ -28,6 +31,7 @@ import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
+import { fromUrl } from 'geotiff';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -128,6 +132,8 @@ function AppComponent(props: App): JSX.Element {
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
+    console.log(assets);
+
     if (myasset) {
       setFile(myasset);
       // Update the app title
@@ -142,35 +148,96 @@ function AppComponent(props: App): JSX.Element {
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
         console.log('MapGL> Adding source to map', newURL);
-        // Get the GEOJSON data from the asset
-        const response = await fetch(newURL, {
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-        });
+        if (file.data.mimetype === 'image/tiff') {
+          const tiff = await fromUrl(newURL);
+          const image = await tiff.getImage();
+          const bbox = image.getBoundingBox();
+          const data: any = await image.readRasters();
+          const fileDirectory = image.getFileDirectory();
+          const width = image.getWidth();
+          const height = image.getHeight();
+          console.log(tiff, image, bbox, data, fileDirectory);
+          // Compute min and max values
+          let min = Infinity;
+          let max = -Infinity;
+          for (let i = 0; i < data[0].length; i++) {
+            const value = data[0][i];
+            if (value < min) min = value;
+            if (value > max) max = value;
+          }
+          // console.log(tiff);
+          const canvas = document.createElement('canvas');
+          canvas.setAttribute('id', 'canvas');
+          // Example custom color scale
+          const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
+          const customStops = [0, 0.3, 0.5, 1];
 
-        const gjson = await response.json();
-
-        // Check if the file is valid
-        // bbox will throw an error if an invalid geojson is passed
-        try {
-          // Calculate the bounding box and center using turf library
-          const box = bbox(gjson);
-          const cc = center(gjson).geometry.coordinates;
-          // Duration is zero to get a valid zoom value next
-          map.fitBounds(box, { padding: 20, duration: 0 });
-          updateState(props._id, { zoom: map.getZoom(), location: cc });
-          // Add the source to the map
-          setSource({ id: file._id, data: gjson });
-        } catch (error: any) {
-          toast({
-            title: 'Error',
-            description: 'Error loading GEOJSON file',
-            status: 'error',
-            duration: 3000,
-            isClosable: true,
+          Plotty.addColorScale('custom', customColors, customStops);
+          // console.log(min, max);
+          const plot = new Plotty.plot({
+            canvas: canvas,
+            data: data[0],
+            width: width,
+            height: height,
+            domain: [0, max],
+            colorScale: 'custom',
           });
+          console.log(bbox);
+          plot.render();
+
+          const dataURL = canvas.toDataURL();
+
+          map.addSource('geotiff', {
+            type: 'image',
+            url: dataURL,
+            coordinates: [
+              [bbox[0], bbox[3]], // top left
+              [bbox[2], bbox[3]], // top right
+              [bbox[2], bbox[1]], // bottom right
+              [bbox[0], bbox[1]], // bottom left
+            ],
+          });
+
+          map.addLayer({
+            id: 'geotiff-layer',
+            type: 'raster',
+            source: 'geotiff',
+            paint: {
+              'raster-opacity': 0.7,
+            },
+          });
+          console.log('loading done');
+        } else {
+          // Get the GEOJSON data from the asset
+          const response = await fetch(newURL, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          });
+
+          const gjson = await response.json();
+
+          // Check if the file is valid
+          // bbox will throw an error if an invalid geojson is passed
+          try {
+            // Calculate the bounding box and center using turf library
+            const box = bbox(gjson);
+            const cc = center(gjson).geometry.coordinates;
+            // Duration is zero to get a valid zoom value next
+            map.fitBounds(box, { padding: 20, duration: 0 });
+            updateState(props._id, { zoom: map.getZoom(), location: cc });
+            // Add the source to the map
+            setSource({ id: file._id, data: gjson });
+          } catch (error: any) {
+            toast({
+              title: 'Error',
+              description: 'Error loading GEOJSON file',
+              status: 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          }
         }
       });
     }

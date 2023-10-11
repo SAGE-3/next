@@ -18,8 +18,7 @@ import maplibregl from 'maplibre-gl';
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 import { fromUrl } from 'geotiff';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import * as Plotty from 'plotty';
@@ -145,6 +144,7 @@ function MapLibreWrapper(props: App): JSX.Element {
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
         console.log('MapGL> Adding source to map', newURL);
+
         // Get the GEOJSON data from the asset
         const response = await fetch(newURL, {
           headers: {
