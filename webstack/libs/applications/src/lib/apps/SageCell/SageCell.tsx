@@ -11,27 +11,11 @@ import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
 // Chakra Imports
 import {
-  Accordion,
-  AccordionItem,
-  AccordionIcon,
-  AccordionButton,
-  AccordionPanel,
-  Alert,
-  Badge,
-  Box,
-  ButtonGroup,
-  Code,
-  Flex,
-  Icon,
-  IconButton,
-  Image,
-  Spacer,
-  Spinner,
-  Stack,
-  Tooltip,
-  Text,
-  useColorModeValue,
-  useToast,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
+  Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
@@ -49,7 +33,7 @@ import { VegaLite } from 'react-vega';
 // Monaco Imports
 import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { monacoOptions } from './components/monacoOptions';
+import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
 // Yjs Imports
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
@@ -58,7 +42,10 @@ import { MonacoBinding } from 'y-monaco';
 import { throttle } from 'throttle-debounce';
 
 // SAGE3 Component imports
-import { useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser, useUsersStore } from '@sage3/frontend';
+import {
+  useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser,
+  useUsersStore, useUIStore, useCursorBoardPosition
+} from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -67,14 +54,10 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
 import { App } from '../../schema';
+import { useStore } from './components/store';
 
 // Styling
 import './SageCell.css';
-
-type YjsClientState = {
-  name: string;
-  color: string;
-};
 
 /**
  * SageCell - SAGE3 application
@@ -94,6 +77,12 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+
+  // Store between app window and toolbar
+  const drawer = useStore((state: any) => state.drawer[props._id]);
+  const setDrawer = useStore((state: any) => state.setDrawer);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -102,13 +91,16 @@ function AppComponent(props: App): JSX.Element {
   const users = useUsersStore((state) => state.users);
   const userId = user?._id;
   const userInfo = users.find((u) => u._id === userId)?.data;
-  const userName = userInfo?.name;
   const userColor = useHexColor(userInfo?.color as string);
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+  const { uiToBoard } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -123,13 +115,7 @@ function AppComponent(props: App): JSX.Element {
   // YJS and Monaco
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const [binding, setBinding] = useState<MonacoBinding | null>(null);
-
-  const [yProvider, setYProvider] = useState<WebsocketProvider | null>(null);
-  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
-  const [yText, setYText] = useState<Y.Text | null>(null);
-
-  const [peers, setPeers] = useState<Map<number, YjsClientState>>(new Map());
+  const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -151,50 +137,6 @@ function AppComponent(props: App): JSX.Element {
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
-
-  useEffect(() => {
-    if (!yProvider) return;
-    yProvider.awareness.on('change', () => {
-      const states = yProvider.awareness.getStates();
-      const peers = new Map(states) as Map<number, YjsClientState>;
-      for (const [clientId, state] of states.entries()) {
-        if (clientId !== yProvider.awareness.clientID) {
-          const style = document.createElement('style');
-          style.id = `style-${clientId}`;
-          const css = `
-              .yRemoteSelection-${clientId} {
-                background-color: ${state.user.color} !important;
-                margin-left: -1px;
-                margin-right: -1px;
-                pointer-events: none;
-                position: relative;
-                word-break: normal;
-              }
-
-              .yRemoteSelection-${clientId} {
-                border-left: 1px solid ${state.user.color} !important;
-                border-right: 1px solid ${state.user.color} !important;
-              }
-            `;
-          style.appendChild(document.createTextNode(css));
-          const oldStyle = document.getElementById(`style-${clientId}`);
-          if (oldStyle) {
-            document.head.removeChild(oldStyle);
-          }
-          document.head.appendChild(style);
-        }
-      }
-      if (yDoc) {
-        peers.delete(yDoc.clientID);
-      }
-      setPeers(peers);
-    });
-
-    return () => {
-      if (yProvider) yProvider.disconnect();
-      if (yProvider && peers.size < 1) yProvider.destroy();
-    };
-  }, [yProvider]);
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -280,6 +222,12 @@ function AppComponent(props: App): JSX.Element {
    * Executes the code in the editor
    * @returns void
    */
+  const handleExecuteDrawer = async () => {
+    // Copy the drawer code to the editor
+    editorRef.current?.setValue(editorRef2.current?.getValue() || '');
+    // Execute the code
+    handleExecute();
+  };
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
@@ -619,23 +567,14 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
-    const binding = new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
-    setBinding(binding);
-    setYProvider(provider);
-    setYDoc(doc);
-    setYText(yText);
-
-    provider.awareness.setLocalStateField('user', {
-      name: userName,
-      color: userColor,
-    });
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
       const count = users.size;
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
-        // Does the board have lines?
+        // Does the app have code?
         if (s.code) {
           // Clear any existing lines
           yText.delete(0, yText.length);
@@ -649,6 +588,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.updateOptions({ fontSize });
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
     updateState(props._id, { fontSize });
   }, [fontSize]);
 
@@ -661,6 +601,12 @@ function AppComponent(props: App): JSX.Element {
   };
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
+  };
+  const handleSaveCode = () => {
+    if (editorRef2.current) {
+      // Copy the drawer code to the editor in the board
+      editorRef.current?.setValue(editorRef2.current.getValue());
+    }
   };
 
   /**
@@ -763,8 +709,125 @@ function AppComponent(props: App): JSX.Element {
     });
 
     // Update database on key up
-    editor.onKeyUp(() => {
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        return;
+      }
       throttleFunc();
+    });
+
+    // Not in drawer to start
+    setDrawer(props._id, false);
+  };
+
+  const handleMountDrawer: OnMount = (editor, monaco) => {
+    // set the editorRef
+    editorRef2.current = editor;
+
+    // set the editor options
+    editor.updateOptions({
+      fontSize: s.fontSize,
+      readOnly: !access || !apiStatus || !s.kernel,
+    });
+    // set the editor theme
+    monaco.editor.setTheme(defaultTheme);
+    // set the editor language
+    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
+    // set the editor cursor position
+    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
+    // set the editor cursor selection
+    editor.setSelection({
+      startLineNumber: cursorPosition.r,
+      startColumn: cursorPosition.c,
+      endLineNumber: cursorPosition.r,
+      endColumn: cursorPosition.c,
+    });
+    // set the editor layout
+    editor.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
+    });
+    editor.addAction({
+      id: 'execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: handleExecuteDrawer,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Cell Clear',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
+    });
+    editor.addAction({
+      id: 'interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+      run: handleInterrupt,
+    });
+    editor.addAction({
+      id: 'syncForServer',
+      label: 'Cell Save',
+      contextMenuOrder: 3,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: handleSaveCode,
+    });
+
+    editor.addAction({
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertInfo,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        closingDrawer();
+        return;
+      }
     });
   };
 
@@ -798,153 +861,201 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [s.fontSize]);
 
+
+  useEffect(() => {
+    if (drawer) {
+      onOpen();
+      // If the right side of the app is beyond the center of the board, move the board
+      const xw = props.data.position.x + props.data.size.width;
+      const center = uiToBoard(innerWidth / 2, innerHeight / 2);
+      if (xw > center.x) {
+        const offset = xw - center.x + 10 / scale;
+        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
+      }
+    }
+  }, [drawer]);
+
+  const closingDrawer = () => {
+    setDrawer(props._id, false);
+    if (editorRef2.current) {
+      // Copy the drawer code to the editor in the board
+      editorRef.current?.setValue(editorRef2.current.getValue());
+    }
+    onClose();
+  };
+
+  const drawerEditor = <Editor
+    defaultValue={editorRef.current?.getValue()}
+    loading={<Spinner />}
+    options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
+    onMount={handleMountDrawer}
+    height={"100%"}
+    width={"100%"}
+    theme={defaultTheme}
+    language={s.language}
+  />;
+
   return (
     <AppWindow app={props}>
-      <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-        <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
-          <Stack direction="row" p={1}>
-            {!apiStatus ? (
-              <></>
-            ) : (
-              <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
-                {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
-              </Badge>
-            )}
+      <>
+        <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
+          closeOnOverlayClick={true}>
+          <DrawerContent >
+            <DrawerCloseButton />
+            <DrawerHeader p={1} m={1}>SageCell</DrawerHeader>
+            <DrawerBody p={0} m={0} boxSizing='border-box'>
+              <Box style={{ width: '50vw', height: '100%' }} border="1px solid lightgray">
+                {drawerEditor}
+              </Box>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
 
-            <Spacer />
-            {apiStatus ? ( // no kernel selected and no access
-              <Badge variant="ghost" color={green}>
-                Online
-              </Badge>
-            ) : (
-              <Badge variant="ghost" color={red}>
-                Offline
-              </Badge>
-            )}
-          </Stack>
-        </Box>
-        <Box
-          w={'100%'}
-          h={'100%'}
-          display="flex"
-          flex="1"
-          flexDirection="column"
-          whiteSpace={'pre-wrap'}
-          overflowWrap="break-word"
-          overflowY="auto"
-        >
-          <Flex direction={'row'}>
-            {/* The editor status info (bottom) */}
-            <Flex direction={'column'}>
-              <Editor
-                // defaultValue={s.code}
-                loading={<Spinner />}
-                options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
-                onMount={handleMount}
-                height={editorHeight && editorHeight > 150 ? editorHeight : 150}
-                width={props.data.size.width - 60}
-                theme={defaultTheme}
-                language={s.language}
-              />
-              <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
-                {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
-                <Spacer />
-              </Flex>
-            </Flex>
-            {/* The editor action panel (right side) */}
-            <Box p={1}>
-              <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-                <Tooltip hasArrow label="Execute" placement="right-start">
-                  <IconButton
-                    onClick={handleExecute}
-                    aria-label={''}
-                    icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
-                    isDisabled={!s.kernel || !canExecuteCode}
-                  />
-                </Tooltip>
-                <Tooltip hasArrow label="Stop" placement="right-start">
-                  <IconButton
-                    onClick={handleInterrupt}
-                    aria-label={''}
-                    isDisabled={!s.msgId || !canExecuteCode}
-                    icon={<MdStop size={'1.5em'} color="#008080" />}
-                  />
-                </Tooltip>
-                <Tooltip hasArrow label="Clear Cell" placement="right-start">
-                  <IconButton
-                    onClick={handleClear}
-                    aria-label={''}
-                    isDisabled={!s.kernel}
-                    icon={<MdClearAll size={'1.5em'} color="#008080" />}
-                  />
-                </Tooltip>
-              </ButtonGroup>
-            </Box>
-          </Flex>
-          {/* The grab bar */}
-          <Box
-            className="grab-bar"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('mouseup', handleMouseUp);
-            }}
-          />
-          {/* The output area */}
-          <Box
-            height={window.innerHeight - editorHeight - 20 + 'px'}
-            overflow={'scroll'}
-            css={{
-              '&::-webkit-scrollbar': {
-                background: `${bgColor}`,
-                width: '6px',
-                height: '6px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'teal',
-                borderRadius: '24px',
-              },
-            }}
-          >
-            <Flex align="start">
-              {!executionCount || executionCount < 1 ? null : (
-                <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
-                  [{executionCount}]:
-                </Text>
+        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
+          <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
+            <Stack direction="row" p={1}>
+              {!apiStatus ? (
+                <></>
+              ) : (
+                <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
+                  {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
+                </Badge>
               )}
-              <Box
-                flex="1"
-                borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
-                p={1}
-                className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
-                fontSize={s.fontSize}
-              >
-                {error && (
-                  <Alert status="error">
-                    <Icon as={MdError} />
-                    <Code
-                      style={{
-                        fontFamily: 'monospace',
-                        display: 'inline-block',
-                        marginLeft: '0.5em',
-                        marginRight: '0.5em',
-                        fontWeight: 'bold',
-                        background: 'transparent',
-                        fontSize: s.fontSize,
-                      }}
-                    >
-                      {error.ename}: <Ansi>{error.evalue}</Ansi>
-                    </Code>
-                  </Alert>
-                )}
-                {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
-                {renderedContent}
+
+              <Spacer />
+              {apiStatus ? ( // no kernel selected and no access
+                <Badge variant="ghost" color={green}>
+                  Online
+                </Badge>
+              ) : (
+                <Badge variant="ghost" color={red}>
+                  Offline
+                </Badge>
+              )}
+            </Stack>
+          </Box>
+          <Box
+            w={'100%'}
+            h={'100%'}
+            display="flex"
+            flex="1"
+            flexDirection="column"
+            whiteSpace={'pre-wrap'}
+            overflowWrap="break-word"
+            overflowY="auto"
+          >
+            <Flex direction={'row'}>
+              {/* The editor status info (bottom) */}
+              <Flex direction={'column'}>
+                <Editor
+                  loading={<Spinner />}
+                  options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
+                  onMount={handleMount}
+                  height={editorHeight && editorHeight > 150 ? editorHeight : 150}
+                  width={props.data.size.width - 60}
+                  theme={defaultTheme}
+                  language={s.language}
+                />
+                <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
+                  {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+                  <Spacer />
+                </Flex>
+              </Flex>
+              {/* The editor action panel (right side) */}
+              <Box p={1}>
+                <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+                  <Tooltip hasArrow label="Execute" placement="right-start">
+                    <IconButton
+                      onClick={handleExecute}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Stop" placement="right-start">
+                    <IconButton
+                      onClick={handleInterrupt}
+                      aria-label={''}
+                      isDisabled={!s.msgId || !canExecuteCode}
+                      icon={<MdStop size={'1.5em'} color="#008080" />}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Clear Cell" placement="right-start">
+                    <IconButton
+                      onClick={handleClear}
+                      aria-label={''}
+                      isDisabled={!s.kernel}
+                      icon={<MdClearAll size={'1.5em'} color="#008080" />}
+                    />
+                  </Tooltip>
+                </ButtonGroup>
               </Box>
             </Flex>
-            {/* End of Flex container */}
+            {/* The grab bar */}
+            <Box
+              className="grab-bar"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            />
+            {/* The output area */}
+            <Box
+              height={window.innerHeight - editorHeight - 20 + 'px'}
+              overflow={'scroll'}
+              css={{
+                '&::-webkit-scrollbar': {
+                  background: `${bgColor}`,
+                  width: '6px',
+                  height: '6px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'teal',
+                  borderRadius: '24px',
+                },
+              }}
+            >
+              <Flex align="start">
+                {!executionCount || executionCount < 1 ? null : (
+                  <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
+                    [{executionCount}]:
+                  </Text>
+                )}
+                <Box
+                  flex="1"
+                  borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
+                  p={1}
+                  className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
+                  fontSize={s.fontSize}
+                >
+                  {error && (
+                    <Alert status="error">
+                      <Icon as={MdError} />
+                      <Code
+                        style={{
+                          fontFamily: 'monospace',
+                          display: 'inline-block',
+                          marginLeft: '0.5em',
+                          marginRight: '0.5em',
+                          fontWeight: 'bold',
+                          background: 'transparent',
+                          fontSize: s.fontSize,
+                        }}
+                      >
+                        {error.ename}: <Ansi>{error.evalue}</Ansi>
+                      </Code>
+                    </Alert>
+                  )}
+                  {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
+                  {renderedContent}
+                </Box>
+              </Flex>
+              {/* End of Flex container */}
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </>
     </AppWindow>
   );
 }
