@@ -12,7 +12,7 @@ import { useParams } from 'react-router';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 
 import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, } from 'react-icons/md';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSaveAs, HiOutlineStop } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -44,6 +44,9 @@ export function LassoToolbar() {
 
   // Apps selection
   const selectedAppsIds = useUIStore((state) => state.selectedAppsIds);
+  // Save/clear the app selection
+  const setSavedSelectedAppsIds = useUIStore((state) => state.setSavedSelectedAppsIds);
+  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
 
   // Position
   const { boardCursor } = useCursorBoardPosition();
@@ -125,7 +128,7 @@ export function LassoToolbar() {
 
   const openInCell = () => {
     const x = boardCursor.x - 200;
-    const y = boardCursor.y - 700;
+    const y = boardCursor.y - 1000;
     if (roomId && boardId) {
       let code = '';
       // Check if all of same type
@@ -136,30 +139,36 @@ export function LassoToolbar() {
 import pandas as pd
 from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
-room_id = '${roomId}'
-board_id = '${boardId}'
-selected_apps = ${JSON.stringify(selectedAppsIds)}
+room_id = %%room_id
+board_id = %%board_id
+app_id = %%app_id
+selected_apps = %%selected_apps
 ps3 = PySage3(conf, prod_type)
 smartbits = ps3.get_smartbits(room_id, board_id)
+cell = smartbits[app_id]
 bits = [smartbits[a] for a in selected_apps]
 for b in bits:
     url = ps3.get_public_url(b.state.assetid)
     frame = pd.read_csv(url)
     print(frame)`;
       } else {
-        code = `# About apps
+        code = `# Setup SAGE3 API
 from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
-room_id = '${roomId}'
-board_id = '${boardId}'
-selected_apps = ${JSON.stringify(selectedAppsIds)}
+room_id = %%room_id
+board_id = %%board_id
+app_id = %%app_id
+selected_apps = %%selected_apps
 ps3 = PySage3(conf, prod_type)
 smartbits = ps3.get_smartbits(room_id, board_id)
+cell = smartbits[app_id]
 bits = [smartbits[a] for a in selected_apps]
 for b in bits:
     print(b)`;
       }
-      createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 900, h: 620 }, { fontSize: 24, code }));
+      createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 960, h: 860 }, { fontSize: 24, code }));
+      // Save the selection
+      setSavedSelectedAppsIds();
     }
   };
 
@@ -176,6 +185,7 @@ for b in bits:
           bg={panelBackground}
           p="2"
           rounded="md"
+          zIndex={1410} // above the drawer but with tooltips
         >
           <Box display="flex" flexDirection="column">
             <Text
@@ -222,6 +232,17 @@ for b in bits:
                   })}
                 </MenuList>
               </Menu>
+
+              <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
+                <Button onClick={setSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <HiOutlineSaveAs size="18px" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Clear the app selection'} openDelay={400}>
+                <Button onClick={clearSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <HiOutlineStop size="18px" />
+                </Button>
+              </Tooltip>
 
               <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
                 <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>

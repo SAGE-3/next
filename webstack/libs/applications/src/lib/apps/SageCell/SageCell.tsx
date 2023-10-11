@@ -77,6 +77,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
@@ -121,7 +122,7 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState(true);
 
   // Styles
-  const [editorHeight, setEditorHeight] = useState(150);
+  const [editorHeight, setEditorHeight] = useState(350);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
   const green = useHexColor('green');
   const yellow = useHexColor('yellow');
@@ -269,7 +270,14 @@ function AppComponent(props: App): JSX.Element {
       editorRef.current.setValue(info);
     }
     try {
-      const response = await executeCode(editorRef.current.getValue(), s.kernel, user._id);
+      const selectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
+      let code2execute = editorRef.current.getValue();
+      code2execute = code2execute.replaceAll('%%room_id', `'${roomId}'`);
+      code2execute = code2execute.replaceAll('%%board_id', `'${boardId}'`);
+      code2execute = code2execute.replaceAll('%%app_id', `'${props._id}'`);
+      code2execute = code2execute.replaceAll('%%selected_apps', `${JSON.stringify(selectedAppsIds)}`);
+
+      const response = await executeCode(code2execute, s.kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
         updateState(props._id, {
@@ -331,7 +339,7 @@ function AppComponent(props: App): JSX.Element {
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    code += `room_id = %%room_id\nboard_id = %%board_id\napp_id = %%app_id\nselected_apps = %%selected_apps\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();
     ed.setValue(code);
