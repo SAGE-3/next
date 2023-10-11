@@ -7,15 +7,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Text } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
 import create from 'zustand';
 // Map library
-import maplibregl, { Marker, latest } from 'maplibre-gl';
+import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
@@ -53,14 +51,11 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   const update = useAppStore((state) => state.update);
   const saveMap = useStore((state: any) => state.saveMap);
   const map = useStore((state: any) => state.map[props._id + '0']);
-  const stationDataRef = React.useRef(stationData);
-  const stationNameRef = React.useRef(s.stationNames);
+
   // Assets store
   const assets = useAssetStore((state) => state.assets);
-  const scale = useUIStore((state) => state.scale);
   const [file, setFile] = useState<Asset>();
   const [markers, setMarkers] = useState<Marker[]>([]);
-  const [scaleSize, setScaleSize] = useState<number>(5);
   const [scaleToFontSize, setScaleToFontSize] = useState(100);
   const variableName = props.data.state.widget.yAxisNames[0].split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1));
 
@@ -120,13 +115,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       });
     }
   }
-
-  // useEffect(() => {
-  //   if (map) {
-  //     const mapContainer = map.getContainer();
-  //     mapContainer.style.transform = `scale(${1 / scale})`;
-  //   }
-  // }, [scale]);
 
   // Convert ID to asset
   useEffect(() => {
@@ -304,45 +292,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
               marker.togglePopup();
               setMarkers((prev) => [...prev, marker]);
             }
-
-            // // station.value = latestValue;
-            // map.addSource(`stationValues${props._id + "0" + variableName + station.name}`, {
-            //   type: 'geojson',
-            //   data: {
-            //     type: 'FeatureCollection',
-            //     features: [
-            //       {
-            //         type: 'Feature',
-            //         geometry: { type: 'Point', coordinates: [station.lon, station.lat] },
-            //         // properties: { stationInfo: station },
-            //       },
-            //     ],
-            //   },
-            // });
-
-            // // map.addLayer({
-            // //   id: 'selectedCircle',
-            // //   type: 'circle',
-            // //   source: 'selectedStations',
-            // //   paint: {
-            // //     'circle-radius': 15,
-            // //     'circle-color': '#CC4833',
-            // //     'circle-stroke-color': 'black',
-            // //     'circle-stroke-width': 2,
-            // //   },
-            // // });
-            // map.addLayer({
-            //   id: `stationValues${props._id + "0" + variableName + station.name}`,
-            //   type: 'symbol',
-            //   source: `stationValues${props._id + "0" + variableName + station.name}`,
-            //   layout: {
-            //     'icon-image': 'marker_15',
-            //     'text-field': `Soil Moisture: ${Number(latestValue).toFixed(1)} at ${station.name}`,
-            //     'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-            //     'text-offset': [0, 0.6],
-            //     'text-anchor': 'top',
-            //   },
-            // });
           }
         }
       }
