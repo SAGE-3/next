@@ -64,6 +64,9 @@ function AppComponent(props: App): JSX.Element {
         cellXSize: resolution[0],
         cellYSize: resolution[1],
       };
+
+      const response = await fetch('/api//hcdp');
+      console.log(response);
     };
     fetchData();
   }, []);
