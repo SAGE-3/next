@@ -91,6 +91,7 @@ export const schema = z.object({
   stationColor: z.string(),
   getDataFrom: z.string(),
   stationScale: z.number(),
+  processing: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -110,6 +111,7 @@ export const init: Partial<state> = {
   stationColor: '',
   getDataFrom: 'mesonet',
   stationScale: 5,
+  processing: false,
 };
 
 export const name = 'HCDP';

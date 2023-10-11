@@ -382,7 +382,6 @@ function MapLibreWrapper(props: App): JSX.Element {
 
   return (
     <>
-      {' '}
       {/* One box for map, one box for container */}
       <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}>
         <Box id={'map' + props._id} w="100%" h="100%" />

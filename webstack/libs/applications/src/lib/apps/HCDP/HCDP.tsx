@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import { HStack } from '@chakra-ui/react';
+import { Button, HStack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -32,6 +32,20 @@ import { AppWindow } from '@sage3/applications/apps';
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
   return tempInFahrenheit;
+};
+
+const fetchRequest = async (id: string) => {
+  const response = await fetch('/api//hcdp', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      url: 'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif ',
+      appId: id,
+    }),
+  });
+  console.log(response);
 };
 
 // HCDP app
@@ -64,62 +78,10 @@ function AppComponent(props: App): JSX.Element {
         cellXSize: resolution[0],
         cellYSize: resolution[1],
       };
-
-      const response = await fetch('/api//hcdp');
-      console.log(response);
     };
     fetchData();
   }, []);
-
-  useEffect(() => {
-    const fetchStationData = async () => {
-      const tmpStationData = [...s.stationData];
-      for (let i = 0; i < s.stationData.length; i++) {
-        const repsonse = await fetch(
-          `https://api.mesowest.net/v2/stations/timeseries?STID=${s.stationData[i].name}&showemptystations=1&recent=4320&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`
-        );
-        const station = await repsonse.json();
-        const tmpStation: any = s.stationData[i];
-        if (station.STATION[0].OBSERVATIONS.soil_moisture_set_1 !== undefined) {
-          const soilMoisture = station.STATION[0].OBSERVATIONS.soil_moisture_set_1;
-          tmpStation.soilMoisture = Math.floor(soilMoisture[soilMoisture.length - 1]);
-        }
-        if (station.STATION[0].OBSERVATIONS.wind_speed_set_1 !== undefined) {
-          const windSpeed = station.STATION[0].OBSERVATIONS.wind_speed_set_1;
-          tmpStation.windSpeed = Math.floor(windSpeed[windSpeed.length - 1]);
-        }
-        if (station.STATION[0].OBSERVATIONS.wind_direction_set_1 !== undefined) {
-          const windDirection = station.STATION[0].OBSERVATIONS.wind_direction_set_1;
-          tmpStation.windDirection = Math.floor(windDirection[windDirection.length - 1]);
-        }
-        if (station.STATION[0].OBSERVATIONS.air_temp_set_1 !== undefined) {
-          const airTemp = station.STATION[0].OBSERVATIONS.air_temp_set_1;
-          const tempInFahrenheit = convertToFahrenheit(Math.floor(airTemp[airTemp.length - 1]));
-          const tempInCelcius = Math.floor(airTemp[airTemp.length - 1]);
-          tmpStation.temperatureF = tempInFahrenheit;
-          tmpStation.temperatureC = tempInCelcius;
-        }
-        if (station.STATION[0].OBSERVATIONS.relative_humidity_set_1 !== undefined) {
-          const relativeHumidity = station.STATION[0].OBSERVATIONS.relative_humidity_set_1;
-          tmpStation.relativeHumidity = Math.floor(relativeHumidity[relativeHumidity.length - 1]);
-        }
-        if (station.STATION[0].OBSERVATIONS.solar_radiation_set_1 !== undefined) {
-          const solarRadiation = station.STATION[0].OBSERVATIONS.solar_radiation_set_1;
-          tmpStation.solarRadiation = Math.floor(solarRadiation[solarRadiation.length - 1]);
-        }
-        tmpStationData[tmpStationData.indexOf(station)] = tmpStation;
-        setStationMetadata(station);
-      }
-      updateState(props._id, { stationData: [...tmpStationData] });
-    };
-    fetchStationData();
-  }, []);
-
-  // Change the variable to display on the map
-  const handleChangeVariable = (variableName: string) => {
-    updateState(props._id, { variableToDisplay: variableName });
-  };
-
+  console.log(s);
   return (
     <AppWindow app={props}>
       <MapLibreWrapper {...props} />
@@ -158,7 +120,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return <HStack></HStack>;
+  return (
+    <HStack>
+      <Button onClick={() => fetchRequest(props._id)}>Test Fetch</Button>
+    </HStack>
+  );
 }
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected

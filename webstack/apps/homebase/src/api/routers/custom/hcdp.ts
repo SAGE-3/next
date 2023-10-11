@@ -7,19 +7,51 @@
  */
 
 import * as express from 'express';
-import { SAGEnlp } from '@sage3/backend';
+import { AppsCollection } from '../../collections';
 
 export function HCDPRouter(): express.Router {
   const router = express.Router();
 
-  router.get('/', async ({ body, user }, res) => {
-    const response = await fetch(
-      'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif '
-    );
+  router.post('/', async ({ body, user }, res) => {
+    const url = body.url;
+    // const image = body.image;
+    const appId = body.appId;
+    const appData = await AppsCollection.get(appId);
+    AppsCollection.update(appId, user.id, { state: { ...appData?.data.state, processing: true } });
+
+    let success = false;
+    let responseMessage = null;
+
+    const response = await fetch(url);
+    if (response.status !== 200) {
+      console.log('FETCH ERROR: ', response.status);
+      AppsCollection.update(appId, user.id, { state: { ...appData?.data.state, processing: false } });
+      res.status(500).send({ success: false, message: 'Failed to access HCDP.' });
+    }
+    AppsCollection.update(appId, user.id, { state: { ...appData?.data.state, processing: false } });
+
     console.log(response);
+    res.status(200).send({ success: true, message: 'okay' });
+
+    // TODO Write code to process geotiff
+    // try {
+    //   responseMessage = await postImage(prompt, image);
+    // } catch (e) {
+    //   console.log('STABLEDIFFUSION ERROR: ', e);
+    //   AppsCollection.update(appId, user.id, { state: { processing: false, textPrompt: prompt } });
+    // }
+
+    // if (responseMessage && responseMessage['images']) success = true;
+    // if (success) {
+    //   const img = `data:image/jpeg;base64,${responseMessage['images'][0]}`;
+    //   AppsCollection.update(appId, user.id, { state: { processing: false, imgSrc: img, textPrompt: prompt } });
+    //   res.status(200).send({ success: true, message: img });
+    // } else {
+    //   AppsCollection.update(appId, user.id, { state: { processing: false, textPrompt: prompt } });
+    //   res.status(500).send({ success: false, message: 'Failed to process the stable diffusion request.' });
+    // }
 
     // if (success) res.status(200).send({ success: true, message: completion.data.choices[0].message?.content });
-    res.status(200).send({ success: true, message: 'okay' });
 
     // res.status(500).send({ success: false, message: 'Failed to process the nlp request.' });
   });
