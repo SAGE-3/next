@@ -1,5 +1,3 @@
-//@ts-nocheck
-
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -8,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import { HStack, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
+import { HStack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -24,7 +22,10 @@ import MapLibreWrapper from './MapLibreWrapper';
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 import * as plotty from 'plotty';
+import { fromUrl } from 'geotiff';
 
 import { AppWindow } from '@sage3/applications/apps';
 
@@ -42,32 +43,30 @@ function AppComponent(props: App): JSX.Element {
 
   const [, setStationMetadata] = useState([]);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const url = '/assets/HCDPTestData.tif';
+  useEffect(() => {
+    const fetchData = async () => {
+      const url = '/assets/HCDPTestData.tif';
 
-  //     const tiff = await fromUrl(url);
-  //     const image = await tiff.getImage();
-  //     const data = await image.readRasters();
-  //     const resolution = image.getResolution();
-  //     const bbox = image.getBoundingBox();
-  //     const { width, height } = data;
-  //     const tiepoint = image.getTiePoints()[0];
-  //     const [, yScale] = image.getFileDirectory().ModelPixelScale;
+      const tiff = await fromUrl(url);
+      const image = await tiff.getImage();
+      const data = await image.readRasters();
+      const resolution = image.getResolution();
+      const bbox = image.getBoundingBox();
+      const { width, height } = data;
+      const tiepoint = image.getTiePoints()[0];
+      const [, yScale] = image.getFileDirectory().ModelPixelScale;
 
-  //     const HCDPData = {
-  //       nCols: width,
-  //       nRows: height,
-  //       xllCorner: tiepoint.x,
-  //       yllCorner: tiepoint.y - height * yScale,
-  //       cellXSize: resolution[0],
-  //       cellYSize: resolution[1],
-  //     };
-
-  //     console.log(HCDPData, bbox, data);
-  //   };
-  //   fetchData();
-  // }, []);
+      const HCDPData = {
+        nCols: width,
+        nRows: height,
+        xllCorner: tiepoint.x,
+        yllCorner: tiepoint.y - height * yScale,
+        cellXSize: resolution[0],
+        cellYSize: resolution[1],
+      };
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const fetchStationData = async () => {

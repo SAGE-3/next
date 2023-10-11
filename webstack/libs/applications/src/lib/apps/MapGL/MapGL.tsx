@@ -132,7 +132,6 @@ function AppComponent(props: App): JSX.Element {
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
-    console.log(assets);
 
     if (myasset) {
       setFile(myasset);
@@ -149,64 +148,71 @@ function AppComponent(props: App): JSX.Element {
         const newURL = getStaticAssetUrl(file.data.file);
         console.log('MapGL> Adding source to map', newURL);
         if (file.data.mimetype === 'image/tiff') {
-          const tiff = await fromUrl(newURL);
-          const image = await tiff.getImage();
-          const bbox = image.getBoundingBox();
-          const data: any = await image.readRasters();
-          const fileDirectory = image.getFileDirectory();
-          const width = image.getWidth();
-          const height = image.getHeight();
-          console.log(tiff, image, bbox, data, fileDirectory);
-          // Compute min and max values
-          let min = Infinity;
-          let max = -Infinity;
-          for (let i = 0; i < data[0].length; i++) {
-            const value = data[0][i];
-            if (value < min) min = value;
-            if (value > max) max = value;
+          try {
+            // Fetching the tiff file
+            const tiff = await fromUrl(newURL);
+
+            //Extracting metadata from tiff file
+            const image = await tiff.getImage();
+            const bbox = image.getBoundingBox();
+            const data: any = await image.readRasters();
+            const width = image.getWidth();
+            const height = image.getHeight();
+
+            // Compute min and max values
+            let min = Infinity;
+            let max = -Infinity;
+            for (let i = 0; i < data[0].length; i++) {
+              const value = data[0][i];
+              if (value < min) min = value;
+              if (value > max) max = value;
+            }
+
+            // Create canvas for geotiff
+            const canvas = document.createElement('canvas');
+            canvas.setAttribute('id', 'canvas');
+
+            // Example custom color scale
+            const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
+            const customStops = [0, 0.3, 0.5, 1];
+
+            // Plot Geotiff in Plotty canvas
+            Plotty.addColorScale('custom', customColors, customStops);
+            const plot = new Plotty.plot({
+              canvas: canvas,
+              data: data[0],
+              width: width,
+              height: height,
+              domain: [0, max],
+              colorScale: 'custom',
+            });
+            plot.render();
+
+            // Turn the canvas into an image
+            const dataURL = canvas.toDataURL();
+
+            // Add the image to the map
+            map.addSource('geotiff', {
+              type: 'image',
+              url: dataURL,
+              coordinates: [
+                [bbox[0], bbox[3]], // top left
+                [bbox[2], bbox[3]], // top right
+                [bbox[2], bbox[1]], // bottom right
+                [bbox[0], bbox[1]], // bottom left
+              ],
+            });
+            map.addLayer({
+              id: 'geotiff-layer',
+              type: 'raster',
+              source: 'geotiff',
+              paint: {
+                'raster-opacity': 0.7,
+              },
+            });
+          } catch (error: any) {
+            console.error(`Error Reading ${file.data.originalfilename}`, error);
           }
-          // console.log(tiff);
-          const canvas = document.createElement('canvas');
-          canvas.setAttribute('id', 'canvas');
-          // Example custom color scale
-          const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
-          const customStops = [0, 0.3, 0.5, 1];
-
-          Plotty.addColorScale('custom', customColors, customStops);
-          // console.log(min, max);
-          const plot = new Plotty.plot({
-            canvas: canvas,
-            data: data[0],
-            width: width,
-            height: height,
-            domain: [0, max],
-            colorScale: 'custom',
-          });
-          console.log(bbox);
-          plot.render();
-
-          const dataURL = canvas.toDataURL();
-
-          map.addSource('geotiff', {
-            type: 'image',
-            url: dataURL,
-            coordinates: [
-              [bbox[0], bbox[3]], // top left
-              [bbox[2], bbox[3]], // top right
-              [bbox[2], bbox[1]], // bottom right
-              [bbox[0], bbox[1]], // bottom left
-            ],
-          });
-
-          map.addLayer({
-            id: 'geotiff-layer',
-            type: 'raster',
-            source: 'geotiff',
-            paint: {
-              'raster-opacity': 0.7,
-            },
-          });
-          console.log('loading done');
         } else {
           // Get the GEOJSON data from the asset
           const response = await fetch(newURL, {
