@@ -26,7 +26,6 @@ import { App } from '@sage3/applications/schema';
 // import { state as AppState } from '../index';
 import { state as AppState } from './index';
 // import { state as AppState } from './index';
-import redMarker from './redMarker.png';
 import { stationData } from './SensorOverview';
 
 // Styling

@@ -22,8 +22,6 @@ import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-// import { state as AppState } from './index';
-// import redMarker from './redMarker.png';
 
 // Styling
 import './maplibre-gl.css';
