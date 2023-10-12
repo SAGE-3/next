@@ -1,6 +1,6 @@
 import type { EChartsOption } from 'echarts';
 import { getFormattedTimePeriod } from '../SensorOverview/SensorOverview';
-import variableUnits from '../SensorOverview/data/VariableUnits';
+import variableUnits from '../SensorOverview/data/variableUnits';
 
 //Types
 type filterType = {

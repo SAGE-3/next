@@ -10,9 +10,8 @@ import React, { useEffect, useState } from 'react';
 
 import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
-import { MdOutlineArrowUpward } from 'react-icons/md';
+import { AppState } from '@sage3/applications/schema';
+import variableUnits from '../data/variableUnits';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;

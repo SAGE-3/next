@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AppState } from '../../../types';
-import variableUnits from '../data/VariableUnits';
+import variableUnits from '../data/variableUnits';
 import { Box, Text } from '@chakra-ui/react';
 import { VariableProps } from '../types/types';
 

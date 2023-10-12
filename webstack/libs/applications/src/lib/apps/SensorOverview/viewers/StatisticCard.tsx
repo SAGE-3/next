@@ -12,7 +12,7 @@ import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon 
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
+import variableUnits from '../data/variableUnits';
 import { MdOutlineArrowUpward } from 'react-icons/md';
 import { WidgetType } from '../utils';
 import { getFormattedTimePeriod } from '../SensorOverview';
