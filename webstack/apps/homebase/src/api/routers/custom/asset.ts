@@ -118,3 +118,16 @@ export function uploadHandler(req: express.Request, res: express.Response) {
     }
   });
 }
+
+export async function uploadByURLHandler(req: express.Request, res: express.Response): Promise<void> {
+  const { user, body } = req as any as { user: SBAuthSchema; body: { url: string } };
+  const url = body.url;
+  const response = await fetch(url);
+  const blob = await response.blob();
+  const filename = url.split('/').pop();
+  const mimetype = blob.type;
+  const size = blob.size;
+
+  console.log(filename, mimetype, size);
+  res.status(200).send({ success: true, message: 'okay' });
+}

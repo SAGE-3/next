@@ -26,7 +26,7 @@ import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
-import { uploadHandler } from '../routers/custom';
+import { uploadByURLHandler, uploadHandler } from '../routers/custom';
 import { config } from '../../config';
 
 class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
@@ -43,8 +43,10 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   public async initialize(clear?: boolean, ttl?: number): Promise<void> {
     // call the base class method
     await super.initialize(clear, ttl);
+    this.router().post('/uploadbyurl', uploadByURLHandler);
     // Upload files: POST /api/assets/upload
     this.router().post('/upload', uploadHandler);
+
     // Access to uploaded files: GET /api/assets/static/:filename
     const assetFolder = config.public;
     this.router().use('/static', express.static(assetFolder));
