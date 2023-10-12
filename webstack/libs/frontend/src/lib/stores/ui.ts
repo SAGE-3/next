@@ -248,7 +248,7 @@ export const useUIStore = create<UIState>((set, get) => ({
 
   savedSelectedAppsIds: [],
   setSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: get().selectedAppsIds })),
-  clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [] })),
+  clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [], selectedAppsIds: [] })),
 
   setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),

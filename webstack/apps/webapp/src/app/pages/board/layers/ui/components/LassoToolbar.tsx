@@ -42,8 +42,6 @@ export function LassoToolbar() {
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
 
-  // Apps selection
-  const selectedAppsIds = useUIStore((state) => state.selectedAppsIds);
   // Save/clear the app selection
   const setSavedSelectedAppsIds = useUIStore((state) => state.setSavedSelectedAppsIds);
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
