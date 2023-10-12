@@ -16,6 +16,7 @@ import {
   Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   useDisclosure,
+  Button,
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
@@ -903,17 +904,32 @@ function AppComponent(props: App): JSX.Element {
     theme={defaultTheme}
     language={s.language}
   />;
+  const [drawerWidth, setDrawerWidth] = useState("50vw");
+  const make25W = () => {
+    setDrawerWidth('25vw');
+  };
+  const make50W = () => {
+    setDrawerWidth('50vw');
+  };
+  const make75W = () => {
+    setDrawerWidth('75vw');
+  };
 
   return (
     <AppWindow app={props}>
       <>
         <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
-          <DrawerContent >
+          <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}>SageCell</DrawerHeader>
+            <DrawerHeader p={1} m={1}><Flex p={0} m={0}><Text flex={1}>SageCell</Text>
+              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make25W}>25%</Button></Tooltip>
+              <Tooltip hasArrow label="Medium Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make50W}>50%</Button></Tooltip>
+              <Tooltip hasArrow label="Large Editor"><Button size={"sm"} p={2} m={"0 40px 0 1px"} onClick={make75W}>75%</Button></Tooltip>
+            </Flex>
+            </DrawerHeader>
             <DrawerBody p={0} m={0} boxSizing='border-box'>
-              <Box style={{ width: '50vw', height: '100%' }} border="1px solid lightgray">
+              <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
                 {drawerEditor}
               </Box>
             </DrawerBody>
@@ -1065,7 +1081,7 @@ function AppComponent(props: App): JSX.Element {
           </Box>
         </Box>
       </>
-    </AppWindow>
+    </AppWindow >
   );
 }
 
