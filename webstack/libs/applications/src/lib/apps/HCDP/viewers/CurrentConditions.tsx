@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@chakra-ui/react';
 
 import { AppState } from '../../../types';
-import VariableUnits from '../data/VariableUnits';
+import variableUnits from '../data/variableUnits';
 
 type VariableProps = {
   variableName: string;
@@ -83,11 +83,11 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
           let unit = '';
           let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
-              color = VariableUnits[i].color;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+              images = variableUnits[i].images;
+              color = variableUnits[i].color;
             }
           }
           if (sensorValues.length !== 0) {
@@ -161,8 +161,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                   flexDirection={'row'}
                   justifyContent="center"
 
-                // alignContent={'center'}
-                // justifyItems={'center'}
+                  // alignContent={'center'}
+                  // justifyItems={'center'}
                 >
                   {station.variables.map((variable, index) => {
                     const variableName = variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
@@ -184,8 +184,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                           display="flex"
                           margin="1rem"
                           flexDirection="column"
-                        // justifyContent={'center'}
-                        // alignContent="center"
+                          // justifyContent={'center'}
+                          // alignContent="center"
                         >
                           <Box>
                             <Text
@@ -215,8 +215,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                               {isNaN(variable.value)
                                 ? variable.value
                                 : variable.value % 1
-                                  ? Number(variable.value).toFixed(2)
-                                  : variable.value}
+                                ? Number(variable.value).toFixed(2)
+                                : variable.value}
                               <span style={{ marginLeft: '3px', fontSize: 30 }}>{variable.unit}</span>
                             </Text>
                           </Box>

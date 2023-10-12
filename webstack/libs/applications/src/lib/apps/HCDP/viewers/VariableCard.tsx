@@ -8,13 +8,10 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 
 import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
-import { MdOutlineArrowUpward } from 'react-icons/md';
+import variableUnits from '../data/variableUnits';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -131,10 +128,10 @@ export default function VariableCard(
           let unit = '';
           let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+              images = variableUnits[i].images;
               color = variableUnits[i].color;
             }
           }

@@ -8,12 +8,9 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, Icon, useColorMode } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 
 import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
 import { MdCircle } from 'react-icons/md';
 
 type VariableProps = {
@@ -32,8 +29,7 @@ export default function StationMetadata(
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
-  const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
-  const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  const [, setVariablesToDisplay] = useState<VariableProps[]>([]);
 
   useEffect(() => {
     const values: VariableProps[] = [];

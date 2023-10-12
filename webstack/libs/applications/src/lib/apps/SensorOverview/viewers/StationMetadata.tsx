@@ -11,8 +11,6 @@ import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 import { MdCircle } from 'react-icons/md';
 
 import { AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
-import VariableUnits from '../data/VariableUnits';
 
 type VariableProps = {
   stationName: string;
@@ -30,8 +28,7 @@ export default function StationMetadata(
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
-  const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
-  const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  const [, setVariablesToDisplay] = useState<VariableProps[]>([]);
 
   useEffect(() => {
     const values: VariableProps[] = [];

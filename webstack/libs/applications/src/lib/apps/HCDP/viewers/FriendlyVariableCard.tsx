@@ -8,13 +8,10 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
+import variableUnits from '../data/variableUnits';
 
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
-import { MdOutlineArrowUpward } from 'react-icons/md';
+import { AppState } from '@sage3/applications/schema';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -42,35 +39,6 @@ function celsiusToFahrenheit(celsiusArray: number[]) {
   return celsiusArray.map(function (celsius) {
     return (celsius * 9) / 5 + 32;
   });
-}
-
-function compareWithStandardDeviation(average: number, standardDeviation: number, currentValue: number) {
-  const deviation = Math.abs(currentValue - average);
-
-  if (deviation <= standardDeviation) {
-    return 1;
-  } else if (currentValue < average) {
-    return 0;
-  } else {
-    return 1;
-  }
-}
-
-function lightenColor(hexColor: string) {
-  // Parse the hexadecimal color string to RGB values
-  let r = parseInt(hexColor.substr(1, 2), 16);
-  let g = parseInt(hexColor.substr(3, 2), 16);
-  let b = parseInt(hexColor.substr(5, 2), 16);
-
-  // Increase each RGB component by 20 (or adjust as desired)
-  r = Math.min(r + 25, 255);
-  g = Math.min(g + 25, 255);
-  b = Math.min(b + 25, 255);
-
-  // Convert the updated RGB values back to hexadecimal
-  const newHexColor = '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
-
-  return newHexColor;
 }
 
 type VariableProps = {
@@ -131,10 +99,10 @@ export default function FriendlyVariableCard(
           let unit = '';
           let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+              images = variableUnits[i].images;
               color = variableUnits[i].color;
             }
           }
