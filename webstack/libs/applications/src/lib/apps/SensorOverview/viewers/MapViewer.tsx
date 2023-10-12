@@ -6,22 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Text } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
 import create from 'zustand';
 // Map library
-import maplibregl, { Marker, latest } from 'maplibre-gl';
+import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+// import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
+
 import { App } from '../../../schema';
 import { state as AppState } from '../../HCDP/index';
 // import { state as AppState } from './index';
@@ -29,7 +29,6 @@ import { state as AppState } from '../../HCDP/index';
 
 // Styling
 import './maplibre-gl.css';
-import React from 'react';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -288,9 +287,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             const el = document.createElement('div');
 
             el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
-              s.stationScale
-            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${s.stationScale
+              }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
             <p  style="font-size:5px; font-weight: bold; text-align: center">
             ${Number(latestValue).toFixed(1)}</p>
             </div>

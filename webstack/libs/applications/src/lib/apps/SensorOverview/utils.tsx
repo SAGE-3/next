@@ -1,4 +1,3 @@
-import { apiUrls } from '@sage3/frontend';
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -6,6 +5,8 @@ import { apiUrls } from '@sage3/frontend';
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+
+import { apiUrls } from '@sage3/frontend';
 
 type NLPRequestResponse = {
   success: boolean;

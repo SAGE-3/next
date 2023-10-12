@@ -7,10 +7,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import './styling.css';
-
 // Chakra Imports
 import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+// Icon imports
+import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
+import { useParams } from 'react-router';
+import { AppWindow } from '@sage3/applications/apps';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -23,10 +25,7 @@ import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
-// Icon imports
-import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
-import { useParams } from 'react-router';
-import { AppWindow } from '@sage3/applications/apps';
+import './styling.css';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
   const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);

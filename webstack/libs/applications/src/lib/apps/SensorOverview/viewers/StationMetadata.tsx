@@ -7,10 +7,9 @@
  */
 
 import { useEffect, useState } from 'react';
-
 import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 
-import { App, AppState } from '@sage3/applications/schema';
+import { AppState } from '@sage3/applications/schema';
 import { MdCircle } from 'react-icons/md';
 
 type VariableProps = {
