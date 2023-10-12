@@ -9,12 +9,11 @@
 import React, { useEffect, useState } from 'react';
 
 import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
-import { MdOutlineArrowUpward } from 'react-icons/md';
+import { VariableProps } from '../types/types';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -73,23 +72,7 @@ function lightenColor(hexColor: string) {
   return newHexColor;
 }
 
-type VariableProps = {
-  variableName: string;
-  stationName: string;
-  value: number;
-  average: number;
-  stdDev: number;
-  high: number;
-  low: number;
-  unit: string;
-  startDate: string;
-  endDate: string;
-  stationSTIDName: string;
-  images: string[];
-  color: string;
-};
-
-export default function FriendlyVariableCard(
+export default function VariableCard(
   props: {
     isLoaded: boolean;
     stationNames: string[];
@@ -129,12 +112,11 @@ export default function FriendlyVariableCard(
         const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+
               color = variableUnits[i].color;
             }
           }
@@ -151,7 +133,7 @@ export default function FriendlyVariableCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
+
               color: color,
             });
           } else {
@@ -167,7 +149,7 @@ export default function FriendlyVariableCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
+
               color: color,
             });
           }
@@ -271,7 +253,6 @@ export default function FriendlyVariableCard(
                     startDate: props.startDate,
                     stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
-                    images: [],
                   }
             }
           />
@@ -305,6 +286,7 @@ const Content = (props: {
     } else {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
+    console.log(props.size.width, props.size.height);
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
   return (
     <>
@@ -340,19 +322,18 @@ const Content = (props: {
         display="flex"
         flexDirection="column"
         // justifyContent={'center'}
-        // flexWrap={'wrap'}
         alignContent="center"
         textAlign={'center'}
       >
         <Box bg="#2D62D2">
-          <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 10}>
-            {variableName.join(' ')}
+          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 10}>
+            {props.variable.stationName}
           </Text>
         </Box>
 
         <Box>
-          <Text mt={scaleToFontSize / 10} textAlign={'center'} fontSize={scaleToFontSize / 8}>
-            {props.variable.stationName}
+          <Text mt={scaleToFontSize / 6} textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 8}>
+            {variableName.join(' ')}
           </Text>
         </Box>
 
@@ -393,7 +374,6 @@ const Content = (props: {
             fontSize={scaleToFontSize / 20}
             fontWeight="semibold"
             // lineHeight={'48px'}
-            mt={scaleToFontSize / 20}
           >
             <>{props.timeSinceLastUpdate}</>
           </Text>
@@ -403,6 +383,6 @@ const Content = (props: {
   );
 };
 
-FriendlyVariableCard.defaultProps = {
+VariableCard.defaultProps = {
   generateAllVariables: false,
 };

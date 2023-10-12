@@ -1,23 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AppState } from '../../../types';
-import VariableUnits from '../data/VariableUnits';
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter } from '@chakra-ui/react';
-
-type VariableProps = {
-  variableName: string;
-  stationName: string;
-  value: number;
-  average: number;
-  stdDev: number;
-  high: number;
-  low: number;
-  unit: string;
-  startDate: string;
-  endDate: string;
-  stationSTIDName: string;
-  images: string[];
-  color: string;
-};
+import variableUnits from '../data/VariableUnits';
+import { Box, Text } from '@chakra-ui/react';
+import { VariableProps } from '../types/types';
 
 type CurrentConditionsProps = {
   isLoaded: boolean;
@@ -29,8 +14,8 @@ type CurrentConditionsProps = {
 } & { state: AppState };
 
 // Calculate the average of all the numbers
-const calculateMean = (values: number[]) => {
-  const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
+const calculateMean = (values: number[]): number => {
+  const mean: number = values.reduce((sum: number, current: number) => sum + current) / values.length;
   return mean;
 };
 
@@ -72,13 +57,13 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
         const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
+
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
-              color = VariableUnits[i].color;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+
+              color = variableUnits[i].color;
             }
           }
           if (sensorValues.length !== 0) {
@@ -94,7 +79,7 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
+
               color: color,
             });
           } else {
@@ -110,7 +95,7 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
+
               color: color,
             });
           }

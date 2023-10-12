@@ -9,14 +9,13 @@
 import React, { useEffect, useState } from 'react';
 
 import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
 import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
 
 import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
 import { MdOutlineArrowUpward } from 'react-icons/md';
-import { WidgetType } from '../menu/CustomizeWidgets';
-import { getFormattedTimePeriod } from '../../SensorOverview/SensorOverview';
+import { WidgetType } from '../utils';
+import { getFormattedTimePeriod } from '../SensorOverview';
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -87,7 +86,6 @@ type VariableProps = {
   startDate: string;
   endDate: string;
   stationSTIDName: string;
-  images: string[];
   color: string;
 };
 
@@ -132,12 +130,10 @@ export default function StatisticCard(
         let sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (props.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (props.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
               color = variableUnits[i].color;
             }
           }
@@ -156,7 +152,6 @@ export default function StatisticCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
               color: color,
             });
           } else {
@@ -172,7 +167,6 @@ export default function StatisticCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
               color: color,
             });
           }
@@ -278,7 +272,6 @@ export default function StatisticCard(
                     startDate: props.startDate,
                     stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
-                    images: [],
                   }
             }
             timePeriod={props.widget.timePeriod}

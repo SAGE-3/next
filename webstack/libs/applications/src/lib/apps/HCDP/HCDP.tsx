@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import './styling.css';
 
 // Chakra Imports
-import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, Box, RadioGroup, Radio, Stack, useDisclosure } from '@chakra-ui/react';
+import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -20,21 +20,12 @@ import { MdAdd, MdMinimize } from 'react-icons/md';
 
 // Leaflet plus React
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { TileLayer, LayersControl, CircleMarker, SVGOverlay } from 'react-leaflet';
-import LeafletWrapper from './LeafletWrapper';
-
-import { SensorTypes } from './data/stationData';
-
-import { hcdpStationData } from './data/hcdpStationData';
-
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
 // Icon imports
 import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
 import { useParams } from 'react-router';
-import CustomizeWidgets from './menu/CustomizeWidgets';
-import CustomizeWidgetsHCDP from './menu/CustomizeWidgetsHCDP';
 import { AppWindow } from '@sage3/applications/apps';
 
 const convertToFahrenheit = (tempInCelcius: number) => {
@@ -108,123 +99,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <LeafletWrapper map={map} setMap={setMap} {...props}>
-        <Box
-          w="26rem"
-          h="21.5rem"
-          position="absolute"
-          bg="white"
-          zIndex="500"
-          top="1rem"
-          left="1rem"
-          border="3px solid gray"
-          rounded={10}
-          boxShadow={'0 0 10px 5px rgba(0, 0, 0, 0.2)'}
-          // margin="auto"
-          color="black"
-          padding="1rem"
-          fontWeight={'bold'}
-          fontSize="xl"
-        >
-          <RadioGroup onChange={handleChangeVariable} defaultValue={s.variableToDisplay} value={s.variableToDisplay}>
-            <Stack direction="column">
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureC">
-                <p style={{ fontSize: 30 }}>Temperature (C)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="temperatureF">
-                <p style={{ fontSize: 30 }}>Temperature (F)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="soilMoisture">
-                <p style={{ fontSize: 30 }}>Soil Moisture(%)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="windSpeed">
-                <p style={{ fontSize: 30 }}>Wind Speed (m/s)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="relativeHumidity">
-                <p style={{ fontSize: 30 }}>Relative Humidity (%)</p>
-              </Radio>
-              <Radio color="black" borderColor="gray.400" backgroundColor={'white'} size="lg" colorScheme="orange" value="solarRadiation">
-                <p style={{ fontSize: 30 }}>Solar Radiation {'(W/m\u00B2)'}</p>
-              </Radio>
-            </Stack>
-          </RadioGroup>
-        </Box>
-
-        <LayersControl.BaseLayer checked={s.baseLayer === 'OpenStreetMap'} name="OpenStreetMap">
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {s.getDataFrom === 'mesonet'
-            ? s.stationData.map((data: SensorTypes, index: number) => {
-              return (
-                <div key={index}>
-                  <SVGOverlay
-                    bounds={[
-                      [data.lat - 0.17, data.lon - 0.05],
-                      [data.lat + 0.15, data.lon + 0.05],
-                    ]}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                      <g transform={`translate(100, 100) scale(${s.stationScale}) translate(-100, -100)`}>
-                        <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-                        <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                          {data[s.variableToDisplay]}
-                        </text>
-                      </g>
-                    </svg>
-                    {/* {s.variableToDisplay === 'windSpeed' ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                          <g transform={`translate(100, 100) scale(${(1 / s.zoom) * 150 - 12}) translate(-100, -100)`}>
-                            <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />
-
-                            <text x="100" y="100" alignmentBaseline="middle" textAnchor="middle" fill="black">
-                              {data[s.variableToDisplay]}
-                            </text>
-                          </g>
-                        </svg>
-                      ) : (
-null
-                      )} */}
-                  </SVGOverlay>
-                </div>
-              );
-            })
-            : hcdpStationData.map((station: any, index: number) => {
-              if (station.value.island !== 'OA') return null;
-              return <CircleMarker key={index} center={[Number(station.value.lat), Number(station.value.lng)]} radius={10} />;
-              return (
-                <div key={index}>
-                  <SVGOverlay
-                    bounds={[
-                      [Number(station.value.lat) - 0.17, Number(station.value.lng) - 0.05],
-                      [Number(station.value.lat) + 0.15, Number(station.value.lng) + 0.05],
-                    ]}
-                    eventHandlers={{
-                      click: () => {
-                        console.log(station);
-                      },
-                    }}
-                  >
-                    {s.variableToDisplay === 'windSpeed' ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                        </g>
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-                        <g transform={`translate(100, 100) scale(1) translate(-100, -100)`}>
-                          <circle cx="100" cy="100" r="20" fill={'#E1BB78'} stroke={'black'} strokeWidth="3" />=
-                        </g>
-                      </svg>
-                    )}
-                  </SVGOverlay>
-                </div>
-              );
-            })}
-        </LayersControl.BaseLayer>
-      </LeafletWrapper>
+      <></>
     </AppWindow>
   );
 }
@@ -387,11 +262,6 @@ function ToolbarComponent(props: App): JSX.Element {
       <Button colorScheme={'green'} size="xs" onClick={onOpen}>
         Create Visualization
       </Button>
-      {s.getDataFrom === 'mesonet' ? (
-        <CustomizeWidgets {...props} isOpen={isOpen} onClose={onClose} />
-      ) : (
-        <CustomizeWidgetsHCDP {...props} />
-      )}
     </HStack>
   );
 }
@@ -399,6 +269,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
