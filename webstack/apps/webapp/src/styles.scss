@@ -34,4 +34,7 @@ h6 {
 :root {
   --primary-color: #13a89e;
   --link-color: #1890ff;
+
+  // resize observer problem in dev
+  iframe#webpack-dev-server-client-overlay{display:none!important}
 }
