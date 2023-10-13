@@ -39,6 +39,8 @@ import {
   MdPerson,
   MdSearch,
   MdSettings,
+  MdStar,
+  MdStarOutline,
 } from 'react-icons/md';
 
 export function HomePage() {
@@ -57,7 +59,7 @@ export function HomePage() {
   const roomsFetched = useRoomStore((state) => state.fetched);
 
   // Board Store
-  const { boards, subscribeByRoomId } = useBoardStore((state) => state);
+  const { boards, subscribeToAllBoards } = useBoardStore((state) => state);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
 
   // Plugins
@@ -82,11 +84,18 @@ export function HomePage() {
   const infoBG = useHexColor(infoBackground);
   const borderColor = useHexColor(selectedRoom ? selectedRoom.data.color : 'gray.300');
 
+  // Favorites
+  const [showFavorites, setShowFavorites] = useState<boolean>(false);
+  const handleShowFavorites = () => {
+    setShowFavorites(!showFavorites);
+  };
+
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
+  const inputBorderColor = useHexColor('teal.200');
 
   // Filter Search on Rooms, Boards, and Users
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
@@ -115,12 +124,14 @@ export function HomePage() {
     subscribeToPresence();
     subscribeToUsers();
     subToRooms();
+    subscribeToAllBoards();
     subPlugins();
   }, []);
 
   function handleRoomClick(room: Room | undefined) {
     if (room) {
       setSelectedRoom(room);
+      setFilteredBoards(boards.filter((board) => board.data.roomId === room._id));
       setSelectedBoard(undefined);
       if (user) updatePresence(user._id, { roomId: room._id, boardId: '', following: '' });
       // update the URL, helps with history
@@ -128,6 +139,7 @@ export function HomePage() {
     } else {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
+
       if (user) updatePresence(user._id, { roomId: '', boardId: '', following: '' });
     }
   }
@@ -166,12 +178,6 @@ export function HomePage() {
       }
     }
   }, [roomsFetched]);
-
-  useEffect(() => {
-    if (selectedRoom) {
-      subscribeByRoomId(selectedRoom?._id);
-    }
-  }, [selectedRoom]);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -214,19 +220,35 @@ export function HomePage() {
         flexDirection="row"
         flexGrow={1}
         justifyContent={'center'}
-        width="100%"
+        maxWidth="1920px"
         height="100%"
         overflow="hidden"
         gap="16px"
         p="16px"
       >
         <Box display="flex" flexDir={'column'} width="100%">
-          <Box width="100%" display="flex" p="2">
+          <Box width="100%" display="flex" p="2" pr="4" gap="8px">
+            <IconButton
+              size="md"
+              colorScheme="teal"
+              variant={'outline'}
+              aria-label="create-room"
+              fontSize="2xl"
+              onClick={handleShowFavorites}
+              icon={showFavorites ? <MdStar /> : <MdStarOutline />}
+            ></IconButton>
             <InputGroup colorScheme="teal">
               <InputLeftElement pointerEvents="none">
                 <MdSearch color="white" />{' '}
               </InputLeftElement>
-              <Input type="text" placeholder="Search" _placeholder={{ color: 'white' }} onChange={handleSearchInput} />
+              <Input
+                type="text"
+                placeholder="Search"
+                _placeholder={{ color: 'white' }}
+                onChange={handleSearchInput}
+                colorScheme="teal"
+                _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
+              />
             </InputGroup>
           </Box>
 
@@ -242,7 +264,8 @@ export function HomePage() {
                 // justifyContent={'space-between'}
                 // borderRadius="md"
                 // border="solid gray 2px"
-                width="640px"
+                flex="1"
+                minWidth="420px"
                 // background={boardListBG}
               >
                 <Box display="flex" mb="2" justifyContent={'space-between'} width="100%">
@@ -273,14 +296,14 @@ export function HomePage() {
                   {filteredRooms
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
                     .map((room) => {
-                      return <RoomCard room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
+                      return <RoomCard key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
                     })}
                 </Box>
                 <Box
                   display="flex"
                   flexDirection="column"
                   borderRadius="md"
-                  height="300px"
+                  height="240px"
                   // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
                   background={linearBGColor}
                   padding="8px"
@@ -302,8 +325,8 @@ export function HomePage() {
                   </Box>
                   <Box flex="1" display="flex" my="4" px="2" flexDir="column">
                     <Box>
-                      <Text fontSize="sm">This is the board's description.</Text>
-                      <Text fontSize="sm">Owner: Ryan Theriot</Text>
+                      <Text fontSize="sm">{selectedRoom?.data.description}</Text>
+                      <Text fontSize="sm">Owner: {users.find((u) => u._id === selectedRoom?.data.ownerId)?.data.name}</Text>
                       <Text fontSize="sm">Created: Jan 5th, 2023</Text>
                       <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
                     </Box>
@@ -312,16 +335,8 @@ export function HomePage() {
               </Box>
 
               {/* Middle Section Room and Boards */}
-              <Box display="flex" flexDirection="column" height="100%" width="600px" gap="16px">
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  // borderRadius="md"
-                  flex="1"
-                  // border="solid gray 2px"
-                  // background={boardListBG}
-                  padding="8px"
-                >
+              <Box display="flex" flexDirection="column" height="100%" flex="1" gap="16px">
+                <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
                   <Box display="flex" justifyContent={'space-between'}>
                     <Box mb="2" display="flex" justifyContent={'space-between'} width="100%">
                       <Text fontSize="2xl">Boards</Text>
@@ -341,22 +356,32 @@ export function HomePage() {
                     {filteredBoards
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .map((board) => {
-                        return <BoardCard board={board} onClick={() => {}} />;
+                        return (
+                          <BoardCard key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
+                        );
                       })}
                   </Box>
                   <Box
                     display="flex"
                     flexDirection="column"
                     borderRadius="md"
-                    height="300px"
+                    height="240px"
                     // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
                     background={linearBGColor}
                     padding="8px"
                   >
                     <Box display="flex" justifyContent={'space-between'}>
                       <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                        <Text fontSize="2xl">Board Name</Text>
+                        <Text fontSize="2xl">{selectedBoard?.data.name}</Text>
                         <Box display="flex" justifyContent={'left'} gap="8px">
+                          <IconButton
+                            size="sm"
+                            variant={'outline'}
+                            colorScheme="teal"
+                            aria-label="enter-board"
+                            fontSize="xl"
+                            icon={<MdLink />}
+                          ></IconButton>
                           <IconButton
                             size="sm"
                             colorScheme="teal"
@@ -371,7 +396,7 @@ export function HomePage() {
                     <Box flex="1" display="flex" my="4" px="2" flexDir="column">
                       <Box>
                         <Text fontSize="sm">This is the board's description.</Text>
-                        <Text fontSize="sm">Owner: Ryan Theriot</Text>
+                        <Text fontSize="sm">Owner: {users.find((u) => u._id === selectedBoard?.data.ownerId)?.data.name}</Text>
                         <Text fontSize="sm">Created: Jan 5th, 2023</Text>
                         <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
                       </Box>
@@ -386,13 +411,11 @@ export function HomePage() {
                 flexDirection="column"
                 height="100%"
                 p="8px"
-                // borderRadius="md"
-                // border="solid gray 2px"
-                width="360px"
+                width="320px"
                 // background={boardListBG}
               >
                 <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                  <Text fontSize="2xl">Members</Text>
+                  <Text fontSize="2xl"> Room Members</Text>
                   <Box display="flex" justifyContent={'left'} gap="8px">
                     <IconButton
                       size="sm"
@@ -414,26 +437,8 @@ export function HomePage() {
                 </Box>
                 <Box flex="1" overflow="hidden" mb="4">
                   {filteredUsers.map((user) => {
-                    return <UserCard user={user} onClick={() => {}} />;
+                    return <UserCard key={user._id} user={user} onClick={() => {}} />;
                   })}
-                </Box>
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  borderRadius="md"
-                  height="300px"
-                  // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
-                  background={linearBGColor}
-                  padding="8px"
-                >
-                  <Box display="flex" justifyContent={'space-between'}>
-                    <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                      <Text fontSize="2xl">Mike</Text>
-                    </Box>
-                  </Box>
-                  <Box flex="1" display="flex" my="4" px="2" flexDir="column" border="solid white 1px" m="2" borderRadius="md">
-                    <Box>chat</Box>
-                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -490,6 +495,8 @@ function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) 
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
+
+  const created = new Date(props.room._createdAt).toLocaleDateString();
   return (
     <Box
       // my="4"
@@ -499,6 +506,7 @@ function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) 
       my="2"
       display="flex"
       justifyContent={'space-between'}
+      alignItems={'center'}
       borderColor={props.selected ? borderColor : borderColor}
       onClick={() => props.onClick(props.room)}
       border={`solid 1px ${props.selected ? borderColor : 'none'}`}
@@ -508,9 +516,14 @@ function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) 
       backgroundColor={props.selected ? borderColorG : 'transparent'}
       _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
     >
-      <Text fontSize="md" fontWeight="bold" textAlign="center">
-        {props.room.data.name}
-      </Text>
+      <Box display="flex" flexDir="column">
+        <Text fontSize="lg" fontWeight="bold" textAlign="left">
+          {props.room.data.name}
+        </Text>
+        <Text fontSize="xs" textAlign="left">
+          {props.room.data.description}
+        </Text>
+      </Box>
       <Box display="flex" gap="4px">
         <IconButton
           size="sm"
@@ -521,20 +534,14 @@ function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) 
           icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
         ></IconButton>
 
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme="teal"
-          aria-label="enter-board"
-          fontSize="xl"
-          icon={<MdFavorite />}
-        ></IconButton>
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
       </Box>
     </Box>
   );
 }
 
-function BoardCard(props: { board: Board; onClick: (board: Board) => void }) {
+function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void }) {
   const borderColorValue = useColorModeValue(props.board.data.color, props.board.data.color);
   const borderColor = useHexColor(borderColorValue);
   const borderColorGray = useColorModeValue('gray.300', 'gray.700');
@@ -554,8 +561,10 @@ function BoardCard(props: { board: Board; onClick: (board: Board) => void }) {
       justifyContent={'space-between'}
       alignContent={'center'}
       onClick={() => props.onClick(props.board)}
+      border={`solid 1px ${props.selected ? borderColor : 'none'}`}
+      borderLeft={`${borderColor} solid 8px`}
       background={linearBGColor}
-      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}` }}
+      _hover={{ cursor: 'pointer' }}
     >
       <Text fontSize="md" textAlign="center" lineHeight="32px" fontWeight="bold">
         {props.board.data.name}
@@ -570,16 +579,16 @@ function BoardCard(props: { board: Board; onClick: (board: Board) => void }) {
           icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
         ></IconButton>
 
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLink />}></IconButton>
         <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
 
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
         <IconButton
           size="sm"
           variant={'ghost'}
           colorScheme="teal"
           aria-label="enter-board"
           fontSize="xl"
-          icon={<MdSettings />}
+          icon={<MdExitToApp />}
         ></IconButton>
       </Box>
     </Box>
