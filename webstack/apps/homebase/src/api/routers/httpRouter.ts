@@ -94,7 +94,6 @@ export function expressAPIRouter(): express.Router {
 
   // Experimental NLP route
   router.use('/nlp', NLPRouter());
-  router.use('/hcdp', HCDPRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

@@ -27,33 +27,12 @@ import { fromUrl } from 'geotiff';
 
 import { AppWindow } from '@sage3/applications/apps';
 
-const convertToFahrenheit = (tempInCelcius: number) => {
-  const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
-  return tempInFahrenheit;
-};
-
-const fetchRequest = async (id: string) => {
-  const response = await fetch('/api//hcdp', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url: 'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif ',
-      appId: id,
-    }),
-  });
-  console.log(response);
-};
-
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
   const s = props.data.state as AppState;
 
   const updateState = useAppStore((state) => state.updateState);
-
-  const [, setStationMetadata] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +58,6 @@ function AppComponent(props: App): JSX.Element {
     };
     fetchData();
   }, []);
-  console.log(s);
   return (
     <AppWindow app={props}>
       <MapLibreWrapper {...props} />
@@ -118,11 +96,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <HStack>
-      <Button onClick={() => fetchRequest(props._id)}>Test Fetch</Button>
-    </HStack>
-  );
+  return <HStack>{/* <Button onClick={() => fetchRequest(props._id)}>Test Fetch</Button> */}</HStack>;
 }
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
