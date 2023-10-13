@@ -34,6 +34,10 @@ const schema = z.object({
   userRole: UserRole,
   // Saved Room IDs of the user
   savedRooms: z.array(z.string()),
+  // Saved Boards IDs of the user
+  savedBoards: z.array(z.string()),
+  // Saved User IDs of the user
+  savedUsers: z.array(z.string()),
 });
 
 export type UserSchema = z.infer<typeof schema>;

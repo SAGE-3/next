@@ -29,6 +29,10 @@ const UserContext = createContext({
   create: null as ((user: UserSchema) => Promise<void>) | null,
   saveRoom: null as ((roomId: string) => void) | null,
   removeRoom: null as ((roomId: string) => void) | null,
+  saveBoard: null as ((roomId: string) => void) | null,
+  removeBoard: null as ((roomId: string) => void) | null,
+  saveUser: null as ((roomId: string) => void) | null,
+  removeUser: null as ((roomId: string) => void) | null,
 });
 
 export function useUser() {
@@ -148,7 +152,51 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     update({ savedRooms: currentRooms.filter((id) => id !== roomId) });
   };
 
+  /**
+   * Save a board to the user's saved boards
+   * @param boardId Room to save
+   */
+  const saveBoard = (boardId: string) => {
+    if (!user) return;
+    const currentBoards = user?.data.savedBoards || [];
+    update({ savedBoards: [...currentBoards, boardId] });
+  };
+
+  /**
+   * Remove a board from the user's saved boards
+   * @param boardId Room to remove
+   */
+  const removeBoard = (boardId: string) => {
+    if (!user) return;
+    const currentBoards = user?.data.savedBoards || [];
+    update({ savedBoards: currentBoards.filter((id) => id !== boardId) });
+  };
+
+  /**
+   * Save a user to the user's saved users
+   * @param userId Room to save
+   */
+  const saveUser = (userId: string) => {
+    if (!user) return;
+    const currentUsers = user?.data.savedUsers || [];
+    update({ savedUsers: [...currentUsers, userId] });
+  };
+
+  /**
+   * Remove a user from the user's saved users
+   * @param userId Room to remove
+   */
+  const removeUser = (userId: string) => {
+    if (!user) return;
+    const currentUsers = user?.data.savedUsers || [];
+    update({ savedUsers: currentUsers.filter((id) => id !== userId) });
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, update, create, accessId, saveRoom, removeRoom }}>{props.children}</UserContext.Provider>
+    <UserContext.Provider
+      value={{ user, loading, update, create, accessId, saveRoom, removeRoom, saveBoard, removeBoard, saveUser, removeUser }}
+    >
+      {props.children}
+    </UserContext.Provider>
   );
 }
