@@ -35,17 +35,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import {
-  FilesRouter,
-  ConfigRouter,
-  InfoRouter,
-  TimeRouter,
-  NLPRouter,
-  LogsRouter,
-  FastAPIRouter,
-  PresenceThrottle,
-  HCDPRouter,
-} from './custom';
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, FastAPIRouter, PresenceThrottle } from './custom';
 
 import { config } from '../../config';
 

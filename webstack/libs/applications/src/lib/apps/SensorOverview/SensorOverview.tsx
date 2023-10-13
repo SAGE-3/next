@@ -120,7 +120,6 @@ function AppComponent(props: App): JSX.Element {
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
-  const [isDuplicateMenuOpen, setIsDuplicateMenuOpen] = useState<boolean>(false);
   const createApp = useAppStore((state) => state.create);
 
   useEffect(() => {
