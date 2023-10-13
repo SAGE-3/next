@@ -6,12 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Sage Imports
-import { useAppStore, useUIStore } from '@sage3/frontend';
-import { App } from '../../schema';
-import { AppWindow } from '../../components';
-import { state as AppState } from './index';
-
+import { useEffect, useRef, useState } from 'react';
 // React Imports
 import {
   Box,
@@ -39,22 +34,26 @@ import {
 
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
 
-// Styling
-import './styling.css';
-import { useEffect, useRef, useState } from 'react';
+// Sage Imports
+import { useAppStore } from '@sage3/frontend';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
 
 // Visualization imports
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
 import CurrentConditions from './viewers/CurrentConditions';
+import { getFormattedDateTime1MonthBefore, getFormattedDateTime1WeekBefore, getFormattedDateTime1YearBefore } from './utils';
 import StationMetadata from './viewers/StationMetadata';
 import FriendlyVariableCard from './viewers/FriendlyVariableCard';
 import StatisticCard from './viewers/StatisticCard';
 import MapViewer from './viewers/MapViewer';
-import { getFormattedDateTime1MonthBefore, getFormattedDateTime1WeekBefore, getFormattedDateTime1YearBefore } from './tools/formattedTimes';
-
-import { checkAvailableVisualizations } from '../HCDP/menu/CustomizeWidgets';
+import { checkAvailableVisualizations } from './utils';
 import MapGL from './MapGL';
+
+// Styling
+import './styling.css';
 
 export const getFormattedTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {
@@ -90,19 +89,6 @@ function formatDuration(ms: number) {
   } else {
     return `less than a minute ago`;
   }
-}
-
-// Convert the dateTime to Chakra format
-function convertToChakraDateTime(dateTime: string) {
-  const year = dateTime.slice(0, 4);
-  const month = dateTime.slice(4, 6);
-  const day = dateTime.slice(6, 8);
-  const hours = dateTime.slice(8, 10);
-  const minutes = dateTime.slice(10, 12);
-
-  const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-  return formattedDateTime;
 }
 
 function getFormattedDateTime24HoursBefore() {
@@ -434,16 +420,13 @@ function ToolbarComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   const updateState = useAppStore((state) => state.updateState);
-  const fitApps = useUIStore((state) => state.fitApps);
 
-  const [map, setMap] = useState<any>(null);
   const [stationMetadata, setStationMetadata] = useState([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'NAME', direction: 'ascending' });
 
   // For color theme
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const drawerBackgroundColor: string = useColorModeValue('gray.50', 'gray.700');
   const headerBackgroundColor: string = useColorModeValue('white', 'gray.800');
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
@@ -569,31 +552,8 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { widget: { ...s.widget, visualizationType: visualizationType } });
   };
 
-  const removeVisualizationsThatRequireMultipleStations = (availableVisualizations: { value: string; name: string }[]) => {
-    if (s.stationNames.length > 1) {
-      return availableVisualizations.filter((visualization) => {
-        return (
-          visualization.value !== 'variableCard' &&
-          visualization.value !== 'friendlyVariableCard' &&
-          visualization.value !== 'statisticCard'
-        );
-      });
-    } else {
-      return availableVisualizations;
-    }
-  };
-
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedDate = e.target.value;
-    const date = new Date(selectedDate);
-
-    const startDate = convertToFormattedDateTime(date);
-    updateState(props._id, { widget: { ...s.widget, startDate: startDate, timePeriod: 'custom' } });
-  };
-
   const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const timePeriod = e.target.value;
-    const date = new Date();
     switch (timePeriod) {
       case 'previous24Hours':
         updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
@@ -615,21 +575,6 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
   const { isOpen, onOpen, onClose } = useDisclosure();
-
-  const handleAddSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    const stationNames = s.stationNames;
-    stationNames.push(station.name);
-    updateState(props._id, { stationNames: stationNames });
-  };
-
-  const handleRemoveSelectedStation = (station: { lat: number; lon: number; name: string; selected: boolean }) => {
-    const stationNames = s.stationNames;
-    const index = stationNames.indexOf(station.name);
-    if (index > -1) {
-      stationNames.splice(index, 1);
-    }
-    updateState(props._id, { stationNames: stationNames });
-  };
 
   const handleFilterOn = (attributeName: string) => {
     const isFirstTime = isSortedOn.name !== attributeName || isSortedOn.direction === 'ascending';

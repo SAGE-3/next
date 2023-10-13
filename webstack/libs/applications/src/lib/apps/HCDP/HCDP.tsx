@@ -7,8 +7,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import './styling.css';
-
 // Chakra Imports
 import { Button, HStack } from '@chakra-ui/react';
 

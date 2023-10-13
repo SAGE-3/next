@@ -1,23 +1,24 @@
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/CurrentConditions.tsx
 import React, { useState, useEffect } from 'react';
 import { AppState } from '../../../types';
 import VariableUnits from '../data/VariableUnits';
 import { Box, Text } from '@chakra-ui/react';
+========
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/CurrentConditions.tsx
 
-type VariableProps = {
-  variableName: string;
-  stationName: string;
-  value: number;
-  average: number;
-  stdDev: number;
-  high: number;
-  low: number;
-  unit: string;
-  startDate: string;
-  endDate: string;
-  stationSTIDName: string;
-  images: string[];
-  color: string;
-};
+import React, { useState, useEffect } from 'react';
+import { Box, Text } from '@chakra-ui/react';
+
+import { AppState } from '../../../types';
+import variableUnits from '../data/variableUnits';
+import { VariableProps } from '../types/types';
 
 type CurrentConditionsProps = {
   isLoaded: boolean;
@@ -29,8 +30,8 @@ type CurrentConditionsProps = {
 } & { state: AppState };
 
 // Calculate the average of all the numbers
-const calculateMean = (values: number[]) => {
-  const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
+const calculateMean = (values: number[]): number => {
+  const mean: number = values.reduce((sum: number, current: number) => sum + current) / values.length;
   return mean;
 };
 
@@ -54,8 +55,11 @@ const calculateStdDev = (values: number[]) => {
 const CurrentConditions = (props: CurrentConditionsProps) => {
   const s = props.state as AppState;
   const [variablesToDisplay, setVariablesToDisplay] = useState<{ metadata: any; variables: VariableProps[] }[]>([]);
+  const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  const previousStationName: string | null = null;
   useEffect(() => {
-    const tmpVariablesToDisplay: { metadata: any; variables: VariableProps[] }[] = [];
+    const secondaryValues = [];
+    const tmpVariablesToDisplay = [];
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
       s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
@@ -63,19 +67,19 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
       if (index !== -1) {
         s.widget.yAxisNames.splice(index, 1);
       }
-      const tmpValuesForSingleStation: VariableProps[] = [];
+      const tmpValuesForSingleStation = [];
 
       for (let j = 0; j < s.widget.yAxisNames.length; j++) {
         const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
+
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
-              color = VariableUnits[i].color;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
+
+              color = variableUnits[i].color;
             }
           }
           if (sensorValues.length !== 0) {
@@ -91,7 +95,7 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
+
               color: color,
             });
           } else {
@@ -107,7 +111,7 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
+
               color: color,
             });
           }
@@ -149,8 +153,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                   flexDirection={'row'}
                   justifyContent="center"
 
-                  // alignContent={'center'}
-                  // justifyItems={'center'}
+                // alignContent={'center'}
+                // justifyItems={'center'}
                 >
                   {station.variables.map((variable, index) => {
                     const variableName = variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
@@ -172,8 +176,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                           display="flex"
                           margin="1rem"
                           flexDirection="column"
-                          // justifyContent={'center'}
-                          // alignContent="center"
+                        // justifyContent={'center'}
+                        // alignContent="center"
                         >
                           <Box>
                             <Text
@@ -203,8 +207,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                               {isNaN(variable.value)
                                 ? variable.value
                                 : variable.value % 1
-                                ? Number(variable.value).toFixed(2)
-                                : variable.value}
+                                  ? Number(variable.value).toFixed(2)
+                                  : variable.value}
                               <span style={{ marginLeft: '3px', fontSize: 30 }}>{variable.unit}</span>
                             </Text>
                           </Box>

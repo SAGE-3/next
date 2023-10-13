@@ -6,20 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, Icon, useColorMode } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/StationMetadata.tsx
+import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
+========
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/StationMetadata.tsx
+import { AppState } from '@sage3/applications/schema';
 import { MdCircle } from 'react-icons/md';
 
 type VariableProps = {
   stationName: string;
   stationSTIDName: string;
-  images: string[];
   color: string;
 };
 
@@ -31,9 +31,7 @@ export default function StationMetadata(
     size?: { width: number; height: number; depth: number };
   } & { state: AppState }
 ) {
-  const s = props.state as AppState;
-  const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
-  const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  const [, setVariablesToDisplay] = useState<VariableProps[]>([]);
 
   useEffect(() => {
     const values: VariableProps[] = [];
@@ -65,6 +63,8 @@ export default function StationMetadata(
             stationMetadata={props.stationMetadata[0]}
             size={props.size ? props.size : { width: 820, height: 250, depth: 0 }}
           />
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/StationMetadata.tsx
+========
           {/* <Content
             isLoaded={props.isLoaded}
             stationNames={props.stationNames}
@@ -88,10 +88,10 @@ export default function StationMetadata(
                     startDate: props.startDate,
                     stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
-                    images: [],
                   }
             }
           /> */}
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/StationMetadata.tsx
         </Box>
       )}
     </>

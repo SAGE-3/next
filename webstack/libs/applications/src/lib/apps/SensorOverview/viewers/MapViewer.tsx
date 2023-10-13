@@ -6,7 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
 import { useEffect, useState } from 'react';
+========
+import React, { useEffect, useState } from 'react';
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
@@ -14,22 +18,32 @@ import create from 'zustand';
 // Map library
 import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
+========
+// import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
-import { App } from '../../../schema';
-import { state as AppState } from '../index';
+import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
 
+import { App } from '../../../schema';
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
+import { state as AppState } from '../index';
+========
+import { state as AppState } from '../../HCDP/index';
+// import { state as AppState } from './index';
+// import redMarker from './redMarker.png';
+
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 // Styling
 import './maplibre-gl.css';
-import React from 'react';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
-  return `/api/assets/static/${filename}`;
+  return apiUrls.assets.getAssetById(filename);
 }
 
 // Zustand store to communicate with toolbar
@@ -116,13 +130,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       });
     }
   }
-
-  // useEffect(() => {
-  //   if (map) {
-  //     const mapContainer = map.getContainer();
-  //     mapContainer.style.transform = `scale(${1 / scale})`;
-  //   }
-  // }, [scale]);
 
   // Convert ID to asset
   useEffect(() => {
@@ -300,45 +307,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
               marker.togglePopup();
               setMarkers((prev) => [...prev, marker]);
             }
-
-            // // station.value = latestValue;
-            // map.addSource(`stationValues${props._id + "0" + variableName + station.name}`, {
-            //   type: 'geojson',
-            //   data: {
-            //     type: 'FeatureCollection',
-            //     features: [
-            //       {
-            //         type: 'Feature',
-            //         geometry: { type: 'Point', coordinates: [station.lon, station.lat] },
-            //         // properties: { stationInfo: station },
-            //       },
-            //     ],
-            //   },
-            // });
-
-            // // map.addLayer({
-            // //   id: 'selectedCircle',
-            // //   type: 'circle',
-            // //   source: 'selectedStations',
-            // //   paint: {
-            // //     'circle-radius': 15,
-            // //     'circle-color': '#CC4833',
-            // //     'circle-stroke-color': 'black',
-            // //     'circle-stroke-width': 2,
-            // //   },
-            // // });
-            // map.addLayer({
-            //   id: `stationValues${props._id + "0" + variableName + station.name}`,
-            //   type: 'symbol',
-            //   source: `stationValues${props._id + "0" + variableName + station.name}`,
-            //   layout: {
-            //     'icon-image': 'marker_15',
-            //     'text-field': `Soil Moisture: ${Number(latestValue).toFixed(1)} at ${station.name}`,
-            //     'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-            //     'text-offset': [0, 0.6],
-            //     'text-anchor': 'top',
-            //   },
-            // });
           }
         }
       }

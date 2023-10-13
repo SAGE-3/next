@@ -7,15 +7,21 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+import { AppState } from '@sage3/applications/schema';
 
+import variableUnits from '../data/variableUnits';
+import { WidgetType } from '../utils';
+import { getFormattedTimePeriod } from '../SensorOverview';
+
+<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/StatisticCard.tsx
 import { App, AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/VariableUnits';
 import { MdOutlineArrowUpward } from 'react-icons/md';
 import { getFormattedTimePeriod } from '../../SensorOverview/SensorOverview';
+========
+>>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/StatisticCard.tsx
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -86,7 +92,6 @@ type VariableProps = {
   startDate: string;
   endDate: string;
   stationSTIDName: string;
-  images: string[];
   color: string;
 };
 
@@ -131,12 +136,10 @@ export default function StatisticCard(
         let sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (props.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (props.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
               color = variableUnits[i].color;
             }
           }
@@ -155,7 +158,6 @@ export default function StatisticCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
               color: color,
             });
           } else {
@@ -171,7 +173,6 @@ export default function StatisticCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
               color: color,
             });
           }
@@ -200,56 +201,56 @@ export default function StatisticCard(
         >
           {variablesToDisplay.length === 1
             ? variablesToDisplay.map((variable: VariableProps, index: number) => {
-                return (
-                  <React.Fragment key={index}>
-                    <Content
-                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                      isLoaded={props.isLoaded}
-                      secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      stationNames={props.stationNames}
-                      variableToDisplayLength={variablesToDisplay.length}
-                      s={s}
-                      timeSinceLastUpdate={props.timeSinceLastUpdate}
-                      key={index}
-                      variable={variable}
-                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                      timePeriod={props.widget.timePeriod}
-                    />
-                  </React.Fragment>
-                );
-              })
+              return (
+                <React.Fragment key={index}>
+                  <Content
+                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                    isLoaded={props.isLoaded}
+                    secondaryValuesToDisplay={secondaryValuesToDisplay}
+                    stationNames={props.stationNames}
+                    variableToDisplayLength={variablesToDisplay.length}
+                    s={s}
+                    timeSinceLastUpdate={props.timeSinceLastUpdate}
+                    key={index}
+                    variable={variable}
+                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    timePeriod={props.widget.timePeriod}
+                  />
+                </React.Fragment>
+              );
+            })
             : variablesToDisplay.map((variable: VariableProps, index: number) => {
-                const currentStationName = variable.stationName;
-                const isNewStation = currentStationName !== previousStationName;
+              const currentStationName = variable.stationName;
+              const isNewStation = currentStationName !== previousStationName;
 
-                previousStationName = currentStationName;
-                return (
-                  <React.Fragment key={index}>
-                    {props.generateAllVariables ? (
-                      isNewStation ? (
-                        <>
-                          <Divider orientation="horizontal" />
-                          <Box h="20px" width="100%" bgColor="gray.200" />
-                        </>
-                      ) : null
-                    ) : null}
+              previousStationName = currentStationName;
+              return (
+                <React.Fragment key={index}>
+                  {props.generateAllVariables ? (
+                    isNewStation ? (
+                      <>
+                        <Divider orientation="horizontal" />
+                        <Box h="20px" width="100%" bgColor="gray.200" />
+                      </>
+                    ) : null
+                  ) : null}
 
-                    <Content
-                      isLoaded={props.isLoaded}
-                      secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                      stationNames={props.stationNames}
-                      variableToDisplayLength={variablesToDisplay.length}
-                      s={s}
-                      timeSinceLastUpdate={props.timeSinceLastUpdate}
-                      key={index}
-                      variable={variable}
-                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                      timePeriod={props.widget.timePeriod}
-                    />
-                  </React.Fragment>
-                );
-              })}
+                  <Content
+                    isLoaded={props.isLoaded}
+                    secondaryValuesToDisplay={secondaryValuesToDisplay}
+                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                    stationNames={props.stationNames}
+                    variableToDisplayLength={variablesToDisplay.length}
+                    s={s}
+                    timeSinceLastUpdate={props.timeSinceLastUpdate}
+                    key={index}
+                    variable={variable}
+                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    timePeriod={props.widget.timePeriod}
+                  />
+                </React.Fragment>
+              );
+            })}
         </Box>
       ) : (
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
@@ -265,20 +266,19 @@ export default function StatisticCard(
               variablesToDisplay[0]
                 ? variablesToDisplay[0]
                 : {
-                    variableName: 'air_temperature_set_1',
-                    stationName: 'Station Name',
-                    value: 42.01,
-                    average: 38.42,
-                    stdDev: 12,
-                    high: 82,
-                    low: 12,
-                    unit: 'unit',
-                    color: '#fff321',
-                    startDate: props.startDate,
-                    stationSTIDName: 'HI012',
-                    endDate: '2022-04-25T19:55:00Z',
-                    images: [],
-                  }
+                  variableName: 'air_temperature_set_1',
+                  stationName: 'Station Name',
+                  value: 42.01,
+                  average: 38.42,
+                  stdDev: 12,
+                  high: 82,
+                  low: 12,
+                  unit: 'unit',
+                  color: '#fff321',
+                  startDate: props.startDate,
+                  stationSTIDName: 'HI012',
+                  endDate: '2022-04-25T19:55:00Z',
+                }
             }
             timePeriod={props.widget.timePeriod}
           />
@@ -371,8 +371,8 @@ const Content = (props: {
                 {isNaN(props.variable.value)
                   ? props.variable.value
                   : props.variable.value % 1
-                  ? Number(props.variable.value).toFixed(1)
-                  : props.variable.value}
+                    ? Number(props.variable.value).toFixed(1)
+                    : props.variable.value}
                 <span>&nbsp;{props.variable.unit}</span>
               </Text>
               <Box
@@ -424,7 +424,7 @@ const Content = (props: {
             transform={`translateY(${scaleToFontSize / 20}px)`}
             fontSize={scaleToFontSize / 30}
             fontWeight="semibold"
-            // lineHeight={'48px'}
+          // lineHeight={'48px'}
           >
             <>{props.timeSinceLastUpdate}</>
           </Text>
