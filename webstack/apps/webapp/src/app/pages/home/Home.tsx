@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Box, useColorModeValue, Text, Image, Progress, Button, IconButton, Input } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Progress, Button, IconButton, Input, InputLeftElement, InputGroup } from '@chakra-ui/react';
 
 import {
   JoinBoardCheck,
@@ -27,7 +27,19 @@ import {
   useHexColor,
 } from '@sage3/frontend';
 import { Board, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdExitToApp, MdLock, MdPerson } from 'react-icons/md';
+import {
+  MdAdd,
+  MdEdit,
+  MdExitToApp,
+  MdFavorite,
+  MdLink,
+  MdLock,
+  MdManageAccounts,
+  MdPeople,
+  MdPerson,
+  MdSearch,
+  MdSettings,
+} from 'react-icons/md';
 
 export function HomePage() {
   // URL Params
@@ -69,6 +81,31 @@ export function HomePage() {
   const infoBackground = useColorModeValue('gray.100', 'gray.900');
   const infoBG = useHexColor(infoBackground);
   const borderColor = useHexColor(selectedRoom ? selectedRoom.data.color : 'gray.300');
+
+  // Handle Search Input
+  const [searchInput, setSearchInput] = useState<string>('');
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
+
+  // Filter Search on Rooms, Boards, and Users
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
+  const [filteredBoards, setFilteredBoards] = useState<Board[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  useEffect(() => {
+    if (searchInput.length > 0) {
+      const roomResults = rooms.filter((room) => room.data.name.toLowerCase().includes(searchInput.toLowerCase()));
+      const boardResults = boards.filter((board) => board.data.name.toLowerCase().includes(searchInput.toLowerCase()));
+      const userResults = users.filter((user) => user.data.name.toLowerCase().includes(searchInput.toLowerCase()));
+      setFilteredRooms(roomResults);
+      setFilteredBoards(boardResults);
+      setFilteredUsers(userResults);
+    } else {
+      setFilteredRooms(rooms);
+      setFilteredBoards(boards);
+      setFilteredUsers(users);
+    }
+  }, [searchInput]);
 
   // Subscribe to user updates
   useEffect(() => {
@@ -136,6 +173,11 @@ export function HomePage() {
     }
   }, [selectedRoom]);
 
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
+
   return (
     // Main Container
     <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
@@ -172,100 +214,235 @@ export function HomePage() {
         flexDirection="row"
         flexGrow={1}
         justifyContent={'center'}
-        minHeight={0}
         width="100%"
         height="100%"
         overflow="hidden"
+        gap="16px"
+        p="16px"
       >
-        {roomsFetched ? (
-          <>
-            <Box display="column" height="100%" pt="8px" width="400px" background={boardListBG} borderRight={`solid 1px white`}>
-              <Box px="2" mb="2" display="flex" justifyContent={'space-between'}>
-                <h3>Rooms</h3>
-                <IconButton
-                  size="sm"
-                  colorScheme="teal"
-                  variant={'outline'}
-                  aria-label="enter-board"
-                  fontSize="xl"
-                  icon={<MdAdd />}
-                ></IconButton>
-              </Box>
-
-              {rooms
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                .map((room) => {
-                  return <RoomCard room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
-                })}
-            </Box>
-            <Box
-              display="column"
-              height="100%"
-              width="400px"
-              p="8px"
-              background={roomListBG}
-              borderTop={`solid 1px white`}
-              borderBottom={`solid 1px white`}
-            >
-              <Box display="flex" justifyContent={'space-between'}>
-                <h3>{selectedRoom?.data.name}</h3>
-                <IconButton size="sm" variant={'outline'} aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>{' '}
-              </Box>
-              <Box height="300px" display="flex" my="4" flexDir="column" justifyContent={'space-between'}>
-                <Box>
-                  <Text fontSize="sm">This is the board's description.</Text>
-                  <Text fontSize="sm">Owner: Ryan Theriot</Text>
-                  <Text fontSize="sm">Created: Jan 5th, 2023</Text>
-                  <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
-                </Box>
-                <Box>
-                  <Button size="sm" width="100%" my="1" colorScheme="teal" variant="outline">
-                    Edit
-                  </Button>
-                  <Button size="sm" width="100%" my="1" colorScheme="teal" variant="outline">
-                    Manage Members
-                  </Button>
-                </Box>
-              </Box>
-              <h3>Room Members</h3>
-              {users.map((user) => {
-                return <UserCard user={user} onClick={() => {}} />;
-              })}
-            </Box>
-            <Box
-              display="column"
-              height="100%"
-              width="600px"
-              p="8px"
-              background={boardListBG}
-              borderTop={`solid 1px white`}
-              borderBottom={`solid 1px white`}
-            >
-              <Box px="2" display="flex" justifyContent={'space-between'}>
-                <h3>Boards</h3>
-                <IconButton size="sm" variant={'outline'} aria-label="enter-board" fontSize="xl" icon={<MdAdd />}></IconButton>{' '}
-              </Box>
-              {boards
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                .map((board) => {
-                  return <BoardCard board={board} onClick={() => {}} />;
-                })}
-            </Box>
-
-            <Box
-              display="column"
-              height="100%"
-              width="100%"
-              background={infoBG}
-              borderTop={`solid 1px white`}
-              borderBottom={`solid 1px white`}
-            ></Box>
-          </>
-        ) : (
-          <Box display="flex" flexDirection="column" justifyContent={'center'} alignItems="center" height="100%" width="100%">
-            <Progress isIndeterminate width="100%" borderRadius="md" />
+        <Box display="flex" flexDir={'column'} width="100%">
+          <Box width="100%" display="flex" p="2">
+            <InputGroup colorScheme="teal">
+              <InputLeftElement pointerEvents="none">
+                <MdSearch color="white" />{' '}
+              </InputLeftElement>
+              <Input type="text" placeholder="Search" _placeholder={{ color: 'white' }} onChange={handleSearchInput} />
+            </InputGroup>
           </Box>
-        )}
+
+          {roomsFetched ? (
+            <Box display="flex" height="100%" width="100%">
+              {/* Left Side Rooms */}
+              <Box
+                display="flex"
+                flexDirection="column"
+                height="100%"
+                p="8px"
+                // flex="1"
+                // justifyContent={'space-between'}
+                // borderRadius="md"
+                // border="solid gray 2px"
+                width="640px"
+                // background={boardListBG}
+              >
+                <Box display="flex" mb="2" justifyContent={'space-between'} width="100%">
+                  <Text mb="2" fontSize="2xl">
+                    Rooms
+                  </Text>
+                  <Box mb="2" display="flex" ml="2" justifyContent={'left'} gap="8px">
+                    <IconButton
+                      size="sm"
+                      colorScheme="teal"
+                      variant={'outline'}
+                      aria-label="create-room"
+                      fontSize="xl"
+                      icon={<MdAdd />}
+                    ></IconButton>
+                    <IconButton
+                      size="sm"
+                      colorScheme="teal"
+                      variant={'outline'}
+                      aria-label="create-room"
+                      fontSize="xl"
+                      icon={<MdSearch />}
+                    ></IconButton>
+                  </Box>
+                </Box>
+
+                <Box overflow="hidden" flex="1">
+                  {filteredRooms
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                    .map((room) => {
+                      return <RoomCard room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
+                    })}
+                </Box>
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  borderRadius="md"
+                  height="300px"
+                  // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
+                  background={linearBGColor}
+                  padding="8px"
+                >
+                  <Box display="flex" justifyContent={'space-between'}>
+                    <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+                      <Text fontSize="2xl">{selectedRoom ? selectedRoom.data.name : 'Room'}</Text>
+                      <Box display="flex" justifyContent={'left'} gap="8px">
+                        <IconButton
+                          size="sm"
+                          colorScheme="teal"
+                          variant={'outline'}
+                          aria-label="create-room"
+                          fontSize="xl"
+                          icon={<MdEdit />}
+                        ></IconButton>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box flex="1" display="flex" my="4" px="2" flexDir="column">
+                    <Box>
+                      <Text fontSize="sm">This is the board's description.</Text>
+                      <Text fontSize="sm">Owner: Ryan Theriot</Text>
+                      <Text fontSize="sm">Created: Jan 5th, 2023</Text>
+                      <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Middle Section Room and Boards */}
+              <Box display="flex" flexDirection="column" height="100%" width="600px" gap="16px">
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  // borderRadius="md"
+                  flex="1"
+                  // border="solid gray 2px"
+                  // background={boardListBG}
+                  padding="8px"
+                >
+                  <Box display="flex" justifyContent={'space-between'}>
+                    <Box mb="2" display="flex" justifyContent={'space-between'} width="100%">
+                      <Text fontSize="2xl">Boards</Text>
+                      <Box mb="2" display="flex" justifyContent={'left'} gap="8px">
+                        <IconButton
+                          size="sm"
+                          colorScheme="teal"
+                          variant={'outline'}
+                          aria-label="create-room"
+                          fontSize="xl"
+                          icon={<MdAdd />}
+                        ></IconButton>
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box flex="1" overflow="hidden" mb="4">
+                    {filteredBoards
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((board) => {
+                        return <BoardCard board={board} onClick={() => {}} />;
+                      })}
+                  </Box>
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    borderRadius="md"
+                    height="300px"
+                    // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
+                    background={linearBGColor}
+                    padding="8px"
+                  >
+                    <Box display="flex" justifyContent={'space-between'}>
+                      <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+                        <Text fontSize="2xl">Board Name</Text>
+                        <Box display="flex" justifyContent={'left'} gap="8px">
+                          <IconButton
+                            size="sm"
+                            colorScheme="teal"
+                            variant={'outline'}
+                            aria-label="create-room"
+                            fontSize="xl"
+                            icon={<MdEdit />}
+                          ></IconButton>
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box flex="1" display="flex" my="4" px="2" flexDir="column">
+                      <Box>
+                        <Text fontSize="sm">This is the board's description.</Text>
+                        <Text fontSize="sm">Owner: Ryan Theriot</Text>
+                        <Text fontSize="sm">Created: Jan 5th, 2023</Text>
+                        <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Right Side Members */}
+              <Box
+                display="flex"
+                flexDirection="column"
+                height="100%"
+                p="8px"
+                // borderRadius="md"
+                // border="solid gray 2px"
+                width="360px"
+                // background={boardListBG}
+              >
+                <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+                  <Text fontSize="2xl">Members</Text>
+                  <Box display="flex" justifyContent={'left'} gap="8px">
+                    <IconButton
+                      size="sm"
+                      colorScheme="teal"
+                      variant={'outline'}
+                      aria-label="create-room"
+                      fontSize="xl"
+                      icon={<MdAdd />}
+                    ></IconButton>
+                    <IconButton
+                      size="sm"
+                      colorScheme="teal"
+                      variant={'outline'}
+                      aria-label="create-room"
+                      fontSize="xl"
+                      icon={<MdManageAccounts />}
+                    ></IconButton>
+                  </Box>
+                </Box>
+                <Box flex="1" overflow="hidden" mb="4">
+                  {filteredUsers.map((user) => {
+                    return <UserCard user={user} onClick={() => {}} />;
+                  })}
+                </Box>
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  borderRadius="md"
+                  height="300px"
+                  // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
+                  background={linearBGColor}
+                  padding="8px"
+                >
+                  <Box display="flex" justifyContent={'space-between'}>
+                    <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+                      <Text fontSize="2xl">Mike</Text>
+                    </Box>
+                  </Box>
+                  <Box flex="1" display="flex" my="4" px="2" flexDir="column" border="solid white 1px" m="2" borderRadius="md">
+                    <Box>chat</Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          ) : (
+            <Box display="flex" flexDirection="column" justifyContent={'center'} alignItems="center" height="100%" width="100%">
+              <Progress isIndeterminate width="100%" borderRadius="md" />
+            </Box>
+          )}
+        </Box>
       </Box>
       {/* {roomsFetched ? (
           <Box
@@ -294,27 +471,10 @@ export function HomePage() {
       </Box> */}
 
       {/* Bottom Bar */}
-      <Box
-        display="flex"
-        flexDirection="row"
-        justifyContent={'space-between'}
-        width="100%"
-        minHeight={'initial'}
-        alignItems="center"
-        py="2"
-        px="2"
-      >
-        <Box display={'flex'}>
-          <MainButton buttonStyle="solid" config={config} />
-          <Box width="400px" px="8px" py="8px" display="flex">
-            <Text fontSize="sm" mr="2">
-              {' '}
-              Search
-            </Text>
-            <Input size="xs"></Input>
-          </Box>
-        </Box>
-        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
+      <Box display="flex" flexDirection="row" justifyContent={'space-between'} width="100%" minHeight={'initial'} alignItems="center" p="2">
+        <MainButton buttonStyle="solid" config={config} />
+
+        <Image src={imageUrl} height="30px" mb="2" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>
   );
@@ -326,25 +486,50 @@ function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) 
   const borderColorGray = useColorModeValue('gray.300', 'gray.700');
   const borderColorG = useHexColor(borderColorGray);
 
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
   return (
     <Box
       // my="4"
-      p="2"
+      background={linearBGColor}
+      p="1"
       pl="4"
+      my="2"
       display="flex"
+      justifyContent={'space-between'}
+      borderColor={props.selected ? borderColor : borderColor}
       onClick={() => props.onClick(props.room)}
-      border={`solid 1px ${props.selected ? 'white' : 'none'}`}
-      // borderRadius="md"
-      borderRight="none"
-      borderLeft="none"
+      border={`solid 1px ${props.selected ? borderColor : 'none'}`}
+      borderLeft={`${borderColor} solid 8px`}
+      borderRadius="md"
       boxSizing="border-box"
       backgroundColor={props.selected ? borderColorG : 'transparent'}
       _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
-      width={props.selected ? 'calc(100% + 2px)' : '100%'}
     >
       <Text fontSize="md" fontWeight="bold" textAlign="center">
         {props.room.data.name}
       </Text>
+      <Box display="flex" gap="4px">
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          aria-label="enter-board"
+          fontSize="xl"
+          colorScheme="teal"
+          icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
+        ></IconButton>
+
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          icon={<MdFavorite />}
+        ></IconButton>
+      </Box>
     </Box>
   );
 }
@@ -354,9 +539,14 @@ function BoardCard(props: { board: Board; onClick: (board: Board) => void }) {
   const borderColor = useHexColor(borderColorValue);
   const borderColorGray = useColorModeValue('gray.300', 'gray.700');
   const borderColorG = useHexColor(borderColorGray);
+
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
   return (
     <Box
-      my="1"
+      my="2"
       p="1"
       px="2"
       display="flex"
@@ -364,13 +554,34 @@ function BoardCard(props: { board: Board; onClick: (board: Board) => void }) {
       justifyContent={'space-between'}
       alignContent={'center'}
       onClick={() => props.onClick(props.board)}
-      background="gray.800"
-      _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
+      background={linearBGColor}
+      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}` }}
     >
       <Text fontSize="md" textAlign="center" lineHeight="32px" fontWeight="bold">
         {props.board.data.name}
       </Text>
-      <IconButton size="sm" variant={'ghost'} aria-label="enter-board" fontSize="xl" icon={<MdExitToApp />}></IconButton>
+      <Box display="flex" gap="2px">
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          aria-label="enter-board"
+          fontSize="xl"
+          colorScheme="teal"
+          icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
+        ></IconButton>
+
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLink />}></IconButton>
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
+
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          icon={<MdSettings />}
+        ></IconButton>
+      </Box>
     </Box>
   );
 }
@@ -381,32 +592,41 @@ function UserCard(props: { user: User; onClick: (user: User) => void }) {
   const borderColorGray = useColorModeValue('gray.300', 'gray.600');
   const borderColorG = useHexColor(borderColorGray);
 
-  const offline = useHexColor('red');
-  const online = useHexColor('green');
+  const offline = useHexColor('teal');
+  const online = useHexColor('gray.700');
   return (
     <Box
       my="2"
       p="2"
+      width="100%"
       display="flex"
-      justifyContent={'left'}
-      alignContent={'center'}
+      justifyContent={'space-between'}
+      // alignContent={'center'}
       onClick={() => props.onClick(props.user)}
       borderRadius="md"
       _hover={{ cursor: 'pointer', background: borderColorG }}
     >
-      <IconButton
-        size="xs"
-        variant={'ghost'}
-        aria-label="enter-board"
-        fontSize="2xl"
-        mr="2"
-        color={Math.random() > 0.5 ? offline : online}
-        icon={<MdPerson />}
-      ></IconButton>
+      <Box display="flex">
+        <IconButton
+          size="xs"
+          variant={'ghost'}
+          aria-label="enter-board"
+          fontSize="2xl"
+          mr="2"
+          color={Math.random() > 0.5 ? offline : online}
+          icon={<MdPerson />}
+        ></IconButton>
 
-      <Text fontSize="sm" fontWeight="bold" textAlign="center" lineHeight="24px">
-        {props.user.data.name}
-      </Text>
+        <Text fontSize="sm" fontWeight="bold" textAlign="center" lineHeight="24px">
+          {props.user.data.name}
+        </Text>
+      </Box>
+      <Box>
+        {' '}
+        <Text fontSize="xs" fontWeight="bold" textAlign="center" lineHeight="24px">
+          Board Name
+        </Text>
+      </Box>
     </Box>
   );
 }
