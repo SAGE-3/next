@@ -1,9 +1,3 @@
-<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/CurrentConditions.tsx
-import React, { useState, useEffect } from 'react';
-import { AppState } from '../../../types';
-import VariableUnits from '../data/VariableUnits';
-import { Box, Text } from '@chakra-ui/react';
-========
 /**
  * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -11,7 +5,6 @@ import { Box, Text } from '@chakra-ui/react';
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
->>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/CurrentConditions.tsx
 
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@chakra-ui/react';
@@ -153,8 +146,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                   flexDirection={'row'}
                   justifyContent="center"
 
-                // alignContent={'center'}
-                // justifyItems={'center'}
+                  // alignContent={'center'}
+                  // justifyItems={'center'}
                 >
                   {station.variables.map((variable, index) => {
                     const variableName = variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
@@ -176,8 +169,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                           display="flex"
                           margin="1rem"
                           flexDirection="column"
-                        // justifyContent={'center'}
-                        // alignContent="center"
+                          // justifyContent={'center'}
+                          // alignContent="center"
                         >
                           <Box>
                             <Text
@@ -207,8 +200,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                               {isNaN(variable.value)
                                 ? variable.value
                                 : variable.value % 1
-                                  ? Number(variable.value).toFixed(2)
-                                  : variable.value}
+                                ? Number(variable.value).toFixed(2)
+                                : variable.value}
                               <span style={{ marginLeft: '3px', fontSize: 30 }}>{variable.unit}</span>
                             </Text>
                           </Box>

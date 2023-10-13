@@ -6,11 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
-import { useEffect, useState } from 'react';
-========
 import React, { useEffect, useState } from 'react';
->>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
@@ -18,26 +14,18 @@ import create from 'zustand';
 // Map library
 import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
-<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
-========
-// import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
->>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
 import { Asset } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
 
 import { App } from '../../../schema';
-<<<<<<<< HEAD:webstack/libs/applications/src/lib/apps/HCDP/viewers/MapViewer.tsx
-import { state as AppState } from '../index';
-========
 import { state as AppState } from '../../HCDP/index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
 
->>>>>>>> dev:webstack/libs/applications/src/lib/apps/SensorOverview/viewers/MapViewer.tsx
 // Styling
 import './maplibre-gl.css';
 
