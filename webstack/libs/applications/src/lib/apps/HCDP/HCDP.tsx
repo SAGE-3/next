@@ -8,34 +8,17 @@
 
 import React, { useEffect, useState } from 'react';
 // Chakra Imports
-<<<<<<< Updated upstream
-import { Button, HStack } from '@chakra-ui/react';
-=======
-import { HStack, ButtonGroup, Tooltip, Button, useColorModeValue, useDisclosure, Select } from '@chakra-ui/react';
+import { HStack, Input, Select } from '@chakra-ui/react';
 // Icon imports
-import { MdOutlineZoomIn, MdOutlineZoomOut } from 'react-icons/md';
-import { useParams } from 'react-router';
 import { AppWindow } from '@sage3/applications/apps';
->>>>>>> Stashed changes
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
-import MapLibreWrapper from './MapLibreWrapper';
+import './styling.css';
 
-// Import the CSS style sheet from the node_modules folder
-import 'leaflet/dist/leaflet.css';
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
-import * as plotty from 'plotty';
-import { fromUrl } from 'geotiff';
-
-<<<<<<< Updated upstream
-import { AppWindow } from '@sage3/applications/apps';
-=======
 type HCDPProps = {
   production: 'new' | 'legacy';
   temperatureAggregations: 'min' | 'max' | 'mean';
@@ -57,42 +40,14 @@ const convertToFahrenheit = (tempInCelcius: number) => {
 // Max and min zoom for leaflet app
 const maxZoom = 18;
 const minZoom = 1;
->>>>>>> Stashed changes
 
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
-  const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const url = '/assets/HCDPTestData.tif';
-
-      const tiff = await fromUrl(url);
-      const image = await tiff.getImage();
-      const data = await image.readRasters();
-      const resolution = image.getResolution();
-      const bbox = image.getBoundingBox();
-      const { width, height } = data;
-      const tiepoint = image.getTiePoints()[0];
-      const [, yScale] = image.getFileDirectory().ModelPixelScale;
-
-      const HCDPData = {
-        nCols: width,
-        nRows: height,
-        xllCorner: tiepoint.x,
-        yllCorner: tiepoint.y - height * yScale,
-        cellXSize: resolution[0],
-        cellYSize: resolution[1],
-      };
-    };
-    fetchData();
-  }, []);
   return (
     <AppWindow app={props}>
-      <MapLibreWrapper {...props} />
+      <></>
     </AppWindow>
   );
 }
@@ -125,12 +80,6 @@ const hawaiiLatLngCoordinates = [
 ];
 
 function ToolbarComponent(props: App): JSX.Element {
-<<<<<<< Updated upstream
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  return <HStack>{/* <Button onClick={() => fetchRequest(props._id)}>Test Fetch</Button> */}</HStack>;
-=======
   const [HCDPFetchObj, setHCDPFetchObj] = useState<HCDPProps>({
     production: 'new',
     temperatureAggregations: 'mean',
@@ -147,7 +96,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   useEffect(() => {
     //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif
-    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_new_max_month_statewide_data_map_2011_03.tif
+    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.ti
     let url = 'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/';
     if (dataType === 'rainfall') {
       url += `rainfall/${HCDPFetchObj.production}/${HCDPFetchObj.periods}/${HCDPFetchObj.extents}/${HCDPFetchObj.availableRainfallFileTypes}/${HCDPFetchObj.year}/rainfall_${HCDPFetchObj.production}_${HCDPFetchObj.periods}_${HCDPFetchObj.extents}_${HCDPFetchObj.availableRainfallFileTypes}_${HCDPFetchObj.year}_${HCDPFetchObj.month}${HCDPFetchObj.extensions}`;
@@ -193,6 +142,13 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const date = event.target.value;
+    const year = date.slice(0, 4);
+    const month = date.slice(5, 7);
+    setHCDPFetchObj({ ...HCDPFetchObj, year, month });
+  };
+
   return (
     <HStack>
       {dataType === 'rainfall' ? (
@@ -213,6 +169,19 @@ function ToolbarComponent(props: App): JSX.Element {
           <option value="mean">Mean</option>
         </Select>
       )}
+
+      <Input
+        w="10rem"
+        mr="1rem"
+        size="xs"
+        onChange={handleDateChange}
+        value={`${HCDPFetchObj.year}-${HCDPFetchObj.month}`}
+        placeholder="Select Date and Time"
+        type="month"
+        // isDisabled={
+        //   widget.visualizationType === 'variableCard' || widget.visualizationType === 'friendlyVariableCard' ? true : false
+        // }
+      />
 
       <Select size="xs" mr="1rem" placeholder={'Select Variable'} value={HCDPFetchObj.extents} onChange={handleChangeExtents}>
         <option value="statewide">Statewide</option>
@@ -263,7 +232,6 @@ function ToolbarComponent(props: App): JSX.Element {
       )}
     </HStack>
   );
->>>>>>> Stashed changes
 }
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
