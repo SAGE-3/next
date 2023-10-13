@@ -6,30 +6,29 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Text } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
 import create from 'zustand';
 // Map library
-import maplibregl, { Marker, latest } from 'maplibre-gl';
+import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+// import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
+
 import { App } from '../../../schema';
-import { state as AppState } from '../index';
+import { state as AppState } from '../../HCDP/index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
 
 // Styling
 import './maplibre-gl.css';
-import React from 'react';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {

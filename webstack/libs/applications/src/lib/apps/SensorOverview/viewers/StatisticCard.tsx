@@ -7,14 +7,14 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, useColorMode, Icon } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
+import { AppState } from '@sage3/applications/schema';
 
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
-import { MdOutlineArrowUpward } from 'react-icons/md';
+import variableUnits from '../data/variableUnits';
+import { WidgetType } from '../utils';
+import { getFormattedTimePeriod } from '../SensorOverview';
+
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
   const mean = values.reduce((sum: number, current: number) => sum + current) / values.length;
@@ -85,11 +85,10 @@ type VariableProps = {
   startDate: string;
   endDate: string;
   stationSTIDName: string;
-  images: string[];
   color: string;
 };
 
-export default function VariableCard(
+export default function StatisticCard(
   props: {
     isLoaded: boolean;
     stationNames: string[];
@@ -99,6 +98,7 @@ export default function VariableCard(
     size?: { width: number; height: number; depth: number };
     generateAllVariables?: boolean;
     isCustomizeWidgetMenu: boolean;
+    widget: WidgetType;
   } & { state: AppState }
 ) {
   const s = props.state as AppState;
@@ -109,7 +109,7 @@ export default function VariableCard(
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
-    if (s.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
+    if (props.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
     for (let i = 0; i < props.stationMetadata.length; i++) {
       props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
       props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
@@ -123,24 +123,24 @@ export default function VariableCard(
     for (let i = 0; i < props.stationMetadata.length; i++) {
       // Check here if generating all the variable names for a station
       if (props.generateAllVariables) {
-        s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
+        props.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
       }
-      for (let j = 0; j < s.widget.yAxisNames.length; j++) {
-        const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
+      for (let j = 0; j < props.widget.yAxisNames.length; j++) {
+        let sensorValues = props.stationMetadata[i].OBSERVATIONS[props.widget.yAxisNames[j]];
         if (sensorValues) {
           let unit = '';
-          let images: string[] = [];
           let color = '#ffffff';
-          for (let i = 0; i < VariableUnits.length; i++) {
-            if (s.widget.yAxisNames[j].includes(VariableUnits[i].variable)) {
-              unit = VariableUnits[i].unit;
-              images = VariableUnits[i].images;
+          for (let i = 0; i < variableUnits.length; i++) {
+            if (props.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
+              unit = variableUnits[i].unit;
               color = variableUnits[i].color;
             }
           }
+
+          sensorValues = sensorValues.filter((value: number) => Number(value) !== 0);
           if (sensorValues.length !== 0) {
             values.push({
-              variableName: s.widget.yAxisNames[j],
+              variableName: props.widget.yAxisNames[j],
               stationName: props.stationMetadata[i].NAME,
               value: sensorValues[sensorValues.length - 1],
               average: calculateMean(sensorValues),
@@ -151,12 +151,11 @@ export default function VariableCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
               endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-              images: images,
               color: color,
             });
           } else {
             values.push({
-              variableName: s.widget.yAxisNames[j],
+              variableName: props.widget.yAxisNames[j],
               stationName: props.stationMetadata[i].NAME,
               value: 0,
               average: 0,
@@ -167,13 +166,12 @@ export default function VariableCard(
               stationSTIDName: props.stationMetadata[i].STID,
               startDate: props.startDate,
               endDate: '2022-04-25T19:55:00Z',
-              images: images,
               color: color,
             });
           }
 
           // Air Temperature has Celius and Fahrenheit to display as "secondary"
-          if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
+          if (props.widget.yAxisNames[0] === 'air_temp_set_1') {
             secondaryValues = celsiusToFahrenheit(sensorValues);
             setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
           }
@@ -181,7 +179,7 @@ export default function VariableCard(
       }
     }
     setVariablesToDisplay(values);
-  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.state.widget)]);
+  }, [JSON.stringify(props.stationMetadata), JSON.stringify(props.widget)]);
   return (
     <>
       {props.size ? (
@@ -196,54 +194,56 @@ export default function VariableCard(
         >
           {variablesToDisplay.length === 1
             ? variablesToDisplay.map((variable: VariableProps, index: number) => {
-                return (
-                  <React.Fragment key={index}>
-                    <Content
-                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                      isLoaded={props.isLoaded}
-                      secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      stationNames={props.stationNames}
-                      variableToDisplayLength={variablesToDisplay.length}
-                      s={s}
-                      timeSinceLastUpdate={props.timeSinceLastUpdate}
-                      key={index}
-                      variable={variable}
-                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                    />
-                  </React.Fragment>
-                );
-              })
+              return (
+                <React.Fragment key={index}>
+                  <Content
+                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                    isLoaded={props.isLoaded}
+                    secondaryValuesToDisplay={secondaryValuesToDisplay}
+                    stationNames={props.stationNames}
+                    variableToDisplayLength={variablesToDisplay.length}
+                    s={s}
+                    timeSinceLastUpdate={props.timeSinceLastUpdate}
+                    key={index}
+                    variable={variable}
+                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    timePeriod={props.widget.timePeriod}
+                  />
+                </React.Fragment>
+              );
+            })
             : variablesToDisplay.map((variable: VariableProps, index: number) => {
-                const currentStationName = variable.stationName;
-                const isNewStation = currentStationName !== previousStationName;
+              const currentStationName = variable.stationName;
+              const isNewStation = currentStationName !== previousStationName;
 
-                previousStationName = currentStationName;
-                return (
-                  <React.Fragment key={index}>
-                    {props.generateAllVariables ? (
-                      isNewStation ? (
-                        <>
-                          <Divider orientation="horizontal" />
-                          <Box h="20px" width="100%" bgColor="gray.200" />
-                        </>
-                      ) : null
-                    ) : null}
+              previousStationName = currentStationName;
+              return (
+                <React.Fragment key={index}>
+                  {props.generateAllVariables ? (
+                    isNewStation ? (
+                      <>
+                        <Divider orientation="horizontal" />
+                        <Box h="20px" width="100%" bgColor="gray.200" />
+                      </>
+                    ) : null
+                  ) : null}
 
-                    <Content
-                      isLoaded={props.isLoaded}
-                      secondaryValuesToDisplay={secondaryValuesToDisplay}
-                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                      stationNames={props.stationNames}
-                      variableToDisplayLength={variablesToDisplay.length}
-                      s={s}
-                      timeSinceLastUpdate={props.timeSinceLastUpdate}
-                      key={index}
-                      variable={variable}
-                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                    />
-                  </React.Fragment>
-                );
-              })}
+                  <Content
+                    isLoaded={props.isLoaded}
+                    secondaryValuesToDisplay={secondaryValuesToDisplay}
+                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                    stationNames={props.stationNames}
+                    variableToDisplayLength={variablesToDisplay.length}
+                    s={s}
+                    timeSinceLastUpdate={props.timeSinceLastUpdate}
+                    key={index}
+                    variable={variable}
+                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    timePeriod={props.widget.timePeriod}
+                  />
+                </React.Fragment>
+              );
+            })}
         </Box>
       ) : (
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
@@ -259,21 +259,21 @@ export default function VariableCard(
               variablesToDisplay[0]
                 ? variablesToDisplay[0]
                 : {
-                    variableName: 'air_temperature_set_1',
-                    stationName: 'Station Name',
-                    value: 42.01,
-                    average: 38.42,
-                    stdDev: 12,
-                    high: 82,
-                    low: 12,
-                    unit: 'unit',
-                    color: '#fff321',
-                    startDate: props.startDate,
-                    stationSTIDName: 'HI012',
-                    endDate: '2022-04-25T19:55:00Z',
-                    images: [],
-                  }
+                  variableName: 'air_temperature_set_1',
+                  stationName: 'Station Name',
+                  value: 42.01,
+                  average: 38.42,
+                  stdDev: 12,
+                  high: 82,
+                  low: 12,
+                  unit: 'unit',
+                  color: '#fff321',
+                  startDate: props.startDate,
+                  stationSTIDName: 'HI012',
+                  endDate: '2022-04-25T19:55:00Z',
+                }
             }
+            timePeriod={props.widget.timePeriod}
           />
         </Box>
       )}
@@ -291,6 +291,7 @@ const Content = (props: {
   secondaryValuesToDisplay?: number;
   variable: VariableProps;
   isCustomizeWidgetMenu: boolean;
+  timePeriod: string;
 }) => {
   const variableName = props.variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   // delete variableName[variableName.length - 1];
@@ -305,8 +306,8 @@ const Content = (props: {
     } else {
       setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
     }
-    console.log(props.size.width, props.size.height);
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
+
   return (
     <>
       <Box
@@ -344,55 +345,79 @@ const Content = (props: {
         alignContent="center"
         textAlign={'center'}
       >
-        <Box bg="#2D62D2">
-          <Text textShadow={'black 2px 2px'} color="white" textAlign={'center'} fontSize={scaleToFontSize / 10}>
+        <Box>
+          <Text textAlign={'center'} fontSize={scaleToFontSize / 12}>
             {props.variable.stationName}
           </Text>
         </Box>
 
         <Box>
-          <Text mt={scaleToFontSize / 6} textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 8}>
+          <Text textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 12}>
             {variableName.join(' ')}
           </Text>
         </Box>
 
-        <Box>
+        <Box display="flex" flexDir="column" justifyContent="center" alignItems="center">
           {props.isLoaded ? (
             <>
-              {/* <Box display="flex" justifyContent={'center'}>
-                {' '}
-                {props.variable.variableName === 'wind_direction_set_1' ? (
-                  <Icon fontSize={200} as={MdOutlineArrowUpward} transform={`rotate(${props.variable.value}deg)`} />
-                ) : null}
-              </Box> */}
-
-              <Text
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                overflow="hidden"
-                fontSize={scaleToFontSize / 6}
-                fontWeight="bold"
-              >
+              <Text fontSize={scaleToFontSize / 7} fontWeight="bold">
                 {isNaN(props.variable.value)
                   ? props.variable.value
                   : props.variable.value % 1
-                  ? Number(props.variable.value).toFixed(1)
-                  : props.variable.value}
+                    ? Number(props.variable.value).toFixed(1)
+                    : props.variable.value}
                 <span>&nbsp;{props.variable.unit}</span>
               </Text>
+              <Box
+                fontSize={scaleToFontSize / 20}
+                w={scaleToFontSize + 200}
+                p={scaleToFontSize / 30}
+                px={scaleToFontSize / 15}
+                // borderRadius={'lg'}
+                borderRadius={'40px'}
+                boxShadow={'lg'}
+                overflow="visible"
+                // color="white"
+                // bg="#2A2A2A"
+                border={`${scaleToFontSize / 100}px solid grey`}
+                style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
+              >
+                <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>
+                <Box mt={scaleToFontSize / 25} display="flex" flexDir="row" justifyContent="space-between">
+                  <Box>
+                    <Text>Low</Text>
+                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
+                      {props.variable.low} {props.variable.unit}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text>Average</Text>
+                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
+                      {props.variable.average.toFixed(1)} {props.variable.unit}
+                    </Text>
+                  </Box>
+                  <Box>
+                    <Text>High</Text>
+                    <Text fontWeight={'bold'} fontSize={scaleToFontSize / 16}>
+                      {props.variable.high} {props.variable.unit}
+                    </Text>
+                  </Box>
+                </Box>
+              </Box>
             </>
           ) : (
             <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
           )}
+        </Box>
 
+        <Box>
           <Text
             overflow="hidden"
             color="gray.400"
             transform={`translateY(${scaleToFontSize / 20}px)`}
-            fontSize={scaleToFontSize / 20}
+            fontSize={scaleToFontSize / 30}
             fontWeight="semibold"
-            // lineHeight={'48px'}
+          // lineHeight={'48px'}
           >
             <>{props.timeSinceLastUpdate}</>
           </Text>
@@ -402,6 +427,6 @@ const Content = (props: {
   );
 };
 
-VariableCard.defaultProps = {
+StatisticCard.defaultProps = {
   generateAllVariables: false,
 };
