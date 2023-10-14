@@ -4556,7 +4556,7 @@
     "@types/estree" "*"
     "@types/json-schema" "*"
 
-"@types/esri-leaflet-geocoder@^2.2.3":
+"@types/esri-leaflet-geocoder@^2.2.5":
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/@types/esri-leaflet-geocoder/-/esri-leaflet-geocoder-2.2.5.tgz#aae1b4c4949c9a8bca3101c4f8ede7d50f60c4e6"
   integrity sha512-BmkR8pDy1qPIbb/Kgwq97OEqYrPkdI9fTDBi/NceyuraQ9CrFtoptqsgIPlpCIZFnumMF+XZYwemuWjz/5M4bQ==
