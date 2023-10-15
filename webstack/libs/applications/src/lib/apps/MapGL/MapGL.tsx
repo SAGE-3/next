@@ -16,22 +16,24 @@ import create from 'zustand';
 import maplibregl from 'maplibre-gl';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+// GeoTiff
+import { fromUrl, TypedArray } from 'geotiff';
+// @ts-ignore
 import * as Plotty from 'plotty';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+import { isGeoTiff, isTiff } from '@sage3/shared';
+import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
-import { fromUrl } from 'geotiff';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -146,24 +148,36 @@ function AppComponent(props: App): JSX.Element {
       // when the map is loaded, add the source and layers
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
-        console.log('MapGL> Adding source to map', newURL);
-        if (file.data.mimetype === 'image/tiff') {
+        if (isGeoTiff(file.data.mimetype) || isTiff(file.data.mimetype)) {
           try {
             // Fetching the tiff file
             const tiff = await fromUrl(newURL);
-
-            //Extracting metadata from tiff file
+            // Extracting metadata from tiff file
             const image = await tiff.getImage();
             const bbox = image.getBoundingBox();
-            const data: any = await image.readRasters();
-            const width = image.getWidth();
-            const height = image.getHeight();
+            const geoKeys = image.getGeoKeys();
+            if (geoKeys.GeographicTypeGeoKey != 4326) {
+              // not GCS_WGS_84
+              console.log('MapGL> not a GCS_WGS_84 file', geoKeys.GeographicTypeGeoKey);
+              toast({
+                title: 'Error',
+                description: 'Only GCS_WGS_84 files can be loaded',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+              return;
+            }
+
+            const data = await image.readRasters();
+            const { width, height } = data;
 
             // Compute min and max values
             let min = Infinity;
             let max = -Infinity;
-            for (let i = 0; i < data[0].length; i++) {
-              const value = data[0][i];
+            const values = data[0] as TypedArray;
+            for (let i = 0; i < values.length; i++) {
+              const value = values[i];
               if (value < min) min = value;
               if (value > max) max = value;
             }
@@ -184,7 +198,8 @@ function AppComponent(props: App): JSX.Element {
               width: width,
               height: height,
               domain: [0, max],
-              colorScale: 'custom',
+              colorScale: 'greys',
+              // colorScale: 'custom',
             });
             plot.render();
 
@@ -210,7 +225,14 @@ function AppComponent(props: App): JSX.Element {
                 'raster-opacity': 0.7,
               },
             });
-          } catch (error: any) {
+            center
+            const x = (bbox[0] + bbox[2]) / 2;
+            const y = (bbox[1] + bbox[3]) / 2;
+            const cc = [x, y];
+            // Fit map: duration is zero to get a valid zoom value next
+            map.fitBounds(bbox, { padding: 20, duration: 0 });
+            updateState(props._id, { zoom: map.getZoom(), location: cc });
+          } catch (error) {
             console.error(`Error Reading ${file.data.originalfilename}`, error);
           }
         } else {
@@ -230,12 +252,12 @@ function AppComponent(props: App): JSX.Element {
             // Calculate the bounding box and center using turf library
             const box = bbox(gjson);
             const cc = center(gjson).geometry.coordinates;
-            // Duration is zero to get a valid zoom value next
+            // Fit map: duration is zero to get a valid zoom value next
             map.fitBounds(box, { padding: 20, duration: 0 });
             updateState(props._id, { zoom: map.getZoom(), location: cc });
             // Add the source to the map
             setSource({ id: file._id, data: gjson });
-          } catch (error: any) {
+          } catch (error) {
             toast({
               title: 'Error',
               description: 'Error loading GEOJSON file',
@@ -356,8 +378,8 @@ function ToolbarComponent(props: App): JSX.Element {
   });
 
   // from the UI to the react state
-  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
-  const changeAddr = (evt: any) => {
+  const handleAddrChange = (event: React.ChangeEvent<HTMLInputElement>) => setAddrValue(event.target.value);
+  const changeAddr = (evt: React.FormEvent) => {
     evt.preventDefault();
 
     geocoder.text(addrValue).run((err: any, results: any, response: any) => {
