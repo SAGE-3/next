@@ -15,7 +15,7 @@ import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 
-import MapLibreWrapper from './MapLibreWrapper';
+import './styling.css';
 
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
@@ -30,37 +30,10 @@ import { AppWindow } from '@sage3/applications/apps';
 // HCDP app
 function AppComponent(props: App): JSX.Element {
   // State and Store
-  const s = props.data.state as AppState;
 
-  const updateState = useAppStore((state) => state.updateState);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const url = '/assets/HCDPTestData.tif';
-
-      const tiff = await fromUrl(url);
-      const image = await tiff.getImage();
-      const data = await image.readRasters();
-      const resolution = image.getResolution();
-      const bbox = image.getBoundingBox();
-      const { width, height } = data;
-      const tiepoint = image.getTiePoints()[0];
-      const [, yScale] = image.getFileDirectory().ModelPixelScale;
-
-      const HCDPData = {
-        nCols: width,
-        nRows: height,
-        xllCorner: tiepoint.x,
-        yllCorner: tiepoint.y - height * yScale,
-        cellXSize: resolution[0],
-        cellYSize: resolution[1],
-      };
-    };
-    fetchData();
-  }, []);
   return (
     <AppWindow app={props}>
-      <MapLibreWrapper {...props} />
+      <></>
     </AppWindow>
   );
 }

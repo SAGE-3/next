@@ -22,7 +22,7 @@ import { Asset } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
 
 import { App } from '../../../schema';
-import { state as AppState } from '../../HCDP/index';
+import { state as AppState } from '../index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
 
