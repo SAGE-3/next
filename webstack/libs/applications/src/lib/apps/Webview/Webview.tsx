@@ -23,7 +23,7 @@ import {
 import { FaEyeSlash } from 'react-icons/fa';
 
 import { useParams } from 'react-router';
-import create from 'zustand';
+import { create } from 'zustand';
 
 import { useAppStore, useUser, processContentURL, useHexColor } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -35,18 +35,32 @@ import { isElectron } from './util';
 // @ts-ignore
 import { WebviewTag } from 'electron';
 
-export const useStore = create((set: any) => ({
-  title: {} as { [key: string]: string },
-  setTitle: (id: string, title: string) => set((state: any) => ({ title: { ...state.title, ...{ [id]: title } } })),
+interface WebviewStore {
+  title: { [key: string]: string },
+  setTitle: (id: string, title: string) => void,
 
-  mute: {} as { [key: string]: boolean },
-  setMute: (id: string, mute: boolean) => set((state: any) => ({ mute: { ...state.mute, ...{ [id]: mute } } })),
+  mute: { [key: string]: boolean },
+  setMute: (id: string, mute: boolean) => void,
 
-  view: {} as { [key: string]: WebviewTag },
-  setView: (id: string, view: WebviewTag) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
+  view: { [key: string]: WebviewTag },
+  setView: (id: string, view: WebviewTag) => void,
 
-  localURL: {} as { [key: string]: string },
-  setLocalURL: (id: string, url: string) => set((state: any) => ({ localURL: { ...state.localURL, ...{ [id]: url } } })),
+  localURL: { [key: string]: string },
+  setLocalURL: (id: string, url: string) => void
+}
+
+export const useStore = create<WebviewStore>()((set) => ({
+  title: {},
+  setTitle: (id: string, title: string) => set((state) => ({ title: { ...state.title, ...{ [id]: title } } })),
+
+  mute: {},
+  setMute: (id: string, mute: boolean) => set((state) => ({ mute: { ...state.mute, ...{ [id]: mute } } })),
+
+  view: {},
+  setView: (id: string, view: WebviewTag) => set((state) => ({ view: { ...state.view, ...{ [id]: view } } })),
+
+  localURL: {},
+  setLocalURL: (id: string, url: string) => set((state) => ({ localURL: { ...state.localURL, ...{ [id]: url } } })),
 }));
 
 /* App component for Webview */
@@ -59,10 +73,10 @@ function AppComponent(props: App): JSX.Element {
   // Local State
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string>(s.webviewurl);
-  const setView = useStore((state: any) => state.setView);
+  const setView = useStore((state) => state.setView);
   const [zoom, setZoom] = useState(s.zoom ?? 1.0);
-  const mute = useStore((state: any) => state.mute[props._id]);
-  const setMute = useStore((state: any) => state.setMute);
+  const mute = useStore((state) => state.mute[props._id]);
+  const setMute = useStore((state) => state.setMute);
   const createApp = useAppStore((state) => state.create);
 
   // User and board info
@@ -76,7 +90,7 @@ function AppComponent(props: App): JSX.Element {
   // Track if your URL matches the state's URL
   const [urlMatchesState, setUrlMatchesState] = useState(true);
   const matchIconColor = useHexColor('red');
-  const setLocalURL = useStore((state: any) => state.setLocalURL);
+  const setLocalURL = useStore((state) => state.setLocalURL);
 
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
@@ -338,13 +352,13 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const mute = useStore((state: any) => state.mute[props._id]);
-  const setMute = useStore((state: any) => state.setMute);
-  const view = useStore((state: any) => state.view[props._id]);
+  const mute = useStore((state) => state.mute[props._id]);
+  const setMute = useStore((state) => state.setMute);
+  const view = useStore((state) => state.view[props._id]);
 
   // Local URL
-  const setLocalURL = useStore((state: any) => state.setLocalURL);
-  const localURL = useStore((state: any) => state.localURL[props._id]);
+  const setLocalURL = useStore((state) => state.setLocalURL);
+  const localURL = useStore((state) => state.localURL[props._id]);
   const [viewURL, setViewURL] = useState(localURL);
 
   useEffect(() => {
@@ -385,7 +399,7 @@ function ToolbarComponent(props: App): JSX.Element {
       url = new URL(url).toString();
       updateState(props._id, { webviewurl: url });
       // update the address bar
-      setLocalURL(url);
+      setLocalURL(props._id, url);
     } catch (error) {
       console.log('Webview> Invalid URL', url);
       toast({

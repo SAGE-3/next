@@ -10,7 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
-import create from 'zustand';
+import { create } from 'zustand';
 // Map library
 import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
@@ -35,10 +35,15 @@ export function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
 }
 
+interface MapStore {
+  map: { [key: string]: maplibregl.Map },
+  saveMap: (id: string, map: maplibregl.Map) => void,
+}
+
 // Zustand store to communicate with toolbar
-export const useStore = create((set) => ({
+const useStore = create<MapStore>()((set) => ({
   map: {} as { [key: string]: maplibregl.Map },
-  saveMap: (id: string, map: maplibregl.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
+  saveMap: (id: string, map: maplibregl.Map) => set((state) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
 
 // MapTiler API Key
@@ -53,8 +58,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
-  const saveMap = useStore((state: any) => state.saveMap);
-  const map = useStore((state: any) => state.map[props._id + '0']);
+  const saveMap = useStore((state) => state.saveMap);
+  const map = useStore((state) => state.map[props._id + '0']);
   const stationDataRef = React.useRef(stationData);
   const stationNameRef = React.useRef(s.stationNames);
   // Assets store
@@ -164,7 +169,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
           const box = bbox(gjson);
           const cc = center(gjson).geometry.coordinates;
           // Duration is zero to get a valid zoom value next
-          map.fitBounds(box, { padding: 20, duration: 0 });
+          map.fitBounds([box[0], box[1], box[2], box[3]], { padding: 20, duration: 0 });
           updateState(props._id, { zoom: map.getZoom(), location: cc });
           // Add the source to the map
           setSource({ id: file._id, data: gjson });
@@ -247,8 +252,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         pitch: s.pitch,
         center: [s.location[0], s.location[1]],
         zoom: s.zoom,
-        speed: 0.2,
-        curve: 1,
+        // speed: 0.2,
+        // curve: 1,
         duration: 1000,
       });
     }
@@ -258,7 +263,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   useEffect(() => {
     // when app is resized, reset the center
     if (map) {
-      map.setCenter(s.location, { duration: 0 });
+      map.setCenter([s.location[0], s.location[1]], { duration: 0 });
       map.resize();
     }
   }, [props.data.size.width, props.data.size.height, map]);

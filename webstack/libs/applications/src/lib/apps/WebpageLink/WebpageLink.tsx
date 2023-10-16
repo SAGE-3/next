@@ -28,7 +28,8 @@ import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
@@ -38,9 +39,14 @@ import { AppWindow } from '../../components';
 // @ts-ignore
 import { WebviewTag } from 'electron';
 
-export const useStore = create((set: any) => ({
-  sock: {} as { [key: string]: WebSocket },
-  setSocket: (id: string, sock: WebSocket) => set((state: any) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
+interface SockStore {
+  sock: { [key: string]: WebSocket };
+  setSocket: (id: string, sock: WebSocket) => void;
+}
+
+export const useStore = create<SockStore>()((set) => ({
+  sock: {},
+  setSocket: (id: string, sock: WebSocket) => set((state) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
 }));
 
 /* App component for BoardLink */
