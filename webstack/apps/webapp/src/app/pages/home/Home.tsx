@@ -281,14 +281,6 @@ export function HomePage() {
                       fontSize="xl"
                       icon={<MdAdd />}
                     ></IconButton>
-                    <IconButton
-                      size="sm"
-                      colorScheme="teal"
-                      variant={'outline'}
-                      aria-label="create-room"
-                      fontSize="xl"
-                      icon={<MdSearch />}
-                    ></IconButton>
                   </Box>
                 </Box>
 
@@ -411,7 +403,7 @@ export function HomePage() {
                 flexDirection="column"
                 height="100%"
                 p="8px"
-                width="320px"
+                width="280px"
                 // background={boardListBG}
               >
                 <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
@@ -605,8 +597,8 @@ function UserCard(props: { user: User; onClick: (user: User) => void }) {
   const online = useHexColor('gray.700');
   return (
     <Box
-      my="2"
-      p="2"
+      my="1"
+      p="1"
       width="100%"
       display="flex"
       justifyContent={'space-between'}
@@ -615,26 +607,27 @@ function UserCard(props: { user: User; onClick: (user: User) => void }) {
       borderRadius="md"
       _hover={{ cursor: 'pointer', background: borderColorG }}
     >
-      <Box display="flex">
+      <Box display="flex" alignItems={'center'}>
         <IconButton
-          size="xs"
+          size="md"
           variant={'ghost'}
           aria-label="enter-board"
-          fontSize="2xl"
-          mr="2"
+          fontSize="4xl"
           color={Math.random() > 0.5 ? offline : online}
           icon={<MdPerson />}
         ></IconButton>
-
-        <Text fontSize="sm" fontWeight="bold" textAlign="center" lineHeight="24px">
-          {props.user.data.name}
-        </Text>
+        <Box display="flex" flexDir="column">
+          <Text fontSize="sm" fontWeight="bold" textAlign="left">
+            {props.user.data.name}
+          </Text>
+          <Text fontSize="xs" textAlign="left">
+            Board Name
+          </Text>
+        </Box>
       </Box>
       <Box>
         {' '}
-        <Text fontSize="xs" fontWeight="bold" textAlign="center" lineHeight="24px">
-          Board Name
-        </Text>
+        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
       </Box>
     </Box>
   );
