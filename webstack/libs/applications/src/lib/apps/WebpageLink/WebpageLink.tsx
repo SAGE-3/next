@@ -98,7 +98,8 @@ function AppComponent(props: App): JSX.Element {
               const imgid = 'image' + props._id;
               const img = document.getElementById(imgid) as HTMLImageElement;
               if (img) {
-                img.src = 'data:image/jpeg;charset=utf-8;base64,' + msg.params.pixels;
+                // img.src = 'data:image/jpeg;charset=utf-8;base64,' + msg.params.pixels;
+                img.src = 'data:image/avif;charset=utf-8;base64,' + msg.params.pixels;
               }
             }
           };
@@ -201,18 +202,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 
-  // Throttle Function
-  const throttleUpdate = throttle(60, (data: any, width: number, height: number) => {
-    // save the dimensions of the sidebar
-    setDimensions({ width, height });
-    // Send the pixels to the server
-    if (sock && sock.readyState === sock.OPEN) {
-      sock.send(JSON.stringify({ type: 'pixels', params: { room: props._id, pixels: data, width, height } }));
-    }
-  });
-  // Keep the throttlefunc reference
-  const throttleFunc = useCallback(throttleUpdate, [sock]);
-
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
     // event did-attach callback
@@ -264,7 +253,19 @@ function ToolbarComponent(props: App): JSX.Element {
       const id = webviewNode.current.getWebContentsId();
       // Load electron and the IPCRender
       window.electron.on('paint', (arg: any) => {
-        if (arg.id === id) throttleFunc(arg.buf, arg.dirty.width, arg.dirty.height);
+        if (arg.id === id) {
+          // throttleFunc(arg.buf, arg.dirty.width, arg.dirty.height);
+          // save the dimensions of the sidebar
+          setDimensions({ width: arg.dirty.width, height: arg.dirty.height });
+          // Send the pixels to the server
+          if (sock && sock.readyState === sock.OPEN) {
+            sock.send(JSON.stringify({
+              type: 'pixels', params: {
+                room: props._id, pixels: arg.buf, width: arg.dirty.width, height: arg.dirty.height
+              }
+            }));
+          }
+        }
       });
       // Get the webview dimensions for mobile emulation
       const width = webviewNode.current.offsetWidth;
@@ -272,7 +273,7 @@ function ToolbarComponent(props: App): JSX.Element {
       // save the dimensions of the sidebar
       setDimensions({ width, height });
       // Send the streamview event to electron
-      window.electron.send('streamview', { url: s.url, id, width, height });
+      window.electron.send('streamview', { url: s.url, id, width, height, dpr: window.devicePixelRatio });
     } else {
       if (webviewNode.current) {
         if (attached && domReady) {
@@ -348,14 +349,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const openSidebar = () => {
     updateState(props._id, { streaming: true });
+    // Keep the same width, but change the height to match the aspect ratio
+    const newHeight = props.data.size.width * (dimensions.height / dimensions.width);
+    // Update the application window size
     update(props._id, {
-      size: {
-        width: props.data.size.width,
-        height: props.data.size.width * (dimensions.height / dimensions.width),
-        depth: props.data.size.depth,
-      },
+      size: { width: props.data.size.width, height: newHeight, depth: props.data.size.depth },
     });
-
+    // Open the sidebar
     onOpen();
   };
 
