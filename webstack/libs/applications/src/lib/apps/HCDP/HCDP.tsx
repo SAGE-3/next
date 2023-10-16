@@ -94,9 +94,15 @@ function ToolbarComponent(props: App): JSX.Element {
   });
   const [dataType, setDataType] = useState('rainfall');
 
+  const [parameterOptionValue, setParameterOptionValue] = useState('rainfall');
+
   useEffect(() => {
     //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif
-    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.ti
+    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif
+    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/day/statewide/data_map/2011/temperature_max_day_statewide_data_map_2011_03.tif
+    //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/rainfall/new/month/statewide/data_map/2012/rainfall_new_month_statewide_data_map_2012_03.tif
+    //https://ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/rainfall/new/day/statewide/data_map/2011/rainfall_new_day_statewide_data_map_2011_03.tif
+
     let url = 'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/';
     if (dataType === 'rainfall') {
       url += `rainfall/${HCDPFetchObj.production}/${HCDPFetchObj.periods}/${HCDPFetchObj.extents}/${HCDPFetchObj.availableRainfallFileTypes}/${HCDPFetchObj.year}/rainfall_${HCDPFetchObj.production}_${HCDPFetchObj.periods}_${HCDPFetchObj.extents}_${HCDPFetchObj.availableRainfallFileTypes}_${HCDPFetchObj.year}_${HCDPFetchObj.month}${HCDPFetchObj.extensions}`;
@@ -107,41 +113,6 @@ function ToolbarComponent(props: App): JSX.Element {
     console.log(url);
   }, [HCDPFetchObj]);
 
-  const handleChangeProduction = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const production = event.target.value as 'new' | 'legacy';
-    setHCDPFetchObj({ ...HCDPFetchObj, production });
-  };
-
-  const handleChangeAggregation = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const temperatureAggregations = event.target.value as 'min' | 'max' | 'mean';
-    setHCDPFetchObj({ ...HCDPFetchObj, temperatureAggregations });
-  };
-
-  const handleChangeExtents = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const extents = event.target.value as 'statewide' | 'bi' | 'ka' | 'mn' | 'oa';
-    setHCDPFetchObj({ ...HCDPFetchObj, extents });
-  };
-
-  const handleChangeFill = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const fill = event.target.value as 'raw' | 'partial';
-    setHCDPFetchObj({ ...HCDPFetchObj, fill });
-  };
-  const handleChangeDataType = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const dataType = event.target.value as 'rainfall' | 'temperature';
-    setDataType(dataType);
-  };
-
-  const handleFileType = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    if (dataType === 'rainfall') {
-      const availableRainfallFileTypes = event.target.value as 'data_map' | 'se' | 'anom' | 'anom_se' | 'metadata' | 'station_data';
-
-      setHCDPFetchObj({ ...HCDPFetchObj, availableRainfallFileTypes });
-    } else {
-      const availableTemperatureFileTypes = event.target.value as 'data_map' | 'se' | 'metadata' | 'station_data';
-      setHCDPFetchObj({ ...HCDPFetchObj, availableTemperatureFileTypes: availableTemperatureFileTypes });
-    }
-  };
-
   const handleDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const date = event.target.value;
     const year = date.slice(0, 4);
@@ -149,26 +120,54 @@ function ToolbarComponent(props: App): JSX.Element {
     setHCDPFetchObj({ ...HCDPFetchObj, year, month });
   };
 
+  const handleParameterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value;
+    setParameterOptionValue(value);
+    if (value === 'rainfall') {
+      setHCDPFetchObj({ ...HCDPFetchObj, production: 'new' });
+      setDataType('rainfall');
+    } else if (value === 'legacyRainfall') {
+      setHCDPFetchObj({ ...HCDPFetchObj, production: 'legacy', periods: 'month' });
+      setDataType('rainfall');
+    } else if (value === 'maximumTemperature') {
+      setHCDPFetchObj({ ...HCDPFetchObj, temperatureAggregations: 'max', production: 'new' });
+      setDataType('temperature');
+    } else if (value === 'minimumTemperature') {
+      setHCDPFetchObj({ ...HCDPFetchObj, temperatureAggregations: 'min', production: 'new' });
+      setDataType('temperature');
+    } else if (value === 'meanTemperature') {
+      setHCDPFetchObj({ ...HCDPFetchObj, temperatureAggregations: 'mean', production: 'new' });
+      setDataType('temperature');
+    }
+  };
+
+  const handlePeriodsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const periods = event.target.value as 'month' | 'day';
+    setHCDPFetchObj({ ...HCDPFetchObj, periods });
+  };
+
   return (
     <HStack>
-      {dataType === 'rainfall' ? (
-        <Select size="xs" mr="1rem" placeholder={'Select Variable'} value={HCDPFetchObj.production} onChange={handleChangeProduction}>
-          <option value="new">New</option>
-          <option value="legacy">Legacy</option>
-        </Select>
-      ) : (
-        <Select
-          size="xs"
-          mr="1rem"
-          placeholder={'Select Variable'}
-          value={HCDPFetchObj.temperatureAggregations}
-          onChange={handleChangeAggregation}
-        >
-          <option value="min">Min</option>
-          <option value="max">Max</option>
-          <option value="mean">Mean</option>
-        </Select>
-      )}
+      <Select w="10rem" size="xs" mr="1rem" placeholder={'Select Dataset'} value={parameterOptionValue} onChange={handleParameterChange}>
+        <option value="rainfall">Rainfall</option>
+        <option value="legacyRainfall">Legacy Rainfall</option>
+        <option value="maximumTemperature">Maximum Temperature</option>
+        <option value="minimumTemperature">Minimum Temperature</option>
+        <option value="meanTemperature">Mean Temperature</option>
+      </Select>
+
+      <Select
+        isDisabled={HCDPFetchObj.production === 'legacy' ? true : false}
+        size="xs"
+        mr="1rem"
+        w="10rem"
+        placeholder={'Time Period'}
+        value={HCDPFetchObj.periods}
+        onChange={handlePeriodsChange}
+      >
+        <option value="month">Monthly</option>
+        <option value="day">Daily</option>
+      </Select>
 
       <Input
         w="10rem"
@@ -178,58 +177,7 @@ function ToolbarComponent(props: App): JSX.Element {
         value={`${HCDPFetchObj.year}-${HCDPFetchObj.month}`}
         placeholder="Select Date and Time"
         type="month"
-        // isDisabled={
-        //   widget.visualizationType === 'variableCard' || widget.visualizationType === 'friendlyVariableCard' ? true : false
-        // }
       />
-
-      <Select size="xs" mr="1rem" placeholder={'Select Variable'} value={HCDPFetchObj.extents} onChange={handleChangeExtents}>
-        <option value="statewide">Statewide</option>
-        <option value="bi">Big Island</option>
-        <option value="ka">Kauai</option>
-        <option value="mn">Maui</option>
-        <option value="oa">Oahu</option>
-      </Select>
-      {HCDPFetchObj.availableTemperatureFileTypes === 'station_data' || HCDPFetchObj.availableRainfallFileTypes === 'station_data' ? (
-        <Select size="xs" mr="1rem" placeholder={'Select Variable'} value={HCDPFetchObj.fill} onChange={handleChangeFill}>
-          <option value="raw">Raw</option>
-          <option value="partial">Partial</option>
-        </Select>
-      ) : null}
-
-      <Select size="xs" mr="1rem" placeholder={'Select Variable'} value={dataType} onChange={handleChangeDataType}>
-        <option value="rainfall">Rainfall</option>
-        <option value="temperature">Temperature</option>
-      </Select>
-      {dataType === 'rainfall' ? (
-        <Select
-          size="xs"
-          mr="1rem"
-          placeholder={'Select Variable'}
-          value={HCDPFetchObj.availableRainfallFileTypes}
-          onChange={handleFileType}
-        >
-          <option value="data_map">Data Map</option>
-          <option value="se">Standard Error</option>
-          <option value="anom">Anomaly</option>
-          <option value="anom_se">Anomaly Standard Error</option>
-          <option value="metadata">Metadata</option>
-          <option value="station_data">Station Data</option>
-        </Select>
-      ) : (
-        <Select
-          size="xs"
-          mr="1rem"
-          placeholder={'Select Variable'}
-          value={HCDPFetchObj.availableTemperatureFileTypes}
-          onChange={handleFileType}
-        >
-          <option value="data_map">Data Map</option>
-          <option value="se">Standard Error</option>
-          <option value="metadata">Metadata</option>
-          <option value="station_data">Station Data</option>
-        </Select>
-      )}
     </HStack>
   );
 }
