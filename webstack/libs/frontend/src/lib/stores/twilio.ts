@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 import { Room, Participant, connect, ConnectOptions, RemoteTrack, RemoteParticipant } from 'twilio-video';
 
@@ -42,7 +42,7 @@ interface TwilioState {
  * Can join a Twilio room and leave a room.
  * The store will manage all the participants and tracks.
  */
-export const useTwilioStore = create<TwilioState>((set, get) => ({
+export const useTwilioStore = create<TwilioState>()((set, get) => ({
   room: undefined,
   participants: [],
   tracks: [],
