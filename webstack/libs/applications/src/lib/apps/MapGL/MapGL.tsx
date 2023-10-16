@@ -198,8 +198,8 @@ function AppComponent(props: App): JSX.Element {
               width: width,
               height: height,
               domain: [0, max],
-              colorScale: 'greys',
-              // colorScale: 'custom',
+              // colorScale: 'greys',
+              colorScale: 'custom',
             });
             plot.render();
 
@@ -225,7 +225,7 @@ function AppComponent(props: App): JSX.Element {
                 'raster-opacity': 0.7,
               },
             });
-            center
+            center;
             const x = (bbox[0] + bbox[2]) / 2;
             const y = (bbox[1] + bbox[3]) / 2;
             const cc = [x, y];
