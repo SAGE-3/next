@@ -152,7 +152,7 @@ export function BoardPage() {
       }
     }
 
-    if (!isElectron() && !development) {
+    if (!isElectron()) {
       // Function to open the board in the desktop app
       function openDesktopApp() {
         if (!boardId || !roomId) return;
@@ -163,6 +163,9 @@ export function BoardPage() {
         // Open the link in the sage3 app
         window.open(link, '_self');
       }
+
+      // Close the toast
+      toast.closeAll();
 
       // Show a notification
       toast({
