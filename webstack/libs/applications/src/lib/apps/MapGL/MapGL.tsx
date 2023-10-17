@@ -71,7 +71,7 @@ type tiffProps = {
   width: number;
   height: number;
   data: ReadRasterResult | null;
-  bbox: number[];
+  bbox: [number, number, number, number];
 };
 
 /* App component for MapGL */
@@ -177,7 +177,7 @@ function AppComponent(props: App): JSX.Element {
             const tiff = await fromUrl(newURL);
             // Extracting metadata from tiff file
             const image = await tiff.getImage();
-            const bbox = image.getBoundingBox();
+            const bbox: [number, number, number, number] = image.getBoundingBox() as [number, number, number, number];
             const geoKeys = image.getGeoKeys();
             if (geoKeys.GeographicTypeGeoKey != 4326) {
               // not GCS_WGS_84
@@ -272,7 +272,7 @@ function AppComponent(props: App): JSX.Element {
           // bbox will throw an error if an invalid geojson is passed
           try {
             // Calculate the bounding box and center using turf library
-            const box = bbox(gjson);
+            const box: [number, number, number, number] = bbox(gjson) as [number, number, number, number];
             const cc = center(gjson).geometry.coordinates;
             // Fit map: duration is zero to get a valid zoom value next
             map.fitBounds(box, { padding: 20, duration: 0 });
