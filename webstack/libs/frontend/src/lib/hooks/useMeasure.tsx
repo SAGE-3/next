@@ -13,8 +13,6 @@
 
 import { useState, useRef, useLayoutEffect, useMemo } from 'react';
 
-import ResizeObserver from 'resize-observer-polyfill';
-
 type UseMeasureOptions = {
   timeout?: number;
 };

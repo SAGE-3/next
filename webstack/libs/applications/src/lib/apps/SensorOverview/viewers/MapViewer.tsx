@@ -333,7 +333,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
 
-      <Box
+      {/* <Box
         position="absolute"
         left="2rem"
         bottom="2rem"
@@ -345,6 +345,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         backgroundColor={'#ffffff'}
         transform="scale(2)"
         transformOrigin={'bottom left'}
+        overflow="hidden"
       >
         <Button size={'lg'} onClick={increaseScaleSize} colorScheme="teal">
           Increase Marker Size
@@ -352,7 +353,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         <Button size={'lg'} onClick={decreaseScaleSize} colorScheme="teal">
           Decrease Marker Size
         </Button>
-      </Box>
+      </Box> */}
       {/* </Box> */}
     </>
   );
