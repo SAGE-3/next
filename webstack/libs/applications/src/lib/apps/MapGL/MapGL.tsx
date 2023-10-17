@@ -17,7 +17,7 @@ import maplibregl from 'maplibre-gl';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // GeoTiff
-import { fromUrl, TypedArray } from 'geotiff';
+import { fromUrl, TypedArray, ReadRasterResult } from 'geotiff';
 // @ts-ignore
 import * as Plotty from 'plotty';
 // Turfjs geojson utilities functions
@@ -60,6 +60,15 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
+type tiffProps = {
+  min: number;
+  max: number;
+  width: number;
+  height: number;
+  data: ReadRasterResult | null;
+  bbox: number[];
+};
+
 /* App component for MapGL */
 
 function AppComponent(props: App): JSX.Element {
@@ -76,6 +85,15 @@ function AppComponent(props: App): JSX.Element {
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
+
+  const [tiff, setTiff] = useState<tiffProps>({
+    min: 0,
+    max: 0,
+    width: 0,
+    height: 0,
+    data: null,
+    bbox: [0, 0, 0, 0],
+  });
 
   // Toast to inform user about errors
   const toast = useToast();
@@ -186,20 +204,17 @@ function AppComponent(props: App): JSX.Element {
             const canvas = document.createElement('canvas');
             canvas.setAttribute('id', 'canvas');
 
-            // Example custom color scale
-            const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
-            const customStops = [0, 0.3, 0.5, 1];
-
             // Plot Geotiff in Plotty canvas
-            Plotty.addColorScale('custom', customColors, customStops);
+            // Plotty.addColorScale('custom', customColors, customStops);
+
             const plot = new Plotty.plot({
               canvas: canvas,
               data: data[0],
               width: width,
               height: height,
               domain: [0, max],
-              // colorScale: 'greys',
-              colorScale: 'custom',
+              colorScale: s.colorScale,
+              // colorScale: 'custom',
             });
             plot.render();
 
@@ -232,6 +247,8 @@ function AppComponent(props: App): JSX.Element {
             // Fit map: duration is zero to get a valid zoom value next
             map.fitBounds(bbox, { padding: 20, duration: 0 });
             updateState(props._id, { zoom: map.getZoom(), location: cc });
+
+            setTiff({ min: min, max: max, width: width, height: height, data: data, bbox: bbox });
           } catch (error) {
             console.error(`Error Reading ${file.data.originalfilename}`, error);
           }
@@ -270,6 +287,65 @@ function AppComponent(props: App): JSX.Element {
       });
     }
   }, [file, map, setSource]);
+
+  useEffect(() => {
+    if (map) {
+      map.removeLayer('geotiff-layer');
+      map.removeSource('geotiff');
+
+      const canvas = document.createElement('canvas');
+      canvas.setAttribute('id', 'canvas');
+
+      if (s.colorScale === 'custom') {
+        // Example custom color scale
+        const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
+        const customStops = [0, 0.3, 0.5, 1];
+        Plotty.addColorScale('custom', customColors, customStops);
+      }
+
+      if (tiff.data !== null) {
+        const plot = new Plotty.plot({
+          canvas: canvas,
+          data: tiff.data[0],
+          width: tiff.width,
+          height: tiff.height,
+          domain: [0, tiff.max],
+          colorScale: s.colorScale,
+          // colorScale: 'custom',
+        });
+        plot.render();
+        setTiff;
+        // Turn the canvas into an image
+        const dataURL = canvas.toDataURL();
+
+        // Add the image to the map
+        map.addSource('geotiff', {
+          type: 'image',
+          url: dataURL,
+          coordinates: [
+            [tiff.bbox[0], tiff.bbox[3]], // top left
+            [tiff.bbox[2], tiff.bbox[3]], // top right
+            [tiff.bbox[2], tiff.bbox[1]], // bottom right
+            [tiff.bbox[0], tiff.bbox[1]], // bottom left
+          ],
+        });
+        map.addLayer({
+          id: 'geotiff-layer',
+          type: 'raster',
+          source: 'geotiff',
+          paint: {
+            'raster-opacity': 0.7,
+          },
+        });
+        center;
+        // const x = (tiff.bbox[0] + tiff.bbox[2]) / 2;
+        // const y = (tiff.bbox[1] + tiff.bbox[3]) / 2;
+        // // Fit map: duration is zero to get a valid zoom value next
+        // map.fitBounds(bbox, { padding: 20, duration: 0 });
+        // updateState(props._id, { zoom: map.getZoom(), location: cc });
+      }
+    }
+  }, [s.colorScale]);
 
   // If the source is changed, add it to the map
   useEffect(() => {
@@ -451,6 +527,14 @@ function ToolbarComponent(props: App): JSX.Element {
           </InputGroup>
         </form>
       </ButtonGroup>
+      <Button
+        onClick={() => {
+          updateState(props._id, { colorScale: 'custom' });
+        }}
+      >
+        {' '}
+        change
+      </Button>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
