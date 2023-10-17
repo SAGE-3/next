@@ -140,6 +140,9 @@ function AppComponent(props: App): JSX.Element {
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
+  // Drawer size
+  const [drawerWidth, setDrawerWidth] = useState("50vw");
+
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
     if (!apiStatus) {
@@ -598,7 +601,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.updateOptions({ fontSize });
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
+    // if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
     updateState(props._id, { fontSize });
   }, [fontSize]);
 
@@ -737,10 +740,10 @@ function AppComponent(props: App): JSX.Element {
     editorRef2.current = editor;
 
     // set the editor options
-    editor.updateOptions({
-      fontSize: s.fontSize,
-      readOnly: !access || !apiStatus || !s.kernel,
-    });
+    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
+    // Default width and font size
+    make50W();
+
     // set the editor theme
     monaco.editor.setTheme(defaultTheme);
     // set the editor language
@@ -904,15 +907,24 @@ function AppComponent(props: App): JSX.Element {
     theme={defaultTheme}
     language={s.language}
   />;
-  const [drawerWidth, setDrawerWidth] = useState("50vw");
+
   const make25W = () => {
     setDrawerWidth('25vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make50W = () => {
     setDrawerWidth('50vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make75W = () => {
     setDrawerWidth('75vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
 
   return (
