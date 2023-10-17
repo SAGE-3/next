@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
+import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Select } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
@@ -509,6 +509,11 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { baseLayer: 'OpenStreetMap' });
   };
 
+  // Change the color scale for geotiffs
+  const handleChangeColorScale = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    updateState(props._id, { colorScale: event.target.value });
+  };
+
   return (
     <HStack>
       <ButtonGroup>
@@ -527,14 +532,27 @@ function ToolbarComponent(props: App): JSX.Element {
           </InputGroup>
         </form>
       </ButtonGroup>
-      <Button
-        onClick={() => {
-          updateState(props._id, { colorScale: 'custom' });
-        }}
+      <Tooltip
+        placement="top"
+        hasArrow={true}
+        label={s.assetid?.length ? 'This feature is only available for Geotiffs' : 'Color Scale'}
+        openDelay={400}
       >
-        {' '}
-        change
-      </Button>
+        <Select
+          isDisabled={s.assetid?.length ? false : true}
+          size="xs"
+          w="10rem"
+          placeholder={'Select Color Scale'}
+          value={s.colorScale}
+          onChange={handleChangeColorScale}
+        >
+          <option value="greys">Greys</option>
+          <option value="inferno">Inferno</option>
+          <option value="viridis">Viridis</option>
+          <option value="turbo">Turbo</option>
+          <option value="custom">HCDP (Custom)</option>
+        </Select>
+      </Tooltip>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>
