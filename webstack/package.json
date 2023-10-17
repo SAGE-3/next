@@ -63,7 +63,7 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.2",
-    "maplibre-gl": "^3.1.0",
+    "maplibre-gl": "^3.5.0",
     "markdown-to-jsx": "^7.1.1",
     "mime": "^3.0.0",
     "monaco-editor": "^0.43.0",
@@ -117,7 +117,7 @@
     "y-websocket": "^1.5.0",
     "yjs": "^13.5.41",
     "zod": "^3.22.4",
-    "zustand": "4.2.0"
+    "zustand": "^4.4.3"
   },
   "resolutions": {
     "**/oauth": "0.10.0",

@@ -6,9 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
-export const useStore = create((set) => ({
-  drawer: {} as { [key: string]: boolean },
-  setDrawer: (id: string, drawer: boolean) => set((state: any) => ({ drawer: { ...state.drawer, ...{ [id]: drawer } } })),
+export interface CellStore {
+  drawer: { [key: string]: boolean };
+  setDrawer: (id: string, drawer: boolean) => void;
+}
+
+export const useStore = create<CellStore>()((set) => ({
+  drawer: {},
+  setDrawer: (id: string, drawer: boolean) => set((state) => ({ drawer: { ...state.drawer, ...{ [id]: drawer } } })),
 }));

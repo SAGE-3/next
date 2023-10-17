@@ -1,5 +1,5 @@
 import { Badge, Stack, Spacer, Box } from '@chakra-ui/react';
-import { truncateWithEllipsis, useHexColor } from '@sage3/frontend';
+import { useHexColor } from '@sage3/frontend';
 
 interface StatusBarProps {
   kernelName: string;

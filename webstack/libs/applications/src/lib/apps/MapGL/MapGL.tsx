@@ -11,7 +11,7 @@ import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast,
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
-import create from 'zustand';
+import { create } from 'zustand';
 // Map library
 import maplibregl from 'maplibre-gl';
 // Geocoding
@@ -40,10 +40,15 @@ export function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
 }
 
+interface MapStore {
+  map: { [key: string]: maplibregl.Map };
+  saveMap: (id: string, map: maplibregl.Map) => void;
+}
+
 // Zustand store to communicate with toolbar
-export const useStore = create((set) => ({
-  map: {} as { [key: string]: maplibregl.Map },
-  saveMap: (id: string, map: maplibregl.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
+export const useStore = create<MapStore>()((set) => ({
+  map: {},
+  saveMap: (id: string, map: maplibregl.Map) => set((state) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
 
 // Zoom levels
@@ -76,8 +81,8 @@ function AppComponent(props: App): JSX.Element {
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
-  const saveMap = useStore((state: any) => state.saveMap);
-  const map = useStore((state: any) => state.map[props._id]);
+  const saveMap = useStore((state) => state.saveMap);
+  const map = useStore((state) => state.map[props._id]);
 
   // Assets store
   const assets = useAssetStore((state) => state.assets);
@@ -413,8 +418,8 @@ function AppComponent(props: App): JSX.Element {
         pitch: s.pitch,
         center: [s.location[0], s.location[1]],
         zoom: s.zoom,
-        speed: 0.2,
-        curve: 1,
+        // speed: 0.2,
+        // curve: 1,
         duration: 1000,
       });
     }
@@ -424,7 +429,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     // when app is resized, reset the center
     if (map) {
-      map.setCenter(s.location, { duration: 0 });
+      map.setCenter([s.location[0], s.location[1]], { duration: 0 });
       map.resize();
     }
   }, [props.data.size.width, props.data.size.height, map]);
@@ -444,7 +449,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const map = useStore((state: any) => state.map[props._id]);
+  const map = useStore((state) => state.map[props._id]);
   const [addrValue, setAddrValue] = useState('');
   const update = useAppStore((state) => state.update);
 

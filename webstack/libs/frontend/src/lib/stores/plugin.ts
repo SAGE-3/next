@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -33,7 +31,7 @@ interface PluginState {
 /**
  * The PluginStore.
  */
-const PluginStore = createVanilla<PluginState>((set, get) => {
+const PluginStore = create<PluginState>()((set, get) => {
   let pluginSub: (() => void) | null = null;
   return {
     plugins: [],
@@ -112,8 +110,8 @@ const PluginStore = createVanilla<PluginState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const usePluginStore = createReact(PluginStore);
+// Export the Zustand store
+export const usePluginStore = PluginStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('PluginStore', usePluginStore);
