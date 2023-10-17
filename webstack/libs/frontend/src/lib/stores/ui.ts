@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -114,7 +114,7 @@ interface UIState {
 /**
  * The UIStore.
  */
-export const useUIStore = create<UIState>((set, get) => ({
+export const useUIStore = create<UIState>()((set, get) => ({
   scale: 1.0,
   boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
   boardHeight: 3000000, // It was like the div scaleing became to large

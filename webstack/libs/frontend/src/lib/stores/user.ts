@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -31,7 +29,7 @@ interface UserState {
  * The UserStore of others users.
  * The current user is a hook 'useUser'.
  */
-const UsersStore = createVanilla<UserState>((set, get) => {
+const UsersStore = create<UserState>()((set, get) => {
   let usersSub: (() => void) | null = null;
   return {
     users: [],
@@ -107,8 +105,8 @@ const UsersStore = createVanilla<UserState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useUsersStore = createReact(UsersStore);
+// Export the Zustand store
+export const useUsersStore = UsersStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('UsersStore', useUsersStore);

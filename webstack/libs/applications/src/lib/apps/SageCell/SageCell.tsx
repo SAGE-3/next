@@ -80,8 +80,8 @@ function AppComponent(props: App): JSX.Element {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
-  const drawer = useStore((state: any) => state.drawer[props._id]);
-  const setDrawer = useStore((state: any) => state.setDrawer);
+  const drawer = useStore((state) => state.drawer[props._id]);
+  const setDrawer = useStore((state) => state.setDrawer);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling

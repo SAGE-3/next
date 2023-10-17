@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -33,7 +33,7 @@ type KernelStoreState = {
 /**
  * The Kernel Store
  */
-export const useKernelStore = create<KernelStoreState>((set, get) => {
+export const useKernelStore = create<KernelStoreState>()((set, get) => {
   // Heartbeat check for status of the API
   const checkFastAPIStatus = async () => {
     const online = await FastAPI.checkStatus();

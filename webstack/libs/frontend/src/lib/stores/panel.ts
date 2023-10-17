@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -46,7 +46,7 @@ interface UIState {
 /**
  * The UIStore.
  */
-export const usePanelStore = create<UIState>((set, get) => ({
+export const usePanelStore = create<UIState>()((set, get) => ({
   panels: [
     {
       position: { x: 5, y: 105 },
