@@ -287,8 +287,9 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             const el = document.createElement('div');
 
             el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${s.stationScale
-              }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
+              s.stationScale
+            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
             <p  style="font-size:5px; font-weight: bold; text-align: center">
             ${Number(latestValue).toFixed(1)}</p>
             </div>
@@ -382,7 +383,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
 
-      <Box
+      {/* <Box
         position="absolute"
         left="2rem"
         bottom="2rem"
@@ -394,6 +395,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         backgroundColor={'#ffffff'}
         transform="scale(2)"
         transformOrigin={'bottom left'}
+        overflow="hidden"
       >
         <Button size={'lg'} onClick={increaseScaleSize} colorScheme="teal">
           Increase Marker Size
@@ -401,7 +403,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         <Button size={'lg'} onClick={decreaseScaleSize} colorScheme="teal">
           Decrease Marker Size
         </Button>
-      </Box>
+      </Box> */}
       {/* </Box> */}
     </>
   );

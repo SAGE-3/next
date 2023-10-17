@@ -268,15 +268,15 @@ function ToolbarComponent(props: App): JSX.Element {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timer | null = null;
+    let interval: number | null = null;
     const setTime = () => {
       if (videoRef) {
         setCurrentTime(videoRef.currentTime);
       }
     };
-    interval = setInterval(setTime, 500);
+    interval = window.setInterval(setTime, 500);
     return () => {
-      if (interval) clearInterval(interval);
+      if (interval) window.clearInterval(interval);
     };
   }, [videoRef]);
 
@@ -656,7 +656,6 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           <MdAccessTime />
         </Button>
       </Tooltip>
-
     </ButtonGroup>
   );
 };

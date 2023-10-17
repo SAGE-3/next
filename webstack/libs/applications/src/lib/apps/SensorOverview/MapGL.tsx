@@ -348,7 +348,7 @@ const MapGL = (
               el.style.border = '2px solid black';
               el.style.backgroundColor = '#CC4833';
               el.style.zIndex = '1000';
-              new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+              new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
               const tmpSelectedStations = s.stationNames;
               tmpSelectedStations.push(stationInfo.name);
               updateState(props._id, { stationNames: tmpSelectedStations });
@@ -425,7 +425,7 @@ const MapGL = (
               el.style.backgroundColor = 'white';
               // el.style.opacity = '0.1';
               el.style.zIndex = '1000';
-              new maplibregl.Marker(el).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+              new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
 
               // tmpSelectedStations = tmpSelectedStations.filter((name: string) => name !== stationInfo.name);
               for (let i = 0; i < tmpSelectedStations.length; i++) {
