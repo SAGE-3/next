@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 // Chakra Imports
-import { Button, HStack } from '@chakra-ui/react';
+import { Button, HStack, Input, Select } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -65,11 +65,38 @@ const hawaiiLatLngCoordinates = [
   },
 ];
 
+type HCDPProps = {
+  production: 'new' | 'legacy';
+  temperatureAggregations: 'min' | 'max' | 'mean';
+  periods: 'month' | 'day';
+  extents: 'statewide' | 'bi' | 'ka' | 'mn' | 'oa';
+  fill?: 'raw' | 'partial';
+  availableRainfallFileTypes: 'data_map' | 'se' | 'anom' | 'anom_se' | 'metadata' | 'station_data';
+  availableTemperatureFileTypes: 'data_map' | 'se' | 'metadata' | 'station_data';
+  year: string;
+  month: string;
+  extensions: '.tif' | '.csv' | '.txt';
+};
+
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
   const [parameterOptionValue, setParameterOptionValue] = useState('rainfall');
+
+  const [HCDPFetchObj, setHCDPFetchObj] = useState<HCDPProps>({
+    production: 'new',
+    temperatureAggregations: 'mean',
+    periods: 'month',
+    extents: 'statewide',
+    fill: 'raw',
+    availableRainfallFileTypes: 'data_map',
+    availableTemperatureFileTypes: 'data_map',
+    year: '2011',
+    month: '03',
+    extensions: '.tif',
+  });
+  const [dataType, setDataType] = useState('rainfall');
 
   useEffect(() => {
     //https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/temperature/max/month/statewide/data_map/2011/temperature_max_month_statewide_data_map_2011_03.tif
