@@ -27,8 +27,13 @@ import {
   useRouteNav,
   useHexColor,
 } from '@sage3/frontend';
-import { Board, Room, User } from '@sage3/shared/types';
+import { Board, Presence, Room, User } from '@sage3/shared/types';
 import { MdAdd, MdEdit, MdLink, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
+
+type UserPresence = {
+  user: User;
+  presence: Presence | undefined;
+};
 
 export function HomePage() {
   // URL Params
@@ -65,15 +70,6 @@ export function HomePage() {
   const { users, subscribeToUsers } = useUsersStore((state) => state);
   const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
 
-  // UI Colors
-  const roomListBackgroud = useColorModeValue('gray.300', 'gray.700');
-  const roomListBG = useHexColor(roomListBackgroud);
-  const boardListBackground = useColorModeValue('gray.200', 'gray.800');
-  const boardListBG = useHexColor(boardListBackground);
-  const infoBackground = useColorModeValue('gray.100', 'gray.900');
-  const infoBG = useHexColor(infoBackground);
-  const borderColor = useHexColor(selectedRoom ? selectedRoom.data.color : 'gray.300');
-
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,25 +77,55 @@ export function HomePage() {
   };
   const inputBorderColor = useHexColor('teal.200');
 
-  // Favorites
-  const [showFavorites, setShowFavorites] = useState<boolean>(false);
-  const handleShowFavorites = () => {
-    setShowFavorites(!showFavorites);
-  };
-
-  // Filter Search on Rooms, Boards, and Users
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
-  const [filteredBoards, setFilteredBoards] = useState<Board[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-
-  // Check to see if all filters are empty
-  useEffect(() => {
-    if (searchInput.length <= 0 && !showFavorites) {
-      setFilteredRooms(rooms);
-      setFilteredBoards(boards);
-      setFilteredUsers(users);
+  // Filter Functions
+  const roomsFilter = (room: Room): boolean => {
+    if (searchInput.length > 0) {
+      // If the user is searching, filter rooms by searchInput
+      return room.data.name.toLowerCase().includes(searchInput.toLowerCase());
+    } else {
+      // If the user is not searching, return favroties
+      return savedRooms.includes(room._id);
     }
-  }, [showFavorites, searchInput]);
+  };
+  const boardsFilter = (board: Board): boolean => {
+    // If showFavorites is true, filter boards by savedBoards
+    if (searchInput.length > 0) {
+      // If the user is searching, filter boards by searchInput
+      return board.data.name.toLowerCase().includes(searchInput.toLowerCase());
+    } else if (selectedRoom) {
+      // If the user is not searching or showing favorites, filter boards by selectedRoom
+      return board.data.roomId === selectedRoom._id;
+    } else {
+      // If the user is not searching  or selected a room, return favorites
+      return savedBoards.includes(board._id);
+    }
+  };
+  const concatUserPresence = (userList: User[]): UserPresence[] => {
+    return userList.map((u) => {
+      return { user: u, presence: presences.find((p) => p._id === u._id) };
+    });
+  };
+  const usersFilter = (): UserPresence[] => {
+    if (searchInput.length > 0) {
+      // If the user is searching, filter users by searchInput
+      const searchedUsers = users.filter((user) => user.data.name.toLowerCase().includes(searchInput.toLowerCase()));
+      return concatUserPresence(searchedUsers);
+    } else if (selectedBoard) {
+      // If the user is not searching or showing favorites, filter users by selectedBoard
+      const boardPresence = presences.filter((presence) => presence.data.boardId === selectedBoard._id);
+      const boardUsers = users.filter((user) => boardPresence.find((presence) => presence._id === user._id));
+      return concatUserPresence(boardUsers);
+    } else if (selectedRoom) {
+      // If the user is not search or showing favorites or selected a board, filter users by selectedRoom
+      const roomPresence = presences.filter((presence) => presence.data.roomId === selectedRoom._id);
+      const roomUsers = users.filter((user) => roomPresence.find((presence) => presence._id === user._id));
+      return concatUserPresence(roomUsers);
+    } else {
+      // If the user is not searching  or selected a room or board, return favorites
+      const favUsers = users.filter((user) => savedUsers.includes(user._id));
+      return concatUserPresence(favUsers);
+    }
+  };
 
   // Subscribe to user updates
   useEffect(() => {
@@ -116,7 +142,6 @@ export function HomePage() {
   function handleRoomClick(room: Room | undefined) {
     if (room) {
       setSelectedRoom(room);
-      setFilteredBoards(boards.filter((board) => board.data.roomId === room._id));
       setSelectedBoard(undefined);
       if (user) updatePresence(user._id, { roomId: room._id, boardId: '', following: '' });
       // update the URL, helps with history
@@ -213,15 +238,6 @@ export function HomePage() {
       >
         <Box display="flex" flexDir={'column'} width="100%">
           <Box width="100%" display="flex" p="2" pr="4" gap="8px">
-            <IconButton
-              size="md"
-              colorScheme="teal"
-              variant={'outline'}
-              aria-label="create-room"
-              fontSize="2xl"
-              onClick={handleShowFavorites}
-              icon={showFavorites ? <MdStar /> : <MdStarOutline />}
-            ></IconButton>
             <InputGroup colorScheme="teal">
               <InputLeftElement pointerEvents="none">
                 <MdSearch color="white" />{' '}
@@ -270,7 +286,8 @@ export function HomePage() {
                 </Box>
 
                 <Box overflow="hidden" flex="1">
-                  {filteredRooms
+                  {rooms
+                    .filter(roomsFilter)
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
                     .map((room) => {
                       return <RoomRow key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
@@ -330,7 +347,8 @@ export function HomePage() {
                     </Box>
                   </Box>
                   <Box flex="1" overflow="hidden" mb="4">
-                    {filteredBoards
+                    {boards
+                      .filter(boardsFilter)
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .map((board) => {
                         return (
@@ -392,7 +410,7 @@ export function HomePage() {
                 // background={boardListBG}
               >
                 <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                  <Text fontSize="2xl"> Room Members</Text>
+                  <Text fontSize="2xl"> Users</Text>
                   <Box display="flex" justifyContent={'left'} gap="8px">
                     <IconButton
                       size="sm"
@@ -413,8 +431,8 @@ export function HomePage() {
                   </Box>
                 </Box>
                 <Box flex="1" overflow="hidden" mb="4">
-                  {filteredUsers.map((user) => {
-                    return <UserRow key={user._id} user={user} onClick={() => {}} />;
+                  {usersFilter().map((up) => {
+                    return <UserRow key={up.user._id} user={up.user} onClick={() => {}} />;
                   })}
                 </Box>
               </Box>
@@ -426,37 +444,21 @@ export function HomePage() {
           )}
         </Box>
       </Box>
-      {/* {roomsFetched ? (
-          <Box
-            display="flex"
-            flexDirection="column"
-            justifyContent={'center'}
-            alignItems="flex-start"
-            height="100%"
-            width="100%"
-            maxWidth="1200"
-          >
-            <RoomList
-              selectedRoom={selectedRoom}
-              onRoomClick={handleRoomClick}
-              rooms={rooms}
-              boards={boards}
-              onBackClick={() => handleRoomClick(undefined)}
-              onBoardClick={handleBoardClick}
-            ></RoomList>
-          </Box>
-        ) : (
-          <Box display="flex" flexDirection="column" justifyContent={'center'} alignItems="center" height="100%" width="100%">
-            <Progress isIndeterminate width="100%" borderRadius="md" />
-          </Box>
-        )}
-      </Box> */}
 
       {/* Bottom Bar */}
-      <Box display="flex" flexDirection="row" justifyContent={'space-between'} width="100%" minHeight={'initial'} alignItems="center" p="2">
+      <Box
+        display="flex"
+        flexDirection="row"
+        justifyContent={'space-between'}
+        width="100%"
+        minHeight={'initial'}
+        alignItems="center"
+        px="2"
+        pb="2"
+      >
         <MainButton buttonStyle="solid" config={config} />
 
-        <Image src={imageUrl} height="30px" mb="2" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
+        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
       </Box>
     </Box>
   );
