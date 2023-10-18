@@ -14,6 +14,7 @@ mime.define({
   'application/x-ipynb+json': ['ipynb'],
   'application/dzi': ['dzi'],
   'application/python': ['py'],
+  'application/x-geotiff': ['geotiff'],
 });
 
 /**
@@ -40,14 +41,25 @@ export function getExtension(mimeType: string): string {
 }
 
 /**
+ * Test if a given mime type is a Tiff file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isTiff(mimeType: string): boolean {
+  return mimeType === 'image/tiff';
+}
+
+/**
  * Test if a given mime type is a Geotiff file
  *
  * @export
  * @param {string} mimeType
  * @returns {boolean}
  */
-export function isGeotiff(mimeType: string): boolean {
-  return mimeType === 'image/tiff';
+export function isGeoTiff(mimeType: string): boolean {
+  return mimeType === 'application/x-geotiff';
 }
 
 /**
@@ -230,13 +242,8 @@ export function isGLTF(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isValid(mimeType: string): boolean {
-  // Excluded for now
-  // isZip(mimeType) ||
-  // isAudio(mimeType) ||
-  // isHTML(mimeType) ||
-
   return (
-    isGeotiff(mimeType) ||
+    isGeoTiff(mimeType) ||
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||

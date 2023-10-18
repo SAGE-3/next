@@ -21,7 +21,7 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 
 import {
   humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
@@ -180,8 +180,15 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
       case 'jpeg':
+      case 'png':
+      case 'gif':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+      case 'geotiff':
+      case 'geojson':
+        return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
       case 'mp4':
+      case 'qt':
+        return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'json':

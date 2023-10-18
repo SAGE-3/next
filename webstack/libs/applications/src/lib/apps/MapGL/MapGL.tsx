@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
+import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Select } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
@@ -16,22 +16,24 @@ import { create } from 'zustand';
 import maplibregl from 'maplibre-gl';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//@ts-ignore
+// GeoTiff
+import { fromUrl, TypedArray, ReadRasterResult } from 'geotiff';
+// @ts-ignore
 import * as Plotty from 'plotty';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+import { isGeoTiff, isTiff } from '@sage3/shared';
+import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 
 // Styling
 import './maplibre-gl.css';
-import { fromUrl } from 'geotiff';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -63,6 +65,15 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
+type tiffProps = {
+  min: number;
+  max: number;
+  width: number;
+  height: number;
+  data: ReadRasterResult | null;
+  bbox: [number, number, number, number];
+};
+
 /* App component for MapGL */
 
 function AppComponent(props: App): JSX.Element {
@@ -79,6 +90,15 @@ function AppComponent(props: App): JSX.Element {
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
+
+  const [tiff, setTiff] = useState<tiffProps>({
+    min: 0,
+    max: 0,
+    width: 0,
+    height: 0,
+    data: null,
+    bbox: [0, 0, 0, 0],
+  });
 
   // Toast to inform user about errors
   const toast = useToast();
@@ -151,24 +171,36 @@ function AppComponent(props: App): JSX.Element {
       // when the map is loaded, add the source and layers
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
-        console.log('MapGL> Adding source to map', newURL);
-        if (file.data.mimetype === 'image/tiff') {
+        if (isGeoTiff(file.data.mimetype) || isTiff(file.data.mimetype)) {
           try {
             // Fetching the tiff file
             const tiff = await fromUrl(newURL);
-
-            //Extracting metadata from tiff file
+            // Extracting metadata from tiff file
             const image = await tiff.getImage();
-            const bbox = image.getBoundingBox();
-            const data: any = await image.readRasters();
-            const width = image.getWidth();
-            const height = image.getHeight();
+            const bbox: [number, number, number, number] = image.getBoundingBox() as [number, number, number, number];
+            const geoKeys = image.getGeoKeys();
+            if (geoKeys.GeographicTypeGeoKey != 4326) {
+              // not GCS_WGS_84
+              console.log('MapGL> not a GCS_WGS_84 file', geoKeys.GeographicTypeGeoKey);
+              toast({
+                title: 'Error',
+                description: 'Only GCS_WGS_84 files can be loaded',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+              return;
+            }
+
+            const data = await image.readRasters();
+            const { width, height } = data;
 
             // Compute min and max values
             let min = Infinity;
             let max = -Infinity;
-            for (let i = 0; i < data[0].length; i++) {
-              const value = data[0][i];
+            const values = data[0] as TypedArray;
+            for (let i = 0; i < values.length; i++) {
+              const value = values[i];
               if (value < min) min = value;
               if (value > max) max = value;
             }
@@ -177,19 +209,17 @@ function AppComponent(props: App): JSX.Element {
             const canvas = document.createElement('canvas');
             canvas.setAttribute('id', 'canvas');
 
-            // Example custom color scale
-            const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
-            const customStops = [0, 0.3, 0.5, 1];
-
             // Plot Geotiff in Plotty canvas
-            Plotty.addColorScale('custom', customColors, customStops);
+            // Plotty.addColorScale('custom', customColors, customStops);
+
             const plot = new Plotty.plot({
               canvas: canvas,
               data: data[0],
               width: width,
               height: height,
               domain: [0, max],
-              colorScale: 'custom',
+              colorScale: s.colorScale,
+              // colorScale: 'custom',
             });
             plot.render();
 
@@ -215,7 +245,16 @@ function AppComponent(props: App): JSX.Element {
                 'raster-opacity': 0.7,
               },
             });
-          } catch (error: any) {
+            center;
+            const x = (bbox[0] + bbox[2]) / 2;
+            const y = (bbox[1] + bbox[3]) / 2;
+            const cc = [x, y];
+            // Fit map: duration is zero to get a valid zoom value next
+            map.fitBounds(bbox, { padding: 20, duration: 0 });
+            updateState(props._id, { zoom: map.getZoom(), location: cc });
+
+            setTiff({ min: min, max: max, width: width, height: height, data: data, bbox: bbox });
+          } catch (error) {
             console.error(`Error Reading ${file.data.originalfilename}`, error);
           }
         } else {
@@ -233,14 +272,14 @@ function AppComponent(props: App): JSX.Element {
           // bbox will throw an error if an invalid geojson is passed
           try {
             // Calculate the bounding box and center using turf library
-            const box = bbox(gjson) as [number, number, number, number];
+            const box: [number, number, number, number] = bbox(gjson) as [number, number, number, number];
             const cc = center(gjson).geometry.coordinates;
-            // Duration is zero to get a valid zoom value next
+            // Fit map: duration is zero to get a valid zoom value next
             map.fitBounds(box, { padding: 20, duration: 0 });
             updateState(props._id, { zoom: map.getZoom(), location: cc });
             // Add the source to the map
             setSource({ id: file._id, data: gjson });
-          } catch (error: any) {
+          } catch (error) {
             toast({
               title: 'Error',
               description: 'Error loading GEOJSON file',
@@ -253,6 +292,65 @@ function AppComponent(props: App): JSX.Element {
       });
     }
   }, [file, map, setSource]);
+
+  useEffect(() => {
+    if (map) {
+      map.removeLayer('geotiff-layer');
+      map.removeSource('geotiff');
+
+      const canvas = document.createElement('canvas');
+      canvas.setAttribute('id', 'canvas');
+
+      if (s.colorScale === 'custom') {
+        // Example custom color scale
+        const customColors = ['rgb(85, 95, 100, 0)', 'rgb(255, 209, 102, 255)', 'rgb(6, 214, 160, 255)', 'rgb(17, 138, 178, 255)'];
+        const customStops = [0, 0.3, 0.5, 1];
+        Plotty.addColorScale('custom', customColors, customStops);
+      }
+
+      if (tiff.data !== null) {
+        const plot = new Plotty.plot({
+          canvas: canvas,
+          data: tiff.data[0],
+          width: tiff.width,
+          height: tiff.height,
+          domain: [0, tiff.max],
+          colorScale: s.colorScale,
+          // colorScale: 'custom',
+        });
+        plot.render();
+        setTiff;
+        // Turn the canvas into an image
+        const dataURL = canvas.toDataURL();
+
+        // Add the image to the map
+        map.addSource('geotiff', {
+          type: 'image',
+          url: dataURL,
+          coordinates: [
+            [tiff.bbox[0], tiff.bbox[3]], // top left
+            [tiff.bbox[2], tiff.bbox[3]], // top right
+            [tiff.bbox[2], tiff.bbox[1]], // bottom right
+            [tiff.bbox[0], tiff.bbox[1]], // bottom left
+          ],
+        });
+        map.addLayer({
+          id: 'geotiff-layer',
+          type: 'raster',
+          source: 'geotiff',
+          paint: {
+            'raster-opacity': 0.7,
+          },
+        });
+        center;
+        // const x = (tiff.bbox[0] + tiff.bbox[2]) / 2;
+        // const y = (tiff.bbox[1] + tiff.bbox[3]) / 2;
+        // // Fit map: duration is zero to get a valid zoom value next
+        // map.fitBounds(bbox, { padding: 20, duration: 0 });
+        // updateState(props._id, { zoom: map.getZoom(), location: cc });
+      }
+    }
+  }, [s.colorScale]);
 
   // If the source is changed, add it to the map
   useEffect(() => {
@@ -361,8 +459,8 @@ function ToolbarComponent(props: App): JSX.Element {
   });
 
   // from the UI to the react state
-  const handleAddrChange = (event: any) => setAddrValue(event.target.value);
-  const changeAddr = (evt: any) => {
+  const handleAddrChange = (event: React.ChangeEvent<HTMLInputElement>) => setAddrValue(event.target.value);
+  const changeAddr = (evt: React.FormEvent) => {
     evt.preventDefault();
 
     geocoder.text(addrValue).run((err: any, results: any, response: any) => {
@@ -416,6 +514,11 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { baseLayer: 'OpenStreetMap' });
   };
 
+  // Change the color scale for geotiffs
+  const handleChangeColorScale = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    updateState(props._id, { colorScale: event.target.value });
+  };
+
   return (
     <HStack>
       <ButtonGroup>
@@ -434,6 +537,27 @@ function ToolbarComponent(props: App): JSX.Element {
           </InputGroup>
         </form>
       </ButtonGroup>
+      <Tooltip
+        placement="top"
+        hasArrow={true}
+        label={s.assetid?.length ? 'This feature is only available for Geotiffs' : 'Color Scale'}
+        openDelay={400}
+      >
+        <Select
+          isDisabled={s.assetid?.length ? false : true}
+          size="xs"
+          w="10rem"
+          placeholder={'Select Color Scale'}
+          value={s.colorScale}
+          onChange={handleChangeColorScale}
+        >
+          <option value="greys">Greys</option>
+          <option value="inferno">Inferno</option>
+          <option value="viridis">Viridis</option>
+          <option value="turbo">Turbo</option>
+          <option value="custom">HCDP (Custom)</option>
+        </Select>
+      </Tooltip>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.zoom > maxZoom} onClick={incZoom}>

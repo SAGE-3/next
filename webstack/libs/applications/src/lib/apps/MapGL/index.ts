@@ -21,6 +21,7 @@ export const schema = z.object({
   baseLayer: z.string(),
   overlay: z.boolean(),
   assetid: z.string().optional(),
+  colorScale: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -32,6 +33,7 @@ export const init: Partial<state> = {
   baseLayer: 'OpenStreetMap',
   overlay: true,
   assetid: '',
+  colorScale: 'greys',
 };
 
 export const name = 'MapGL';

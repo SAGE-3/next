@@ -6,11 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 // Chakra Imports
-import { HStack, Input, Select } from '@chakra-ui/react';
-// Icon imports
-import { AppWindow } from '@sage3/applications/apps';
+import { Button, HStack } from '@chakra-ui/react';
 
 // SAGE3 imports
 import { useAppStore } from '@sage3/frontend';
@@ -19,27 +17,15 @@ import { state as AppState } from './index';
 
 import './styling.css';
 
-type HCDPProps = {
-  production: 'new' | 'legacy';
-  temperatureAggregations: 'min' | 'max' | 'mean';
-  periods: 'month' | 'day';
-  extents: 'statewide' | 'bi' | 'ka' | 'mn' | 'oa';
-  fill?: 'raw' | 'partial';
-  availableRainfallFileTypes: 'data_map' | 'se' | 'anom' | 'anom_se' | 'metadata' | 'station_data';
-  availableTemperatureFileTypes: 'data_map' | 'se' | 'metadata' | 'station_data';
-  year: string;
-  month: string;
-  extensions: '.tif' | '.csv' | '.txt';
-};
+// Import the CSS style sheet from the node_modules folder
+import 'leaflet/dist/leaflet.css';
 
-const convertToFahrenheit = (tempInCelcius: number) => {
-  const tempInFahrenheit = Math.floor((tempInCelcius * 9) / 5 + 32);
-  return tempInFahrenheit;
-};
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import * as plotty from 'plotty';
+import { fromUrl } from 'geotiff';
 
-// Max and min zoom for leaflet app
-const maxZoom = 18;
-const minZoom = 1;
+import { AppWindow } from '@sage3/applications/apps';
 
 // HCDP app
 function AppComponent(props: App): JSX.Element {
@@ -80,19 +66,8 @@ const hawaiiLatLngCoordinates = [
 ];
 
 function ToolbarComponent(props: App): JSX.Element {
-  const [HCDPFetchObj, setHCDPFetchObj] = useState<HCDPProps>({
-    production: 'new',
-    temperatureAggregations: 'mean',
-    periods: 'month',
-    extents: 'statewide',
-    fill: 'raw',
-    availableRainfallFileTypes: 'data_map',
-    availableTemperatureFileTypes: 'data_map',
-    year: '2011',
-    month: '03',
-    extensions: '.tif',
-  });
-  const [dataType, setDataType] = useState('rainfall');
+  const s = props.data.state as AppState;
+  const updateState = useAppStore((state) => state.updateState);
 
   const [parameterOptionValue, setParameterOptionValue] = useState('rainfall');
 

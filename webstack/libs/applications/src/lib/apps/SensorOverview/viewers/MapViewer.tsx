@@ -57,9 +57,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
-  const saveMap = useStore((state: any) => state.saveMap);
-  const map = useStore((state: any) => state.map[props._id + '0']);
-
+  const saveMap = useStore((state) => state.saveMap);
+  const map = useStore((state) => state.map[props._id + '0']);
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();

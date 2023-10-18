@@ -147,7 +147,7 @@
     "@types/cryptr": "^4.0.1",
     "@types/d3": "^7.4.0",
     "@types/echarts": "^4.9.17",
-    "@types/esri-leaflet-geocoder": "^2.2.3",
+    "@types/esri-leaflet-geocoder": "^2.2.5",
     "@types/express": "^4.17.14",
     "@types/express-session": "^1.17.7",
     "@types/hjson": "^2.4.2",
