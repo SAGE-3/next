@@ -6,20 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Box, Text, Icon, useColorMode } from '@chakra-ui/react';
 
-import { Box, Spinner, Text, Image, Divider, AbsoluteCenter, Icon, useColorMode } from '@chakra-ui/react';
-import VariableUnits from '../data/VariableUnits';
-import { stationColors, getColor } from '../../EChartsViewer/ChartManager';
-
-import { App, AppState } from '@sage3/applications/schema';
-import variableUnits from '../data/VariableUnits';
+import { AppState } from '@sage3/applications/schema';
 import { MdCircle } from 'react-icons/md';
 
 type VariableProps = {
   stationName: string;
   stationSTIDName: string;
-  images: string[];
   color: string;
 };
 
@@ -88,7 +83,6 @@ export default function StationMetadata(
                     startDate: props.startDate,
                     stationSTIDName: 'HI012',
                     endDate: '2022-04-25T19:55:00Z',
-                    images: [],
                   }
             }
           /> */}

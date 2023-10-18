@@ -6,40 +6,44 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Text } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import React, { useEffect, useState } from 'react';
+import { Box, Button, useToast, Text } from '@chakra-ui/react';
 
 // Data store
-import create from 'zustand';
+import { create } from 'zustand';
 // Map library
-import maplibregl, { Marker, latest } from 'maplibre-gl';
+import maplibregl, { Marker } from 'maplibre-gl';
 // Geocoding
-import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
+// import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
 import center from '@turf/center';
 
-import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
+import { useAppStore, useAssetStore, useUIStore, apiUrls } from '@sage3/frontend';
+
 import { App } from '../../../schema';
-import { state as AppState } from '../index';
+import { state as AppState } from '../../HCDP/index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
 
 // Styling
 import './maplibre-gl.css';
-import React from 'react';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
 }
 
+interface MapStore {
+  map: { [key: string]: maplibregl.Map },
+  saveMap: (id: string, map: maplibregl.Map) => void,
+}
+
 // Zustand store to communicate with toolbar
-export const useStore = create((set) => ({
+const useStore = create<MapStore>()((set) => ({
   map: {} as { [key: string]: maplibregl.Map },
-  saveMap: (id: string, map: maplibregl.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
+  saveMap: (id: string, map: maplibregl.Map) => set((state) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
 
 // MapTiler API Key
@@ -54,8 +58,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
-  const saveMap = useStore((state: any) => state.saveMap);
-  const map = useStore((state: any) => state.map[props._id + '0']);
+  const saveMap = useStore((state) => state.saveMap);
+  const map = useStore((state) => state.map[props._id + '0']);
   const stationDataRef = React.useRef(stationData);
   const stationNameRef = React.useRef(s.stationNames);
   // Assets store
@@ -165,7 +169,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
           const box = bbox(gjson);
           const cc = center(gjson).geometry.coordinates;
           // Duration is zero to get a valid zoom value next
-          map.fitBounds(box, { padding: 20, duration: 0 });
+          map.fitBounds([box[0], box[1], box[2], box[3]], { padding: 20, duration: 0 });
           updateState(props._id, { zoom: map.getZoom(), location: cc });
           // Add the source to the map
           setSource({ id: file._id, data: gjson });
@@ -248,8 +252,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         pitch: s.pitch,
         center: [s.location[0], s.location[1]],
         zoom: s.zoom,
-        speed: 0.2,
-        curve: 1,
+        // speed: 0.2,
+        // curve: 1,
         duration: 1000,
       });
     }
@@ -259,7 +263,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   useEffect(() => {
     // when app is resized, reset the center
     if (map) {
-      map.setCenter(s.location, { duration: 0 });
+      map.setCenter([s.location[0], s.location[1]], { duration: 0 });
       map.resize();
     }
   }, [props.data.size.width, props.data.size.height, map]);
@@ -288,8 +292,9 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             const el = document.createElement('div');
 
             el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${s.stationScale
-              }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
+              s.stationScale
+            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
             <p  style="font-size:5px; font-weight: bold; text-align: center">
             ${Number(latestValue).toFixed(1)}</p>
             </div>
@@ -383,7 +388,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
 
-      <Box
+      {/* <Box
         position="absolute"
         left="2rem"
         bottom="2rem"
@@ -395,6 +400,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         backgroundColor={'#ffffff'}
         transform="scale(2)"
         transformOrigin={'bottom left'}
+        overflow="hidden"
       >
         <Button size={'lg'} onClick={increaseScaleSize} colorScheme="teal">
           Increase Marker Size
@@ -402,7 +408,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         <Button size={'lg'} onClick={decreaseScaleSize} colorScheme="teal">
           Decrease Marker Size
         </Button>
-      </Box>
+      </Box> */}
       {/* </Box> */}
     </>
   );

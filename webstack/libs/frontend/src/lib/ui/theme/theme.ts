@@ -39,7 +39,6 @@ const components = {
         },
         dialog: {
           pointerEvents: 'auto',
-          maxW: '50vw',
         },
       },
       alwaysOpen: {

@@ -62,7 +62,7 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.2",
-    "maplibre-gl": "^3.1.0",
+    "maplibre-gl": "^3.5.0",
     "markdown-to-jsx": "^7.1.1",
     "mime": "^3.0.0",
     "monaco-editor": "^0.43.0",
@@ -94,9 +94,8 @@
     "react-router": "^6.4.5",
     "react-router-dom": "^6.4.5",
     "react-vega": "^7.5.1",
-    "react-virtuoso": "^4.3.6",
+    "react-virtuoso": "^4.6.0",
     "redis": "^4.6.6",
-    "resize-observer-polyfill": "^1.5.1",
     "serve-favicon": "^2.5.0",
     "sharp": "^0.32.6",
     "three": "^0.156.0",
@@ -116,7 +115,7 @@
     "y-websocket": "^1.5.0",
     "yjs": "^13.5.41",
     "zod": "^3.22.4",
-    "zustand": "4.2.0"
+    "zustand": "^4.4.3"
   },
   "resolutions": {
     "**/oauth": "0.10.0",

@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -31,7 +29,7 @@ interface InsightState {
 /**
  * The PresenceStore.
  */
-const InsightStore = createVanilla<InsightState>((set, get) => {
+const InsightStore = create<InsightState>()((set, get) => {
   APIHttp.GET<Insight>('/insight').then((response) => {
     if (response.success) {
       set({ insights: response.data });
@@ -110,8 +108,8 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useInsightStore = createReact(InsightStore);
+// Export the Zustand store
+export const useInsightStore = InsightStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('InsightStore', useInsightStore);

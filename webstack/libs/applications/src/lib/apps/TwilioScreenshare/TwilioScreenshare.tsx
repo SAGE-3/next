@@ -431,16 +431,15 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Twilio Store
   const stopStream = useTwilioStore((state) => state.setStopStream);
+
   return (
-    <>
-      <ButtonGroup>
-        {yours ? (
-          <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
-            Stop Stream
-          </Button>
-        ) : null}
-      </ButtonGroup>
-    </>
+    <ButtonGroup>
+      {yours ? (
+        <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
+          Stop Stream
+        </Button>
+      ) : null}
+    </ButtonGroup>
   );
 }
 
