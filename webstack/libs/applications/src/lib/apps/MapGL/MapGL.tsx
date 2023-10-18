@@ -9,7 +9,6 @@
 import { useEffect, useState } from 'react';
 import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
 import { create } from 'zustand';
@@ -234,7 +233,7 @@ function AppComponent(props: App): JSX.Element {
           // bbox will throw an error if an invalid geojson is passed
           try {
             // Calculate the bounding box and center using turf library
-            const box = bbox(gjson);
+            const box = bbox(gjson) as [number, number, number, number];
             const cc = center(gjson).geometry.coordinates;
             // Duration is zero to get a valid zoom value next
             map.fitBounds(box, { padding: 20, duration: 0 });
