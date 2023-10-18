@@ -7,6 +7,8 @@
  */
 
 import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import { MdApps } from 'react-icons/md';
+
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -46,7 +48,6 @@ import {
   BoardTitle,
   KernelsPanel,
 } from './components';
-import { MdApps, MdSelectAll } from 'react-icons/md';
 
 type UILayerProps = {
   boardId: string;
@@ -62,9 +63,7 @@ export function UILayer(props: UILayerProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
-    (state) => state
-  );
+  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore((state) => state);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -170,11 +169,13 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
+  // Zoom to the saved selected apps
   const goToSavedSelectedApps = () => {
     if (savedSelectedAppsIds.length < 1) return;
     fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
   };
 
+  // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
     setWhiteboardMode('none');
     setSelectedApp('');

@@ -12,7 +12,7 @@ import { useParams } from 'react-router';
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 
 import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSaveAs, HiOutlineStop } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -41,10 +41,6 @@ export function LassoToolbar() {
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
-
-  // Save/clear the app selection
-  const setSavedSelectedAppsIds = useUIStore((state) => state.setSavedSelectedAppsIds);
-  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
 
   // Position
   const { boardCursor } = useCursorBoardPosition();
@@ -165,8 +161,6 @@ for b in bits:
     print(b)`;
       }
       createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 960, h: 860 }, { fontSize: 24, code }));
-      // Save the selection
-      setSavedSelectedAppsIds();
     }
   };
 
@@ -231,7 +225,7 @@ for b in bits:
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
+              {/* <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
                 <Button onClick={setSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
                   <HiOutlineSaveAs size="18px" />
                 </Button>
@@ -240,7 +234,7 @@ for b in bits:
                 <Button onClick={clearSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
                   <HiOutlineStop size="18px" />
                 </Button>
-              </Tooltip>
+              </Tooltip> */}
 
               <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
                 <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>

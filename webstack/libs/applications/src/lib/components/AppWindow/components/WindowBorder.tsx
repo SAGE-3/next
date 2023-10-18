@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor, useUIStore } from '@sage3/frontend';
+import { useHexColor } from '@sage3/frontend';
 
 type WindowBorderProps = {
   size: { width: number; height: number };
@@ -35,7 +35,6 @@ export function WindowBorder(props: WindowBorderProps) {
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
-
   const savedSelectedColor = useHexColor('red');
 
   return (
