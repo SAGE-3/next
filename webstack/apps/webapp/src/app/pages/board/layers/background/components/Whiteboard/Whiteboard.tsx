@@ -176,23 +176,26 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yLines]);
 
   // On pointer move, update awareness and (if down) update the current line
-  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (whiteboardMode === 'pen') {
-      const point = getPoint(e.clientX, e.clientY);
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        const currentLine = rCurrentLine.current;
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (whiteboardMode === 'pen') {
+        const point = getPoint(e.clientX, e.clientY);
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          const currentLine = rCurrentLine.current;
 
-        if (!currentLine) return;
+          if (!currentLine) return;
 
-        const points = currentLine.get('points');
+          const points = currentLine.get('points');
 
-        // Don't add the new point to the line
-        if (!points) return;
+          // Don't add the new point to the line
+          if (!points) return;
 
-        points.push([...point]);
+          points.push([...point]);
+        }
       }
-    }
-  }, [rCurrentLine.current, whiteboardMode]);
+    },
+    [rCurrentLine.current, whiteboardMode]
+  );
 
   // On pointer up, complete the current line
   const handlePointerUp = useCallback(
@@ -250,10 +253,6 @@ export function Whiteboard(props: WhiteboardProps) {
 
   const spacebarPressed = useKeyPress(' ');
 
-  useHotkeys('esc', () => {
-    setWhiteboardMode('none');
-  });
-
   // Deselect all apps
   useHotkeys(
     'shift+w',
@@ -281,8 +280,8 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: (whiteboardMode !== 'none') && !spacebarPressed ? 'auto' : 'none',
-        touchAction: (whiteboardMode !== 'none') && !spacebarPressed ? 'none' : 'auto',
+        pointerEvents: whiteboardMode !== 'none' && !spacebarPressed ? 'auto' : 'none',
+        touchAction: whiteboardMode !== 'none' && !spacebarPressed ? 'none' : 'auto',
       }}
     >
       <svg

@@ -55,6 +55,10 @@ interface UIState {
   removeSelectedApp: (appId: string) => void;
   clearSelectedApps: () => void;
 
+  savedSelectedAppsIds: string[];
+  setSavedSelectedAppsIds: () => void;
+  clearSavedSelectedAppsIds: () => void;
+
   // whiteboard
   whiteboardMode: DrawingMode;
   clearMarkers: boolean;
@@ -227,7 +231,7 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
   setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
-  setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds })),
+  setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds, savedSelectedAppsIds: appIds })),
   setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
     snapshot = structuredClone(snapshot);
     set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
@@ -241,6 +245,10 @@ export const useUIStore = create<UIState>()((set, get) => ({
       return { ...state, selectedApps: newArray };
     }),
   clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
+
+  savedSelectedAppsIds: [],
+  setSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: get().selectedAppsIds })),
+  clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [] })),
 
   setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),

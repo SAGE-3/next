@@ -6,7 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import { MdApps } from 'react-icons/md';
+
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -25,6 +27,7 @@ import {
   useThrottleApps,
   useAbility,
   apiUrls,
+  useHotkeys,
 } from '@sage3/frontend';
 
 import {
@@ -60,6 +63,7 @@ export function UILayer(props: UILayerProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore((state) => state);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -165,6 +169,20 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
+  // Zoom to the saved selected apps
+  const goToSavedSelectedApps = () => {
+    if (savedSelectedAppsIds.length < 1) return;
+    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
+  };
+
+  // Deselect all apps when the escape key is pressed
+  useHotkeys('esc', () => {
+    setWhiteboardMode('none');
+    setSelectedApp('');
+    clearSavedSelectedAppsIds();
+    setSelectedAppsIds([]);
+  });
+
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
@@ -174,17 +192,33 @@ export function UILayer(props: UILayerProps) {
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
-        <MainButton
-          buttonStyle="solid"
-          backToRoom={() => toHome(props.roomId)}
-          boardInfo={{
-            boardId: props.boardId,
-            roomId: props.roomId,
-            boardName: board ? board?.data.name : '',
-            roomName: room ? room?.data.name : '',
-          }}
-          config={config}
-        />
+        <Box display="flex" gap="2">
+          <MainButton
+            buttonStyle="solid"
+            backToRoom={() => toHome(props.roomId)}
+            boardInfo={{
+              boardId: props.boardId,
+              roomId: props.roomId,
+              boardName: board ? board?.data.name : '',
+              roomName: room ? room?.data.name : '',
+            }}
+            config={config}
+          />
+          <Tooltip
+            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
+          >
+            <IconButton
+              size="sm"
+              disabled={savedSelectedAppsIds.length < 1}
+              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
+              icon={<MdApps />}
+              fontSize="xl"
+              variant={'outline'}
+              aria-label={'selected-apps'}
+              onClick={goToSavedSelectedApps}
+            ></IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Buttons Middle Bottom */}
