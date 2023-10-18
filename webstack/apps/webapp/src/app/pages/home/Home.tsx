@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -9,11 +9,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Box, useColorModeValue, Text, Image, Progress, Button, IconButton, Input, InputLeftElement, InputGroup } from '@chakra-ui/react';
+import { Box, useColorModeValue, Text, Image, Progress, IconButton, Input, InputLeftElement, InputGroup } from '@chakra-ui/react';
+
+import { UserRow, BoardRow, RoomRow } from './components';
 
 import {
   JoinBoardCheck,
-  RoomList,
   useBoardStore,
   usePresenceStore,
   useRoomStore,
@@ -27,21 +28,7 @@ import {
   useHexColor,
 } from '@sage3/frontend';
 import { Board, Room, User } from '@sage3/shared/types';
-import {
-  MdAdd,
-  MdEdit,
-  MdExitToApp,
-  MdFavorite,
-  MdLink,
-  MdLock,
-  MdManageAccounts,
-  MdPeople,
-  MdPerson,
-  MdSearch,
-  MdSettings,
-  MdStar,
-  MdStarOutline,
-} from 'react-icons/md';
+import { MdAdd, MdEdit, MdLink, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
 
 export function HomePage() {
   // URL Params
@@ -51,29 +38,32 @@ export function HomePage() {
   // Configuration information
   const config = useConfigStore((state) => state.config);
 
-  // Room Store
-  const [selectedRoomId] = useState<string | undefined>(roomId);
-  const rooms = useRoomStore((state) => state.rooms);
-  const subToRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
-  const roomsFetched = useRoomStore((state) => state.fetched);
-
-  // Board Store
-  const { boards, subscribeToAllBoards } = useBoardStore((state) => state);
-  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
-
-  // Plugins
-  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
-
-  // Users and presence
-  const { user } = useUser();
-  const users = useUsersStore((state) => state.users);
-  const updatePresence = usePresenceStore((state) => state.update);
-  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
-  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+
+  // Plugin Store
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+
+  // Room Store
+  const [selectedRoomId] = useState<string | undefined>(roomId);
+  const { rooms, subscribeToAllRooms: subscribeToRooms, fetched: roomsFetched } = useRoomStore((state) => state);
+
+  // Board Store
+  const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
+
+  // User Selected Room and Board
+  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
+  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
+
+  // User
+  const { user } = useUser();
+  const savedRooms = user?.data.savedRooms || [];
+  const savedBoards = user?.data.savedBoards || [];
+  const savedUsers = user?.data.savedUsers || [];
+
+  // User and Presence Store
+  const { users, subscribeToUsers } = useUsersStore((state) => state);
+  const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
 
   // UI Colors
   const roomListBackgroud = useColorModeValue('gray.300', 'gray.700');
@@ -84,12 +74,6 @@ export function HomePage() {
   const infoBG = useHexColor(infoBackground);
   const borderColor = useHexColor(selectedRoom ? selectedRoom.data.color : 'gray.300');
 
-  // Favorites
-  const [showFavorites, setShowFavorites] = useState<boolean>(false);
-  const handleShowFavorites = () => {
-    setShowFavorites(!showFavorites);
-  };
-
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,34 +81,35 @@ export function HomePage() {
   };
   const inputBorderColor = useHexColor('teal.200');
 
+  // Favorites
+  const [showFavorites, setShowFavorites] = useState<boolean>(false);
+  const handleShowFavorites = () => {
+    setShowFavorites(!showFavorites);
+  };
+
   // Filter Search on Rooms, Boards, and Users
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [filteredBoards, setFilteredBoards] = useState<Board[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+
+  // Check to see if all filters are empty
   useEffect(() => {
-    if (searchInput.length > 0) {
-      const roomResults = rooms.filter((room) => room.data.name.toLowerCase().includes(searchInput.toLowerCase()));
-      const boardResults = boards.filter((board) => board.data.name.toLowerCase().includes(searchInput.toLowerCase()));
-      const userResults = users.filter((user) => user.data.name.toLowerCase().includes(searchInput.toLowerCase()));
-      setFilteredRooms(roomResults);
-      setFilteredBoards(boardResults);
-      setFilteredUsers(userResults);
-    } else {
+    if (searchInput.length <= 0 && !showFavorites) {
       setFilteredRooms(rooms);
       setFilteredBoards(boards);
       setFilteredUsers(users);
     }
-  }, [searchInput]);
+  }, [showFavorites, searchInput]);
 
   // Subscribe to user updates
   useEffect(() => {
     // Update the document title
-    document.title = 'SAGE3 - Rooms and Boards';
+    document.title = 'SAGE3 - Home';
 
     subscribeToPresence();
     subscribeToUsers();
-    subToRooms();
-    subscribeToAllBoards();
+    subscribeToRooms();
+    subscribeToBoards();
     subPlugins();
   }, []);
 
@@ -288,7 +273,7 @@ export function HomePage() {
                   {filteredRooms
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
                     .map((room) => {
-                      return <RoomCard key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
+                      return <RoomRow key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
                     })}
                 </Box>
                 <Box
@@ -349,7 +334,7 @@ export function HomePage() {
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .map((board) => {
                         return (
-                          <BoardCard key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
+                          <BoardRow key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
                         );
                       })}
                   </Box>
@@ -429,7 +414,7 @@ export function HomePage() {
                 </Box>
                 <Box flex="1" overflow="hidden" mb="4">
                   {filteredUsers.map((user) => {
-                    return <UserCard key={user._id} user={user} onClick={() => {}} />;
+                    return <UserRow key={user._id} user={user} onClick={() => {}} />;
                   })}
                 </Box>
               </Box>
@@ -472,162 +457,6 @@ export function HomePage() {
         <MainButton buttonStyle="solid" config={config} />
 
         <Image src={imageUrl} height="30px" mb="2" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
-      </Box>
-    </Box>
-  );
-}
-
-function RoomCard(props: { room: Room; selected: boolean; onClick: (room: Room) => void }) {
-  const borderColorValue = useColorModeValue(props.room.data.color, props.room.data.color);
-  const borderColor = useHexColor(borderColorValue);
-  const borderColorGray = useColorModeValue('gray.300', 'gray.700');
-  const borderColorG = useHexColor(borderColorGray);
-
-  const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
-  );
-
-  const created = new Date(props.room._createdAt).toLocaleDateString();
-  return (
-    <Box
-      // my="4"
-      background={linearBGColor}
-      p="1"
-      pl="4"
-      my="2"
-      display="flex"
-      justifyContent={'space-between'}
-      alignItems={'center'}
-      borderColor={props.selected ? borderColor : borderColor}
-      onClick={() => props.onClick(props.room)}
-      border={`solid 1px ${props.selected ? borderColor : 'none'}`}
-      borderLeft={`${borderColor} solid 8px`}
-      borderRadius="md"
-      boxSizing="border-box"
-      backgroundColor={props.selected ? borderColorG : 'transparent'}
-      _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
-    >
-      <Box display="flex" flexDir="column">
-        <Text fontSize="lg" fontWeight="bold" textAlign="left">
-          {props.room.data.name}
-        </Text>
-        <Text fontSize="xs" textAlign="left">
-          {props.room.data.description}
-        </Text>
-      </Box>
-      <Box display="flex" gap="4px">
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          aria-label="enter-board"
-          fontSize="xl"
-          colorScheme="teal"
-          icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
-        ></IconButton>
-
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
-      </Box>
-    </Box>
-  );
-}
-
-function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void }) {
-  const borderColorValue = useColorModeValue(props.board.data.color, props.board.data.color);
-  const borderColor = useHexColor(borderColorValue);
-  const borderColorGray = useColorModeValue('gray.300', 'gray.700');
-  const borderColorG = useHexColor(borderColorGray);
-
-  const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
-  );
-  return (
-    <Box
-      my="2"
-      p="1"
-      px="2"
-      display="flex"
-      borderRadius="md"
-      justifyContent={'space-between'}
-      alignContent={'center'}
-      onClick={() => props.onClick(props.board)}
-      border={`solid 1px ${props.selected ? borderColor : 'none'}`}
-      borderLeft={`${borderColor} solid 8px`}
-      background={linearBGColor}
-      _hover={{ cursor: 'pointer' }}
-    >
-      <Text fontSize="md" textAlign="center" lineHeight="32px" fontWeight="bold">
-        {props.board.data.name}
-      </Text>
-      <Box display="flex" gap="2px">
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          aria-label="enter-board"
-          fontSize="xl"
-          colorScheme="teal"
-          icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
-        ></IconButton>
-
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
-
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme="teal"
-          aria-label="enter-board"
-          fontSize="xl"
-          icon={<MdExitToApp />}
-        ></IconButton>
-      </Box>
-    </Box>
-  );
-}
-
-function UserCard(props: { user: User; onClick: (user: User) => void }) {
-  const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
-  const borderColor = useHexColor(borderColorValue);
-  const borderColorGray = useColorModeValue('gray.300', 'gray.600');
-  const borderColorG = useHexColor(borderColorGray);
-
-  const offline = useHexColor('teal');
-  const online = useHexColor('gray.700');
-  return (
-    <Box
-      my="1"
-      p="1"
-      width="100%"
-      display="flex"
-      justifyContent={'space-between'}
-      // alignContent={'center'}
-      onClick={() => props.onClick(props.user)}
-      borderRadius="md"
-      _hover={{ cursor: 'pointer', background: borderColorG }}
-    >
-      <Box display="flex" alignItems={'center'}>
-        <IconButton
-          size="md"
-          variant={'ghost'}
-          aria-label="enter-board"
-          fontSize="4xl"
-          color={Math.random() > 0.5 ? offline : online}
-          icon={<MdPerson />}
-        ></IconButton>
-        <Box display="flex" flexDir="column">
-          <Text fontSize="sm" fontWeight="bold" textAlign="left">
-            {props.user.data.name}
-          </Text>
-          <Text fontSize="xs" textAlign="left">
-            Board Name
-          </Text>
-        </Box>
-      </Box>
-      <Box>
-        {' '}
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
       </Box>
     </Box>
   );
