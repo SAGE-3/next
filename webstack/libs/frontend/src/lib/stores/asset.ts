@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -31,7 +29,8 @@ interface AssetState {
 /**
  * The AssetStore.
  */
-const AssetStore = createVanilla<AssetState>((set, get) => {
+
+const AssetStore = create<AssetState>()((set, get) => {
   let assetSub: (() => void) | null = null;
   return {
     assets: [],
@@ -97,8 +96,8 @@ const AssetStore = createVanilla<AssetState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useAssetStore = createReact(AssetStore);
+// Export the Zustand store
+export const useAssetStore = AssetStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('AssetStore', useAssetStore);

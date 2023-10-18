@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -35,7 +33,7 @@ interface BoardState {
 /**
  * The BoardStore.
  */
-const BoardStore = createVanilla<BoardState>((set, get) => {
+const BoardStore = create<BoardState>()((set, get) => {
   let boardsSub: (() => void) | null = null;
   return {
     boards: [],
@@ -173,8 +171,8 @@ const BoardStore = createVanilla<BoardState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useBoardStore = createReact(BoardStore);
+// Export the Zustand store
+export const useBoardStore = BoardStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('BoardStore', useBoardStore);

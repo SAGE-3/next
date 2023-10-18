@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -34,7 +32,7 @@ interface PresenceState {
 /**
  * The PresenceStore.
  */
-const PresenceStore = createVanilla<PresenceState>((set, get) => {
+const PresenceStore = create<PresenceState>()((set, get) => {
   APIHttp.GET<Presence>('/presence').then((response) => {
     if (response.success) {
       set({ presences: response.data });
@@ -98,8 +96,8 @@ const PresenceStore = createVanilla<PresenceState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const usePresenceStore = createReact(PresenceStore);
+// Export the Zustand store
+export const usePresenceStore = PresenceStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('PresenceStore', usePresenceStore);

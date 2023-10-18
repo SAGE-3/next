@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -34,7 +32,7 @@ interface RoomState {
 /**
  * The RoomStore.
  */
-const RoomStore = createVanilla<RoomState>((set, get) => {
+const RoomStore = create<RoomState>()((set, get) => {
   let roomSub: (() => void) | null = null;
   return {
     rooms: [],
@@ -120,8 +118,8 @@ const RoomStore = createVanilla<RoomState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useRoomStore = createReact(RoomStore);
+// Export the Zustand store
+export const useRoomStore = RoomStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('RoomStore', useRoomStore);

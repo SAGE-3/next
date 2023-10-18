@@ -14,16 +14,22 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useAppStore, useUser } from '@sage3/frontend';
 import { isElectron, waitForOpenSocket } from './util';
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Electron and Browser components
 // @ts-ignore
 import { WebviewTag } from 'electron';
 import { useParams } from 'react-router';
 
-export const useStore = create((set: any) => ({
-  sock: {} as { [key: string]: WebSocket },
-  setSock: (id: string, sock: WebSocket) => set((state: any) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
+interface SockStore {
+  sock: { [key: string]: WebSocket };
+  setSocket: (id: string, sock: WebSocket) => void;
+}
+
+export const useStore = create<SockStore>()((set) => ({
+  sock: {},
+  setSocket: (id: string, sock: WebSocket) => set((state) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
 }));
 
 /* App component for CoBrowse */
@@ -45,7 +51,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Websocket to communicate with the server
   const rtcSock = useRef<WebSocket>();
-  const setSock = useStore((state: any) => state.setSock);
+  const setSocket = useStore((state) => state.setSocket);
 
   function handleStop() {
     console.log('RTC> Stop');
@@ -73,7 +79,7 @@ function AppComponent(props: App): JSX.Element {
         waitForOpenSocket(rtcSock.current).then(() => {
           if (rtcSock.current) {
             console.log('RTC> WS Connection Open', rtcSock.current.readyState);
-            setSock(props._id, rtcSock.current);
+            setSocket(props._id, rtcSock.current);
             if (props._createdBy === user?._id) {
               console.log('RTC> Create group', props._id);
               rtcSock.current.send(JSON.stringify({ type: 'create', user: user?._id, app: props._id }));
@@ -233,7 +239,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
   const [mine, setMine] = useState(false);
-  const sock = useStore((state: any) => state.sock[props._id]);
+  const sock = useStore((state) => state.sock[props._id]);
 
   useEffect(() => {
     if (user && props._createdBy === user._id) {

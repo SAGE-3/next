@@ -16,6 +16,7 @@ import {
   Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   useDisclosure,
+  Button,
 } from '@chakra-ui/react';
 import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
 
@@ -77,11 +78,12 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
-  const drawer = useStore((state: any) => state.drawer[props._id]);
-  const setDrawer = useStore((state: any) => state.setDrawer);
+  const drawer = useStore((state) => state.drawer[props._id]);
+  const setDrawer = useStore((state) => state.setDrawer);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
@@ -121,7 +123,7 @@ function AppComponent(props: App): JSX.Element {
   const [access, setAccess] = useState(true);
 
   // Styles
-  const [editorHeight, setEditorHeight] = useState(150);
+  const [editorHeight, setEditorHeight] = useState(350);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
   const green = useHexColor('green');
   const yellow = useHexColor('yellow');
@@ -137,6 +139,9 @@ function AppComponent(props: App): JSX.Element {
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
+
+  // Drawer size
+  const [drawerWidth, setDrawerWidth] = useState("50vw");
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -269,7 +274,14 @@ function AppComponent(props: App): JSX.Element {
       editorRef.current.setValue(info);
     }
     try {
-      const response = await executeCode(editorRef.current.getValue(), s.kernel, user._id);
+      const selectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
+      let code2execute = editorRef.current.getValue();
+      code2execute = code2execute.replaceAll('%%room_id', `'${roomId}'`);
+      code2execute = code2execute.replaceAll('%%board_id', `'${boardId}'`);
+      code2execute = code2execute.replaceAll('%%app_id', `'${props._id}'`);
+      code2execute = code2execute.replaceAll('%%selected_apps', `${JSON.stringify(selectedAppsIds)}`);
+
+      const response = await executeCode(code2execute, s.kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
         updateState(props._id, {
@@ -327,10 +339,11 @@ function AppComponent(props: App): JSX.Element {
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
+
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-    code += `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    code += `room_id = %%room_id\nboard_id = %%board_id\napp_id = %%app_id\nselected_apps = %%selected_apps\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();
     ed.setValue(code);
@@ -588,7 +601,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.updateOptions({ fontSize });
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
+    // if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
     updateState(props._id, { fontSize });
   }, [fontSize]);
 
@@ -727,10 +740,10 @@ function AppComponent(props: App): JSX.Element {
     editorRef2.current = editor;
 
     // set the editor options
-    editor.updateOptions({
-      fontSize: s.fontSize,
-      readOnly: !access || !apiStatus || !s.kernel,
-    });
+    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
+    // Default width and font size
+    make50W();
+
     // set the editor theme
     monaco.editor.setTheme(defaultTheme);
     // set the editor language
@@ -895,16 +908,40 @@ function AppComponent(props: App): JSX.Element {
     language={s.language}
   />;
 
+  const make25W = () => {
+    setDrawerWidth('25vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+  const make50W = () => {
+    setDrawerWidth('50vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+  const make75W = () => {
+    setDrawerWidth('75vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+
   return (
     <AppWindow app={props}>
       <>
         <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
-          <DrawerContent >
+          <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}>SageCell</DrawerHeader>
+            <DrawerHeader p={1} m={1}><Flex p={0} m={0}><Text flex={1}>SageCell</Text>
+              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make25W}>25%</Button></Tooltip>
+              <Tooltip hasArrow label="Medium Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make50W}>50%</Button></Tooltip>
+              <Tooltip hasArrow label="Large Editor"><Button size={"sm"} p={2} m={"0 40px 0 1px"} onClick={make75W}>75%</Button></Tooltip>
+            </Flex>
+            </DrawerHeader>
             <DrawerBody p={0} m={0} boxSizing='border-box'>
-              <Box style={{ width: '50vw', height: '100%' }} border="1px solid lightgray">
+              <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
                 {drawerEditor}
               </Box>
             </DrawerBody>
@@ -1056,7 +1093,7 @@ function AppComponent(props: App): JSX.Element {
           </Box>
         </Box>
       </>
-    </AppWindow>
+    </AppWindow >
   );
 }
 
