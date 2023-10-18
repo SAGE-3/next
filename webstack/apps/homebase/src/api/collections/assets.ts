@@ -43,6 +43,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   public async initialize(clear?: boolean, ttl?: number): Promise<void> {
     // call the base class method
     await super.initialize(clear, ttl);
+    // Upload files: POST /api/assets/uploadbyurl
     this.router().post('/uploadbyurl', uploadByURLHandler);
     // Upload files: POST /api/assets/upload
     this.router().post('/upload', uploadHandler);

@@ -84,6 +84,22 @@ export function AssetsPanel(props: AssetsPanelProps) {
     );
   }, [assets, props.roomId]);
 
+  const handleUploadAssetByURL = async () => {
+    const response = await fetch('/api/assets/uploadbyurl', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: JSON.stringify({
+        url: 'https:/ikeauth.its.hawaii.edu/files/v2/download/public/system/ikewai-annotated-data/HCDP/production/rainfall/new/month/statewide/data_map/2012/rainfall_new_month_statewide_data_map_2012_03.tif ',
+      }),
+    });
+    const data = await response.json();
+    console.log(data);
+    // console.log(response, await response.json());
+  };
+
   return (
     <>
       <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
@@ -95,6 +111,7 @@ export function AssetsPanel(props: AssetsPanelProps) {
           <Flex>
             <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
             <Spacer />
+            <Button onClick={handleUploadAssetByURL}></Button>
 
             <Tooltip
               placement="top-start"
