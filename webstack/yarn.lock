@@ -4615,15 +4615,20 @@
   dependencies:
     "@types/node" "*"
 
-"@types/geojson@*", "@types/geojson@^7946.0.11":
-  version "7946.0.11"
-  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.11.tgz#012c17cb2256ad8de78560da851ab914a7b9b40e"
-  integrity sha512-L7A0AINMXQpVwxHJ4jxD6/XjZ4NDufaRlUJHjNIFKYUFBH1SvOW+neaqb0VTRSLW5suSrSu19ObFEFnfNcr+qg==
+"@types/geojson@*":
+  version "7946.0.10"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.10.tgz#6dfbf5ea17142f7f9a043809f1cd4c448cb68249"
+  integrity sha512-Nmh0K3iWQJzniTuPRcJn5hxXkfB1T1pgB89SBig5PlJQU5yocazeu4jATJlaA0GYFKWMqDdvYemoSnF2pXgLVA==
 
 "@types/geojson@7946.0.4":
   version "7946.0.4"
   resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.4.tgz#4e049756383c3f055dd8f3d24e63fb543e98eb07"
   integrity sha512-MHmwBtCb7OCv1DSivz2UNJXPGU/1btAWRKlqJ2saEhVJkpkvqHMMaOpKg0v4sAbDWSQekHGvPVMM8nQ+Jen03Q==
+
+"@types/geojson@^7946.0.11":
+  version "7946.0.11"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.11.tgz#012c17cb2256ad8de78560da851ab914a7b9b40e"
+  integrity sha512-L7A0AINMXQpVwxHJ4jxD6/XjZ4NDufaRlUJHjNIFKYUFBH1SvOW+neaqb0VTRSLW5suSrSu19ObFEFnfNcr+qg==
 
 "@types/glob@^7.1.1":
   version "7.2.0"
@@ -4890,7 +4895,12 @@
   dependencies:
     "@types/express" "*"
 
-"@types/pbf@*", "@types/pbf@^3.0.3":
+"@types/pbf@*":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/pbf/-/pbf-3.0.2.tgz#8d291ad68b4b8c533e96c174a2e3e6399a59ed61"
+  integrity sha512-EDrLIPaPXOZqDjrkzxxbX7UlJSeQVgah3i0aA4pOSzmK9zq3BIh7/MZIQxED7slJByvKM4Gc6Hypyu2lJzh3SQ==
+
+"@types/pbf@^3.0.3":
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/@types/pbf/-/pbf-3.0.3.tgz#7983338f5a3f83f8b3449f2217a167749c3f5089"
   integrity sha512-hw6bDMjvm+QTvEC+pRLpnTknQXoPu8Fnf+A+zX9HB7j/7RfYajFSbdukabo3adPwvvEHhIMafQl0R0Tpej7clQ==
@@ -12653,7 +12663,7 @@ mapbox-gl@1.10.1:
     tinyqueue "^2.0.3"
     vt-pbf "^3.1.1"
 
-maplibre-gl@^3.1.0:
+maplibre-gl@^3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/maplibre-gl/-/maplibre-gl-3.5.0.tgz#063dabd438474a4c9ec30f16aec6c65ff2aa3291"
   integrity sha512-kPEBz6r1LBOZjUpFy+4wZU5Nvnkr60wBtYN/JD6N7oaA4Prpe21afYKxi1oWzSPSfspS1tWNF18GlpF2XcmNSA==
@@ -14756,10 +14766,10 @@ react-vega@^7.5.1:
     prop-types "^15.8.1"
     vega-embed "^6.5.1"
 
-react-virtuoso@^4.3.6:
-  version "4.6.1"
-  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-4.6.1.tgz#b08465be4222d9820a22fbe2fefec29e91d0b048"
-  integrity sha512-dQq0yOdRjdWIYaiTvUbudqmTodGSdWGt5lVYz3mM07TTEV91yv7eL5Fn3FPEJOA36whScxPWg0GiYBIOZYEIEA==
+react-virtuoso@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/react-virtuoso/-/react-virtuoso-4.6.0.tgz#402d86363b6fc6408273615bae9be83e4ce73037"
+  integrity sha512-paQbkLA8U6dRe9srltWgPeoFCtNKqUYIcOpUR01JyznzaXWVzgZQE0M9KGi9vMoq8vHvHkGzuxJ6jDCS6uzePg==
 
 react@^18.2.0:
   version "18.2.0"
@@ -14999,11 +15009,6 @@ requires-port@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/requires-port/-/requires-port-1.0.0.tgz#925d2601d39ac485e091cf0da5c6e694dc3dcaff"
   integrity sha512-KigOCHcocU3XODJxsu8i/j8T9tzT4adHiecwORRQ0ZZFcp7ahwXuRU1m+yuO90C5ZUyGeGfocHDI14M3L3yDAQ==
-
-resize-observer-polyfill@^1.5.1:
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz#0e9020dd3d21024458d4ebd27e23e40269810464"
-  integrity sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==
 
 resolve-cwd@^3.0.0:
   version "3.0.0"
@@ -17870,14 +17875,14 @@ zrender@5.4.4:
   dependencies:
     tslib "2.3.0"
 
-zustand@4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/zustand/-/zustand-4.2.0.tgz#f6ef9e63794eda9b296979578538a6df6be3e1b0"
-  integrity sha512-eNwaDoD2FYVnMgtNxiMUhTJO780wonZUzJrPQTLYI0erSIMZF8cniWFW22kGQUECd8rdHRJ/ZJL2XO54c9Ttuw==
-  dependencies:
-    use-sync-external-store "1.2.0"
-
 zustand@^3.7.1:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/zustand/-/zustand-3.7.2.tgz#7b44c4f4a5bfd7a8296a3957b13e1c346f42514d"
   integrity sha512-PIJDIZKtokhof+9+60cpockVOq05sJzHCriyvaLBmEJixseQ1a5Kdov6fWZfWOu5SK9c+FhH1jU0tntLxRJYMA==
+
+zustand@^4.4.3:
+  version "4.4.3"
+  resolved "https://registry.yarnpkg.com/zustand/-/zustand-4.4.3.tgz#1d54cf7fa4507ad8bf58e2f13e08ddc8a6730128"
+  integrity sha512-oRy+X3ZazZvLfmv6viIaQmtLOMeij1noakIsK/Y47PWYhT8glfXzQ4j0YcP5i0P0qI1A4rIB//SGROGyZhx91A==
+  dependencies:
+    use-sync-external-store "1.2.0"

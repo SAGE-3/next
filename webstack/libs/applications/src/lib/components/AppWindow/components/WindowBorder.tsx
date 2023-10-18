@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box, useColorModeValue } from '@chakra-ui/react';
+import { useHexColor } from '@sage3/frontend';
 
 type WindowBorderProps = {
   size: { width: number; height: number };
@@ -16,6 +17,7 @@ type WindowBorderProps = {
   borderColor: string;
   selectColor: string;
   borderRadius: number;
+  isSavedSelected: boolean;
 };
 
 /**
@@ -26,12 +28,14 @@ export function WindowBorder(props: WindowBorderProps) {
   const size = props.size;
   const selected = props.selected;
   const isGrouped = props.isGrouped;
+  const isSavedSelected = props.isSavedSelected;
   const borderWidth = props.borderWidth;
   const borderColor = props.borderColor;
   const selectColor = props.selectColor;
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
+  const savedSelectedColor = useHexColor('red');
 
   return (
     <Box
@@ -44,6 +48,7 @@ export function WindowBorder(props: WindowBorderProps) {
       opacity={isGrouped || dragging ? 0.6 : 1}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
       background={selected || isGrouped ? selectColor : borderColor}
+      outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : 'none'}
       boxShadow={`4px 4px 12px 0px ${shadowColor}`}
       pointerEvents={'none'}
     ></Box>

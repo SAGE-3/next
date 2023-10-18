@@ -6,7 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { HStack, useToast } from '@chakra-ui/react';
+import {
+  HStack, useToast, Button, Text,
+  Popover, PopoverArrow, PopoverBody, PopoverContent,
+  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+} from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
@@ -85,16 +89,32 @@ export function Controller(props: ControllerProps) {
     bringPanelForward(panel.name);
   };
 
+  // Popover for long press
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
+
   return (
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
-        <IconButtonPanel
-          icon={<MdArrowBack />}
-          isActive={false}
-          onClick={handleHomeClick}
-          // description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
-          description={`Back to ${room?.data.name} (Shift+Click to go back to previous board)`}
-        />
+        <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose} placement='bottom-start'>
+          <PopoverAnchor>
+            <IconButtonPanel
+              icon={<MdArrowBack />}
+              isActive={false}
+              onClick={handleHomeClick}
+              onLongPress={popOnOpen}
+              description={`Back to ${room?.data.name} (Shift+Click to go back to previous board)`}
+            />
+          </PopoverAnchor>
+          <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 80, left: 30 }}>
+            <PopoverArrow />
+            <PopoverBody userSelect={"text"}>
+              <VStack display={"block"} >
+                <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
+                <Button variant={"link"} fontSize={"sm"} onClick={back}>Back to previous board</Button>
+              </VStack>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
         <IconButtonPanel

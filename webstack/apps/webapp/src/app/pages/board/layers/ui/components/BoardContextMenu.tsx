@@ -127,7 +127,8 @@ export function BoardContextMenu(props: ContextProps) {
     let width = 400;
     let height = 420;
     if (appName === 'SageCell') {
-      width = 650;
+      width = 900;
+      height = 800;
     }
     if (appName === 'Screenshare') {
       width = 1280;

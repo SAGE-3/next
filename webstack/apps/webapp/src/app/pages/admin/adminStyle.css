@@ -1,18 +1,17 @@
-table {
+.adminTable table {
   font-family: arial, sans-serif;
   border-collapse: collapse;
   width: 100%;
 }
-tbody td:hover {
+.adminTable tbody td:hover {
   background-color: unset;
 }
-td,
-th {
+.adminTable td, th {
   border: 1px solid #dddddd;
   text-align: left;
   padding: 8px;
 }
 
-tr:nth-child(even) {
-  background-color: #dddddd;
+.adminTable tr:nth-child(even) {
+  background-color: #999999;
 }

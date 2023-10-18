@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -22,7 +22,7 @@ interface ConfigState {
 /**
  * The UIStore.
  */
-export const useConfigStore = create<ConfigState>((set, get) => {
+export const useConfigStore = create<ConfigState>()((set, get) => {
   // get the confguration from the server and set it
   GetConfiguration().then((data) => {
     set({ config: data as OpenConfiguration });

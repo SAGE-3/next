@@ -30,7 +30,7 @@ import { useStore } from './store';
  */
 export function ToolbarComponent(props: App): JSX.Element {
   // Store between toolbar and appWindow
-  const setDrawer = useStore((state: any) => state.setDrawer);
+  const setDrawer = useStore((state) => state.setDrawer);
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
