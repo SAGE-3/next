@@ -30,7 +30,6 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
       background={linearBGColor}
       p="1"
       pl="4"
-      my="2"
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}

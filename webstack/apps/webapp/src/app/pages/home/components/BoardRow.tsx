@@ -23,22 +23,26 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   );
   return (
     <Box
-      my="2"
       p="1"
       px="2"
       display="flex"
       borderRadius="md"
       justifyContent={'space-between'}
-      alignContent={'center'}
+      alignItems={'center'}
       onClick={() => props.onClick(props.board)}
       border={`solid 1px ${props.selected ? borderColor : 'none'}`}
-      borderLeft={`${borderColor} solid 8px`}
+      borderRight={`${borderColor} solid 8px`}
       background={linearBGColor}
       _hover={{ cursor: 'pointer' }}
     >
-      <Text fontSize="md" textAlign="center" lineHeight="32px" fontWeight="bold">
-        {props.board.data.name}
-      </Text>
+      <Box display="flex" flexDir="column">
+        <Text fontSize="lg" fontWeight="bold" textAlign="left">
+          {props.board.data.name}
+        </Text>
+        <Text fontSize="xs" textAlign="left">
+          {props.board.data.description}
+        </Text>
+      </Box>
       <Box display="flex" gap="2px">
         <IconButton
           size="sm"

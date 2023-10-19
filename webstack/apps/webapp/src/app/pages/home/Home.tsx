@@ -11,7 +11,7 @@ import { useParams } from 'react-router-dom';
 
 import { Box, useColorModeValue, Text, Image, Progress, IconButton, Input, InputLeftElement, InputGroup } from '@chakra-ui/react';
 
-import { UserRow, BoardRow, RoomRow } from './components';
+import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard } from './components';
 
 import {
   JoinBoardCheck,
@@ -29,6 +29,7 @@ import {
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
 import { MdAdd, MdEdit, MdLink, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
+import { set } from 'date-fns';
 
 type UserPresence = {
   user: User;
@@ -59,6 +60,7 @@ export function HomePage() {
   // User Selected Room and Board
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
+  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
 
   // User
   const { user } = useUser();
@@ -141,21 +143,25 @@ export function HomePage() {
 
   function handleRoomClick(room: Room | undefined) {
     if (room) {
-      setSelectedRoom(room);
+      room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
       setSelectedBoard(undefined);
-      if (user) updatePresence(user._id, { roomId: room._id, boardId: '', following: '' });
+      setSelectedUser(undefined);
       // update the URL, helps with history
       toHome(room._id);
     } else {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
-
-      if (user) updatePresence(user._id, { roomId: '', boardId: '', following: '' });
+      setSelectedUser(undefined);
     }
   }
 
   function handleBoardClick(board: Board) {
     setSelectedBoard(board);
+    setSelectedUser(undefined);
+  }
+
+  function handleUserClick(user: User) {
+    setSelectedUser(user);
   }
 
   useEffect(() => {
@@ -189,18 +195,13 @@ export function HomePage() {
     }
   }, [roomsFetched]);
 
-  const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
-  );
-
   return (
     // Main Container
-    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
+    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between" py="10px">
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Top Bar */}
-      <Box display="flex" flexDirection="row" justifyContent="space-between" height={'32px'} width="100vw" px="2">
+      <Box display="flex" flexDirection="row" justifyContent="space-between" width="100vw" px="2">
         <Box flex="1 1 0px">
           <Text
             fontSize="xl"
@@ -224,224 +225,121 @@ export function HomePage() {
       </Box>
 
       {/* Middle Section */}
-
       <Box
         display="flex"
-        flexDirection="row"
-        flexGrow={1}
-        justifyContent={'center'}
-        maxWidth="1920px"
+        flexDirection="column"
         height="100%"
+        maxHeight="100%"
+        justifyContent={'space-between'}
+        maxWidth="1920px"
         overflow="hidden"
-        gap="16px"
-        p="16px"
       >
-        <Box display="flex" flexDir={'column'} width="100%">
-          <Box width="100%" display="flex" p="2" pr="4" gap="8px">
-            <InputGroup colorScheme="teal">
-              <InputLeftElement pointerEvents="none">
-                <MdSearch color="white" />{' '}
-              </InputLeftElement>
-              <Input
-                type="text"
-                placeholder="Search"
-                _placeholder={{ color: 'white' }}
-                onChange={handleSearchInput}
-                colorScheme="teal"
-                _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
-              />
-            </InputGroup>
+        {/* Search Box */}
+        <Box width="100%" display="flex" p="2" pr="4">
+          <InputGroup colorScheme="teal">
+            <InputLeftElement pointerEvents="none">
+              <MdSearch color="white" />{' '}
+            </InputLeftElement>
+            <Input
+              type="text"
+              placeholder="Search"
+              _placeholder={{ color: 'white' }}
+              onChange={handleSearchInput}
+              colorScheme="teal"
+              _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
+            />
+          </InputGroup>
+        </Box>
+
+        {/* Data Section */}
+        <Box display="flex" flex={1} height="100%" width="100%">
+          {/* Left Side Rooms */}
+          <Box display="flex" flexDirection="column" height="100%" p="8px" flex="1" minWidth="420px" justifyContent={'space-between'}>
+            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
+              <Text fontSize="2xl">Rooms</Text>
+              <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
+                <IconButton
+                  size="sm"
+                  colorScheme="teal"
+                  variant={'outline'}
+                  aria-label="create-room"
+                  fontSize="xl"
+                  icon={<MdAdd />}
+                ></IconButton>
+              </Box>
+            </Box>
+
+            <Box overflow="hidden" flex="1" gap="8px" display="flex" flexDir={'column'}>
+              {rooms
+                .filter(roomsFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                .map((room) => {
+                  return <RoomRow key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
+                })}
+            </Box>
+            <RoomCard room={selectedRoom} />
           </Box>
 
-          {roomsFetched ? (
-            <Box display="flex" height="100%" width="100%">
-              {/* Left Side Rooms */}
-              <Box
-                display="flex"
-                flexDirection="column"
-                height="100%"
-                p="8px"
-                // flex="1"
-                // justifyContent={'space-between'}
-                // borderRadius="md"
-                // border="solid gray 2px"
-                flex="1"
-                minWidth="420px"
-                // background={boardListBG}
-              >
-                <Box display="flex" mb="2" justifyContent={'space-between'} width="100%">
-                  <Text mb="2" fontSize="2xl">
-                    Rooms
-                  </Text>
-                  <Box mb="2" display="flex" ml="2" justifyContent={'left'} gap="8px">
-                    <IconButton
-                      size="sm"
-                      colorScheme="teal"
-                      variant={'outline'}
-                      aria-label="create-room"
-                      fontSize="xl"
-                      icon={<MdAdd />}
-                    ></IconButton>
-                  </Box>
-                </Box>
-
-                <Box overflow="hidden" flex="1">
-                  {rooms
-                    .filter(roomsFilter)
-                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                    .map((room) => {
-                      return <RoomRow key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
-                    })}
-                </Box>
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  borderRadius="md"
-                  height="240px"
-                  // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
-                  background={linearBGColor}
-                  padding="8px"
-                >
-                  <Box display="flex" justifyContent={'space-between'}>
-                    <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                      <Text fontSize="2xl">{selectedRoom ? selectedRoom.data.name : 'Room'}</Text>
-                      <Box display="flex" justifyContent={'left'} gap="8px">
-                        <IconButton
-                          size="sm"
-                          colorScheme="teal"
-                          variant={'outline'}
-                          aria-label="create-room"
-                          fontSize="xl"
-                          icon={<MdEdit />}
-                        ></IconButton>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box flex="1" display="flex" my="4" px="2" flexDir="column">
-                    <Box>
-                      <Text fontSize="sm">{selectedRoom?.data.description}</Text>
-                      <Text fontSize="sm">Owner: {users.find((u) => u._id === selectedRoom?.data.ownerId)?.data.name}</Text>
-                      <Text fontSize="sm">Created: Jan 5th, 2023</Text>
-                      <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
-                    </Box>
-                  </Box>
+          {/* Middle Section Room and Boards */}
+          <Box display="flex" flexDirection="column" height="100%" flex="1">
+            <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
+              <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
+                <Text fontSize="2xl">Boards</Text>
+                <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
+                  <IconButton
+                    size="sm"
+                    colorScheme="teal"
+                    variant={'outline'}
+                    aria-label="create-room"
+                    fontSize="xl"
+                    icon={<MdAdd />}
+                  ></IconButton>
                 </Box>
               </Box>
-
-              {/* Middle Section Room and Boards */}
-              <Box display="flex" flexDirection="column" height="100%" flex="1" gap="16px">
-                <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
-                  <Box display="flex" justifyContent={'space-between'}>
-                    <Box mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                      <Text fontSize="2xl">Boards</Text>
-                      <Box mb="2" display="flex" justifyContent={'left'} gap="8px">
-                        <IconButton
-                          size="sm"
-                          colorScheme="teal"
-                          variant={'outline'}
-                          aria-label="create-room"
-                          fontSize="xl"
-                          icon={<MdAdd />}
-                        ></IconButton>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box flex="1" overflow="hidden" mb="4">
-                    {boards
-                      .filter(boardsFilter)
-                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => {
-                        return (
-                          <BoardRow key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
-                        );
-                      })}
-                  </Box>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    borderRadius="md"
-                    height="240px"
-                    // border={`solid ${selectedRoom ? borderColor : 'transparent'} 2px`}
-                    background={linearBGColor}
-                    padding="8px"
-                  >
-                    <Box display="flex" justifyContent={'space-between'}>
-                      <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                        <Text fontSize="2xl">{selectedBoard?.data.name}</Text>
-                        <Box display="flex" justifyContent={'left'} gap="8px">
-                          <IconButton
-                            size="sm"
-                            variant={'outline'}
-                            colorScheme="teal"
-                            aria-label="enter-board"
-                            fontSize="xl"
-                            icon={<MdLink />}
-                          ></IconButton>
-                          <IconButton
-                            size="sm"
-                            colorScheme="teal"
-                            variant={'outline'}
-                            aria-label="create-room"
-                            fontSize="xl"
-                            icon={<MdEdit />}
-                          ></IconButton>
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box flex="1" display="flex" my="4" px="2" flexDir="column">
-                      <Box>
-                        <Text fontSize="sm">This is the board's description.</Text>
-                        <Text fontSize="sm">Owner: {users.find((u) => u._id === selectedBoard?.data.ownerId)?.data.name}</Text>
-                        <Text fontSize="sm">Created: Jan 5th, 2023</Text>
-                        <Text fontSize="sm">Updated: Oct 5th, 2023</Text>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Right Side Members */}
-              <Box
-                display="flex"
-                flexDirection="column"
-                height="100%"
-                p="8px"
-                width="280px"
-                // background={boardListBG}
-              >
-                <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-                  <Text fontSize="2xl"> Users</Text>
-                  <Box display="flex" justifyContent={'left'} gap="8px">
-                    <IconButton
-                      size="sm"
-                      colorScheme="teal"
-                      variant={'outline'}
-                      aria-label="create-room"
-                      fontSize="xl"
-                      icon={<MdAdd />}
-                    ></IconButton>
-                    <IconButton
-                      size="sm"
-                      colorScheme="teal"
-                      variant={'outline'}
-                      aria-label="create-room"
-                      fontSize="xl"
-                      icon={<MdManageAccounts />}
-                    ></IconButton>
-                  </Box>
-                </Box>
-                <Box flex="1" overflow="hidden" mb="4">
-                  {usersFilter().map((up) => {
-                    return <UserRow key={up.user._id} user={up.user} onClick={() => {}} />;
+              <Box overflow="hidden" flex="1" gap="8px" display="flex" flexDir={'column'}>
+                {boards
+                  .filter(boardsFilter)
+                  .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                  .map((board) => {
+                    return (
+                      <BoardRow key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
+                    );
                   })}
-                </Box>
+              </Box>
+              <BoardCard board={selectedBoard} />
+            </Box>
+          </Box>
+
+          {/* Right Side Members */}
+          <Box display="flex" flexDirection="column" height="100%" p="8px" width="280px">
+            <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+              <Text fontSize="2xl"> Users</Text>
+              <Box display="flex" justifyContent={'left'} gap="8px">
+                <IconButton
+                  size="sm"
+                  colorScheme="teal"
+                  variant={'outline'}
+                  aria-label="create-room"
+                  fontSize="xl"
+                  icon={<MdAdd />}
+                ></IconButton>
+                <IconButton
+                  size="sm"
+                  colorScheme="teal"
+                  variant={'outline'}
+                  aria-label="create-room"
+                  fontSize="xl"
+                  icon={<MdManageAccounts />}
+                ></IconButton>
               </Box>
             </Box>
-          ) : (
-            <Box display="flex" flexDirection="column" justifyContent={'center'} alignItems="center" height="100%" width="100%">
-              <Progress isIndeterminate width="100%" borderRadius="md" />
+            <Box flex="1" overflow="hidden" mb="4">
+              {usersFilter().map((up) => {
+                return <UserRow key={up.user._id} user={up.user} onClick={() => handleUserClick(up.user)} />;
+              })}
             </Box>
-          )}
+            <UserCard user={selectedUser} presence={presences.find((p) => p._id === selectedUser?._id)} />
+          </Box>
         </Box>
       </Box>
 
