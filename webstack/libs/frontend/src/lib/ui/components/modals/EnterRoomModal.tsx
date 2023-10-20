@@ -90,7 +90,7 @@ export const EnterRoomModal = (props: EnterRoomProps) => {
               ref={initialRef}
               width="full"
               value={privateText}
-              type="password"
+              type="password" autoCapitalize='off'
               onChange={(e) => setPrivateText(e.target.value)}
             />
           </InputGroup>

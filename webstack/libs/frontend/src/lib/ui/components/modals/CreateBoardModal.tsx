@@ -182,7 +182,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text"
+              type="text" autoCapitalize='off'
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
