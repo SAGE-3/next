@@ -7,18 +7,33 @@
  */
 
 import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
-import { useHexColor } from '@sage3/frontend';
+import { useHexColor, useUser } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
-import { MdPerson, MdStar } from 'react-icons/md';
+import { MdPerson, MdStar, MdStarOutline } from 'react-icons/md';
+import { UserPresence } from '../..';
 
-export function UserRow(props: { user: User; onClick: (user: User) => void }) {
-  const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
+export function UserRow(props: { userPresence: UserPresence; onClick: (user: User) => void }) {
+  const { user, saveUser, removeUser } = useUser();
+
+  const borderColorValue = useColorModeValue(props.userPresence.user.data.color, props.userPresence.user.data.color);
   const borderColor = useHexColor(borderColorValue);
   const borderColorGray = useColorModeValue('gray.300', 'gray.600');
   const borderColorG = useHexColor(borderColorGray);
 
   const offline = useHexColor('teal');
   const online = useHexColor('gray.700');
+
+  const savedUsers = user?.data.savedUsers || [];
+  const isFavorite = user && savedUsers.includes(props.userPresence.user._id);
+
+  const handleFavorite = (event: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const userId = props.userPresence.user._id;
+    if (user && saveUser && removeUser) {
+      savedUsers.includes(userId) ? removeUser(userId) : saveUser(userId);
+    }
+  };
   return (
     <Box
       my="1"
@@ -27,7 +42,7 @@ export function UserRow(props: { user: User; onClick: (user: User) => void }) {
       display="flex"
       justifyContent={'space-between'}
       // alignContent={'center'}
-      onClick={() => props.onClick(props.user)}
+      onClick={() => props.onClick(props.userPresence.user)}
       borderRadius="md"
       _hover={{ cursor: 'pointer', background: borderColorG }}
     >
@@ -37,12 +52,12 @@ export function UserRow(props: { user: User; onClick: (user: User) => void }) {
           variant={'ghost'}
           aria-label="enter-board"
           fontSize="4xl"
-          color={Math.random() > 0.5 ? offline : online}
+          color={props.userPresence.presence ? online : offline}
           icon={<MdPerson />}
         ></IconButton>
         <Box display="flex" flexDir="column">
           <Text fontSize="sm" fontWeight="bold" textAlign="left">
-            {props.user.data.name}
+            {props.userPresence.user.data.name}
           </Text>
           <Text fontSize="xs" textAlign="left">
             Board Name
@@ -51,7 +66,15 @@ export function UserRow(props: { user: User; onClick: (user: User) => void }) {
       </Box>
       <Box>
         {' '}
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          onClick={handleFavorite}
+          icon={isFavorite ? <MdStar /> : <MdStarOutline />}
+        ></IconButton>
       </Box>
     </Box>
   );

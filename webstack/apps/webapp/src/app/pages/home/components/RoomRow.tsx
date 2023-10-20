@@ -8,11 +8,12 @@
 
 import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
 import { useHexColor } from '@sage3/frontend';
-import {} from 'framer-motion';
-import { MdLock, MdStar } from 'react-icons/md';
+import { useUser } from '@sage3/frontend';
+import { MdLock, MdStar, MdStarOutline } from 'react-icons/md';
 import { Room } from '@sage3/shared/types';
 
-export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: Room) => void }) {
+export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: Room) => void; usersPresent: number }) {
+  const { user, saveRoom, removeRoom } = useUser();
   const borderColorValue = useColorModeValue(props.room.data.color, props.room.data.color);
   const borderColor = useHexColor(borderColorValue);
   const borderColorGray = useColorModeValue('gray.300', 'gray.700');
@@ -24,6 +25,18 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
   );
 
   const created = new Date(props.room._createdAt).toLocaleDateString();
+
+  const savedRooms = user?.data.savedRooms || [];
+  const isFavorite = user && savedRooms.includes(props.room._id);
+
+  const handleFavorite = (event: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const roomId = props.room._id;
+    if (user && removeRoom && saveRoom) {
+      savedRooms.includes(roomId) ? removeRoom(roomId) : saveRoom(roomId);
+    }
+  };
   return (
     <Box
       // my="4"
@@ -57,11 +70,19 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
           aria-label="enter-board"
           fontSize="xl"
           colorScheme="teal"
-          icon={<Text>{(Math.random() * 25).toFixed()}</Text>}
+          icon={<Text>{props.usersPresent}</Text>}
         ></IconButton>
 
         <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdStar />}></IconButton>
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          onClick={handleFavorite}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          icon={isFavorite ? <MdStar /> : <MdStarOutline />}
+        ></IconButton>
       </Box>
     </Box>
   );

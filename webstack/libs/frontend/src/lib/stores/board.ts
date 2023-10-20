@@ -23,7 +23,7 @@ interface BoardState {
   error: string | null;
   fetched: boolean;
   clearError: () => void;
-  create: (newBoard: BoardSchema) => void;
+  create: (newBoard: BoardSchema) => Promise<Board | undefined>;
   update: (id: string, updates: Partial<BoardSchema>) => void;
   delete: (id: string) => void;
   subscribeToAllBoards: () => Promise<void>;
@@ -47,6 +47,9 @@ const BoardStore = create<BoardState>()((set, get) => {
       const res = await SocketAPI.sendRESTMessage('/boards', 'POST', newBoard);
       if (!res.success) {
         set({ error: res.message });
+        return undefined;
+      } else {
+        return res.data;
       }
     },
     update: async (id: string, updates: Partial<BoardSchema>) => {

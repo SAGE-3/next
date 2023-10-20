@@ -9,7 +9,18 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { Box, useColorModeValue, Text, Image, Progress, IconButton, Input, InputLeftElement, InputGroup } from '@chakra-ui/react';
+import {
+  Box,
+  useColorModeValue,
+  Text,
+  Image,
+  Progress,
+  IconButton,
+  Input,
+  InputLeftElement,
+  InputGroup,
+  useDisclosure,
+} from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard } from './components';
 
@@ -26,12 +37,14 @@ import {
   useConfigStore,
   useRouteNav,
   useHexColor,
+  CreateRoomModal,
+  CreateBoardModal,
+  useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdEdit, MdLink, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
-import { set } from 'date-fns';
+import { MdAdd, MdManageAccounts, MdSearch } from 'react-icons/md';
 
-type UserPresence = {
+export type UserPresence = {
   user: User;
   presence: Presence | undefined;
 };
@@ -75,9 +88,17 @@ export function HomePage() {
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e);
     setSearchInput(e.target.value);
+    setSelectedRoom(undefined);
+    setSelectedBoard(undefined);
+    setSelectedUser(undefined);
   };
   const inputBorderColor = useHexColor('teal.200');
+
+  // Modals
+  const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
+  const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
 
   // Filter Functions
   const roomsFilter = (room: Room): boolean => {
@@ -141,11 +162,20 @@ export function HomePage() {
     subPlugins();
   }, []);
 
+  // Change of room
+  useEffect(() => {
+    if (user) {
+      const roomId = selectedRoom ? selectedRoom._id : '';
+      updatePresence(user?._id, { roomId });
+    }
+  }, [selectedRoom]);
+
   function handleRoomClick(room: Room | undefined) {
     if (room) {
       room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
+
       // update the URL, helps with history
       toHome(room._id);
     } else {
@@ -195,11 +225,23 @@ export function HomePage() {
     }
   }, [roomsFetched]);
 
+  useHotkeys('esc', () => {
+    setSearchInput('');
+    setSelectedRoom(undefined);
+    setSelectedBoard(undefined);
+    setSelectedUser(undefined);
+  });
+
   return (
     // Main Container
-    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between" py="10px">
+    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
+      {/* Modal to create a room */}
+      <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
+      {/* Modal to create a board */}
+      <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
+
       {/* Top Bar */}
       <Box display="flex" flexDirection="row" justifyContent="space-between" width="100vw" px="2">
         <Box flex="1 1 0px">
@@ -233,6 +275,7 @@ export function HomePage() {
         justifyContent={'space-between'}
         maxWidth="1920px"
         overflow="hidden"
+        paddingBottom="55px"
       >
         {/* Search Box */}
         <Box width="100%" display="flex" p="2" pr="4">
@@ -246,6 +289,7 @@ export function HomePage() {
               _placeholder={{ color: 'white' }}
               onChange={handleSearchInput}
               colorScheme="teal"
+              value={searchInput}
               _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
             />
           </InputGroup>
@@ -264,50 +308,87 @@ export function HomePage() {
                   variant={'outline'}
                   aria-label="create-room"
                   fontSize="xl"
+                  onClick={createRoomModalOnOpen}
                   icon={<MdAdd />}
                 ></IconButton>
               </Box>
             </Box>
 
-            <Box overflow="hidden" flex="1" gap="8px" display="flex" flexDir={'column'}>
+            <Box
+              flex="1"
+              overflowY="scroll"
+              gap="8px"
+              display="flex"
+              flexDir={'column'}
+              css={{
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+              }}
+            >
               {rooms
                 .filter(roomsFilter)
                 .sort((a, b) => a.data.name.localeCompare(b.data.name))
                 .map((room) => {
-                  return <RoomRow key={room._id} room={room} selected={selectedRoom?._id === room._id} onClick={handleRoomClick} />;
+                  return (
+                    <RoomRow
+                      key={room._id}
+                      room={room}
+                      selected={selectedRoom?._id === room._id}
+                      onClick={handleRoomClick}
+                      usersPresent={presences.filter((p) => p.data.roomId === room._id).length}
+                    />
+                  );
                 })}
             </Box>
             <RoomCard room={selectedRoom} />
           </Box>
 
           {/* Middle Section Room and Boards */}
-          <Box display="flex" flexDirection="column" height="100%" flex="1">
-            <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
-              <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-                <Text fontSize="2xl">Boards</Text>
-                <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
-                  <IconButton
-                    size="sm"
-                    colorScheme="teal"
-                    variant={'outline'}
-                    aria-label="create-room"
-                    fontSize="xl"
-                    icon={<MdAdd />}
-                  ></IconButton>
-                </Box>
+          <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
+            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
+              <Text fontSize="2xl">Boards</Text>
+              <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
+                <IconButton
+                  size="sm"
+                  colorScheme="teal"
+                  variant={'outline'}
+                  aria-label="create-room"
+                  fontSize="xl"
+                  isDisabled={!selectedRoom}
+                  onClick={createBoardModalOnOpen}
+                  icon={<MdAdd />}
+                ></IconButton>
               </Box>
-              <Box overflow="hidden" flex="1" gap="8px" display="flex" flexDir={'column'}>
-                {boards
-                  .filter(boardsFilter)
-                  .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                  .map((board) => {
-                    return (
-                      <BoardRow key={board._id} board={board} selected={selectedBoard?._id === board._id} onClick={handleBoardClick} />
-                    );
-                  })}
-              </Box>
-              <BoardCard board={selectedBoard} />
             </Box>
+            <Box
+              flex="1"
+              overflowY="scroll"
+              gap="8px"
+              display="flex"
+              flexDir={'column'}
+              css={{
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+              }}
+            >
+              {boards
+                .filter(boardsFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                .map((board) => {
+                  return (
+                    <BoardRow
+                      key={board._id}
+                      board={board}
+                      selected={selectedBoard?._id === board._id}
+                      onClick={handleBoardClick}
+                      usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                    />
+                  );
+                })}
+            </Box>
+            <BoardCard board={selectedBoard} />
           </Box>
 
           {/* Right Side Members */}
@@ -315,7 +396,7 @@ export function HomePage() {
             <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
               <Text fontSize="2xl"> Users</Text>
               <Box display="flex" justifyContent={'left'} gap="8px">
-                <IconButton
+                {/* <IconButton
                   size="sm"
                   colorScheme="teal"
                   variant={'outline'}
@@ -330,13 +411,25 @@ export function HomePage() {
                   aria-label="create-room"
                   fontSize="xl"
                   icon={<MdManageAccounts />}
-                ></IconButton>
+                ></IconButton> */}
               </Box>
             </Box>
-            <Box flex="1" overflow="hidden" mb="4">
-              {usersFilter().map((up) => {
-                return <UserRow key={up.user._id} user={up.user} onClick={() => handleUserClick(up.user)} />;
-              })}
+            <Box flex="1" overflow="hidden" mb="4" width="100%">
+              <Box
+                display="flex"
+                flexDir="column"
+                overflowY="scroll"
+                height="100%"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    display: 'none',
+                  },
+                }}
+              >
+                {usersFilter().map((up) => {
+                  return <UserRow key={up.user._id} userPresence={up} onClick={() => handleUserClick(up.user)} />;
+                })}
+              </Box>
             </Box>
             <UserCard user={selectedUser} presence={presences.find((p) => p._id === selectedUser?._id)} />
           </Box>
