@@ -133,10 +133,10 @@ export function LassoToolbar() {
 import pandas as pd
 from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
-room_id = %%room_id
-board_id = %%board_id
-app_id = %%app_id
-selected_apps = %%selected_apps
+room_id = %%sage_room_id
+board_id = %%sage_board_id
+app_id = %%sage_app_id
+selected_apps = %%sage_selected_apps
 ps3 = PySage3(conf, prod_type)
 smartbits = ps3.get_smartbits(room_id, board_id)
 cell = smartbits[app_id]
@@ -149,10 +149,10 @@ for b in bits:
         code = `# Setup SAGE3 API
 from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
-room_id = %%room_id
-board_id = %%board_id
-app_id = %%app_id
-selected_apps = %%selected_apps
+room_id = %%sage_room_id
+board_id = %%sage_board_id
+app_id = %%sage_app_id
+selected_apps = %%sage_selected_apps
 ps3 = PySage3(conf, prod_type)
 smartbits = ps3.get_smartbits(room_id, board_id)
 cell = smartbits[app_id]
