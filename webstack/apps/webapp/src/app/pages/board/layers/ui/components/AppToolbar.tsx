@@ -12,7 +12,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import {
   Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem,
   Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent,
-  PopoverHeader, PopoverTrigger, UnorderedList
+  PopoverHeader, PopoverTrigger, UnorderedList, useDisclosure,
 } from '@chakra-ui/react';
 import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
@@ -21,7 +21,7 @@ import { formatDistance } from 'date-fns';
 
 import {
   useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore,
-  useUsersStore, useInsightStore
+  useUsersStore, useInsightStore, ConfirmModal,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
@@ -75,6 +75,9 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Apps
   const app = apps.find((app) => app._id === selectedApp);
+
+  // Delete app modal
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
 
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
@@ -216,6 +219,7 @@ export function AppToolbar(props: AppToolbarProps) {
       const ownerName = users.find((el) => el._id === app._createdBy)?.data.name;
       const now = new Date();
       const when = formatDistance(new Date(app._createdAt), now, { addSuffix: true });
+
       // Input to edit the tags
       const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInputLabel(event.target.value);
@@ -306,7 +310,7 @@ export function AppToolbar(props: AppToolbarProps) {
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
               <Button
-                onClick={() => deleteApp(app._id)}
+                onClick={onDeleteOpen}
                 backgroundColor={commonButtonColors}
                 size="xs"
                 mr="1"
@@ -316,6 +320,19 @@ export function AppToolbar(props: AppToolbarProps) {
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
+
+            <ConfirmModal
+              isOpen={isDeleteOpen}
+              onClose={onDeleteClose}
+              onConfirm={() => deleteApp(app._id)}
+              title="Delete this Application"
+              message="Are you sure you want to delete this application?"
+              cancelText="Cancel"
+              confirmText="Delete"
+              cancelColor="green"
+              confirmColor="red" size="lg"
+            />
+
           </>
         </ErrorBoundary>
       );
