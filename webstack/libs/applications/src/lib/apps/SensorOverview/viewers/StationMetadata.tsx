@@ -26,9 +26,7 @@ export default function StationMetadata(
     size?: { width: number; height: number; depth: number };
   } & { state: AppState }
 ) {
-  const s = props.state as AppState;
-  const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
-  const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
+  const [, setVariablesToDisplay] = useState<VariableProps[]>([]);
 
   useEffect(() => {
     const values: VariableProps[] = [];
@@ -60,32 +58,6 @@ export default function StationMetadata(
             stationMetadata={props.stationMetadata[0]}
             size={props.size ? props.size : { width: 820, height: 250, depth: 0 }}
           />
-          {/* <Content
-            isLoaded={props.isLoaded}
-            stationNames={props.stationNames}
-            variableToDisplayLength={0}
-            s={s}
-            size={{ width: 800, height: 590, depth: 0 }}
-            timeSinceLastUpdate={props.timeSinceLastUpdate}
-            variable={
-              variablesToDisplay[0]
-                ? variablesToDisplay[0]
-                : {
-                    variableName: 'air_temperature_set_1',
-                    stationName: 'Station Name',
-                    value: 42.01,
-                    average: 38.42,
-                    stdDev: 12,
-                    high: 82,
-                    low: 12,
-                    unit: 'unit',
-                    color: '#fff321',
-                    startDate: props.startDate,
-                    stationSTIDName: 'HI012',
-                    endDate: '2022-04-25T19:55:00Z',
-                  }
-            }
-          /> */}
         </Box>
       )}
     </>
