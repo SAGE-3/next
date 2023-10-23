@@ -135,7 +135,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
                   ref={initialRef}
                   width="full"
                   value={privateText}
-                  type="password"
+                  type="password" autoCapitalize='off'
                   onChange={updatePrivateText}
                 />
               </InputGroup>

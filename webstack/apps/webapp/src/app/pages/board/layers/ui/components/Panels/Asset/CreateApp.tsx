@@ -8,7 +8,7 @@
 
 // File information
 import { FileEntry } from './types';
-import { isImage, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import { isImage, isTiff, isGeoTiff, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
 import { GetConfiguration, apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -35,7 +35,20 @@ export async function setupAppForFile(
   user: User
 ): Promise<AppSchema | null> {
   const w = 400;
-  if (isGIF(file.type)) {
+  if (isGeoTiff(file.type)) {
+    return {
+      title: file.originalfilename,
+      roomId: roomId,
+      boardId: boardId,
+      position: { x: xDrop, y: yDrop, z: 0 },
+      size: { width: 400, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'MapGL',
+      state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
+      raised: true,
+      dragging: false,
+    };
+  } else if (isGIF(file.type)) {
     return {
       title: file.originalfilename,
       roomId: roomId,
@@ -49,6 +62,36 @@ export async function setupAppForFile(
       dragging: false,
     };
   } else if (isImage(file.type)) {
+    // Might be geotiff in disguise
+    if (isTiff(file.type)) {
+      // Look for the metadata, maybe it's a GeoTiff
+      if (file.metadata) {
+        const localurl = apiUrls.assets.getAssetById(file.metadata);
+        // Get the content of the file
+        const response = await fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+        const metadata = await response.json();
+        // Check if it is a GeoTiff
+        if (metadata && metadata.GeoTiffVersion) {
+          return {
+            title: file.originalfilename,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: xDrop, y: yDrop, z: 0 },
+            size: { width: 400, height: 400, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'MapGL',
+            state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
+            raised: true,
+            dragging: false,
+          };
+        }
+      }
+    }
     // Look for the file in the asset store
     const extras = file.derived as ExtraImageType;
     return {
@@ -130,7 +173,7 @@ export async function setupAppForFile(
       roomId: roomId,
       boardId: boardId,
       position: { x: xDrop, y: yDrop, z: 0 },
-      size: { width: 800, height: 400, depth: 0 },
+      size: { width: 400, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'MapGL',
       state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },

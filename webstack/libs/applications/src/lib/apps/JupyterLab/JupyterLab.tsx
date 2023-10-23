@@ -133,6 +133,9 @@ function AppComponent(props: App): JSX.Element {
         };
         webview.addEventListener('page-title-updated', titleUpdated);
 
+        // the webview will use a persistent session (cookies, cache, proxy settings, etc.)
+        webviewNode.current.partition = 'persist:jupyter';
+
         // After the partition has been set, you can navigate
         webview.src = url;
       }

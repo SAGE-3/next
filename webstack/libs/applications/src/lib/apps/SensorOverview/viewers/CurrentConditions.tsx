@@ -146,8 +146,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                   flexDirection={'row'}
                   justifyContent="center"
 
-                // alignContent={'center'}
-                // justifyItems={'center'}
+                  // alignContent={'center'}
+                  // justifyItems={'center'}
                 >
                   {station.variables.map((variable, index) => {
                     const variableName = variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
@@ -169,8 +169,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                           display="flex"
                           margin="1rem"
                           flexDirection="column"
-                        // justifyContent={'center'}
-                        // alignContent="center"
+                          // justifyContent={'center'}
+                          // alignContent="center"
                         >
                           <Box>
                             <Text
@@ -200,8 +200,8 @@ const CurrentConditions = (props: CurrentConditionsProps) => {
                               {isNaN(variable.value)
                                 ? variable.value
                                 : variable.value % 1
-                                  ? Number(variable.value).toFixed(2)
-                                  : variable.value}
+                                ? Number(variable.value).toFixed(2)
+                                : variable.value}
                               <span style={{ marginLeft: '3px', fontSize: 30 }}>{variable.unit}</span>
                             </Text>
                           </Box>

@@ -16,6 +16,7 @@ import {
   getMime,
   isValid,
   isImage,
+  isGeoTiff,
   isPDF,
   isCSV,
   isMD,
@@ -27,6 +28,7 @@ import {
   isGLTF,
   isGIF,
   isPythonNotebook,
+  isTiff,
 } from '@sage3/shared';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -251,7 +253,13 @@ export function useFiles(): UseFiles {
   ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
-    if (isGIF(fileType)) {
+    if (isGeoTiff(fileType)) {
+      for (const a of assets) {
+        if (a._id === fileID) {
+          return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+        }
+      }
+    } else if (isGIF(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
@@ -268,6 +276,29 @@ export function useFiles(): UseFiles {
         }
       }
     } else if (isImage(fileType)) {
+      // Check if it is a GeoTiff in disguise
+      if (isTiff(fileType)) {
+        for (const a of assets) {
+          if (a._id === fileID) {
+            // Look for the metadata, maybe it's a GeoTiff
+            if (a.data.metadata) {
+              const localurl = apiUrls.assets.getAssetById(a.data.metadata);
+              // Get the content of the file
+              const response = await fetch(localurl, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              });
+              const metadata = await response.json();
+              // Check if it is a GeoTiff
+              if (metadata && metadata.GeoTiffVersion) {
+                return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+              }
+            }
+          }
+        }
+      }
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {

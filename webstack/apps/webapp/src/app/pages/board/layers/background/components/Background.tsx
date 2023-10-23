@@ -182,7 +182,6 @@ export function Background(props: BackgroundProps) {
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
-
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {
