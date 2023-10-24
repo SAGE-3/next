@@ -315,12 +315,37 @@ function AppComponent(props: App): JSX.Element {
    */
   const handleClear = () => {
     if (!editorRef.current) return;
+
+    // Clear the code in the backend
     updateState(props._id, {
       code: '',
       msgId: '',
       streaming: false,
     });
-    editorRef.current?.setValue('');
+
+    // editorRef.current?.setValue('');
+    // editorRef2.current?.setValue('');
+
+    const model = editorRef.current.getModel();
+    if (model) {
+      // Clear the cell editor
+      editorRef.current.executeEdits('update-value', [{
+        range: model.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+    }
+    if (!editorRef2.current) return;
+    const model2 = editorRef2.current.getModel();
+    if (model2) {
+      // Clear the drawer editor
+      editorRef2.current.executeEdits('update-value', [{
+        range: model2.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+    }
+
   };
 
   // Handle interrupt
