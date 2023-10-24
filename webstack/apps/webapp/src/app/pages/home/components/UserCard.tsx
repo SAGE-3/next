@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Box, Text, useColorModeValue } from '@chakra-ui/react';
+import { Image, Box, Text, useColorModeValue } from '@chakra-ui/react';
 import { MdEdit } from 'react-icons/md';
 import { Presence, User } from '@sage3/shared/types';
 import { useHexColor } from '@sage3/frontend';
@@ -25,31 +25,52 @@ export function UserCard(props: UserCardProps) {
   const borderColor = useHexColor(props.user ? props.user.data.color : 'gray');
   const title = props.user ? props.user.data.name : 'No User Selected';
 
-  const joinedDate = props.user ? new Date(props.user._createdAt).toLocaleDateString() : 'N/A';
+  const joinedDate = props.user ? new Date(props.user._createdAt).toDateString() : 'N/A';
+  const email = props.user ? props.user.data.email : 'N/A';
 
   return (
     <Box
       display="flex"
       flexDirection="column"
       borderRadius="md"
-      height="200px"
+      height="180px"
       border={`solid ${borderColor} 2px`}
       background={linearBGColor}
       padding="8px"
     >
       <Box display="flex" justifyContent={'space-between'}>
         <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-          <Text fontSize="2xl">{title}</Text>
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="2xl" fontWeight={'bold'}>
+            {title}
+          </Box>
           <Box display="flex" justifyContent={'left'} gap="8px"></Box>
         </Box>
       </Box>
       <Box flex="1" display="flex" my="4" px="2" flexDir="column">
         <Box>
           {props.user && (
-            <>
-              <Text fontSize="sm">{props.user.data.email}</Text>
-              <Text fontSize="sm">Joined: {joinedDate}</Text>
-            </>
+            <table>
+              <tr>
+                <td width="60px">
+                  <Text fontSize="sm" fontWeight={'bold'}>
+                    Joined
+                  </Text>
+                </td>
+                <td>
+                  <Text fontSize="sm">{joinedDate}</Text>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <Text fontSize="sm" fontWeight={'bold'}>
+                    Email
+                  </Text>
+                </td>
+                <td>
+                  <Text fontSize="sm">{email}</Text>
+                </td>
+              </tr>
+            </table>
           )}
         </Box>
       </Box>

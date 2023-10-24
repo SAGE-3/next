@@ -174,11 +174,14 @@ export function MainButton(props: MainButtonProps) {
         <MenuButton
           as={Button}
           size="sm"
+          maxWidth="150px"
           variant={props.buttonStyle ? props.buttonStyle : 'outline'}
           colorScheme={user?.data.color ? user.data.color : 'white'}
           leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
         >
-          {user ? user.data.name : ''}
+          <Box textOverflow={'ellipsis'} overflow={'hidden'}>
+            {user ? user.data.name : ''}
+          </Box>
         </MenuButton>
         <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip">
           <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>

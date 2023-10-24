@@ -9,7 +9,7 @@
 import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
 import { useHexColor } from '@sage3/frontend';
 import { useUser } from '@sage3/frontend';
-import { MdLock, MdStar, MdStarOutline } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdStar, MdStarOutline } from 'react-icons/md';
 import { Room } from '@sage3/shared/types';
 
 export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: Room) => void; usersPresent: number }) {
@@ -28,6 +28,7 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
 
   const savedRooms = user?.data.savedRooms || [];
   const isFavorite = user && savedRooms.includes(props.room._id);
+  const isPrivate = props.room.data.isPrivate;
 
   const handleFavorite = (event: any) => {
     event.preventDefault();
@@ -55,13 +56,13 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
       backgroundColor={props.selected ? borderColorG : 'transparent'}
       _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
     >
-      <Box display="flex" flexDir="column">
-        <Text fontSize="lg" fontWeight="bold" textAlign="left">
+      <Box display="flex" flexDir="column" width="270px">
+        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
           {props.room.data.name}
-        </Text>
-        <Text fontSize="xs" textAlign="left">
+        </Box>
+        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
           {props.room.data.description}
-        </Text>
+        </Box>
       </Box>
       <Box display="flex" gap="4px">
         <IconButton
@@ -73,7 +74,14 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
           icon={<Text>{props.usersPresent}</Text>}
         ></IconButton>
 
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          icon={isPrivate ? <MdLock /> : <MdLockOpen />}
+        ></IconButton>
         <IconButton
           size="sm"
           variant={'ghost'}

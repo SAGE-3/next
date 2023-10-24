@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
-import { useHexColor, useUser } from '@sage3/frontend';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure } from '@chakra-ui/react';
+import { EnterBoardModal, useHexColor, useUser } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
-import { MdLock, MdStar, MdExitToApp, MdStarOutline } from 'react-icons/md';
+import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdLockOpen } from 'react-icons/md';
 
 export function BoardRow(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: number }) {
   const { user, saveBoard, removeBoard } = useUser();
@@ -26,6 +26,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
 
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
+  const isPrivate = props.board.data.isPrivate;
 
   const handleFavorite = (event: any) => {
     event.preventDefault();
@@ -35,6 +36,16 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       savedBoards.includes(boardId) ? removeBoard(boardId) : saveBoard(boardId);
     }
   };
+
+  // Disclosure
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  // Enter Board
+  const handleEnterBoard = (ev: any) => {
+    ev.stopPropagation();
+    onOpen();
+  };
+
   return (
     <Box
       p="1"
@@ -49,13 +60,14 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       background={linearBGColor}
       _hover={{ cursor: 'pointer' }}
     >
-      <Box display="flex" flexDir="column">
-        <Text fontSize="lg" fontWeight="bold" textAlign="left">
+      <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
+      <Box display="flex" flexDir="column" width="240px">
+        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
           {props.board.data.name}
-        </Text>
-        <Text fontSize="xs" textAlign="left">
+        </Box>
+        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
           {props.board.data.description}
-        </Text>
+        </Box>
       </Box>
       <Box display="flex" gap="2px">
         <IconButton
@@ -67,7 +79,14 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           icon={<Text>{props.usersPresent}</Text>}
         ></IconButton>
 
-        <IconButton size="sm" variant={'ghost'} colorScheme="teal" aria-label="enter-board" fontSize="xl" icon={<MdLock />}></IconButton>
+        <IconButton
+          size="sm"
+          variant={'ghost'}
+          colorScheme="teal"
+          aria-label="enter-board"
+          fontSize="xl"
+          icon={isPrivate ? <MdLock /> : <MdLockOpen />}
+        ></IconButton>
 
         <IconButton
           size="sm"
@@ -84,6 +103,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           colorScheme="teal"
           aria-label="enter-board"
           fontSize="xl"
+          onClick={handleEnterBoard}
           icon={<MdExitToApp />}
         ></IconButton>
       </Box>

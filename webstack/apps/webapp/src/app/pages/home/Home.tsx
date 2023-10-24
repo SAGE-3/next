@@ -186,8 +186,13 @@ export function HomePage() {
   }
 
   function handleBoardClick(board: Board) {
-    setSelectedBoard(board);
-    setSelectedUser(undefined);
+    if (board) {
+      board._id == selectedBoard?._id ? setSelectedBoard(undefined) : setSelectedBoard(board);
+      setSelectedUser(undefined);
+    } else {
+      setSelectedBoard(undefined);
+      setSelectedUser(undefined);
+    }
   }
 
   function handleUserClick(user: User) {
@@ -220,7 +225,7 @@ export function HomePage() {
       } else {
         // Go to room with id. Does room exist, if not go to main room
         const room = rooms.find((room) => room._id === selectedRoomId);
-        room ? handleRoomClick(room) : goToMainRoom();
+        room ? setSelectedRoom(room) : goToMainRoom();
       }
     }
   }, [roomsFetched]);
@@ -285,7 +290,7 @@ export function HomePage() {
             </InputLeftElement>
             <Input
               type="text"
-              placeholder="Search"
+              placeholder="Search for Rooms, Boards, or Users..."
               _placeholder={{ color: 'white' }}
               onChange={handleSearchInput}
               colorScheme="teal"
@@ -298,7 +303,7 @@ export function HomePage() {
         {/* Data Section */}
         <Box display="flex" flex={1} height="100%" width="100%">
           {/* Left Side Rooms */}
-          <Box display="flex" flexDirection="column" height="100%" p="8px" flex="1" minWidth="420px" justifyContent={'space-between'}>
+          <Box display="flex" flexDirection="column" height="100%" p="8px" flex="1" width="420px" justifyContent={'space-between'}>
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
               <Text fontSize="2xl">Rooms</Text>
               <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
@@ -345,7 +350,7 @@ export function HomePage() {
           </Box>
 
           {/* Middle Section Room and Boards */}
-          <Box display="flex" flexDirection="column" flex="1" minWidth="420px" padding="8px">
+          <Box display="flex" flexDirection="column" flex="1" width="420px" padding="8px">
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
               <Text fontSize="2xl">Boards</Text>
               <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
@@ -395,24 +400,7 @@ export function HomePage() {
           <Box display="flex" flexDirection="column" height="100%" p="8px" width="280px">
             <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
               <Text fontSize="2xl"> Users</Text>
-              <Box display="flex" justifyContent={'left'} gap="8px">
-                {/* <IconButton
-                  size="sm"
-                  colorScheme="teal"
-                  variant={'outline'}
-                  aria-label="create-room"
-                  fontSize="xl"
-                  icon={<MdAdd />}
-                ></IconButton>
-                <IconButton
-                  size="sm"
-                  colorScheme="teal"
-                  variant={'outline'}
-                  aria-label="create-room"
-                  fontSize="xl"
-                  icon={<MdManageAccounts />}
-                ></IconButton> */}
-              </Box>
+              <Box display="flex" justifyContent={'left'} gap="8px"></Box>
             </Box>
             <Box flex="1" overflow="hidden" mb="4" width="100%">
               <Box

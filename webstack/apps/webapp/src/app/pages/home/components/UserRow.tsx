@@ -20,8 +20,8 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
   const borderColorGray = useColorModeValue('gray.300', 'gray.600');
   const borderColorG = useHexColor(borderColorGray);
 
-  const offline = useHexColor('teal');
-  const online = useHexColor('gray.700');
+  const online = useHexColor('teal');
+  const offline = useHexColor('gray.700');
 
   const savedUsers = user?.data.savedUsers || [];
   const isFavorite = user && savedUsers.includes(props.userPresence.user._id);
@@ -52,7 +52,7 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
           variant={'ghost'}
           aria-label="enter-board"
           fontSize="4xl"
-          color={props.userPresence.presence ? online : offline}
+          color={props.userPresence.presence?.data.status === 'online' ? online : offline}
           icon={<MdPerson />}
         ></IconButton>
         <Box display="flex" flexDir="column">
