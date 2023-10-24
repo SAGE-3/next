@@ -935,10 +935,10 @@ function AppComponent(props: App): JSX.Element {
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
             <DrawerHeader p={1} m={1}><Flex p={0} m={0}>
-              <Text flex={1}>SageCell</Text>
+              <Text flex={1} mr={"10px"}>SageCell</Text>
               <Box flex={2} width={"100px"} overflow={"clip"}>
                 <Text fontSize={"md"} pt={1} whiteSpace={"nowrap"} textOverflow={"ellipsis"}>
-                  Use context-menu for cell functions
+                  Use right-click for cell functions
                 </Text>
               </Box>
               <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 10px"} onClick={make25W}>25%</Button></Tooltip>
