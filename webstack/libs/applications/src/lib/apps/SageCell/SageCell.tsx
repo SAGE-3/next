@@ -270,16 +270,16 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
     if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
-      const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\nprint('room_id = ' + room_id)\nprint('board_id = ' + board_id)\nprint('app_id = ' + app_id)`;
+      const info = `sage_room_id = '${roomId}'\nsage_board_id = '${boardId}'\nsage_app_id = '${props._id}'\nprint('sage_room_id = ' + sage_room_id)\nprint('sage_board_id = ' + sage_board_id)\nprint('sage_app_id = ' + sage_app_id)`;
       editorRef.current.setValue(info);
     }
     try {
       const selectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
       let code2execute = editorRef.current.getValue();
-      code2execute = code2execute.replaceAll('%%room_id', `'${roomId}'`);
-      code2execute = code2execute.replaceAll('%%board_id', `'${boardId}'`);
-      code2execute = code2execute.replaceAll('%%app_id', `'${props._id}'`);
-      code2execute = code2execute.replaceAll('%%selected_apps', `${JSON.stringify(selectedAppsIds)}`);
+      code2execute = code2execute.replaceAll('%%sage_room_id', `'${roomId}'`);
+      code2execute = code2execute.replaceAll('%%sage_board_id', `'${boardId}'`);
+      code2execute = code2execute.replaceAll('%%sage_app_id', `'${props._id}'`);
+      code2execute = code2execute.replaceAll('%%sage_selected_apps', `${JSON.stringify(selectedAppsIds)}`);
 
       const response = await executeCode(code2execute, s.kernel, user._id);
       if (response.ok) {
@@ -315,12 +315,37 @@ function AppComponent(props: App): JSX.Element {
    */
   const handleClear = () => {
     if (!editorRef.current) return;
+
+    // Clear the code in the backend
     updateState(props._id, {
       code: '',
       msgId: '',
       streaming: false,
     });
-    editorRef.current?.setValue('');
+
+    // editorRef.current?.setValue('');
+    // editorRef2.current?.setValue('');
+
+    const model = editorRef.current.getModel();
+    if (model) {
+      // Clear the cell editor
+      editorRef.current.executeEdits('update-value', [{
+        range: model.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+    }
+    if (!editorRef2.current) return;
+    const model2 = editorRef2.current.getModel();
+    if (model2) {
+      // Clear the drawer editor
+      editorRef2.current.executeEdits('update-value', [{
+        range: model2.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+    }
+
   };
 
   // Handle interrupt
@@ -343,7 +368,7 @@ function AppComponent(props: App): JSX.Element {
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
-    code += `room_id = %%room_id\nboard_id = %%board_id\napp_id = %%app_id\nselected_apps = %%selected_apps\n`;
+    code += `sage_room_id = %%sage_room_id\nsage_board_id = %%sage_board_id\nsage_app_id = %%sage_app_id\nsage_selected_apps = %%sage_selected_apps\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();
     ed.setValue(code);
@@ -934,8 +959,14 @@ function AppComponent(props: App): JSX.Element {
           closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}><Flex p={0} m={0}><Text flex={1}>SageCell</Text>
-              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make25W}>25%</Button></Tooltip>
+            <DrawerHeader p={1} m={1}><Flex p={0} m={0}>
+              <Text flex={1} mr={"10px"}>SageCell</Text>
+              <Box flex={2} width={"100px"} overflow={"clip"}>
+                <Text fontSize={"md"} pt={1} whiteSpace={"nowrap"} textOverflow={"ellipsis"}>
+                  Use right-click for cell functions
+                </Text>
+              </Box>
+              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 10px"} onClick={make25W}>25%</Button></Tooltip>
               <Tooltip hasArrow label="Medium Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make50W}>50%</Button></Tooltip>
               <Tooltip hasArrow label="Large Editor"><Button size={"sm"} p={2} m={"0 40px 0 1px"} onClick={make75W}>75%</Button></Tooltip>
             </Flex>
