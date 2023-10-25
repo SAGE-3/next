@@ -65,7 +65,7 @@ export function RoomCard(props: RoomCardProps) {
       flexDirection="column"
       borderRadius="md"
       height="220px"
-      border={`solid ${borderColor} 2px`}
+      border={`solid ${borderColor} 1px`}
       background={linearBGColor}
       padding="12px"
       overflow="hidden"

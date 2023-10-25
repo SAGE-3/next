@@ -53,7 +53,7 @@ export function BoardCard(props: BoardCardProps) {
       flexDirection="column"
       borderRadius="md"
       height="220px"
-      border={`solid ${borderColor} 2px`}
+      border={`solid ${borderColor} 1px`}
       background={linearBGColor}
       padding="8px"
     >

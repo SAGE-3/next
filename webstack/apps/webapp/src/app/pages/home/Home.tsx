@@ -20,6 +20,7 @@ import {
   InputLeftElement,
   InputGroup,
   useDisclosure,
+  Icon,
 } from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList } from './components';
@@ -42,7 +43,7 @@ import {
   useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdApps, MdFolder, MdManageAccounts, MdPeople, MdPerson, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
 
 export type UserPresence = {
   user: User;
@@ -298,7 +299,13 @@ export function HomePage() {
           {/* Left Side Rooms */}
           <Box display="flex" flexDirection="column" height="100%" p="8px" flex="1" width="420px" justifyContent={'space-between'}>
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-              <Text fontSize="2xl">Rooms</Text>
+              <Box display="flex">
+                <Icon fontSize="28px" mr="2">
+                  <MdFolder />
+                </Icon>
+                <Text fontSize="2xl">Rooms</Text>
+              </Box>
+
               <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
                 <IconButton
                   size="sm"
@@ -345,7 +352,12 @@ export function HomePage() {
           {/* Middle Section Room and Boards */}
           <Box display="flex" flexDirection="column" flex="1" width="420px" padding="8px">
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-              <Text fontSize="2xl">Boards</Text>
+              <Box display="flex">
+                <Icon fontSize="28px" mr="2">
+                  <MdApps />
+                </Icon>
+                <Text fontSize="2xl">Boards</Text>
+              </Box>
               <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
                 <IconButton
                   size="sm"
@@ -392,7 +404,12 @@ export function HomePage() {
           {/* Right Side Members */}
           <Box display="flex" flexDirection="column" height="100%" p="8px" width="280px">
             <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
-              <Text fontSize="2xl"> Users</Text>
+              <Box display="flex">
+                <Icon fontSize="28px" mr="2">
+                  <MdPeople />
+                </Icon>
+                <Text fontSize="2xl">Members</Text>
+              </Box>
               <Box display="flex" justifyContent={'left'} gap="8px"></Box>
             </Box>
             <Box flex="1" overflow="hidden" mb="4" width="100%">
