@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -22,7 +22,7 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 
-import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard } from './components';
+import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList } from './components';
 
 import {
   JoinBoardCheck,
@@ -42,7 +42,7 @@ import {
   useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdManageAccounts, MdSearch } from 'react-icons/md';
+import { MdAdd, MdManageAccounts, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
 
 export type UserPresence = {
   user: User;
@@ -65,7 +65,7 @@ export function HomePage() {
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
-  const { rooms, subscribeToAllRooms: subscribeToRooms, fetched: roomsFetched } = useRoomStore((state) => state);
+  const { rooms, members, subscribeToAllRooms: subscribeToRooms, fetched: roomsFetched } = useRoomStore((state) => state);
 
   // Board Store
   const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
@@ -95,6 +95,7 @@ export function HomePage() {
     setSelectedUser(undefined);
   };
   const inputBorderColor = useHexColor('teal.200');
+  const searchInputRef = useRef<HTMLDivElement>(null);
 
   // Modals
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
@@ -102,26 +103,14 @@ export function HomePage() {
 
   // Filter Functions
   const roomsFilter = (room: Room): boolean => {
-    if (searchInput.length > 0) {
-      // If the user is searching, filter rooms by searchInput
-      return room.data.name.toLowerCase().includes(searchInput.toLowerCase());
-    } else {
-      // If the user is not searching, return favroties
-      return savedRooms.includes(room._id);
-    }
+    if (!user) return false;
+    const roomMembership = members.find((m) => m.data.roomId === room._id);
+    const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
+    const isOwner = room.data.ownerId === user?._id;
+    return isMember || isOwner;
   };
   const boardsFilter = (board: Board): boolean => {
-    // If showFavorites is true, filter boards by savedBoards
-    if (searchInput.length > 0) {
-      // If the user is searching, filter boards by searchInput
-      return board.data.name.toLowerCase().includes(searchInput.toLowerCase());
-    } else if (selectedRoom) {
-      // If the user is not searching or showing favorites, filter boards by selectedRoom
-      return board.data.roomId === selectedRoom._id;
-    } else {
-      // If the user is not searching  or selected a room, return favorites
-      return savedBoards.includes(board._id);
-    }
+    return selectedRoom ? board.data.roomId === selectedRoom?._id : false;
   };
   const concatUserPresence = (userList: User[]): UserPresence[] => {
     return userList.map((u) => {
@@ -129,24 +118,12 @@ export function HomePage() {
     });
   };
   const usersFilter = (): UserPresence[] => {
-    if (searchInput.length > 0) {
-      // If the user is searching, filter users by searchInput
-      const searchedUsers = users.filter((user) => user.data.name.toLowerCase().includes(searchInput.toLowerCase()));
-      return concatUserPresence(searchedUsers);
-    } else if (selectedBoard) {
-      // If the user is not searching or showing favorites, filter users by selectedBoard
-      const boardPresence = presences.filter((presence) => presence.data.boardId === selectedBoard._id);
-      const boardUsers = users.filter((user) => boardPresence.find((presence) => presence._id === user._id));
-      return concatUserPresence(boardUsers);
-    } else if (selectedRoom) {
-      // If the user is not search or showing favorites or selected a board, filter users by selectedRoom
-      const roomPresence = presences.filter((presence) => presence.data.roomId === selectedRoom._id);
-      const roomUsers = users.filter((user) => roomPresence.find((presence) => presence._id === user._id));
+    if (selectedRoom) {
+      const roomUserIds = members.find((m) => m.data.roomId === selectedRoom._id)?.data.members || [];
+      const roomUsers = users.filter((user) => roomUserIds.includes(user._id));
       return concatUserPresence(roomUsers);
     } else {
-      // If the user is not searching  or selected a room or board, return favorites
-      const favUsers = users.filter((user) => savedUsers.includes(user._id));
-      return concatUserPresence(favUsers);
+      return [];
     }
   };
 
@@ -284,20 +261,36 @@ export function HomePage() {
       >
         {/* Search Box */}
         <Box width="100%" display="flex" p="2" pr="4">
-          <InputGroup colorScheme="teal">
-            <InputLeftElement pointerEvents="none">
-              <MdSearch color="white" />{' '}
-            </InputLeftElement>
-            <Input
-              type="text"
-              placeholder="Search for Rooms, Boards, or Users..."
-              _placeholder={{ color: 'white' }}
-              onChange={handleSearchInput}
+          <Box mr="2">
+            <IconButton
+              size="md"
               colorScheme="teal"
-              value={searchInput}
-              _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
-            />
-          </InputGroup>
+              variant={'outline'}
+              aria-label="create-room"
+              fontSize="xl"
+              onClick={createRoomModalOnOpen}
+              icon={<MdStarOutline />}
+            ></IconButton>
+          </Box>
+          <Box width="100%">
+            <InputGroup colorScheme="teal" ref={searchInputRef}>
+              <InputLeftElement pointerEvents="none">
+                <MdSearch color="white" />{' '}
+              </InputLeftElement>
+              <Input
+                type="text"
+                placeholder="Search for Rooms, Boards, or Users..."
+                _placeholder={{ color: 'white' }}
+                onChange={handleSearchInput}
+                colorScheme="teal"
+                value={searchInput}
+                _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
+              />
+            </InputGroup>
+            <Box position="absolute" width="100%">
+              {searchInput !== '' && <SearchList searchInput={searchInput} searchDiv={searchInputRef.current} />}
+            </Box>
+          </Box>
         </Box>
 
         {/* Data Section */}

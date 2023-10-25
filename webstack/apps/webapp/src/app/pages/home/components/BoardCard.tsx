@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Box, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { IconButton, Box, Text, useColorModeValue, useDisclosure, Button } from '@chakra-ui/react';
 import { MdEdit } from 'react-icons/md';
 import { Board } from '@sage3/shared/types';
-import { EditBoardModal, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
+import { EditBoardModal, EnterBoardModal, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 
 type BoardCardProps = {
   board: Board | undefined;
@@ -36,19 +36,31 @@ export function BoardCard(props: BoardCardProps) {
   const updatedDate = props.board ? new Date(props.board._updatedAt).toDateString() : 'No Updated Date';
 
   // Disclousre for Edit Board
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
+
+  // Enter Board
+  const { isOpen: enterIsOpen, onOpen: enterOnOpen, onClose: enterOnClose } = useDisclosure();
+
+  // Enter Board
+  const handleEnterBoard = (ev: any) => {
+    ev.stopPropagation();
+    enterOnClose();
+  };
 
   return (
     <Box
       display="flex"
       flexDirection="column"
       borderRadius="md"
-      height="180px"
+      height="220px"
       border={`solid ${borderColor} 2px`}
       background={linearBGColor}
       padding="8px"
     >
-      {props.board && isOwner && <EditBoardModal isOpen={isOpen} onOpen={onOpen} board={props.board} onClose={onClose}></EditBoardModal>}
+      {props.board && <EnterBoardModal board={props.board} isOpen={enterIsOpen} onClose={enterOnClose} />}
+      {props.board && isOwner && (
+        <EditBoardModal isOpen={editIsOpen} onOpen={editOnOpen} board={props.board} onClose={editOnClose}></EditBoardModal>
+      )}
       <Box display="flex" justifyContent={'space-between'}>
         <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="2xl" fontWeight={'bold'}>
@@ -62,7 +74,7 @@ export function BoardCard(props: BoardCardProps) {
               aria-label="create-board"
               fontSize="xl"
               isDisabled={!isOwner}
-              onClick={onOpen}
+              onClick={editOnOpen}
               icon={<MdEdit />}
             ></IconButton>
           </Box>
@@ -116,6 +128,11 @@ export function BoardCard(props: BoardCardProps) {
           )}
         </Box>
       </Box>
+      {props.board && (
+        <Button my="1" size="sm" variant="outline" colorScheme="teal" onClick={handleEnterBoard}>
+          Enter Board
+        </Button>
+      )}
     </Box>
   );
 }

@@ -33,7 +33,7 @@ export function UserCard(props: UserCardProps) {
       display="flex"
       flexDirection="column"
       borderRadius="md"
-      height="180px"
+      height="220px"
       border={`solid ${borderColor} 2px`}
       background={linearBGColor}
       padding="8px"
