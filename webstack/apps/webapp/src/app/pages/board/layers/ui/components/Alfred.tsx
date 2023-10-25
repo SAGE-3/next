@@ -45,7 +45,6 @@ import {
   useAppStore,
   useHotkeys,
   HotkeysEvent,
-  usePresenceStore,
   useUIStore,
   useUser,
   useCursorBoardPosition,
@@ -53,7 +52,6 @@ import {
   useUsersStore,
   useConfigStore,
   useThrottleApps,
-  useThrottleScale,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -75,8 +73,6 @@ export function Alfred(props: props) {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // UI
-  const scale = useThrottleScale(250);
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
   // chakra color mode
@@ -106,14 +102,17 @@ export function Alfred(props: props) {
     }
 
     // Get around  the center of the board
-    const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+    const bx = useUIStore.getState().boardPosition.x;
+    const by = useUIStore.getState().boardPosition.y;
+    const scale = useUIStore.getState().scale;
+    const x = Math.floor(-bx + window.innerWidth / scale / 2);
+    const y = Math.floor(-by + window.innerHeight / scale / 2);
 
     createApp({
       title: appName,
       roomId: props.roomId,
       boardId: props.boardId,
-      position: { x, y, z: 0 },
+      position: { x: x - 200, y: y - 200, z: 0 },
       size: { width: 400, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
@@ -247,7 +246,6 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   const users = useUsersStore((state) => state.users);
   // check if user is a guest
   const { user } = useUser();
-  const { cursor: cursorPosition } = useCursorBoardPosition();
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
 
@@ -368,7 +366,14 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
     // Create the app
     const file = assetsList.find((a) => a.id === id);
     if (file) {
-      const setup = await setupAppForFile(file, cursorPosition.x, cursorPosition.y, roomId, boardId, user);
+      // Get around  the center of the board
+      const bx = useUIStore.getState().boardPosition.x;
+      const by = useUIStore.getState().boardPosition.y;
+      const scale = useUIStore.getState().scale;
+      const x = Math.floor(-bx + window.innerWidth / scale / 2);
+      const y = Math.floor(-by + window.innerHeight / scale / 2);
+      // Create the app
+      const setup = await setupAppForFile(file, x, y, roomId, boardId, user);
       if (setup) createApp(setup);
     }
   };
