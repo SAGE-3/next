@@ -14,7 +14,7 @@ import {
   Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent,
   PopoverHeader, PopoverTrigger, UnorderedList, useDisclosure,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -39,6 +39,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
+  const update = useAppStore((state) => state.update);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -300,21 +301,31 @@ export function AppToolbar(props: AppToolbarProps) {
               <Button
                 onClick={() => duplicate([app._id])}
                 backgroundColor={commonButtonColors}
-                size="xs"
-                mx="1"
-                p={0}
+                size="xs" mx="1" p={0}
                 isDisabled={!canDuplicateApp}
               >
                 <MdCopyAll size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
+              <Button
+                onClick={() => { app.data.pinned ? update(app._id, { pinned: false }) : update(app._id, { pinned: true }) }}
+                backgroundColor={commonButtonColors}
+                size="xs" mr="1" p={0}
+                isDisabled={!canDeleteApp}
+              >
+                {
+                  app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> :
+                    <MdLockOpen size="18px" color={buttonTextColor} />
+                }
+
               </Button>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
               <Button
                 onClick={onDeleteOpen}
                 backgroundColor={commonButtonColors}
-                size="xs"
-                mr="1"
-                p={0}
+                size="xs" mr="1" p={0}
                 isDisabled={!canDeleteApp}
               >
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
