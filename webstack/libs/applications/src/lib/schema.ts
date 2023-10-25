@@ -23,6 +23,7 @@ export type AppSchema = {
   state: AppState;
   raised: boolean;
   dragging: boolean;
+  pinned: boolean;
 };
 
 export type App = SBDoc & { data: AppSchema };

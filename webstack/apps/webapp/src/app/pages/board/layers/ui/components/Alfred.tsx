@@ -120,6 +120,7 @@ export function Alfred(props: props) {
       state: { ...(initialValues[appName] as AppState), ...state },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -162,6 +163,7 @@ export function Alfred(props: props) {
             state: { ...initialValues['WebpageLink'], url: processContentURL(loc) },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         }
       } else if (terms[0] === 'g' || terms[0] === 'goo' || terms[0] === 'google') {
@@ -178,6 +180,7 @@ export function Alfred(props: props) {
           state: { ...initialValues['WebpageLink'], url: processContentURL(searchURL) },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
         const content = terms.slice(1).join(' ');
@@ -192,6 +195,7 @@ export function Alfred(props: props) {
           state: { ...(initialValues['Stickie'] as AppState), text: content },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
         newApplication('SageCell');

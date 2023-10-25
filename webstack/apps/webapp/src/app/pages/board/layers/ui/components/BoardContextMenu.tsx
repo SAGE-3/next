@@ -151,6 +151,7 @@ export function BoardContextMenu(props: ContextProps) {
       state: { ...(initialValues[appName] as any), ...state },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -173,6 +174,7 @@ export function BoardContextMenu(props: ContextProps) {
       state: { ...initialValues['JupyterLab'], jupyterURL: '' },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -195,6 +197,7 @@ export function BoardContextMenu(props: ContextProps) {
       state: { ...initialValues['Chat'] },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
