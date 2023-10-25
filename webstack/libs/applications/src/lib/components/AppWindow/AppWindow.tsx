@@ -92,6 +92,7 @@ export function AppWindow(props: WindowProps) {
 
   // Resize Handle scale
   const enableResize = props.disableResize === undefined ? true : !props.disableResize;
+  const isPinned = props.app.data.pinned === undefined ? false : props.app.data.pinned;
   // Make the handles a little bigger when the scale is small
   const invScale = Math.round(1 / scale);
   const handleScale = Math.max(2, Math.min(invScale, 10));
@@ -290,8 +291,12 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
-  // When closing the app, deselect it
   useEffect(() => {
+    // Check if the app has the pinned property
+    if (props.app.data.pinned === undefined) {
+      update(props.app._id, { pinned: false });
+    }
+    // When closing the app, deselect it
     return () => {
       if (selectedApp === props.app._id) {
         setSelectedApp('');
@@ -315,8 +320,8 @@ export function AppWindow(props: WindowProps) {
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize && canResize}
-      disableDragging={!canMove}
+      enableResizing={enableResize && canResize && !isPinned}
+      disableDragging={!canMove || isPinned}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -357,6 +362,7 @@ export function AppWindow(props: WindowProps) {
         borderColor={borderColor}
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
+        pinned={isPinned}
       />
 
       {/* The Application */}
