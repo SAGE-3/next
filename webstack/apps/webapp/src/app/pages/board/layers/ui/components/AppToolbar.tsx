@@ -286,41 +286,37 @@ export function AppToolbar(props: AppToolbarProps) {
             </Popover>
 
             {/* Common Actions */}
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
-              openDelay={400}
-              ml="1"
-            >
+            <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1"
+              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}>
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
+
+            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
+              <Button
+                onClick={() => { app.data.pinned ? update(app._id, { pinned: false }) : update(app._id, { pinned: true }) }}
+                backgroundColor={commonButtonColors}
+                size="xs" mx="1" p={0}
+                isDisabled={!canDeleteApp}
+              >
+                {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> :
+                  <MdLockOpen size="18px" color={buttonTextColor} />}
+              </Button>
+            </Tooltip>
+
             <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
               <Button
                 onClick={() => duplicate([app._id])}
                 backgroundColor={commonButtonColors}
-                size="xs" mx="1" p={0}
+                size="xs" mr="1" p={0}
                 isDisabled={!canDuplicateApp}
               >
                 <MdCopyAll size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
-              <Button
-                onClick={() => { app.data.pinned ? update(app._id, { pinned: false }) : update(app._id, { pinned: true }) }}
-                backgroundColor={commonButtonColors}
-                size="xs" mr="1" p={0}
-                isDisabled={!canDeleteApp}
-              >
-                {
-                  app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> :
-                    <MdLockOpen size="18px" color={buttonTextColor} />
-                }
 
-              </Button>
-            </Tooltip>
+
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
               <Button
                 onClick={onDeleteOpen}
