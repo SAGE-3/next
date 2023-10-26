@@ -224,8 +224,9 @@ export function AppToolbar(props: AppToolbarProps) {
       const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInputLabel(event.target.value);
       };
+
       // Press Enter to update
-      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>, onClose: () => void) => {
         if (event.key === 'Enter') {
           // cleanup the input
           const clean = inputLabel.replace(/\s+/g, ' ');
@@ -233,6 +234,8 @@ export function AppToolbar(props: AppToolbarProps) {
           setInputLabel(localTags.join(' '));
           // Updating the backend
           updateInsight(app._id, { labels: localTags });
+          // Close the popover
+          onClose();
         }
       };
 
@@ -254,34 +257,38 @@ export function AppToolbar(props: AppToolbarProps) {
 
             {/* Application Information Popover */}
             <Popover trigger="hover">
-              <PopoverTrigger>
-                <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
-                  <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent fontSize={'sm'} width={'375px'}>
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverHeader>Application Information</PopoverHeader>
-                <PopoverBody userSelect={"text"}>
-                  <UnorderedList>
-                    <ListItem><b>ID</b>: {app._id}</ListItem>
-                    <ListItem><b>Type</b>: {app.data.type}</ListItem>
-                    <ListItem><b>Owner</b>: {ownerName}</ListItem>
-                    <ListItem><b>Created</b>: {when}</ListItem>
-                    <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
-                      width="300px" m={0} p={0} size="xs" variant='filled'
-                      value={inputLabel}
-                      placeholder="Enter tags here separated by spaces"
-                      _placeholder={{ opacity: 1, color: 'gray.400' }}
-                      focusBorderColor="gray.500"
-                      onChange={handleChange}
-                      onKeyDown={onSubmit}
-                    />
-                    </ListItem>
-                  </UnorderedList>
-                </PopoverBody>
-              </PopoverContent>
+              {({ isOpen, onClose }) => (
+                <>
+                  <PopoverTrigger>
+                    <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                      <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent fontSize={'sm'} width={'375px'}>
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverHeader>Application Information</PopoverHeader>
+                    <PopoverBody userSelect={"text"}>
+                      <UnorderedList>
+                        <ListItem><b>ID</b>: {app._id}</ListItem>
+                        <ListItem><b>Type</b>: {app.data.type}</ListItem>
+                        <ListItem><b>Owner</b>: {ownerName}</ListItem>
+                        <ListItem><b>Created</b>: {when}</ListItem>
+                        <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
+                          width="300px" m={0} p={0} size="xs" variant='filled'
+                          value={inputLabel}
+                          placeholder="Enter tags here separated by spaces"
+                          _placeholder={{ opacity: 1, color: 'gray.400' }}
+                          focusBorderColor="gray.500"
+                          onChange={handleChange}
+                          onKeyDown={(e) => { onSubmit(e, onClose) }}
+                        />
+                        </ListItem>
+                      </UnorderedList>
+                    </PopoverBody>
+                  </PopoverContent>
+                </>
+              )}
             </Popover>
 
             {/* Common Actions */}
