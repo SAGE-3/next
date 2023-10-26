@@ -14,16 +14,17 @@ import {
   useColorModeValue,
   Text,
   Image,
-  Progress,
   IconButton,
   Input,
   InputLeftElement,
   InputGroup,
   useDisclosure,
   Icon,
+  useToast,
+  Button,
 } from '@chakra-ui/react';
 
-import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList } from './components';
+import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
 
 import {
   JoinBoardCheck,
@@ -43,7 +44,8 @@ import {
   useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdApps, MdFolder, MdManageAccounts, MdPeople, MdPerson, MdSearch, MdStar, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdApps, MdFolder, MdPeople, MdSearch, MdStar } from 'react-icons/md';
+import { set } from 'date-fns';
 
 export type UserPresence = {
   user: User;
@@ -66,7 +68,13 @@ export function HomePage() {
 
   // Room Store
   const [selectedRoomId] = useState<string | undefined>(roomId);
-  const { rooms, members, subscribeToAllRooms: subscribeToRooms, fetched: roomsFetched } = useRoomStore((state) => state);
+  const {
+    rooms,
+    members,
+    subscribeToAllRooms: subscribeToRooms,
+    fetched: roomsFetched,
+    joinRoomMembership,
+  } = useRoomStore((state) => state);
 
   // Board Store
   const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
@@ -78,9 +86,6 @@ export function HomePage() {
 
   // User
   const { user } = useUser();
-  const savedRooms = user?.data.savedRooms || [];
-  const savedBoards = user?.data.savedBoards || [];
-  const savedUsers = user?.data.savedUsers || [];
 
   // User and Presence Store
   const { users, subscribeToUsers } = useUsersStore((state) => state);
@@ -89,18 +94,73 @@ export function HomePage() {
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e);
     setSearchInput(e.target.value);
     setSelectedRoom(undefined);
     setSelectedBoard(undefined);
     setSelectedUser(undefined);
   };
+
+  const toast = useToast();
+
+  // On Search Clicks
+  const handleExternalRoomSelect = (room: Room) => {
+    setSelectedRoom(room);
+    // Check if this user is a member of this room
+    const roomMembership = members.find((m) => m.data.roomId === room._id);
+    const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
+    if (!isMember) {
+      toast({
+        title: 'Not a Member of Room',
+        description: (
+          <Box display="flex">
+            Would you like to join '{room.data.name}'?
+            <Button
+              colorScheme="yellow"
+              variant="solid"
+              size="xs"
+              ml="2"
+              onClick={() => {
+                joinRoomMembership(room._id);
+                toast.closeAll();
+              }}
+            >
+              Join
+            </Button>
+          </Box>
+        ),
+        status: 'info',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+  const handleExternalBoardSelect = (board: Board) => {
+    setSelectedBoard(board);
+    setSelectedRoom(rooms.find((r) => r._id === board.data.roomId));
+  };
+  const handleExternalUserSelect = (user: User) => {
+    setSelectedUser(user);
+    const presence = presences.find((p) => p._id === user._id);
+    if (presence) {
+      const roomId = presence.data.roomId;
+      const boardId = presence.data.boardId;
+      const room = rooms.find((r) => r._id === roomId);
+      const board = boards.find((b) => b._id === boardId);
+      setSelectedRoom(room);
+      setSelectedBoard(board);
+    }
+  };
+
+  // Colors
   const inputBorderColor = useHexColor('teal.200');
+  const searchPlaceHolderColor = useColorModeValue('gray.900', 'gray.100');
+  const searchColor = useHexColor(searchPlaceHolderColor);
   const searchInputRef = useRef<HTMLDivElement>(null);
 
   // Modals
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
   const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
+  const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
 
   // Filter Functions
   const roomsFilter = (room: Room): boolean => {
@@ -108,7 +168,8 @@ export function HomePage() {
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
     const isOwner = room.data.ownerId === user?._id;
-    return isMember || isOwner;
+    const isCurrentRoom = selectedRoom ? selectedRoom._id === room._id : false;
+    return isMember || isCurrentRoom;
   };
   const boardsFilter = (board: Board): boolean => {
     return selectedRoom ? board.data.roomId === selectedRoom?._id : false;
@@ -224,6 +285,14 @@ export function HomePage() {
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
       {/* Modal to create a board */}
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
+      {/* Favorites Modal */}
+      <FavoritesList
+        isOpen={favoritesIsOpen}
+        onClose={favoritesOnClose}
+        onRoomClick={handleExternalRoomSelect}
+        onBoardClick={handleExternalBoardSelect}
+        onUserClick={handleExternalUserSelect}
+      />
 
       {/* Top Bar */}
       <Box display="flex" flexDirection="row" justifyContent="space-between" width="100vw" px="2">
@@ -269,27 +338,45 @@ export function HomePage() {
               variant={'outline'}
               aria-label="create-room"
               fontSize="xl"
-              onClick={createRoomModalOnOpen}
-              icon={<MdStarOutline />}
+              onClick={() => {
+                setSearchInput('');
+                favoritesOnOpen();
+              }}
+              icon={<MdStar />}
             ></IconButton>
           </Box>
           <Box width="100%">
             <InputGroup colorScheme="teal" ref={searchInputRef}>
               <InputLeftElement pointerEvents="none">
-                <MdSearch color="white" />{' '}
+                <MdSearch />
               </InputLeftElement>
               <Input
                 type="text"
                 placeholder="Search for Rooms, Boards, or Users..."
-                _placeholder={{ color: 'white' }}
+                _placeholder={{ color: searchColor }}
                 onChange={handleSearchInput}
+                onKeyDown={(ev) => {
+                  // If esc pressed while focused on search input, clear search
+                  if (ev.keyCode === 27) {
+                    setSearchInput('');
+                  }
+                }}
                 colorScheme="teal"
                 value={searchInput}
                 _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
               />
             </InputGroup>
             <Box position="absolute" width="100%">
-              {searchInput !== '' && <SearchList searchInput={searchInput} searchDiv={searchInputRef.current} />}
+              {searchInput !== '' && (
+                <SearchList
+                  searchInput={searchInput}
+                  searchDiv={searchInputRef.current}
+                  setSearch={setSearchInput}
+                  onRoomClick={handleExternalRoomSelect}
+                  onBoardClick={handleExternalBoardSelect}
+                  onUserClick={handleExternalUserSelect}
+                />
+              )}
             </Box>
           </Box>
         </Box>

@@ -41,7 +41,7 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
       width="100%"
       display="flex"
       justifyContent={'space-between'}
-      // alignContent={'center'}
+      alignItems={'center'}
       onClick={() => props.onClick(props.userPresence.user)}
       borderRadius="md"
       _hover={{ cursor: 'pointer', background: borderColorG }}
@@ -56,7 +56,15 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
           icon={<MdPerson />}
         ></IconButton>
         <Box display="flex" flexDir="column">
-          <Text fontSize="sm" fontWeight="bold" textAlign="left">
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+            textAlign="left"
+            overflow={'hidden'}
+            whiteSpace={'nowrap'}
+            textOverflow={'ellipsis'}
+            width="160px"
+          >
             {props.userPresence.user.data.name}
           </Text>
           <Text fontSize="xs" textAlign="left">
@@ -64,18 +72,16 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
           </Text>
         </Box>
       </Box>
-      <Box>
-        {' '}
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme="teal"
-          aria-label="enter-board"
-          fontSize="xl"
-          onClick={handleFavorite}
-          icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-        ></IconButton>
-      </Box>
+
+      <IconButton
+        size="sm"
+        variant={'ghost'}
+        colorScheme="teal"
+        aria-label="enter-board"
+        fontSize="xl"
+        onClick={handleFavorite}
+        icon={isFavorite ? <MdStar /> : <MdStarOutline />}
+      ></IconButton>
     </Box>
   );
 }

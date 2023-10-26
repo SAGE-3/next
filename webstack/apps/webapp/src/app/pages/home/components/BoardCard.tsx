@@ -44,7 +44,7 @@ export function BoardCard(props: BoardCardProps) {
   // Enter Board
   const handleEnterBoard = (ev: any) => {
     ev.stopPropagation();
-    enterOnClose();
+    enterOnOpen();
   };
 
   return (
@@ -55,14 +55,14 @@ export function BoardCard(props: BoardCardProps) {
       height="220px"
       border={`solid ${borderColor} 1px`}
       background={linearBGColor}
-      padding="8px"
+      padding="12px"
     >
       {props.board && <EnterBoardModal board={props.board} isOpen={enterIsOpen} onClose={enterOnClose} />}
       {props.board && isOwner && (
         <EditBoardModal isOpen={editIsOpen} onOpen={editOnOpen} board={props.board} onClose={editOnClose}></EditBoardModal>
       )}
       <Box display="flex" justifyContent={'space-between'}>
-        <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+        <Box mb="2" display="flex" justifyContent={'space-between'} width="100%">
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="2xl" fontWeight={'bold'}>
             {title}
           </Box>
@@ -80,7 +80,7 @@ export function BoardCard(props: BoardCardProps) {
           </Box>
         </Box>
       </Box>
-      <Box flex="1" display="flex" my="2" px="2" flexDir="column">
+      <Box flex="1" display="flex" flexDir="column">
         <Box>
           {props.board && (
             <table>

@@ -6,18 +6,29 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, Icon, useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor, useRoomStore, useUsersStore, useBoardStore } from '@sage3/frontend';
+import { Box, Icon, useColorModeValue, Text, Divider, IconButton } from '@chakra-ui/react';
+import { useHexColor, useRoomStore, useUsersStore, useBoardStore, useUser } from '@sage3/frontend';
 import { Board, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdApps, MdExitToApp, MdFolder, MdGroup, MdHouse, MdJoinFull, MdPerson, MdSquare, MdStarOutline } from 'react-icons/md';
+import { MdApps, MdFolder, MdPerson, MdStar, MdStarOutline } from 'react-icons/md';
 
 type SearchListProps = {
   searchInput: string;
   searchDiv: HTMLDivElement | null;
+  setSearch: (search: string) => void;
+  onRoomClick: (room: Room) => void;
+  onBoardClick: (board: Board) => void;
+  onUserClick: (user: User) => void;
 };
 
 export function SearchList(props: SearchListProps) {
   if (!props.searchDiv) return null;
+
+  const { user, saveBoard, removeBoard, saveRoom, removeRoom, saveUser, removeUser } = useUser();
+
+  // Saved Info
+  const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
+  const savedRooms = user && user.data.savedRooms ? user.data.savedRooms : [];
+  const savedUsers = user && user.data.savedUsers ? user.data.savedUsers : [];
 
   // Get input width
   const inputWidth = props.searchDiv.getBoundingClientRect().width;
@@ -50,6 +61,49 @@ export function SearchList(props: SearchListProps) {
   // Colors
   const borderColor = useHexColor('teal');
   const backgroundColor = useColorModeValue('gray.50', 'gray.800');
+  const hoverBackgroundColor = useColorModeValue('gray.100', 'gray.700');
+  const hoverColor = useHexColor(hoverBackgroundColor);
+
+  // Interaction
+  const handleRoomClick = (room: Room) => {
+    props.onRoomClick(room);
+    props.setSearch('');
+  };
+  const handleBoardClick = (board: Board) => {
+    props.onBoardClick(board);
+    props.setSearch('');
+  };
+  const handleUserClick = (user: User) => {
+    props.onUserClick(user);
+    props.setSearch('');
+  };
+
+  // Favorites Events
+  const handleBoardFavorite = (event: any, board: Board) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const boardId = board._id;
+    if (user && removeBoard && saveBoard) {
+      savedBoards.includes(boardId) ? removeBoard(boardId) : saveBoard(boardId);
+    }
+  };
+  const handleRoomFavorite = (event: any, room: Room) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const roomId = room._id;
+    if (user && removeRoom && saveRoom) {
+      savedRooms.includes(roomId) ? removeRoom(roomId) : saveRoom(roomId);
+    }
+  };
+  const handleUserFavorite = (event: any, user: User) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const userId = user._id;
+    if (user && removeUser && saveUser) {
+      savedUsers.includes(userId) ? removeUser(userId) : saveUser(userId);
+    }
+  };
+
   return (
     <Box
       height="40vh"
@@ -63,7 +117,9 @@ export function SearchList(props: SearchListProps) {
       border={`solid 2px ${borderColor}`}
       overflowY="scroll"
     >
-      {boards.filter(boardsFilter).map((b) => {
+      <Text fontSize="xl">Rooms</Text>
+      <Divider />
+      {rooms.filter(roomsFilter).map((room) => {
         return (
           <Box
             width="100%"
@@ -72,58 +128,34 @@ export function SearchList(props: SearchListProps) {
             p="1"
             display="flex"
             justifyContent={'space-between'}
+            alignItems={'center'}
             cursor="pointer"
-            _hover={{ backgroundColor: 'gray' }}
-          >
-            <Box>
-              <Icon fontSize="2xl" mr="2">
-                <MdApps />
-              </Icon>
-              {b.data.name}
-            </Box>
-            <Box alignItems={'left'}> </Box>
-            <Box>
-              <Icon fontSize="2xl" mr="2">
-                <MdStarOutline />
-              </Icon>
-              <Icon fontSize="2xl" mr="2">
-                <MdExitToApp />
-              </Icon>
-            </Box>
-          </Box>
-        );
-      })}
-      {rooms.filter(roomsFilter).map((b) => {
-        return (
-          <Box
-            width="100%"
-            my="1"
-            borderRadius="3px"
-            p="1"
-            display="flex"
-            justifyContent={'space-between'}
-            cursor="pointer"
-            _hover={{ backgroundColor: 'gray' }}
+            _hover={{ backgroundColor: hoverColor }}
+            onClick={() => handleRoomClick(room)}
           >
             <Box>
               <Icon fontSize="2xl" mr="2">
                 <MdFolder />
               </Icon>
-              {b.data.name}
+              {room.data.name}
             </Box>
             <Box alignItems={'left'}> </Box>
             <Box>
-              <Icon fontSize="2xl" mr="2">
-                <MdStarOutline />
-              </Icon>
-              <Icon fontSize="2xl" mr="2">
-                <MdAdd />
-              </Icon>
+              <IconButton
+                size="sm"
+                fontSize="xl"
+                mr="2"
+                icon={savedRooms.includes(room._id) ? <MdStar /> : <MdStarOutline />}
+                aria-label={'favorite-board'}
+                onClick={(event) => handleRoomFavorite(event, room)}
+              ></IconButton>
             </Box>
           </Box>
         );
       })}
-      {users.filter(usersFilter).map((b) => {
+      <Text fontSize="xl">Boards</Text>
+      <Divider />
+      {boards.filter(boardsFilter).map((board) => {
         return (
           <Box
             width="100%"
@@ -132,23 +164,63 @@ export function SearchList(props: SearchListProps) {
             p="1"
             display="flex"
             justifyContent={'space-between'}
+            alignItems={'center'}
             cursor="pointer"
-            _hover={{ backgroundColor: 'gray' }}
+            _hover={{ backgroundColor: hoverColor }}
+            onClick={() => handleBoardClick(board)}
+          >
+            <Box>
+              <Icon fontSize="2xl" mr="2">
+                <MdApps />
+              </Icon>
+              {board.data.name}
+            </Box>
+            <Box alignItems={'left'}> </Box>
+            <Box>
+              <IconButton
+                size="sm"
+                fontSize="xl"
+                mr="2"
+                icon={savedBoards.includes(board._id) ? <MdStar /> : <MdStarOutline />}
+                aria-label={'favorite-board'}
+                onClick={(event) => handleBoardFavorite(event, board)}
+              ></IconButton>
+            </Box>
+          </Box>
+        );
+      })}
+      <Text fontSize="xl">Users</Text>
+      <Divider />
+      {users.filter(usersFilter).map((user) => {
+        return (
+          <Box
+            width="100%"
+            my="1"
+            borderRadius="3px"
+            p="1"
+            display="flex"
+            justifyContent={'space-between'}
+            alignItems={'center'}
+            cursor="pointer"
+            _hover={{ backgroundColor: hoverColor }}
+            onClick={() => handleUserClick(user)}
           >
             <Box>
               <Icon fontSize="2xl" mr="2">
                 <MdPerson />
               </Icon>
-              {b.data.name}
+              {user.data.name}
             </Box>
             <Box alignItems={'left'}> </Box>
             <Box>
-              <Icon fontSize="2xl" mr="2">
-                <MdStarOutline />
-              </Icon>
-              <Icon fontSize="2xl" mr="2">
-                <MdExitToApp />
-              </Icon>
+              <IconButton
+                size="sm"
+                fontSize="xl"
+                mr="2"
+                icon={savedUsers.includes(user._id) ? <MdStar /> : <MdStarOutline />}
+                aria-label={'favorite-board'}
+                onClick={(event) => handleUserFavorite(event, user)}
+              ></IconButton>
             </Box>
           </Box>
         );
