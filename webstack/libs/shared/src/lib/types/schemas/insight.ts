@@ -12,8 +12,8 @@ import { SBDoc } from './SBSchema';
 const schema = z.object({
   // the concerned app
   app_id: z.string(),
-  // the room ID to filter the data
-  roomId: z.string(),
+  // the board ID to filter the data
+  boardId: z.string(),
   // the tags/labels, array of strings
   labels: z.array(z.string()),
 });

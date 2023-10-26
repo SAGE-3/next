@@ -186,7 +186,7 @@ export function UILayer(props: UILayerProps) {
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={"none"}>
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 

@@ -52,6 +52,7 @@ import {
   useUsersStore,
   useConfigStore,
   useThrottleApps,
+  useInsightStore,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -82,6 +83,8 @@ export function Alfred(props: props) {
   const apps = useThrottleApps(250);
   const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
+  const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // User
   const { user, accessId } = useUser();
@@ -204,6 +207,22 @@ export function Alfred(props: props) {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
+      } else if (terms[0] === 'tag') {
+        // search apps with tags
+        const tags = terms.slice(1);
+        const tag = tags[0];
+        if (tag) {
+          const toSelect: string[] = [];
+          useInsightStore.getState().insights.forEach((insight) => {
+            if (insight.data.labels && insight.data.labels.includes(tag)) {
+              toSelect.push(insight.data.app_id);
+            }
+          });
+          if (toSelect.length > 0) {
+            setSelectedApps(toSelect);
+            fitApps(apps.filter((a) => toSelect.includes(a._id)));
+          }
+        }
       } else if (terms[0] === 'clear' || terms[0] === 'clearall' || terms[0] === 'closeall') {
         // Batch delete all the apps
         const ids = apps.map((a) => a._id);
@@ -472,6 +491,9 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
                   </ListItem>
                   <ListItem>
                     <b>dark</b> : Switch to dark mode
+                  </ListItem>
+                  <ListItem>
+                    <b>tag</b> : Search applications with tags
                   </ListItem>
                   <ListItem>
                     <b>clear</b> : Close all applications
