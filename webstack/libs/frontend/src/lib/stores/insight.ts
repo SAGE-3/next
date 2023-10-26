@@ -22,6 +22,7 @@ interface InsightState {
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<InsightSchema>) => void;
+  updateBatch: (updates: { id: string; updates: Partial<InsightSchema> }[]) => Promise<void>;
   subscribe: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
 }
@@ -45,6 +46,13 @@ const InsightStore = create<InsightState>()((set, get) => {
     update: async (id: string, updates: Partial<InsightSchema>) => {
       if (!SAGE3Ability.canCurrentUser('update', 'insight')) return;
       const res = await SocketAPI.sendRESTMessage(`/insight/${id}`, 'PUT', updates);
+      if (!res.success) {
+        set({ error: res.message });
+      }
+    },
+    updateBatch: async (updates: { id: string; updates: Partial<InsightSchema> }[]) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'insight')) return;
+      const res = await SocketAPI.sendRESTMessage('/insight', 'PUT', { batch: updates });
       if (!res.success) {
         set({ error: res.message });
       }
