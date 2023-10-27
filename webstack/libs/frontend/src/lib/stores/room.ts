@@ -89,12 +89,10 @@ const RoomStore = create<RoomState>()((set, get) => {
     fetched: false,
     members: [],
     joinRoomMembership: async (roomId: string) => {
-      const res = await APIHttp.POST<RoomMembers>(`/roommembers/join`, { roomId, members: [] });
-      console.log(res);
+      await APIHttp.POST<RoomMembers>(`/roommembers/join`, { roomId, members: [] });
     },
     leaveRoomMembership: async (roomId: string) => {
-      const res = await APIHttp.POST<RoomMembers>(`/roommembers/leave`, { roomId, members: [] });
-      console.log(res);
+      await APIHttp.POST<RoomMembers>(`/roommembers/leave`, { roomId, members: [] });
     },
     clearError: () => {
       set({ error: null });

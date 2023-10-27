@@ -117,6 +117,7 @@ export function FavoritesList(props: FavoritesProps) {
               .map((room) => {
                 return (
                   <Box
+                    key={'fav-' + room._id}
                     width="100%"
                     my="1"
                     px="2"
@@ -158,6 +159,7 @@ export function FavoritesList(props: FavoritesProps) {
               .map((board) => {
                 return (
                   <Box
+                    key={'fav-' + board._id}
                     width="100%"
                     my="1"
                     px="2"
@@ -199,6 +201,7 @@ export function FavoritesList(props: FavoritesProps) {
               .map((user) => {
                 return (
                   <Box
+                    key={'fav-' + user._id}
                     width="100%"
                     my="1"
                     px="2"

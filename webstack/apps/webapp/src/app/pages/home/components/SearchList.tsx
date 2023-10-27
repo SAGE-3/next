@@ -122,6 +122,7 @@ export function SearchList(props: SearchListProps) {
       {rooms.filter(roomsFilter).map((room) => {
         return (
           <Box
+            key={'search-' + room._id}
             width="100%"
             my="1"
             borderRadius="3px"
@@ -158,6 +159,7 @@ export function SearchList(props: SearchListProps) {
       {boards.filter(boardsFilter).map((board) => {
         return (
           <Box
+            key={'search-' + board._id}
             width="100%"
             my="1"
             borderRadius="3px"
@@ -194,6 +196,7 @@ export function SearchList(props: SearchListProps) {
       {users.filter(usersFilter).map((user) => {
         return (
           <Box
+            key={'search-' + user._id}
             width="100%"
             my="1"
             borderRadius="3px"

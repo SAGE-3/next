@@ -40,21 +40,19 @@ export function RoomRow(props: { room: Room; selected: boolean; onClick: (room: 
   };
   return (
     <Box
-      // my="4"
       background={linearBGColor}
       p="1"
-      pl="4"
+      px="2"
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
-      borderColor={props.selected ? borderColor : borderColor}
       onClick={() => props.onClick(props.room)}
-      border={`solid 1px ${props.selected ? borderColor : 'none'}`}
-      borderLeft={`${borderColor} solid 8px`}
       borderRadius="md"
       boxSizing="border-box"
-      backgroundColor={props.selected ? borderColorG : 'transparent'}
-      _hover={{ cursor: 'pointer', backgroundColor: borderColorG }}
+      border={`solid 1px ${props.selected ? borderColor : 'transpanent'}`}
+      borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
+      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}`, borderLeft: props.selected ? `${borderColor} solid 8px` : '' }}
+      transition={'all 0.2s ease-in-out'}
     >
       <Box display="flex" flexDir="column" width="270px">
         <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>

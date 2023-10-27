@@ -48,15 +48,7 @@ export function BoardCard(props: BoardCardProps) {
   };
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      borderRadius="md"
-      height="220px"
-      border={`solid ${borderColor} 1px`}
-      background={linearBGColor}
-      padding="12px"
-    >
+    <Box display="flex" flexDirection="column" borderRadius="md" height="220px" background={linearBGColor} padding="12px">
       {props.board && <EnterBoardModal board={props.board} isOpen={enterIsOpen} onClose={enterOnClose} />}
       {props.board && isOwner && (
         <EditBoardModal isOpen={editIsOpen} onOpen={editOnOpen} board={props.board} onClose={editOnClose}></EditBoardModal>
@@ -84,46 +76,48 @@ export function BoardCard(props: BoardCardProps) {
         <Box>
           {props.board && (
             <table>
-              <tr>
-                <td width="100px">
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Description
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{description}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Owner
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{owner}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Created
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{createdDate}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Updated
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{updatedDate}</Text>
-                </td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td width="100px">
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Description
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{description}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Owner
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{owner}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Created
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{createdDate}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Updated
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{updatedDate}</Text>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           )}
         </Box>

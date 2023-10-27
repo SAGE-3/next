@@ -10,9 +10,11 @@ import { IconButton, Box, Text, useColorModeValue, useDisclosure, Button } from 
 import { MdEdit } from 'react-icons/md';
 import { Room } from '@sage3/shared/types';
 import { EditRoomModal, useHexColor, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
+import { SAGE3Ability } from '@sage3/shared';
 
 type RoomCardProps = {
   room: Room | undefined;
+  leaveRoom: () => void;
 };
 
 export function RoomCard(props: RoomCardProps) {
@@ -31,7 +33,6 @@ export function RoomCard(props: RoomCardProps) {
   // RoomStore
   const { joinRoomMembership, leaveRoomMembership, members } = useRoomStore((state) => state);
   const roomMembership = members.find((m) => m.data.roomId === props.room?._id);
-  console.log(members);
   const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
 
   // UI Elements
@@ -44,9 +45,11 @@ export function RoomCard(props: RoomCardProps) {
   // Disclousre for Edit Board
   const { isOpen, onOpen, onClose } = useDisclosure();
 
+  // Permissions
+  const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
+
   // Join Room
   const handleJoinRoom = () => {
-    console.log('Joining room');
     if (props.room) {
       joinRoomMembership(props.room._id);
     }
@@ -57,19 +60,11 @@ export function RoomCard(props: RoomCardProps) {
     console.log('Leaving room');
     if (props.room) {
       leaveRoomMembership(props.room._id);
+      props.leaveRoom();
     }
   };
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      borderRadius="md"
-      height="220px"
-      border={`solid ${borderColor} 1px`}
-      background={linearBGColor}
-      padding="12px"
-      overflow="hidden"
-    >
+    <Box display="flex" flexDirection="column" borderRadius="md" height="220px" background={linearBGColor} padding="12px" overflow="hidden">
       {props.room && isOwner && <EditRoomModal isOpen={isOpen} onOpen={onOpen} room={props.room} onClose={onClose}></EditRoomModal>}
 
       <Box display="flex" justifyContent={'space-between'}>
@@ -96,46 +91,48 @@ export function RoomCard(props: RoomCardProps) {
         <Box>
           {props.room && (
             <table>
-              <tr>
-                <td width="100px">
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Description
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{description}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Owner
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{owner}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Created
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{createdDate}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Updated
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{updatedDate}</Text>
-                </td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td width="100px">
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Description
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{description}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Owner
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{owner}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Created
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{createdDate}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Updated
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{updatedDate}</Text>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           )}
         </Box>
@@ -145,6 +142,7 @@ export function RoomCard(props: RoomCardProps) {
           my="1"
           size="sm"
           variant="outline"
+          isDisabled={!canJoin}
           colorScheme={isMember ? 'red' : 'teal'}
           onClick={isMember ? handleLeaveRoom : handleJoinRoom}
         >

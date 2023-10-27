@@ -46,6 +46,7 @@ import {
 import { Board, Presence, Room, User } from '@sage3/shared/types';
 import { MdAdd, MdApps, MdFolder, MdPeople, MdSearch, MdStar } from 'react-icons/md';
 import { set } from 'date-fns';
+import { SAGE3Ability } from '@sage3/shared';
 
 export type UserPresence = {
   user: User;
@@ -54,7 +55,7 @@ export type UserPresence = {
 
 export function HomePage() {
   // URL Params
-  const { roomId } = useParams();
+  const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
 
   // Configuration information
@@ -63,11 +64,13 @@ export function HomePage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  // User
+  const { user } = useUser();
+
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Room Store
-  const [selectedRoomId] = useState<string | undefined>(roomId);
   const {
     rooms,
     members,
@@ -79,17 +82,14 @@ export function HomePage() {
   // Board Store
   const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
 
-  // User Selected Room and Board
-  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
-  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
-  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
-
-  // User
-  const { user } = useUser();
-
   // User and Presence Store
   const { users, subscribeToUsers } = useUsersStore((state) => state);
   const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
+
+  // User Selected Room, Board, and User
+  const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
+  const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
+  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
 
   // Handle Search Input
   const [searchInput, setSearchInput] = useState<string>('');
@@ -100,15 +100,32 @@ export function HomePage() {
     setSelectedUser(undefined);
   };
 
+  // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
-  // On Search Clicks
+  // Colors
+  const inputBorderColor = useHexColor('teal.200');
+  const searchPlaceHolderColor = useColorModeValue('gray.900', 'gray.100');
+  const searchColor = useHexColor(searchPlaceHolderColor);
+  const searchInputRef = useRef<HTMLDivElement>(null);
+
+  // Modals
+  const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
+  const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
+  const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
+
+  // Permissions
+  const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
+  const canCreateRoom = SAGE3Ability.canCurrentUser('create', 'rooms');
+  const canCreateBoards = SAGE3Ability.canCurrentUser('create', 'boards');
+
+  // On Search or Favorite Clicks
   const handleExternalRoomSelect = (room: Room) => {
     setSelectedRoom(room);
     // Check if this user is a member of this room
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
-    if (!isMember) {
+    if (!isMember && canJoin) {
       toast({
         title: 'Not a Member of Room',
         description: (
@@ -150,17 +167,6 @@ export function HomePage() {
       setSelectedBoard(board);
     }
   };
-
-  // Colors
-  const inputBorderColor = useHexColor('teal.200');
-  const searchPlaceHolderColor = useColorModeValue('gray.900', 'gray.100');
-  const searchColor = useHexColor(searchPlaceHolderColor);
-  const searchInputRef = useRef<HTMLDivElement>(null);
-
-  // Modals
-  const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
-  const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
-  const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
 
   // Filter Functions
   const roomsFilter = (room: Room): boolean => {
@@ -209,21 +215,21 @@ export function HomePage() {
     }
   }, [selectedRoom]);
 
+  // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
     if (room) {
+      // If the room is already selected, deselect it
       room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
-
       // update the URL, helps with history
       toHome(room._id);
     } else {
-      setSelectedRoom(undefined);
-      setSelectedBoard(undefined);
-      setSelectedUser(undefined);
+      handleLeaveRoom();
     }
   }
 
+  // Function to handle states for when a user clicks on a board
   function handleBoardClick(board: Board) {
     if (board) {
       board._id == selectedBoard?._id ? setSelectedBoard(undefined) : setSelectedBoard(board);
@@ -234,18 +240,28 @@ export function HomePage() {
     }
   }
 
+  // Function to handle states for when a user clicks on a user
   function handleUserClick(user: User) {
-    setSelectedUser(user);
+    if (user) {
+      user._id == selectedUser?._id ? setSelectedUser(undefined) : setSelectedUser(user);
+    }
   }
 
+  // Function to handle states for when a user leaves a room (unjoins)
+  function handleLeaveRoom() {
+    setSelectedRoom(undefined);
+    setSelectedBoard(undefined);
+    setSelectedUser(undefined);
+  }
+
+  // Handle when the rooms and boards change
   useEffect(() => {
-    const room = rooms.find((r) => r._id === selectedRoom?._id);
-    if (!room) {
+    // Check to see if the room you are in still exists
+    if (!rooms.find((r) => r._id === selectedRoom?._id)) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
-    } else {
-      setSelectedRoom(room);
     }
+    // Check to see if the board you are in still exists
     if (!boards.find((board) => board._id === selectedBoard?._id)) {
       setSelectedBoard(undefined);
     }
@@ -253,18 +269,22 @@ export function HomePage() {
 
   // To handle the case where the user is redirected to the home page from a board
   useEffect(() => {
-    function goToMainRoom() {
-      // Go to Main Room, should be the oldest room on the server.
-      const room = rooms.reduce((prev, curr) => (prev._createdAt < curr._createdAt ? prev : curr));
-      handleRoomClick(room);
-    }
-    if (roomsFetched) {
-      if (!selectedRoomId) {
-        goToMainRoom();
-      } else {
-        // Go to room with id. Does room exist, if not go to main room
-        const room = rooms.find((room) => room._id === selectedRoomId);
-        room ? setSelectedRoom(room) : goToMainRoom();
+    // Get the RoomId from the URL
+    if (roomId) {
+      // Find room
+      const room = rooms.find((r) => r._id === roomId);
+      // If the room exists, select it
+      if (room) {
+        setSelectedRoom(room);
+        // Get the BoardId from the URL
+        if (boardId) {
+          // Find board
+          const board = boards.find((b) => b._id === boardId);
+          // If the board exists, select it
+          if (board) {
+            setSelectedBoard(board);
+          }
+        }
       }
     }
   }, [roomsFetched]);
@@ -278,7 +298,7 @@ export function HomePage() {
 
   return (
     // Main Container
-    <Box display="flex" flexDir={'column'} width="100%" height="100%" alignItems="center" justifyContent="space-between">
+    <Box display="flex" flexDir={'column'} width="100%" height="100vh" alignItems="center">
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
@@ -319,16 +339,7 @@ export function HomePage() {
       </Box>
 
       {/* Middle Section */}
-      <Box
-        display="flex"
-        flexDirection="column"
-        height="100%"
-        maxHeight="100%"
-        justifyContent={'space-between'}
-        maxWidth="1920px"
-        overflow="hidden"
-        paddingBottom="55px"
-      >
+      <Box flex="1" display="flex" flexDirection="column" maxWidth="1920px" overflow="hidden">
         {/* Search Box */}
         <Box width="100%" display="flex" p="2" pr="4">
           <Box mr="2">
@@ -382,9 +393,9 @@ export function HomePage() {
         </Box>
 
         {/* Data Section */}
-        <Box display="flex" flex={1} height="100%" width="100%">
+        <Box flex="1" display="flex" width="100%">
           {/* Left Side Rooms */}
-          <Box display="flex" flexDirection="column" height="100%" p="8px" flex="1" width="420px" justifyContent={'space-between'}>
+          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
               <Box display="flex">
                 <Icon fontSize="28px" mr="2">
@@ -401,6 +412,7 @@ export function HomePage() {
                   aria-label="create-room"
                   fontSize="xl"
                   onClick={createRoomModalOnOpen}
+                  isDisabled={!canCreateRoom}
                   icon={<MdAdd />}
                 ></IconButton>
               </Box>
@@ -433,11 +445,10 @@ export function HomePage() {
                   );
                 })}
             </Box>
-            <RoomCard room={selectedRoom} />
           </Box>
 
           {/* Middle Section Room and Boards */}
-          <Box display="flex" flexDirection="column" flex="1" width="420px" padding="8px">
+          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
             <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
               <Box display="flex">
                 <Icon fontSize="28px" mr="2">
@@ -452,7 +463,7 @@ export function HomePage() {
                   variant={'outline'}
                   aria-label="create-room"
                   fontSize="xl"
-                  isDisabled={!selectedRoom}
+                  isDisabled={!selectedRoom || !canCreateBoards}
                   onClick={createBoardModalOnOpen}
                   icon={<MdAdd />}
                 ></IconButton>
@@ -485,12 +496,11 @@ export function HomePage() {
                   );
                 })}
             </Box>
-            <BoardCard board={selectedBoard} />
           </Box>
 
           {/* Right Side Members */}
-          <Box display="flex" flexDirection="column" height="100%" p="8px" width="280px">
-            <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
+          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
+            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
               <Box display="flex">
                 <Icon fontSize="28px" mr="2">
                   <MdPeople />
@@ -512,11 +522,31 @@ export function HomePage() {
                 }}
               >
                 {usersFilter().map((up) => {
-                  return <UserRow key={up.user._id} userPresence={up} onClick={() => handleUserClick(up.user)} />;
+                  return (
+                    <UserRow
+                      key={up.user._id}
+                      userPresence={up}
+                      selected={selectedUser?._id == up.user._id}
+                      onClick={() => handleUserClick(up.user)}
+                    />
+                  );
                 })}
               </Box>
             </Box>
-            <UserCard user={selectedUser} presence={presences.find((p) => p._id === selectedUser?._id)} />
+          </Box>
+        </Box>
+
+        {/* Card Section showing current Selection */}
+        <Box display="flex" width="100%">
+          <Box width="420px" p="8px">
+            <RoomCard room={selectedRoom} leaveRoom={handleLeaveRoom} />
+          </Box>
+
+          <Box width="420px" p="8px">
+            <BoardCard board={selectedBoard} />
+          </Box>
+          <Box width="420px" p="8px">
+            <BoardCard board={selectedBoard} />
           </Box>
         </Box>
       </Box>

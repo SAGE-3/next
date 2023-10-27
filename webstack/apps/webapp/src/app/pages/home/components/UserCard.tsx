@@ -29,15 +29,7 @@ export function UserCard(props: UserCardProps) {
   const email = props.user ? props.user.data.email : 'N/A';
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      borderRadius="md"
-      height="220px"
-      border={`solid ${borderColor} 1px`}
-      background={linearBGColor}
-      padding="8px"
-    >
+    <Box display="flex" flexDirection="column" borderRadius="md" height="220px" background={linearBGColor} padding="8px">
       <Box display="flex" justifyContent={'space-between'}>
         <Box px="2" mb="2" display="flex" justifyContent={'space-between'} width="100%">
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="2xl" fontWeight={'bold'}>
@@ -50,26 +42,28 @@ export function UserCard(props: UserCardProps) {
         <Box>
           {props.user && (
             <table>
-              <tr>
-                <td width="60px">
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Joined
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{joinedDate}</Text>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <Text fontSize="sm" fontWeight={'bold'}>
-                    Email
-                  </Text>
-                </td>
-                <td>
-                  <Text fontSize="sm">{email}</Text>
-                </td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td width="60px">
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Joined
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{joinedDate}</Text>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <Text fontSize="sm" fontWeight={'bold'}>
+                      Email
+                    </Text>
+                  </td>
+                  <td>
+                    <Text fontSize="sm">{email}</Text>
+                  </td>
+                </tr>
+              </tbody>
             </table>
           )}
         </Box>

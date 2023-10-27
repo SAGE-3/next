@@ -12,7 +12,7 @@ import { User } from '@sage3/shared/types';
 import { MdPerson, MdStar, MdStarOutline } from 'react-icons/md';
 import { UserPresence } from '../..';
 
-export function UserRow(props: { userPresence: UserPresence; onClick: (user: User) => void }) {
+export function UserRow(props: { userPresence: UserPresence; selected: boolean; onClick: (user: User) => void }) {
   const { user, saveUser, removeUser } = useUser();
 
   const borderColorValue = useColorModeValue(props.userPresence.user.data.color, props.userPresence.user.data.color);
@@ -22,6 +22,10 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
 
   const online = useHexColor('teal');
   const offline = useHexColor('gray.700');
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
 
   const savedUsers = user?.data.savedUsers || [];
   const isFavorite = user && savedUsers.includes(props.userPresence.user._id);
@@ -36,15 +40,19 @@ export function UserRow(props: { userPresence: UserPresence; onClick: (user: Use
   };
   return (
     <Box
-      my="1"
+      background={linearBGColor}
       p="1"
-      width="100%"
+      px="2"
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
       onClick={() => props.onClick(props.userPresence.user)}
       borderRadius="md"
-      _hover={{ cursor: 'pointer', background: borderColorG }}
+      boxSizing="border-box"
+      border={`solid 1px ${props.selected ? borderColor : 'transpanent'}`}
+      borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
+      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}`, borderLeft: props.selected ? `${borderColor} solid 8px` : '' }}
+      transition={'all 0.2s ease-in-out'}
     >
       <Box display="flex" alignItems={'center'}>
         <IconButton
