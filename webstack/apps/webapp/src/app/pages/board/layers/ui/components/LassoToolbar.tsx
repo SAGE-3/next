@@ -8,10 +8,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import potpack from 'potpack';
 
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, } from 'react-icons/md';
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
@@ -20,6 +21,7 @@ import {
   useThrottleApps, useUIStore, setupApp, useCursorBoardPosition,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
+import { off } from 'process';
 
 /**
  * Lasso Toolbar Component
@@ -36,6 +38,7 @@ export function LassoToolbar() {
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
+  const update = useAppStore((state) => state.update);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
@@ -164,6 +167,60 @@ for b in bits:
     }
   };
 
+  // Calculate a new layout for the selected apps
+  const autoLayout = () => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const boxes = selectedApps.map((el) => {
+      return {
+        app: el,
+        bbox: [el.data.position.x, el.data.position.y, el.data.position.x + el.data.size.width, el.data.position.y + el.data.size.height],
+        area: el.data.size.width * el.data.size.height,
+      }
+    });
+    console.log('Auto Layout', selectedApps);
+    // sort by size
+    boxes.sort((a, b) => b.area - a.area);
+    console.log('Boxes', boxes);
+
+    const padding = 30;
+    // calculate the center of the bounding boxes
+    const minx = Math.min(...boxes.map((el) => el.bbox[0]));
+    const maxx = Math.max(...boxes.map((el) => el.bbox[2]));
+    const miny = Math.min(...boxes.map((el) => el.bbox[1]));
+    const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
+    const center = [padding / 2 + (minx + maxx) / 2, padding / 2 + (miny + maxy) / 2];
+    console.log('Center', center);
+
+    const data = boxes.map((el) => ({
+      w: el.app.data.size.width + padding, h: el.app.data.size.height + padding,
+      id: el.app._id, x: 0, y: 0
+    }));
+
+    const { w, h, fill } = potpack(data);
+    console.log("🚀 ~ file: LassoToolbar.tsx:211 ~ autoLayout ~ w, h, fill:", w, h, fill);
+    console.log("🚀 ~ file: LassoToolbar.tsx:206 ~ autoLayout ~ data:", data);
+    data.forEach((el) => {
+      const app = apps.find((a) => a._id === el.id);
+      const x = center[0] + el.x - w / 2;
+      const y = center[1] + el.y - h / 2;
+      if (app) update(app._id, { position: { ...app.data.position, x, y } });
+    });
+
+    // move the big one to the center
+    // const big = boxes[0].app;
+    // const newpos = { x: center[0] - big.data.size.width / 2, y: center[1] - big.data.size.height / 2 };
+    // update(big._id, { position: { ...big.data.position, ...newpos } });
+
+    // // move a second one to the right and with an offset down
+    // const secondpos = {
+    //   x: center[0] + big.data.size.width / 2 + 20,
+    //   y: center[1] - big.data.size.height / 2 + (big.data.size.height / 3),
+    // };
+    // const second = boxes[1].app;
+    // update(second._id, { position: { ...second.data.position, ...secondpos } });
+
+  };
+
   return (
     <>
       {showLasso && (
@@ -235,6 +292,13 @@ for b in bits:
                   <HiOutlineStop size="18px" />
                 </Button>
               </Tooltip> */}
+
+              {/* MdAutoAwesomeMosaic, MdAutoAwesomeMotion */}
+              <Tooltip placement="top" hasArrow={true} label={'Automatic Layout'} openDelay={400}>
+                <Button onClick={autoLayout} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <MdAutoAwesomeMosaic size="18px" />
+                </Button>
+              </Tooltip>
 
               <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
                 <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
