@@ -6,15 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure } from '@chakra-ui/react';
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdWeb, MdRemove } from 'react-icons/md';
+import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast, } from '@chakra-ui/react';
+import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
-import { downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility } from '@sage3/frontend';
+import {
+  downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility,
+  ConfirmValueModal, apiUrls,
+} from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
 import { App, AppGroup } from '../../../schema';
@@ -34,21 +37,23 @@ export function ToolbarComponent(props: App): JSX.Element {
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-
   // Abilities
   const canCreateKernels = useAbility('create', 'kernels');
-
   // User state
   const { user } = useUser();
-
+  // Room and board
+  const { roomId } = useParams();
   // Access
   const [access, setAccess] = useState<boolean>(true); // Default true, it will be updated later
 
   // Disclousre for the create kernel modal
   const { isOpen, onOpen, onClose } = useDisclosure();
-
   // Disclosure of Modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // display some notifications
+  const toast = useToast();
 
   // Kernel Store
   const { apiStatus, kernels } = useKernelStore((state) => state);
@@ -125,10 +130,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   const downloadPy = (): void => {
     // Current date
     const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    // Get the text of the note
-    const content = `${s.code}`;
     // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s.code);
     // Make a filename with username and date
     const filename = 'sagecell-' + dt + '.py';
     // Go for download
@@ -149,6 +152,42 @@ export function ToolbarComponent(props: App): JSX.Element {
     // Set the drawer to open
     setDrawer(props._id, true);
   };
+
+  const handleSave = useCallback((val: string) => {
+    // save cell code in asset manager
+    if (!val.endsWith('.py')) {
+      val += '.py';
+    }
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([s.code])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [s.code, roomId]);
 
   return (
     <HStack>
@@ -211,15 +250,32 @@ export function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
       <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
+            <MdFileUpload />
+          </Button>
+        </Tooltip>
+
         <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
           <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
             <MdFileDownload />
           </Button>
         </Tooltip>
       </ButtonGroup>
+
+      {/* Modals */}
       <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
       <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+      <ConfirmValueModal
+        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={handleSave}
+        title="Save Code in Asset Manager" message="Select a file name:"
+        initiaValue={'sagecell-' + dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
+        cancelText="Cancel" confirmText="Save"
+        confirmColor="green"
+      />
+
     </HStack>
   );
 }
