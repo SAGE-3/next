@@ -22,6 +22,7 @@ import {
 
 // Icons for file types
 import { MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
 
 import {
   humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
@@ -177,6 +178,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
+      case 'py':
+        return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
       case 'jpeg':
