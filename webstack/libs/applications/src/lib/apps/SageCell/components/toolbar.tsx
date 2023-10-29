@@ -237,15 +237,15 @@ export function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }}>
             <MdRemove />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Button _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>{s.fontSize}</Button>
+          <Button _hover={{ opacity: 0.7 }}>{s.fontSize}</Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
+          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }}>
             <MdAdd />
           </Button>
         </Tooltip>
