@@ -29,6 +29,7 @@
     "@chakra-ui/react": "^2.8.1",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
+    "@flatten-js/core": "^1.4.4",
     "@fluent-org/logger": "^1.0.10",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.5.2",
