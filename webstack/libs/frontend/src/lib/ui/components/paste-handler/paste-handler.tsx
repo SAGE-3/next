@@ -123,6 +123,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 state: { text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             } else {
               // Not supported file format
@@ -162,6 +163,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             state: { url: pastedText.trim() },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         } else {
           // Create a new stickie
@@ -176,6 +178,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         }
       }

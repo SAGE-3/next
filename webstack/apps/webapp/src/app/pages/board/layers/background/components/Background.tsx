@@ -102,7 +102,7 @@ export function Background(props: BackgroundProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
-  const gc = useColorModeValue('gray.100', 'gray.800');
+  const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
   const [dropPosition, setDropPosition] = useState({ x: 0, y: 0 });
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
@@ -253,6 +253,7 @@ export function Background(props: BackgroundProps) {
               state: { ...(initialValues[appName] as AppState), ...appstate },
               raised: true,
               dragging: false,
+              pinned: false,
             };
             createApp(newState);
           } else {

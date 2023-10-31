@@ -144,6 +144,7 @@ function AppComponent(props: App): JSX.Element {
           state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       }
     }
