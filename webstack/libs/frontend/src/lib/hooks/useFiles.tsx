@@ -27,6 +27,7 @@ import {
   isPython,
   isGLTF,
   isGIF,
+  isFileURL,
   isPythonNotebook,
   isTiff,
 } from '@sage3/shared';
@@ -257,6 +258,40 @@ export function useFiles(): UseFiles {
       for (const a of assets) {
         if (a._id === fileID) {
           return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+        }
+      }
+    } else if (isFileURL(fileType)) {
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          });
+          // Get the content of the file
+          const text = await response.text();
+          const lines = text.split('\n');
+          for (const line of lines) {
+            // look for a line starting with URL=
+            if (line.startsWith('URL')) {
+              const words = line.split('=');
+              // the URL
+              const goto = words[1].trim();
+              return setupApp(
+                goto,
+                'WebpageLink',
+                xDrop - 200, yDrop - 200,
+                roomId, boardId,
+                { w: w, h: w },
+                { url: goto }
+              );
+            }
+          }
+          return null;
         }
       }
     } else if (isGIF(fileType)) {

@@ -24,9 +24,11 @@ import {
   DrawerHeader,
   DrawerBody,
 } from '@chakra-ui/react';
-import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, } from 'react-icons/md';
+// Date manipulation (for filename)
+import dateFormat from 'date-fns/format';
 
-import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
+import { isElectron, useAppStore, processContentURL, downloadFile } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
 // Zustand
 import { create } from 'zustand';
@@ -56,6 +58,8 @@ function AppComponent(props: App): JSX.Element {
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  // App store
+  const update = useAppStore((state) => state.update);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -69,13 +73,20 @@ function AppComponent(props: App): JSX.Element {
   const setSocket = useStore((state) => state.setSocket);
 
   const url = s.url;
-  const title = s.meta.title ? s.meta.title : 'No Title';
+  const title = s.meta.title ? s.meta.title : url;
   const description = s.meta.description ? s.meta.description : 'No Description';
   const imageUrl = s.meta.image;
 
   const aspect = 1200 / 630;
   const imageHeight = 250;
   const imageWidth = imageHeight * aspect;
+
+  // Update the titlebar of the app
+  useEffect(() => {
+    if (s.meta && s.meta.title) {
+      update(props._id, { title: s.meta.title });
+    }
+  }, [s.meta]);
 
   useEffect(() => {
     setStreaming(s.streaming);
@@ -374,6 +385,27 @@ function ToolbarComponent(props: App): JSX.Element {
     onClose();
   };
 
+  /**
+   * Download the stickie as a text file
+   * @returns {void}
+   */
+  const downloadURL = (): void => {
+    // Current date
+    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    // Get the text of the note
+    const content = `[InternetShortcut]\nURL=${s.url}\n`;
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename with username and date
+    const filename = 'link-' + dt + '.url';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
+
+  const saveInAssetManager = () => {
+    // TODO
+  };
+
   // Update the size of the app when the sidebar is resized
   useEffect(() => {
     update(props._id, {
@@ -422,6 +454,21 @@ function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top-start" hasArrow={true} label={'Copy URL to Clipboard'} openDelay={400}>
           <Button onClick={copyUrl}>
             <MdCopyAll />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
+          <Button onClick={saveInAssetManager} _hover={{ opacity: 0.7 }}>
+            <MdFileUpload />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Link'} openDelay={400}>
+          <Button onClick={downloadURL} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
           </Button>
         </Tooltip>
       </ButtonGroup>
