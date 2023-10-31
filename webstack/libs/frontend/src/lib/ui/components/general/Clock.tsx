@@ -9,7 +9,7 @@ import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
 import { MdNetworkCheck } from 'react-icons/md';
 
-import { useNetworkState } from '@sage3/frontend';
+import { useHexColor, useNetworkState } from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -28,9 +28,15 @@ export function Clock(props: ClockProps) {
   const textColor = useColorModeValue('gray.800', 'gray.50');
   const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
 
+  // Network Status Colors
+  const onlineColor = useHexColor('green.600');
+  const midtierColor = useHexColor('yellow.300');
+  const lowtierColor = useHexColor('orange.400');
+  const offlineColor = useHexColor('red.500');
+
   // Network Status
   const networkStatus = useNetworkState();
-  const [netcolor, setNetcolor] = useState('green');
+  const [netcolor, setNetcolor] = useState(onlineColor);
   const [netlabel, setNetlabel] = useState('online');
 
   // Update the time on an interval every 30secs
@@ -44,18 +50,18 @@ export function Clock(props: ClockProps) {
   useEffect(() => {
     if (networkStatus) {
       if (networkStatus.online) {
-        setNetcolor('#38A169');
+        setNetcolor(onlineColor);
         setNetlabel('online');
         if (networkStatus.effectiveType === '3g') {
-          setNetcolor('#F6AD55');
+          setNetcolor(midtierColor);
           setNetlabel('mid-tier mobile');
         }
         if (networkStatus.effectiveType === '2g') {
-          setNetcolor('#FC8181');
+          setNetcolor(lowtierColor);
           setNetlabel('low-tier mobile');
         }
       } else {
-        setNetcolor('red');
+        setNetcolor(offlineColor);
         setNetlabel('offline');
       }
     }
