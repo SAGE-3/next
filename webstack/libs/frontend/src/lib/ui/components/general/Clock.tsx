@@ -46,7 +46,6 @@ export function Clock(props: ClockProps) {
       if (networkStatus.online) {
         setNetcolor('#38A169');
         setNetlabel('online');
-        console.log('green');
         if (networkStatus.effectiveType === '3g') {
           setNetcolor('#F6AD55');
           setNetlabel('mid-tier mobile');
