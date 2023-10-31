@@ -126,6 +126,7 @@ export function AppWindow(props: WindowProps) {
   useMemo(() => {
     // If the delta position changes, update the local state if you are grouped and not the leader
     if (isGrouped && !isGroupLeader) {
+      if (props.app.data.pinned) return;
       const x = props.app.data.position.x + deltaPosition.p.x;
       const y = props.app.data.position.y + deltaPosition.p.y;
       setPos({ x, y });
@@ -175,7 +176,7 @@ export function AppWindow(props: WindowProps) {
       // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
         const app = apps.find((el) => el._id == appId);
-        if (!app) return;
+        if (!app || app.data.pinned) return;
         const p = app.data.position;
         ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
       });

@@ -11,13 +11,20 @@ import { useParams } from 'react-router';
 
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdLock, } from 'react-icons/md';
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdLock } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
-  ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor,
-  useThrottleApps, useUIStore, setupApp, useCursorBoardPosition,
+  ConfirmModal,
+  useAbility,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  useThrottleApps,
+  useUIStore,
+  setupApp,
+  useCursorBoardPosition,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
@@ -67,6 +74,7 @@ export function LassoToolbar() {
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
+  const canUpdateApp = useAbility('update', 'apps');
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -96,7 +104,7 @@ export function LassoToolbar() {
       // Update all the apps at once
       updateBatch(ps);
     }
-  }
+  };
 
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
@@ -131,7 +139,10 @@ export function LassoToolbar() {
       let context = '';
       if (isAllOfSameType) {
         if (selectedApps[0].data.type === 'Stickie') {
-          context = selectedApps.reduce((acc, el) => { acc += el.data.state.text + '\n'; return acc; }, '');
+          context = selectedApps.reduce((acc, el) => {
+            acc += el.data.state.text + '\n';
+            return acc;
+          }, '');
           console.log('All', context);
         }
       }
@@ -222,7 +233,7 @@ for b in bits:
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Pin/Unpin Apps'} openDelay={400}>
-                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDuplicateApp}>
+                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canUpdateApp}>
                   <MdLock />
                 </Button>
               </Tooltip>
@@ -276,7 +287,6 @@ for b in bits:
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
-
             </Box>
           </Box>
         </Box>
