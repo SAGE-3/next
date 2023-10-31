@@ -23,7 +23,7 @@ export function BoardTitle(props: BoardTitleProps) {
 
   const textColor = useColorModeValue('gray.800', 'gray.50');
   const textColorHex = useHexColor(textColor);
-  const backgroundColor = useColorModeValue('#ffffff69', '#00000069');
+  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
 
   return (
     <Box
