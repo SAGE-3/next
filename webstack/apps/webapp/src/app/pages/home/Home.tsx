@@ -546,7 +546,7 @@ export function HomePage() {
             <BoardCard board={selectedBoard} />
           </Box>
           <Box width="420px" p="8px">
-            <BoardCard board={selectedBoard} />
+            <UserCard user={selectedUser} presence={undefined} />
           </Box>
         </Box>
       </Box>
