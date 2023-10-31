@@ -143,6 +143,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
       },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 

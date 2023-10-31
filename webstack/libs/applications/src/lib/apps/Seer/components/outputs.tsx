@@ -172,6 +172,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
       state: { webviewurl: url },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 

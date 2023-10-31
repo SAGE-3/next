@@ -11,15 +11,23 @@ import { useParams } from 'react-router';
 
 import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, } from 'react-icons/md';
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdLock } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
-  ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor,
-  useThrottleApps, useUIStore, setupApp, useCursorBoardPosition,
+  ConfirmModal,
+  useAbility,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  useThrottleApps,
+  useUIStore,
+  setupApp,
+  useCursorBoardPosition,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
+import { AppSchema } from '@sage3/applications/schema';
 
 /**
  * Lasso Toolbar Component
@@ -36,6 +44,7 @@ export function LassoToolbar() {
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
@@ -65,6 +74,7 @@ export function LassoToolbar() {
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
+  const canPin = useAbility('pin', 'apps');
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -77,6 +87,23 @@ export function LassoToolbar() {
   const fitSelectedApps = () => {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
+  };
+
+  // Pin/Unpin all the selected apps
+  const pin = () => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    if (selectedApps.length > 0) {
+      // use the first app to determine the state of the rest
+      const pinned = selectedApps[0].data.pinned;
+      // Array of update to batch at once
+      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+      selectedApps.forEach((el) => {
+        ps.push({ id: el._id, updates: { pinned: !pinned } });
+        // updateS!pinned;
+      });
+      // Update all the apps at once
+      updateBatch(ps);
+    }
   };
 
   // This function will check if the selected apps are all of the same type
@@ -112,7 +139,10 @@ export function LassoToolbar() {
       let context = '';
       if (isAllOfSameType) {
         if (selectedApps[0].data.type === 'Stickie') {
-          context = selectedApps.reduce((acc, el) => { acc += el.data.state.text + '\n'; return acc; }, '');
+          context = selectedApps.reduce((acc, el) => {
+            acc += el.data.state.text + '\n';
+            return acc;
+          }, '');
           console.log('All', context);
         }
       }
@@ -202,6 +232,11 @@ for b in bits:
                   <MdZoomOutMap />
                 </Button>
               </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Pin/Unpin Apps'} openDelay={400}>
+                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canPin}>
+                  <MdLock />
+                </Button>
+              </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps'} openDelay={400}>
                 <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDuplicateApp}>
                   <MdCopyAll />
@@ -252,7 +287,6 @@ for b in bits:
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
-
             </Box>
           </Box>
         </Box>
