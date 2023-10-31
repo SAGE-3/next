@@ -118,7 +118,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
-  const canUpdateApp = useAbility('update', 'apps');
+  const canPin = useAbility('pin', 'apps');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -339,7 +339,7 @@ export function AppToolbar(props: AppToolbarProps) {
             </Tooltip>
 
             <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
-              <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canUpdateApp}>
+              <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
                 {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
               </Button>
             </Tooltip>

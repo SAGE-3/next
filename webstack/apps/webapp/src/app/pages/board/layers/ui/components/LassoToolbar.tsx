@@ -74,7 +74,7 @@ export function LassoToolbar() {
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
-  const canUpdateApp = useAbility('update', 'apps');
+  const canPin = useAbility('pin', 'apps');
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -233,7 +233,7 @@ for b in bits:
                 </Button>
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Pin/Unpin Apps'} openDelay={400}>
-                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canUpdateApp}>
+                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canPin}>
                   <MdLock />
                 </Button>
               </Tooltip>
