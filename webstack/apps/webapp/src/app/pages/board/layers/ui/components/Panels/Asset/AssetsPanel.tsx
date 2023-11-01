@@ -13,7 +13,7 @@ import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useAb
 
 import { Panel } from '../Panel';
 import { Files } from './Files';
-import { FileEntry } from './types';
+import { FileEntry } from '@sage3/shared/types';
 
 type AssetsPanelProps = {
   boardId: string;

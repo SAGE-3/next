@@ -15,24 +15,45 @@ import { format as formatDate, formatDistanceStrict } from 'date-fns';
 
 // Chakra UI
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  Box, Button, Flex, useEventListener, useDisclosure, Portal, useColorModeValue,
-  useToast, Tooltip,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Box,
+  Button,
+  Flex,
+  useEventListener,
+  useDisclosure,
+  Portal,
+  useColorModeValue,
+  useToast,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // Icons for file types
 import { MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
 
+
 import {
-  humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
-  useCursorBoardPosition, AssetHTTPService, useAbility, apiUrls
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition,
+  AssetHTTPService,
+  useAbility,
+  apiUrls,
+  setupAppForFile,
 } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 
-import { FileEntry } from './types';
-import { setupAppForFile } from './CreateApp';
 import './menu.scss';
+import { FileEntry } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;

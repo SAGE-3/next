@@ -10,18 +10,37 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import {
-  Input, Box, useColorModeValue, Text, Button, Tooltip, ListItem,
-  Popover, PopoverArrow, PopoverBody, PopoverCloseButton, PopoverContent,
-  PopoverHeader, PopoverTrigger, UnorderedList, useDisclosure,
+  Input,
+  Box,
+  useColorModeValue,
+  Text,
+  Button,
+  Tooltip,
+  ListItem,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  UnorderedList,
+  useDisclosure,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
 
 import {
-  useAbility, useAppStore, useHexColor, useThrottleApps, useUIStore,
-  useUsersStore, useInsightStore, ConfirmModal,
+  useAbility,
+  useAppStore,
+  useHexColor,
+  useThrottleApps,
+  useUIStore,
+  useUsersStore,
+  useInsightStore,
+  ConfirmModal,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 
@@ -39,6 +58,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
+  const update = useAppStore((state) => state.update);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -98,6 +118,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
   const canDuplicateApp = useAbility('create', 'apps');
+  const canPin = useAbility('pin', 'apps');
 
   useLayoutEffect(() => {
     if (app && boxRef.current) {
@@ -211,6 +232,12 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
+  const togglePin = () => {
+    if (app) {
+      update(app._id, { pinned: !app.data.pinned });
+    }
+  };
+
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       // Get the component from the app definition
@@ -224,8 +251,9 @@ export function AppToolbar(props: AppToolbarProps) {
       const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInputLabel(event.target.value);
       };
+
       // Press Enter to update
-      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>, onClose: () => void) => {
         if (event.key === 'Enter') {
           // cleanup the input
           const clean = inputLabel.replace(/\s+/g, ' ');
@@ -233,6 +261,8 @@ export function AppToolbar(props: AppToolbarProps) {
           setInputLabel(localTags.join(' '));
           // Updating the backend
           updateInsight(app._id, { labels: localTags });
+          // Close the popover
+          onClose();
         }
       };
 
@@ -254,69 +284,74 @@ export function AppToolbar(props: AppToolbarProps) {
 
             {/* Application Information Popover */}
             <Popover trigger="hover">
-              <PopoverTrigger>
-                <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
-                  <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent fontSize={'sm'} width={'375px'}>
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverHeader>Application Information</PopoverHeader>
-                <PopoverBody userSelect={"text"}>
-                  <UnorderedList>
-                    <ListItem><b>ID</b>: {app._id}</ListItem>
-                    <ListItem><b>Type</b>: {app.data.type}</ListItem>
-                    <ListItem><b>Owner</b>: {ownerName}</ListItem>
-                    <ListItem><b>Created</b>: {when}</ListItem>
-                    <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
-                      width="300px" m={0} p={0} size="xs" variant='filled'
-                      value={inputLabel}
-                      placeholder="Enter tags here separated by spaces"
-                      _placeholder={{ opacity: 1, color: 'gray.400' }}
-                      focusBorderColor="gray.500"
-                      onChange={handleChange}
-                      onKeyDown={onSubmit}
-                    />
-                    </ListItem>
-                  </UnorderedList>
-                </PopoverBody>
-              </PopoverContent>
+              {({ isOpen, onClose }) => (
+                <>
+                  <PopoverTrigger>
+                    <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                      <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent fontSize={'sm'} width={'375px'}>
+                    <PopoverArrow />
+                    <PopoverCloseButton />
+                    <PopoverHeader>Application Information</PopoverHeader>
+                    <PopoverBody userSelect={"text"}>
+                      <UnorderedList>
+                        <ListItem><b>ID</b>: {app._id}</ListItem>
+                        <ListItem><b>Type</b>: {app.data.type}</ListItem>
+                        <ListItem><b>Owner</b>: {ownerName}</ListItem>
+                        <ListItem><b>Created</b>: {when}</ListItem>
+                        <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
+                          width="300px" m={0} p={0} size="xs" variant='filled'
+                          value={inputLabel}
+                          placeholder="Enter tags here separated by spaces"
+                          _placeholder={{ opacity: 1, color: 'gray.400' }}
+                          focusBorderColor="gray.500"
+                          onChange={handleChange}
+                          onKeyDown={(e) => { onSubmit(e, onClose) }}
+                        />
+                        </ListItem>
+                      </UnorderedList>
+                    </PopoverBody>
+                  </PopoverContent>
+                </>
+              )}
             </Popover>
 
             {/* Common Actions */}
             <Tooltip
               placement="top"
               hasArrow={true}
-              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
               openDelay={400}
               ml="1"
+              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
             >
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
+
+            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
+              <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
+                {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
+              </Button>
+            </Tooltip>
+
             <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
               <Button
                 onClick={() => duplicate([app._id])}
                 backgroundColor={commonButtonColors}
                 size="xs"
-                mx="1"
+                mr="1"
                 p={0}
                 isDisabled={!canDuplicateApp}
               >
                 <MdCopyAll size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
+
             <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-              <Button
-                onClick={onDeleteOpen}
-                backgroundColor={commonButtonColors}
-                size="xs"
-                mr="1"
-                p={0}
-                isDisabled={!canDeleteApp}
-              >
+              <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
@@ -330,9 +365,9 @@ export function AppToolbar(props: AppToolbarProps) {
               cancelText="Cancel"
               confirmText="Delete"
               cancelColor="green"
-              confirmColor="red" size="lg"
+              confirmColor="red"
+              size="lg"
             />
-
           </>
         </ErrorBoundary>
       );

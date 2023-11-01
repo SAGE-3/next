@@ -116,7 +116,7 @@ export function LoginPage() {
               icon={<FcGoogle size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}
-              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
             />
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('google')} justifyContent="left" onClick={googleLogin}>
               Login with Google
@@ -131,7 +131,7 @@ export function LoginPage() {
               icon={<FaApple size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}
-              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
             />
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('apple')} justifyContent="left" onClick={appleLogin}>
               Login with Apple
@@ -146,7 +146,7 @@ export function LoginPage() {
               icon={<Image w="36px" h="36px" src={cilogonLogo} alt="CILogon Logo" />}
               pointerEvents="none"
               borderRight={`3px solid`}
-              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
             />
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('cilogon')} justifyContent="left" onClick={ciLogin}>
               Login with CILogon
@@ -161,7 +161,7 @@ export function LoginPage() {
               icon={<FaGhost size="30" width="50px" />}
               pointerEvents="none"
               borderRight={`3px solid`}
-              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.900'}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
             />
             <Button width="100%" isDisabled={shouldDisable || !logins.includes('guest')} justifyContent="left" onClick={guestLogin}>
               Login as Guest

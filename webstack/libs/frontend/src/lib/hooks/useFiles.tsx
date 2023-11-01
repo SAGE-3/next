@@ -70,6 +70,7 @@ export function setupApp(
     state: { ...(initialValues[type] as AppState), ...init },
     raised: true,
     dragging: false,
+    pinned: false,
   };
 }
 
