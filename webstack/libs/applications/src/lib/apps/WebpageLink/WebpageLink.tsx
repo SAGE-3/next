@@ -510,7 +510,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ConfirmValueModal
         isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
-        title="Save Code in Asset Manager" message="Select a file name:"
+        title="Save URL in Asset Manager" message="Select a file name:"
         initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
         cancelText="Cancel" confirmText="Save"
         confirmColor="green"
