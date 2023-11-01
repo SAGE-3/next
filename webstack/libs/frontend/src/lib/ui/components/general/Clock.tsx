@@ -7,17 +7,7 @@
  */
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import {
-  MdHelp,
-  MdHelpCenter,
-  MdHelpOutline,
-  MdLiveHelp,
-  MdNetworkCheck,
-  MdOutlineHelpCenter,
-  MdOutlineHelpOutline,
-  MdQuestionMark,
-  MdSearch,
-} from 'react-icons/md';
+import { MdHelpOutline, MdNetworkCheck, MdSearch } from 'react-icons/md';
 
 import { HelpModal, useHexColor, useNetworkState, Alfred } from '@sage3/frontend';
 import { useParams } from 'react-router';
