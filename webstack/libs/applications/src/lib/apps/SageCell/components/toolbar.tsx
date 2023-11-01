@@ -252,7 +252,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
             <MdFileUpload />
           </Button>

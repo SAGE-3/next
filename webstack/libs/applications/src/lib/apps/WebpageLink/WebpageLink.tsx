@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { useRef, useCallback, useState, useEffect } from 'react';
+import { useParams } from 'react-router';
 import {
   ButtonGroup,
   Box,
@@ -25,10 +26,8 @@ import {
   DrawerBody,
 } from '@chakra-ui/react';
 import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, } from 'react-icons/md';
-// Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
 
-import { isElectron, useAppStore, processContentURL, downloadFile } from '@sage3/frontend';
+import { isElectron, useAppStore, processContentURL, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
 // Zustand
 import { create } from 'zustand';
@@ -217,6 +216,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const isE = isElectron();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // Room and board
+  const { roomId } = useParams();
 
   // Throttle Function
   const throttleUpdate = throttle(60, (data: any, width: number, height: number) => {
@@ -390,21 +393,53 @@ function ToolbarComponent(props: App): JSX.Element {
    * @returns {void}
    */
   const downloadURL = (): void => {
-    // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    // Get the text of the note
+    // Generate the content of the file
     const content = `[InternetShortcut]\nURL=${s.url}\n`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with username and date
-    const filename = 'link-' + dt + '.url';
+    // Make a filename from the title
+    const filename = 'link-' + props.data.title.split(' ').slice(0, 2).join('-') + '.url';
     // Go for download
     downloadFile(txturl, filename);
   };
 
-  const saveInAssetManager = () => {
-    // TODO
-  };
+  const saveInAssetManager = useCallback((val: string) => {
+    // save cell code in asset manager
+    if (!val.endsWith('.url')) {
+      val += '.url';
+    }
+    // Generate the content of the file
+    const content = `[InternetShortcut]\nURL=${s.url}\n`;
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([content])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [s.url, roomId]);
 
   // Update the size of the app when the sidebar is resized
   useEffect(() => {
@@ -460,8 +495,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
-          <Button onClick={saveInAssetManager} _hover={{ opacity: 0.7 }}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
             <MdFileUpload />
           </Button>
         </Tooltip>
@@ -472,26 +507,17 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
+      <ConfirmValueModal
+        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
+        title="Save Code in Asset Manager" message="Select a file name:"
+        initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+        cancelText="Cancel" confirmText="Save"
+        confirmColor="green"
+      />
+
     </>
   );
-}
-
-/*
- * Wait for socket to be open
- *
- * @param {WebSocket} socket
- * @returns {Promise<void>}
- * */
-async function waitForOpenSocket(socket: WebSocket): Promise<void> {
-  return new Promise((resolve) => {
-    if (socket.readyState !== socket.OPEN) {
-      socket.addEventListener('open', () => {
-        resolve();
-      });
-    } else {
-      resolve();
-    }
-  });
 }
 
 /**
