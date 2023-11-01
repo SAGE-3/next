@@ -240,12 +240,12 @@ export function UILayer(props: UILayerProps) {
       </Box> */}
 
       {/* ServerName Top Left */}
-      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" right="1" top="1" display={showUI ? 'initial' : 'none'}>
         <Clock isBoard={true} />
       </Box>
 

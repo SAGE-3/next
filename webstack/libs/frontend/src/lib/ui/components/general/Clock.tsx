@@ -7,7 +7,17 @@
  */
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import { MdHelp, MdNetworkCheck, MdSearch } from 'react-icons/md';
+import {
+  MdHelp,
+  MdHelpCenter,
+  MdHelpOutline,
+  MdLiveHelp,
+  MdNetworkCheck,
+  MdOutlineHelpCenter,
+  MdOutlineHelpOutline,
+  MdQuestionMark,
+  MdSearch,
+} from 'react-icons/md';
 
 import { HelpModal, useHexColor, useNetworkState, Alfred } from '@sage3/frontend';
 import { useParams } from 'react-router';
@@ -93,7 +103,8 @@ export function Clock(props: ClockProps) {
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"
-      px={2}
+      pr={2}
+      pl={1}
       justifyContent="right"
       alignItems={'center'}
     >
@@ -129,10 +140,10 @@ export function Clock(props: ClockProps) {
             borderRadius="md"
             h="auto"
             p={0}
-            m={0}
+            m={-2}
             justifyContent="center"
             aria-label={'Network status'}
-            icon={<MdHelp size="22px" />}
+            icon={<MdHelpOutline size="22px" />}
             background={'transparent'}
             colorScheme="gray"
             transition={'all 0.2s'}
