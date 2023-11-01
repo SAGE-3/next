@@ -18,8 +18,9 @@ import { debounce } from 'throttle-debounce';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 store hooks and utility functions
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile } from '@sage3/frontend';
+import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile, useInsightStore } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
+import { InsightSchema } from '@sage3/shared/types';
 
 import { state as AppState } from './';
 import { App, AppGroup } from '../../schema';
@@ -257,7 +258,12 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const handleColorChange = (color: string) => {
+    // Save the previous color
+    const oldcolor = s.color;
+    // Update the application state
     updateState(props._id, { color: color });
+    // Update the tags with the new color
+    updateTags(props._id, oldcolor, color);
   };
 
   const lockUnlock = () => {
@@ -336,23 +342,56 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 /**
+ * Update the tags of an app: remove the old value, add the new one
+ * @param appid
+ * @param oldvalue
+ * @param newvalue
+ */
+function updateTags(appid: string, oldvalue: string, newvalue: string) {
+  const newset = getSet(appid, oldvalue, newvalue);
+  // Update the collection
+  useInsightStore.getState().update(appid, { labels: newset });
+}
+
+function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
+  // Update the insight labels: put the color as a tag
+  const entries = useInsightStore.getState().insights;
+  // Find the correct app entry
+  const entry = entries.find((e) => e.data.app_id === appid);
+  if (entry) {
+    // Build a set to remove old color and add new one
+    const set = new Set(entry.data.labels);
+    set.delete(oldvalue);
+    set.add(newvalue);
+    // Update the collection
+    return Array.from(set);
+  }
+  return [];
+}
+
+
+/**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
 const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
+  const updateInsightBatch = useInsightStore((state) => state.updateBatch);
   const { user } = useUser();
 
   const handleColorChange = (color: string) => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ba: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const bi: Array<{ id: string; updates: Partial<InsightSchema> }> = [];
     // Iterate through all the selected apps
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
-      ps.push({ id: app._id, updates: { color: color } });
+      bi.push({ id: app._id, updates: { labels: getSet(app._id, app.data.state.color, color) } });
+      ba.push({ id: app._id, updates: { color: color } });
     });
     // Update all the apps at once
-    updateStateBatch(ps);
+    updateStateBatch(ba);
+    updateInsightBatch(bi);
   };
 
   const handleIncreaseFont = () => {

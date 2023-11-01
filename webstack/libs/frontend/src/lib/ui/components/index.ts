@@ -20,6 +20,8 @@ export * from './modals/AboutModal';
 export * from './modals/PluginModal';
 export * from './modals/UserSearchModal';
 export * from './modals/CreateKernelModal';
+export * from './modals/HelpModal';
+export * from './modals/Alfred';
 
 export * from './cards/BoardCard';
 export * from './cards/RoomCard';

@@ -47,7 +47,7 @@ import {
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 
-import { HelpModal } from './HelpModal';
+import { HelpModal } from '@sage3/frontend';
 
 type BackgroundProps = {
   roomId: string;
@@ -480,8 +480,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -498,9 +499,7 @@ export function Background(props: BackgroundProps) {
       onPointerOut={onPointerUp}
       onPointerLeave={onPointerUp}
     >
-      <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
-        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-      </Modal>
+      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
         <Portal>

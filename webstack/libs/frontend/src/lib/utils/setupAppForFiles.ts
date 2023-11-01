@@ -7,10 +7,24 @@
  */
 
 // File information
-import { FileEntry } from './types';
-import { isImage, isTiff, isGeoTiff, isPDF, isCSV, isMD, isJSON, isVideo, isDZI, isGeoJSON, isPython, isGLTF, isGIF, isPythonNotebook } from '@sage3/shared';
+import {
+  isImage,
+  isTiff,
+  isGeoTiff,
+  isPDF,
+  isCSV,
+  isMD,
+  isJSON,
+  isVideo,
+  isDZI,
+  isGeoJSON,
+  isPython,
+  isGLTF,
+  isGIF,
+  isPythonNotebook,
+} from '@sage3/shared';
 import { GetConfiguration, apiUrls } from '@sage3/frontend';
-import { ExtraImageType, ExtraPDFType, User } from '@sage3/shared/types';
+import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
 

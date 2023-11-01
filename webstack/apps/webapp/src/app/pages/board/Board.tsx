@@ -125,11 +125,11 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Sub to insights
-    subToInsight(roomId);
+    subToInsight(boardId);
     // plugins
     subPlugins();
     // Update the user's presence information
-    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
+    if (user) updatePresence(user._id, { boardId, roomId, following: '' });
 
     // Set Selected app to empty
     setSelectedApp('');
@@ -152,7 +152,7 @@ export function BoardPage() {
       }
     }
 
-    if (!isElectron()) {
+    if (!isElectron() && !development) {
       // Function to open the board in the desktop app
       function openDesktopApp() {
         if (!boardId || !roomId) return;
