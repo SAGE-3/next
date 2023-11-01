@@ -7,12 +7,13 @@
  */
 
 import { Modal, Button, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@chakra-ui/react';
-import imageHelp from './sage3-help.jpg';
 
 type HelpProps = {
   onClose: () => void;
   isOpen: boolean;
 };
+
+const url = 'https://sage-3.github.io/docs/Quick-Start-Guide#pages';
 
 export function HelpModal(props: HelpProps) {
   return (
@@ -21,7 +22,8 @@ export function HelpModal(props: HelpProps) {
       <ModalContent>
         <ModalHeader>SAGE3 Help</ModalHeader>
         <ModalBody>
-          <img src={imageHelp} alt="SAGE3 Help" />
+          {/* <img src={imageHelp} alt="SAGE3 Help" /> */}
+          <iframe height="800px" width="100%" src={url} title="SAGE3 Help PDF"></iframe>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>

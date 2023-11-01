@@ -320,6 +320,7 @@ export function Panel(props: PanelProps) {
                     fontWeight="bold"
                     cursor="move"
                     onDoubleClick={props.titleDblClick}
+                    userSelect={'none'}
                   >
                     {props.title}
                   </Text>

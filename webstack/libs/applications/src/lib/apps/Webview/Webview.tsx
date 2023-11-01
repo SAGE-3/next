@@ -238,6 +238,7 @@ function AppComponent(props: App): JSX.Element {
         state: { webviewurl: processContentURL(url) },
         raised: true,
         dragging: false,
+        pinned: false,
       });
     };
 

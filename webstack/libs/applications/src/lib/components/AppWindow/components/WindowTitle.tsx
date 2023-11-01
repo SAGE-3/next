@@ -55,6 +55,7 @@ export function WindowTitle(props: WindowTitleProps) {
       backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
       borderRadius={6}
       px={2}
+      userSelect={"none"}
     >
       {title}
     </Text>

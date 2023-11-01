@@ -22,7 +22,9 @@ export type ActionArg =
   | 'lasso'
   | 'execute'
   | 'sub'
-  | 'unsub';
+  | 'unsub'
+  | 'pin'
+  | 'lock';
 
 // Roles
 export type Role = RoleArg | 'all';

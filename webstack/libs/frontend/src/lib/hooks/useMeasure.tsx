@@ -39,7 +39,7 @@ export function useMeasure<E extends Element = Element>(
 
   const [element, ref] = useState<E | null>(null);
   const [rect, setRect] = useState<UseMeasureRect>(defaultState);
-  const resizeTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  const resizeTimeout = useRef<number | undefined>(undefined);
 
   const observer = useMemo(
     () =>
@@ -51,10 +51,10 @@ export function useMeasure<E extends Element = Element>(
             setRect({ x, y, width, height, top, left, bottom, right });
           } else {
             if (resizeTimeout.current) {
-              clearTimeout(resizeTimeout.current);
+              window.clearTimeout(resizeTimeout.current);
             }
 
-            resizeTimeout.current = setTimeout(() => {
+            resizeTimeout.current = window.setTimeout(() => {
               setRect({ x, y, width, height, top, left, bottom, right });
             }, timeout);
           }
@@ -68,9 +68,8 @@ export function useMeasure<E extends Element = Element>(
     observer.observe(element);
     return () => {
       if (resizeTimeout.current) {
-        clearTimeout(resizeTimeout.current);
+        window.clearTimeout(resizeTimeout.current);
       }
-
       observer.disconnect();
     };
   }, [element, observer]);

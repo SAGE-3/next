@@ -13,6 +13,7 @@ type WindowBorderProps = {
   selected: boolean;
   isGrouped: boolean;
   dragging: boolean;
+  pinned: boolean;
   borderWidth: number;
   borderColor: string;
   selectColor: string;
@@ -29,7 +30,8 @@ export function WindowBorder(props: WindowBorderProps) {
   const selected = props.selected;
   const isGrouped = props.isGrouped;
   const isSavedSelected = props.isSavedSelected;
-  const borderWidth = props.borderWidth;
+  const pinned = props.pinned;
+  const borderWidth = pinned ? 0 : props.borderWidth;
   const borderColor = props.borderColor;
   const selectColor = props.selectColor;
   const borderRadius = props.borderRadius;
@@ -49,7 +51,7 @@ export function WindowBorder(props: WindowBorderProps) {
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
       background={selected || isGrouped ? selectColor : borderColor}
       outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : 'none'}
-      boxShadow={`4px 4px 12px 0px ${shadowColor}`}
+      boxShadow={pinned ? '' : `4px 4px 12px 0px ${shadowColor}`}
       pointerEvents={'none'}
     ></Box>
   );

@@ -185,6 +185,7 @@ export function Apps() {
                 state: { ...(initialValues[type] as AppState), ...state },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             } else {
               console.log('Paste> JSON is not a SAGE3 app');
