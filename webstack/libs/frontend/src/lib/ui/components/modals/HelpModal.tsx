@@ -7,7 +7,7 @@
  */
 
 import { Modal, Button, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@chakra-ui/react';
-import imageHelp from './sage3-help.jpg';
+import imageHelp from '../../assets/sage3-help.jpg';
 
 type HelpProps = {
   onClose: () => void;

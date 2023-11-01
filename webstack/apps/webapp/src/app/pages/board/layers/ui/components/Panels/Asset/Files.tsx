@@ -33,10 +33,10 @@ import {
 
 import { getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
-import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
-import { FileEntry } from './types';
+import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile } from '@sage3/frontend';
+
 import { RowFile } from './RowFile';
-import { setupAppForFile } from './CreateApp';
+import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];

@@ -28,6 +28,8 @@ import {
   useAbility,
   apiUrls,
   useHotkeys,
+  Alfred,
+  HotkeysEvent,
 } from '@sage3/frontend';
 
 import {
@@ -35,7 +37,6 @@ import {
   ClearBoardModal,
   AppToolbar,
   Twilio,
-  Alfred,
   LassoToolbar,
   Controller,
   AssetsPanel,
@@ -63,7 +64,9 @@ export function UILayer(props: UILayerProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore((state) => state);
+  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
+    (state) => state
+  );
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -90,6 +93,9 @@ export function UILayer(props: UILayerProps) {
 
   // Clear board modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
+
+  // Alfred Modal
+  const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
@@ -183,10 +189,17 @@ export function UILayer(props: UILayerProps) {
     setSelectedAppsIds([]);
   });
 
+  // Open Alfred
+  useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
+    // Open the window
+    alredOnOpen();
+    return false;
+  });
+
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={"none"}>
+      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
@@ -275,7 +288,7 @@ export function UILayer(props: UILayerProps) {
       {canLasso && <LassoToolbar />}
 
       {/* Alfred modal dialog */}
-      <Alfred boardId={props.boardId} roomId={props.roomId} />
+      <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
 
       {/* Presence Follow Component. Doesnt Render Anything */}
       <PresenceFollow />
