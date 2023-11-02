@@ -22,6 +22,7 @@ import {
   isGLTF,
   isGIF,
   isPythonNotebook,
+  isFileURL,
 } from '@sage3/shared';
 import { GetConfiguration, apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
@@ -63,6 +64,40 @@ export async function setupAppForFile(
       dragging: false,
       pinned: false,
     };
+  } else if (isFileURL(file.type)) {
+    // Look for the file in the asset store
+    const localurl = apiUrls.assets.getAssetById(file.filename);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    // Get the content of the file
+    const text = await response.text();
+    const lines = text.split('\n');
+    for (const line of lines) {
+      // look for a line starting with URL=
+      if (line.startsWith('URL')) {
+        const words = line.split('=');
+        // the URL
+        const goto = words[1].trim();
+        return {
+          title: goto,
+          roomId: roomId,
+          boardId: boardId,
+          position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
+          size: { width: 400, height: 400, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'WebpageLink',
+          state: { ...(initialValues['WebpageLink'] as AppState), url: goto },
+          raised: true,
+          dragging: false,
+          pinned: false,
+        };
+      }
+    }
   } else if (isGIF(file.type)) {
     return {
       title: file.originalfilename,

@@ -33,9 +33,8 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
-
 
 import {
   humanFileSize,
@@ -199,6 +198,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
+      case 'url':
+        return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'py':
         return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
