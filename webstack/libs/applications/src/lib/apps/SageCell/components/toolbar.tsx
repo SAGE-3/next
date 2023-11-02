@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast, } from '@chakra-ui/react';
+import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
