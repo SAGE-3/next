@@ -27,6 +27,7 @@ import {
   PopoverHeader,
   PopoverTrigger,
   UnorderedList,
+  useToast,
 } from '@chakra-ui/react';
 
 // Icons for file types
@@ -51,6 +52,7 @@ import {
   useThrottleApps,
   useInsightStore,
   setupAppForFile,
+  downloadFile,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -76,6 +78,7 @@ export function Alfred(props: props) {
   const hideUI = useUIStore((state) => state.hideUI);
   // chakra color mode
   const { colorMode, toggleColorMode } = useColorMode();
+  const toast = useToast();
 
   // Apps
   const apps = useThrottleApps(250);
@@ -121,6 +124,29 @@ export function Alfred(props: props) {
       raised: true,
       dragging: false,
       pinned: false,
+    });
+  };
+
+  const saveBoard = (name: string) => {
+    const selectedapps = useUIStore.getState().savedSelectedAppsIds;
+    // Use selected apps if any or all apps
+    const apps = selectedapps.length > 0 ?
+      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
+      : useAppStore.getState().apps;
+    let filename = name || 'board.json';
+    if (!filename.endsWith('.json')) filename += '.json';
+    // Generate a URL containing the content of the file
+    const payload = JSON.stringify(apps, null, 2);
+    const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
+    // Trigger the download
+    downloadFile(jsonurl, filename);
+    // Success message
+    toast({
+      title: 'Board saved',
+      description: apps.length + ' apps saved to ' + filename,
+      status: 'info',
+      duration: 4000,
+      isClosable: true,
     });
   };
 
@@ -209,6 +235,8 @@ export function Alfred(props: props) {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
+      } else if (terms[0] === 'save') {
+        saveBoard(terms[1]);
       } else if (terms[0] === 'tag') {
         // search apps with tags
         const tags = terms.slice(1);
@@ -497,6 +525,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                   </ListItem>
                   <ListItem>
                     <b>tag</b> : Search applications with tags
+                  </ListItem>
+                  <ListItem>
+                    <b>save</b> [filename]: Save the board to a file
                   </ListItem>
                   <ListItem>
                     <b>clear</b> : Close all applications
