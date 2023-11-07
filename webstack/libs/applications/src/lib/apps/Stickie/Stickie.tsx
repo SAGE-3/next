@@ -7,10 +7,10 @@
  */
 
 // Import the React library
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
-import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
+import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
+import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
@@ -18,8 +18,9 @@ import { debounce } from 'throttle-debounce';
 import dateFormat from 'date-fns/format';
 
 // SAGE3 store hooks and utility functions
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile } from '@sage3/frontend';
+import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile, useInsightStore, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
+import { InsightSchema } from '@sage3/shared/types';
 
 import { state as AppState } from './';
 import { App, AppGroup } from '../../schema';
@@ -66,13 +67,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    if (!updatedByYou) {
-      setNote(s.text);
-    }
-  }, [s.text, updatedByYou]);
-
-  // Update local value with value from the server
-  useEffect(() => {
     setFontSize(s.fontSize);
     // Adjust the size of the textarea
     if (textbox.current) {
@@ -82,11 +76,34 @@ function AppComponent(props: App): JSX.Element {
         setRows(numlines);
         // update size of the window
         if (props.data.size.height !== numlines * s.fontSize) {
-          update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
+          update(props._id, { size: { ...props.data.size, height: numlines * s.fontSize } });
         }
       }
     }
   }, [s.fontSize]);
+
+  // Update local value with value from the server
+  useEffect(() => {
+    // Adjust the size of the textarea
+    if (s.text) {
+      const txt = note.split('\n');
+      const numlines = txt.length;
+      const numcols = Math.min(Math.max(...txt.map((l) => l.length)), 80); // max width of 80 chars
+      if (numlines > rows) {
+        let w = props.data.size.width;
+        const h = Math.min(numlines, 60) * s.fontSize;  // 60 lines in a page
+        const cols = Math.ceil(w / s.fontSize) + 1;
+        if (numcols > cols) {
+          w = numcols * 16;
+          update(props._id, { size: { ...props.data.size, width: w, height: h } });
+        }
+      }
+    }
+
+    if (!updatedByYou) {
+      setNote(s.text);
+    }
+  }, [s.text, updatedByYou]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(100, (val) => {
@@ -143,6 +160,7 @@ function AppComponent(props: App): JSX.Element {
           state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       }
     }
@@ -206,6 +224,12 @@ function ToolbarComponent(props: App): JSX.Element {
   // Access the list of users
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+  // Room and board
+  const { roomId } = useParams();
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // Display some notifications
+  const toast = useToast();
 
   const yours = user?._id === props._createdBy;
   const locked = s.lock;
@@ -255,8 +279,49 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
+  const handleSave = useCallback((val: string) => {
+    // save cell code in asset manager
+    if (!val.endsWith('.md')) {
+      val += '.md';
+    }
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([s.text])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [s.text, roomId]);
+
   const handleColorChange = (color: string) => {
+    // Save the previous color
+    const oldcolor = s.color;
+    // Update the application state
     updateState(props._id, { color: color });
+    // Update the tags with the new color
+    updateTags(props._id, oldcolor, color);
   };
 
   const lockUnlock = () => {
@@ -292,6 +357,11 @@ function ToolbarComponent(props: App): JSX.Element {
       <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.text.length === 0}>
+            <MdFileUpload />
+          </Button>
+        </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
           <Button onClick={downloadTxt}>
             <MdFileDownload />
@@ -315,6 +385,16 @@ function ToolbarComponent(props: App): JSX.Element {
         </Menu>
       </ButtonGroup>
 
+
+      {/* Modal for saving stickie in asset manager */}
+      <ConfirmValueModal
+        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={handleSave}
+        title="Save Code in Asset Manager" message="Select a file name:"
+        initiaValue={'stickie-' + dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.md'}
+        cancelText="Cancel" confirmText="Save"
+        confirmColor="green"
+      />
+
       {/* Remote Action in Python */}
       {/* <ButtonGroup isAttached size="xs" colorScheme="orange" mr={0}>
         <Menu placement="top-start">
@@ -335,23 +415,56 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 /**
+ * Update the tags of an app: remove the old value, add the new one
+ * @param appid
+ * @param oldvalue
+ * @param newvalue
+ */
+function updateTags(appid: string, oldvalue: string, newvalue: string) {
+  const newset = getSet(appid, oldvalue, newvalue);
+  // Update the collection
+  useInsightStore.getState().update(appid, { labels: newset });
+}
+
+function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
+  // Update the insight labels: put the color as a tag
+  const entries = useInsightStore.getState().insights;
+  // Find the correct app entry
+  const entry = entries.find((e) => e.data.app_id === appid);
+  if (entry) {
+    // Build a set to remove old color and add new one
+    const set = new Set(entry.data.labels);
+    set.delete(oldvalue);
+    set.add(newvalue);
+    // Update the collection
+    return Array.from(set);
+  }
+  return [];
+}
+
+
+/**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
 const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
+  const updateInsightBatch = useInsightStore((state) => state.updateBatch);
   const { user } = useUser();
 
   const handleColorChange = (color: string) => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ba: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const bi: Array<{ id: string; updates: Partial<InsightSchema> }> = [];
     // Iterate through all the selected apps
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
-      ps.push({ id: app._id, updates: { color: color } });
+      bi.push({ id: app._id, updates: { labels: getSet(app._id, app.data.state.color, color) } });
+      ba.push({ id: app._id, updates: { color: color } });
     });
     // Update all the apps at once
-    updateStateBatch(ps);
+    updateStateBatch(ba);
+    updateInsightBatch(bi);
   };
 
   const handleIncreaseFont = () => {

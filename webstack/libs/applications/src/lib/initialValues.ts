@@ -14,7 +14,6 @@ import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
-import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
@@ -49,7 +48,6 @@ export const initialValues = {
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
   [ImageViewerName]: defaultImageViewer,
-  [JupyterLabName]: defaultJupyterLab,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,

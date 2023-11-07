@@ -23,7 +23,9 @@ export type ActionArg =
   | 'execute'
   | 'sub'
   | 'unsub'
-  | 'join';
+  | 'join'
+  | 'pin'
+  | 'lock';
 
 // Roles
 export type Role = RoleArg | 'all';

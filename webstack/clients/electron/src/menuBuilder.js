@@ -365,6 +365,12 @@ function buildSageMenu(window, commander) {
           },
         },
         {
+          label: 'Discord Server (Online Forum)',
+          click: function () {
+            shell.openExternal('https://discord.gg/hHsKu47buY');
+          },
+        },
+        {
           label: 'Keyboard Shortcuts',
           click: function () {
             shell.openExternal('https://sage-3.github.io/docs/Shortcuts');

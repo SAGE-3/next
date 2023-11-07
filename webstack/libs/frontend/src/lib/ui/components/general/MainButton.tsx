@@ -217,7 +217,7 @@ export function MainButton(props: MainButtonProps) {
               <MenuButton
                 as={MenuItem}
                 icon={<MdArrowForward fontSize="24px" />}
-                onPointerEnter={toggleBoardList}
+                onClick={toggleBoardList}
                 _hover={{ background: bgColor }}
               >
                 Go To Board

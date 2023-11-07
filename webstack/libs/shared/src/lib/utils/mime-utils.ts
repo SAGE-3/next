@@ -14,6 +14,7 @@ mime.define({
   'application/x-ipynb+json': ['ipynb'],
   'application/dzi': ['dzi'],
   'application/python': ['py'],
+  'application/url': ['url'],
   'application/x-geotiff': ['geotiff'],
 });
 
@@ -38,6 +39,17 @@ export function getMime(filename: string): string | null {
 export function getExtension(mimeType: string): string {
   const ext = mime.getExtension(mimeType) || '-';
   return ext;
+}
+
+/**
+ * Test if a given mime type is a Tiff file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isFileURL(mimeType: string): boolean {
+  return mimeType === 'application/url';
 }
 
 /**
@@ -244,10 +256,11 @@ export function isGLTF(mimeType: string): boolean {
 export function isValid(mimeType: string): boolean {
   return (
     isGeoTiff(mimeType) ||
+    isFileURL(mimeType) ||
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
-    isPythonNotebook(mimeType) ||
+    // isPythonNotebook(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
     isJSON(mimeType) ||

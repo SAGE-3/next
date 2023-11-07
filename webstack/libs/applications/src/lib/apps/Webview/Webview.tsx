@@ -7,7 +7,9 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useColorModeValue } from '@chakra-ui/react';
+import { useParams } from 'react-router';
+
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure } from '@chakra-ui/react';
 import {
   MdArrowBack,
   MdArrowForward,
@@ -19,13 +21,13 @@ import {
   MdVolumeUp,
   MdOpenInNew,
   MdCopyAll,
+  MdFileUpload,
 } from 'react-icons/md';
 import { FaEyeSlash } from 'react-icons/fa';
 
-import { useParams } from 'react-router';
 import { create } from 'zustand';
 
-import { useAppStore, useUser, processContentURL, useHexColor } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
@@ -238,6 +240,7 @@ function AppComponent(props: App): JSX.Element {
         state: { webviewurl: processContentURL(url) },
         raised: true,
         dragging: false,
+        pinned: false,
       });
     };
 
@@ -360,6 +363,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const setLocalURL = useStore((state) => state.setLocalURL);
   const localURL = useStore((state) => state.localURL[props._id]);
   const [viewURL, setViewURL] = useState(localURL);
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // Room and board
+  const { roomId } = useParams();
 
   useEffect(() => {
     setViewURL(localURL);
@@ -455,6 +462,44 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  const saveInAssetManager = useCallback((val: string) => {
+    // save cell code in asset manager
+    if (!val.endsWith('.url')) {
+      val += '.url';
+    }
+    // Generate the content of the file
+    const content = `[InternetShortcut]\nURL=${s.webviewurl}\n`;
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([content])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [s.webviewurl, roomId]);
+
   return (
     <HStack>
       {clientIsElectron ? (
@@ -515,6 +560,13 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
               <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
             </Tooltip>
+
+            <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+              <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
+                <MdFileUpload />
+              </Button>
+            </Tooltip>
+
             <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
               <Button onClick={handleCopy}>{<MdCopyAll />}</Button>
             </Tooltip>
@@ -525,6 +577,15 @@ function ToolbarComponent(props: App): JSX.Element {
               </Button>
             </Tooltip>
           </ButtonGroup>
+
+          <ConfirmValueModal
+            isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
+            title="Save URL in Asset Manager" message="Select a file name:"
+            initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+            cancelText="Cancel" confirmText="Save"
+            confirmColor="green"
+          />
+
         </>
       ) : (
         <>
