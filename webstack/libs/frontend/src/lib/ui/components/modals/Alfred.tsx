@@ -133,8 +133,8 @@ export function Alfred(props: props) {
     const apps = selectedapps.length > 0 ?
       useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
       : useAppStore.getState().apps;
-    let filename = name || 'board.json';
-    if (!filename.endsWith('.json')) filename += '.json';
+    let filename = name || 'board.s3json';
+    if (!filename.endsWith('.s3json')) filename += '.s3json';
     // Generate a URL containing the content of the file
     const payload = JSON.stringify(apps, null, 2);
     const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);

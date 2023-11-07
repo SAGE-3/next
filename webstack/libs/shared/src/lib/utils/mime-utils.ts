@@ -15,6 +15,7 @@ mime.define({
   'application/dzi': ['dzi'],
   'application/python': ['py'],
   'application/url': ['url'],
+  'application/sage3': ['s3json'],
   'application/x-geotiff': ['geotiff'],
 });
 
@@ -50,6 +51,17 @@ export function getExtension(mimeType: string): string {
  */
 export function isFileURL(mimeType: string): boolean {
   return mimeType === 'application/url';
+}
+
+/**
+ * Test if a given mime type is a Tiff file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isSessionFile(mimeType: string): boolean {
+  return mimeType === 'application/sage3';
 }
 
 /**
@@ -255,6 +267,7 @@ export function isGLTF(mimeType: string): boolean {
  */
 export function isValid(mimeType: string): boolean {
   return (
+    isSessionFile(mimeType) ||
     isGeoTiff(mimeType) ||
     isFileURL(mimeType) ||
     isImage(mimeType) ||
