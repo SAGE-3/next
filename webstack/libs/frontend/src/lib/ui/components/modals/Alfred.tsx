@@ -39,6 +39,7 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
 } from 'react-icons/md';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   processContentURL,
@@ -53,6 +54,7 @@ import {
   useInsightStore,
   setupAppForFile,
   downloadFile,
+  apiUrls,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -135,8 +137,25 @@ export function Alfred(props: props) {
       : useAppStore.getState().apps;
     let filename = name || 'board.s3json';
     if (!filename.endsWith('.s3json')) filename += '.s3json';
-    // Generate a URL containing the content of the file
-    const payload = JSON.stringify(apps, null, 2);
+    const namespace = useConfigStore.getState().config.namespace;
+    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+      if (app.data.state.assetid) {
+        // Generate a public URL of the file
+        const token = uuidv5(app.data.state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+        }
+      }
+      return arr;
+    }, []);
+    // Data structure to save
+    const session = {
+      assets: assets,
+      apps: apps,
+    }
+    const payload = JSON.stringify(session, null, 2);
     const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
     // Trigger the download
     downloadFile(jsonurl, filename);

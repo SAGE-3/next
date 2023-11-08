@@ -32,7 +32,7 @@ import {
   isTiff,
   isSessionFile,
 } from '@sage3/shared';
-import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
@@ -130,7 +130,9 @@ export function useFiles(): UseFiles {
                     Accept: 'application/json',
                   },
                 });
-                const apps = await response.json();
+                const session = await response.json();
+                const apps = session.apps as App[];
+                const newassets = session.assets as { id: string, url: string, filename: string }[];
                 let xmin = useUIStore.getState().boardWidth;
                 let ymin = useUIStore.getState().boardHeight;
                 for (const app of apps) {
@@ -140,6 +142,29 @@ export function useFiles(): UseFiles {
                 }
                 for (const app of apps) {
                   // Select only the usefull values to rebuild the app
+                  if (app.data.state.assetid) {
+                    // Find the asset in the session
+                    const asset = newassets.find((a) => a.id === app.data.state.assetid);
+                    // download the old asset
+                    if (asset) {
+                      // Get the content of the file
+                      const response = await fetch(asset.url);
+                      const blob = await response.blob();
+                      // Create a form to upload the file
+                      const fd = new FormData();
+                      const codefile = new File([new Blob([blob])], asset.filename);
+                      fd.append('files', codefile);
+                      // Add fields to the upload form
+                      fd.append('room', configDrop.roomId);
+                      // Upload with a POST request
+                      const up = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd });
+                      const result = await up.json();
+                      const newasset = result[0];
+                      // Rebuild the app with the new asset
+                      app.data.state.assetid = newasset.id;
+                    }
+                  }
+                  // Create an application
                   const newapp = {
                     title: app.data.title,
                     roomId: configDrop.roomId,
@@ -174,7 +199,8 @@ export function useFiles(): UseFiles {
       }
     }
     openApps();
-  }, [uploadSuccess, assets, configDrop]);
+  }, [uploadSuccess]);
+  // }, [uploadSuccess, assets, configDrop]);
 
   async function uploadFiles(input: File[], dx: number, dy: number, roomId: string, boardId: string) {
     if (input) {
