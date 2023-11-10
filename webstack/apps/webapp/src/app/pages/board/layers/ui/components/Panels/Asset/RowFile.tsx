@@ -12,6 +12,8 @@ import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
+// UUID generator
+import { v5 as uuidv5 } from 'uuid';
 
 // Chakra UI
 import {
@@ -48,6 +50,7 @@ import {
   useAbility,
   apiUrls,
   setupAppForFile,
+  useConfigStore,
 } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 
@@ -132,8 +135,12 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         downloadFile(url, file.originalfilename);
       }
     } else if (id === 'copy') {
+      // Get the namespace UUID of the server
+      const namespace = useConfigStore.getState().config.namespace;
+      // Generate a public URL of the file
+      const token = uuidv5(file.id, namespace);
+      const publicUrl = window.location.origin + apiUrls.assets.getPublicURL(file.id, token);
       // Copy the file URL to the clipboard
-      const publicUrl = window.location.origin + apiUrls.assets.getAssetById(file.filename);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(publicUrl);
         // Notify the user
@@ -305,13 +312,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             }}
           >
             <li className="s3contextmenuitem" id={'copy'} onClick={actionClick}>
-              Copy URL
+              Copy Public URL
             </li>
             <li className="s3contextmenuitem" id={'down'} onClick={actionClick}>
-              Download
+              Download File
             </li>
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
-              Delete
+              Delete File
             </li>
           </ul>
         </Portal>
