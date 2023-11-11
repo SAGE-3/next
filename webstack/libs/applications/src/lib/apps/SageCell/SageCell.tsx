@@ -1084,7 +1084,7 @@ function AppComponent(props: App): JSX.Element {
                 },
                 '&::-webkit-scrollbar-thumb': {
                   background: 'teal',
-                  borderRadius: '2px',
+                  borderRadius: '8px',
                 },
               }}
             >
