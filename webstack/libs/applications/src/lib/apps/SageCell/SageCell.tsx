@@ -1079,6 +1079,8 @@ function AppComponent(props: App): JSX.Element {
                   background: `${bgColor}`,
                   width: '28px',
                   height: '2px',
+                  // reserver space for scrollbar
+                  scrollbarGutter: 'stable',
                 },
                 '&::-webkit-scrollbar-thumb': {
                   background: 'teal',
