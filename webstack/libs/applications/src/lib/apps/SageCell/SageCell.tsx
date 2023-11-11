@@ -140,8 +140,8 @@ function AppComponent(props: App): JSX.Element {
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
-  // Drawer size
-  const [drawerWidth, setDrawerWidth] = useState("50vw");
+  // Drawer size: user's preference from local storage or default
+  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || "50vw");
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -768,7 +768,8 @@ function AppComponent(props: App): JSX.Element {
     // set the editor options
     editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
     // Default width and font size
-    make50W();
+    const preference = localStorage.getItem('sage_preferred_drawer_width');
+    setDrawerWidth(preference || '50vw');
 
     // set the editor theme
     monaco.editor.setTheme(defaultTheme);
@@ -906,7 +907,15 @@ function AppComponent(props: App): JSX.Element {
       onOpen();
       // If the right side of the app is beyond the center of the board, move the board
       const xw = props.data.position.x + props.data.size.width;
-      const center = uiToBoard(innerWidth / 2, innerHeight / 2);
+      let position = 1;
+      if (drawerWidth === '25vw') {
+        position = 3 * innerWidth / 4;
+      } else if (drawerWidth === '50vw') {
+        position = innerWidth / 2;
+      } else if (drawerWidth === '75vw') {
+        position = innerWidth / 4;
+      }
+      const center = uiToBoard(position, innerHeight);
       if (xw > center.x) {
         const offset = xw - center.x + 10 / scale;
         setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
@@ -936,18 +945,24 @@ function AppComponent(props: App): JSX.Element {
 
   const make25W = () => {
     setDrawerWidth('25vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '25vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make50W = () => {
     setDrawerWidth('50vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '50vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make75W = () => {
     setDrawerWidth('75vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '75vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
@@ -956,7 +971,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
+        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
