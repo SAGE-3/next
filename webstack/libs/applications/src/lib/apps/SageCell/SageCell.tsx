@@ -1073,15 +1073,16 @@ function AppComponent(props: App): JSX.Element {
             <Box
               height={window.innerHeight - editorHeight - 20 + 'px'}
               overflow={'scroll'}
+              mr={"8px"}
               css={{
                 '&::-webkit-scrollbar': {
                   background: `${bgColor}`,
-                  width: '6px',
-                  height: '6px',
+                  width: '28px',
+                  height: '2px',
                 },
                 '&::-webkit-scrollbar-thumb': {
                   background: 'teal',
-                  borderRadius: '24px',
+                  borderRadius: '2px',
                 },
               }}
             >
