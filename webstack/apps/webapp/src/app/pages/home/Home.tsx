@@ -22,6 +22,13 @@ import {
   Icon,
   useToast,
   Button,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerOverlay,
 } from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
@@ -44,7 +51,7 @@ import {
   useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdApps, MdFolder, MdPeople, MdSearch, MdStar } from 'react-icons/md';
+import { MdAdd, MdApps, MdChevronLeft, MdChevronRight, MdFolder, MdOutlineChevronLeft, MdPeople, MdSearch, MdStar } from 'react-icons/md';
 import { set } from 'date-fns';
 import { SAGE3Ability } from '@sage3/shared';
 
@@ -296,275 +303,54 @@ export function HomePage() {
     setSelectedUser(undefined);
   });
 
+  const sideBarRef = useRef<HTMLDivElement>(null);
+  const toggleSidebarButtonRef = useRef<HTMLButtonElement>(null);
+  const [sidebarState, setsidebarState] = useState<'open' | 'closed'>('open');
+
+  const toggleSidebar = () => {
+    if (sideBarRef.current) {
+      sidebarState == 'open' ? setsidebarState('closed') : setsidebarState('open');
+    }
+  };
+
   return (
     // Main Container
-    <Box display="flex" flexDir={'column'} width="100%" height="100vh" alignItems="center">
+    <Box display="flex" width="100%" height="100vh" alignItems="center">
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
       {/* Modal to create a board */}
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
-      {/* Favorites Modal */}
-      <FavoritesList
-        isOpen={favoritesIsOpen}
-        onClose={favoritesOnClose}
-        onRoomClick={handleExternalRoomSelect}
-        onBoardClick={handleExternalBoardSelect}
-        onUserClick={handleExternalUserSelect}
-      />
 
-      {/* Top Bar */}
-      <Box display="flex" flexDirection="row" justifyContent="space-between" width="100vw" px="2">
-        <Box flex="1 1 0px">
-          <Text
-            fontSize="xl"
-            flex="1 1 0px"
-            textOverflow={'ellipsis'}
-            overflow={'hidden'}
-            justifyContent="left"
-            display="flex"
-            width="100%"
-            userSelect="none"
-            whiteSpace={'nowrap'}
-          >
-            Server: {config?.serverName}
-          </Text>
-        </Box>
-        <Box></Box>
-
-        <Box flex="1 1 0px" justifyContent="right" display="flex" alignItems={'start'}>
-          <Clock />
-        </Box>
-      </Box>
-
-      {/* Middle Section */}
-      <Box flex="1" display="flex" flexDirection="column" maxWidth="1920px" overflow="hidden">
-        {/* Search Box */}
-        <Box width="100%" display="flex" p="2" pr="4">
-          <Box mr="2">
-            <IconButton
-              size="md"
-              colorScheme="teal"
-              variant={'outline'}
-              aria-label="create-room"
-              fontSize="xl"
-              onClick={() => {
-                setSearchInput('');
-                favoritesOnOpen();
-              }}
-              icon={<MdStar />}
-            ></IconButton>
-          </Box>
-          <Box width="100%">
-            <InputGroup colorScheme="teal" ref={searchInputRef}>
-              <InputLeftElement pointerEvents="none">
-                <MdSearch />
-              </InputLeftElement>
-              <Input
-                type="text"
-                placeholder="Search for Rooms, Boards, or Users..."
-                _placeholder={{ color: searchColor }}
-                onChange={handleSearchInput}
-                onKeyDown={(ev) => {
-                  // If esc pressed while focused on search input, clear search
-                  if (ev.keyCode === 27) {
-                    setSearchInput('');
-                  }
-                }}
-                colorScheme="teal"
-                value={searchInput}
-                _focus={{ outline: 'none !important', borderColor: inputBorderColor, boxShadow: `0px 0px 0px ${inputBorderColor}` }}
-              />
-            </InputGroup>
-            <Box position="absolute" width="100%">
-              {searchInput !== '' && (
-                <SearchList
-                  searchInput={searchInput}
-                  searchDiv={searchInputRef.current}
-                  setSearch={setSearchInput}
-                  onRoomClick={handleExternalRoomSelect}
-                  onBoardClick={handleExternalBoardSelect}
-                  onUserClick={handleExternalUserSelect}
-                />
-              )}
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Data Section */}
-        <Box flex="1" display="flex" width="100%">
-          {/* Left Side Rooms */}
-          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
-            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-              <Box display="flex">
-                <Icon fontSize="28px" mr="2">
-                  <MdFolder />
-                </Icon>
-                <Text fontSize="2xl">Rooms</Text>
-              </Box>
-
-              <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
-                <IconButton
-                  size="sm"
-                  colorScheme="teal"
-                  variant={'outline'}
-                  aria-label="create-room"
-                  fontSize="xl"
-                  onClick={createRoomModalOnOpen}
-                  isDisabled={!canCreateRoom}
-                  icon={<MdAdd />}
-                ></IconButton>
-              </Box>
-            </Box>
-
-            <Box
-              flex="1"
-              overflowY="scroll"
-              gap="8px"
-              display="flex"
-              flexDir={'column'}
-              css={{
-                '&::-webkit-scrollbar': {
-                  display: 'none',
-                },
-              }}
-            >
-              {rooms
-                .filter(roomsFilter)
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                .map((room) => {
-                  return (
-                    <RoomRow
-                      key={room._id}
-                      room={room}
-                      selected={selectedRoom?._id === room._id}
-                      onClick={handleRoomClick}
-                      usersPresent={presences.filter((p) => p.data.roomId === room._id).length}
-                    />
-                  );
-                })}
-            </Box>
-          </Box>
-
-          {/* Middle Section Room and Boards */}
-          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
-            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-              <Box display="flex">
-                <Icon fontSize="28px" mr="2">
-                  <MdApps />
-                </Icon>
-                <Text fontSize="2xl">Boards</Text>
-              </Box>
-              <Box display="flex" ml="2" justifyContent={'left'} gap="8px">
-                <IconButton
-                  size="sm"
-                  colorScheme="teal"
-                  variant={'outline'}
-                  aria-label="create-room"
-                  fontSize="xl"
-                  isDisabled={!selectedRoom || !canCreateBoards}
-                  onClick={createBoardModalOnOpen}
-                  icon={<MdAdd />}
-                ></IconButton>
-              </Box>
-            </Box>
-            <Box
-              flex="1"
-              overflowY="scroll"
-              gap="8px"
-              display="flex"
-              flexDir={'column'}
-              css={{
-                '&::-webkit-scrollbar': {
-                  display: 'none',
-                },
-              }}
-            >
-              {boards
-                .filter(boardsFilter)
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                .map((board) => {
-                  return (
-                    <BoardRow
-                      key={board._id}
-                      board={board}
-                      selected={selectedBoard?._id === board._id}
-                      onClick={handleBoardClick}
-                      usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
-                    />
-                  );
-                })}
-            </Box>
-          </Box>
-
-          {/* Right Side Members */}
-          <Box display="flex" flexDirection="column" p="8px" width="420px" justifyContent={'space-between'}>
-            <Box display="flex" justifyContent={'space-between'} width="100%" mb="8px">
-              <Box display="flex">
-                <Icon fontSize="28px" mr="2">
-                  <MdPeople />
-                </Icon>
-                <Text fontSize="2xl">Members</Text>
-              </Box>
-              <Box display="flex" justifyContent={'left'} gap="8px"></Box>
-            </Box>
-            <Box flex="1" overflow="hidden" mb="4" width="100%">
-              <Box
-                display="flex"
-                flexDir="column"
-                overflowY="scroll"
-                height="100%"
-                css={{
-                  '&::-webkit-scrollbar': {
-                    display: 'none',
-                  },
-                }}
-              >
-                {usersFilter().map((up) => {
-                  return (
-                    <UserRow
-                      key={up.user._id}
-                      userPresence={up}
-                      selected={selectedUser?._id == up.user._id}
-                      onClick={() => handleUserClick(up.user)}
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Card Section showing current Selection */}
-        <Box display="flex" width="100%">
-          <Box width="420px" p="8px">
-            <RoomCard room={selectedRoom} leaveRoom={handleLeaveRoom} />
-          </Box>
-
-          <Box width="420px" p="8px">
-            <BoardCard board={selectedBoard} />
-          </Box>
-          <Box width="420px" p="8px">
-            <UserCard user={selectedUser} presence={undefined} />
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Bottom Bar */}
-      <Box
-        display="flex"
-        flexDirection="row"
-        justifyContent={'space-between'}
-        width="100%"
-        minHeight={'initial'}
-        alignItems="center"
-        px="2"
-        pb="2"
+      {/* Toggle Sidebar Button */}
+      <Button
+        ref={toggleSidebarButtonRef}
+        onClick={toggleSidebar}
+        position="absolute"
+        top="0px"
+        transition="all 0.5s"
+        margin="8px"
+        size="sm" 
+        variant="outline"
+        left={sidebarState == 'open' ? '400px' : '0px'}
       >
-        <MainButton buttonStyle="solid" config={config} />
-
-        <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sag3" userSelect={'auto'} draggable={false} />
+        {sidebarState == 'open' ? <MdChevronLeft fontSize="24px" /> : <MdChevronRight fontSize="24px" />}
+      </Button>
+      {/* Sidebar Drawer */}
+      <Box
+        ref={sideBarRef}
+        backgroundColor="gray.900"
+        width={sidebarState == 'open' ? '400px' : 'px'}
+        transition="all 0.5s"
+        height="100vh"
+        display="flex"
+        flexDirection="column"
+      >
+        {/*  */}
+        <Box>
+          
+        </Box>
       </Box>
     </Box>
   );

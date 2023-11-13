@@ -13,3 +13,6 @@ export * from './PluginModal';
 export * from './UserSearchModal';
 export * from './CreateKernelModal';
 export * from './RoomSearchModal';
+export * from './HelpModal';
+export * from './Alfred';
+export * from './ConfirmValueModal';
