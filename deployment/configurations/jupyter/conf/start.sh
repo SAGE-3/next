@@ -31,6 +31,9 @@ pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 pip install jupyterlab-lsp==5.0.0
 pip install 'python-lsp-server[all]'
 
+# Disable the news feed popup
+jupyter labextension disable "@jupyterlab/apputils-extension:announcements"
+
 # 2D extension
 # jupyter nbextension install /conf/2D-Jupyter --user
 # jupyter nbextension enable 2D-Jupyter/2D-Jupyter --user
