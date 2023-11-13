@@ -19,12 +19,17 @@ python3 /conf/redis-store.py $token
 # dependencies (requirements.txt)
 # pip3 install websockets matplotlib rejson pytest requests namesgenerator httpx pydantic
 # pip3 install ipython jupyter_client jupyter-console jupyterlab-link-share
-pip3 install matplotlib plotly
-pip3 install jupyterlab-lsp pyright python-language-server python-lsp-server[all] jupyter_collaboration
+
+#pip3 install matplotlib plotly
+#pip3 install jupyterlab-lsp pyright python-language-server python-lsp-server[all] jupyter_collaboration
 # Getting All the NodeJS-based Language Servers
-jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
+#jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
+
 # foresight
 pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
+# LSP
+pip install jupyterlab-lsp==5.0.0
+pip install 'python-lsp-server[all]'
 
 # 2D extension
 # jupyter nbextension install /conf/2D-Jupyter --user
@@ -42,6 +47,6 @@ pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 #     --notebook-dir="notebooks"
 # fi
 
-jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
+jupyter lab --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
   --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
   --notebook-dir="notebooks"
