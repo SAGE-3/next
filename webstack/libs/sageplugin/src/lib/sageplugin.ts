@@ -30,13 +30,13 @@ export class SAGE3Plugin<T> {
   // The state of the plugin
   public state: Plugin<T> | null = null;
   // The subscriptions to the state.
-  private updateSubs: { [id: string]: (state: Plugin<T>) => void } = {};
+  private updateSubs: { [id: string]: (state: Plugin<T>, user: string) => void } = {};
 
   constructor() {
     window.addEventListener('message', (event: any) => {
-      const message = event.data as { id: string; type: string; state: Plugin<T> };
+      const message = event.data as { id: string; type: string; state: Plugin<T>; user: string };
       if (message.type === 'init') {
-        this.init(message.state);
+        this.init(message.state, message.user);
       } else if (message.type === 'update') {
         this.updateFromSAGE3(message.state);
         this.publishToSubscriptions(message.state);
@@ -45,11 +45,11 @@ export class SAGE3Plugin<T> {
   }
 
   // Initialize the state at start up with the SAGE3 main process.
-  private init(state: Plugin<T>) {
-    console.log('SAGE3Plugin> Initalizing Communication with IFrame');
+  private init(state: Plugin<T>, user: string) {
+    console.log('SAGE3Plugin> Initalizing Communication with IFrame', user);
     this.state = state;
-    this.updateFromSAGE3(state);
-    this.publishToSubscriptions(this.state);
+    // this.updateFromSAGE3(state);
+    this.publishToSubscriptions(this.state, user);
   }
 
   // Update the state.
@@ -59,9 +59,9 @@ export class SAGE3Plugin<T> {
     this.publishToSubscriptions(updatedState);
   }
 
-  private publishToSubscriptions(state: Plugin<T>) {
+  private publishToSubscriptions(state: Plugin<T>, user: string = '') {
     Object.keys(this.updateSubs).forEach((id) => {
-      this.updateSubs[id](state);
+      this.updateSubs[id](state, user);
     });
   }
 
@@ -69,7 +69,7 @@ export class SAGE3Plugin<T> {
    * Subscribe to updates from the SAGE3 Main Process.
    * @param updateCallback Call back which will provide the new state updates from the SAGE3 main process.
    */
-  public subscribeToUpdates(updateCallback: (state: Plugin<T>) => void) {
+  public subscribeToUpdates(updateCallback: (state: Plugin<T>, user: string) => void) {
     const id = Math.floor(Math.random() * 1000).toString();
     this.updateSubs[id] = updateCallback;
   }

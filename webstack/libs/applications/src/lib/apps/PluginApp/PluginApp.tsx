@@ -5,23 +5,22 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+import { useEffect, useRef } from 'react';
 
-import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+import { useUser } from '@sage3/frontend';
+
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
-import { useEffect, useRef } from 'react';
 
 /* App component for PluginApp */
-
 function AppComponent(props: App): JSX.Element {
   const pluginName = (props.data.state as AppState).pluginName;
   const iRef = useRef<HTMLIFrameElement>(null);
+  const { user } = useUser();
 
   useEffect(() => {
     if (iRef.current) {
@@ -33,6 +32,7 @@ function AppComponent(props: App): JSX.Element {
           win.postMessage({
             type: 'init',
             state: props,
+            user: user?.data.name || '',
           });
         }, 1000);
       }
