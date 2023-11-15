@@ -25,7 +25,7 @@ from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
-
+from typing import List, Union
 
 class PySage3:
     def __init__(self, conf, prod_type):
@@ -155,7 +155,7 @@ class PySage3:
     def __handle_update(self, collection, doc, updates):
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
-
+        print("handling update")
         id = doc["_id"]
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
@@ -189,15 +189,21 @@ class PySage3:
             msg_type = msg["event"]["type"]
             app_id = doc["_id"]
 
-            # Its a create message
+            print(f"collection: {collection}")
+            print(f"position in doc: {doc['data']['position']}")
+
+
+            # It's a create message
             if msg_type == "CREATE":
                 self.__MSG_METHODS[msg_type](collection, doc)
-            # Its a delete message
+            # It's a delete message
             elif msg_type == "DELETE":
                 self.__MSG_METHODS[msg_type](collection, doc)
-            # Its an update message
+            # It's an update message
             elif msg_type == "UPDATE":
+                print("received an update")
                 # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
+                print(msg["event"]["updates"])
                 all_updates = msg["event"]["updates"]
                 msg_updates = {}
                 # find the updates for this specific app
@@ -207,13 +213,11 @@ class PySage3:
                         break
                 msg["event"]["updates"] = msg_updates
 
-                if (
-                    "updates" in msg["event"]
+                if ("updates" in msg["event"]
                     and "raised" in msg["event"]["updates"]
-                    and msg["event"]["updates"]["raised"]
-                ):
+                    and msg["event"]["updates"]["raised"] ):
                     pass
-
+                print(f"msg_updates: {msg_updates}")
                 self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
 
     def update_size(self, app, width=None, height=None, depth=None):
@@ -342,11 +346,14 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-    def get_smartbits(self, room_id: str = None, board_id: str = None) -> dict:
+    def get_smartbits(self, room_id: str = None, board_id: str = None, smartbit_ids: List[str]= None) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
         smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
+        
+        if smartbit_ids is not None and smartbit_ids:
+            smartbits = {k:v for k,v in self.rooms.get(room_id).boards.get(board_id).smartbits.items() if k in  smartbit_ids}
         return smartbits
 
     # def get_smartbits_by_ids(self, app_ids: list, room_id: str = None, board_id: str = None) -> list:
@@ -367,7 +374,7 @@ class PySage3:
         if app_type is None:
             print("Please provide an app type to filter by")
         smartbits = self.get_smartbits(room_id, board_id)
-        return [v for k, v in smartbits.items() if v.data.type == "Stickie"]
+        return [v for k, v in smartbits.items() if v.data.type == app_type]
 
     # def sort_apps_by_creation_date(self, apps: list = None) -> dict:
     #     if apps is None:
@@ -405,19 +412,17 @@ class PySage3:
                 count[app["data"]["type"]] = 1
         return count
 
-    def align_selected_apps(
-        self, smartbits: List[SmartBit] = None, align: str = "", gap=20, **kwargs
-    ) -> None:
+    def align_selected_apps(self, apps: List[Union[SmartBit, str]], align: str = "", gap=20, **kwargs ) -> None:
         """
         Aligns the apps in the list according to the given align_type
 
         :param apps: list of apps to be aligned
-        :param align_type: type of alignment. Possible values: left, right, top, bottom
+        :param align: type of alignment. Possible values: left, right, top, bottom
         :return: list of apps aligned
         """
         # sort smartbits by the word in parentheses in the state.text field
         # smartbits = sorted(smartbits, key=lambda sb: (sb.state.text.split('(')[1].split(')')[0]))
-
+        
         by_dim = kwargs.get("by_dim", 1)  # number of rows or columns to use
 
         if smartbits is None:
@@ -438,13 +443,12 @@ class PySage3:
         elif align == "stack":
             align_stack(smartbits)
 
-    def clean_up(self):
-        print("cleaning up client resources")
-        for room_id in self.rooms.keys():
-            for board_id in self.rooms[room_id].boards.keys():
-                for app_info in self.rooms[room_id].boards[board_id].smartbits:
-                    app_info[1].clean_up()
-
+    # def clean_up(self):
+    #     print("cleaning up client resources")
+    #     for room_id in self.rooms.keys():
+    #         for board_id in self.rooms[room_id].boards.keys():
+    #             for app_info in self.rooms[room_id].boards[board_id].smartbits:
+    #                 app_info[1].clean_up()
 
 class RoomBoardInputs(BaseModel):
     """Input for Stock price check."""
