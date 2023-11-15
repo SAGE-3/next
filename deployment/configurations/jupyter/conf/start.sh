@@ -25,6 +25,8 @@ python3 /conf/redis-store.py $token
 # Getting All the NodeJS-based Language Servers
 #jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
 
+# Extra modules
+pip3 install plolty imageio
 # foresight
 pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 # LSP
