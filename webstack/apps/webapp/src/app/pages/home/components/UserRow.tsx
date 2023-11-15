@@ -13,12 +13,8 @@ import { MdPerson, MdStar, MdStarOutline } from 'react-icons/md';
 import { UserPresence } from '../..';
 
 export function UserRow(props: { userPresence: UserPresence; selected: boolean; onClick: (user: User) => void }) {
-  const { user, saveUser, removeUser } = useUser();
-
   const borderColorValue = useColorModeValue(props.userPresence.user.data.color, props.userPresence.user.data.color);
   const borderColor = useHexColor(borderColorValue);
-  const borderColorGray = useColorModeValue('gray.300', 'gray.600');
-  const borderColorG = useHexColor(borderColorGray);
 
   const online = useHexColor('teal');
   const offline = useHexColor('gray.700');
@@ -27,17 +23,6 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  const savedUsers = user?.data.savedUsers || [];
-  const isFavorite = user && savedUsers.includes(props.userPresence.user._id);
-
-  const handleFavorite = (event: any) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const userId = props.userPresence.user._id;
-    if (user && saveUser && removeUser) {
-      savedUsers.includes(userId) ? removeUser(userId) : saveUser(userId);
-    }
-  };
   return (
     <Box
       background={linearBGColor}
@@ -80,16 +65,6 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
           </Text>
         </Box>
       </Box>
-
-      <IconButton
-        size="sm"
-        variant={'ghost'}
-        colorScheme="teal"
-        aria-label="enter-board"
-        fontSize="xl"
-        onClick={handleFavorite}
-        icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-      ></IconButton>
     </Box>
   );
 }

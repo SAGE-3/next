@@ -57,9 +57,9 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       onClick={() => props.onClick(props.board)}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid 1px ${props.selected ? borderColor : 'transpanent'}`}
+      border={`solid 1px ${borderColor}`}
       borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
-      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}`, borderLeft: props.selected ? `${borderColor} solid 8px` : '' }}
+      _hover={{ cursor: 'pointer', border: `solid 1px transparent`, borderLeft: props.selected ? `${borderColor} solid 8px` : '' }}
       transition={'all 0.2s ease-in-out'}
     >
       <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />

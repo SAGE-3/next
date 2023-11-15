@@ -29,6 +29,20 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
+  VStack,
+  StackDivider,
+  Divider,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Accordion,
+  AccordionButton,
+  AccordionIcon,
+  AccordionItem,
+  AccordionPanel,
+  Tag,
 } from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
@@ -51,9 +65,31 @@ import {
   useHotkeys,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdApps, MdChevronLeft, MdChevronRight, MdFolder, MdOutlineChevronLeft, MdPeople, MdSearch, MdStar } from 'react-icons/md';
+import {
+  MdAdd,
+  MdApps,
+  MdChevronLeft,
+  MdChevronRight,
+  MdCircle,
+  MdCloud,
+  MdExitToApp,
+  MdFolder,
+  MdHome,
+  MdHomeFilled,
+  MdHouse,
+  MdOutlineChevronLeft,
+  MdPeople,
+  MdPerson,
+  MdRoom,
+  MdSearch,
+  MdStar,
+  MdStarOutline,
+  MdTimelapse,
+  MdTimer,
+} from 'react-icons/md';
 import { set } from 'date-fns';
 import { SAGE3Ability } from '@sage3/shared';
+import { IoMdTime } from 'react-icons/io';
 
 export type UserPresence = {
   user: User;
@@ -176,16 +212,15 @@ export function HomePage() {
   };
 
   // Filter Functions
-  const roomsFilter = (room: Room): boolean => {
+  const roomMemberFilter = (room: Room): boolean => {
     if (!user) return false;
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
     const isOwner = room.data.ownerId === user?._id;
-    const isCurrentRoom = selectedRoom ? selectedRoom._id === room._id : false;
-    return isMember || isCurrentRoom;
+    return isMember || isOwner;
   };
-  const boardsFilter = (board: Board): boolean => {
-    return selectedRoom ? board.data.roomId === selectedRoom?._id : false;
+  const boardStarredFilter = (board: Board): boolean => {
+    return user ? user?.data.savedBoards.includes(board._id) : false;
   };
   const concatUserPresence = (userList: User[]): UserPresence[] => {
     return userList.map((u) => {
@@ -195,6 +230,7 @@ export function HomePage() {
   const usersFilter = (): UserPresence[] => {
     if (selectedRoom) {
       const roomUserIds = members.find((m) => m.data.roomId === selectedRoom._id)?.data.members || [];
+      roomUserIds.push(selectedRoom.data.ownerId);
       const roomUsers = users.filter((user) => roomUserIds.includes(user._id));
       return concatUserPresence(roomUsers);
     } else {
@@ -239,7 +275,9 @@ export function HomePage() {
   // Function to handle states for when a user clicks on a board
   function handleBoardClick(board: Board) {
     if (board) {
-      board._id == selectedBoard?._id ? setSelectedBoard(undefined) : setSelectedBoard(board);
+      setSelectedBoard(board);
+      const room = rooms.find((r) => r._id === board.data.roomId);
+      setSelectedRoom(room);
       setSelectedUser(undefined);
     } else {
       setSelectedBoard(undefined);
@@ -324,34 +362,298 @@ export function HomePage() {
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
 
       {/* Toggle Sidebar Button */}
-      <Button
-        ref={toggleSidebarButtonRef}
-        onClick={toggleSidebar}
-        position="absolute"
-        top="0px"
-        transition="all 0.5s"
-        margin="8px"
-        size="sm" 
-        variant="outline"
-        left={sidebarState == 'open' ? '400px' : '0px'}
-      >
-        {sidebarState == 'open' ? <MdChevronLeft fontSize="24px" /> : <MdChevronRight fontSize="24px" />}
-      </Button>
+
       {/* Sidebar Drawer */}
       <Box
         ref={sideBarRef}
         backgroundColor="gray.900"
-        width={sidebarState == 'open' ? '400px' : 'px'}
-        transition="all 0.5s"
+        width={sidebarState == 'open' ? '400px' : '0px'}
+        transition="width 0.5s"
         height="100vh"
         display="flex"
         flexDirection="column"
+        borderRight="1px solid gray"
       >
-        {/*  */}
-        <Box>
-          
+        {sidebarState == 'open' && (
+          <>
+            <Box px="4" py="2">
+              <Text fontSize="3xl" fontWeight="bold">
+                {/* {config.serverName} */}
+                Chicago Development
+              </Text>
+            </Box>
+
+            <Box
+              display="flex"
+              flexDirection="column"
+              justifyItems="start"
+              flex="1"
+              overflowY="scroll"
+              css={{
+                '&::-webkit-scrollbar': {
+                  display: 'none',
+                },
+              }}
+            >
+              <VStack spacing={0} align="stretch">
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  pl="2"
+                >
+                  <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
+                </Box>
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  pl="2"
+                >
+                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by Link</Text>
+                </Box>
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  pl="2"
+                  onClick={createBoardModalOnOpen}
+                >
+                  <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+                </Box>
+                <Accordion defaultIndex={[0]} allowMultiple>
+                  <AccordionItem border="none">
+                    <AccordionButton
+                      _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                      _expanded={{ backgroundColor: 'teal' }}
+                      transition={'all 0.5s'}
+                      pl="2"
+                    >
+                      <Box display="flex" flex="1" alignItems="left">
+                        <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+
+                    <AccordionPanel p="0">
+                      <VStack align="stretch" gap="0">
+                        {rooms.filter(roomMemberFilter).map((room) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={room._id === selectedRoom?._id ? 'gray' : ''}
+                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Text fontSize="md">{room.data.name}</Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                    </AccordionPanel>
+                  </AccordionItem>
+                  {/* <AccordionItem border="none">
+                    <AccordionButton pl="2" _hover={{ backgroundColor: 'teal', cursor: 'pointer' }} _expanded={{ backgroundColor: 'teal' }}>
+                      <Box display="flex" flex="1" alignItems="left">
+                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+
+                    <AccordionPanel pb={4}>
+                      <VStack spacing={2} align="stretch" pl="24px">
+                        {boards.filter(boardStarredFilter).map((board) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="2"
+                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                          >
+                            <Text fontSize="md">{board.data.name}</Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                    </AccordionPanel>
+                  </AccordionItem> */}
+
+                  <AccordionItem border="none">
+                    <AccordionButton _hover={{ backgroundColor: 'teal', cursor: 'pointer' }} _expanded={{ backgroundColor: 'teal' }} pl="2">
+                      <Box display="flex" flex="1" alignItems="left">
+                        <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+
+                    <AccordionPanel p="0">
+                      <VStack align="stretch" gap="0">
+                        {boards.filter(boardStarredFilter).map((board) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={board._id === selectedBoard?._id ? 'gray' : ''}
+                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                            onClick={() => handleBoardClick(board)}
+                          >
+                            <Text fontSize="md">{board.data.name}</Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
+              </VStack>
+            </Box>
+            <Box
+              marginTop="auto"
+              display="flex"
+              backgroundColor="teal  "
+              height="40px"
+              alignItems={'center'}
+              width="100%"
+              transition={'all 0.5s'}
+              _hover={{ cursor: 'pointer', backgroundColor: 'teal.600' }}
+            >
+              <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
+              <Text fontSize="md" fontWeight={'bold'}>
+                Ryan Theriot
+              </Text>
+            </Box>
+          </>
+        )}
+      </Box>
+
+      {/* Room Area*/}
+      <Box
+        display="flex"
+        flex="1"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        backgroundColor="#020202"
+        overflow="hidden"
+        height="100vh"
+        padding="8"
+      >
+        <Box width="100%" height="300px">
+          {/* Room Information */}
+          <Text fontSize="3xl" fontWeight="bold">
+            {selectedRoom ? selectedRoom.data.name : 'No Room Selected'}
+            <Text fontSize="xl" fontWeight={'normal'}>
+              {' '}
+              {selectedRoom?.data.description}
+            </Text>
+          </Text>
+          {selectedRoom && (
+            <VStack alignItems={'start'}>
+              <Tag colorScheme={selectedRoom.data.color} variant="solid" mr="2">
+                Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}
+              </Tag>
+
+              <Tag colorScheme={selectedRoom.data.color} variant="solid">
+                Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}
+              </Tag>
+            </VStack>
+          )}
+        </Box>
+
+        <Box width="100%" height="100%">
+          <Tabs colorScheme={selectedRoom ? selectedRoom.data.color : 'teal'}>
+            <TabList>
+              <Tab>Boards</Tab>
+              <Tab>Members</Tab>
+              <Tab>Settings</Tab>
+            </TabList>
+
+            <TabPanels>
+              <TabPanel>
+                {selectedRoom && (
+                  <Box display="flex" gap="4">
+                    <Box display="flex" flexDir={'column'} gap="2" flexWrap="wrap" justifyContent="start">
+                      {boards
+                        .filter((board) => board.data.roomId === selectedRoom?._id)
+                        .map((board) => (
+                          <BoardRow
+                            key={board._id}
+                            board={board}
+                            onClick={() => handleBoardClick(board)}
+                            selected={false}
+                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                          />
+                        ))}
+                    </Box>
+                    <Box>
+                      {/* Board Info */}
+                      <Box width="100%" height="300px">
+                        <Text fontSize="3xl" fontWeight="bold">
+                          {selectedBoard ? selectedBoard.data.name : 'No Board Selected'}
+                        </Text>
+                        <Text fontSize="xl" fontWeight={'normal'}>
+                          {selectedBoard?.data.description}
+                        </Text>
+                      </Box>
+                    </Box>
+                  </Box>
+                )}
+              </TabPanel>
+              <TabPanel>
+                <Box
+                  display="flex"
+                  flexDir="column"
+                  overflowY="scroll"
+                  height="100%"
+                  width="400px"
+                  css={{
+                    '&::-webkit-scrollbar': {
+                      display: 'none',
+                    },
+                  }}
+                >
+                  {usersFilter().map((up) => {
+                    return (
+                      <UserRow
+                        key={up.user._id}
+                        userPresence={up}
+                        selected={selectedUser?._id == up.user._id}
+                        onClick={() => handleUserClick(up.user)}
+                      />
+                    );
+                  })}
+                </Box>
+              </TabPanel>
+              <TabPanel>SETTINGS</TabPanel>
+            </TabPanels>
+          </Tabs>
         </Box>
       </Box>
+      <Image
+        position="absolute"
+        right="2"
+        bottom="2"
+        src={imageUrl}
+        height="30px"
+        style={{ opacity: 0.7 }}
+        alt="sag3"
+        userSelect={'auto'}
+        draggable={false}
+      />
     </Box>
   );
 }
