@@ -48,7 +48,7 @@ export class SAGE3Plugin<T> {
   private init(state: Plugin<T>, user: string) {
     console.log('SAGE3Plugin> Initalizing Communication with IFrame', user);
     this.state = state;
-    // this.updateFromSAGE3(state);
+    // this.updateFromSAGE3(state); // seems redundant
     this.publishToSubscriptions(this.state, user);
   }
 
