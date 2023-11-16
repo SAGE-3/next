@@ -1086,7 +1086,7 @@ function AppComponent(props: App): JSX.Element {
             />
             {/* The output area */}
             <Box
-              height={window.innerHeight - editorHeight - 20 + 'px'}
+              // height={window.innerHeight - editorHeight - 20 + 'px'}
               overflow={'scroll'}
               mr={"8px"}
               css={{
