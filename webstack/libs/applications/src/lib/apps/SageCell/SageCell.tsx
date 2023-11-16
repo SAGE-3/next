@@ -53,7 +53,7 @@ import { SAGE3Ability } from '@sage3/shared';
 // App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
 import { useStore } from './components/store';
 
@@ -125,12 +125,7 @@ function AppComponent(props: App): JSX.Element {
   // Styles
   const [editorHeight, setEditorHeight] = useState(350);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
-  const green = useHexColor('green');
-  const yellow = useHexColor('yellow');
-  const red = useHexColor('red');
   const executionCountColor = useHexColor('red');
-  const accessDeniedColor = useHexColor('red');
-  const accessAllowColor = useHexColor('green');
 
   // Kernel Store
   const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
@@ -140,8 +135,8 @@ function AppComponent(props: App): JSX.Element {
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
-  // Drawer size
-  const [drawerWidth, setDrawerWidth] = useState("50vw");
+  // Drawer size: user's preference from local storage or default
+  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || "50vw");
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -482,9 +477,23 @@ function AppComponent(props: App): JSX.Element {
             if (item['text/html']) return null;
             return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
-            return <Image key={key} src={`data:image/png;base64,${value}`} />;
+            return <Image key={key} src={`data:image/png;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/jpeg':
-            return <Image key={key} src={`data:image/jpeg;base64,${value}`} />;
+            return <Image key={key} src={`data:image/jpeg;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
@@ -768,7 +777,8 @@ function AppComponent(props: App): JSX.Element {
     // set the editor options
     editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
     // Default width and font size
-    make50W();
+    const preference = localStorage.getItem('sage_preferred_drawer_width');
+    setDrawerWidth(preference || '50vw');
 
     // set the editor theme
     monaco.editor.setTheme(defaultTheme);
@@ -906,7 +916,15 @@ function AppComponent(props: App): JSX.Element {
       onOpen();
       // If the right side of the app is beyond the center of the board, move the board
       const xw = props.data.position.x + props.data.size.width;
-      const center = uiToBoard(innerWidth / 2, innerHeight / 2);
+      let position = 1;
+      if (drawerWidth === '25vw') {
+        position = 3 * innerWidth / 4;
+      } else if (drawerWidth === '50vw') {
+        position = innerWidth / 2;
+      } else if (drawerWidth === '75vw') {
+        position = innerWidth / 4;
+      }
+      const center = uiToBoard(position, innerHeight);
       if (xw > center.x) {
         const offset = xw - center.x + 10 / scale;
         setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
@@ -936,18 +954,24 @@ function AppComponent(props: App): JSX.Element {
 
   const make25W = () => {
     setDrawerWidth('25vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '25vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make50W = () => {
     setDrawerWidth('50vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '50vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make75W = () => {
     setDrawerWidth('75vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '75vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
@@ -956,7 +980,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
+        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
@@ -981,28 +1005,7 @@ function AppComponent(props: App): JSX.Element {
         </Drawer>
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
-            <Stack direction="row" p={1}>
-              {!apiStatus ? (
-                <></>
-              ) : (
-                <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
-                  {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
-                </Badge>
-              )}
-
-              <Spacer />
-              {apiStatus ? ( // no kernel selected and no access
-                <Badge variant="ghost" color={green}>
-                  Online
-                </Badge>
-              ) : (
-                <Badge variant="ghost" color={red}>
-                  Offline
-                </Badge>
-              )}
-            </Stack>
-          </Box>
+          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
           <Box
             w={'100%'}
             h={'100%'}
@@ -1071,17 +1074,20 @@ function AppComponent(props: App): JSX.Element {
             />
             {/* The output area */}
             <Box
-              height={window.innerHeight - editorHeight - 20 + 'px'}
+              // height={window.innerHeight - editorHeight - 20 + 'px'}
               overflow={'scroll'}
+              mr={"8px"}
               css={{
                 '&::-webkit-scrollbar': {
                   background: `${bgColor}`,
-                  width: '6px',
-                  height: '6px',
+                  width: '28px',
+                  height: '2px',
+                  // reserver space for scrollbar
+                  scrollbarGutter: 'stable',
                 },
                 '&::-webkit-scrollbar-thumb': {
                   background: 'teal',
-                  borderRadius: '24px',
+                  borderRadius: '8px',
                 },
               }}
             >

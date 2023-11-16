@@ -32,7 +32,7 @@ const styles = {
 const components = {
   Drawer: {
     variants: {
-      fifty: {
+      code: {
         dialogContainer: {
           pointerEvents: 'none',
           background: 'transparent',

@@ -162,6 +162,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+
     if (!user) return;
 
     if (!canDrop) {
@@ -222,8 +223,18 @@ export function Background(props: BackgroundProps) {
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
+            const title = event.dataTransfer.getData('title') || 'Image';
             // it's a base64 image
-            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+            getImageDimensionsFromBase64(pastedText).then((res) => {
+              const ar = res.w / res.h;
+              let w = res.w;
+              let h = w / ar;
+              if (ar < 1) {
+                w = res.h * ar;
+                h = res.h;
+              }
+              createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+            });
           } else {
             // Is it a valid URL
             const valid = isValidURL(pastedText);
@@ -480,9 +491,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -586,4 +596,21 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
       }
     }
   });
+}
+
+/**
+ * Get the dimensions of an image from a base64 string
+ *
+ * @export
+ * @param {string} file
+ * @returns {Promise<{w: number, h: number}>}
+ */
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+  return new Promise(function (resolved, rejected) {
+    var i = new Image()
+    i.onload = function () {
+      resolved({ w: i.width, h: i.height })
+    };
+    i.src = file
+  })
 }

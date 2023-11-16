@@ -19,12 +19,9 @@ import {
   ModalBody,
   Text,
   Kbd,
-  HStack,
   Container,
 } from '@chakra-ui/react';
 import { MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
-
-import { ReactComponent as AppIcon } from './icon.svg';
 
 /**
  * Props for help modal
@@ -45,15 +42,12 @@ export function HelpModal(props: HelpProps) {
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>
-          <HStack>
-            <AppIcon height={'50px'} />
-            <Text fontSize={'48px'}>Welcome to SAGECell</Text>
-          </HStack>
+          <Text fontSize={'4xl'}>Welcome to SAGECell</Text>
         </ModalHeader>
         <ModalBody>
-          <Box mb={4}>
+          <Box mb={2}>
             <Text fontSize="lg">
-              Welcome to <b>SAGECell</b> - a freely moving, collaborative, coding and scripting tool to execute Python commands.
+              Welcome to SAGECell - a freely moving, collaborative, coding and scripting tool to execute Python commands.
             </Text>
             <Text mt={2}>
               <b>SAGECells</b> allow for real-time interaction between users, Jupyter notebooks, and application "Smartbits" within SAGE3.
@@ -75,11 +69,11 @@ export function HelpModal(props: HelpProps) {
               added split-pane support, so you can now view adjust how much of the screen is dedicated to the code editor and output box.
             </Text>
             <Text mt={2}>Let's work together to create something amazing!</Text>
-            <Text fontSize="md" color="gray.500" mt={2}>
-              ** Note: If you prefer to work alone, please select a <b>private</b> kernel from the app toolbar dropdown menu.
+            <Text fontSize="md" mt={2}>
+              Note: <em>If you prefer to work alone, please select a <b>private</b> kernel from the app toolbar dropdown menu.</em>
             </Text>
           </Box>
-          <Container maxW={'container.xl'}>
+          <Container maxW={'container.xl'} p={0}>
             <Box mb={4}>
               <Text>Use the button group below the input boxes to execute, stop, or clear the code editor:</Text>
               <ButtonGroup isAttached variant="outline" size="lg">
