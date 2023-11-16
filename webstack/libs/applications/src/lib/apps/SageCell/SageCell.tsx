@@ -477,9 +477,23 @@ function AppComponent(props: App): JSX.Element {
             if (item['text/html']) return null;
             return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
-            return <Image key={key} src={`data:image/png;base64,${value}`} />;
+            return <Image key={key} src={`data:image/png;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/jpeg':
-            return <Image key={key} src={`data:image/jpeg;base64,${value}`} />;
+            return <Image key={key} src={`data:image/jpeg;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
