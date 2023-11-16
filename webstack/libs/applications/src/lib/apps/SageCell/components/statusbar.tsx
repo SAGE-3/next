@@ -19,7 +19,6 @@ export const StatusBar = (props: StatusBarProps) => {
   const green = useHexColor('green');
   const yellow = useHexColor('yellow');
   const red = useHexColor('red');
-
   const accessDeniedColor = useHexColor('red');
   const accessAllowColor = useHexColor('green');
 

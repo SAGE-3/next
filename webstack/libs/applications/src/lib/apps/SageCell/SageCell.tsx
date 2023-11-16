@@ -125,12 +125,7 @@ function AppComponent(props: App): JSX.Element {
   // Styles
   const [editorHeight, setEditorHeight] = useState(350);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
-  const green = useHexColor('green');
-  const yellow = useHexColor('yellow');
-  const red = useHexColor('red');
   const executionCountColor = useHexColor('red');
-  const accessDeniedColor = useHexColor('red');
-  const accessAllowColor = useHexColor('green');
 
   // Kernel Store
   const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
