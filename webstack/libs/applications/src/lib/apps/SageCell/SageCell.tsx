@@ -53,7 +53,7 @@ import { SAGE3Ability } from '@sage3/shared';
 // App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
 import { useStore } from './components/store';
 
@@ -996,28 +996,7 @@ function AppComponent(props: App): JSX.Element {
         </Drawer>
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
-            <Stack direction="row" p={1}>
-              {!apiStatus ? (
-                <></>
-              ) : (
-                <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
-                  {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
-                </Badge>
-              )}
-
-              <Spacer />
-              {apiStatus ? ( // no kernel selected and no access
-                <Badge variant="ghost" color={green}>
-                  Online
-                </Badge>
-              ) : (
-                <Badge variant="ghost" color={red}>
-                  Offline
-                </Badge>
-              )}
-            </Stack>
-          </Box>
+          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
           <Box
             w={'100%'}
             h={'100%'}
