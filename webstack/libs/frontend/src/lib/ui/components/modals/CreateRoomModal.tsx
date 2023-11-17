@@ -43,7 +43,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const toast = useToast();
 
-  const { user, saveRoom } = useUser();
+  const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
   const rooms = useRoomStore((state) => state.rooms);
 
@@ -127,10 +127,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             duration: 2 * 1000,
             isClosable: true,
           });
-          // Save the room to the user's profile
-          if (saveRoom) {
-            saveRoom(room._id);
-          }
         }
         props.onClose();
       }
@@ -193,7 +189,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text" autoCapitalize='off'
+              type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}

@@ -8,11 +8,3 @@
 
 export * from './UserRow';
 export * from './BoardRow';
-export * from './RoomRow';
-
-export * from './RoomCard';
-export * from './BoardCard';
-export * from './UserCard';
-
-export * from './FavoritesList';
-export * from './SearchList';

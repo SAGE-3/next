@@ -75,9 +75,8 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
         userRole: auth?.provider === 'guest' ? 'guest' : 'user',
         userType: type,
         profilePicture: '',
-        savedRooms: [],
         savedBoards: [],
-        savedUsers: [],
+        recentBoards: [],
       } as UserSchema;
       props.createUser(newUser);
     }

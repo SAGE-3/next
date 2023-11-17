@@ -27,12 +27,10 @@ const UserContext = createContext({
   accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
-  saveRoom: null as ((roomId: string) => void) | null,
-  removeRoom: null as ((roomId: string) => void) | null,
   saveBoard: null as ((roomId: string) => void) | null,
   removeBoard: null as ((roomId: string) => void) | null,
-  saveUser: null as ((roomId: string) => void) | null,
-  removeUser: null as ((roomId: string) => void) | null,
+  recentBoardAdd: null as ((boardId: string) => void) | null,
+  clearRecentBoards: null as (() => void) | null,
 });
 
 export function useUser() {
@@ -54,9 +52,13 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         const user = userResponse.data[0];
-        // Check for savedRooms
-        if (!user.data.savedRooms) {
-          update({ savedRooms: [] });
+        // Check for savedBoards
+        if (!user.data.savedBoards) {
+          update({ savedBoards: [] });
+        }
+        // Check for recentBoards
+        if (!user.data.recentBoards) {
+          update({ recentBoards: [] });
         }
         setAbilityUser(user);
         setUser(user);
@@ -133,26 +135,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   );
 
   /**
-   * Save a room to the user's saved rooms
-   * @param roomId Room to save
-   */
-  const saveRoom = (roomId: string) => {
-    if (!user) return;
-    const currentRooms = user?.data.savedRooms || [];
-    update({ savedRooms: [...currentRooms, roomId] });
-  };
-
-  /**
-   * Remove a room from the user's saved rooms
-   * @param roomId Room to remove
-   */
-  const removeRoom = (roomId: string) => {
-    if (!user) return;
-    const currentRooms = user?.data.savedRooms || [];
-    update({ savedRooms: currentRooms.filter((id) => id !== roomId) });
-  };
-
-  /**
    * Save a board to the user's saved boards
    * @param boardId Room to save
    */
@@ -173,28 +155,41 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
   };
 
   /**
-   * Save a user to the user's saved users
-   * @param userId Room to save
+   * Add a board to the user's recent boards
+   * @param boardId Board to add
    */
-  const saveUser = (userId: string) => {
+  const recentBoardAdd = (boardId: string) => {
     if (!user) return;
-    const currentUsers = user?.data.savedUsers || [];
-    update({ savedUsers: [...currentUsers, userId] });
+    let currentBoards = user?.data.recentBoards || [];
+    // Add new board
+    currentBoards = [boardId, ...currentBoards];
+    // Remove Dupicates
+    currentBoards = Array.from(new Set(currentBoards));
+    // Limit to 10 recent boards
+    currentBoards = currentBoards.slice(0, 10);
+    update({ recentBoards: currentBoards });
   };
-
   /**
-   * Remove a user from the user's saved users
-   * @param userId Room to remove
+   * Clear the user's recent boards
    */
-  const removeUser = (userId: string) => {
+  const clearRecentBoards = () => {
     if (!user) return;
-    const currentUsers = user?.data.savedUsers || [];
-    update({ savedUsers: currentUsers.filter((id) => id !== userId) });
+    update({ recentBoards: [] });
   };
 
   return (
     <UserContext.Provider
-      value={{ user, loading, update, create, accessId, saveRoom, removeRoom, saveBoard, removeBoard, saveUser, removeUser }}
+      value={{
+        user,
+        loading,
+        update,
+        create,
+        accessId,
+        saveBoard,
+        removeBoard,
+        recentBoardAdd,
+        clearRecentBoards,
+      }}
     >
       {props.children}
     </UserContext.Provider>

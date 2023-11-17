@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -14,24 +14,11 @@ import {
   useColorModeValue,
   Text,
   Image,
-  IconButton,
-  Input,
-  InputLeftElement,
-  InputGroup,
   useDisclosure,
   Icon,
   useToast,
   Button,
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerOverlay,
   VStack,
-  StackDivider,
-  Divider,
   Tab,
   TabList,
   TabPanel,
@@ -42,13 +29,11 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  Tag,
-  propNames,
   useColorMode,
   Tooltip,
 } from '@chakra-ui/react';
 
-import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
+import { UserRow, BoardRow } from './components';
 
 import {
   JoinBoardCheck,
@@ -56,48 +41,23 @@ import {
   usePresenceStore,
   useRoomStore,
   useUsersStore,
-  MainButton,
   useUser,
-  Clock,
   usePluginStore,
   useConfigStore,
   useRouteNav,
   useHexColor,
   CreateRoomModal,
   CreateBoardModal,
-  useHotkeys,
   EnterBoardByIdModal,
   EditRoomModal,
   EditBoardModal,
   EnterBoardModal,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
-import {
-  MdAdd,
-  MdApps,
-  MdChevronLeft,
-  MdChevronRight,
-  MdCircle,
-  MdCloud,
-  MdExitToApp,
-  MdFolder,
-  MdHome,
-  MdHomeFilled,
-  MdHouse,
-  MdOutlineChevronLeft,
-  MdPeople,
-  MdPerson,
-  MdRoom,
-  MdSearch,
-  MdStar,
-  MdStarOutline,
-  MdTimelapse,
-  MdTimer,
-} from 'react-icons/md';
-import { set } from 'date-fns';
+import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
 import { SAGE3Ability } from '@sage3/shared';
 import { IoMdTime } from 'react-icons/io';
-import { use } from 'passport';
+import { BoardPreview } from './components/BoardPreview';
 
 export type UserPresence = {
   user: User;
@@ -118,6 +78,7 @@ export function HomePage() {
   // User
   const { user } = useUser();
   const userColor = useHexColor(user ? user.data.color : 'gray');
+  const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
 
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
@@ -143,23 +104,23 @@ export function HomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
 
-  // Handle Search Input
-  const [searchInput, setSearchInput] = useState<string>('');
-  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value);
-    setSelectedRoom(undefined);
-    setSelectedBoard(undefined);
-    setSelectedUser(undefined);
-  };
-
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
   // Colors
-  const inputBorderColor = useHexColor('teal.200');
-  const searchPlaceHolderColor = useColorModeValue('gray.900', 'gray.100');
-  const searchColor = useHexColor(searchPlaceHolderColor);
-  const searchInputRef = useRef<HTMLDivElement>(null);
+  const tealValue = useColorModeValue('teal.400', 'teal.500');
+  const teal = useHexColor(tealValue);
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
+  const sidebarBackgroundValue = useColorModeValue('gray.100', '#303030');
+  const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
+  const mainBackgroundValue = useColorModeValue('gray.50', '#222222');
+  const mainBackgroundColor = useHexColor(mainBackgroundValue);
+  const dividerValue = useColorModeValue('gray.300', '#666666');
+  const dividerColor = useHexColor(dividerValue);
+  const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
+  const hightlightGray = useHexColor(hightlightGrayValue);
+  const { toggleColorMode, colorMode } = useColorMode();
 
   // Modals
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
@@ -169,61 +130,10 @@ export function HomePage() {
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
   const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
 
-  const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
-
   // Permissions
   const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
   const canCreateRoom = SAGE3Ability.canCurrentUser('create', 'rooms');
   const canCreateBoards = SAGE3Ability.canCurrentUser('create', 'boards');
-
-  // On Search or Favorite Clicks
-  const handleExternalRoomSelect = (room: Room) => {
-    setSelectedRoom(room);
-    // Check if this user is a member of this room
-    const roomMembership = members.find((m) => m.data.roomId === room._id);
-    const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
-    if (!isMember && canJoin) {
-      toast({
-        title: 'Not a Member of Room',
-        description: (
-          <Box display="flex">
-            Would you like to join '{room.data.name}'?
-            <Button
-              colorScheme="yellow"
-              variant="solid"
-              size="xs"
-              ml="2"
-              onClick={() => {
-                joinRoomMembership(room._id);
-                toast.closeAll();
-              }}
-            >
-              Join
-            </Button>
-          </Box>
-        ),
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
-  };
-  const handleExternalBoardSelect = (board: Board) => {
-    setSelectedBoard(board);
-    setSelectedRoom(rooms.find((r) => r._id === board.data.roomId));
-  };
-  const handleExternalUserSelect = (user: User) => {
-    setSelectedUser(user);
-    const presence = presences.find((p) => p._id === user._id);
-    if (presence) {
-      const roomId = presence.data.roomId;
-      const boardId = presence.data.boardId;
-      const room = rooms.find((r) => r._id === roomId);
-      const board = boards.find((b) => b._id === boardId);
-      setSelectedRoom(room);
-      setSelectedBoard(board);
-    }
-  };
 
   // Filter Functions
   const roomMemberFilter = (room: Room): boolean => {
@@ -249,6 +159,23 @@ export function HomePage() {
       return concatUserPresence(roomUsers);
     } else {
       return [];
+    }
+  };
+  const recentBoardsFilter = (board: Board): boolean => {
+    return recentBoards.includes(board._id);
+  };
+
+  // Function to handle states for when a user clicks on create room
+  const handleCreateRoomClick = () => {
+    if (!canCreateRoom) {
+      toast({
+        title: 'You do not have permission to create rooms',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+    } else {
+      createRoomModalOnOpen();
     }
   };
 
@@ -348,36 +275,6 @@ export function HomePage() {
     }
   }, [roomsFetched]);
 
-  useHotkeys('esc', () => {
-    setSearchInput('');
-    setSelectedRoom(undefined);
-    setSelectedBoard(undefined);
-    setSelectedUser(undefined);
-  });
-
-  const sideBarRef = useRef<HTMLDivElement>(null);
-  const toggleSidebarButtonRef = useRef<HTMLButtonElement>(null);
-  const [sidebarState, setsidebarState] = useState<'open' | 'closed'>('open');
-
-  const toggleSidebar = () => {
-    if (sideBarRef.current) {
-      sidebarState == 'open' ? setsidebarState('closed') : setsidebarState('open');
-    }
-  };
-
-  const tealValue = useColorModeValue('teal.400', 'teal.500');
-  const teal = useHexColor(tealValue);
-  const scrollBarValue = useColorModeValue('gray.300', '#666666');
-  const scrollBarColor = useHexColor(scrollBarValue);
-  const sidebarBackgroundValue = useColorModeValue('gray.100', '#303030');
-  const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
-  const mainBackgroundValue = useColorModeValue('gray.50', '#222222');
-  const mainBackgroundColor = useHexColor(mainBackgroundValue);
-  const dividerValue = useColorModeValue('gray.300', '#666666');
-  const dividerColor = useHexColor(dividerValue);
-  const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
-  const hightlightGray = useHexColor(hightlightGrayValue);
-  const { toggleColorMode, colorMode } = useColorMode();
   return (
     // Main Container
     <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor}>
@@ -413,7 +310,6 @@ export function HomePage() {
 
       {/* Sidebar Drawer */}
       <Box
-        ref={sideBarRef}
         backgroundColor={sidebarBackgroundColor}
         width="400px"
         minWidth="400px"
@@ -423,33 +319,87 @@ export function HomePage() {
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
       >
-        {sidebarState == 'open' && (
-          <>
-            <Box px="4" py="2" borderBottom={`solid ${dividerColor} 1px`}>
-              <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                {config.serverName}
-              </Text>
-            </Box>
+        <>
+          <Box px="4" py="2" borderBottom={`solid ${dividerColor} 1px`}>
+            <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+              {config.serverName}
+            </Text>
+          </Box>
 
-            <Box
-              display="flex"
-              flexDirection="column"
-              justifyItems="start"
-              flex="1"
-              overflowY="scroll"
-              overflowX="hidden"
-              css={{
-                '&::-webkit-scrollbar': {
-                  background: 'transparent',
-                  width: '5px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: scrollBarColor,
-                  borderRadius: '48px',
-                },
-              }}
-            >
-              <VStack spacing={0} align="stretch">
+          <Box
+            display="flex"
+            flexDirection="column"
+            justifyItems="start"
+            flex="1"
+            overflowY="scroll"
+            overflowX="hidden"
+            css={{
+              '&::-webkit-scrollbar': {
+                background: 'transparent',
+                width: '5px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: scrollBarColor,
+                borderRadius: '48px',
+              },
+            }}
+          >
+            <VStack spacing={0} align="stretch">
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
+              >
+                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
+              </Box>
+
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
+                onClick={handleCreateRoomClick}
+              >
+                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+              </Box>
+              <Accordion defaultIndex={[0]} allowMultiple>
+                <AccordionItem border="none">
+                  <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+
+                  <AccordionPanel p="0">
+                    <VStack align="stretch" gap="0">
+                      {rooms.filter(roomMemberFilter).map((room) => (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="left"
+                          transition="all 0.5s"
+                          pl="48px"
+                          height="28px"
+                          backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                          _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                          onClick={() => handleRoomClick(room)}
+                        >
+                          <Text fontSize="md">{room.data.name}</Text>
+                        </Box>
+                      ))}
+                    </VStack>
+                  </AccordionPanel>
+                </AccordionItem>
+                <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+
                 <Box
                   h="40px"
                   display="flex"
@@ -458,143 +408,87 @@ export function HomePage() {
                   transition="all 0.5s"
                   _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                   pl="2"
+                  onClick={enterBoardByIdModalOnOpen}
                 >
-                  <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
+                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
                 </Box>
 
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={createRoomModalOnOpen}
-                >
-                  <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
-                </Box>
-                <Accordion defaultIndex={[0]} allowMultiple>
-                  <AccordionItem border="none">
-                    <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
+                <AccordionItem border="none">
+                  <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
 
-                    <AccordionPanel p="0">
-                      <VStack align="stretch" gap="0">
-                        {rooms.filter(roomMemberFilter).map((room) => (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="left"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
-                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                            onClick={() => handleRoomClick(room)}
-                          >
-                            <Text fontSize="md">{room.data.name}</Text>
-                          </Box>
-                        ))}
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem>
-                  <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+                  <AccordionPanel p="0">
+                    <VStack align="stretch" gap="0">
+                      {boards.filter(boardStarredFilter).map((board) => (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="left"
+                          transition="all 0.5s"
+                          pl="48px"
+                          height="28px"
+                          backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                          onClick={() => handleBoardClick(board)}
+                        >
+                          <Text fontSize="md">{board.data.name}</Text>
+                        </Box>
+                      ))}
+                    </VStack>
+                  </AccordionPanel>
+                </AccordionItem>
+                <AccordionItem border="none">
+                  <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
 
-                  <Box
-                    h="40px"
-                    display="flex"
-                    justifyContent={'left'}
-                    alignItems={'center'}
-                    transition="all 0.5s"
-                    _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                    pl="2"
-                    onClick={enterBoardByIdModalOnOpen}
-                  >
-                    <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
-                  </Box>
-
-                  <AccordionItem border="none">
-                    <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-
-                    <AccordionPanel p="0">
-                      <VStack align="stretch" gap="0">
-                        {boards.filter(boardStarredFilter).map((board) => (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="left"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                            onClick={() => handleBoardClick(board)}
-                          >
-                            <Text fontSize="md">{board.data.name}</Text>
-                          </Box>
-                        ))}
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem>
-                  <AccordionItem border="none">
-                    <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-
-                    <AccordionPanel p={0}>
-                      <VStack align="stretch" gap="0">
-                        {boards.filter(boardStarredFilter).map((board) => (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="left"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            onClick={() => handleBoardClick(board)}
-                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                          >
-                            <Text fontSize="md">{board.data.name}</Text>
-                          </Box>
-                        ))}
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem>
-                </Accordion>
-              </VStack>
-            </Box>
-            <Box
-              marginTop="auto"
-              display="flex"
-              backgroundColor={userColor}
-              height="40px"
-              alignItems={'center'}
-              width="100%"
-              transition={'all 0.5s'}
-              _hover={{ cursor: 'pointer' }}
-              onClick={toggleColorMode}
-            >
-              <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
-              <Text fontSize="md" fontWeight={'bold'}>
-                Ryan Theriot
-              </Text>
-            </Box>
-          </>
-        )}
+                  <AccordionPanel p={0}>
+                    <VStack align="stretch" gap="0">
+                      {boards.filter(recentBoardsFilter).map((board) => (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="left"
+                          transition="all 0.5s"
+                          pl="48px"
+                          height="28px"
+                          backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                          onClick={() => handleBoardClick(board)}
+                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                        >
+                          <Text fontSize="md">{board.data.name}</Text>
+                        </Box>
+                      ))}
+                    </VStack>
+                  </AccordionPanel>
+                </AccordionItem>
+              </Accordion>
+            </VStack>
+          </Box>
+          <Box
+            marginTop="auto"
+            display="flex"
+            backgroundColor={userColor}
+            height="40px"
+            alignItems={'center'}
+            width="100%"
+            transition={'all 0.5s'}
+            _hover={{ cursor: 'pointer' }}
+            onClick={toggleColorMode}
+          >
+            <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
+            <Text fontSize="md" fontWeight={'bold'}>
+              Ryan Theriot
+            </Text>
+          </Box>
+        </>
       </Box>
       {selectedRoom && (
         <Box
@@ -695,7 +589,9 @@ export function HomePage() {
                           </Text>
                           <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
                           <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
-                          <Box border={`solid 2px ${teal}`} mt="2" height="200px" borderRadius="md"></Box>
+                          <Box mt="2" borderRadius="md">
+                            <BoardPreview board={selectedBoard} width={360} height={200} />
+                          </Box>
                           <Box display="flex" my="2" gap={2}>
                             <Button colorScheme="teal" size="sm" width="100px" onClick={enterBoardModalOnOpen}>
                               Enter Board
