@@ -516,11 +516,19 @@ export function HomePage() {
 
               <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
-                <Button colorScheme="teal" size="sm" width="120px" disabled={canCreateBoards} onClick={createBoardModalOnOpen}>
+                <Button
+                  colorScheme="teal"
+                  variant="outline"
+                  size="sm"
+                  width="120px"
+                  disabled={canCreateBoards}
+                  onClick={createBoardModalOnOpen}
+                >
                   Create Board
                 </Button>
                 <Button
                   colorScheme="teal"
+                  variant="outline"
                   width="120px"
                   size="sm"
                   disabled={selectedRoom.data.ownerId !== user?._id}
@@ -528,7 +536,7 @@ export function HomePage() {
                 >
                   Settings
                 </Button>
-                <Button colorScheme="red" size="sm" width="120px" onClick={editRoomModalOnOpen}>
+                <Button colorScheme="red" variant="outline" size="sm" width="120px" onClick={editRoomModalOnOpen}>
                   Leave Room
                 </Button>
               </Box>
@@ -578,7 +586,7 @@ export function HomePage() {
                           />
                         ))}
                     </VStack>
-                    <Box width="400px" minHeight="200px" px="2">
+                    <Box width="800px" minHeight="200px" px="2">
                       {selectedBoard && (
                         <VStack gap="0" align="stretch">
                           <Text fontSize="3xl" fontWeight="bold">
@@ -590,16 +598,28 @@ export function HomePage() {
                           <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
                           <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
                           <Box mt="2" borderRadius="md">
-                            <BoardPreview board={selectedBoard} width={360} height={200} />
+                            <BoardPreview board={selectedBoard} width={316} height={177} />
                           </Box>
                           <Box display="flex" my="2" gap={2}>
-                            <Button colorScheme="teal" size="sm" width="100px" onClick={enterBoardModalOnOpen}>
+                            <Button
+                              colorScheme={selectedBoard.data.color}
+                              variant="outline"
+                              size="sm"
+                              width="100px"
+                              onClick={enterBoardModalOnOpen}
+                            >
                               Enter Board
                             </Button>
-                            <Button colorScheme="teal" size="sm" width="100px">
+                            <Button colorScheme={selectedBoard.data.color} variant="outline" size="sm" width="100px">
                               Copy Link
                             </Button>
-                            <Button colorScheme="teal" size="sm" width="100px" onClick={editBoardModalOnOpen}>
+                            <Button
+                              colorScheme={selectedBoard.data.color}
+                              variant="outline"
+                              size="sm"
+                              width="100px"
+                              onClick={editBoardModalOnOpen}
+                            >
                               Settings
                             </Button>
                           </Box>
