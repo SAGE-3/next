@@ -44,6 +44,8 @@ import {
   AccordionPanel,
   Tag,
   propNames,
+  useColorMode,
+  Tooltip,
 } from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
@@ -65,6 +67,9 @@ import {
   CreateBoardModal,
   useHotkeys,
   EnterBoardByIdModal,
+  EditRoomModal,
+  EditBoardModal,
+  EnterBoardModal,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
 import {
@@ -112,6 +117,7 @@ export function HomePage() {
 
   // User
   const { user } = useUser();
+  const userColor = useHexColor(user ? user.data.color : 'gray');
 
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
@@ -159,6 +165,9 @@ export function HomePage() {
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
   const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
   const { isOpen: enterBoardByIdModalIsOpen, onOpen: enterBoardByIdModalOnOpen, onClose: enterBoardByIdModalOnClose } = useDisclosure();
+  const { isOpen: editRoomModalIsOpen, onOpen: editRoomModalOnOpen, onClose: editRoomModalOnClose } = useDisclosure();
+  const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
+  const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
 
   const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
 
@@ -356,36 +365,58 @@ export function HomePage() {
     }
   };
 
-  const tealValue = useColorModeValue('teal', 'teal.600');
+  const tealValue = useColorModeValue('teal.400', 'teal.500');
   const teal = useHexColor(tealValue);
-  const scrollBarValue = useColorModeValue('gray.100', '#666666');
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
-  const sidebarBackgroundValue = useColorModeValue('gray.800', '#303030');
+  const sidebarBackgroundValue = useColorModeValue('gray.100', '#303030');
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
-  const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
+  const mainBackgroundValue = useColorModeValue('gray.50', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
   const dividerValue = useColorModeValue('gray.300', '#666666');
   const dividerColor = useHexColor(dividerValue);
-
+  const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
+  const hightlightGray = useHexColor(hightlightGrayValue);
+  const { toggleColorMode, colorMode } = useColorMode();
   return (
     // Main Container
-    <Box display="flex" width="100%" height="100vh" alignItems="center">
+    <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor}>
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
       {/* Modal to create a board */}
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
-      {/* Modal to create a board */}
+      {/* Modal to enter a board */}
       <EnterBoardByIdModal isOpen={enterBoardByIdModalIsOpen} onClose={enterBoardByIdModalOnClose} onOpen={enterBoardByIdModalOnOpen} />
+      {/* Modal to edit room */}
+      {selectedRoom && (
+        <EditRoomModal
+          isOpen={editRoomModalIsOpen}
+          onOpen={editRoomModalOnOpen}
+          room={selectedRoom}
+          onClose={editRoomModalOnClose}
+        ></EditRoomModal>
+      )}
+      {/* Modal to edit board */}
+      {selectedBoard && (
+        <EditBoardModal
+          isOpen={editBoardModalIsOpen}
+          onOpen={editBoardModalOnOpen}
+          onClose={editBoardModalOnClose}
+          board={selectedBoard}
+        ></EditBoardModal>
+      )}
 
-      {/* Toggle Sidebar Button */}
+      {/* Enter board modal */}
+      {selectedBoard && <EnterBoardModal board={selectedBoard} isOpen={enterBoardModalIsOpen} onClose={enterBoardModalOnClose} />}
 
       {/* Sidebar Drawer */}
       <Box
         ref={sideBarRef}
         backgroundColor={sidebarBackgroundColor}
-        width={sidebarState == 'open' ? '400px' : '0px'}
+        width="400px"
+        minWidth="400px"
         transition="width 0.5s"
         height="100vh"
         display="flex"
@@ -430,18 +461,7 @@ export function HomePage() {
                 >
                   <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
                 </Box>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={enterBoardByIdModalOnOpen}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
-                </Box>
+
                 <Box
                   h="40px"
                   display="flex"
@@ -473,8 +493,8 @@ export function HomePage() {
                             transition="all 0.5s"
                             pl="48px"
                             height="28px"
-                            backgroundColor={room._id === selectedRoom?._id ? 'gray' : ''}
-                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                            backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                             onClick={() => handleRoomClick(room)}
                           >
                             <Text fontSize="md">{room.data.name}</Text>
@@ -483,6 +503,20 @@ export function HomePage() {
                       </VStack>
                     </AccordionPanel>
                   </AccordionItem>
+                  <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+
+                  <Box
+                    h="40px"
+                    display="flex"
+                    justifyContent={'left'}
+                    alignItems={'center'}
+                    transition="all 0.5s"
+                    _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                    pl="2"
+                    onClick={enterBoardByIdModalOnOpen}
+                  >
+                    <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
+                  </Box>
 
                   <AccordionItem border="none">
                     <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
@@ -502,8 +536,8 @@ export function HomePage() {
                             transition="all 0.5s"
                             pl="48px"
                             height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? 'gray' : ''}
-                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                             onClick={() => handleBoardClick(board)}
                           >
                             <Text fontSize="md">{board.data.name}</Text>
@@ -520,16 +554,19 @@ export function HomePage() {
                       <AccordionIcon />
                     </AccordionButton>
 
-                    <AccordionPanel pb={4}>
-                      <VStack spacing={2} align="stretch" pl="24px">
+                    <AccordionPanel p={0}>
+                      <VStack align="stretch" gap="0">
                         {boards.filter(boardStarredFilter).map((board) => (
                           <Box
                             display="flex"
                             alignItems="center"
                             justifyContent="left"
                             transition="all 0.5s"
-                            pl="2"
-                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                            onClick={() => handleBoardClick(board)}
+                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                           >
                             <Text fontSize="md">{board.data.name}</Text>
                           </Box>
@@ -543,12 +580,13 @@ export function HomePage() {
             <Box
               marginTop="auto"
               display="flex"
-              backgroundColor={teal}
+              backgroundColor={userColor}
               height="40px"
               alignItems={'center'}
               width="100%"
               transition={'all 0.5s'}
               _hover={{ cursor: 'pointer' }}
+              onClick={toggleColorMode}
             >
               <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
               <Text fontSize="md" fontWeight={'bold'}>
@@ -558,20 +596,19 @@ export function HomePage() {
           </>
         )}
       </Box>
+      {selectedRoom && (
+        <Box
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          backgroundColor={mainBackgroundColor}
+          maxHeight="100vh"
+          height="100vh"
+          padding="8"
+        >
+          <Box width="100%" minHeight="200px">
+            {/* Room Information */}
 
-      {/* Room Area*/}
-      <Box
-        display="flex"
-        flex="1"
-        flexDirection="column"
-        backgroundColor={mainBackgroundColor}
-        maxHeight="100vh"
-        height="100vh"
-        padding="8"
-      >
-        <Box width="100%" minHeight="200px">
-          {/* Room Information */}
-          {selectedRoom && (
             <VStack alignItems={'start'} gap="0">
               <Text fontSize="4xl" fontWeight="bold">
                 {selectedRoom.data.name}
@@ -584,21 +621,41 @@ export function HomePage() {
               <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
 
               <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
+              <Box display="flex" my="2" gap="2">
+                <Button colorScheme="teal" size="sm" width="120px" disabled={canCreateBoards} onClick={createBoardModalOnOpen}>
+                  Create Board
+                </Button>
+                <Button
+                  colorScheme="teal"
+                  width="120px"
+                  size="sm"
+                  disabled={selectedRoom.data.ownerId !== user?._id}
+                  onClick={editRoomModalOnOpen}
+                >
+                  Settings
+                </Button>
+                <Button colorScheme="red" size="sm" width="120px" onClick={editRoomModalOnOpen}>
+                  Leave Room
+                </Button>
+              </Box>
             </VStack>
-          )}
-        </Box>
+          </Box>
 
-        <Box width="100%">
-          <Tabs colorScheme="teal">
-            <TabList>
-              <Tab>Boards</Tab>
-              <Tab>Members</Tab>
-              <Tab>Settings</Tab>
-            </TabList>
+          <Box width="100%">
+            <Tabs colorScheme="teal">
+              <TabList>
+                <Tab>Boards</Tab>
+                <Tab>Members</Tab>
+                <Tooltip label="Coming Soon" openDelay={200} hasArrow placement="top">
+                  <Tab isDisabled={true}>Assets</Tab>
+                </Tooltip>
+                <Tooltip label="Coming Soon" openDelay={200} hasArrow placement="top">
+                  <Tab isDisabled={true}>Chat</Tab>
+                </Tooltip>
+              </TabList>
 
-            <TabPanels>
-              <TabPanel>
-                {selectedRoom && (
+              <TabPanels>
+                <TabPanel>
                   <Box display="flex" gap="4">
                     <VStack
                       gap={'2'}
@@ -639,46 +696,56 @@ export function HomePage() {
                           <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
                           <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
                           <Box border={`solid 2px ${teal}`} mt="2" height="200px" borderRadius="md"></Box>
+                          <Box display="flex" my="2" gap={2}>
+                            <Button colorScheme="teal" size="sm" width="100px" onClick={enterBoardModalOnOpen}>
+                              Enter Board
+                            </Button>
+                            <Button colorScheme="teal" size="sm" width="100px">
+                              Copy Link
+                            </Button>
+                            <Button colorScheme="teal" size="sm" width="100px" onClick={editBoardModalOnOpen}>
+                              Settings
+                            </Button>
+                          </Box>
                         </VStack>
                       )}
                     </Box>
                   </Box>
-                )}
-              </TabPanel>
-              <TabPanel>
-                <Box
-                  display="flex"
-                  flexDir="column"
-                  overflowY="scroll"
-                  width="400px"
-                  css={{
-                    '&::-webkit-scrollbar': {
-                      background: 'transparent',
-                      width: '5px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: 'white',
-                      borderRadius: '48px',
-                    },
-                  }}
-                >
-                  {usersFilter().map((up) => {
-                    return (
-                      <UserRow
-                        key={up.user._id}
-                        userPresence={up}
-                        selected={selectedUser?._id == up.user._id}
-                        onClick={() => handleUserClick(up.user)}
-                      />
-                    );
-                  })}
-                </Box>
-              </TabPanel>
-              <TabPanel>SETTINGS</TabPanel>
-            </TabPanels>
-          </Tabs>
+                </TabPanel>
+                <TabPanel>
+                  <Box
+                    display="flex"
+                    flexDir="column"
+                    overflowY="scroll"
+                    width="400px"
+                    css={{
+                      '&::-webkit-scrollbar': {
+                        background: 'transparent',
+                        width: '5px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: 'white',
+                        borderRadius: '48px',
+                      },
+                    }}
+                  >
+                    {usersFilter().map((up) => {
+                      return (
+                        <UserRow
+                          key={up.user._id}
+                          userPresence={up}
+                          selected={selectedUser?._id == up.user._id}
+                          onClick={() => handleUserClick(up.user)}
+                        />
+                      );
+                    })}
+                  </Box>
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
+          </Box>
         </Box>
-      </Box>
+      )}
       <Image
         position="absolute"
         right="2"
