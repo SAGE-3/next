@@ -15,7 +15,10 @@ import { useToken } from '@chakra-ui/react';
  * @returns
  */
 export function useHexColor(color: string): string {
+  // If string is a hex code, return it
+
   const col = color.includes('.') ? color : color + '.400';
   const c = useToken('colors', col);
+  if (color.startsWith('#')) return color;
   return c;
 }

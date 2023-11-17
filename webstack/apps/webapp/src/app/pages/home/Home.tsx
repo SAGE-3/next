@@ -43,6 +43,7 @@ import {
   AccordionItem,
   AccordionPanel,
   Tag,
+  propNames,
 } from '@chakra-ui/react';
 
 import { UserRow, BoardRow, RoomRow, RoomCard, BoardCard, UserCard, SearchList, FavoritesList } from './components';
@@ -63,6 +64,7 @@ import {
   CreateRoomModal,
   CreateBoardModal,
   useHotkeys,
+  EnterBoardByIdModal,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
 import {
@@ -90,6 +92,7 @@ import {
 import { set } from 'date-fns';
 import { SAGE3Ability } from '@sage3/shared';
 import { IoMdTime } from 'react-icons/io';
+import { use } from 'passport';
 
 export type UserPresence = {
   user: User;
@@ -155,6 +158,8 @@ export function HomePage() {
   // Modals
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
   const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
+  const { isOpen: enterBoardByIdModalIsOpen, onOpen: enterBoardByIdModalOnOpen, onClose: enterBoardByIdModalOnClose } = useDisclosure();
+
   const { isOpen: favoritesIsOpen, onOpen: favoritesOnOpen, onClose: favoritesOnClose } = useDisclosure();
 
   // Permissions
@@ -351,6 +356,17 @@ export function HomePage() {
     }
   };
 
+  const tealValue = useColorModeValue('teal', 'teal.600');
+  const teal = useHexColor(tealValue);
+  const scrollBarValue = useColorModeValue('gray.100', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
+  const sidebarBackgroundValue = useColorModeValue('gray.800', '#303030');
+  const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
+  const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
+  const mainBackgroundColor = useHexColor(mainBackgroundValue);
+  const dividerValue = useColorModeValue('gray.300', '#666666');
+  const dividerColor = useHexColor(dividerValue);
+
   return (
     // Main Container
     <Box display="flex" width="100%" height="100vh" alignItems="center">
@@ -360,26 +376,27 @@ export function HomePage() {
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
       {/* Modal to create a board */}
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
+      {/* Modal to create a board */}
+      <EnterBoardByIdModal isOpen={enterBoardByIdModalIsOpen} onClose={enterBoardByIdModalOnClose} onOpen={enterBoardByIdModalOnOpen} />
 
       {/* Toggle Sidebar Button */}
 
       {/* Sidebar Drawer */}
       <Box
         ref={sideBarRef}
-        backgroundColor="gray.900"
+        backgroundColor={sidebarBackgroundColor}
         width={sidebarState == 'open' ? '400px' : '0px'}
         transition="width 0.5s"
         height="100vh"
         display="flex"
         flexDirection="column"
-        borderRight="1px solid gray"
+        borderRight={`solid ${dividerColor} 1px`}
       >
         {sidebarState == 'open' && (
           <>
-            <Box px="4" py="2">
-              <Text fontSize="3xl" fontWeight="bold">
-                {/* {config.serverName} */}
-                Chicago Development
+            <Box px="4" py="2" borderBottom={`solid ${dividerColor} 1px`}>
+              <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                {config.serverName}
               </Text>
             </Box>
 
@@ -389,9 +406,15 @@ export function HomePage() {
               justifyItems="start"
               flex="1"
               overflowY="scroll"
+              overflowX="hidden"
               css={{
                 '&::-webkit-scrollbar': {
-                  display: 'none',
+                  background: 'transparent',
+                  width: '5px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: scrollBarColor,
+                  borderRadius: '48px',
                 },
               }}
             >
@@ -402,7 +425,7 @@ export function HomePage() {
                   justifyContent={'left'}
                   alignItems={'center'}
                   transition="all 0.5s"
-                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                   pl="2"
                 >
                   <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
@@ -413,10 +436,11 @@ export function HomePage() {
                   justifyContent={'left'}
                   alignItems={'center'}
                   transition="all 0.5s"
-                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                   pl="2"
+                  onClick={enterBoardByIdModalOnOpen}
                 >
-                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by Link</Text>
+                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
                 </Box>
                 <Box
                   h="40px"
@@ -424,20 +448,15 @@ export function HomePage() {
                   justifyContent={'left'}
                   alignItems={'center'}
                   transition="all 0.5s"
-                  _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
+                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                   pl="2"
-                  onClick={createBoardModalOnOpen}
+                  onClick={createRoomModalOnOpen}
                 >
                   <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
                 </Box>
                 <Accordion defaultIndex={[0]} allowMultiple>
                   <AccordionItem border="none">
-                    <AccordionButton
-                      _hover={{ backgroundColor: 'teal', cursor: 'pointer' }}
-                      _expanded={{ backgroundColor: 'teal' }}
-                      transition={'all 0.5s'}
-                      pl="2"
-                    >
+                    <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
                       <Box display="flex" flex="1" alignItems="left">
                         <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
                       </Box>
@@ -464,34 +483,9 @@ export function HomePage() {
                       </VStack>
                     </AccordionPanel>
                   </AccordionItem>
-                  {/* <AccordionItem border="none">
-                    <AccordionButton pl="2" _hover={{ backgroundColor: 'teal', cursor: 'pointer' }} _expanded={{ backgroundColor: 'teal' }}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-
-                    <AccordionPanel pb={4}>
-                      <VStack spacing={2} align="stretch" pl="24px">
-                        {boards.filter(boardStarredFilter).map((board) => (
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="left"
-                            transition="all 0.5s"
-                            pl="2"
-                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
-                          >
-                            <Text fontSize="md">{board.data.name}</Text>
-                          </Box>
-                        ))}
-                      </VStack>
-                    </AccordionPanel>
-                  </AccordionItem> */}
 
                   <AccordionItem border="none">
-                    <AccordionButton _hover={{ backgroundColor: 'teal', cursor: 'pointer' }} _expanded={{ backgroundColor: 'teal' }} pl="2">
+                    <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
                       <Box display="flex" flex="1" alignItems="left">
                         <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
                       </Box>
@@ -518,18 +512,43 @@ export function HomePage() {
                       </VStack>
                     </AccordionPanel>
                   </AccordionItem>
+                  <AccordionItem border="none">
+                    <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
+                      <Box display="flex" flex="1" alignItems="left">
+                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+
+                    <AccordionPanel pb={4}>
+                      <VStack spacing={2} align="stretch" pl="24px">
+                        {boards.filter(boardStarredFilter).map((board) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="2"
+                            _hover={{ backgroundColor: 'gray', cursor: 'pointer' }}
+                          >
+                            <Text fontSize="md">{board.data.name}</Text>
+                          </Box>
+                        ))}
+                      </VStack>
+                    </AccordionPanel>
+                  </AccordionItem>
                 </Accordion>
               </VStack>
             </Box>
             <Box
               marginTop="auto"
               display="flex"
-              backgroundColor="teal  "
+              backgroundColor={teal}
               height="40px"
               alignItems={'center'}
               width="100%"
               transition={'all 0.5s'}
-              _hover={{ cursor: 'pointer', backgroundColor: 'teal.600' }}
+              _hover={{ cursor: 'pointer' }}
             >
               <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
               <Text fontSize="md" fontWeight={'bold'}>
@@ -545,37 +564,32 @@ export function HomePage() {
         display="flex"
         flex="1"
         flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
-        backgroundColor="#020202"
-        overflow="hidden"
+        backgroundColor={mainBackgroundColor}
+        maxHeight="100vh"
         height="100vh"
         padding="8"
       >
-        <Box width="100%" height="300px">
+        <Box width="100%" minHeight="200px">
           {/* Room Information */}
-          <Text fontSize="3xl" fontWeight="bold">
-            {selectedRoom ? selectedRoom.data.name : 'No Room Selected'}
-            <Text fontSize="xl" fontWeight={'normal'}>
-              {' '}
-              {selectedRoom?.data.description}
-            </Text>
-          </Text>
           {selectedRoom && (
-            <VStack alignItems={'start'}>
-              <Tag colorScheme={selectedRoom.data.color} variant="solid" mr="2">
-                Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}
-              </Tag>
+            <VStack alignItems={'start'} gap="0">
+              <Text fontSize="4xl" fontWeight="bold">
+                {selectedRoom.data.name}
+              </Text>
+              <Text fontSize="xl" fontWeight={'normal'}>
+                {' '}
+                {selectedRoom?.data.description}
+              </Text>
 
-              <Tag colorScheme={selectedRoom.data.color} variant="solid">
-                Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}
-              </Tag>
+              <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+
+              <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
             </VStack>
           )}
         </Box>
 
-        <Box width="100%" height="100%">
-          <Tabs colorScheme={selectedRoom ? selectedRoom.data.color : 'teal'}>
+        <Box width="100%">
+          <Tabs colorScheme="teal">
             <TabList>
               <Tab>Boards</Tab>
               <Tab>Members</Tab>
@@ -586,7 +600,21 @@ export function HomePage() {
               <TabPanel>
                 {selectedRoom && (
                   <Box display="flex" gap="4">
-                    <Box display="flex" flexDir={'column'} gap="2" flexWrap="wrap" justifyContent="start">
+                    <VStack
+                      gap={'2'}
+                      width="400px"
+                      overflowY="scroll"
+                      css={{
+                        '&::-webkit-scrollbar': {
+                          background: 'transparent',
+                          width: '5px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: 'gray',
+                          borderRadius: '48px',
+                        },
+                      }}
+                    >
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
                         .map((board) => (
@@ -594,21 +622,25 @@ export function HomePage() {
                             key={board._id}
                             board={board}
                             onClick={() => handleBoardClick(board)}
-                            selected={false}
+                            selected={selectedBoard ? selectedBoard._id === board._id : false}
                             usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
                           />
                         ))}
-                    </Box>
-                    <Box>
-                      {/* Board Info */}
-                      <Box width="100%" height="300px">
-                        <Text fontSize="3xl" fontWeight="bold">
-                          {selectedBoard ? selectedBoard.data.name : 'No Board Selected'}
-                        </Text>
-                        <Text fontSize="xl" fontWeight={'normal'}>
-                          {selectedBoard?.data.description}
-                        </Text>
-                      </Box>
+                    </VStack>
+                    <Box width="400px" minHeight="200px" px="2">
+                      {selectedBoard && (
+                        <VStack gap="0" align="stretch">
+                          <Text fontSize="3xl" fontWeight="bold">
+                            {selectedBoard.data.name}
+                          </Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>
+                            {selectedBoard?.data.description}
+                          </Text>
+                          <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+                          <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+                          <Box border={`solid 2px ${teal}`} mt="2" height="200px" borderRadius="md"></Box>
+                        </VStack>
+                      )}
                     </Box>
                   </Box>
                 )}
@@ -618,11 +650,15 @@ export function HomePage() {
                   display="flex"
                   flexDir="column"
                   overflowY="scroll"
-                  height="100%"
                   width="400px"
                   css={{
                     '&::-webkit-scrollbar': {
-                      display: 'none',
+                      background: 'transparent',
+                      width: '5px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: 'white',
+                      borderRadius: '48px',
                     },
                   }}
                 >

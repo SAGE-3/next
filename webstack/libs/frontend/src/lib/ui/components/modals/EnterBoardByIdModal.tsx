@@ -63,9 +63,43 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
   const handleSubmit = async () => {
     // Update local state
     setSubmitStatus('submitted');
+    let url: any = '';
+    try {
+      url = new URL(url.startsWith('http') ? url : `https://${url}`);
+    } catch (e) {
+      console.log('Invalid URL');
+      // Reset local state
+      setSubmitStatus('pending');
+      setBoardId('');
+      // Give user some feedback
+      toast({
+        title: 'Invalid URL',
+        description: 'Please enter a valid URL',
+        duration: 3000,
+        isClosable: true,
+        status: 'error',
+      });
+      return;
+    }
+    console.log(url);
+    // Check if the hostname is the same as the current hostname
+    if (url.hostname !== window.location.hostname) {
+      // Reset local state
+      setSubmitStatus('pending');
+      setBoardId('');
+      // Give user some feedback
+      toast({
+        title: 'Invalid Board ID',
+        description: 'This link is for a different server.',
+        duration: 3000,
+        isClosable: true,
+        status: 'error',
+      });
+      return;
+    }
     // Fetch board from the server
     const response = await fetch(apiUrls.boards.getBoard(boardId));
-    const results = await response.json() as { success: boolean; data: Board[] };
+    const results = (await response.json()) as { success: boolean; data: Board[] };
     // Check the data we got back
     if (results.success) {
       // Update local state
@@ -107,19 +141,19 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
 
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Enter Board by ID</ModalHeader>
+        <ModalHeader>Enter Board by URL</ModalHeader>
         <ModalBody mb="2">
           {submitStatus === 'pending' ? (
             <Box mx={2} width="500px">
               <form onSubmit={handleSubmit}>
                 <InputGroup>
-                  <InputLeftAddon children="BoardID" />
+                  <InputLeftAddon children="URL" />
                   <Input
                     value={boardId}
                     onChange={handleInputChange}
                     onSubmit={handleSubmit}
                     fontSize="sm"
-                    placeholder="Enter a board ID"
+                    placeholder="Enter URL"
                     spellCheck={false}
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                   />
@@ -135,7 +169,7 @@ export function EnterBoardByIdModal(props: enterBoardProps) {
             <Button colorScheme="blue" mr={4} onClick={props.onClose}>
               Cancel
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!isUUIDv4(boardId)}>
+            <Button colorScheme="green" onClick={handleSubmit}>
               Enter
             </Button>
           </ModalFooter>
