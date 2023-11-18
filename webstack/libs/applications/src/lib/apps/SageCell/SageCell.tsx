@@ -12,8 +12,8 @@ import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 // Chakra Imports
 import {
   Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
-  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
-  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
+  Alert, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Tooltip, Text, useColorModeValue, useToast,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   useDisclosure,
   Button,
@@ -84,6 +84,10 @@ function AppComponent(props: App): JSX.Element {
   // Store between app window and toolbar
   const drawer = useStore((state) => state.drawer[props._id]);
   const setDrawer = useStore((state) => state.setDrawer);
+  const execute = useStore((state) => state.execute[props._id]);
+  const interrupt = useStore((state) => state.interrupt[props._id]);
+  const setExecute = useStore((state) => state.setExecute);
+  const setInterrupt = useStore((state) => state.setInterrupt);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
@@ -302,6 +306,21 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   };
+
+  // Track the execute flag from the store in the toolbar
+  useEffect(() => {
+    if (execute) {
+      handleExecute();
+      setExecute(props._id, false);
+    }
+  }, [execute]);
+  // Track the interrupt flag from the store in the toolbar
+  useEffect(() => {
+    if (interrupt) {
+      handleInterrupt();
+      setInterrupt(props._id, false);
+    }
+  }, [interrupt]);
 
   /**
    * Clears the code and the msgId from the state
