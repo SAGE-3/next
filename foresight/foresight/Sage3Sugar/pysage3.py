@@ -78,19 +78,16 @@ class PySage3:
                 raise Exception("Smartbit not supported in interactive mode")
 
             # just try to create to see if it's going to raise an error
-            try:
-                _ = SmartBitFactory.create_smartbit(
-                    {
-                        "_id": str(uuid.uuid4()),
-                        "data": obj,
-                        "state": obj["state"],
-                    }
-                )
-            except Exception as e:
-                print(f"Error creating smartbit {e}")
+            _ = SmartBitFactory.create_smartbit(
+                {
+                    "_id": str(uuid.uuid4()),
+                    "data": obj,
+                    "state": obj["state"],
+                }
+            )
             return self.s3_comm.create_app(obj)
         except Exception as e:
-            print(f"Err or during creation of app {e}")
+            print(f"Error during creation of app {e}")
             return None
 
     def get_tags(self, app_id):
