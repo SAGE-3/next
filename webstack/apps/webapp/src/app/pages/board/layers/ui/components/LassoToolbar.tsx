@@ -262,7 +262,7 @@ for b in bits:
             >
               {'Actions'}
             </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+            <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
               {selectedAppFunctions()}
 
@@ -270,21 +270,21 @@ for b in bits:
                 <MenuButton size="xs" as={Button} mr={'2px'} colorScheme="yellow">
                   <MdMenu />
                 </MenuButton>
-                <MenuList>
-                  <MenuGroup title="Actions">
-                    <MenuItem onClick={fitSelectedApps} icon={<MdZoomOutMap />}>
+                <MenuList p="0" m="0">
+                  <MenuGroup title="Actions" m="1">
+                    <MenuItem onClick={fitSelectedApps} icon={<MdZoomOutMap />} py="0" m="0">
                       Zoom To Apps
                     </MenuItem>
-                    <MenuItem isDisabled={!canPin} onClick={pin} icon={<MdPinDrop />}>
+                    <MenuItem isDisabled={!canPin} onClick={pin} icon={<MdPinDrop />} py="0" m="0">
                       Pin Apps
                     </MenuItem>
-                    <MenuItem isDisabled={!canCreateApp} onClick={handleDuplicateApps} icon={<MdCopyAll />}>
+                    <MenuItem isDisabled={!canCreateApp} onClick={handleDuplicateApps} icon={<MdCopyAll />} py="0" m="0">
                       Duplicate Apps
                     </MenuItem>
                     {/* Submenu */}
                     <Menu isOpen={sendToBoardSubmenuOpen} placement="right-end" onClose={closeSendToBoardSubmenu}>
                       <MenuButton
-                        as={MenuItem}
+                        as={MenuItem} py="0" m="0"
                         isDisabled={!canCreateApp}
                         onClick={toggleSendToBoardSubmenu}
                         icon={<MdSend />}
@@ -295,7 +295,7 @@ for b in bits:
                       <MenuList>
                         {roomsBoards.map((b) => {
                           return (
-                            <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)}>
+                            <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)} py="0" m="0">
                               {b.data.name}
                             </MenuItem>
                           );
@@ -304,11 +304,11 @@ for b in bits:
                     </Menu>
                   </MenuGroup>
                   <MenuDivider />
-                  <MenuGroup title="AI Actions">
-                    <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />}>
+                  <MenuGroup title="AI Actions" m="1">
+                    <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
                     </MenuItem>
-                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />}>
+                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />} py="0" m="0">
                       Open in Chat
                     </MenuItem>
                   </MenuGroup>
