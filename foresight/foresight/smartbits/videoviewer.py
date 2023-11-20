@@ -10,21 +10,21 @@ from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
-class StickieState(TrackedBaseModel):
-    text: str
-    fontSize: int
-    color: str
-    lock: bool
-    executeInfo: ExecuteInfo
+class VideoViewerState(TrackedBaseModel):
+    assetid: str
+    currentTime: float
+    paused: bool
+    loop: bool
 
 
-class Stickie(SmartBit):
+class VideoViewer(SmartBit):
     # the key that is assigned to this in state is
-    state: StickieState
+    state: VideoViewerState
 
+    # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(Stickie, self).__init__(**kwargs)
+        super(VideoViewer, self).__init__(**kwargs)
 
     def clean_up(self):
         pass

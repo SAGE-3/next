@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove } from 'react-icons/md';
+import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow, MdStop } from 'react-icons/md';
 // Date manipulation (for filename)
 import dateFormat from 'date-fns/format';
 
@@ -32,8 +32,12 @@ import { useStore } from './store';
  * @returns {JSX.Element}
  */
 export function ToolbarComponent(props: App): JSX.Element {
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
   // Store between toolbar and appWindow
   const setDrawer = useStore((state) => state.setDrawer);
+  const setExecute = useStore((state) => state.setExecute);
+  const setInterrupt = useStore((state) => state.setInterrupt);
   // App State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -189,6 +193,15 @@ export function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.code, roomId]);
 
+  const setExecuteTrue = () => {
+    // Set the flag to execute the cell
+    setExecute(props._id, true);
+  };
+  const setStopTrue = () => {
+    // Set the flag to stop the cell
+    setInterrupt(props._id, true);
+  };
+
   return (
     <HStack>
       {myKernels.length === 0 ? (
@@ -223,14 +236,24 @@ export function ToolbarComponent(props: App): JSX.Element {
       )}
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
-          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdHelp />
+        <Tooltip placement="top-start" hasArrow={true} label={'Execute'} openDelay={400}>
+          <Button isDisabled={!selectedKernel || !canExecuteCode} onClick={setExecuteTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdPlayArrow />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Stop'} openDelay={400}>
+          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdStop />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
           <Button onClick={openInDrawer}>
             <MdWeb />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdHelp />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -290,6 +313,8 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   // User
   const { user } = useUser();
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
 
   // Abilities
   const canCreateKernels = useAbility('create', 'kernels');
@@ -305,6 +330,9 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   // Params
   const { boardId } = useParams();
+  // Store to communicate with the appWindow
+  const setExecute = useStore((state) => state.setExecute);
+  const setInterrupt = useStore((state) => state.setInterrupt);
 
   /**
    * Check if the user has access to the kernel
@@ -339,7 +367,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
-      if (app.data.state.lock) return;
       const size = app.data.state.fontSize + 2;
       if (size > 128) return;
       ps.push({ id: app._id, updates: { fontSize: size } });
@@ -352,13 +379,23 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
-      if (app.data.state.lock) return;
       const size = app.data.state.fontSize - 2;
       if (size <= 8) return;
       ps.push({ id: app._id, updates: { fontSize: size } });
     });
     // Update all the apps at once
     updateStateBatch(ps);
+  };
+
+  const setExecuteAll = () => {
+    props.apps.forEach((app) => {
+      setExecute(app._id, true);
+    });
+  };
+  const setStopAll = () => {
+    props.apps.forEach((app) => {
+      setInterrupt(app._id, true);
+    });
   };
 
   /**
@@ -373,7 +410,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     props.apps.forEach((app) => {
-      if (app.data.state.lock) return;
       // if (!myKernels.find((kernel) => kernel.kernel_id === app.data.state.kernel)) return;
       ps.push({ id: app._id, updates: { kernel: newKernelValue } });
     });
@@ -420,6 +456,21 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           }
         </Select>
       )}
+
+      {/* Execute all selected cells */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+        <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
+          <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdPlayArrow />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
+          <Button onClick={setStopAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdStop />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="2">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button onClick={handleDecreaseFont} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>

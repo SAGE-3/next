@@ -87,7 +87,7 @@ class PySage3:
             )
             return self.s3_comm.create_app(obj)
         except Exception as e:
-            print(f"Err or during creation of app {e}")
+            print(f"Error during creation of app {e}")
             return None
 
     def get_tags(self, app_id):
