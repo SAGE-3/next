@@ -198,7 +198,7 @@ function AppComponent(props: App): JSX.Element {
           name={'stickie' + props._id}
           css={{
             // Balance the text, improve text layouts
-            textWrap: 'balance',
+            textWrap: 'pretty', // 'balance',
           }}
         />
         {locked && (
