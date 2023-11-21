@@ -72,4 +72,3 @@ class SmartBitFactory:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")
 
         return smartbit_instance
-        "Chat": "chat",
