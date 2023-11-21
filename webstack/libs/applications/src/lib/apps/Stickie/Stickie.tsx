@@ -157,7 +157,7 @@ function AppComponent(props: App): JSX.Element {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Stickie',
           // keep the same color, like a clone operation except for the text
-          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          state: { ...s, text: '' },
           raised: true,
           dragging: false,
           pinned: false,
