@@ -29,6 +29,9 @@ class SmartBitFactory:
         "PDFViewer": "pdfviewer",
         "VegaLiteViewer": "vegaliteviewer",
         "ImageViewer": "imageviewer",
+        "Chat": "chat",
+        "MapGL": "mapgl",
+        "webview": "webview",
         "VideoViewer": "videoviewer",
         "IFrame": "iframe",
         "Seer": "seer",
@@ -69,3 +72,4 @@ class SmartBitFactory:
                 logger.error(f"Couldn't create the class in the SmartbitFactory {e}")
 
         return smartbit_instance
+        "Chat": "chat",
