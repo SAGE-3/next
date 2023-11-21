@@ -29,6 +29,10 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   const appBorderColorValue = useColorModeValue('gray.700', 'gray.200');
   const appBorderColor = useHexColor(appBorderColorValue);
   const backgroundColor = useColorModeValue(`${props.board.data.color}.400`, `${props.board.data.color}.900}`);
+  const linearBGColor = useColorModeValue(
+    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(178deg, #303030, #252525, #262626)`
+  );
 
   async function updateAppInfo() {
     const res = await APIHttp.QUERY<App>('/apps', { boardId: props.board._id });
@@ -70,6 +74,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       height={`${props.height}px`}
       backgroundSize="contain"
       borderRadius="md"
+      background={linearBGColor}
       p="2"
       border={`2px solid ${boardColor}`}
       display="flex"

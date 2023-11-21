@@ -33,7 +33,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 
-import { UserRow, BoardRow } from './components';
+import { UserRow, BoardRow, RoomSearchModal } from './components';
 
 import {
   JoinBoardCheck,
@@ -129,6 +129,7 @@ export function HomePage() {
   const { isOpen: editRoomModalIsOpen, onOpen: editRoomModalOnOpen, onClose: editRoomModalOnClose } = useDisclosure();
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
   const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
+  const { isOpen: roomSearchModal, onOpen: roomSearchModalOnOpen, onClose: roomSearchModalOnClose } = useDisclosure();
 
   // Permissions
   const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
@@ -240,6 +241,11 @@ export function HomePage() {
     setSelectedUser(undefined);
   }
 
+  // Function to handle when a use clicks on the room search button
+  function handleRoomSearchClick() {
+    roomSearchModalOnOpen();
+  }
+
   // Handle when the rooms and boards change
   useEffect(() => {
     // Check to see if the room you are in still exists
@@ -308,6 +314,9 @@ export function HomePage() {
       {/* Enter board modal */}
       {selectedBoard && <EnterBoardModal board={selectedBoard} isOpen={enterBoardModalIsOpen} onClose={enterBoardModalOnClose} />}
 
+      {/* Room Search Modal */}
+      <RoomSearchModal isOpen={roomSearchModal} onClose={roomSearchModalOnClose} />
+
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
@@ -353,6 +362,7 @@ export function HomePage() {
                 transition="all 0.5s"
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
+                onClick={handleRoomSearchClick}
               >
                 <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
               </Box>
@@ -561,8 +571,9 @@ export function HomePage() {
                   <Box display="flex" gap="4">
                     <VStack
                       gap={'2'}
-                      width="400px"
                       overflowY="scroll"
+                      overflowX="hidden"
+                      height="100%"
                       css={{
                         '&::-webkit-scrollbar': {
                           background: 'transparent',
