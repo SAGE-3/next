@@ -90,6 +90,15 @@ class PySage3:
             print(f"Error during creation of app {e}")
             return None
 
+    def upload_file(self, room_id, filename, filedata):
+        try:
+            payload = {"room": room_id}
+            files = {"files": (filename, filedata)}
+            return self.s3_comm.upload_file(files, payload)
+        except Exception as e:
+            print(f"Error during creation of app {e}")
+            return None
+
     def get_tags(self, app_id):
         try:
             res = self.s3_comm.get_tags(app_id)
