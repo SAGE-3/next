@@ -10,21 +10,19 @@ from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
-class StickieState(TrackedBaseModel):
-    text: str
-    fontSize: int
-    color: str
-    lock: bool
-    executeInfo: ExecuteInfo
+class IFrameState(TrackedBaseModel):
+    source: str
+    doc: str
 
 
-class Stickie(SmartBit):
+class IFrame(SmartBit):
     # the key that is assigned to this in state is
-    state: StickieState
+    state: IFrameState
 
+    # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(Stickie, self).__init__(**kwargs)
+        super(VideoViewer, self).__init__(**kwargs)
 
     def clean_up(self):
         pass
