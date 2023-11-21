@@ -88,6 +88,7 @@ function AppComponent(props: App): JSX.Element {
   const interrupt = useStore((state) => state.interrupt[props._id]);
   const setExecute = useStore((state) => state.setExecute);
   const setInterrupt = useStore((state) => state.setInterrupt);
+  const setKernel = useStore((state) => state.setKernel);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
@@ -232,11 +233,14 @@ function AppComponent(props: App): JSX.Element {
     // Execute the code
     handleExecute();
   };
+
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
     updateState(props._id, { code: editorRef.current.getValue() });
-    if (!s.kernel) {
+    // Get the kernel from the store, since function executed from monoaco editor
+    const kernel = useStore.getState().kernel[props._id];
+    if (!kernel) {
       if (toastRef.current) return;
       toastRef.current = true;
       toast({
@@ -252,7 +256,7 @@ function AppComponent(props: App): JSX.Element {
       });
       return;
     }
-    if (s.kernel && !access) {
+    if (kernel && !access) {
       if (toastRef.current) return;
       toastRef.current = true;
       toast({
@@ -279,8 +283,7 @@ function AppComponent(props: App): JSX.Element {
       code2execute = code2execute.replaceAll('%%sage_board_id', `'${boardId}'`);
       code2execute = code2execute.replaceAll('%%sage_app_id', `'${props._id}'`);
       code2execute = code2execute.replaceAll('%%sage_selected_apps', `${JSON.stringify(selectedAppsIds)}`);
-
-      const response = await executeCode(code2execute, s.kernel, user._id);
+      const response = await executeCode(code2execute, kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
         updateState(props._id, {
@@ -288,7 +291,6 @@ function AppComponent(props: App): JSX.Element {
           session: user._id,
         });
       } else {
-        // console.log('Error executing code');
         updateState(props._id, {
           streaming: false,
           msgId: '',
@@ -727,17 +729,9 @@ function AppComponent(props: App): JSX.Element {
       run: handleExecute,
     });
     editor.addAction({
-      id: 'clear',
-      label: 'Cell Clear',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-    editor.addAction({
       id: 'interrupt',
       label: 'Cell Interrupt',
-      contextMenuOrder: 2,
+      contextMenuOrder: 1,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
@@ -756,6 +750,14 @@ function AppComponent(props: App): JSX.Element {
       contextMenuOrder: 1,
       contextMenuGroupId: '3_sagecell',
       run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
     });
 
     editor.addAction({
@@ -832,17 +834,9 @@ function AppComponent(props: App): JSX.Element {
       run: handleExecuteDrawer,
     });
     editor.addAction({
-      id: 'clear',
-      label: 'Cell Clear',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-    editor.addAction({
       id: 'interrupt',
       label: 'Cell Interrupt',
-      contextMenuOrder: 2,
+      contextMenuOrder: 1,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
@@ -850,7 +844,7 @@ function AppComponent(props: App): JSX.Element {
     editor.addAction({
       id: 'syncForServer',
       label: 'Cell Save',
-      contextMenuOrder: 3,
+      contextMenuOrder: 2,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: handleSaveCode,
@@ -869,6 +863,14 @@ function AppComponent(props: App): JSX.Element {
       contextMenuOrder: 1,
       contextMenuGroupId: '3_sagecell',
       run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
     });
 
     editor.addAction({
@@ -900,19 +902,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   /**
-   * Needs to be reset every time the kernel changes
+   * Put the kernel in the store, read from the action in Monaco
    */
   useEffect(() => {
-    if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
-      editorRef.current.addAction({
-        id: 'execute',
-        label: 'Cell Execute',
-        contextMenuOrder: 0,
-        contextMenuGroupId: '2_sage3',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-        run: handleExecute,
-      });
-    }
+    setKernel(props._id, s.kernel);
   }, [s.kernel]);
 
   useEffect(() => {
