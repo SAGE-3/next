@@ -11,10 +11,18 @@ import { create } from 'zustand';
 
 export interface CellStore {
   drawer: { [key: string]: boolean };
+  execute: { [key: string]: boolean };
+  interrupt: { [key: string]: boolean };
   setDrawer: (id: string, drawer: boolean) => void;
+  setExecute: (id: string, exec: boolean) => void;
+  setInterrupt: (id: string, exec: boolean) => void;
 }
 
 export const useStore = create<CellStore>()((set) => ({
   drawer: {},
+  execute: {},
+  interrupt: {},
   setDrawer: (id: string, drawer: boolean) => set((state) => ({ drawer: { ...state.drawer, ...{ [id]: drawer } } })),
+  setExecute: (id: string, exec: boolean) => set((state) => ({ execute: { ...state.execute, ...{ [id]: exec } } })),
+  setInterrupt: (id: string, stop: boolean) => set((state) => ({ interrupt: { ...state.interrupt, ...{ [id]: stop } } })),
 }));
