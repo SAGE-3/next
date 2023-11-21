@@ -8,22 +8,24 @@
 
 from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
 from foresight.smartbits.smartbit import TrackedBaseModel
-from typing import Optional
+from typing import List
 
 
-class IFrameState(TrackedBaseModel):
-    source: str
-    doc: Optional[str]
+class ChatState(TrackedBaseModel):
+    previousQ: str
+    previousA: str
+    context: str
+    messages: List
 
 
-class IFrame(SmartBit):
+class Chat(SmartBit):
     # the key that is assigned to this in state is
-    state: IFrameState
+    state: ChatState
 
     # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(IFrame, self).__init__(**kwargs)
+        super(Chat, self).__init__(**kwargs)
 
     def clean_up(self):
         pass

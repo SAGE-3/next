@@ -11,19 +11,19 @@ from foresight.smartbits.smartbit import TrackedBaseModel
 from typing import Optional
 
 
-class IFrameState(TrackedBaseModel):
-    source: str
-    doc: Optional[str]
+class WebviewState(TrackedBaseModel):
+    webviewurl: str
+    zoom: Optional[int]
 
 
-class IFrame(SmartBit):
+class Webview(SmartBit):
     # the key that is assigned to this in state is
-    state: IFrameState
+    state: WebviewState
 
     # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(IFrame, self).__init__(**kwargs)
+        super(Webview, self).__init__(**kwargs)
 
     def clean_up(self):
         pass
