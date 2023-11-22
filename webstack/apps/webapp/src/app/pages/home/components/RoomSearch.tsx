@@ -14,7 +14,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -30,6 +30,7 @@ import {
   InputLeftElement,
   Button,
   Tag,
+  ModalFooter,
 } from '@chakra-ui/react';
 
 import { useHexColor, useRoomStore, useUser } from '@sage3/frontend';
@@ -53,36 +54,82 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
 
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
+  const searchColorValue = useColorModeValue('gray.900', 'gray.100');
+  const searchColor = useHexColor(searchColorValue);
+
+  // Initial Ref to focus on the input
+  const initialRef = useRef<HTMLInputElement>(null);
+
+  // Colors
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
 
   // Handle Search Term Change
   const handleSearchTermChange = (event: any) => {
     setSearchTerm(event.target.value);
   };
 
-  // Room Search Filter
+  // Room Search Filter that matches on name or description
   const filterRooms = (room: Room) => {
-    return room.data.name.includes(searchTerm) || room.data.description.includes(searchTerm);
+    return (
+      room.data.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()) ||
+      room.data.description.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase())
+    );
+  };
+
+  const onClose = () => {
+    setSearchTerm('');
+    props.onClose();
   };
 
   return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} isCentered size="3xl">
+    <Modal isOpen={props.isOpen} onClose={onClose} isCentered size="xl">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize={'3xl'}>Room Search</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody px={8} pb={8}>
+        <ModalBody px={8}>
           <InputGroup mb="4">
             <InputLeftElement pointerEvents="none">
               <MdSearch color="gray.300" />
             </InputLeftElement>
-            <Input type="tel" placeholder="Room Search..." onChange={handleSearchTermChange} />
+            <Input
+              ref={initialRef}
+              type="text"
+              _placeholder={{ color: searchColor }}
+              placeholder="Room Search..."
+              onChange={handleSearchTermChange}
+            />
           </InputGroup>
-          <Box display="flex" flexDir="column" textAlign={'left'} gap="3" height="50vh" overflowY={'scroll'} pr="4">
-            {rooms.filter(filterRooms).map((room) => (
-              <RoomRow room={room} />
-            ))}
+          <Box
+            display="flex"
+            flexDir="column"
+            textAlign={'left'}
+            gap="3"
+            height="50vh"
+            overflowY={'scroll'}
+            pr="2"
+            css={{
+              '&::-webkit-scrollbar': {
+                background: 'transparent',
+                width: '5px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: scrollBarColor,
+                borderRadius: '48px',
+              },
+            }}
+          >
+            {rooms
+              .filter(filterRooms)
+              .sort((a, b) => a.data.name.localeCompare(b.data.name))
+              .map((room) => (
+                <RoomRow room={room} />
+              ))}
           </Box>
         </ModalBody>
+        <ModalFooter>
+          <Button onClick={onClose}>Close</Button>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );
@@ -105,7 +152,7 @@ function RoomRow(props: RoomRowProps) {
   );
 
   // Room Store
-  const { joinRoomMembership, leaveRoomMembership, members } = useRoomStore((state) => state);
+  const { joinRoomMembership, members } = useRoomStore((state) => state);
 
   // Is this user a member of this room?
   const roomMember = members.find((roomMember) => roomMember.data.roomId === props.room._id);
@@ -119,16 +166,13 @@ function RoomRow(props: RoomRowProps) {
     }
   }, []);
 
-  const handleMembershipClick = () => {
+  const handleMembershipClick = (ev: React.MouseEvent) => {
+    ev.stopPropagation();
     if (isOwner) {
       return;
     }
-    if (isMember) {
-      leaveRoomMembership(props.room._id);
-    } else {
-      // Join Room
-      joinRoomMembership(props.room._id);
-    }
+    // Join Room
+    joinRoomMembership(props.room._id);
   };
 
   return (
@@ -154,21 +198,21 @@ function RoomRow(props: RoomRowProps) {
         </Box>
       </Box>
       <Box display="flex" gap="2px">
-        {isOwner ? (
-          <Tag size="md" width="140px" colorScheme="green">
-            You are the Owner
+        {isOwner || isMember ? (
+          <Tag size="md" width="100px" colorScheme={isOwner ? 'green' : 'yellow'} justifyContent={'center'}>
+            {isOwner ? 'Owner' : 'Member'}
           </Tag>
         ) : (
           <Button
             size="xs"
             variant={'solid'}
-            width="140px"
+            width="100px"
             fontSize="sm"
             aria-label="enter-board"
             colorScheme={isMember ? 'red' : 'teal'}
             onClick={handleMembershipClick}
           >
-            {isMember ? 'Leave' : 'Join'}
+            Join
           </Button>
         )}
       </Box>

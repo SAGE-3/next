@@ -52,6 +52,7 @@ import {
   EditRoomModal,
   EditBoardModal,
   EnterBoardModal,
+  ConfirmModal,
 } from '@sage3/frontend';
 import { Board, Presence, Room, User } from '@sage3/shared/types';
 import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
@@ -89,7 +90,7 @@ export function HomePage() {
     members,
     subscribeToAllRooms: subscribeToRooms,
     fetched: roomsFetched,
-    joinRoomMembership,
+    leaveRoomMembership,
   } = useRoomStore((state) => state);
 
   // Board Store
@@ -130,6 +131,7 @@ export function HomePage() {
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
   const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
   const { isOpen: roomSearchModal, onOpen: roomSearchModalOnOpen, onClose: roomSearchModalOnClose } = useDisclosure();
+  const { isOpen: leaveRoomModalIsOpen, onOpen: leaveRoomModalOnOpen, onClose: leaveRoomModalOnClose } = useDisclosure();
 
   // Permissions
   const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
@@ -234,6 +236,16 @@ export function HomePage() {
     }
   }
 
+  // Handle when the user wnats to leave a room membership
+  const handleLeaveRoomMembership = () => {
+    const isOwner = selectedRoom?.data.ownerId === user?._id;
+    if (selectedRoom && !isOwner) {
+      leaveRoomMembership(selectedRoom._id);
+      handleLeaveRoom();
+      leaveRoomModalOnClose();
+    }
+  };
+
   // Function to handle states for when a user leaves a room (unjoins)
   function handleLeaveRoom() {
     setSelectedRoom(undefined);
@@ -243,7 +255,16 @@ export function HomePage() {
 
   // Function to handle when a use clicks on the room search button
   function handleRoomSearchClick() {
-    roomSearchModalOnOpen();
+    if (canJoin) {
+      roomSearchModalOnOpen();
+    } else {
+      toast({
+        title: 'You do not have permission to join rooms',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+    }
   }
 
   // Handle when the rooms and boards change
@@ -284,6 +305,17 @@ export function HomePage() {
   return (
     // Main Container
     <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor}>
+      {/* Confirmation Dilog to leave a room */}
+      <ConfirmModal
+        isOpen={leaveRoomModalIsOpen}
+        onClose={leaveRoomModalOnClose}
+        title={'Leave Room'}
+        cancelText={'Cancel'}
+        confirmText="Leave Room"
+        confirmColor="red"
+        message={`Are you sure you want to leave "${selectedRoom?.data.name}"?`}
+        onConfirm={handleLeaveRoomMembership}
+      />
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
@@ -390,21 +422,24 @@ export function HomePage() {
 
                   <AccordionPanel p="0">
                     <VStack align="stretch" gap="0">
-                      {rooms.filter(roomMemberFilter).map((room) => (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="left"
-                          transition="all 0.5s"
-                          pl="48px"
-                          height="28px"
-                          backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
-                          _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                          onClick={() => handleRoomClick(room)}
-                        >
-                          <Text fontSize="md">{room.data.name}</Text>
-                        </Box>
-                      ))}
+                      {rooms
+                        .filter(roomMemberFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((room) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Text fontSize="md">{room.data.name}</Text>
+                          </Box>
+                        ))}
                     </VStack>
                   </AccordionPanel>
                 </AccordionItem>
@@ -433,21 +468,24 @@ export function HomePage() {
 
                   <AccordionPanel p="0">
                     <VStack align="stretch" gap="0">
-                      {boards.filter(boardStarredFilter).map((board) => (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="left"
-                          transition="all 0.5s"
-                          pl="48px"
-                          height="28px"
-                          backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                          onClick={() => handleBoardClick(board)}
-                        >
-                          <Text fontSize="md">{board.data.name}</Text>
-                        </Box>
-                      ))}
+                      {boards
+                        .filter(boardStarredFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((board) => (
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="left"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                            onClick={() => handleBoardClick(board)}
+                          >
+                            <Text fontSize="md">{board.data.name}</Text>
+                          </Box>
+                        ))}
                     </VStack>
                   </AccordionPanel>
                 </AccordionItem>
@@ -508,6 +546,7 @@ export function HomePage() {
           backgroundColor={mainBackgroundColor}
           maxHeight="100vh"
           height="100vh"
+          overflow="hidden"
           padding="8"
         >
           <Box width="100%" minHeight="200px">
@@ -531,29 +570,52 @@ export function HomePage() {
                   variant="outline"
                   size="sm"
                   width="120px"
-                  disabled={canCreateBoards}
+                  isDisabled={!canCreateBoards}
                   onClick={createBoardModalOnOpen}
                 >
                   Create Board
                 </Button>
-                <Button
-                  colorScheme="teal"
-                  variant="outline"
-                  width="120px"
-                  size="sm"
-                  disabled={selectedRoom.data.ownerId !== user?._id}
-                  onClick={editRoomModalOnOpen}
+                <Tooltip
+                  label={
+                    selectedRoom.data.ownerId === user?._id ? `Update the room's settings` : 'Only the owner can update the room settings'
+                  }
+                  openDelay={200}
+                  hasArrow
+                  placement="top"
                 >
-                  Settings
-                </Button>
-                <Button colorScheme="red" variant="outline" size="sm" width="120px" onClick={editRoomModalOnOpen}>
-                  Leave Room
-                </Button>
+                  <Button
+                    colorScheme="teal"
+                    variant="outline"
+                    width="120px"
+                    size="sm"
+                    isDisabled={selectedRoom.data.ownerId !== user?._id}
+                    onClick={editRoomModalOnOpen}
+                  >
+                    Settings
+                  </Button>
+                </Tooltip>
+                <Tooltip
+                  label={selectedRoom.data.ownerId === user?._id ? 'You cannot leave this room since you are the owner' : 'Leave the room'}
+                  openDelay={200}
+                  hasArrow
+                  placement="top"
+                >
+                  <Button
+                    colorScheme="red"
+                    variant="outline"
+                    size="sm"
+                    width="120px"
+                    onClick={leaveRoomModalOnOpen}
+                    isDisabled={selectedRoom.data.ownerId === user?._id}
+                  >
+                    Leave Room
+                  </Button>
+                </Tooltip>
               </Box>
             </VStack>
           </Box>
 
-          <Box width="100%">
+          <Box width="100%" overflow="hidden">
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>Boards</Tab>
@@ -568,25 +630,27 @@ export function HomePage() {
 
               <TabPanels>
                 <TabPanel>
-                  <Box display="flex" gap="4">
+                  <Box display="flex" gap="4" overflow="hidden">
                     <VStack
-                      gap={'2'}
+                      gap="3"
+                      pr="2"
+                      style={{ height: 'calc(100vh - 340px)' }}
                       overflowY="scroll"
-                      overflowX="hidden"
-                      height="100%"
                       css={{
                         '&::-webkit-scrollbar': {
                           background: 'transparent',
                           width: '5px',
                         },
                         '&::-webkit-scrollbar-thumb': {
-                          background: 'gray',
+                          background: scrollBarColor,
                           borderRadius: '48px',
                         },
                       }}
                     >
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
+                        // Sort alphabetically
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <BoardRow
                             key={board._id}
@@ -640,32 +704,35 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel>
-                  <Box
-                    display="flex"
-                    flexDir="column"
-                    overflowY="scroll"
-                    width="400px"
-                    css={{
-                      '&::-webkit-scrollbar': {
-                        background: 'transparent',
-                        width: '5px',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: 'white',
-                        borderRadius: '48px',
-                      },
-                    }}
-                  >
-                    {usersFilter().map((up) => {
-                      return (
-                        <UserRow
-                          key={up.user._id}
-                          userPresence={up}
-                          selected={selectedUser?._id == up.user._id}
-                          onClick={() => handleUserClick(up.user)}
-                        />
-                      );
-                    })}
+                  <Box display="flex" width="800px">
+                    <VStack
+                      gap="3"
+                      pr="2"
+                      style={{ height: 'calc(100vh - 340px)' }}
+                      overflowY="scroll"
+                      alignContent="left"
+                      css={{
+                        '&::-webkit-scrollbar': {
+                          background: 'transparent',
+                          width: '5px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: scrollBarColor,
+                          borderRadius: '48px',
+                        },
+                      }}
+                    >
+                      {usersFilter().map((up) => {
+                        return (
+                          <UserRow
+                            key={up.user._id}
+                            userPresence={up}
+                            selected={selectedUser?._id == up.user._id}
+                            onClick={() => handleUserClick(up.user)}
+                          />
+                        );
+                      })}
+                    </VStack>
                   </Box>
                 </TabPanel>
               </TabPanels>

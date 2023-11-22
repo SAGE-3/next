@@ -7,12 +7,12 @@
  */
 
 import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
-import { useHexColor, useUser } from '@sage3/frontend';
-import { User } from '@sage3/shared/types';
-import { MdPerson, MdStar, MdStarOutline } from 'react-icons/md';
+import { useHexColor } from '@sage3/frontend';
+import { Presence } from '@sage3/shared/types';
+import { MdPerson } from 'react-icons/md';
 import { UserPresence } from '../..';
 
-export function UserRow(props: { userPresence: UserPresence; selected: boolean; onClick: (user: User) => void }) {
+export function UserRow(props: { userPresence: UserPresence; selected: boolean; onClick: (user: Presence) => void }) {
   const borderColorValue = useColorModeValue(props.userPresence.user.data.color, props.userPresence.user.data.color);
   const borderColor = useHexColor(borderColorValue);
 
@@ -23,6 +23,13 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
+  const handleUserClick = () => {
+    const user = props.userPresence;
+    if (user.presence) {
+      props.onClick(user.presence);
+    }
+  };
+
   return (
     <Box
       background={linearBGColor}
@@ -31,7 +38,7 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
-      onClick={() => props.onClick(props.userPresence.user)}
+      onClick={handleUserClick}
       borderRadius="md"
       boxSizing="border-box"
       border={`solid 1px ${props.selected ? borderColor : 'transpanent'}`}
