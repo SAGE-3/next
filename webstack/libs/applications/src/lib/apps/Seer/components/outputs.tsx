@@ -73,16 +73,27 @@ export function Outputs(props: OutputsProps): JSX.Element {
   const [ownerColor, setOwnerColor] = useState<string>('#000000');
   const [history, setHistory] = useState<string[]>(s.history || []);
 
-  // Memos and errors
-  const renderedContent = useMemo(() => processedContent(content || []), [content]);
-  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
-
-  // Styles
-  const executionCountColor = useHexColor('red');
-
-  // Kernel Store
-  const { apiStatus, kernels, fetchResults } = useKernelStore((state) => state);
-  // const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+  /**
+   * This function will create a new webview app
+   * with the url provided
+   *
+   * @param url
+   */
+  const openInWebview = (url: string): void => {
+    createApp({
+      title: 'Webview',
+      roomId: props.app.data.roomId,
+      boardId: props.app.data.boardId,
+      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
+      size: { width: 600, height: props.app.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: { webviewurl: url },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
 
   // Get the color of the kernel owner
   useEffect(() => {

@@ -16,6 +16,7 @@ import {
   getMime,
   isValid,
   isImage,
+  isGeoTiff,
   isPDF,
   isCSV,
   isMD,
@@ -26,7 +27,9 @@ import {
   isPython,
   isGLTF,
   isGIF,
+  isFileURL,
   isPythonNotebook,
+  isTiff,
 } from '@sage3/shared';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -68,6 +71,7 @@ export function setupApp(
     state: { ...(initialValues[type] as AppState), ...init },
     raised: true,
     dragging: false,
+    pinned: false,
   };
 }
 
@@ -251,7 +255,47 @@ export function useFiles(): UseFiles {
   ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
-    if (isGIF(fileType)) {
+    if (isGeoTiff(fileType)) {
+      for (const a of assets) {
+        if (a._id === fileID) {
+          return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+        }
+      }
+    } else if (isFileURL(fileType)) {
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          });
+          // Get the content of the file
+          const text = await response.text();
+          const lines = text.split('\n');
+          for (const line of lines) {
+            // look for a line starting with URL=
+            if (line.startsWith('URL')) {
+              const words = line.split('=');
+              // the URL
+              const goto = words[1].trim();
+              return setupApp(
+                goto,
+                'WebpageLink',
+                xDrop - 200, yDrop - 200,
+                roomId, boardId,
+                { w: w, h: w },
+                { url: goto }
+              );
+            }
+          }
+          return null;
+        }
+      }
+    } else if (isGIF(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
@@ -268,6 +312,29 @@ export function useFiles(): UseFiles {
         }
       }
     } else if (isImage(fileType)) {
+      // Check if it is a GeoTiff in disguise
+      if (isTiff(fileType)) {
+        for (const a of assets) {
+          if (a._id === fileID) {
+            // Look for the metadata, maybe it's a GeoTiff
+            if (a.data.metadata) {
+              const localurl = apiUrls.assets.getAssetById(a.data.metadata);
+              // Get the content of the file
+              const response = await fetch(localurl, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              });
+              const metadata = await response.json();
+              // Check if it is a GeoTiff
+              if (metadata && metadata.GeoTiffVersion) {
+                return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+              }
+            }
+          }
+        }
+      }
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
@@ -342,43 +409,43 @@ export function useFiles(): UseFiles {
           return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
         }
       }
-    } else if (isPythonNotebook(fileType)) {
-      // Look for the file in the asset store
-      for (const a of assets) {
-        if (a._id === fileID) {
-          const localurl = apiUrls.assets.getAssetById(a.data.file);
-          // Get the content of the file
-          const response = await fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          });
-          const json = await response.json();
-          // Create a notebook file in Jupyter with the content of the file
-          const conf = await GetConfiguration();
-          if (conf.token) {
-            // Create a new notebook
-            const base = `http://${window.location.hostname}:8888`;
-            // Talk to the jupyter server API
-            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
-            const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-            // Create a new notebook
-            const response = await fetch(j_url, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: 'Token ' + conf.token,
-              },
-              body: JSON.stringify(payload),
-            });
-            const res = await response.json();
-            console.log('Jupyter> notebook created', res);
-            // Create a note from the json
-            return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
-          }
-        }
-      }
+      // } else if (isPythonNotebook(fileType)) {
+      //   // Look for the file in the asset store
+      //   for (const a of assets) {
+      //     if (a._id === fileID) {
+      //       const localurl = apiUrls.assets.getAssetById(a.data.file);
+      //       // Get the content of the file
+      //       const response = await fetch(localurl, {
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //           Accept: 'application/json',
+      //         },
+      //       });
+      //       const json = await response.json();
+      //       // Create a notebook file in Jupyter with the content of the file
+      //       const conf = await GetConfiguration();
+      //       if (conf.token) {
+      //         // Create a new notebook
+      //         const base = `http://${window.location.hostname}:8888`;
+      //         // Talk to the jupyter server API
+      //         const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
+      //         const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+      //         // Create a new notebook
+      //         const response = await fetch(j_url, {
+      //           method: 'PUT',
+      //           headers: {
+      //             'Content-Type': 'application/json',
+      //             Authorization: 'Token ' + conf.token,
+      //           },
+      //           body: JSON.stringify(payload),
+      //         });
+      //         const res = await response.json();
+      //         console.log('Jupyter> notebook created', res);
+      //         // Create a note from the json
+      //         return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
+      //       }
+      //     }
+      //   }
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {

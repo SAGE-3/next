@@ -36,7 +36,6 @@ export function Apps() {
   const appsFetched = useAppStore((state) => state.fetched);
 
   const deleteApp = useAppStore((state) => state.delete);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
@@ -68,11 +67,6 @@ export function Apps() {
   useEffect(() => {
     if (apps.length === 0) resetZIndex();
   }, [apps]);
-
-  // Deselect all apps
-  useHotkeys('esc', () => {
-    setSelectedApp('');
-  });
 
   // This still doesnt work properly
   // But a start
@@ -191,6 +185,7 @@ export function Apps() {
                 state: { ...(initialValues[type] as AppState), ...state },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             } else {
               console.log('Paste> JSON is not a SAGE3 app');
@@ -277,7 +272,7 @@ export function Apps() {
 
 function AppRender(props: { app: App }) {
   const [hasType] = useState(props.app.data.type in Applications);
-  const [AppComponent] = useState(() => hasType ? Applications[props.app.data.type].AppComponent : null);
+  const [AppComponent] = useState(() => (hasType ? Applications[props.app.data.type].AppComponent : null));
   const iconSize = Math.min(500, Math.max(40, props.app.data.size.height - 200));
   const fontSize = 15 + props.app.data.size.height / 100;
   const iconColorAppNotFound = useHexColor('red');

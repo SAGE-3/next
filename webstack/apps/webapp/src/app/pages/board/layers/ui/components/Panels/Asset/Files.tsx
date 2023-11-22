@@ -33,10 +33,10 @@ import {
 
 import { getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
-import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
-import { FileEntry } from './types';
+import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile } from '@sage3/frontend';
+
 import { RowFile } from './RowFile';
-import { setupAppForFile } from './CreateApp';
+import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];
@@ -67,7 +67,7 @@ export function Files(props: FilesProps): JSX.Element {
 
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
-  const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
+  const [sorted, setSorted] = useState<sortType>({ order: 'added', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>('');
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);

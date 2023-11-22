@@ -55,6 +55,8 @@ export function AppWindow(props: WindowProps) {
   const setAppDragging = useUIStore((state) => state.setAppDragging);
   const incZ = useUIStore((state) => state.incZ);
   const gridSize = useUIStore((state) => state.gridSize);
+  const savedSelectedApps = useUIStore((state) => state.savedSelectedAppsIds);
+  const isSavedSelected = savedSelectedApps.includes(props.app._id);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -90,6 +92,7 @@ export function AppWindow(props: WindowProps) {
 
   // Resize Handle scale
   const enableResize = props.disableResize === undefined ? true : !props.disableResize;
+  const isPinned = props.app.data.pinned === undefined ? false : props.app.data.pinned;
   // Make the handles a little bigger when the scale is small
   const invScale = Math.round(1 / scale);
   const handleScale = Math.max(2, Math.min(invScale, 10));
@@ -123,6 +126,7 @@ export function AppWindow(props: WindowProps) {
   useMemo(() => {
     // If the delta position changes, update the local state if you are grouped and not the leader
     if (isGrouped && !isGroupLeader) {
+      if (props.app.data.pinned) return;
       const x = props.app.data.position.x + deltaPosition.p.x;
       const y = props.app.data.position.y + deltaPosition.p.y;
       setPos({ x, y });
@@ -172,7 +176,7 @@ export function AppWindow(props: WindowProps) {
       // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
         const app = apps.find((el) => el._id == appId);
-        if (!app) return;
+        if (!app || app.data.pinned) return;
         const p = app.data.position;
         ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
       });
@@ -288,8 +292,12 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
-  // When closing the app, deselect it
   useEffect(() => {
+    // Check if the app has the pinned property
+    if (props.app.data.pinned === undefined) {
+      update(props.app._id, { pinned: false });
+    }
+    // When closing the app, deselect it
     return () => {
       if (selectedApp === props.app._id) {
         setSelectedApp('');
@@ -313,8 +321,8 @@ export function AppWindow(props: WindowProps) {
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize && canResize}
-      disableDragging={!canMove}
+      enableResizing={enableResize && canResize && !isPinned}
+      disableDragging={!canMove || isPinned}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -349,11 +357,13 @@ export function AppWindow(props: WindowProps) {
         size={size}
         selected={selected}
         isGrouped={isGrouped}
+        isSavedSelected={isSavedSelected}
         dragging={!appDragging && props.app.data.dragging}
         borderWidth={borderWidth}
         borderColor={borderColor}
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
+        pinned={isPinned}
       />
 
       {/* The Application */}

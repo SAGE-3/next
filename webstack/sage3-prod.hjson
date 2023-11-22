@@ -62,7 +62,7 @@
     // Enable Plugins
     "plugins": true,
     // Which Apps to enable.  Available Apps: 
-    // ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, Stickie, Screenshare, Webview
+    // ChartMaker, LeafLet, Notepad, SageCell, Stickie, Screenshare, Webview
     "apps": [
       "Chat",
       "ChartMaker",
@@ -71,8 +71,7 @@
       "SageCell",
       "Stickie",
       "Screenshare",
-      "Webview",
-      "JupyterLab"
+      "Webview"
     ]
   },
 

@@ -50,7 +50,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const toast = useToast();
 
   // Kernel Store
-  const { kernels, fetchKernels, deleteKernel, restartKernel, apiStatus } = useKernelStore((state) => state);
+  const { kernels, fetchKernels, deleteKernel, restartKernel, apiStatus, keepChecking, stopChecking } = useKernelStore((state) => state);
 
   // Local kernel state
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
@@ -143,6 +143,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
       },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -160,6 +161,14 @@ export function KernelsPanel(props: KernelsPanelProps) {
       isClosable: true,
     });
   };
+
+  // Start checking for kernels and stopping when leaving the board
+  useEffect(() => {
+    keepChecking();
+    return () => {
+      stopChecking();
+    };
+  }, []);
 
   return (
     <Panel title={'Kernels'} name="kernels" width={0} showClose={false}>

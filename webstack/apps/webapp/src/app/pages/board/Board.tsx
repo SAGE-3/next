@@ -125,11 +125,11 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Sub to insights
-    subToInsight(roomId);
+    subToInsight(boardId);
     // plugins
     subPlugins();
     // Update the user's presence information
-    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
+    if (user) updatePresence(user._id, { boardId, roomId, following: '' });
 
     // Set Selected app to empty
     setSelectedApp('');
@@ -163,6 +163,9 @@ export function BoardPage() {
         // Open the link in the sage3 app
         window.open(link, '_self');
       }
+
+      // Close the toast
+      toast.closeAll();
 
       // Show a notification
       toast({

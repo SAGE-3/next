@@ -50,6 +50,7 @@ class SageCommunication(Borg):
             "send_batch_update": "/api/apps/",
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
+            "upload_file": "/api/assets/upload",
             "get_time": "/api/time",
             "get_configuration": "/api/configuration",
         }
@@ -99,6 +100,18 @@ class SageCommunication(Borg):
             self.conf[self.prod_type]["web_server"] + self.routes["create_app"],
             headers=self.__headers,
             json=data,
+        )
+        return r
+
+    def upload_file(self, files, payload):
+        """
+        :return:
+        """
+        r = self.httpx_client.post(
+            self.conf[self.prod_type]["web_server"] + self.routes["upload_file"],
+            headers=self.__headers,
+            files=files,
+            data=payload,
         )
         return r
 

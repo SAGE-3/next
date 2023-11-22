@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { useRef, useCallback, useState, useEffect } from 'react';
+import { useParams } from 'react-router';
 import {
   ButtonGroup,
   Box,
@@ -24,11 +25,12 @@ import {
   DrawerHeader,
   DrawerBody,
 } from '@chakra-ui/react';
-import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll } from 'react-icons/md';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, } from 'react-icons/md';
 
-import { isElectron, useAppStore, processContentURL } from '@sage3/frontend';
+import { isElectron, useAppStore, processContentURL, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 import { state as AppState } from './index';
 import { App, AppSchema } from '../../schema';
@@ -38,9 +40,14 @@ import { AppWindow } from '../../components';
 // @ts-ignore
 import { WebviewTag } from 'electron';
 
-export const useStore = create((set: any) => ({
-  sock: {} as { [key: string]: WebSocket },
-  setSocket: (id: string, sock: WebSocket) => set((state: any) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
+interface SockStore {
+  sock: { [key: string]: WebSocket };
+  setSocket: (id: string, sock: WebSocket) => void;
+}
+
+export const useStore = create<SockStore>()((set) => ({
+  sock: {},
+  setSocket: (id: string, sock: WebSocket) => set((state) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
 }));
 
 /* App component for BoardLink */
@@ -50,6 +57,8 @@ function AppComponent(props: App): JSX.Element {
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  // App store
+  const update = useAppStore((state) => state.update);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -63,13 +72,20 @@ function AppComponent(props: App): JSX.Element {
   const setSocket = useStore((state) => state.setSocket);
 
   const url = s.url;
-  const title = s.meta.title ? s.meta.title : 'No Title';
+  const title = s.meta.title ? s.meta.title : url;
   const description = s.meta.description ? s.meta.description : 'No Description';
   const imageUrl = s.meta.image;
 
   const aspect = 1200 / 630;
   const imageHeight = 250;
   const imageWidth = imageHeight * aspect;
+
+  // Update the titlebar of the app
+  useEffect(() => {
+    if (s.meta && s.meta.title) {
+      update(props._id, { title: s.meta.title });
+    }
+  }, [s.meta]);
 
   useEffect(() => {
     setStreaming(s.streaming);
@@ -200,6 +216,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const isE = isElectron();
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // Room and board
+  const { roomId } = useParams();
 
   // Throttle Function
   const throttleUpdate = throttle(60, (data: any, width: number, height: number) => {
@@ -368,6 +388,59 @@ function ToolbarComponent(props: App): JSX.Element {
     onClose();
   };
 
+  /**
+   * Download the stickie as a text file
+   * @returns {void}
+   */
+  const downloadURL = (): void => {
+    // Generate the content of the file
+    const content = `[InternetShortcut]\nURL=${s.url}\n`;
+    // generate a URL containing the text of the note
+    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
+    // Make a filename from the title
+    const filename = 'link-' + props.data.title.split(' ').slice(0, 2).join('-') + '.url';
+    // Go for download
+    downloadFile(txturl, filename);
+  };
+
+  const saveInAssetManager = useCallback((val: string) => {
+    // save cell code in asset manager
+    if (!val.endsWith('.url')) {
+      val += '.url';
+    }
+    // Generate the content of the file
+    const content = `[InternetShortcut]\nURL=${s.url}\n`;
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([content])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [s.url, roomId]);
+
   // Update the size of the app when the sidebar is resized
   useEffect(() => {
     update(props._id, {
@@ -419,26 +492,32 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
+            <MdFileUpload />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Download Link'} openDelay={400}>
+          <Button onClick={downloadURL} _hover={{ opacity: 0.7 }}>
+            <MdFileDownload />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ConfirmValueModal
+        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
+        title="Save URL in Asset Manager" message="Select a file name:"
+        initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+        cancelText="Cancel" confirmText="Save"
+        confirmColor="green"
+      />
+
     </>
   );
-}
-
-/*
- * Wait for socket to be open
- *
- * @param {WebSocket} socket
- * @returns {Promise<void>}
- * */
-async function waitForOpenSocket(socket: WebSocket): Promise<void> {
-  return new Promise((resolve) => {
-    if (socket.readyState !== socket.OPEN) {
-      socket.addEventListener('open', () => {
-        resolve();
-      });
-    } else {
-      resolve();
-    }
-  });
 }
 
 /**

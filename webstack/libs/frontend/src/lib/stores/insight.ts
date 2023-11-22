@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -24,14 +22,15 @@ interface InsightState {
   error: string | null;
   clearError: () => void;
   update: (id: string, updates: Partial<InsightSchema>) => void;
-  subscribe: (roomdId: string) => Promise<void>;
+  updateBatch: (updates: { id: string; updates: Partial<InsightSchema> }[]) => Promise<void>;
+  subscribe: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
 }
 
 /**
  * The PresenceStore.
  */
-const InsightStore = createVanilla<InsightState>((set, get) => {
+const InsightStore = create<InsightState>()((set, get) => {
   APIHttp.GET<Insight>('/insight').then((response) => {
     if (response.success) {
       set({ insights: response.data });
@@ -51,6 +50,13 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
         set({ error: res.message });
       }
     },
+    updateBatch: async (updates: { id: string; updates: Partial<InsightSchema> }[]) => {
+      if (!SAGE3Ability.canCurrentUser('update', 'insight')) return;
+      const res = await SocketAPI.sendRESTMessage('/insight', 'PUT', { batch: updates });
+      if (!res.success) {
+        set({ error: res.message });
+      }
+    },
     unsubscribe: () => {
       // Unsubscribe old subscription
       if (insightSub) {
@@ -58,10 +64,10 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
         insightSub = null;
       }
     },
-    subscribe: async (roomdId: string) => {
+    subscribe: async (boardId: string) => {
       if (!SAGE3Ability.canCurrentUser('read', 'insight')) return;
       set({ insights: [] });
-      const reponse = await APIHttp.GET<Insight>('/insight');
+      const reponse = await APIHttp.QUERY<Insight>('/insight', { boardId });
       if (reponse.success) {
         set({ insights: reponse.data });
       } else {
@@ -76,7 +82,7 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = `/insight?roomId=${roomdId}`;
+      const route = `/insight?boardId=${boardId}`;
       insightSub = await SocketAPI.subscribe<Insight>(route, (message) => {
         if (message.col !== 'INSIGHT') return;
         switch (message.type) {
@@ -110,8 +116,8 @@ const InsightStore = createVanilla<InsightState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useInsightStore = createReact(InsightStore);
+// Export the Zustand store
+export const useInsightStore = InsightStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('InsightStore', useInsightStore);

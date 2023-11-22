@@ -10,7 +10,7 @@
 import { Fragment, ChangeEvent, MouseEvent, FormEvent, useEffect, useState, useRef, useMemo } from 'react';
 import { useParams } from 'react-router';
 // Chakra UI
-import { Box, Button, Text, Input, useColorModeValue, Progress, } from '@chakra-ui/react';
+import { Box, Button, Text, Input, useColorModeValue, Progress } from '@chakra-ui/react';
 // Libraries
 import { parse } from 'csv-parse/browser/esm';
 // SAGE3
@@ -20,7 +20,7 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { SensorTypes, stationDataTemplate } from '../HCDP/data/stationData';
+import { SensorTypes, stationDataTemplate } from '../SensorOverview/data/stationData';
 
 // Styling
 import './styling.css';
@@ -247,6 +247,7 @@ function ToolbarComponent(props: App): JSX.Element {
       },
       raised: true,
       dragging: false,
+      pinned: false,
     });
 
     // Add messages
@@ -307,8 +308,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 stationData: [...stationDataTemplate],
               },
               raised: true,
-
               dragging: false,
+              pinned: false,
             });
             // Add messages
             updateState(props._id, {
@@ -412,6 +413,7 @@ function ToolbarComponent(props: App): JSX.Element {
               },
               raised: true,
               dragging: false,
+              pinned: false,
             });
           }
           break;
@@ -468,6 +470,7 @@ function ToolbarComponent(props: App): JSX.Element {
                 },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             }}
             colorScheme="teal"
@@ -497,7 +500,9 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
