@@ -26,7 +26,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
 
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
-  const isPrivate = props.board.data.isPrivate;
+  const boardColor = props.board.data.color;
 
   const handleFavorite = (event: any) => {
     event.preventDefault();
@@ -77,23 +77,14 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           variant={'ghost'}
           aria-label="enter-board"
           fontSize="xl"
-          colorScheme="teal"
+          colorScheme={boardColor}
           icon={<Text>{props.usersPresent}</Text>}
         ></IconButton>
 
         <IconButton
           size="sm"
           variant={'ghost'}
-          colorScheme="teal"
-          aria-label="enter-board"
-          fontSize="xl"
-          icon={isPrivate ? <MdLock /> : <MdLockOpen />}
-        ></IconButton>
-
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme="teal"
+          colorScheme={boardColor}
           aria-label="enter-board"
           fontSize="xl"
           onClick={handleFavorite}
@@ -102,7 +93,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
         <IconButton
           size="sm"
           variant={'ghost'}
-          colorScheme="teal"
+          colorScheme={boardColor}
           aria-label="enter-board"
           fontSize="xl"
           onClick={handleEnterBoard}

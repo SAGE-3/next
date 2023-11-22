@@ -9,3 +9,4 @@
 export * from './UserRow';
 export * from './BoardRow';
 export * from './RoomSearch';
+export * from './BoardPreview';

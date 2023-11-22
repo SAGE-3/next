@@ -24,10 +24,13 @@ import {
   IconButton,
   Tooltip,
   MenuGroup,
+  Icon,
+  Text,
 } from '@chakra-ui/react';
 import {
   MdOutlineGridOn,
   MdAccountCircle,
+  MdPerson,
   MdArrowBack,
   MdInvertColors,
   MdLink,
@@ -73,6 +76,8 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
+  const userColorValue = user?.data.color ? user.data.color : 'teal';
+  const userColor = useHexColor(userColorValue);
 
   // Abilties
   const canCreatePlugins = useAbility('create', 'plugins');
@@ -170,20 +175,43 @@ export function MainButton(props: MainButtonProps) {
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
 
-      <Menu preventOverflow={false}>
-        <MenuButton
-          as={Button}
-          size="sm"
-          maxWidth="150px"
-          variant={props.buttonStyle ? props.buttonStyle : 'outline'}
-          colorScheme={user?.data.color ? user.data.color : 'white'}
-          leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
-        >
-          <Box textOverflow={'ellipsis'} overflow={'hidden'}>
-            {user ? user.data.name : ''}
-          </Box>
-        </MenuButton>
-        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip">
+      <Menu preventOverflow={false} placement="top-start">
+        {props.boardInfo ? (
+          <MenuButton
+            as={Button}
+            size="sm"
+            maxWidth="150px"
+            variant={props.buttonStyle ? props.buttonStyle : 'outline'}
+            colorScheme={user?.data.color ? user.data.color : 'white'}
+            leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
+          >
+            <Box textOverflow={'ellipsis'} overflow={'hidden'}>
+              {user ? user.data.name : ''}
+            </Box>
+          </MenuButton>
+        ) : (
+          <MenuButton
+            marginTop="auto"
+            display="flex"
+            as={Box}
+            backgroundColor={userColor}
+            height="40px"
+            alignItems={'center'}
+            justifyContent={'left'}
+            width="100%"
+            transition={'all 0.5s'}
+            _hover={{ cursor: 'pointer' }}
+          >
+            <Box display="flex">
+              {' '}
+              <Icon as={MdPerson} fontSize="24px" mx="2" />
+              <Text fontSize="md" fontWeight={'bold'}>
+                {user?.data.name}
+              </Text>
+            </Box>
+          </MenuButton>
+        )}
+        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '400px'}>
           <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>

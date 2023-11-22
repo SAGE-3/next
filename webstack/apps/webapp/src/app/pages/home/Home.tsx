@@ -31,10 +31,19 @@ import {
   AccordionPanel,
   useColorMode,
   Tooltip,
+  IconButton,
 } from '@chakra-ui/react';
 
-import { UserRow, BoardRow, RoomSearchModal } from './components';
+// Icons
+import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
+import { IoMdTime } from 'react-icons/io';
 
+// Components
+import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
+
+// SAGE Imports
+import { SAGE3Ability } from '@sage3/shared';
+import { Board, Presence, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
   useBoardStore,
@@ -53,18 +62,21 @@ import {
   EditBoardModal,
   EnterBoardModal,
   ConfirmModal,
+  MainButton,
 } from '@sage3/frontend';
-import { Board, Presence, Room, User } from '@sage3/shared/types';
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
-import { SAGE3Ability } from '@sage3/shared';
-import { IoMdTime } from 'react-icons/io';
-import { BoardPreview } from './components/BoardPreview';
 
+// Custome Types
 export type UserPresence = {
   user: User;
   presence: Presence | undefined;
 };
 
+/**
+ * Home page for SAGE3
+ * Displays all the rooms and boards that the user has access to
+ * Users can create rooms and board and join other rooms as members
+ * @returns JSX.Element
+ */
 export function HomePage() {
   // URL Params
   const { roomId, boardId } = useParams();
@@ -76,10 +88,12 @@ export function HomePage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
-  // User
-  const { user } = useUser();
+  // User Information
+  const { user, clearRecentBoards } = useUser();
+  const userId = user ? user._id : '';
   const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
+  const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
@@ -132,6 +146,11 @@ export function HomePage() {
   const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
   const { isOpen: roomSearchModal, onOpen: roomSearchModalOnOpen, onClose: roomSearchModalOnClose } = useDisclosure();
   const { isOpen: leaveRoomModalIsOpen, onOpen: leaveRoomModalOnOpen, onClose: leaveRoomModalOnClose } = useDisclosure();
+  const {
+    isOpen: clearRecentBoardsModalIsOpen,
+    onOpen: clearRecentBoardsModalOnOpen,
+    onClose: clearRecentBoardsModalOnClose,
+  } = useDisclosure();
 
   // Permissions
   const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
@@ -142,12 +161,22 @@ export function HomePage() {
   const roomMemberFilter = (room: Room): boolean => {
     if (!user) return false;
     const roomMembership = members.find((m) => m.data.roomId === room._id);
-    const isMember = roomMembership && roomMembership.data.members && user ? roomMembership.data.members.includes(user?._id) : false;
-    const isOwner = room.data.ownerId === user?._id;
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    const isOwner = room.data.ownerId === userId;
     return isMember || isOwner;
   };
   const boardStarredFilter = (board: Board): boolean => {
-    return user ? user?.data.savedBoards.includes(board._id) : false;
+    const isSaved = savedBoards.includes(board._id);
+    const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    return isSaved && isMember;
+  };
+
+  const recentBoardsFilter = (board: Board): boolean => {
+    const isRecent = recentBoards.includes(board._id);
+    const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    return isRecent && isMember;
   };
   const concatUserPresence = (userList: User[]): UserPresence[] => {
     return userList.map((u) => {
@@ -158,14 +187,11 @@ export function HomePage() {
     if (selectedRoom) {
       const roomUserIds = members.find((m) => m.data.roomId === selectedRoom._id)?.data.members || [];
       roomUserIds.push(selectedRoom.data.ownerId);
-      const roomUsers = users.filter((user) => roomUserIds.includes(user._id));
+      const roomUsers = users.filter((user) => roomUserIds.includes(userId));
       return concatUserPresence(roomUsers);
     } else {
       return [];
     }
-  };
-  const recentBoardsFilter = (board: Board): boolean => {
-    return recentBoards.includes(board._id);
   };
 
   // Function to handle states for when a user clicks on create room
@@ -198,7 +224,7 @@ export function HomePage() {
   useEffect(() => {
     if (user) {
       const roomId = selectedRoom ? selectedRoom._id : '';
-      updatePresence(user?._id, { roomId });
+      updatePresence(userId, { roomId });
     }
   }, [selectedRoom]);
 
@@ -238,12 +264,20 @@ export function HomePage() {
 
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
-    const isOwner = selectedRoom?.data.ownerId === user?._id;
+    const isOwner = selectedRoom?.data.ownerId === userId;
     if (selectedRoom && !isOwner) {
       leaveRoomMembership(selectedRoom._id);
       handleLeaveRoom();
       leaveRoomModalOnClose();
     }
+  };
+
+  // Handle when the user wants to clear his recent boards
+  const handleClearRecentBoards = () => {
+    if (clearRecentBoards) {
+      clearRecentBoards();
+    }
+    clearRecentBoardsModalOnClose();
   };
 
   // Function to handle states for when a user leaves a room (unjoins)
@@ -305,17 +339,6 @@ export function HomePage() {
   return (
     // Main Container
     <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor}>
-      {/* Confirmation Dilog to leave a room */}
-      <ConfirmModal
-        isOpen={leaveRoomModalIsOpen}
-        onClose={leaveRoomModalOnClose}
-        title={'Leave Room'}
-        cancelText={'Cancel'}
-        confirmText="Leave Room"
-        confirmColor="red"
-        message={`Are you sure you want to leave "${selectedRoom?.data.name}"?`}
-        onConfirm={handleLeaveRoomMembership}
-      />
       {/* Check if the user wanted to join a board through a URL */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
@@ -349,6 +372,30 @@ export function HomePage() {
       {/* Room Search Modal */}
       <RoomSearchModal isOpen={roomSearchModal} onClose={roomSearchModalOnClose} />
 
+      {/* Confirmation Dialog to leave a room */}
+      <ConfirmModal
+        isOpen={leaveRoomModalIsOpen}
+        onClose={leaveRoomModalOnClose}
+        title={'Leave Room'}
+        cancelText={'Cancel'}
+        confirmText="Leave Room"
+        confirmColor="red"
+        message={`Are you sure you want to leave "${selectedRoom?.data.name}"?`}
+        onConfirm={handleLeaveRoomMembership}
+      />
+
+      {/* Confirmation Dialog to clear recent boards */}
+      <ConfirmModal
+        isOpen={clearRecentBoardsModalIsOpen}
+        onClose={clearRecentBoardsModalOnClose}
+        title={'Clear Recent Boards'}
+        cancelText={'Cancel'}
+        confirmText="Clear"
+        confirmColor="red"
+        message={`Are you sure you want to clear your recent boards?`}
+        onConfirm={handleClearRecentBoards}
+      />
+
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
@@ -361,7 +408,7 @@ export function HomePage() {
         borderRight={`solid ${dividerColor} 1px`}
       >
         <>
-          <Box px="4" py="2" borderBottom={`solid ${dividerColor} 1px`}>
+          <Box px="4" py="2" borderBottom={`solid ${dividerColor} 1px`} whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
             <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
               {config.serverName}
             </Text>
@@ -427,9 +474,10 @@ export function HomePage() {
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((room) => (
                           <Box
+                            key={room._id}
                             display="flex"
                             alignItems="center"
-                            justifyContent="left"
+                            justifyContent="space-between"
                             transition="all 0.5s"
                             pl="48px"
                             height="28px"
@@ -437,7 +485,13 @@ export function HomePage() {
                             _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                             onClick={() => handleRoomClick(room)}
                           >
-                            <Text fontSize="md">{room.data.name}</Text>
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md">{room.data.name}</Text>
+                            </Box>
+
+                            <Text fontSize="xs" pr="4">
+                              {room.data.ownerId === userId ? 'Owner' : ''}
+                            </Text>
                           </Box>
                         ))}
                     </VStack>
@@ -473,9 +527,10 @@ export function HomePage() {
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <Box
+                            key={board._id}
                             display="flex"
                             alignItems="center"
-                            justifyContent="left"
+                            justifyContent="space-between"
                             transition="all 0.5s"
                             pl="48px"
                             height="28px"
@@ -483,7 +538,12 @@ export function HomePage() {
                             _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                             onClick={() => handleBoardClick(board)}
                           >
-                            <Text fontSize="md">{board.data.name}</Text>
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md">{board.data.name}</Text>
+                            </Box>
+                            <Box pr="5">
+                              <Text fontSize="sm">{presences.filter((p) => p.data.boardId === board._id).length}</Text>
+                            </Box>
                           </Box>
                         ))}
                     </VStack>
@@ -501,9 +561,10 @@ export function HomePage() {
                     <VStack align="stretch" gap="0">
                       {boards.filter(recentBoardsFilter).map((board) => (
                         <Box
+                          key={board._id}
                           display="flex"
                           alignItems="center"
-                          justifyContent="left"
+                          justifyContent="space-between"
                           transition="all 0.5s"
                           pl="48px"
                           height="28px"
@@ -511,31 +572,37 @@ export function HomePage() {
                           onClick={() => handleBoardClick(board)}
                           _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                         >
-                          <Text fontSize="md">{board.data.name}</Text>
+                          <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                            <Text fontSize="md">{board.data.name}</Text>
+                          </Box>
+                          <Box pr="5">
+                            <Text fontSize="sm">{presences.filter((p) => p.data.boardId === board._id).length}</Text>
+                          </Box>
                         </Box>
                       ))}
+                      {boards.filter(recentBoardsFilter).length > 0 && (
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="left"
+                          transition="all 0.5s"
+                          pl="48px"
+                          height="28px"
+                          color="red.400"
+                          fontWeight={'bold'}
+                          onClick={clearRecentBoardsModalOnOpen}
+                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                        >
+                          <Text fontSize="md">Clear Recents Boards</Text>
+                        </Box>
+                      )}
                     </VStack>
                   </AccordionPanel>
                 </AccordionItem>
               </Accordion>
             </VStack>
           </Box>
-          <Box
-            marginTop="auto"
-            display="flex"
-            backgroundColor={userColor}
-            height="40px"
-            alignItems={'center'}
-            width="100%"
-            transition={'all 0.5s'}
-            _hover={{ cursor: 'pointer' }}
-            onClick={toggleColorMode}
-          >
-            <Icon as={MdPerson} fontSize="24px" mx="2" />{' '}
-            <Text fontSize="md" fontWeight={'bold'}>
-              Ryan Theriot
-            </Text>
-          </Box>
+          <MainButton config={config}></MainButton>
         </>
       </Box>
       {selectedRoom && (
@@ -557,7 +624,6 @@ export function HomePage() {
                 {selectedRoom.data.name}
               </Text>
               <Text fontSize="xl" fontWeight={'normal'}>
-                {' '}
                 {selectedRoom?.data.description}
               </Text>
 
@@ -577,7 +643,7 @@ export function HomePage() {
                 </Button>
                 <Tooltip
                   label={
-                    selectedRoom.data.ownerId === user?._id ? `Update the room's settings` : 'Only the owner can update the room settings'
+                    selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
                   }
                   openDelay={200}
                   hasArrow
@@ -588,14 +654,14 @@ export function HomePage() {
                     variant="outline"
                     width="120px"
                     size="sm"
-                    isDisabled={selectedRoom.data.ownerId !== user?._id}
+                    isDisabled={selectedRoom.data.ownerId !== userId}
                     onClick={editRoomModalOnOpen}
                   >
                     Settings
                   </Button>
                 </Tooltip>
                 <Tooltip
-                  label={selectedRoom.data.ownerId === user?._id ? 'You cannot leave this room since you are the owner' : 'Leave the room'}
+                  label={selectedRoom.data.ownerId === userId ? 'You cannot leave this room since you are the owner' : 'Leave the room'}
                   openDelay={200}
                   hasArrow
                   placement="top"
@@ -606,7 +672,7 @@ export function HomePage() {
                     size="sm"
                     width="120px"
                     onClick={leaveRoomModalOnOpen}
-                    isDisabled={selectedRoom.data.ownerId === user?._id}
+                    isDisabled={selectedRoom.data.ownerId === userId}
                   >
                     Leave Room
                   </Button>
@@ -694,6 +760,7 @@ export function HomePage() {
                               size="sm"
                               width="100px"
                               onClick={editBoardModalOnOpen}
+                              isDisabled={selectedBoard.data.ownerId !== userId}
                             >
                               Settings
                             </Button>
@@ -722,13 +789,13 @@ export function HomePage() {
                         },
                       }}
                     >
-                      {usersFilter().map((up) => {
+                      {usersFilter().map((userPresence) => {
                         return (
                           <UserRow
-                            key={up.user._id}
-                            userPresence={up}
-                            selected={selectedUser?._id == up.user._id}
-                            onClick={() => handleUserClick(up.user)}
+                            key={userPresence.user._id}
+                            userPresence={userPresence}
+                            selected={selectedUser?._id == userPresence.user._id}
+                            onClick={() => handleUserClick(userPresence.user)}
                           />
                         );
                       })}
