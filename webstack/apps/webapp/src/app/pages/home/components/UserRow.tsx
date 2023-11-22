@@ -8,12 +8,11 @@
 
 import { useColorModeValue, IconButton, Box, Text } from '@chakra-ui/react';
 import { useHexColor } from '@sage3/frontend';
-import { Presence } from '@sage3/shared/types';
+import { User } from '@sage3/shared/types';
 import { MdPerson } from 'react-icons/md';
-import { UserPresence } from '../..';
 
-export function UserRow(props: { userPresence: UserPresence; selected: boolean; onClick: (user: Presence) => void }) {
-  const borderColorValue = useColorModeValue(props.userPresence.user.data.color, props.userPresence.user.data.color);
+export function UserRow(props: { user: User }) {
+  const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
   const borderColor = useHexColor(borderColorValue);
 
   const online = useHexColor('teal');
@@ -23,13 +22,6 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
     `linear-gradient(178deg, #303030, #252525, #262626)`
   );
 
-  const handleUserClick = () => {
-    const user = props.userPresence;
-    if (user.presence) {
-      props.onClick(user.presence);
-    }
-  };
-
   return (
     <Box
       background={linearBGColor}
@@ -38,12 +30,10 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
-      onClick={handleUserClick}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid 1px ${props.selected ? borderColor : 'transpanent'}`}
-      borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
-      _hover={{ cursor: 'pointer', border: `solid 1px ${borderColor}`, borderLeft: props.selected ? `${borderColor} solid 8px` : '' }}
+      border={`solid 1px ${borderColor}`}
+      borderLeft={`solid 8px ${borderColor}`}
       transition={'all 0.2s ease-in-out'}
     >
       <Box display="flex" alignItems={'center'}>
@@ -52,7 +42,7 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
           variant={'ghost'}
           aria-label="enter-board"
           fontSize="4xl"
-          color={props.userPresence.presence?.data.status === 'online' ? online : offline}
+          color={borderColor}
           icon={<MdPerson />}
         ></IconButton>
         <Box display="flex" flexDir="column">
@@ -65,10 +55,7 @@ export function UserRow(props: { userPresence: UserPresence; selected: boolean; 
             textOverflow={'ellipsis'}
             width="160px"
           >
-            {props.userPresence.user.data.name}
-          </Text>
-          <Text fontSize="xs" textAlign="left">
-            Board Name
+            {props.user.data.name}
           </Text>
         </Box>
       </Box>

@@ -123,7 +123,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
               .filter(filterRooms)
               .sort((a, b) => a.data.name.localeCompare(b.data.name))
               .map((room) => (
-                <RoomRow room={room} />
+                <RoomRow key={room._id} room={room} />
               ))}
           </Box>
         </ModalBody>

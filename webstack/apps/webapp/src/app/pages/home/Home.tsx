@@ -31,11 +31,10 @@ import {
   AccordionPanel,
   useColorMode,
   Tooltip,
-  IconButton,
 } from '@chakra-ui/react';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdSearch, MdStarOutline } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 
 // Components
@@ -43,7 +42,7 @@ import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
 
 // SAGE Imports
 import { SAGE3Ability } from '@sage3/shared';
-import { Board, Presence, Room, User } from '@sage3/shared/types';
+import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
   useBoardStore,
@@ -57,19 +56,14 @@ import {
   useHexColor,
   CreateRoomModal,
   CreateBoardModal,
-  EnterBoardByIdModal,
+  EnterBoardByURLModal,
   EditRoomModal,
   EditBoardModal,
   EnterBoardModal,
   ConfirmModal,
   MainButton,
+  copyBoardUrlToClipboard,
 } from '@sage3/frontend';
-
-// Custome Types
-export type UserPresence = {
-  user: User;
-  presence: Presence | undefined;
-};
 
 /**
  * Home page for SAGE3
@@ -137,10 +131,10 @@ export function HomePage() {
   const hightlightGray = useHexColor(hightlightGrayValue);
   const { toggleColorMode, colorMode } = useColorMode();
 
-  // Modals
+  // Modals Disclosures
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
   const { isOpen: createBoardModalIsOpen, onOpen: createBoardModalOnOpen, onClose: createBoardModalOnClose } = useDisclosure();
-  const { isOpen: enterBoardByIdModalIsOpen, onOpen: enterBoardByIdModalOnOpen, onClose: enterBoardByIdModalOnClose } = useDisclosure();
+  const { isOpen: enterBoardByURLModalIsOpen, onOpen: enterBoardByURLModalOnOpen, onClose: enterBoardByURLModalOnClose } = useDisclosure();
   const { isOpen: editRoomModalIsOpen, onOpen: editRoomModalOnOpen, onClose: editRoomModalOnClose } = useDisclosure();
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
   const { isOpen: enterBoardModalIsOpen, onOpen: enterBoardModalOnOpen, onClose: enterBoardModalOnClose } = useDisclosure();
@@ -178,20 +172,12 @@ export function HomePage() {
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isRecent && isMember;
   };
-  const concatUserPresence = (userList: User[]): UserPresence[] => {
-    return userList.map((u) => {
-      return { user: u, presence: presences.find((p) => p._id === u._id) };
-    });
-  };
-  const usersFilter = (): UserPresence[] => {
-    if (selectedRoom) {
-      const roomUserIds = members.find((m) => m.data.roomId === selectedRoom._id)?.data.members || [];
-      roomUserIds.push(selectedRoom.data.ownerId);
-      const roomUsers = users.filter((user) => roomUserIds.includes(userId));
-      return concatUserPresence(roomUsers);
-    } else {
-      return [];
-    }
+
+  const membersFilter = (user: User): boolean => {
+    if (!selectedRoom) return false;
+    const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+    return isMember;
   };
 
   // Function to handle states for when a user clicks on create room
@@ -255,12 +241,33 @@ export function HomePage() {
     }
   }
 
-  // Function to handle states for when a user clicks on a user
-  function handleUserClick(user: User) {
-    if (user) {
-      user._id == selectedUser?._id ? setSelectedUser(undefined) : setSelectedUser(user);
+  // Copy a sharable link to the user's os clipboard
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Check if there is a selected board
+    if (!selectedBoard) {
+      toast({
+        title: 'No board selected',
+        description: 'Please select a board to copy a link to',
+        duration: 3000,
+        isClosable: true,
+        status: 'error',
+      });
+      return;
+    } else {
+      const roomId = selectedBoard.data.roomId;
+      const boardId = selectedBoard._id;
+      // make it a sage3:// protocol link
+      copyBoardUrlToClipboard(roomId, boardId);
+      toast({
+        title: 'Success',
+        description: `Sharable Board link copied to clipboard.`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
     }
-  }
+  };
 
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
@@ -346,7 +353,7 @@ export function HomePage() {
       {/* Modal to create a board */}
       <CreateBoardModal isOpen={createBoardModalIsOpen} onClose={createBoardModalOnClose} roomId={selectedRoom ? selectedRoom._id : ''} />
       {/* Modal to enter a board */}
-      <EnterBoardByIdModal isOpen={enterBoardByIdModalIsOpen} onClose={enterBoardByIdModalOnClose} onOpen={enterBoardByIdModalOnOpen} />
+      <EnterBoardByURLModal isOpen={enterBoardByURLModalIsOpen} onClose={enterBoardByURLModalOnClose} onOpen={enterBoardByURLModalOnOpen} />
       {/* Modal to edit room */}
       {selectedRoom && (
         <EditRoomModal
@@ -507,7 +514,7 @@ export function HomePage() {
                   transition="all 0.5s"
                   _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                   pl="2"
-                  onClick={enterBoardByIdModalOnOpen}
+                  onClick={enterBoardByURLModalOnOpen}
                 >
                   <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
                 </Box>
@@ -702,6 +709,7 @@ export function HomePage() {
                       pr="2"
                       style={{ height: 'calc(100vh - 340px)' }}
                       overflowY="scroll"
+                      minWidth="375px"
                       css={{
                         '&::-webkit-scrollbar': {
                           background: 'transparent',
@@ -715,7 +723,6 @@ export function HomePage() {
                     >
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
-                        // Sort alphabetically
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <BoardRow
@@ -751,7 +758,13 @@ export function HomePage() {
                             >
                               Enter Board
                             </Button>
-                            <Button colorScheme={selectedBoard.data.color} variant="outline" size="sm" width="100px">
+                            <Button
+                              colorScheme={selectedBoard.data.color}
+                              variant="outline"
+                              size="sm"
+                              width="100px"
+                              onClick={handleCopyLink}
+                            >
                               Copy Link
                             </Button>
                             <Button
@@ -789,15 +802,8 @@ export function HomePage() {
                         },
                       }}
                     >
-                      {usersFilter().map((userPresence) => {
-                        return (
-                          <UserRow
-                            key={userPresence.user._id}
-                            userPresence={userPresence}
-                            selected={selectedUser?._id == userPresence.user._id}
-                            onClick={() => handleUserClick(userPresence.user)}
-                          />
-                        );
+                      {users.filter(membersFilter).map((user) => {
+                        return <UserRow key={user._id} user={user} />;
                       })}
                     </VStack>
                   </Box>

@@ -49,7 +49,6 @@ import {
   useAuth,
   useUser,
   EditUserModal,
-  EnterBoardByIdModal,
   AboutModal,
   copyBoardUrlToClipboard,
   useRouteNav,
@@ -87,7 +86,6 @@ export function MainButton(props: MainButtonProps) {
   const { toggleColorMode, colorMode } = useColorMode();
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
-  const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
   const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
@@ -327,7 +325,6 @@ export function MainButton(props: MainButtonProps) {
         </MenuList>
       </Menu>
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
-      <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
       <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
 
