@@ -43,6 +43,7 @@ import {
   isValidURL,
   setupApp,
   useAbility,
+  processContentURL,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -399,6 +400,14 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
   const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     createApp(
       setupApp(
         'Webview',
@@ -407,8 +416,8 @@ export function Background(props: BackgroundProps) {
         dropPosition.y,
         props.roomId,
         props.boardId,
-        { w: 800, h: 1000 },
-        { webviewurl: validURL }
+        { w: w, h: h },
+        { webviewurl: final_url }
       )
     );
     popOnClose();

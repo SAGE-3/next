@@ -8,22 +8,28 @@
 
 from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
 from foresight.smartbits.smartbit import TrackedBaseModel
-from typing import Optional
+from typing import List, Optional
 
 
-class IFrameState(TrackedBaseModel):
-    source: str
-    doc: Optional[str]
+class MapGLState(TrackedBaseModel):
+    location: List[int]
+    zoom: float
+    bearing: float
+    pitch: float
+    baseLayer: str
+    overlay: bool
+    colorScale: str
+    assetid: Optional[str]
 
 
-class IFrame(SmartBit):
+class MapGL(SmartBit):
     # the key that is assigned to this in state is
-    state: IFrameState
+    state: MapGLState
 
     # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(IFrame, self).__init__(**kwargs)
+        super(MapGL, self).__init__(**kwargs)
 
     def clean_up(self):
         pass

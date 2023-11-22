@@ -13,6 +13,7 @@ import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
+import { name as IFrameName, init as defaultIFrame } from './apps/IFrame';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
@@ -47,6 +48,7 @@ export const initialValues = {
   [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
+  [IFrameName]: defaultIFrame,
   [ImageViewerName]: defaultImageViewer,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,

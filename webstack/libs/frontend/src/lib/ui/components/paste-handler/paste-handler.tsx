@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { isValidURL, setupApp } from '@sage3/frontend';
+import { isValidURL, setupApp, processContentURL } from '@sage3/frontend';
 
 type PasteProps = {
   boardId: string;
@@ -209,6 +209,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     popOnClose();
   };
   const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     createApp(
       setupApp(
         'Webview',
@@ -217,8 +225,8 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         cursorPosition.y,
         props.roomId,
         props.boardId,
-        { w: 800, h: 1000 },
-        { webviewurl: validURL }
+        { w: w, h: h },
+        { webviewurl: final_url }
       )
     );
     popOnClose();

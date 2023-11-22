@@ -16,6 +16,14 @@ import { AppWindow } from '../../components';
 // Styling
 import './styling.css';
 
+declare module 'react' {
+  interface IframeHTMLAttributes<T> extends React.HTMLAttributes<T> {
+    credentialless?: boolean;
+  }
+}
+
+// React., HTMLIFrameElement>
+
 /* App component for PluginApp */
 function AppComponent(props: App): JSX.Element {
   const pluginName = (props.data.state as AppState).pluginName;
@@ -55,7 +63,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <iframe ref={iRef} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
+        <iframe ref={iRef} credentialless={true} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
       </>
     </AppWindow>
   );
