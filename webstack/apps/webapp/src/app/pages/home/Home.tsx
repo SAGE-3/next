@@ -448,6 +448,19 @@ export function HomePage() {
                 transition="all 0.5s"
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
+                onClick={handleCreateRoomClick}
+              >
+                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+              </Box>
+
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
                 onClick={handleRoomSearchClick}
               >
                 <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
@@ -461,11 +474,14 @@ export function HomePage() {
                 transition="all 0.5s"
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
-                onClick={handleCreateRoomClick}
+                onClick={enterBoardByURLModalOnOpen}
               >
-                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
               </Box>
-              <Accordion defaultIndex={[0]} allowMultiple>
+
+              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+
+              <Accordion defaultIndex={[0, 1, 2]} allowMultiple>
                 <AccordionItem border="none">
                   <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
                     <Box display="flex" flex="1" alignItems="left">
@@ -504,20 +520,6 @@ export function HomePage() {
                     </VStack>
                   </AccordionPanel>
                 </AccordionItem>
-                <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
-
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={enterBoardByURLModalOnOpen}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
-                </Box>
 
                 <AccordionItem border="none">
                   <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
