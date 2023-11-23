@@ -634,7 +634,7 @@ export function HomePage() {
                 {selectedRoom?.data.description}
               </Text>
 
-              <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+              <Text>Created by {(users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name) || 'SAGE3'}</Text>
 
               <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
@@ -743,7 +743,7 @@ export function HomePage() {
                           <Text fontSize="lg" fontWeight={'normal'}>
                             {selectedBoard?.data.description}
                           </Text>
-                          <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+                          <Text>Created by {(users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name) || 'SAGE3'}</Text>
                           <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
                           <Box mt="2" borderRadius="md">
                             <BoardPreview board={selectedBoard} width={316} height={177} />
