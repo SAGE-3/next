@@ -49,6 +49,9 @@ interface RoomSearchModalProps {
  * @returns
  */
 export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
+  // User
+  const { user } = useUser();
+
   // Room Store
   const { rooms } = useRoomStore((state) => state);
 
@@ -70,7 +73,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   };
 
   // Room Search Filter that matches on name or description
-  const filterRooms = (room: Room) => {
+  const searchRooms = (room: Room) => {
     return (
       room.data.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()) ||
       room.data.description.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase())
@@ -120,7 +123,8 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
             }}
           >
             {rooms
-              .filter(filterRooms)
+              .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
+              .filter(searchRooms)
               .sort((a, b) => a.data.name.localeCompare(b.data.name))
               .map((room) => (
                 <RoomRow key={room._id} room={room} />
