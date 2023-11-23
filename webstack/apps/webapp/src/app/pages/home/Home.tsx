@@ -745,7 +745,7 @@ export function HomePage() {
                           </Text>
                           <Text>Created by {(users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name) || 'SAGE3'}</Text>
                           <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
-                          <Box mt="2" borderRadius="md">
+                          <Box mt="2" borderRadius="md" as='button' onClick={enterBoardModalOnOpen}>
                             <BoardPreview board={selectedBoard} width={316} height={177} />
                           </Box>
                           <Box display="flex" my="2" gap={2}>
@@ -820,7 +820,7 @@ export function HomePage() {
         src={imageUrl}
         height="30px"
         style={{ opacity: 0.7 }}
-        alt="sag3"
+        alt="sage3"
         userSelect={'auto'}
         draggable={false}
       />
