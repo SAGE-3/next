@@ -124,7 +124,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
           })}
         </Box>
       ) : (
-        <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold">
+        <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
           This board has no opened applications.
         </Text>
       )}
