@@ -49,7 +49,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   return (
     <Box
       background={linearBGColor}
-      p="1"
+      p={props.selected ? '2' : '1'}
       px="2"
       display="flex"
       justifyContent={'space-between'}
@@ -57,7 +57,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       onClick={() => props.onClick(props.board)}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid  ${props.selected ? `2px ${borderColor}` : '1px gray'}`}
+      border={`solid  ${props.selected ? `2px ${borderColor}` : '2px gray'}`}
       // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
       _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
       transition={'all 0.2s ease-in-out'}
