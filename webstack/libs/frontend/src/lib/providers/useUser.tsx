@@ -21,6 +21,9 @@ import { genId, SAGE3Ability } from '@sage3/shared';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
+// Number of boards to keep in recent boards list
+const MAX_RECENT_BOARDS = 10;
+
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
@@ -165,8 +168,8 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     currentBoards = [boardId, ...currentBoards];
     // Remove Dupicates
     currentBoards = Array.from(new Set(currentBoards));
-    // Limit to 10 recent boards
-    currentBoards = currentBoards.slice(0, 10);
+    // Limit to MAX_RECENT_BOARDS recent boards
+    currentBoards = currentBoards.slice(0, MAX_RECENT_BOARDS);
     update({ recentBoards: currentBoards });
   };
   /**
