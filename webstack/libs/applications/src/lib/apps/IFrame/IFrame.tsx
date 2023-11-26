@@ -18,13 +18,12 @@ import { AppWindow } from '../../components';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  // const updateState = useAppStore((state) => state.updateState);
+  const allow = "clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;";
 
   return (
     <AppWindow app={props}>
-      {/* credentialless */}
-      {s.source ? <iframe loading='eager' src={s.source} width={"100%"} height={"100%"} /> :
-        <iframe loading='eager' srcDoc={s.doc} width={"100%"} height={"100%"} />}
+      {s.source ? <iframe loading='eager' src={s.source} width={"100%"} height={"100%"} allow={allow} /> :
+        <iframe loading='eager' srcDoc={s.doc} width={"100%"} height={"100%"} allow={allow} />}
     </AppWindow>
   );
 }
