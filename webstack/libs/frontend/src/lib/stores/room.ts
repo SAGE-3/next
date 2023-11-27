@@ -47,7 +47,7 @@ const RoomStore = create<RoomState>()((set, get) => {
     // Unsubscribe old subscription
     if (membersSub) {
       membersSub();
-      roomSub = null;
+      membersSub = null;
     }
 
     // Socket Subscribe Message
@@ -127,7 +127,7 @@ const RoomStore = create<RoomState>()((set, get) => {
       // Sub to Members
       subscribeToRoomMembers();
 
-      set({ ...get(), rooms: [], fetched: false });
+      set({ rooms: [], fetched: false });
 
       const rooms = await APIHttp.GET<Room>('/rooms');
       if (rooms.success) {
