@@ -16,6 +16,7 @@ type ClockProps = {
   style?: CSSProperties;
   opacity?: number;
   isBoard?: boolean;
+  homeHelpClick?: () => void;
 };
 
 // A digital Clock
@@ -146,6 +147,28 @@ export function Clock(props: ClockProps) {
         </Tooltip>
       )}
 
+      {!isBoard && (
+        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <IconButton
+            borderRadius="md"
+            h="auto"
+            p={0}
+            pb={'1px'}
+            justifyContent="center"
+            aria-label={'Network status'}
+            icon={<MdHelpOutline size="22px" />}
+            background={'transparent'}
+            colorScheme="gray"
+            transition={'all 0.2s'}
+            opacity={0.75}
+            variant="ghost"
+            onClick={props.homeHelpClick}
+            isDisabled={false}
+            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
+          />
+        </Tooltip>
+      )}
+
       {isBoard && (
         <Tooltip label={'Network status: ' + netlabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
@@ -168,6 +191,7 @@ export function Clock(props: ClockProps) {
           />
         </Tooltip>
       )}
+
       <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
         {time}
       </Text>

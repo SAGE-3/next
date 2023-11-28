@@ -45,7 +45,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
-  const rooms = useRoomStore((state) => state.rooms);
+  const { rooms, joinRoomMembership } = useRoomStore((state) => state);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -127,6 +127,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             duration: 2 * 1000,
             isClosable: true,
           });
+          // Join the room membership
+          joinRoomMembership(room._id);
         }
         props.onClose();
       }

@@ -163,13 +163,6 @@ function RoomRow(props: RoomRowProps) {
   const isMember = roomMember ? roomMember.data.members.includes(userId) : false;
   const isOwner = props.room.data.ownerId === userId;
 
-  // Check to see if the user is the owner but not a member in weird cases
-  useEffect(() => {
-    if (isOwner && !isMember) {
-      joinRoomMembership(props.room._id);
-    }
-  }, []);
-
   const handleMembershipClick = (ev: React.MouseEvent) => {
     ev.stopPropagation();
     if (isOwner) {
