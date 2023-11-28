@@ -334,7 +334,7 @@ const Content = (props: {
               </Text>
             </>
           ) : (
-            <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
+            <Spinner w={100} h={100} thickness="20px" speed="1s" emptyColor="gray.200" />
           )}
 
           <Text
