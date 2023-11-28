@@ -267,6 +267,11 @@ export function HomePage() {
           'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button.',
       },
       {
+        target: clockRef.current!,
+        title: 'Clock',
+        content: 'The time is displayed here along with your network status and a help button. The help button will restart this tour.',
+      },
+      {
         target: introRef.current!,
         title: 'Tour End',
         content: 'We hope you enjoy using SAGE3!',
