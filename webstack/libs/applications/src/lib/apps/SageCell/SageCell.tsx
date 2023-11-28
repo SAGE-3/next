@@ -339,9 +339,6 @@ function AppComponent(props: App): JSX.Element {
       streaming: false,
     });
 
-    // editorRef.current?.setValue('');
-    // editorRef2.current?.setValue('');
-
     const model = editorRef.current.getModel();
     if (model) {
       // Clear the cell editor
@@ -989,6 +986,27 @@ function AppComponent(props: App): JSX.Element {
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
 
+  // Start dragging
+  function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  }
+  // Drop event
+  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    // Get the infos from the drag transfer data
+    const ids = event.dataTransfer.getData('file');
+    const types = event.dataTransfer.getData('type');
+    if (editorRef.current) {
+      const pos = editorRef.current.getPosition();
+      if (pos) {
+        // insert variables at the cursor position in the editor
+        const text = `sage_assets_types = ${types}\nsage_assets_ids = ${ids}\n`;
+        editorRef.current.focus();
+        editorRef.current.trigger('keyboard', 'type', { text });
+      }
+    }
+  }
+
   return (
     <AppWindow app={props}>
       <>
@@ -1027,6 +1045,8 @@ function AppComponent(props: App): JSX.Element {
             whiteSpace={'pre-wrap'}
             overflowWrap="break-word"
             overflowY="auto"
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
           >
             <Flex direction={'row'}>
               {/* The editor status info (bottom) */}
