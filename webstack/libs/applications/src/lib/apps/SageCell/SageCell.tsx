@@ -347,6 +347,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model.setEOL(0);
     }
     if (!editorRef2.current) return;
     const model2 = editorRef2.current.getModel();
@@ -357,6 +359,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model2.setEOL(0);
     }
 
   };
@@ -633,6 +637,9 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    const model = editor.getModel();
+    if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
