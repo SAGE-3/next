@@ -11,14 +11,16 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center, useColorMode } from '@chakra-ui/react';
+import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { isValidURL, setupApp, processContentURL } from '@sage3/frontend';
 
+import { initialValues } from '@sage3/applications/initialValues';
+
 import hljs from 'highlight.js';
 
-hljs.configure({ languages: ['json', 'yaml', 'javascript', 'typescript', 'python', 'html', 'css'] });
+hljs.configure({ languages: ['json', 'yaml', 'typescript', 'javascript', 'python', 'html', 'css'] });
 
 type PasteProps = {
   boardId: string;
@@ -45,8 +47,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // Popover
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
-  //  Dark/light mode
-  const { colorMode } = useColorMode();
 
   useEffect(() => {
     if (!user) return;
@@ -126,7 +126,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
+                state: { ...initialValues['Stickie'], text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
                 raised: true,
                 dragging: false,
                 pinned: false,
@@ -166,7 +166,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'BoardLink',
-            state: { url: pastedText.trim() },
+            state: { ...initialValues['BoardLink'], url: pastedText.trim() },
             raised: true,
             dragging: false,
             pinned: false,
@@ -184,7 +184,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               size: { width: 400, height: 400, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'Stickie',
-              state: { text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+              state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
               raised: true,
               dragging: false,
               pinned: false,
@@ -198,7 +198,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               size: { width: 850, height: 400, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CodeViewer',
-              state: { content: pastedText, language: lang },
+              state: { ...initialValues['CodeViewer'], content: pastedText, language: lang },
               raised: true,
               dragging: false,
               pinned: false,
@@ -279,7 +279,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   );
 };
 
-
+/**
+ * Determine the language of the code
+ * @param code string to check
+ * @returns string of the language
+ */
 function containsCode(code: string) {
   try {
     const lang = hljs.highlightAuto(code).language;

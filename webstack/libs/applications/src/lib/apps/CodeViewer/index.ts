@@ -16,12 +16,16 @@ import { z } from 'zod';
 export const schema = z.object({
   content: z.string(),
   language: z.string(),
+  fontSize: z.number(),
+  selection: z.optional(z.array(z.number()).length(4)),
+  scrollPosition: z.optional(z.number()),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   content: '',
   language: 'javascript',
+  fontSize: 18,
 };
 
 export const name = 'CodeViewer';

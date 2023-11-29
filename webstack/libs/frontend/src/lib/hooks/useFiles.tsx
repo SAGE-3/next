@@ -28,14 +28,13 @@ import {
   isGLTF,
   isGIF,
   isFileURL,
-  isPythonNotebook,
   isTiff,
 } from '@sage3/shared';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
-import { GetConfiguration, apiUrls } from '../config';
+import { apiUrls } from '../config';
 import { useAssetStore, useAppStore } from '../stores';
 import { useUser } from '../providers';
 
