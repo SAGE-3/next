@@ -760,7 +760,7 @@ export function HomePage() {
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .map((room) => {
                         return (
-                          <Tooltip openDelay={400} hasArrow placement="top" label={`Description: ${room.data.description}`}>
+                          <Tooltip key={'tooltip_room' + room._id} openDelay={400} hasArrow placement="top" label={`Description: ${room.data.description}`}>
                             <Box
                               key={room._id}
                               display="flex"
@@ -807,7 +807,7 @@ export function HomePage() {
                         const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                         const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                         return (
-                          <Tooltip
+                          <Tooltip key={'tooltip_starred' + board._id}
                             openDelay={400}
                             hasArrow
                             placement="top"
@@ -855,7 +855,7 @@ export function HomePage() {
                       const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                       const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                       return (
-                        <Tooltip
+                        <Tooltip key={'tooltip_recent' + board._id}
                           openDelay={400}
                           hasArrow
                           placement="top"
