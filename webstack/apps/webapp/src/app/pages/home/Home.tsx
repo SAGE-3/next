@@ -29,7 +29,6 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  useColorMode,
   Tooltip,
   Menu,
   MenuButton,
@@ -41,12 +40,9 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdArrowDownward, MdDownload, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
-
-// Components
-import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
 
 // SAGE Imports
 import { SAGE3Ability } from '@sage3/shared';
@@ -75,6 +71,10 @@ import {
   isElectron,
 } from '@sage3/frontend';
 
+// Components
+import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
+
+
 /**
  * Home page for SAGE3
  * Displays all the rooms and boards that the user has access to
@@ -91,13 +91,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<
-    {
-      name: string;
-      id: string;
-      url: string;
-    }[]
-  >([]);
+  const [servers, setServers] = useState<{ name: string; id: string; url: string; }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -105,7 +99,7 @@ export function HomePage() {
   // User Information
   const { user, clearRecentBoards } = useUser();
   const userId = user ? user._id : '';
-  const userColor = useHexColor(user ? user.data.color : 'gray');
+  // const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
@@ -150,7 +144,7 @@ export function HomePage() {
   const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
-  const { toggleColorMode, colorMode } = useColorMode();
+  // const { toggleColorMode, colorMode } = useColorMode();
 
   // Modals Disclosures
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
@@ -196,19 +190,20 @@ export function HomePage() {
   // It is required because we have the HELP Button in the upper right
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { action, index, status, type } = data;
-
-    console.log(data);
-
-    if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+    // Check if already done
+    const already = localStorage.getItem('joyride_done');
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED || already === 'true') {
       // Need to set our running state to false, so we can restart if we click start again.
       setRunJoyride(false);
       setStepIndex(0);
+      localStorage.setItem('joyride_done', 'true');
     }
 
     if (action === ACTIONS.CLOSE) {
       // Need to set our running state to false, so we can restart if we click start again.
       setRunJoyride(false);
       setStepIndex(0);
+      localStorage.setItem('joyride_done', 'true');
     }
 
     if (action === ACTIONS.NEXT && type === EVENTS.STEP_AFTER) {
@@ -302,6 +297,7 @@ export function HomePage() {
   const handleHomeHelpClick = () => {
     setStepIndex(0);
     setRunJoyride(true);
+    localStorage.setItem('joyride_done', 'false');
   };
 
   // Load the steps when the component mounts
@@ -783,7 +779,7 @@ export function HomePage() {
                                 </Box>
 
                                 <Text fontSize="xs" pr="4">
-                                  {room.data.ownerId === userId ? 'Owner' : ''}
+                                  {room.data.ownerId === userId ? 'Owner' : 'Default'}
                                 </Text>
                               </Box>
                             </Tooltip>
