@@ -11,10 +11,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
+import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center, useColorMode } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { isValidURL, setupApp, processContentURL } from '@sage3/frontend';
+
+import hljs from 'highlight.js';
+
+hljs.configure({ languages: ['json', 'yaml', 'javascript', 'typescript', 'python', 'html', 'css'] });
 
 type PasteProps = {
   boardId: string;
@@ -41,6 +45,8 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // Popover
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
+  //  Dark/light mode
+  const { colorMode } = useColorMode();
 
   useEffect(() => {
     if (!user) return;
@@ -167,19 +173,37 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           });
         } else {
           // Create a new stickie
-          createApp({
-            title: user.data.name,
-            roomId: props.roomId,
-            boardId: props.boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
-            raised: true,
-            dragging: false,
-            pinned: false,
-          });
+          const lang = containsCode(pastedText);
+          console.log("Language>", lang)
+          if (lang === 'plaintext') {
+            createApp({
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 400, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Stickie',
+              state: { text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            });
+          } else {
+            createApp({
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 850, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'CodeViewer',
+              state: { content: pastedText, language: lang },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            });
+          }
         }
       }
     };
@@ -254,3 +278,17 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     </Popover>
   );
 };
+
+
+function containsCode(code: string) {
+  try {
+    const lang = hljs.highlightAuto(code).language;
+    if (lang) {
+      return lang;
+    } else {
+      return 'plaintext';
+    }
+  } catch (error) {
+    return 'plaintext';
+  }
+}
