@@ -838,6 +838,12 @@ function createWindow() {
     mainWindow.webContents.send('client-info-response', info);
   });
 
+  // Request from Client for bookmarks
+  ipcMain.on('get-servers-request', () => {
+    const bookmarks = bookmarkStore.getBookmarks();
+    mainWindow.webContents.send('get-servers-response', bookmarks);
+  });
+
   // Request from user to check for updates to the client
   ipcMain.on('client-update-check', () => {
     const currentURL = mainWindow.webContents.getURL();

@@ -44,7 +44,7 @@ import {
   MdPeople,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
-
+import { BiChevronDown } from 'react-icons/bi';
 import {
   useAuth,
   useUser,
@@ -200,12 +200,16 @@ export function MainButton(props: MainButtonProps) {
             transition={'all 0.5s'}
             _hover={{ cursor: 'pointer' }}
           >
-            <Box display="flex">
-              {' '}
-              <Icon as={MdPerson} fontSize="24px" mx="2" />
-              <Text fontSize="md" fontWeight={'bold'}>
-                {user?.data.name}
-              </Text>
+            <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+              <Box display="flex">
+                <Icon as={MdPerson} fontSize="24px" mx="2" />
+                <Text fontSize="md" fontWeight={'bold'}>
+                  {user?.data.name}
+                </Text>
+              </Box>
+              <Box pr="3" fontSize="3xl">
+                <BiChevronDown />
+              </Box>
             </Box>
           </MenuButton>
         )}

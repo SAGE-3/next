@@ -31,14 +31,19 @@ import {
   AccordionPanel,
   useColorMode,
   Tooltip,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdArrowDownward, MdDownload, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
+import { BiChevronDown } from 'react-icons/bi';
 
 // Components
 import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
@@ -67,8 +72,8 @@ import {
   MainButton,
   copyBoardUrlToClipboard,
   Clock,
+  isElectron,
 } from '@sage3/frontend';
-import { set } from 'date-fns';
 
 /**
  * Home page for SAGE3
@@ -83,6 +88,16 @@ export function HomePage() {
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
+
+  // Electron
+  const electron = isElectron();
+  const [servers, setServers] = useState<
+    {
+      name: string;
+      id: string;
+      url: string;
+    }[]
+  >([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -223,8 +238,10 @@ export function HomePage() {
       },
       {
         target: serverNameRef.current!,
-        title: 'Server Name',
-        content: 'This is the name of the server you are connected to.',
+        title: electron ? 'Servers' : 'Server',
+        content: electron
+          ? 'This shows the current server. You can change servers by clicking on the server name.'
+          : 'This shows the current server.',
         disableBeacon: true,
       },
       {
@@ -356,6 +373,13 @@ export function HomePage() {
     }
   };
 
+  const getBookmarks = () => {
+    window.electron.on('get-servers-response', async (servers: any) => {
+      setServers(servers);
+    });
+    window.electron.send('get-servers-request');
+  };
+
   // Subscribe to user updates
   useEffect(() => {
     // Update the document title
@@ -366,6 +390,10 @@ export function HomePage() {
     subscribeToRooms();
     subscribeToBoards();
     subPlugins();
+
+    if (electron) {
+      getBookmarks();
+    }
   }, []);
 
   // Change of room
@@ -595,19 +623,60 @@ export function HomePage() {
         borderRight={`solid ${dividerColor} 1px`}
       >
         <>
-          <Box
-            px="4"
-            py="2"
-            borderBottom={`solid ${dividerColor} 1px`}
-            whiteSpace="nowrap"
-            overflow="hidden"
-            textOverflow="ellipsis"
-            ref={serverNameRef}
-          >
-            <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-              {config.serverName}
-            </Text>
-          </Box>
+          {servers.length > 0 ? (
+            <Menu placement="bottom-end">
+              <MenuButton
+                as={Box}
+                px="4"
+                py="2"
+                width="100%"
+                borderBottom={`solid ${dividerColor} 1px`}
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                ref={serverNameRef}
+                fontSize="3xl"
+                fontWeight={'bold'}
+                _hover={{ cursor: 'pointer', backgroundColor: teal }}
+              >
+                <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
+                  <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                    {config.serverName}
+                  </Text>
+                  <Box pt="2">
+                    <BiChevronDown />
+                  </Box>
+                </Box>
+              </MenuButton>
+              <MenuList width={'400px'}>
+                {servers.map((server) => {
+                  return (
+                    <MenuItem
+                      onClick={() => {
+                        window.location.href = server.url;
+                      }}
+                    >
+                      {server.name}
+                    </MenuItem>
+                  );
+                })}
+              </MenuList>
+            </Menu>
+          ) : (
+            <Box
+              px="4"
+              py="2"
+              borderBottom={`solid ${dividerColor} 1px`}
+              whiteSpace="nowrap"
+              overflow="hidden"
+              textOverflow="ellipsis"
+              ref={serverNameRef}
+            >
+              <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                {config.serverName}
+              </Text>
+            </Box>
+          )}
 
           <Box
             display="flex"
