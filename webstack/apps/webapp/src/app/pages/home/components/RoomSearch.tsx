@@ -14,15 +14,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+// React Imports
+import { useRef, useState } from 'react';
+
+// Chakra Imports
 import {
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
   ModalBody,
-  Text,
-  ModalCloseButton,
   Box,
   useColorModeValue,
   Input,
@@ -31,10 +32,17 @@ import {
   Button,
   Tag,
   ModalFooter,
+  InputLeftAddon,
+  useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
+import { v5 as uuidv5 } from 'uuid';
 
-import { useHexColor, useRoomStore, useUser } from '@sage3/frontend';
+// Icons
 import { MdSearch } from 'react-icons/md';
+
+// SAGE Imports
+import { useConfigStore, useHexColor, useRoomStore, useUser } from '@sage3/frontend';
 import { Room } from '@sage3/shared/types';
 
 // Props for the AboutModal
@@ -158,61 +166,180 @@ function RoomRow(props: RoomRowProps) {
   // Room Store
   const { joinRoomMembership, members } = useRoomStore((state) => state);
 
+  // Password disclosure
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   // Is this user a member of this room?
   const roomMember = members.find((roomMember) => roomMember.data.roomId === props.room._id);
   const isMember = roomMember ? roomMember.data.members.includes(userId) : false;
   const isOwner = props.room.data.ownerId === userId;
+
+  // Toast
+  const toast = useToast();
 
   const handleMembershipClick = (ev: React.MouseEvent) => {
     ev.stopPropagation();
     if (isOwner) {
       return;
     }
-    // Join Room
-    joinRoomMembership(props.room._id);
+    // Check Password
+    if (props.room.data.privatePin) {
+      onOpen();
+    } else {
+      // Join Room
+      joinRoomMembership(props.room._id);
+      // Toast
+      toast({
+        title: `You have successfully joined ${props.room.data.name}`,
+        status: 'success',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
-    <Box
-      background={linearBGColor}
-      p="1"
-      px="2"
-      display="flex"
-      justifyContent={'space-between'}
-      alignItems={'center'}
-      borderRadius="md"
-      boxSizing="border-box"
-      border={`solid 1px ${'gray'}`}
-      borderLeft={`${borderColor} solid 8px`}
-      transition={'all 0.2s ease-in-out'}
-    >
-      <Box display="flex" flexDir="column" width="240px">
-        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
-          {props.room.data.name}
+    <>
+      <Box
+        background={linearBGColor}
+        p="1"
+        px="2"
+        display="flex"
+        justifyContent={'space-between'}
+        alignItems={'center'}
+        borderRadius="md"
+        boxSizing="border-box"
+        border={`solid 1px ${'gray'}`}
+        borderLeft={`${borderColor} solid 8px`}
+        transition={'all 0.2s ease-in-out'}
+      >
+        <Box display="flex" flexDir="column" width="240px">
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+            {props.room.data.name}
+          </Box>
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
+            {props.room.data.description}
+          </Box>
         </Box>
-        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
-          {props.room.data.description}
+        <Box display="flex" gap="2px">
+          {isOwner || isMember ? (
+            <Tag size="md" width="100px" colorScheme={isOwner ? 'green' : 'yellow'} justifyContent={'center'}>
+              {isOwner ? 'Owner' : 'Member'}
+            </Tag>
+          ) : (
+            <Button
+              size="xs"
+              variant={'solid'}
+              width="100px"
+              fontSize="sm"
+              aria-label="enter-board"
+              colorScheme={isMember ? 'red' : 'teal'}
+              onClick={handleMembershipClick}
+            >
+              Join
+            </Button>
+          )}
         </Box>
       </Box>
-      <Box display="flex" gap="2px">
-        {isOwner || isMember ? (
-          <Tag size="md" width="100px" colorScheme={isOwner ? 'green' : 'yellow'} justifyContent={'center'}>
-            {isOwner ? 'Owner' : 'Member'}
-          </Tag>
-        ) : (
-          <Button
-            size="xs"
-            variant={'solid'}
-            width="100px"
-            fontSize="sm"
-            aria-label="enter-board"
-            colorScheme={isMember ? 'red' : 'teal'}
-            onClick={handleMembershipClick}
-          >
-            Join
-          </Button>
-        )}
-      </Box>
-    </Box>
+      <PasswordJoinRoomModal isOpen={isOpen} onClose={onClose} room={props.room} />
+    </>
+  );
+}
+
+type PasswordModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  room: Room;
+};
+
+function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
+  // Reference to the input field
+  const initialRef = useRef<HTMLInputElement>(null);
+
+  // Toast for information feedback
+  const toast = useToast();
+
+  // Private information setter and getter
+  const [privateText, setPrivateText] = useState<string>('');
+  const updatePrivateText = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrivateText(e.target.value);
+  };
+
+  // Room Store
+  const { joinRoomMembership } = useRoomStore((state) => state);
+
+  // Checks if the user entered pin matches the board pin
+  const compareKey = async () => {
+    if (!privateText) return;
+    // Feature of UUID v5: private key to 'sign' a string
+    // Hash the PIN: the namespace comes from the server configuration
+    const key = uuidv5(privateText, config.namespace);
+
+    // compare the hashed keys
+    if (key === props.room.data.privatePin) {
+      joinRoomMembership(props.room._id);
+      toast({
+        title: `You have successfully joined ${props.room.data.name}`,
+        status: 'success',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+      handleOnClose();
+    } else {
+      toast({
+        title: `The password you have entered is incorrect`,
+        status: 'error',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+      setPrivateText('');
+    }
+  };
+
+  // Allows the user to hit enter to submit the password
+  const handleKeyClick = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      compareKey();
+    }
+  };
+
+  // Clear the password on close
+  const handleOnClose = () => {
+    setPrivateText('');
+    props.onClose();
+  };
+
+  return (
+    <Modal isCentered initialFocusRef={initialRef} size="lg" isOpen={props.isOpen} onClose={handleOnClose} blockScrollOnMount={false}>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalHeader>{props.room.data.name} is Password Protected</ModalHeader>
+        <ModalBody>
+          <InputGroup>
+            <InputLeftAddon children="Password" />
+            <Input
+              onKeyDown={handleKeyClick}
+              ref={initialRef}
+              width="full"
+              value={privateText}
+              type="password"
+              autoComplete="off"
+              autoCapitalize="off"
+              onChange={updatePrivateText}
+            />
+          </InputGroup>
+          <ModalFooter pr="0">
+            <Button colorScheme="blue" mr="4" onClick={props.onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="green" onClick={compareKey}>
+              Enter
+            </Button>
+          </ModalFooter>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
   );
 }

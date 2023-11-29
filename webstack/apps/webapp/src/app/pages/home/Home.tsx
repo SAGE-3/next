@@ -6,9 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React Imports
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
+// Chakra Iports
 import {
   Box,
   useColorModeValue,
@@ -71,9 +73,8 @@ import {
   isElectron,
 } from '@sage3/frontend';
 
-// Components
+// Home Page Components
 import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
-
 
 /**
  * Home page for SAGE3
@@ -91,7 +92,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<{ name: string; id: string; url: string; }[]>([]);
+  const [servers, setServers] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -311,6 +312,7 @@ export function HomePage() {
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     const isOwner = room.data.ownerId === userId;
+    const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
     return isMember || isOwner;
   };
   const boardStarredFilter = (board: Board): boolean => {
@@ -760,7 +762,13 @@ export function HomePage() {
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .map((room) => {
                         return (
-                          <Tooltip key={'tooltip_room' + room._id} openDelay={400} hasArrow placement="top" label={`Description: ${room.data.description}`}>
+                          <Tooltip
+                            key={'tooltip_room' + room._id}
+                            openDelay={400}
+                            hasArrow
+                            placement="top"
+                            label={`Description: ${room.data.description}`}
+                          >
                             <Box
                               key={room._id}
                               display="flex"
@@ -807,7 +815,8 @@ export function HomePage() {
                         const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                         const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                         return (
-                          <Tooltip key={'tooltip_starred' + board._id}
+                          <Tooltip
+                            key={'tooltip_starred' + board._id}
                             openDelay={400}
                             hasArrow
                             placement="top"
@@ -855,7 +864,8 @@ export function HomePage() {
                       const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                       const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                       return (
-                        <Tooltip key={'tooltip_recent' + board._id}
+                        <Tooltip
+                          key={'tooltip_recent' + board._id}
                           openDelay={400}
                           hasArrow
                           placement="top"
