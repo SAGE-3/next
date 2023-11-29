@@ -618,241 +618,192 @@ export function HomePage() {
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
       >
-        <>
-          {servers.length > 0 ? (
-            <Menu placement="bottom-end">
-              <MenuButton
-                as={Box}
-                px="4"
-                py="2"
-                width="100%"
-                borderBottom={`solid ${dividerColor} 1px`}
-                whiteSpace="nowrap"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                ref={serverNameRef}
-                fontSize="3xl"
-                fontWeight={'bold'}
-                _hover={{ cursor: 'pointer', backgroundColor: teal }}
-              >
-                <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
-                  <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                    {config.serverName}
-                  </Text>
-                  <Box pt="2">
-                    <BiChevronDown />
-                  </Box>
-                </Box>
-              </MenuButton>
-              <MenuList width={'400px'}>
-                {servers.map((server) => {
-                  return (
-                    <MenuItem
-                      onClick={() => {
-                        window.location.href = server.url;
-                      }}
-                    >
-                      {server.name}
-                    </MenuItem>
-                  );
-                })}
-              </MenuList>
-            </Menu>
-          ) : (
-            <Box
+        {servers.length > 0 ? (
+          <Menu placement="bottom-end">
+            <MenuButton
+              as={Box}
               px="4"
               py="2"
+              width="100%"
               borderBottom={`solid ${dividerColor} 1px`}
               whiteSpace="nowrap"
               overflow="hidden"
               textOverflow="ellipsis"
               ref={serverNameRef}
+              fontSize="3xl"
+              fontWeight={'bold'}
+              _hover={{ cursor: 'pointer', backgroundColor: teal }}
             >
-              <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                {config.serverName}
-              </Text>
-            </Box>
-          )}
-
+              <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
+                <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                  {config.serverName}
+                </Text>
+                <Box pt="2">
+                  <BiChevronDown />
+                </Box>
+              </Box>
+            </MenuButton>
+            <MenuList width={'400px'}>
+              {servers.map((server) => {
+                return (
+                  <MenuItem
+                    onClick={() => {
+                      window.location.href = server.url;
+                    }}
+                  >
+                    {server.name}
+                  </MenuItem>
+                );
+              })}
+            </MenuList>
+          </Menu>
+        ) : (
           <Box
-            display="flex"
-            flexDirection="column"
-            justifyItems="start"
-            flex="1"
-            overflowY="scroll"
-            overflowX="hidden"
-            css={{
-              '&::-webkit-scrollbar': {
-                background: 'transparent',
-                width: '5px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: scrollBarColor,
-                borderRadius: '48px',
-              },
-            }}
+            px="4"
+            py="2"
+            borderBottom={`solid ${dividerColor} 1px`}
+            whiteSpace="nowrap"
+            overflow="hidden"
+            textOverflow="ellipsis"
+            ref={serverNameRef}
           >
-            <VStack spacing={0} align="stretch">
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for a multiple boards'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={handleCreateRoomClick}
-                  ref={createRoomRef}
-                >
-                  <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
-                </Box>
-              </Tooltip>
+            <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+              {config.serverName}
+            </Text>
+          </Box>
+        )}
 
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={handleRoomSearchClick}
-                  ref={searchRoomsRef}
-                >
-                  <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
-                </Box>
-              </Tooltip>
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyItems="start"
+          flex="1"
+          overflowY="scroll"
+          overflowX="hidden"
+          css={{
+            '&::-webkit-scrollbar': {
+              background: 'transparent',
+              width: '5px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: scrollBarColor,
+              borderRadius: '48px',
+            },
+          }}
+        >
+          <VStack spacing={0} align="stretch">
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for a multiple boards'}>
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
+                onClick={handleCreateRoomClick}
+                ref={createRoomRef}
+              >
+                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+              </Box>
+            </Tooltip>
 
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using a shared URL'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                  pl="2"
-                  onClick={enterBoardByURLModalOnOpen}
-                  ref={enterBoardByURLRef}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
-                </Box>
-              </Tooltip>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
+                onClick={handleRoomSearchClick}
+                ref={searchRoomsRef}
+              >
+                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
+              </Box>
+            </Tooltip>
 
-              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using a shared URL'}>
+              <Box
+                h="40px"
+                display="flex"
+                justifyContent={'left'}
+                alignItems={'center'}
+                transition="all 0.5s"
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                pl="2"
+                onClick={enterBoardByURLModalOnOpen}
+                ref={enterBoardByURLRef}
+              >
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
+              </Box>
+            </Tooltip>
 
-              <Accordion defaultIndex={[0, 1, 2]} allowMultiple>
-                <AccordionItem border="none" ref={roomsRef}>
-                  <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'The rooms you are a part of'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
+            <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
 
-                  <AccordionPanel p="0">
-                    <VStack align="stretch" gap="0">
-                      {rooms
-                        .filter(roomMemberFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((room) => {
-                          return (
-                            <Tooltip openDelay={400} hasArrow placement="top" label={`Description: ${room.data.description}`}>
-                              <Box
-                                key={room._id}
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                transition="all 0.5s"
-                                pl="48px"
-                                height="28px"
-                                backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
-                                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                                onClick={() => handleRoomClick(room)}
-                              >
-                                <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                  <Text fontSize="md">{room.data.name}</Text>
-                                </Box>
+            <Accordion defaultIndex={[0]} allowMultiple>
+              <AccordionItem border="none" ref={roomsRef}>
+                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'The rooms you are a part of'}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
+                    </Box>
+                  </Tooltip>
+                  <AccordionIcon />
+                </AccordionButton>
 
-                                <Text fontSize="xs" pr="4">
-                                  {room.data.ownerId === userId ? 'Owner' : 'Default'}
-                                </Text>
-                              </Box>
-                            </Tooltip>
-                          );
-                        })}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-
-                <AccordionItem border="none" ref={starredBoardsRef}>
-                  <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Your favorite rooms'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
-
-                  <AccordionPanel p="0">
-                    <VStack align="stretch" gap="0">
-                      {boards
-                        .filter(boardStarredFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((board) => {
-                          const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                          const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                          return (
-                            <Tooltip
-                              openDelay={400}
-                              hasArrow
-                              placement="top"
-                              label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
+                <AccordionPanel p="0">
+                  <VStack align="stretch" gap="0">
+                    {rooms
+                      .filter(roomMemberFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((room) => {
+                        return (
+                          <Tooltip openDelay={400} hasArrow placement="top" label={`Description: ${room.data.description}`}>
+                            <Box
+                              key={room._id}
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              transition="all 0.5s"
+                              pl="48px"
+                              height="28px"
+                              backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                              onClick={() => handleRoomClick(room)}
                             >
-                              <Box
-                                key={board._id}
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                transition="all 0.5s"
-                                pl="48px"
-                                height="28px"
-                                backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                                _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                                onClick={() => handleBoardClick(board)}
-                              >
-                                <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                  <Text fontSize="md">{board.data.name}</Text>
-                                </Box>
-                                <Box pr="5" display="flex" alignItems="center">
-                                  <Text fontSize="sm">{userCount}</Text>
-                                  <MdPerson></MdPerson>
-                                </Box>
+                              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                                <Text fontSize="md">{room.data.name}</Text>
                               </Box>
-                            </Tooltip>
-                          );
-                        })}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-                <AccordionItem border="none" ref={recentBoardsRef}>
-                  <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Your recently visited rooms (limit to 10)'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
 
-                  <AccordionPanel p={0}>
-                    <VStack align="stretch" gap="0">
-                      {boards.filter(recentBoardsFilter).map((board) => {
+                              <Text fontSize="xs" pr="4">
+                                {room.data.ownerId === userId ? 'Owner' : 'Member'}
+                              </Text>
+                            </Box>
+                          </Tooltip>
+                        );
+                      })}
+                  </VStack>
+                </AccordionPanel>
+              </AccordionItem>
+
+              <AccordionItem border="none" ref={starredBoardsRef}>
+                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Your favorite rooms'}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
+                    </Box>
+                  </Tooltip>
+                  <AccordionIcon />
+                </AccordionButton>
+
+                <AccordionPanel p="0">
+                  <VStack align="stretch" gap="0">
+                    {boards
+                      .filter(boardStarredFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((board) => {
                         const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                         const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                         return (
@@ -871,8 +822,8 @@ export function HomePage() {
                               pl="48px"
                               height="28px"
                               backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                              onClick={() => handleBoardClick(board)}
                               _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                              onClick={() => handleBoardClick(board)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
                                 <Text fontSize="md">{board.data.name}</Text>
@@ -885,32 +836,79 @@ export function HomePage() {
                           </Tooltip>
                         );
                       })}
-                      {boards.filter(recentBoardsFilter).length > 0 && (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="left"
-                          transition="all 0.5s"
-                          pl="48px"
-                          height="28px"
-                          color="red.400"
-                          fontWeight={'bold'}
-                          onClick={clearRecentBoardsModalOnOpen}
-                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                  </VStack>
+                </AccordionPanel>
+              </AccordionItem>
+              <AccordionItem border="none" ref={recentBoardsRef}>
+                <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Your recently visited rooms (limit to 10)'}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
+                    </Box>
+                  </Tooltip>
+                  <AccordionIcon />
+                </AccordionButton>
+
+                <AccordionPanel p={0}>
+                  <VStack align="stretch" gap="0">
+                    {boards.filter(recentBoardsFilter).map((board) => {
+                      const userCount = presences.filter((p) => p.data.boardId === board._id).length;
+                      const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
+                      return (
+                        <Tooltip
+                          openDelay={400}
+                          hasArrow
+                          placement="top"
+                          label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
                         >
-                          <Text fontSize="md">Clear Recents Boards</Text>
-                        </Box>
-                      )}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-              </Accordion>
-            </VStack>
-          </Box>
-          <Box ref={mainButtonRef}>
-            <MainButton config={config}></MainButton>
-          </Box>
-        </>
+                          <Box
+                            key={board._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                            onClick={() => handleBoardClick(board)}
+                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                          >
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md">{board.data.name}</Text>
+                            </Box>
+                            <Box pr="5" display="flex" alignItems="center">
+                              <Text fontSize="sm">{userCount}</Text>
+                              <MdPerson></MdPerson>
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                    {boards.filter(recentBoardsFilter).length > 0 && (
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="left"
+                        transition="all 0.5s"
+                        pl="48px"
+                        height="28px"
+                        color="red.400"
+                        fontWeight={'bold'}
+                        onClick={clearRecentBoardsModalOnOpen}
+                        _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+                      >
+                        <Text fontSize="md">Clear Recents Boards</Text>
+                      </Box>
+                    )}
+                  </VStack>
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
+          </VStack>
+        </Box>
+        <Box ref={mainButtonRef}>
+          <MainButton config={config}></MainButton>
+        </Box>
       </Box>
       {selectedRoom && (
         <Box
