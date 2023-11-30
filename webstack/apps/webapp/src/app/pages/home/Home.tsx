@@ -1017,7 +1017,7 @@ export function HomePage() {
                       pr="2"
                       style={{ height: 'calc(100vh - 340px)' }}
                       overflowY="scroll"
-                      minWidth="375px"
+                      minWidth="420px"
                       css={{
                         '&::-webkit-scrollbar': {
                           background: 'transparent',
