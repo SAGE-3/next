@@ -18,7 +18,7 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
     const router = sageRouter<RoomMembersSchema>(this);
 
     router.post('/join', async ({ body, user }, res) => {
-      console.log('Joining room', body);
+      // console.log('Joining room', body);
       let doc = null;
       const userId = (user as any).id;
       const roomId = body.roomId;
