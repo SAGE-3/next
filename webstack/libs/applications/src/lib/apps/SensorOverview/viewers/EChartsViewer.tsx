@@ -134,7 +134,7 @@ const EChartsViewer = (props: {
             left="50%"
             transform={`scale(${4 * Math.min(props.size ? props.size.width / 300 : 0, props.size ? props.size.height / 300 : 0)})`}
           >
-            <Spinner thickness="20px" speed="1s" emptyColor="gray.200" size="xl" />
+            <Spinner thickness="5px" speed="1s" emptyColor="gray.200" size="xl" />
           </Box>
         )}
       </Box>
