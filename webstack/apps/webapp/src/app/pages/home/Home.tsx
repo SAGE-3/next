@@ -36,6 +36,7 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
+  Link,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -222,29 +223,30 @@ export function HomePage() {
       {
         target: introRef.current!,
         title: 'Welcome to SAGE3',
-        content: 'We recently updated our UI to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
+        content: 'We recently updated our design to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
         disableBeacon: true,
         disableOverlayClose: true,
+        placement: 'center',
       },
       {
         target: mainButtonRef.current!,
         title: 'Main Menu',
-        content: 'This is the Main Menu Button. From here you can update your profile, change theme, find users, and logout.',
+        content: 'This is the Main Menu Button. From here, you can update your profile, change theme, find users, and logout.',
         disableBeacon: true,
       },
       {
         target: serverNameRef.current!,
         title: electron ? 'Servers' : 'Server',
         content: electron
-          ? 'This shows the current server. You can change servers by clicking on the server name.'
-          : 'This shows the current server.',
+          ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
+          : 'This shows the current SAGE3 server.',
         disableBeacon: true,
       },
       {
         target: createRoomRef.current!,
         title: 'Create Rooms',
         content:
-          'This button will allow you to create new Rooms. After creating a room you can start creating boards and start collaborating.',
+          'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
         disableBeacon: true,
       },
       {
@@ -256,40 +258,41 @@ export function HomePage() {
       {
         target: enterBoardByURLRef.current!,
         title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You can enter the board by clicking this button and pasting the link.',
+        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
         target: roomsRef.current!,
         title: 'Your Rooms',
         content:
-          'Rooms you are the owner of or a member of will appear here. Click on them to enter the room. If you dont have any room listed you can create a new one or search for an existing one from above.',
+          'Rooms you are the owner of or a member of will appear here. Click a name to enter the room. If you dont have any room listed, you can create a new one or search for existing ones above.',
         disableBeacon: true,
       },
       {
         target: starredBoardsRef.current!,
         title: 'Starred Boards',
         content:
-          'You can star boards you like to quickly access them from here. You can star a board by clicking on the star icon next to the boards name once you enter a room.',
+          'You can star your frequently used boards here for quick access. You can star a board by clicking on the star icon next to the boards name once you enter a room.',
         disableBeacon: true,
       },
       {
         target: recentBoardsRef.current!,
         title: 'Recent Boards',
         content:
-          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button.',
+          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
       },
       {
         target: clockRef.current!,
         title: 'Clock',
-        content: 'The time is displayed here along with your network status and a help button. The help button will restart this tour.',
+        content: 'Your local time is displayed here, along with your network status and a help button. The help button will restart this tour.',
       },
       {
         target: introRef.current!,
-        title: 'Tour End',
-        content: 'We hope you enjoy using SAGE3!',
+        title: 'End of the Tour',
+        content: <><Text py={2}>We hope you enjoy using SAGE3!</Text><Text>Join us on the SAGE3 Discord server: <Link href='https://discord.gg/hHsKu47buY' color='teal.500' isExternal>https://discord.gg/hHsKu47buY</Link></Text></>,
         disableBeacon: true,
         disableOverlayClose: true,
+        placement: 'center',
       },
     ]);
   };
@@ -546,7 +549,6 @@ export function HomePage() {
         styles={{
           options: {
             primaryColor: teal,
-
             width: 400,
             zIndex: 1000,
           },
@@ -648,7 +650,7 @@ export function HomePage() {
             <MenuList width={'400px'}>
               {servers.map((server) => {
                 return (
-                  <MenuItem
+                  <MenuItem key={server.id}
                     onClick={() => {
                       window.location.href = server.url;
                     }}
