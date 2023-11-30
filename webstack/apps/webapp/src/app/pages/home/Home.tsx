@@ -192,19 +192,19 @@ export function HomePage() {
   const handleJoyrideCallback = (data: CallBackProps) => {
     const { action, index, status, type } = data;
     // Check if already done
-    const already = localStorage.getItem('joyride_done');
+    const already = localStorage.getItem('s3_intro_done');
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED || already === 'true') {
       // Need to set our running state to false, so we can restart if we click start again.
       setRunJoyride(false);
       setStepIndex(0);
-      localStorage.setItem('joyride_done', 'true');
+      localStorage.setItem('s3_intro_done', 'true');
     }
 
     if (action === ACTIONS.CLOSE) {
       // Need to set our running state to false, so we can restart if we click start again.
       setRunJoyride(false);
       setStepIndex(0);
-      localStorage.setItem('joyride_done', 'true');
+      localStorage.setItem('s3_intro_done', 'true');
     }
 
     if (action === ACTIONS.NEXT && type === EVENTS.STEP_AFTER) {
@@ -298,7 +298,7 @@ export function HomePage() {
   const handleHomeHelpClick = () => {
     setStepIndex(0);
     setRunJoyride(true);
-    localStorage.setItem('joyride_done', 'false');
+    localStorage.setItem('s3_intro_done', 'false');
   };
 
   // Load the steps when the component mounts
