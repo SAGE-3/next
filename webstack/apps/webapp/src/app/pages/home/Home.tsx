@@ -623,44 +623,45 @@ export function HomePage() {
         borderRight={`solid ${dividerColor} 1px`}
       >
         {servers.length > 0 ? (
-          <Menu placement="bottom-end">
-            <MenuButton
-              as={Box}
-              px="4"
-              py="2"
-              width="100%"
-              borderBottom={`solid ${dividerColor} 1px`}
-              whiteSpace="nowrap"
-              overflow="hidden"
-              textOverflow="ellipsis"
-              ref={serverNameRef}
-              fontSize="3xl"
-              fontWeight={'bold'}
-              _hover={{ cursor: 'pointer', backgroundColor: teal }}
-            >
-              <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
-                <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                  {config.serverName}
-                </Text>
-                <Box pt="2">
-                  <BiChevronDown />
+          <Box ref={serverNameRef}>
+            <Menu placement="bottom-end">
+              <MenuButton
+                as={Box}
+                px="4"
+                py="2"
+                width="100%"
+                borderBottom={`solid ${dividerColor} 1px`}
+                whiteSpace="nowrap"
+                overflow="hidden"
+                textOverflow="ellipsis"
+                fontSize="3xl"
+                fontWeight={'bold'}
+                _hover={{ cursor: 'pointer', backgroundColor: teal }}
+              >
+                <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
+                  <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                    {config.serverName}
+                  </Text>
+                  <Box pt="2">
+                    <BiChevronDown />
+                  </Box>
                 </Box>
-              </Box>
-            </MenuButton>
-            <MenuList width={'400px'}>
-              {servers.map((server) => {
-                return (
-                  <MenuItem key={server.id}
-                    onClick={() => {
-                      window.location.href = server.url;
-                    }}
-                  >
-                    {server.name}
-                  </MenuItem>
-                );
-              })}
-            </MenuList>
-          </Menu>
+              </MenuButton>
+              <MenuList width={'400px'}>
+                {servers.map((server) => {
+                  return (
+                    <MenuItem key={server.id}
+                      onClick={() => {
+                        window.location.href = server.url;
+                      }}
+                    >
+                      {server.name}
+                    </MenuItem>
+                  );
+                })}
+              </MenuList>
+            </Menu>
+          </Box>
         ) : (
           <Box
             px="4"
