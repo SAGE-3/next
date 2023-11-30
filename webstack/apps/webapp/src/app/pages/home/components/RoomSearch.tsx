@@ -39,7 +39,7 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 
 // Icons
-import { MdSearch } from 'react-icons/md';
+import { MdLock, MdSearch } from 'react-icons/md';
 
 // SAGE Imports
 import { useConfigStore, useHexColor, useRoomStore, useUser } from '@sage3/frontend';
@@ -236,7 +236,8 @@ function RoomRow(props: RoomRowProps) {
               colorScheme={isMember ? 'red' : 'teal'}
               onClick={handleMembershipClick}
             >
-              Join
+              <Box mr="1">Join</Box>
+              {props.room.data.privatePin && <MdLock />}
             </Button>
           )}
         </Box>

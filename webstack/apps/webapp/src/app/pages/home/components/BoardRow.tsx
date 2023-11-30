@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon } from '@chakra-ui/react';
 import { EnterBoardModal, useHexColor, useUser } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
 import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdLockOpen } from 'react-icons/md';
@@ -14,7 +14,7 @@ import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdLockOpen } from 'react-ic
 export function BoardRow(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: number }) {
   const { user, saveBoard, removeBoard } = useUser();
 
-  const borderColorValue = useColorModeValue(props.board.data.color, props.board.data.color);
+  const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
   const borderColorGray = useColorModeValue('gray.300', 'gray.700');
   const borderColorG = useHexColor(borderColorGray);
@@ -57,13 +57,15 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       onClick={() => props.onClick(props.board)}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid  ${props.selected ? `2px ${borderColor}` : '2px gray'}`}
+      width="400px"
+      height="56px"
+      border={`solid  ${props.selected ? `2px ${borderColor}` : '1px gray'}`}
       // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
       _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
-      transition={'all 0.2s ease-in-out'}
+      transition={'all 0.1s ease-in-out'}
     >
       <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
-      <Box display="flex" flexDir="column" width="240px">
+      <Box display="flex" flexDir="column" width="260px">
         <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
           {props.board.data.name}
         </Box>
@@ -71,15 +73,12 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           {props.board.data.description}
         </Box>
       </Box>
-      <Box display="flex" gap="2px">
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          aria-label="enter-board"
-          fontSize="xl"
-          colorScheme={boardColor}
-          icon={<Text>{props.usersPresent}</Text>}
-        ></IconButton>
+      <Box display="flex" alignItems={'center'}>
+        {props.board.data.isPrivate && <Icon size="md" color={borderColor} as={MdLock} mr="2" />}
+
+        <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
+          {props.usersPresent}
+        </Text>
 
         <IconButton
           size="sm"
