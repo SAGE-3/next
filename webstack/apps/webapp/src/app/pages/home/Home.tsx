@@ -946,21 +946,29 @@ export function HomePage() {
 
               <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
-                <Button
-                  colorScheme="teal"
-                  variant="outline"
-                  size="sm"
-                  width="120px"
-                  isDisabled={!canCreateBoards}
-                  onClick={createBoardModalOnOpen}
+                <Tooltip
+                  label={'Create a new board in this room'}
+                  openDelay={400}
+                  hasArrow
+                  placement="top"
                 >
-                  Create Board
-                </Button>
+
+                  <Button
+                    colorScheme="teal"
+                    variant="outline"
+                    size="sm"
+                    width="120px"
+                    isDisabled={!canCreateBoards}
+                    onClick={createBoardModalOnOpen}
+                  >
+                    Create Board
+                  </Button>
+                </Tooltip>
                 <Tooltip
                   label={
                     selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
                   }
-                  openDelay={200}
+                  openDelay={400}
                   hasArrow
                   placement="top"
                 >
@@ -976,8 +984,8 @@ export function HomePage() {
                   </Button>
                 </Tooltip>
                 <Tooltip
-                  label={selectedRoom.data.ownerId === userId ? 'Owners cannot leave their own room.' : ''}
-                  openDelay={200}
+                  label={selectedRoom.data.ownerId === userId ? 'Owners cannot leave their own room.' : 'Leave this room'}
+                  openDelay={400}
                   hasArrow
                   placement="top"
                 >
@@ -1001,10 +1009,10 @@ export function HomePage() {
               <TabList>
                 <Tab>Boards</Tab>
                 <Tab>Members</Tab>
-                <Tooltip label="Coming Soon" openDelay={200} hasArrow placement="top">
+                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
                   <Tab isDisabled={true}>Assets</Tab>
                 </Tooltip>
-                <Tooltip label="Coming Soon" openDelay={200} hasArrow placement="top">
+                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
                   <Tab isDisabled={true}>Chat</Tab>
                 </Tooltip>
               </TabList>

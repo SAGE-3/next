@@ -6,18 +6,19 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip } from '@chakra-ui/react';
+import { MdLock, MdStar, MdExitToApp, MdStarOutline } from 'react-icons/md';
+
 import { EnterBoardModal, useHexColor, useUser } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
-import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdLockOpen } from 'react-icons/md';
 
 export function BoardRow(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: number }) {
   const { user, saveBoard, removeBoard } = useUser();
 
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
-  const borderColorGray = useColorModeValue('gray.300', 'gray.700');
-  const borderColorG = useHexColor(borderColorGray);
+  // const borderColorGray = useColorModeValue('gray.300', 'gray.700');
+  // const borderColorG = useHexColor(borderColorGray);
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -65,6 +66,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       transition={'all 0.1s ease-in-out'}
     >
       <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
+
       <Box display="flex" flexDir="column" width="260px">
         <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
           {props.board.data.name}
@@ -73,32 +75,46 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           {props.board.data.description}
         </Box>
       </Box>
+
       <Box display="flex" alignItems={'center'}>
-        {props.board.data.isPrivate && <Icon size="md" color={borderColor} as={MdLock} mr="2" />}
+        {props.board.data.isPrivate &&
+          <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
+            <Box>
+              <Icon verticalAlign={'text-top'} fontSize="xl" color={borderColor} as={MdLock} mr="1" />
+            </Box>
+          </Tooltip>
+        }
 
-        <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
-          {props.usersPresent}
-        </Text>
+        <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
+          <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
+            {props.usersPresent}
+          </Text>
+        </Tooltip>
 
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme={boardColor}
-          aria-label="enter-board"
-          fontSize="xl"
-          onClick={handleFavorite}
-          icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-        ></IconButton>
-        <IconButton
-          size="sm"
-          variant={'ghost'}
-          colorScheme={boardColor}
-          aria-label="enter-board"
-          fontSize="xl"
-          onClick={handleEnterBoard}
-          icon={<MdExitToApp />}
-        ></IconButton>
+        <Tooltip placement="top" hasArrow={true} label={'Favorite this board'} openDelay={400} ml="1">
+          <IconButton
+            size="sm"
+            variant={'ghost'}
+            colorScheme={boardColor}
+            aria-label="enter-board"
+            fontSize="xl"
+            onClick={handleFavorite}
+            icon={isFavorite ? <MdStar /> : <MdStarOutline />}
+          ></IconButton>
+        </Tooltip>
+
+        <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
+          <IconButton
+            size="sm"
+            variant={'ghost'}
+            colorScheme={boardColor}
+            aria-label="enter-board"
+            fontSize="xl"
+            onClick={handleEnterBoard}
+            icon={<MdExitToApp />}
+          ></IconButton>
+        </Tooltip>
       </Box>
-    </Box>
+    </Box >
   );
 }

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { useState, useEffect } from 'react';
-import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
+import { Box, Text, Icon, useColorModeValue, Tooltip } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
 import { APIHttp, useHexColor } from '@sage3/frontend';
@@ -69,65 +69,67 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   }, [props.board._id]);
 
   return (
-    <Box
-      width={`${props.width}px`}
-      height={`${props.height}px`}
-      backgroundSize="contain"
-      borderRadius="md"
-      background={linearBGColor}
-      p="2"
-      border={`2px solid ${boardColor}`}
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      textAlign={'center'}
-      flexDir={'column'}
-    >
-      {props.board.data.isPrivate ? (
-        <>
-          <Icon
-            aria-label="LockBoard"
-            fontSize="96px"
-            pointerEvents="none"
-            color={boardColor}
-            m="0"
-            p="0"
-            _hover={{ cursor: 'initial' }}
-            as={MdLock}
-            textAlign={'center'}
-            mb={2}
-          />
+    <Tooltip placement="top" hasArrow={true} label={'Board preview - Click to enter'} openDelay={1000}>
+      <Box
+        width={`${props.width}px`}
+        height={`${props.height}px`}
+        backgroundSize="contain"
+        borderRadius="md"
+        background={linearBGColor}
+        p="2"
+        border={`2px solid ${boardColor}`}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        textAlign={'center'}
+        flexDir={'column'}
+      >
+        {props.board.data.isPrivate ? (
+          <>
+            <Icon
+              aria-label="LockBoard"
+              fontSize="96px"
+              pointerEvents="none"
+              color={boardColor}
+              m="0"
+              p="0"
+              _hover={{ cursor: 'initial' }}
+              as={MdLock}
+              textAlign={'center'}
+              mb={2}
+            />
 
-          <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold">
-            This board is private.
+            <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold">
+              This board is private.
+            </Text>
+          </>
+        ) : appInfo.length > 0 ? (
+          <Box position="relative" height={boardHeight} width={boardWidth}>
+            {appInfo.map((app) => {
+              return (
+                <Box
+                  backgroundColor={boardColor}
+                  position="absolute"
+                  left={(app.position.x - appsX) * mapScale + 'px'}
+                  top={(app.position.y - appsY) * mapScale + 'px'}
+                  width={app.size.width * mapScale + 'px'}
+                  height={app.size.height * mapScale + 'px'}
+                  transition={'all .5s'}
+                  borderWidth="1px"
+                  borderStyle="solid"
+                  borderColor={appBorderColor}
+                  borderRadius="sm"
+                  key={app.id}
+                ></Box>
+              );
+            })}
+          </Box>
+        ) : (
+          <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
+            This board has no opened applications.
           </Text>
-        </>
-      ) : appInfo.length > 0 ? (
-        <Box position="relative" height={boardHeight} width={boardWidth}>
-          {appInfo.map((app) => {
-            return (
-              <Box
-                backgroundColor={boardColor}
-                position="absolute"
-                left={(app.position.x - appsX) * mapScale + 'px'}
-                top={(app.position.y - appsY) * mapScale + 'px'}
-                width={app.size.width * mapScale + 'px'}
-                height={app.size.height * mapScale + 'px'}
-                transition={'all .5s'}
-                borderWidth="1px"
-                borderStyle="solid"
-                borderColor={appBorderColor}
-                borderRadius="sm"
-                key={app.id}
-              ></Box>
-            );
-          })}
-        </Box>
-      ) : (
-        <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
-          This board has no opened applications.
-        </Text>
-      )}
-    </Box>
+        )}
+      </Box>
+    </Tooltip>
   );
 }
