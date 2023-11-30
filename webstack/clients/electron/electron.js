@@ -739,6 +739,10 @@ function createWindow() {
     if (details.frameName === 'sage3') {
       shell.openExternal(details.url);
     }
+    // Allow to open discord links
+    if (details.url.startsWith('https://discord.gg/')) {
+      shell.openExternal(details.url);
+    }
     return { action: 'deny' };
   });
 
