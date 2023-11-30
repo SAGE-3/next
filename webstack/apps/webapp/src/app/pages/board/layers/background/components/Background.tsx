@@ -376,11 +376,14 @@ export function Background(props: BackgroundProps) {
   useEffect(() => {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
-    if (isShiftPressed) {
-      document.onselectstart = function () {
-        return false;
-      };
-    }
+
+    // Removing this for now, it's causing issues with the Notepad app
+    // if (isShiftPressed) {
+    //   document.onselectstart = function () {
+    //     return false;
+    //   };
+    // }
+
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
