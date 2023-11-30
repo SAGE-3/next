@@ -932,13 +932,13 @@ export function HomePage() {
           maxHeight="100vh"
           height="100vh"
           overflow="hidden"
-          padding="8"
+          pt={4} pr={4} pb={4} pl={6}
         >
-          <Box width="100%" minHeight="200px">
+          <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
             {/* Room Information */}
 
             <VStack alignItems={'start'} gap="0">
-              <Text fontSize="4xl" fontWeight="bold">
+              <Text fontSize="3xl" fontWeight="bold">
                 {selectedRoom.data.name}
               </Text>
               <Text fontSize="xl" fontWeight={'normal'}>
@@ -1007,7 +1007,7 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" overflow="hidden">
+          <Box width="100%" overflow="hidden" height="100%">
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>Boards</Tab>
@@ -1026,7 +1026,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100vh - 340px)' }}
+                      style={{ height: 'calc(100vh - 270px)' }}
                       overflowY="scroll"
                       minWidth="420px"
                       css={{
