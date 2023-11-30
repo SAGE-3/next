@@ -27,6 +27,7 @@ import {
   Icon,
   Text,
 } from '@chakra-ui/react';
+
 import {
   MdOutlineGridOn,
   MdAccountCircle,
@@ -44,7 +45,8 @@ import {
   MdPeople,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
-import { BiChevronDown } from 'react-icons/bi';
+import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
+
 import {
   useAuth,
   useUser,
@@ -67,6 +69,7 @@ type MainButtonProps = {
   boardInfo?: { roomId: string; boardId: string; boardName: string; roomName: string };
   config: OpenConfiguration;
 };
+
 /**
  * Main (StartMenu Button) component
  *
@@ -78,7 +81,10 @@ export function MainButton(props: MainButtonProps) {
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
 
-  // Abilties
+  // Track if the menu is open or not
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
+  // Abilities
   const canCreatePlugins = useAbility('create', 'plugins');
   const canUpdateAccount = useAbility('update', 'users');
 
@@ -173,7 +179,7 @@ export function MainButton(props: MainButtonProps) {
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
 
-      <Menu preventOverflow={false} placement="top-start">
+      <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
           <MenuButton
             as={Button}
@@ -208,7 +214,7 @@ export function MainButton(props: MainButtonProps) {
                 </Text>
               </Box>
               <Box pr="3" fontSize="3xl">
-                <BiChevronDown />
+                {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
               </Box>
             </Box>
           </MenuButton>
@@ -328,6 +334,7 @@ export function MainButton(props: MainButtonProps) {
           </MenuItem>
         </MenuList>
       </Menu>
+
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
       <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
