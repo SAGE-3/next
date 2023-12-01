@@ -709,7 +709,7 @@ export function HomePage() {
           }}
         >
           <VStack spacing={0} align="stretch">
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for a multiple boards'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for multiple boards'}>
               <Box
                 h="40px"
                 display="flex"
