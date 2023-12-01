@@ -223,7 +223,8 @@ export function HomePage() {
       {
         target: introRef.current!,
         title: 'Welcome to SAGE3',
-        content: 'We recently updated our design to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
+        content:
+          'We recently updated our design to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
         disableBeacon: true,
         disableOverlayClose: true,
         placement: 'center',
@@ -245,8 +246,7 @@ export function HomePage() {
       {
         target: createRoomRef.current!,
         title: 'Create Rooms',
-        content:
-          'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
+        content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
         disableBeacon: true,
       },
       {
@@ -284,12 +284,23 @@ export function HomePage() {
       {
         target: clockRef.current!,
         title: 'Clock',
-        content: 'Your local time is displayed here, along with your network status and a help button. The help button will restart this tour.',
+        content:
+          'Your local time is displayed here, along with your network status and a help button. The help button will restart this tour.',
       },
       {
         target: introRef.current!,
         title: 'End of the Tour',
-        content: <><Text py={2}>We hope you enjoy using SAGE3!</Text><Text>Join us on the SAGE3 Discord server: <Link href='https://discord.gg/hHsKu47buY' color='teal.500' isExternal>https://discord.gg/hHsKu47buY</Link></Text></>,
+        content: (
+          <>
+            <Text py={2}>We hope you enjoy using SAGE3!</Text>
+            <Text>
+              Join us on the SAGE3 Discord server:
+              <Link href="https://discord.gg/hHsKu47buY" color="teal.500" isExternal>
+                https://discord.gg/hHsKu47buY
+              </Link>
+            </Text>
+          </>
+        ),
         disableBeacon: true,
         disableOverlayClose: true,
         placement: 'center',
@@ -650,7 +661,8 @@ export function HomePage() {
               <MenuList width={'400px'}>
                 {servers.map((server) => {
                   return (
-                    <MenuItem key={server.id}
+                    <MenuItem
+                      key={server.id}
                       onClick={() => {
                         window.location.href = server.url;
                       }}
@@ -932,7 +944,10 @@ export function HomePage() {
           maxHeight="100vh"
           height="100vh"
           overflow="hidden"
-          pt={4} pr={4} pb={4} pl={6}
+          pt={4}
+          pr={4}
+          pb={4}
+          pl={6}
         >
           <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
             {/* Room Information */}
@@ -949,13 +964,7 @@ export function HomePage() {
 
               <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
-                <Tooltip
-                  label={'Create a new board in this room'}
-                  openDelay={400}
-                  hasArrow
-                  placement="top"
-                >
-
+                <Tooltip label={'Create a new board in this room'} openDelay={400} hasArrow placement="top">
                   <Button
                     colorScheme="teal"
                     variant="outline"
@@ -1000,7 +1009,7 @@ export function HomePage() {
                     onClick={leaveRoomModalOnOpen}
                     isDisabled={selectedRoom.data.ownerId === userId}
                   >
-                    Leave Room
+                    Unjoin Room
                   </Button>
                 </Tooltip>
               </Box>
