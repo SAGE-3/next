@@ -18,7 +18,7 @@ import {
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
-import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -1096,7 +1096,7 @@ function AppComponent(props: App): JSX.Element {
                       onClick={handleClear}
                       aria-label={''}
                       isDisabled={!s.kernel}
-                      icon={<MdClearAll size={'1.5em'} color="#008080" />}
+                      icon={<MdDelete size={'1.5em'} color="#008080" />}
                     />
                   </Tooltip>
                 </ButtonGroup>
