@@ -16630,10 +16630,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha512-KXXFFdAbFXY4geFIwoyNK+f5Z1b7swfXABfL7HXCmoIWMKU3dmS26672A4EeQtDzLKy7SXmfBu51JolvEKwtGA==
 
-twilio-video@^2.28.0:
-  version "2.28.0"
-  resolved "https://registry.yarnpkg.com/twilio-video/-/twilio-video-2.28.0.tgz#a1a8630a2e50f22250efa852c37170a8af853012"
-  integrity sha512-+nicX5p3j68TG5X+GWIwYgsmJlnxAC8POj/5nSQmhDfG8akbsFnutEThjUBb/197K4R4H7UQeRzuCZRmZ4ZPuQ==
+twilio-video@^2.28.1:
+  version "2.28.1"
+  resolved "https://registry.yarnpkg.com/twilio-video/-/twilio-video-2.28.1.tgz#e955c4d077c147bb59d3eb88cecca3518489ff21"
+  integrity sha512-q87gLqwPfpfAchLa1KIL58MBMxOZwUFPfZUYBoMH9P2kSG0+42Y+eKCJ192u7eFit7iDY32nzF/TkYBxXAcvIA==
   dependencies:
     events "^3.3.0"
     util "^0.12.4"

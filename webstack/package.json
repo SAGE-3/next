@@ -105,7 +105,7 @@
     "throttle-debounce": "^5.0.0",
     "tslib": "^2.4.0",
     "twilio": "^4.19.3",
-    "twilio-video": "^2.28.0",
+    "twilio-video": "^2.28.1",
     "url-metadata": "^3.0.2",
     "utf8": "^3.0.0",
     "uuid": "^9.0.0",
