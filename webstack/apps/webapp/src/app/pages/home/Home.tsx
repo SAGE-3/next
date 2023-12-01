@@ -294,7 +294,7 @@ export function HomePage() {
           <>
             <Text py={2}>We hope you enjoy using SAGE3!</Text>
             <Text>
-              Join us on the SAGE3 Discord server:{' '}
+              Join us on the SAGE3 Discord server:
               <Link href="https://discord.gg/hHsKu47buY" color="teal.500" isExternal>
                 https://discord.gg/hHsKu47buY
               </Link>
@@ -944,7 +944,10 @@ export function HomePage() {
           maxHeight="100vh"
           height="100vh"
           overflow="hidden"
-          pt={4} pr={4} pb={4} pl={6}
+          pt={4}
+          pr={4}
+          pb={4}
+          pl={6}
         >
           <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
             {/* Room Information */}
