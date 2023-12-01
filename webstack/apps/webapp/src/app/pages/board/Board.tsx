@@ -112,14 +112,21 @@ export function BoardPage() {
     // Detect for scroll event on the 'root' div
     const root = document.getElementById('root');
     if (!root) return;
-    root.addEventListener('scroll', (event) => {
+    // Function for scroll correction
+    const scrollCorrection = () => {
       const x = root.scrollLeft;
       const y = root.scrollTop;
       // If x is not 0 set it to 0
       if (x !== 0) root.scrollLeft = 0;
       // If y is not 0 set it to 0
       if (y !== 0) root.scrollTop = 0;
-    });
+    };
+    // Add the event listener on mount
+    root.addEventListener('scroll', scrollCorrection);
+    return () => {
+      // Remove the event listener on unmount
+      root.removeEventListener('scroll', scrollCorrection);
+    };
   }, []);
 
   // Handle joining and leave a board
