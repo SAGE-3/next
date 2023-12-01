@@ -27,6 +27,7 @@ import {
   PopoverHeader,
   PopoverTrigger,
   UnorderedList,
+  useToast,
 } from '@chakra-ui/react';
 
 // Icons for file types
@@ -38,6 +39,7 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
 } from 'react-icons/md';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   processContentURL,
@@ -51,6 +53,8 @@ import {
   useThrottleApps,
   useInsightStore,
   setupAppForFile,
+  downloadFile,
+  apiUrls,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -76,6 +80,7 @@ export function Alfred(props: props) {
   const hideUI = useUIStore((state) => state.hideUI);
   // chakra color mode
   const { colorMode, toggleColorMode } = useColorMode();
+  const toast = useToast();
 
   // Apps
   const apps = useThrottleApps(250);
@@ -120,6 +125,46 @@ export function Alfred(props: props) {
       raised: true,
       dragging: false,
       pinned: false,
+    });
+  };
+
+  const saveBoard = (name: string) => {
+    const selectedapps = useUIStore.getState().savedSelectedAppsIds;
+    // Use selected apps if any or all apps
+    const apps = selectedapps.length > 0 ?
+      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
+      : useAppStore.getState().apps;
+    let filename = name || 'board.s3json';
+    if (!filename.endsWith('.s3json')) filename += '.s3json';
+    const namespace = useConfigStore.getState().config.namespace;
+    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+      if (app.data.state.assetid) {
+        // Generate a public URL of the file
+        const token = uuidv5(app.data.state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+        }
+      }
+      return arr;
+    }, []);
+    // Data structure to save
+    const session = {
+      assets: assets,
+      apps: apps,
+    }
+    const payload = JSON.stringify(session, null, 2);
+    const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
+    // Trigger the download
+    downloadFile(jsonurl, filename);
+    // Success message
+    toast({
+      title: 'Board saved',
+      description: apps.length + ' apps saved to ' + filename,
+      status: 'info',
+      duration: 4000,
+      isClosable: true,
     });
   };
 
@@ -208,6 +253,8 @@ export function Alfred(props: props) {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
+      } else if (terms[0] === 'save') {
+        saveBoard(terms[1]);
       } else if (terms[0] === 'tag') {
         // search apps with tags
         const tags = terms.slice(1);
@@ -496,6 +543,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                   </ListItem>
                   <ListItem>
                     <b>tag</b> : Search applications with tags
+                  </ListItem>
+                  <ListItem>
+                    <b>save</b> [filename]: Save the board to a file
                   </ListItem>
                   <ListItem>
                     <b>clear</b> : Close all applications

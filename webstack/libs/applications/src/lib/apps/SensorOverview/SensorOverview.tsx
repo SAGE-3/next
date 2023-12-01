@@ -405,7 +405,7 @@ function AppComponent(props: App): JSX.Element {
             left="50%"
             transform={`scale(${Math.min(props.data.size.width / 50, props.data.size.height / 50)})`}
           >
-            <Spinner thickness="20px" speed="1s" emptyColor="gray.200" />
+            <Spinner thickness="5px" speed="1s" emptyColor="gray.200" />
           </Box>
         )}
       </Box>
