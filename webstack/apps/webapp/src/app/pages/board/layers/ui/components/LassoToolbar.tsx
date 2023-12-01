@@ -354,8 +354,9 @@ for b in bits:
               </Tooltip>
             </Box>
           </Box>
-        </Box>
-      )}
+        </Box >
+      )
+      }
 
       <ConfirmModal
         isOpen={deleteIsOpen}
