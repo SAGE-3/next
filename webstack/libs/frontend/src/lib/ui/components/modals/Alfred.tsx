@@ -99,7 +99,6 @@ export function Alfred(props: props) {
 
     const state = {} as AppState;
     // Check if the app is enabled in the config
-    if (appName === 'JupyterLab' && config.features && !config.features.apps.includes('jupyter')) return;
     if (appName === 'SageCell' && config.features && !config.features.apps.includes('SageCell')) return;
     if (appName === 'Screenshare' && config.features && !config.features.apps.includes('Screenshare')) {
       return;

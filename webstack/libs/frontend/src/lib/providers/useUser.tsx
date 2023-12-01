@@ -21,12 +21,19 @@ import { genId, SAGE3Ability } from '@sage3/shared';
 import { APIHttp, SocketAPI } from '../api';
 import { useAuth } from './useAuth';
 
+// Number of boards to keep in recent boards list
+const MAX_RECENT_BOARDS = 10;
+
 const UserContext = createContext({
   user: undefined as User | undefined,
   loading: true,
   accessId: '',
   update: null as ((updates: Partial<UserSchema>) => Promise<void>) | null,
   create: null as ((user: UserSchema) => Promise<void>) | null,
+  saveBoard: null as ((roomId: string) => void) | null,
+  removeBoard: null as ((roomId: string) => void) | null,
+  recentBoardAdd: null as ((boardId: string) => void) | null,
+  clearRecentBoards: null as (() => void) | null,
 });
 
 export function useUser() {
@@ -48,6 +55,14 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         const user = userResponse.data[0];
+        // Check for savedBoards
+        if (!user.data.savedBoards) {
+          update({ savedBoards: [] });
+        }
+        // Check for recentBoards
+        if (!user.data.recentBoards) {
+          update({ recentBoards: [] });
+        }
         setAbilityUser(user);
         setUser(user);
       } else {
@@ -122,5 +137,64 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     [user]
   );
 
-  return <UserContext.Provider value={{ user, loading, update, create, accessId }}>{props.children}</UserContext.Provider>;
+  /**
+   * Save a board to the user's saved boards
+   * @param boardId Room to save
+   */
+  const saveBoard = (boardId: string) => {
+    if (!user) return;
+    const currentBoards = user?.data.savedBoards || [];
+    update({ savedBoards: [...currentBoards, boardId] });
+  };
+
+  /**
+   * Remove a board from the user's saved boards
+   * @param boardId Room to remove
+   */
+  const removeBoard = (boardId: string) => {
+    if (!user) return;
+    const currentBoards = user?.data.savedBoards || [];
+    update({ savedBoards: currentBoards.filter((id) => id !== boardId) });
+  };
+
+  /**
+   * Add a board to the user's recent boards
+   * @param boardId Board to add
+   */
+  const recentBoardAdd = (boardId: string) => {
+    if (!user) return;
+    let currentBoards = user?.data.recentBoards || [];
+    // Add new board
+    currentBoards = [boardId, ...currentBoards];
+    // Remove Dupicates
+    currentBoards = Array.from(new Set(currentBoards));
+    // Limit to MAX_RECENT_BOARDS recent boards
+    currentBoards = currentBoards.slice(0, MAX_RECENT_BOARDS);
+    update({ recentBoards: currentBoards });
+  };
+  /**
+   * Clear the user's recent boards
+   */
+  const clearRecentBoards = () => {
+    if (!user) return;
+    update({ recentBoards: [] });
+  };
+
+  return (
+    <UserContext.Provider
+      value={{
+        user,
+        loading,
+        update,
+        create,
+        accessId,
+        saveBoard,
+        removeBoard,
+        recentBoardAdd,
+        clearRecentBoards,
+      }}
+    >
+      {props.children}
+    </UserContext.Provider>
+  );
 }

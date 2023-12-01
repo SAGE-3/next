@@ -273,7 +273,7 @@ export function isValid(mimeType: string): boolean {
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
-    isPythonNotebook(mimeType) ||
+    // isPythonNotebook(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
     isJSON(mimeType) ||

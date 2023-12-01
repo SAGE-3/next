@@ -739,6 +739,10 @@ function createWindow() {
     if (details.frameName === 'sage3') {
       shell.openExternal(details.url);
     }
+    // Allow to open discord links
+    if (details.url.startsWith('https://discord.gg/')) {
+      shell.openExternal(details.url);
+    }
     return { action: 'deny' };
   });
 
@@ -836,6 +840,12 @@ function createWindow() {
       version: version,
     };
     mainWindow.webContents.send('client-info-response', info);
+  });
+
+  // Request from Client for bookmarks
+  ipcMain.on('get-servers-request', () => {
+    const bookmarks = bookmarkStore.getBookmarks();
+    mainWindow.webContents.send('get-servers-response', bookmarks);
   });
 
   // Request from user to check for updates to the client

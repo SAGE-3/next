@@ -39,17 +39,17 @@ function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
 
+  const { user } = useUser();
   const { boardId, roomId } = useParams();
 
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
-  const { user } = useUser();
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   const backgroundColor = useHexColor(s.color + '.300');
+  const scrollbarColor = useHexColor(s.color + '.400');
 
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
@@ -60,50 +60,21 @@ function AppComponent(props: App): JSX.Element {
 
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
-  const [rows, setRows] = useState(5);
 
   // The text of the sticky for React
   const [note, setNote] = useState(s.text);
 
   // Update local value with value from the server
   useEffect(() => {
-    setFontSize(s.fontSize);
-    // Adjust the size of the textarea
-    if (textbox.current) {
-      const numlines = Math.ceil(textbox.current.scrollHeight / s.fontSize);
-      if (numlines > rows) {
-        // change local number of rows
-        setRows(numlines);
-        // update size of the window
-        if (props.data.size.height !== numlines * s.fontSize) {
-          update(props._id, { size: { ...props.data.size, height: numlines * s.fontSize } });
-        }
-      }
-    }
-  }, [s.fontSize]);
-
-  // Update local value with value from the server
-  useEffect(() => {
-    // Adjust the size of the textarea
-    if (s.text) {
-      const txt = note.split('\n');
-      const numlines = txt.length;
-      const numcols = Math.min(Math.max(...txt.map((l) => l.length)), 80); // max width of 80 chars
-      if (numlines > rows) {
-        let w = props.data.size.width;
-        const h = Math.min(numlines, 60) * s.fontSize;  // 60 lines in a page
-        const cols = Math.ceil(w / s.fontSize) + 1;
-        if (numcols > cols) {
-          w = numcols * 16;
-          update(props._id, { size: { ...props.data.size, width: w, height: h } });
-        }
-      }
-    }
-
     if (!updatedByYou) {
       setNote(s.text);
     }
   }, [s.text, updatedByYou]);
+
+  // Update local value with value from the server
+  useEffect(() => {
+    setFontSize(s.fontSize);
+  }, [s.fontSize]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(100, (val) => {
@@ -119,17 +90,6 @@ function AppComponent(props: App): JSX.Element {
     setNote(inputValue);
     // Update the text when not typing
     debounceFunc.current(inputValue);
-
-    // Adjust the size of the textarea
-    if (textbox.current) {
-      const numlines = Math.ceil(textbox.current.scrollHeight / s.fontSize);
-      if (numlines > rows) {
-        // change local number of rows
-        setRows(numlines);
-        // update size of the window
-        update(props._id, { size: { width: props.data.size.width, height: numlines * s.fontSize, depth: props.data.size.depth } });
-      }
-    }
   }
 
   // Key down handler: Tab creates another stickie
@@ -157,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Stickie',
           // keep the same color, like a clone operation except for the text
-          state: { text: '', color: s.color, fontSize: s.fontSize, executeInfo: { executeFunc: '', params: {} } },
+          state: { ...s, text: '' },
           raised: true,
           dragging: false,
           pinned: false,
@@ -187,7 +147,6 @@ function AppComponent(props: App): JSX.Element {
           placeholder="Type here..."
           fontFamily="Arial"
           focusBorderColor={backgroundColor}
-          overflow={fontSize !== 10 ? 'hidden' : 'auto'}
           fontSize={fontSize + 'px'}
           lineHeight="1em"
           value={note}
@@ -198,8 +157,21 @@ function AppComponent(props: App): JSX.Element {
           name={'stickie' + props._id}
           css={{
             // Balance the text, improve text layouts
-            textWrap: 'balance',
+            textWrap: 'pretty', // 'balance',
+            '&::-webkit-scrollbar': {
+              background: `${backgroundColor}`,
+              width: '24px',
+              height: '2px',
+              scrollbarGutter: 'stable',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: `${scrollbarColor}`,
+              borderRadius: '8px',
+            },
           }}
+          // overflow={fontSize !== 10 ? 'hidden' : 'auto'}
+          overflowY="scroll"
+          overflowX="hidden"
         />
         {locked && (
           <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>

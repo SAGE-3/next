@@ -43,6 +43,7 @@ import {
   isValidURL,
   setupApp,
   useAbility,
+  processContentURL,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -162,6 +163,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+
     if (!user) return;
 
     if (!canDrop) {
@@ -222,8 +224,18 @@ export function Background(props: BackgroundProps) {
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
+            const title = event.dataTransfer.getData('title') || 'Image';
             // it's a base64 image
-            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+            getImageDimensionsFromBase64(pastedText).then((res) => {
+              const ar = res.w / res.h;
+              let w = res.w;
+              let h = w / ar;
+              if (ar < 1) {
+                w = res.h * ar;
+                h = res.h;
+              }
+              createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+            });
           } else {
             // Is it a valid URL
             const valid = isValidURL(pastedText);
@@ -364,11 +376,14 @@ export function Background(props: BackgroundProps) {
   useEffect(() => {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
-    if (isShiftPressed) {
-      document.onselectstart = function () {
-        return false;
-      };
-    }
+
+    // Removing this for now, it's causing issues with the Notepad app
+    // if (isShiftPressed) {
+    //   document.onselectstart = function () {
+    //     return false;
+    //   };
+    // }
+
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
@@ -388,6 +403,14 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
   const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     createApp(
       setupApp(
         'Webview',
@@ -396,8 +419,8 @@ export function Background(props: BackgroundProps) {
         dropPosition.y,
         props.roomId,
         props.boardId,
-        { w: 800, h: 1000 },
-        { webviewurl: validURL }
+        { w: w, h: h },
+        { webviewurl: final_url }
       )
     );
     popOnClose();
@@ -480,9 +503,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -586,4 +608,21 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
       }
     }
   });
+}
+
+/**
+ * Get the dimensions of an image from a base64 string
+ *
+ * @export
+ * @param {string} file
+ * @returns {Promise<{w: number, h: number}>}
+ */
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+  return new Promise(function (resolved, rejected) {
+    var i = new Image()
+    i.onload = function () {
+      resolved({ w: i.width, h: i.height })
+    };
+    i.src = file
+  })
 }
