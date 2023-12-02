@@ -45,6 +45,7 @@ export function Apps() {
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
+  const appDragging = useUIStore((state) => state.appDragging);
 
   const { roomId, boardId } = useParams();
   // Display some notifications
@@ -216,7 +217,7 @@ export function Apps() {
   useHotkeys(
     'z',
     (evt) => {
-      if (boardCursor && apps.length > 0) {
+      if (boardCursor && apps.length > 0 && !appDragging) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
         let found = false;
@@ -257,7 +258,18 @@ export function Apps() {
         }
       }
     },
-    { dependencies: [previousLocation.set, boardCursor.x, boardCursor.y, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)] }
+    {
+      dependencies: [
+        previousLocation.set,
+        boardCursor.x,
+        boardCursor.y,
+        appDragging,
+        scale,
+        boardPosition.x,
+        boardPosition.y,
+        JSON.stringify(apps),
+      ],
+    }
   );
 
   return (

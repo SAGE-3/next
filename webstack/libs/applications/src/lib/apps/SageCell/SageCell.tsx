@@ -18,7 +18,7 @@ import {
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
-import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -340,9 +340,6 @@ function AppComponent(props: App): JSX.Element {
       streaming: false,
     });
 
-    // editorRef.current?.setValue('');
-    // editorRef2.current?.setValue('');
-
     const model = editorRef.current.getModel();
     if (model) {
       // Clear the cell editor
@@ -351,6 +348,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model.setEOL(0);
     }
     if (!editorRef2.current) return;
     const model2 = editorRef2.current.getModel();
@@ -361,6 +360,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model2.setEOL(0);
     }
 
   };
@@ -637,6 +638,9 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    const model = editor.getModel();
+    if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
@@ -990,6 +994,27 @@ function AppComponent(props: App): JSX.Element {
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
 
+  // Start dragging
+  function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  }
+  // Drop event
+  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    // Get the infos from the drag transfer data
+    const ids = event.dataTransfer.getData('file');
+    const types = event.dataTransfer.getData('type');
+    if (editorRef.current) {
+      const pos = editorRef.current.getPosition();
+      if (pos) {
+        // insert variables at the cursor position in the editor
+        const text = `sage_assets_types = ${types}\nsage_assets_ids = ${ids}\n`;
+        editorRef.current.focus();
+        editorRef.current.trigger('keyboard', 'type', { text });
+      }
+    }
+  }
+
   return (
     <AppWindow app={props}>
       <>
@@ -1028,6 +1053,8 @@ function AppComponent(props: App): JSX.Element {
             whiteSpace={'pre-wrap'}
             overflowWrap="break-word"
             overflowY="auto"
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
           >
             <Flex direction={'row'}>
               {/* The editor status info (bottom) */}
@@ -1070,7 +1097,7 @@ function AppComponent(props: App): JSX.Element {
                       onClick={handleClear}
                       aria-label={''}
                       isDisabled={!s.kernel}
-                      icon={<MdClearAll size={'1.5em'} color="#008080" />}
+                      icon={<MdDelete size={'1.5em'} color="#008080" />}
                     />
                   </Tooltip>
                 </ButtonGroup>

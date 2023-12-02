@@ -24,10 +24,14 @@ import {
   IconButton,
   Tooltip,
   MenuGroup,
+  Icon,
+  Text,
 } from '@chakra-ui/react';
+
 import {
   MdOutlineGridOn,
   MdAccountCircle,
+  MdPerson,
   MdArrowBack,
   MdInvertColors,
   MdLink,
@@ -41,12 +45,12 @@ import {
   MdPeople,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
+import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 
 import {
   useAuth,
   useUser,
   EditUserModal,
-  EnterBoardByIdModal,
   AboutModal,
   copyBoardUrlToClipboard,
   useRouteNav,
@@ -65,6 +69,7 @@ type MainButtonProps = {
   boardInfo?: { roomId: string; boardId: string; boardName: string; roomName: string };
   config: OpenConfiguration;
 };
+
 /**
  * Main (StartMenu Button) component
  *
@@ -73,8 +78,13 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
+  const userColorValue = user?.data.color ? user.data.color : 'teal';
+  const userColor = useHexColor(userColorValue);
 
-  // Abilties
+  // Track if the menu is open or not
+  const [menuOpen, setMenuOpen] = useState<boolean>(false);
+
+  // Abilities
   const canCreatePlugins = useAbility('create', 'plugins');
   const canUpdateAccount = useAbility('update', 'users');
 
@@ -82,7 +92,6 @@ export function MainButton(props: MainButtonProps) {
   const { toggleColorMode, colorMode } = useColorMode();
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
-  const { isOpen: boardIsOpen, onOpen: boardOnOpen, onClose: boardOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
   const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
@@ -170,17 +179,47 @@ export function MainButton(props: MainButtonProps) {
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
 
-      <Menu preventOverflow={false}>
-        <MenuButton
-          as={Button}
-          size="sm"
-          variant={props.buttonStyle ? props.buttonStyle : 'outline'}
-          colorScheme={user?.data.color ? user.data.color : 'white'}
-          leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
-        >
-          {user ? user.data.name : ''}
-        </MenuButton>
-        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip">
+      <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
+        {props.boardInfo ? (
+          <MenuButton
+            as={Button}
+            size="sm"
+            maxWidth="150px"
+            variant={props.buttonStyle ? props.buttonStyle : 'outline'}
+            colorScheme={user?.data.color ? user.data.color : 'white'}
+            leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
+          >
+            <Box textOverflow={'ellipsis'} overflow={'hidden'}>
+              {user ? user.data.name : ''}
+            </Box>
+          </MenuButton>
+        ) : (
+          <MenuButton
+            marginTop="auto"
+            display="flex"
+            as={Box}
+            backgroundColor={userColor}
+            height="40px"
+            alignItems={'center'}
+            justifyContent={'left'}
+            width="100%"
+            transition={'all 0.5s'}
+            _hover={{ cursor: 'pointer' }}
+          >
+            <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+              <Box display="flex">
+                <Icon as={MdPerson} fontSize="24px" mx="2" />
+                <Text fontSize="md" fontWeight={'bold'}>
+                  {user?.data.name}
+                </Text>
+              </Box>
+              <Box pr="3" fontSize="3xl">
+                {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
+              </Box>
+            </Box>
+          </MenuButton>
+        )}
+        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '400px'}>
           <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
@@ -295,8 +334,8 @@ export function MainButton(props: MainButtonProps) {
           </MenuItem>
         </MenuList>
       </Menu>
+
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
-      <EnterBoardByIdModal isOpen={boardIsOpen} onOpen={boardOnOpen} onClose={boardOnClose}></EnterBoardByIdModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
       <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
 

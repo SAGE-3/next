@@ -42,7 +42,6 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-
 type ElectronSource = {
   appIcon: null | string;
   display_id: string;
@@ -56,7 +55,7 @@ const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const toast = useToast();
+  const toast = useToast({ id: `toast-${props._id}` });
 
   // Current User
   const { user, accessId } = useUser();
@@ -196,7 +195,7 @@ function AppComponent(props: App): JSX.Element {
 
           // Show a notification
           toast({
-            title: 'Screensharing started for ' + props.data.title,
+            title: 'Screenshare started',
             status: 'success',
             duration: 3000,
             isClosable: true,
@@ -248,13 +247,18 @@ function AppComponent(props: App): JSX.Element {
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
-        // Zoom to the window
-        goToScreenshare();
         // Show a notification
         toast({
-          title: 'Screensharing started for ' + props.data.title,
-          status: 'success',
-          duration: 5000,
+          title: `${props.data.title} started a screenshare`,
+          description: (
+            <Box>
+              <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
+                Show Screenshare
+              </Button>
+            </Box>
+          ),
+          status: 'info',
+          duration: null,
           isClosable: true,
         });
       }
@@ -265,14 +269,17 @@ function AppComponent(props: App): JSX.Element {
     stopStream();
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
-      // Show a notification
-      toast({
-        title: 'Screensharing stopped',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      stopStream();
+      if (yours) {
+        // Show a notification
+        toast({
+          title: 'Your screenshare has ended',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        stopStream();
+      }
+      toast.close(`toast-${props._id}`);
     };
   }, []);
 
@@ -315,9 +322,8 @@ function AppComponent(props: App): JSX.Element {
       // }
 
       // Show a notification
-      goToScreenshare();
       toast({
-        title: 'Your screensharing started, ' + props.data.title,
+        title: 'Screenshare started',
         status: 'success',
         duration: 3000,
         isClosable: true,
@@ -447,6 +453,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

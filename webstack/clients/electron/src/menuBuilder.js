@@ -56,7 +56,7 @@ function buildSageMenu(window, commander) {
 
   // Clear Bookmarks button
   const clearBookmarks = {
-    label: 'Restore Original Bookmarks',
+    label: 'Restore Original Server List',
     click: () => {
       bookmarkStore.clear();
       buildMenu(window);
@@ -66,12 +66,12 @@ function buildSageMenu(window, commander) {
 
   // Add the current location to the bookmarks
   const addBookmark = {
-    label: 'Bookmark This Server',
+    label: 'Save current Server',
     click: async () => {
       const url = window.webContents.getURL();
       const isSage = await checkServerIsSage(url);
       if (!isSage) return;
-      const name = await dialogUserTextInput('Name of Bookmark', 'Name', '');
+      const name = await dialogUserTextInput('Name of Server', 'Name', '');
       if (name) {
         bookmarkStore.addBookmark(name, url);
         buildMenu(window);
@@ -320,7 +320,7 @@ function buildSageMenu(window, commander) {
       ],
     },
     {
-      label: 'Bookmarks',
+      label: 'Servers',
       role: 'bookmarks',
       submenu: [
         ...bookmarks,
@@ -332,7 +332,7 @@ function buildSageMenu(window, commander) {
           type: 'separator',
         },
         {
-          label: 'Remove Bookmark',
+          label: 'Remove Server',
           submenu: removeBookmarks,
         },
         clearBookmarks,

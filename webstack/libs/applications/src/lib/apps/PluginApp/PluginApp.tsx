@@ -18,7 +18,7 @@ import './styling.css';
 
 declare module 'react' {
   interface IframeHTMLAttributes<T> extends React.HTMLAttributes<T> {
-    credentialless?: boolean;
+    credentialless?: string;
   }
 }
 
@@ -60,10 +60,12 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [JSON.stringify(props)]);
 
+  const allow = "clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;";
+
   return (
     <AppWindow app={props}>
       <>
-        <iframe ref={iRef} credentialless={true} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
+        <iframe allow={allow} ref={iRef} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
       </>
     </AppWindow>
   );
