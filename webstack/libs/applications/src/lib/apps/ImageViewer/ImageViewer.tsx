@@ -77,11 +77,16 @@ function AppComponent(props: App): JSX.Element {
         setOrigSizes(localOrigSizes);
 
         if (extra) {
-          // find the smallest image for this page (multi-resolution)
-          const res = extra.sizes.reduce(function (p, v) {
-            return p.width < v.width ? p : v;
-          });
-          setUrl(res.url);
+          if (extra.sizes.length === 0) {
+            // No multi-resolution images, use the original
+            setUrl(apiUrls.assets.getAssetById(file.data.file));
+          } else {
+            // find the smallest image for this page (multi-resolution)
+            const res = extra.sizes.reduce(function (p, v) {
+              return p.width < v.width ? p : v;
+            });
+            setUrl(res.url);
+          }
         }
       }
     }
@@ -93,7 +98,7 @@ function AppComponent(props: App): JSX.Element {
     if (isUUID) {
       // Match the window size, dpi, and scale of the board to a URL
       const res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
-      setUrl(res);
+      if (res) setUrl(res);
     }
   }, [url, sizes, displaySize, scale]);
 
@@ -177,9 +182,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
-                const filename = s.assetid.split('/').pop();
-                const appasset = assets.find((a) => a.data.file === filename);
-                downloadFile(url, appasset?.data.originalfilename);
+                const filename = props.data.title || s.assetid.split('/').pop();
+                downloadFile(url, filename);
               }
             }}
           >

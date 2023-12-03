@@ -22,6 +22,7 @@ import {
   MessageCollection,
   PluginsCollection,
   InsightCollection,
+  RoomMembersCollection,
 } from '../collections';
 
 // Lib Imports
@@ -38,6 +39,8 @@ const wsRoutes = {
     BoardsCollection.wsRouter(socket, message, user, cache),
   '/rooms': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     RoomsCollection.wsRouter(socket, message, user, cache),
+  '/roommembers': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    RoomMembersCollection.wsRouter(socket, message, user, cache),
   '/users': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     UsersCollection.wsRouter(socket, message, user, cache),
   '/presence': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>

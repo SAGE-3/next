@@ -13,10 +13,9 @@
 import { useEffect, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
-import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { isValidURL, setupApp, processContentURL } from '@sage3/frontend';
-
 import { initialValues } from '@sage3/applications/initialValues';
+import { isValidURL, setupApp, processContentURL, truncateWithEllipsis } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 
 import hljs from 'highlight.js';
 
@@ -109,6 +108,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               //         type: 'ImageViewer',
               //         state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
               //         raised: true,
+              //         pinned: false,
               //         dragging: false,
               //       });
               //     }
@@ -119,7 +119,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               const textcontent = await file.text();
               // Create a new stickie with the text
               createApp({
-                title: user.data.name,
+                title: truncateWithEllipsis(textcontent, 20),
                 roomId: props.roomId,
                 boardId: props.boardId,
                 position: { x: xDrop, y: yDrop, z: 0 },
@@ -159,7 +159,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else if (pastedText.startsWith('sage3://')) {
           // Create a board link app
           createApp({
-            title: user.data.name,
+            title: 'BoardLink',
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
@@ -174,7 +174,6 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else {
           // Create a new stickie
           const lang = containsCode(pastedText);
-          console.log("Language>", lang)
           if (lang === 'plaintext') {
             createApp({
               title: user.data.name,

@@ -4,7 +4,6 @@ import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
-import { name as ChartMakerName } from './apps/ChartMaker';
 import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
@@ -19,7 +18,6 @@ import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
-import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
@@ -40,7 +38,6 @@ import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
-import ChartMaker from './apps/ChartMaker/ChartMaker';
 import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
@@ -55,7 +52,6 @@ import ImageViewer from './apps/ImageViewer/ImageViewer';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
-import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
@@ -79,7 +75,6 @@ export const Applications = {
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent, GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent },
-  [ChartMakerName]: { AppComponent: React.memo(ChartMaker.AppComponent), ToolbarComponent: ChartMaker.ToolbarComponent, GroupedToolbarComponent: ChartMaker.GroupedToolbarComponent },
   [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent, GroupedToolbarComponent: Chat.GroupedToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent, GroupedToolbarComponent: Clock.GroupedToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent, GroupedToolbarComponent: Cobrowse.GroupedToolbarComponent },
@@ -94,7 +89,6 @@ export const Applications = {
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent, GroupedToolbarComponent: LeafLet.GroupedToolbarComponent },
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent, GroupedToolbarComponent: Linker.GroupedToolbarComponent },
   [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent, GroupedToolbarComponent: MapGL.GroupedToolbarComponent },
-  [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent, GroupedToolbarComponent: Notepad.GroupedToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent, GroupedToolbarComponent: PDFResult.GroupedToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent, GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent },
   [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
