@@ -29,6 +29,11 @@ class SmartBitFactory:
         "PDFViewer": "pdfviewer",
         "VegaLiteViewer": "vegaliteviewer",
         "ImageViewer": "imageviewer",
+        "Chat": "chat",
+        "MapGL": "mapgl",
+        "webview": "webview",
+        "VideoViewer": "videoviewer",
+        "IFrame": "iframe",
         "Seer": "seer",
     }
 

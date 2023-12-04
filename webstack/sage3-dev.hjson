@@ -52,7 +52,7 @@
     },
     "openai": {
       // API Key
-      "apiKey": "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",
+      "apiKey": "XXXX",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
     }
@@ -63,7 +63,7 @@
     // Enable Plugins
     "plugins": true,
     // Which Apps to enable.  Available Apps: 
-    //  ChartMaker, LeafLet, JupyterLab, Notepad, SageCell, Stickie, Screenshare, Webview
+    //  ChartMaker, LeafLet, Notepad, SageCell, Stickie, Screenshare, Webview
     "apps": [
       "Chat",
       "ChartMaker",
@@ -72,8 +72,7 @@
       "SageCell",
       "Stickie",
       "Screenshare",
-      "Webview",
-      "JupyterLab"
+      "Webview"
     ]
   },
 

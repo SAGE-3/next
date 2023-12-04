@@ -14,7 +14,8 @@ import { useEffect, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-import { isValidURL, setupApp } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/initialValues';
+import { isValidURL, setupApp, processContentURL, truncateWithEllipsis } from '@sage3/frontend';
 
 type PasteProps = {
   boardId: string;
@@ -103,6 +104,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               //         type: 'ImageViewer',
               //         state: { ...(initialValues['ImageViewer'] as AppState), assetid: base64data },
               //         raised: true,
+              //         pinned: false,
               //         dragging: false,
               //       });
               //     }
@@ -113,16 +115,17 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               const textcontent = await file.text();
               // Create a new stickie with the text
               createApp({
-                title: user.data.name,
+                title: truncateWithEllipsis(textcontent, 20),
                 roomId: props.roomId,
                 boardId: props.boardId,
                 position: { x: xDrop, y: yDrop, z: 0 },
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
+                state: { ...initialValues['Stickie'], text: textcontent, fontSize: 24, color: user.data.color || 'yellow' },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             } else {
               // Not supported file format
@@ -152,31 +155,54 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else if (pastedText.startsWith('sage3://')) {
           // Create a board link app
           createApp({
-            title: user.data.name,
+            title: 'BoardLink',
             roomId: props.roomId,
             boardId: props.boardId,
             position: { x: xDrop, y: yDrop, z: 0 },
             size: { width: 400, height: 375, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'BoardLink',
-            state: { url: pastedText.trim() },
+            state: { ...initialValues['BoardLink'], url: pastedText.trim() },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         } else {
-          // Create a new stickie
-          createApp({
-            title: user.data.name,
-            roomId: props.roomId,
-            boardId: props.boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 400, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'Stickie',
-            state: { text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
-            raised: true,
-            dragging: false,
-          });
+          // if SVG, create an image viewer
+          if (pastedText.startsWith('<svg xmlns')) {
+            // weird conversion to base64, but needed to handle unicode characters
+            const processed = btoa(unescape(encodeURIComponent(pastedText)));
+            const src = 'data:image/svg+xml;base64,' + processed;
+            // Create an image with the svg
+            createApp({
+              title: 'SVG - pasted',
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 400, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'ImageViewer',
+              state: { ...initialValues['ImageViewer'], assetid: src },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            });
+          } else {
+            // else use the text to create a new stickie
+            createApp({
+              title: truncateWithEllipsis(pastedText, 20),
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 400, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'Stickie',
+              state: { ...initialValues['Stickie'], text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            })
+          }
         }
       }
     };
@@ -206,6 +232,14 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     popOnClose();
   };
   const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     createApp(
       setupApp(
         'Webview',
@@ -214,8 +248,8 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         cursorPosition.y,
         props.roomId,
         props.boardId,
-        { w: 800, h: 1000 },
-        { webviewurl: validURL }
+        { w: w, h: h },
+        { webviewurl: final_url }
       )
     );
     popOnClose();

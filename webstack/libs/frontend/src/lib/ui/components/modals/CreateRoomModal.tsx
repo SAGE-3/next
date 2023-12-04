@@ -45,7 +45,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
-  const rooms = useRoomStore((state) => state.rooms);
+  const { rooms, joinRoomMembership } = useRoomStore((state) => state);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -89,7 +89,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     }
   };
 
-  const create = () => {
+  const create = async () => {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
@@ -111,7 +111,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       } else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
-        createRoom({
+        const room = await createRoom({
           name: cleanedName,
           description,
           color: color,
@@ -120,6 +120,16 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           privatePin: isProtected ? key : '',
           isListed: isListed,
         });
+        if (room) {
+          toast({
+            title: 'Room created successfully',
+            status: 'success',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
+          // Join the room membership
+          joinRoomMembership(room._id);
+        }
         props.onClose();
       }
     }
@@ -181,7 +191,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text" autoCapitalize='off'
+              type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}

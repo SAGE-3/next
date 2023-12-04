@@ -198,6 +198,7 @@ const AppStore = create<Applications>()((set, get) => {
             },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         } else {
           const newApps = [] as AppSchema[];

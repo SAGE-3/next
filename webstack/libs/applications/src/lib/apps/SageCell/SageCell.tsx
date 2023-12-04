@@ -12,13 +12,13 @@ import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 // Chakra Imports
 import {
   Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
-  Alert, Badge, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
-  Spacer, Spinner, Stack, Tooltip, Text, useColorModeValue, useToast,
+  Alert, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Tooltip, Text, useColorModeValue, useToast,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
-import { MdError, MdClearAll, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -53,7 +53,7 @@ import { SAGE3Ability } from '@sage3/shared';
 // App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
 import { useStore } from './components/store';
 
@@ -84,6 +84,11 @@ function AppComponent(props: App): JSX.Element {
   // Store between app window and toolbar
   const drawer = useStore((state) => state.drawer[props._id]);
   const setDrawer = useStore((state) => state.setDrawer);
+  const execute = useStore((state) => state.execute[props._id]);
+  const interrupt = useStore((state) => state.interrupt[props._id]);
+  const setExecute = useStore((state) => state.setExecute);
+  const setInterrupt = useStore((state) => state.setInterrupt);
+  const setKernel = useStore((state) => state.setKernel);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
@@ -125,12 +130,7 @@ function AppComponent(props: App): JSX.Element {
   // Styles
   const [editorHeight, setEditorHeight] = useState(350);
   const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
-  const green = useHexColor('green');
-  const yellow = useHexColor('yellow');
-  const red = useHexColor('red');
   const executionCountColor = useHexColor('red');
-  const accessDeniedColor = useHexColor('red');
-  const accessAllowColor = useHexColor('green');
 
   // Kernel Store
   const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
@@ -140,8 +140,8 @@ function AppComponent(props: App): JSX.Element {
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
-  // Drawer size
-  const [drawerWidth, setDrawerWidth] = useState("50vw");
+  // Drawer size: user's preference from local storage or default
+  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || "50vw");
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -233,11 +233,14 @@ function AppComponent(props: App): JSX.Element {
     // Execute the code
     handleExecute();
   };
+
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
     updateState(props._id, { code: editorRef.current.getValue() });
-    if (!s.kernel) {
+    // Get the kernel from the store, since function executed from monoaco editor
+    const kernel = useStore.getState().kernel[props._id];
+    if (!kernel) {
       if (toastRef.current) return;
       toastRef.current = true;
       toast({
@@ -253,7 +256,7 @@ function AppComponent(props: App): JSX.Element {
       });
       return;
     }
-    if (s.kernel && !access) {
+    if (kernel && !access) {
       if (toastRef.current) return;
       toastRef.current = true;
       toast({
@@ -280,8 +283,7 @@ function AppComponent(props: App): JSX.Element {
       code2execute = code2execute.replaceAll('%%sage_board_id', `'${boardId}'`);
       code2execute = code2execute.replaceAll('%%sage_app_id', `'${props._id}'`);
       code2execute = code2execute.replaceAll('%%sage_selected_apps', `${JSON.stringify(selectedAppsIds)}`);
-
-      const response = await executeCode(code2execute, s.kernel, user._id);
+      const response = await executeCode(code2execute, kernel, user._id);
       if (response.ok) {
         const msgId = response.msg_id;
         updateState(props._id, {
@@ -289,7 +291,6 @@ function AppComponent(props: App): JSX.Element {
           session: user._id,
         });
       } else {
-        // console.log('Error executing code');
         updateState(props._id, {
           streaming: false,
           msgId: '',
@@ -308,6 +309,21 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Track the execute flag from the store in the toolbar
+  useEffect(() => {
+    if (execute) {
+      handleExecute();
+      setExecute(props._id, false);
+    }
+  }, [execute]);
+  // Track the interrupt flag from the store in the toolbar
+  useEffect(() => {
+    if (interrupt) {
+      handleInterrupt();
+      setInterrupt(props._id, false);
+    }
+  }, [interrupt]);
+
   /**
    * Clears the code and the msgId from the state
    * and resets the editor to an empty string
@@ -323,9 +339,6 @@ function AppComponent(props: App): JSX.Element {
       streaming: false,
     });
 
-    // editorRef.current?.setValue('');
-    // editorRef2.current?.setValue('');
-
     const model = editorRef.current.getModel();
     if (model) {
       // Clear the cell editor
@@ -334,6 +347,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model.setEOL(0);
     }
     if (!editorRef2.current) return;
     const model2 = editorRef2.current.getModel();
@@ -344,6 +359,8 @@ function AppComponent(props: App): JSX.Element {
         text: '',
         forceMoveMarkers: false
       }]);
+      // Ensure we are always operating on the same line endings
+      model2.setEOL(0);
     }
 
   };
@@ -482,9 +499,23 @@ function AppComponent(props: App): JSX.Element {
             if (item['text/html']) return null;
             return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
-            return <Image key={key} src={`data:image/png;base64,${value}`} />;
+            return <Image key={key} src={`data:image/png;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/jpeg':
-            return <Image key={key} src={`data:image/jpeg;base64,${value}`} />;
+            return <Image key={key} src={`data:image/jpeg;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
@@ -596,6 +627,7 @@ function AppComponent(props: App): JSX.Element {
       state: { webviewurl: url },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -605,6 +637,9 @@ function AppComponent(props: App): JSX.Element {
     const doc = new Y.Doc();
     const yText = doc.getText('monaco');
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    const model = editor.getModel();
+    if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
@@ -698,17 +733,9 @@ function AppComponent(props: App): JSX.Element {
       run: handleExecute,
     });
     editor.addAction({
-      id: 'clear',
-      label: 'Cell Clear',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-    editor.addAction({
       id: 'interrupt',
       label: 'Cell Interrupt',
-      contextMenuOrder: 2,
+      contextMenuOrder: 1,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
@@ -727,6 +754,14 @@ function AppComponent(props: App): JSX.Element {
       contextMenuOrder: 1,
       contextMenuGroupId: '3_sagecell',
       run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
     });
 
     editor.addAction({
@@ -767,7 +802,8 @@ function AppComponent(props: App): JSX.Element {
     // set the editor options
     editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
     // Default width and font size
-    make50W();
+    const preference = localStorage.getItem('sage_preferred_drawer_width');
+    setDrawerWidth(preference || '50vw');
 
     // set the editor theme
     monaco.editor.setTheme(defaultTheme);
@@ -802,17 +838,9 @@ function AppComponent(props: App): JSX.Element {
       run: handleExecuteDrawer,
     });
     editor.addAction({
-      id: 'clear',
-      label: 'Cell Clear',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-    editor.addAction({
       id: 'interrupt',
       label: 'Cell Interrupt',
-      contextMenuOrder: 2,
+      contextMenuOrder: 1,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
       run: handleInterrupt,
@@ -820,7 +848,7 @@ function AppComponent(props: App): JSX.Element {
     editor.addAction({
       id: 'syncForServer',
       label: 'Cell Save',
-      contextMenuOrder: 3,
+      contextMenuOrder: 2,
       contextMenuGroupId: '2_sage3',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
       run: handleSaveCode,
@@ -839,6 +867,14 @@ function AppComponent(props: App): JSX.Element {
       contextMenuOrder: 1,
       contextMenuGroupId: '3_sagecell',
       run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
     });
 
     editor.addAction({
@@ -870,19 +906,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   /**
-   * Needs to be reset every time the kernel changes
+   * Put the kernel in the store, read from the action in Monaco
    */
   useEffect(() => {
-    if (editorRef.current && s.kernel && apiStatus && access && !s.msgId && monaco) {
-      editorRef.current.addAction({
-        id: 'execute',
-        label: 'Cell Execute',
-        contextMenuOrder: 0,
-        contextMenuGroupId: '2_sage3',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-        run: handleExecute,
-      });
-    }
+    setKernel(props._id, s.kernel);
   }, [s.kernel]);
 
   useEffect(() => {
@@ -905,7 +932,15 @@ function AppComponent(props: App): JSX.Element {
       onOpen();
       // If the right side of the app is beyond the center of the board, move the board
       const xw = props.data.position.x + props.data.size.width;
-      const center = uiToBoard(innerWidth / 2, innerHeight / 2);
+      let position = 1;
+      if (drawerWidth === '25vw') {
+        position = 3 * innerWidth / 4;
+      } else if (drawerWidth === '50vw') {
+        position = innerWidth / 2;
+      } else if (drawerWidth === '75vw') {
+        position = innerWidth / 4;
+      }
+      const center = uiToBoard(position, innerHeight);
       if (xw > center.x) {
         const offset = xw - center.x + 10 / scale;
         setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
@@ -935,27 +970,54 @@ function AppComponent(props: App): JSX.Element {
 
   const make25W = () => {
     setDrawerWidth('25vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '25vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make50W = () => {
     setDrawerWidth('50vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '50vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make75W = () => {
     setDrawerWidth('75vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '75vw');
     const base = 6;
     const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
 
+  // Start dragging
+  function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  }
+  // Drop event
+  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    // Get the infos from the drag transfer data
+    const ids = event.dataTransfer.getData('file');
+    const types = event.dataTransfer.getData('type');
+    if (editorRef.current) {
+      const pos = editorRef.current.getPosition();
+      if (pos) {
+        // insert variables at the cursor position in the editor
+        const text = `sage_assets_types = ${types}\nsage_assets_ids = ${ids}\n`;
+        editorRef.current.focus();
+        editorRef.current.trigger('keyboard', 'type', { text });
+      }
+    }
+  }
+
   return (
     <AppWindow app={props}>
       <>
-        <Drawer placement="right" variant="fifty" isOpen={isOpen} onClose={closingDrawer}
+        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
@@ -980,28 +1042,7 @@ function AppComponent(props: App): JSX.Element {
         </Drawer>
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <Box w={'100%'} borderBottom={`5px solid ${access ? accessAllowColor : accessDeniedColor}`}>
-            <Stack direction="row" p={1}>
-              {!apiStatus ? (
-                <></>
-              ) : (
-                <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
-                  {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
-                </Badge>
-              )}
-
-              <Spacer />
-              {apiStatus ? ( // no kernel selected and no access
-                <Badge variant="ghost" color={green}>
-                  Online
-                </Badge>
-              ) : (
-                <Badge variant="ghost" color={red}>
-                  Offline
-                </Badge>
-              )}
-            </Stack>
-          </Box>
+          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
           <Box
             w={'100%'}
             h={'100%'}
@@ -1011,6 +1052,8 @@ function AppComponent(props: App): JSX.Element {
             whiteSpace={'pre-wrap'}
             overflowWrap="break-word"
             overflowY="auto"
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
           >
             <Flex direction={'row'}>
               {/* The editor status info (bottom) */}
@@ -1053,7 +1096,7 @@ function AppComponent(props: App): JSX.Element {
                       onClick={handleClear}
                       aria-label={''}
                       isDisabled={!s.kernel}
-                      icon={<MdClearAll size={'1.5em'} color="#008080" />}
+                      icon={<MdDelete size={'1.5em'} color="#008080" />}
                     />
                   </Tooltip>
                 </ButtonGroup>
@@ -1070,17 +1113,20 @@ function AppComponent(props: App): JSX.Element {
             />
             {/* The output area */}
             <Box
-              height={window.innerHeight - editorHeight - 20 + 'px'}
+              // height={window.innerHeight - editorHeight - 20 + 'px'}
               overflow={'scroll'}
+              mr={"8px"}
               css={{
                 '&::-webkit-scrollbar': {
                   background: `${bgColor}`,
-                  width: '6px',
-                  height: '6px',
+                  width: '28px',
+                  height: '2px',
+                  // reserver space for scrollbar
+                  scrollbarGutter: 'stable',
                 },
                 '&::-webkit-scrollbar-thumb': {
                   background: 'teal',
-                  borderRadius: '24px',
+                  borderRadius: '8px',
                 },
               }}
             >

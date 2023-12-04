@@ -28,7 +28,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const whiteboardMode = useUIStore((state) => state.whiteboardMode);
 
   const handleClick = (ev: any) => {
-    console.log('click', ev.button, whiteboardMode);
     // If Right Click
     if ((ev.button === 2 && whiteboardMode === 'pen') || (ev.button === 0 && whiteboardMode === 'eraser')) {
       onClick(id);

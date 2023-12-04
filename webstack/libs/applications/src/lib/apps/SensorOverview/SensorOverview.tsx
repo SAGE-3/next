@@ -244,6 +244,7 @@ function AppComponent(props: App): JSX.Element {
 
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 
@@ -404,7 +405,7 @@ function AppComponent(props: App): JSX.Element {
             left="50%"
             transform={`scale(${Math.min(props.data.size.width / 50, props.data.size.height / 50)})`}
           >
-            <Spinner thickness="5px" speed="0.30s" emptyColor="gray.200" />
+            <Spinner thickness="5px" speed="1s" emptyColor="gray.200" />
           </Box>
         )}
       </Box>
@@ -526,6 +527,7 @@ function ToolbarComponent(props: App): JSX.Element {
           },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       }
     }
@@ -835,14 +837,14 @@ function ToolbarComponent(props: App): JSX.Element {
   <Button >Fahrenheit</Button> */}
         </ButtonGroup>
       ) : null}
-      <Divider border={'1px'} size={'2xl'} ml="1rem" orientation="vertical" />
+      {/* <Divider border={'1px'} size={'2xl'} ml="1rem" orientation="vertical" />
       <ButtonGroup ml="1rem">
         <Tooltip label={'Duplicate this chart for all other variables from this station'} aria-label="A tooltip">
           <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
             All Variables
           </Button>
         </Tooltip>
-      </ButtonGroup>
+      </ButtonGroup> */}
     </>
   );
 }

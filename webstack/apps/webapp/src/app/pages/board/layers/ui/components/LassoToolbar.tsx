@@ -9,21 +9,42 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
+import {
+  Box,
+  useColorModeValue,
+  Text,
+  Button,
+  Tooltip,
+  useDisclosure,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuGroup,
+  MenuDivider,
+} from '@chakra-ui/react';
+
 import potpack from 'potpack';
 import { Box as Rectangle, Point, Polygon, BooleanOperations, Relations } from '@flatten-js/core';
 
-import { Box, useColorModeValue, Text, Button, Tooltip, useDisclosure, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
-
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
-  ConfirmModal, useAbility, useAppStore, useBoardStore, useHexColor,
-  useThrottleApps, useUIStore, setupApp, useCursorBoardPosition,
+  ConfirmModal,
+  useAbility,
+  useAppStore,
+  useBoardStore,
+  useHexColor,
+  useThrottleApps,
+  useUIStore,
+  setupApp,
+  useCursorBoardPosition,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
-import { off } from 'process';
+import { AppSchema } from '@sage3/applications/schema';
+import { Board } from '@sage3/shared/types';
 
 /**
  * Lasso Toolbar Component
@@ -41,6 +62,7 @@ export function LassoToolbar() {
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
   const update = useAppStore((state) => state.update);
+  const updateBatch = useAppStore((state) => state.updateBatch);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
@@ -52,11 +74,7 @@ export function LassoToolbar() {
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
-
-  useEffect(() => {
-    setShowLasso(lassoApps.length > 0);
-    // selectedAppFunctions();
-  }, [lassoApps]);
+  const roomsBoards = boards.filter((b) => b.data.roomId === roomId);
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -69,7 +87,27 @@ export function LassoToolbar() {
 
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
-  const canDuplicateApp = useAbility('create', 'apps');
+  const canCreateApp = useAbility('create', 'apps');
+  const canPin = useAbility('pin', 'apps');
+
+  // Submenu for duplicating to another board
+  const hoverColorMode = useColorModeValue('gray.100', 'whiteAlpha.100');
+  const hoverColor = useHexColor(hoverColorMode);
+  const [sendToBoardSubmenuOpen, setSendToBoardSubmenuOpen] = useState<boolean>(false);
+  const openSendToBoardSubmenu = () => {
+    if (!sendToBoardSubmenuOpen) setSendToBoardSubmenuOpen(true);
+  };
+  const closeSendToBoardSubmenu = () => {
+    if (sendToBoardSubmenuOpen) setSendToBoardSubmenuOpen(false);
+  };
+  const toggleSendToBoardSubmenu = () => {
+    setSendToBoardSubmenuOpen(!sendToBoardSubmenuOpen);
+  };
+
+  useEffect(() => {
+    setShowLasso(lassoApps.length > 0);
+    // selectedAppFunctions();
+  }, [lassoApps]);
 
   // Close all the selected apps
   const closeSelectedApps = () => {
@@ -82,6 +120,23 @@ export function LassoToolbar() {
   const fitSelectedApps = () => {
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     fitApps(selectedApps);
+  };
+
+  // Pin/Unpin all the selected apps
+  const pin = () => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    if (selectedApps.length > 0) {
+      // use the first app to determine the state of the rest
+      const pinned = selectedApps[0].data.pinned;
+      // Array of update to batch at once
+      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+      selectedApps.forEach((el) => {
+        ps.push({ id: el._id, updates: { pinned: !pinned } });
+        // updateS!pinned;
+      });
+      // Update all the apps at once
+      updateBatch(ps);
+    }
   };
 
   // This function will check if the selected apps are all of the same type
@@ -107,6 +162,16 @@ export function LassoToolbar() {
     return component;
   };
 
+  // Duplicate all the selected apps
+  const handleDuplicateApps = () => {
+    duplicate(lassoApps);
+  };
+
+  // Duplicate all the selected apps to a different board
+  const duplicateToBoard = (board: Board) => {
+    duplicate(lassoApps, board);
+  };
+
   const openInChat = () => {
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 700;
@@ -117,7 +182,10 @@ export function LassoToolbar() {
       let context = '';
       if (isAllOfSameType) {
         if (selectedApps[0].data.type === 'Stickie') {
-          context = selectedApps.reduce((acc, el) => { acc += el.data.state.text + '\n'; return acc; }, '');
+          context = selectedApps.reduce((acc, el) => {
+            acc += el.data.state.text + '\n';
+            return acc;
+          }, '');
           console.log('All', context);
         }
       }
@@ -361,48 +429,59 @@ for b in bits:
             >
               {'Actions'}
             </Text>
-            <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+            <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
               {selectedAppFunctions()}
 
-              <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
-                <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
-                  <MdZoomOutMap />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps'} openDelay={400}>
-                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDuplicateApp}>
-                  <MdCopyAll />
-                </Button>
-              </Tooltip>
-
-              <Menu preventOverflow={false} placement={'top'}>
-                <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
-                  <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'} isDisabled={!canDuplicateApp}>
-                    <MdSend />
-                  </MenuButton>
-                </Tooltip>
-                <MenuList>
-                  {boards.map((b) => {
-                    return (
-                      <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)}>
-                        {b.data.name}
-                      </MenuItem>
-                    );
-                  })}
+              <Menu>
+                <MenuButton size="xs" as={Button} mr={'2px'} colorScheme="yellow">
+                  <MdMenu />
+                </MenuButton>
+                <MenuList p="0" m="0">
+                  <MenuGroup title="Actions" m="1">
+                    <MenuItem onClick={fitSelectedApps} icon={<MdZoomOutMap />} py="0" m="0">
+                      Zoom To Apps
+                    </MenuItem>
+                    <MenuItem isDisabled={!canPin} onClick={pin} icon={<MdPinDrop />} py="0" m="0">
+                      Pin Apps
+                    </MenuItem>
+                    <MenuItem isDisabled={!canCreateApp} onClick={handleDuplicateApps} icon={<MdCopyAll />} py="0" m="0">
+                      Duplicate Apps
+                    </MenuItem>
+                    {/* Submenu */}
+                    <Menu isOpen={sendToBoardSubmenuOpen} placement="right-end" onClose={closeSendToBoardSubmenu}>
+                      <MenuButton
+                        as={MenuItem} py="0" m="0"
+                        isDisabled={!canCreateApp}
+                        onClick={toggleSendToBoardSubmenu}
+                        icon={<MdSend />}
+                        _hover={{ backgroundColor: hoverColor }}
+                      >
+                        Duplicate to another Board
+                      </MenuButton>
+                      <MenuList>
+                        {roomsBoards.map((b) => {
+                          return (
+                            <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)} py="0" m="0">
+                              {b.data.name}
+                            </MenuItem>
+                          );
+                        })}
+                      </MenuList>
+                    </Menu>
+                  </MenuGroup>
+                  <MenuDivider />
+                  <MenuGroup title="AI Actions" m="1">
+                    <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
+                      Open in SAGECell
+                    </MenuItem>
+                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />} py="0" m="0">
+                      Open in Chat
+                    </MenuItem>
+                  </MenuGroup>
                 </MenuList>
               </Menu>
 
-              {/* <Tooltip placement="top" hasArrow={true} label={'Save the app selection'} openDelay={400}>
-                <Button onClick={setSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <HiOutlineSaveAs size="18px" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Clear the app selection'} openDelay={400}>
-                <Button onClick={clearSavedSelectedAppsIds} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <HiOutlineStop size="18px" />
-                </Button>
-              </Tooltip> */}
 
               {/* MdAutoAwesomeMosaic, MdAutoAwesomeMotion */}
               <Tooltip placement="top" hasArrow={true} label={'Nice Layout'} openDelay={400}>
@@ -412,7 +491,7 @@ for b in bits:
               </Tooltip>
               <Tooltip placement="top" hasArrow={true} label={'Pack Layout'} openDelay={400}>
                 <Button onClick={autoLayout_pack} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdAutoAwesomeMosaic size="18px" />
+                  <MdAutoAwesomeMotion size="18px" />
                 </Button>
               </Tooltip>
 
@@ -432,11 +511,11 @@ for b in bits:
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
-
             </Box>
           </Box>
-        </Box>
-      )}
+        </Box >
+      )
+      }
 
       <ConfirmModal
         isOpen={deleteIsOpen}

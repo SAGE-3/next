@@ -13,7 +13,7 @@ import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
-import Quill, { Sources } from 'quill';
+import Quill from 'quill';
 
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
@@ -155,7 +155,6 @@ function AppComponent(props: App): JSX.Element {
   // Initialize the editor at start and when the the user clicks the refresh button in the toolbar
   useEffect(() => {
     if (quillRef && toolbarRef) {
-      console.log('reinit');
       removeEditor();
       setupEditor();
     }
@@ -164,17 +163,16 @@ function AppComponent(props: App): JSX.Element {
   // Remove the editor when the component unmounts
   useEffect(() => {
     return () => {
-      console.log('here i am');
       removeEditor();
     };
   }, []);
 
   return (
     <AppWindow app={props}>
-      <>
-        <div ref={toolbarRef} hidden style={{ pointerEvents: 'none' }}></div>
-        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
-      </>
+      <Box w="100%" h="100%">
+        <div ref={toolbarRef} hidden style={{ display: 'none' }}></div>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5', zIndex: 10000 }}></div>
+      </Box>
     </AppWindow>
   );
 }
