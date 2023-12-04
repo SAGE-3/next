@@ -88,6 +88,7 @@ export function LassoToolbar() {
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
   const canCreateApp = useAbility('create', 'apps');
+  const canMoveApp = useAbility('move', 'apps');
   const canPin = useAbility('pin', 'apps');
 
   // Submenu for duplicating to another board
@@ -132,7 +133,6 @@ export function LassoToolbar() {
       const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
       selectedApps.forEach((el) => {
         ps.push({ id: el._id, updates: { pinned: !pinned } });
-        // updateS!pinned;
       });
       // Update all the apps at once
       updateBatch(ps);
@@ -186,7 +186,6 @@ export function LassoToolbar() {
             acc += el.data.state.text + '\n';
             return acc;
           }, '');
-          console.log('All', context);
         }
       }
       createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
@@ -247,10 +246,8 @@ for b in bits:
         area: el.data.size.width * el.data.size.height,
       }
     });
-    console.log('Auto Layout', selectedApps);
     // sort by size
     boxes.sort((a, b) => b.area - a.area);
-    console.log('Boxes', boxes);
 
     const padding = 30;
     // calculate the center of the bounding boxes
@@ -259,144 +256,182 @@ for b in bits:
     const miny = Math.min(...boxes.map((el) => el.bbox[1]));
     const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
     const center = [padding / 2 + (minx + maxx) / 2, padding / 2 + (miny + maxy) / 2];
-    console.log('Center', center);
 
     const data = boxes.map((el) => ({
       w: el.app.data.size.width + padding, h: el.app.data.size.height + padding,
       id: el.app._id, x: 0, y: 0
     }));
 
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+    // Packing algorithm
     const { w, h, fill } = potpack(data);
+    // Build batched updates
     data.forEach((el) => {
       const app = apps.find((a) => a._id === el.id);
       const x = center[0] + el.x - w / 2;
       const y = center[1] + el.y - h / 2;
-      if (app) update(app._id, { position: { ...app.data.position, x, y } });
+      if (app) {
+        ps.push({ id: app._id, updates: { position: { ...app.data.position, x, y } } });
+      }
     });
+    // Update all the apps at once
+    updateBatch(ps);
   };
 
   // Calculate a new layout for the selected apps
+  // based on: https://twitter.com/hialexwang/status/1714612402527109504
   const autoLayout_nice = () => {
+    const padding = 30 / 2; // half in each dimension
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     const boxes = selectedApps.map((el) => {
+      const w = el.data.size.width + 2 * padding;
+      const h = el.data.size.height + 2 * padding;
+      const x = el.data.position.x - padding;
+      const y = el.data.position.y - padding;
       return {
         app: el,
-        bbox: [el.data.position.x, el.data.position.y, el.data.position.x + el.data.size.width, el.data.position.y + el.data.size.height],
-        area: el.data.size.width * el.data.size.height,
+        id: el._id,
+        width: w,
+        height: h,
+        x: x,
+        y: y,
+        bbox: [x, y, x + w, y + h],
+        area: w * h,
+        rect: new Rectangle(x, y, x + w, y + h),
       }
     });
-    console.log('Auto Layout', selectedApps);
-    // sort by size
+    // Sort by size
     boxes.sort((a, b) => b.area - a.area);
-    console.log('Boxes', boxes);
 
-    // calculate the center of the bounding boxes
+    // Calculate the center of the bounding boxes
     const minx = Math.min(...boxes.map((el) => el.bbox[0]));
     const maxx = Math.max(...boxes.map((el) => el.bbox[2]));
     const miny = Math.min(...boxes.map((el) => el.bbox[1]));
     const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
-    const center = [(minx + maxx) / 2, (miny + maxy) / 2];
-    console.log('Center', center);
+    const center = new Point((minx + maxx) / 2, (miny + maxy) / 2);
 
-    // move the big one to the center
-    const big = boxes[0].app;
+    // Move the big one to the center
+    const big = boxes[0];
 
-    const newpos = { x: center[0] - big.data.size.width / 2, y: center[1] - big.data.size.height / 2 };
-    update(big._id, { position: { ...big.data.position, ...newpos } });
+    const newpos = { x: center.x - big.width / 2, y: center.y - big.height / 2 };
+    update(big.id, { position: { ...big.app.data.position, ...newpos } });
 
+    // Shape representing the big one
     const shape1 = new Rectangle(
       newpos.x,
       newpos.y,
-      newpos.x + big.data.size.width,
-      newpos.y + big.data.size.height);
+      newpos.x + big.width,
+      newpos.y + big.height);
 
-    // move a second one to the right and with an offset down
+    // Move a second one to the right and with an offset down
     const secondpos = {
-      x: center[0] + big.data.size.width / 2,
-      y: center[1] - big.data.size.height / 2 + (big.data.size.height / 3),
+      x: center.x + big.width / 2,
+      y: center.y - big.height / 2 + (big.height / 3),
     };
-    const second = boxes[1].app;
-    update(second._id, { position: { ...second.data.position, ...secondpos } });
+    const second = boxes[1];
+    update(second.id, { position: { ...second.app.data.position, ...secondpos } });
+
+    // Shape representing the second one
     const shape2 = new Rectangle(
       secondpos.x,
       secondpos.y,
-      secondpos.x + second.data.size.width,
-      secondpos.y + second.data.size.height);
+      secondpos.x + second.width,
+      secondpos.y + second.height);
 
-    const p1 = new Polygon(shape1.toPoints());
-    console.log("🚀 ~ file: LassoToolbar.tsx:261 ~ LassoToolbar ~ p1:", shape1.toPoints(), p1.edges);
+    // Shape representing both of them
+    let union = BooleanOperations.unify(new Polygon(shape1.toPoints()), new Polygon(shape2.toPoints()));
 
-    const union = BooleanOperations.unify(new Polygon(shape1.toPoints()), new Polygon(shape2.toPoints()));
-    const vs = union.vertices;
-    const res = vs.map((p, i) => ({ idx: i, d: p.distanceTo(new Point(center[0], center[1]))[0] }));
-    res.sort((a, b) => a.d - b.d);
-    const p = vs[res[0].idx];
-    console.log("🚀 ~ file: LassoToolbar.tsx:264 ~ LassoToolbar ~ res:", p)
+    let index = 2;
+    let closest = 0; // try first with the closest point
+    const shift = 3; // an offset to avoid touching
+    while (index < boxes.length) {
+      const third = boxes[index];
 
-    const third = boxes[2].app;
+      const res = union.vertices.map((pt, i) => ({ idx: i, d: pt.distanceTo(center)[0] }));
+      res.sort((a, b) => a.d - b.d);
+      const p = union.vertices[res[closest].idx];
 
-    const padding = 30;
-    let done = false;
+      let done = false;
 
-    // Q1: up right
-    let px = p.x;
-    let py = p.y - third.data.size.height;
-    const shape3a = new Rectangle(
-      px + padding, py - padding,
-      px + padding + third.data.size.width,
-      py - padding + third.data.size.height);
-    let isTouching = Relations.touch(union, shape3a) || Relations.intersect(union, shape3a);
-    console.log("🚀 ~ file: LassoToolbar.tsx:272 ~ LassoToolbar ~ isTouching:", isTouching);
-    console.log(union.svg(), shape3a.svg());
-    if (!isTouching && !done) {
-      done = true;
-      update(third._id, { position: { ...third.data.position, x: px, y: py } });
-    }
+      // Q1: up right
+      let px = p.x + shift;
+      let py = p.y - shift - third.height;
+      const shape3a = new Rectangle(
+        px, py,
+        px + third.width,
+        py + third.height);
+      let isTouching = Relations.touch(union, shape3a) || Relations.intersect(union, shape3a);
+      if (!isTouching && !done) {
+        done = true;
+        update(third.id, { position: { ...third.app.data.position, x: p.x, y: p.y - third.height } });
+        const moved = new Rectangle(px, py, p.x + third.width, p.y);
+        union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
+        index++;
+        closest = 0;
+      }
 
-    // Q2: down right
-    px = p.x;
-    py = p.y;
-    const shape3b = new Rectangle(
-      px + padding, py + padding,
-      px + padding + third.data.size.width,
-      py + padding + third.data.size.height);
-    isTouching = Relations.touch(union, shape3b) || Relations.intersect(union, shape3b);
-    console.log("🚀 ~ file: LassoToolbar.tsx:289 ~ LassoToolbar ~ isTouching:", isTouching)
-    console.log(union.svg(), shape3b.svg());
-    if (!isTouching && !done) {
-      done = true;
-      update(third._id, { position: { ...third.data.position, x: px, y: py } });
-    }
-    const union1 = BooleanOperations.unify(union, new Polygon(shape3b.toPoints()));
+      // Q2: down right
+      if (!done) {
+        px = p.x + shift;
+        py = p.y + shift;
+        const shape3b = new Rectangle(
+          px, py,
+          px + third.width,
+          py + third.height);
+        isTouching = Relations.touch(union, shape3b) || Relations.intersect(union, shape3b);
+        if (!isTouching) {
+          done = true;
+          update(third.id, { position: { ...third.app.data.position, x: p.x, y: p.y } });
+          const moved = new Rectangle(px, py, p.x + third.width, p.y + third.height);
+          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
+          index++;
+          closest = 0;
+        }
+      }
 
-    // Q3: up left
-    px = p.x - third.data.size.width;
-    py = p.y - third.data.size.height;
-    const shape3c = new Rectangle(
-      px - padding, py - padding,
-      px - padding + third.data.size.width,
-      py - padding + third.data.size.height);
-    isTouching = Relations.touch(union, shape3c) || Relations.intersect(union, shape3c);
-    console.log(union.svg(), shape3c.svg());
-    console.log("🚀 ~ file: LassoToolbar.tsx:272 ~ LassoToolbar ~ isTouching:", isTouching)
-    if (!isTouching && !done) {
-      done = true;
-      update(third._id, { position: { ...third.data.position, x: px, y: py } });
-    }
+      // Q3: up left
+      if (!done) {
+        px = p.x - shift - third.width;
+        py = p.y - shift - third.height;
+        const shape3c = new Rectangle(
+          px, py,
+          px + third.width,
+          py + third.height);
+        isTouching = Relations.touch(union, shape3c) || Relations.intersect(union, shape3c);
+        if (!isTouching) {
+          done = true;
+          update(third.id, { position: { ...third.app.data.position, x: p.x - third.width, y: p.y - third.height } });
+          const moved = new Rectangle(px, px, p.x, p.y);
+          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
+          index++;
+          closest = 0;
+        }
+      }
 
-    // Q4: down left
-    px = p.x - third.data.size.width;
-    py = p.y;
-    const shape3d = new Rectangle(
-      px - padding, py + padding,
-      px - padding + third.data.size.width,
-      py + padding + third.data.size.height);
-    isTouching = Relations.touch(union, shape3d) || Relations.intersect(union, shape3d);
-    console.log(union.svg(), shape3d.svg());
-    console.log("🚀 ~ file: LassoToolbar.tsx:272 ~ LassoToolbar ~ isTouching:", isTouching)
-    if (!isTouching && !done) {
-      done = true;
-      update(third._id, { position: { ...third.data.position, x: px, y: py } });
+      // Q4: down left
+      if (!done) {
+        px = p.x - shift - third.width;
+        py = p.y + shift;
+        const shape3d = new Rectangle(
+          px, py,
+          px + third.width,
+          py + third.height);
+        isTouching = Relations.touch(union, shape3d) || Relations.intersect(union, shape3d);
+        if (!isTouching) {
+          done = true;
+          update(third.id, { position: { ...third.app.data.position, x: p.x - third.width, y: p.y } });
+          const moved = new Rectangle(px, py, p.x, p.y + third.height);
+          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
+          index++;
+          closest = 0;
+        }
+      }
+
+      if (!done) {
+        // Failed to place, try with the next closest point
+        closest += 1;
+      }
     }
   };
 
@@ -471,6 +506,22 @@ for b in bits:
                     </Menu>
                   </MenuGroup>
                   <MenuDivider />
+
+                  <MenuGroup title="Layouts" m="1">
+                    <Tooltip placement="top" hasArrow={true} label={'Spiral Layout around largest app'} openDelay={400}>
+                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_nice} icon={<MdAutoAwesomeMosaic />} py="0" m="0">
+                        Swirl Layout
+                      </MenuItem>
+                    </Tooltip>
+                    <Tooltip placement="top" hasArrow={true} label={'Packs apps into a near-square container'} openDelay={400}>
+                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_pack} icon={<MdAutoAwesomeMotion />} py="0" m="0">
+                        2D Pack Layout
+                      </MenuItem>
+                    </Tooltip>
+                  </MenuGroup>
+
+                  <MenuDivider />
+
                   <MenuGroup title="AI Actions" m="1">
                     <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
@@ -481,19 +532,6 @@ for b in bits:
                   </MenuGroup>
                 </MenuList>
               </Menu>
-
-
-              {/* MdAutoAwesomeMosaic, MdAutoAwesomeMotion */}
-              <Tooltip placement="top" hasArrow={true} label={'Nice Layout'} openDelay={400}>
-                <Button onClick={autoLayout_nice} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdAutoAwesomeMosaic size="18px" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Pack Layout'} openDelay={400}>
-                <Button onClick={autoLayout_pack} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdAutoAwesomeMotion size="18px" />
-                </Button>
-              </Tooltip>
 
               <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
                 <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
