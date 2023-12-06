@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdApps } from 'react-icons/md';
+import { MdApps, MdMouse } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -67,6 +68,7 @@ export function UILayer(props: UILayerProps) {
   const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
     (state) => state
   );
+  const [pointerLocked, setPointerLocked] = useState(false);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -169,7 +171,7 @@ export function UILayer(props: UILayerProps) {
     zip.generateAsync({ type: 'blob' }).then(function (content) {
       // Create a URL from the blob
       const url = URL.createObjectURL(content);
-      //Trigger the download
+      // Trigger the download
       downloadFile(url, name);
       toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
     });
@@ -179,6 +181,28 @@ export function UILayer(props: UILayerProps) {
   const goToSavedSelectedApps = () => {
     if (savedSelectedAppsIds.length < 1) return;
     fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
+  };
+
+  // Callback for pointer lock
+  function lockChangeAlert() {
+    const board = document.getElementById('board');
+    if (document.pointerLockElement === board) {
+      setPointerLocked(true);
+    } else {
+      setPointerLocked(false);
+    }
+  }
+
+  // Request pointer lock on the board element
+  const requestLock = async () => {
+    const board = document.getElementById('board');
+    if (board) {
+      try {
+        await board.requestPointerLock();
+      } catch (error) {
+        console.log("Pointerlock> capture failed:", error);
+      }
+    }
   };
 
   // Deselect all apps when the escape key is pressed
@@ -195,6 +219,14 @@ export function UILayer(props: UILayerProps) {
     alredOnOpen();
     return false;
   });
+
+  useEffect(() => {
+    // Pointer lock
+    document.addEventListener("pointerlockchange", lockChangeAlert, false);
+    return () => {
+      document.removeEventListener("pointerlockchange", lockChangeAlert, false);
+    };
+  }, [])
 
   return (
     <>
@@ -231,8 +263,22 @@ export function UILayer(props: UILayerProps) {
               onClick={goToSavedSelectedApps}
             ></IconButton>
           </Tooltip>
+
+          {/* PointerLock button */}
+          <Tooltip placement="top" hasArrow={true} label={'Pointer Lock'} openDelay={400}>
+            <IconButton
+              size="sm"
+              colorScheme={!pointerLocked ? 'gray' : 'green'}
+              icon={<MdMouse />}
+              fontSize="xl"
+              variant={'outline'}
+              aria-label={'pointer-lock'}
+              onClick={requestLock}
+            ></IconButton>
+          </Tooltip>
         </Box>
       </Box>
+
 
       {/* Buttons Middle Bottom */}
       {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
