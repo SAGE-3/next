@@ -247,6 +247,7 @@ function ToolbarComponent(props: App): JSX.Element {
       },
       raised: true,
       dragging: false,
+      pinned: false,
     });
 
     // Add messages
@@ -307,8 +308,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 stationData: [...stationDataTemplate],
               },
               raised: true,
-
               dragging: false,
+              pinned: false,
             });
             // Add messages
             updateState(props._id, {
@@ -412,6 +413,7 @@ function ToolbarComponent(props: App): JSX.Element {
               },
               raised: true,
               dragging: false,
+              pinned: false,
             });
           }
           break;
@@ -468,6 +470,7 @@ function ToolbarComponent(props: App): JSX.Element {
                 },
                 raised: true,
                 dragging: false,
+                pinned: false,
               });
             }}
             colorScheme="teal"

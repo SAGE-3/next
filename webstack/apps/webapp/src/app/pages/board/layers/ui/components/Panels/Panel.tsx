@@ -71,7 +71,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
 
   return (
     <Box>
-      <Tooltip label={props.description} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+      <Tooltip label={props.description} maxWidth={"400px"} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
           borderRadius="md"
           h="auto"
@@ -320,6 +320,7 @@ export function Panel(props: PanelProps) {
                     fontWeight="bold"
                     cursor="move"
                     onDoubleClick={props.titleDblClick}
+                    userSelect={'none'}
                   >
                     {props.title}
                   </Text>

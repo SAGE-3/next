@@ -8,10 +8,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Button, useToast,
-  Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure
-} from '@chakra-ui/react';
+import { Button, useToast, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
 
 import {
   useAppStore,
@@ -62,7 +59,7 @@ export function BoardPage() {
   const { expire, logout } = useAuth();
 
   // Presence Information
-  const { user } = useUser();
+  const { user, recentBoardAdd } = useUser();
   const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
@@ -110,6 +107,28 @@ export function BoardPage() {
     logout();
   }
 
+  // Scroll detection
+  useEffect(() => {
+    // Detect for scroll event on the 'root' div
+    const root = document.getElementById('root');
+    if (!root) return;
+    // Function for scroll correction
+    const scrollCorrection = () => {
+      const x = root.scrollLeft;
+      const y = root.scrollTop;
+      // If x is not 0 set it to 0
+      if (x !== 0) root.scrollLeft = 0;
+      // If y is not 0 set it to 0
+      if (y !== 0) root.scrollTop = 0;
+    };
+    // Add the event listener on mount
+    root.addEventListener('scroll', scrollCorrection);
+    return () => {
+      // Remove the event listener on unmount
+      root.removeEventListener('scroll', scrollCorrection);
+    };
+  }, []);
+
   // Handle joining and leave a board
   useEffect(() => {
     // Update the document title
@@ -125,11 +144,13 @@ export function BoardPage() {
     subscribeToPresence();
     subscribeToUsers();
     // Sub to insights
-    subToInsight(roomId);
+    subToInsight(boardId);
     // plugins
     subPlugins();
     // Update the user's presence information
-    if (user) updatePresence(user._id, { boardId: boardId, roomId: roomId, following: '' });
+    if (user) updatePresence(user._id, { boardId, roomId, following: '' });
+    // Add the board to the user's recent boards
+    if (recentBoardAdd) recentBoardAdd(boardId);
 
     // Set Selected app to empty
     setSelectedApp('');
@@ -147,12 +168,12 @@ export function BoardPage() {
       const expireDate = new Date(expire);
       const timeLeft = expireDate.getTime() - now.getTime();
       // if less than 4 hours left
-      if (timeLeft < (3600 * 1000 * 4)) {
+      if (timeLeft < 3600 * 1000 * 4) {
         onOpen();
       }
     }
 
-    if (!isElectron()) {
+    if (!isElectron() && !development) {
       // Function to open the board in the desktop app
       function openDesktopApp() {
         if (!boardId || !roomId) return;
@@ -214,15 +235,11 @@ export function BoardPage() {
       <PasteHandler boardId={boardId} roomId={roomId} />
 
       {/* Modal if session is expired */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl"
-        initialFocusRef={initialRef}
-        isCentered blockScrollOnMount={false}>
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef} isCentered blockScrollOnMount={false}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Your session has expired</ModalHeader>
-          <ModalBody>
-            Please log in again to continue using SAGE3.
-          </ModalBody>
+          <ModalBody>Please log in again to continue using SAGE3.</ModalBody>
           <ModalFooter>
             <Button colorScheme="red" onClick={onLogout} ref={initialRef}>
               OK
@@ -230,7 +247,6 @@ export function BoardPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-
     </>
   );
 }

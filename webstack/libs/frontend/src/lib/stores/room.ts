@@ -12,7 +12,7 @@ import { create } from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
-import { Room, RoomSchema } from '@sage3/shared/types';
+import { Room, RoomMembers, RoomSchema } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
@@ -22,8 +22,11 @@ interface RoomState {
   rooms: Room[];
   error: string | null;
   fetched: boolean;
+  members: RoomMembers[];
+  joinRoomMembership: (roomId: string) => Promise<void>;
+  leaveRoomMembership: (roomId: string) => Promise<void>;
   clearError: () => void;
-  create: (newRoom: RoomSchema) => Promise<void>;
+  create: (newRoom: RoomSchema) => Promise<Room | undefined>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
   delete: (id: string) => Promise<void>;
   subscribeToAllRooms: () => Promise<void>;
@@ -34,10 +37,63 @@ interface RoomState {
  */
 const RoomStore = create<RoomState>()((set, get) => {
   let roomSub: (() => void) | null = null;
+  let membersSub: (() => void) | null = null;
+
+  // Subscribe to all the room members collection
+  const subscribeToRoomMembers = async () => {
+    const rooms = await APIHttp.GET<RoomMembers>('/roommembers');
+    const members = rooms.data ? rooms.data : [];
+    set({ members });
+    // Unsubscribe old subscription
+    if (membersSub) {
+      membersSub();
+      membersSub = null;
+    }
+
+    // Socket Subscribe Message
+    const route = '/roommembers';
+    // Socket Listenting to updates from server about the current members
+    membersSub = await SocketAPI.subscribe<RoomMembers>(route, (message) => {
+      switch (message.type) {
+        case 'CREATE': {
+          const docs = message.doc as RoomMembers[];
+          set({ members: [...get().members, ...docs] });
+          break;
+        }
+        case 'UPDATE': {
+          const docs = message.doc as RoomMembers[];
+          const members = [...get().members];
+          docs.forEach((doc) => {
+            const idx = members.findIndex((el) => el._id === doc._id);
+            if (idx > -1) {
+              members[idx] = doc;
+            }
+          });
+          set({ members });
+          break;
+        }
+        case 'DELETE': {
+          const docs = message.doc as RoomMembers[];
+          const ids = docs.map((d) => d._id);
+          const members = [...get().members];
+          const remainingMembers = members.filter((a) => !ids.includes(a._id));
+          set({ members: remainingMembers });
+        }
+      }
+    });
+  };
+
   return {
     rooms: [],
     error: null,
     fetched: false,
+    members: [],
+    joinRoomMembership: async (roomId: string) => {
+      await APIHttp.POST<RoomMembers>(`/roommembers/join`, { roomId, members: [] });
+    },
+    leaveRoomMembership: async (roomId: string) => {
+      await APIHttp.POST<RoomMembers>(`/roommembers/leave`, { roomId, members: [] });
+    },
     clearError: () => {
       set({ error: null });
     },
@@ -46,6 +102,9 @@ const RoomStore = create<RoomState>()((set, get) => {
       const res = await SocketAPI.sendRESTMessage(`/rooms/`, 'POST', newRoom);
       if (!res.success) {
         set({ error: res.message });
+        return undefined;
+      } else {
+        return res.data;
       }
     },
     update: async (id: string, updates: Partial<RoomSchema>) => {
@@ -65,7 +124,10 @@ const RoomStore = create<RoomState>()((set, get) => {
     },
     subscribeToAllRooms: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'rooms')) return;
-      set({ ...get(), rooms: [], fetched: false });
+      // Sub to Members
+      subscribeToRoomMembers();
+
+      set({ rooms: [], fetched: false });
 
       const rooms = await APIHttp.GET<Room>('/rooms');
       if (rooms.success) {

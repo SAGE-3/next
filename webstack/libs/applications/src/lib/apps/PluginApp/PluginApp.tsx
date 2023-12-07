@@ -5,23 +5,30 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+import { useEffect, useRef } from 'react';
 
-import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
+import { useUser } from '@sage3/frontend';
+
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
-import { useEffect, useRef } from 'react';
+
+declare module 'react' {
+  interface IframeHTMLAttributes<T> extends React.HTMLAttributes<T> {
+    credentialless?: string;
+  }
+}
+
+// React., HTMLIFrameElement>
 
 /* App component for PluginApp */
-
 function AppComponent(props: App): JSX.Element {
   const pluginName = (props.data.state as AppState).pluginName;
   const iRef = useRef<HTMLIFrameElement>(null);
+  const { user } = useUser();
 
   useEffect(() => {
     if (iRef.current) {
@@ -33,6 +40,7 @@ function AppComponent(props: App): JSX.Element {
           win.postMessage({
             type: 'init',
             state: props,
+            user: user?.data.name || '',
           });
         }, 1000);
       }
@@ -52,10 +60,12 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [JSON.stringify(props)]);
 
+  const allow = "clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;";
+
   return (
     <AppWindow app={props}>
       <>
-        <iframe ref={iRef} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
+        <iframe allow={allow} ref={iRef} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
       </>
     </AppWindow>
   );

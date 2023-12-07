@@ -49,10 +49,10 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
   stopStreamId: '',
   setStopStream: (streamId: string) => set((state) => ({ ...state, stopStreamId: streamId })),
   joinRoom: async (userId: string, accessId: string, roomName: string) => {
-    console.log('Twilio> Joining room');
+    // console.log('Twilio> Joining room');
 
     if (get().room?.name === roomName) {
-      console.log('Twilio> Already in room: ', roomName);
+      // console.log('Twilio> Already in room: ', roomName);
       return true;
     }
     // Get the token from the SAGE3 server
@@ -66,7 +66,7 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
       const room = await connect(token, { audio: false, preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }] } as ConnectOptions);
       set((state) => ({ ...state, room }));
 
-      console.log('Twilio> Connected to room: ', room.name);
+      // console.log('Twilio> Connected to room: ', room.name);
 
       // If user closes the browser or tab, remove them from the room
       window.addEventListener('beforeunload', () => get().leaveRoom());
@@ -76,7 +76,7 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
 
       // Add all current participants to the participants array
       room.participants.forEach((participant) => {
-        console.log(`Twilio> Participant "${participant.identity}" is connected to the Room`);
+        // console.log(`Twilio> Participant "${participant.identity}" is connected to the Room`);
 
         // Add the participant to the array
         set((state) => ({ ...state, participants: [...state.participants, participant] }));
@@ -97,7 +97,7 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
 
       // New Participant connected
       room.on('participantConnected', (participant) => {
-        console.log(`Twilio> Participant "${participant.identity}" has connected`);
+        // console.log(`Twilio> Participant "${participant.identity}" has connected`);
 
         // Check if this participant is already in the list
         const idx = get().participants.findIndex((el) => el.identity === participant.identity);
@@ -122,7 +122,7 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
 
       // Participant disconnects
       room.on('participantDisconnected', (participant: Participant) => {
-        console.log(`Participant "${participant.identity}" has disconnected`);
+        // console.log(`Participant "${participant.identity}" has disconnected`);
 
         // Check if this participant is in the list
         const idx = get().participants.findIndex((el) => el.identity === participant.identity);
@@ -139,7 +139,7 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
     return true;
   },
   leaveRoom: () => {
-    console.log('Twilio> Leaving room');
+    // console.log('Twilio> Leaving room');
     const room = get().room;
     if (room) {
       room.disconnect();

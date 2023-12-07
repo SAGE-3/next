@@ -37,7 +37,7 @@ import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 're
 import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
 
 import { format } from 'date-fns';
-import { getMime, isZip } from '@sage3/shared';
+import { isZip } from '@sage3/shared';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -145,6 +145,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       // Ignore .DS_Store and empty files
       const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
       setInput(filteredList);
+      // Pre-populate the name and description fields with the filename
+      setName(sanitizeFilename(filteredList[0].name.split('.')[0]));
+      setDescription(sanitizeFilename(filteredList[0].name.split('.')[0]));
     }
   };
 
@@ -166,8 +169,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   return (
     <>
-      <Modal isCentered isOpen={props.isOpen} onClose={props.onClose}
-        blockScrollOnMount={false} size="xl">
+      <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Plugins</ModalHeader>

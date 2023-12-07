@@ -11,6 +11,7 @@ import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 
 import { AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/variableUnits';
+import { VariableProps } from '../types/types';
 
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
@@ -40,51 +41,6 @@ function celsiusToFahrenheit(celsiusArray: number[]) {
     return (celsius * 9) / 5 + 32;
   });
 }
-
-function compareWithStandardDeviation(average: number, standardDeviation: number, currentValue: number) {
-  const deviation = Math.abs(currentValue - average);
-
-  if (deviation <= standardDeviation) {
-    return 1;
-  } else if (currentValue < average) {
-    return 0;
-  } else {
-    return 1;
-  }
-}
-
-function lightenColor(hexColor: string) {
-  // Parse the hexadecimal color string to RGB values
-  let r = parseInt(hexColor.substr(1, 2), 16);
-  let g = parseInt(hexColor.substr(3, 2), 16);
-  let b = parseInt(hexColor.substr(5, 2), 16);
-
-  // Increase each RGB component by 20 (or adjust as desired)
-  r = Math.min(r + 25, 255);
-  g = Math.min(g + 25, 255);
-  b = Math.min(b + 25, 255);
-
-  // Convert the updated RGB values back to hexadecimal
-  const newHexColor = '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
-
-  return newHexColor;
-}
-
-type VariableProps = {
-  variableName: string;
-  stationName: string;
-  value: number;
-  average: number;
-  stdDev: number;
-  high: number;
-  low: number;
-  unit: string;
-  startDate: string;
-  endDate: string;
-  stationSTIDName: string;
-
-  color: string;
-};
 
 export default function FriendlyVariableCard(
   props: {
@@ -193,54 +149,54 @@ export default function FriendlyVariableCard(
         >
           {variablesToDisplay.length === 1
             ? variablesToDisplay.map((variable: VariableProps, index: number) => {
-              return (
-                <React.Fragment key={index}>
-                  <Content
-                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                    isLoaded={props.isLoaded}
-                    secondaryValuesToDisplay={secondaryValuesToDisplay}
-                    stationNames={props.stationNames}
-                    variableToDisplayLength={variablesToDisplay.length}
-                    s={s}
-                    timeSinceLastUpdate={props.timeSinceLastUpdate}
-                    key={index}
-                    variable={variable}
-                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                  />
-                </React.Fragment>
-              );
-            })
+                return (
+                  <React.Fragment key={index}>
+                    <Content
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                      isLoaded={props.isLoaded}
+                      secondaryValuesToDisplay={secondaryValuesToDisplay}
+                      stationNames={props.stationNames}
+                      variableToDisplayLength={variablesToDisplay.length}
+                      s={s}
+                      timeSinceLastUpdate={props.timeSinceLastUpdate}
+                      key={index}
+                      variable={variable}
+                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    />
+                  </React.Fragment>
+                );
+              })
             : variablesToDisplay.map((variable: VariableProps, index: number) => {
-              const currentStationName = variable.stationName;
-              const isNewStation = currentStationName !== previousStationName;
+                const currentStationName = variable.stationName;
+                const isNewStation = currentStationName !== previousStationName;
 
-              previousStationName = currentStationName;
-              return (
-                <React.Fragment key={index}>
-                  {props.generateAllVariables ? (
-                    isNewStation ? (
-                      <>
-                        <Divider orientation="horizontal" />
-                        <Box h="20px" width="100%" bgColor="gray.200" />
-                      </>
-                    ) : null
-                  ) : null}
+                previousStationName = currentStationName;
+                return (
+                  <React.Fragment key={index}>
+                    {props.generateAllVariables ? (
+                      isNewStation ? (
+                        <>
+                          <Divider orientation="horizontal" />
+                          <Box h="20px" width="100%" bgColor="gray.200" />
+                        </>
+                      ) : null
+                    ) : null}
 
-                  <Content
-                    isLoaded={props.isLoaded}
-                    secondaryValuesToDisplay={secondaryValuesToDisplay}
-                    size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
-                    stationNames={props.stationNames}
-                    variableToDisplayLength={variablesToDisplay.length}
-                    s={s}
-                    timeSinceLastUpdate={props.timeSinceLastUpdate}
-                    key={index}
-                    variable={variable}
-                    isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
-                  />
-                </React.Fragment>
-              );
-            })}
+                    <Content
+                      isLoaded={props.isLoaded}
+                      secondaryValuesToDisplay={secondaryValuesToDisplay}
+                      size={props.size ? props.size : { width: 0, height: 0, depth: 0 }}
+                      stationNames={props.stationNames}
+                      variableToDisplayLength={variablesToDisplay.length}
+                      s={s}
+                      timeSinceLastUpdate={props.timeSinceLastUpdate}
+                      key={index}
+                      variable={variable}
+                      isCustomizeWidgetMenu={props.isCustomizeWidgetMenu}
+                    />
+                  </React.Fragment>
+                );
+              })}
         </Box>
       ) : (
         <Box display="flex" flexDirection={'row'} justifyContent="center" alignContent={'center'} justifyItems={'center'}>
@@ -256,19 +212,19 @@ export default function FriendlyVariableCard(
               variablesToDisplay[0]
                 ? variablesToDisplay[0]
                 : {
-                  variableName: 'air_temperature_set_1',
-                  stationName: 'Station Name',
-                  value: 42.01,
-                  average: 38.42,
-                  stdDev: 12,
-                  high: 82,
-                  low: 12,
-                  unit: 'unit',
-                  color: '#fff321',
-                  startDate: props.startDate,
-                  stationSTIDName: 'HI012',
-                  endDate: '2022-04-25T19:55:00Z',
-                }
+                    variableName: 'air_temperature_set_1',
+                    stationName: 'Station Name',
+                    value: 42.01,
+                    average: 38.42,
+                    stdDev: 12,
+                    high: 82,
+                    low: 12,
+                    unit: 'unit',
+                    color: '#fff321',
+                    startDate: props.startDate,
+                    stationSTIDName: 'HI012',
+                    endDate: '2022-04-25T19:55:00Z',
+                  }
             }
           />
         </Box>
@@ -291,7 +247,6 @@ const Content = (props: {
   const variableName = props.variable.variableName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1));
   // delete variableName[variableName.length - 1];
   delete variableName[variableName.length - 2];
-  const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
   const [scaleToFontSize, setScaleToFontSize] = useState(100);
   const { colorMode } = useColorMode();
 
@@ -373,13 +328,13 @@ const Content = (props: {
                 {isNaN(props.variable.value)
                   ? props.variable.value
                   : props.variable.value % 1
-                    ? Number(props.variable.value).toFixed(1)
-                    : props.variable.value}
+                  ? Number(props.variable.value).toFixed(1)
+                  : props.variable.value}
                 <span>&nbsp;{props.variable.unit}</span>
               </Text>
             </>
           ) : (
-            <Spinner w={100} h={100} thickness="20px" speed="0.30s" emptyColor="gray.200" />
+            <Spinner w={100} h={100} thickness="5px" speed="1s" emptyColor="gray.200" />
           )}
 
           <Text

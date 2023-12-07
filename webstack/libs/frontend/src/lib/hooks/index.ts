@@ -20,3 +20,4 @@ export * from './useThrottleApps';
 export * from './useThrottleScale';
 export * from './useThrottlePresenceUsers';
 export * from './useAbility';
+export * from './useNetworkState';

@@ -9,7 +9,6 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 // Import Chakra UI elements
 import {
-  useDisclosure,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -28,6 +27,7 @@ import {
   PopoverHeader,
   PopoverTrigger,
   UnorderedList,
+  useToast,
 } from '@chakra-ui/react';
 
 // Icons for file types
@@ -39,13 +39,11 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
 } from 'react-icons/md';
+import { v5 as uuidv5 } from 'uuid';
 
 import {
   processContentURL,
   useAppStore,
-  useHotkeys,
-  HotkeysEvent,
-  usePresenceStore,
   useUIStore,
   useUser,
   useCursorBoardPosition,
@@ -53,20 +51,23 @@ import {
   useUsersStore,
   useConfigStore,
   useThrottleApps,
-  useThrottleScale,
+  useInsightStore,
+  setupAppForFile,
+  downloadFile,
+  apiUrls,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
 import { getExtension } from '@sage3/shared';
-
-import { FileEntry } from './Panels/Asset/types';
-import { setupAppForFile } from './Panels/Asset/CreateApp';
+import { FileEntry } from '@sage3/shared/types';
 
 type props = {
   boardId: string;
   roomId: string;
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 const MaxElements = 12;
@@ -75,17 +76,18 @@ export function Alfred(props: props) {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // UI
-  const scale = useThrottleScale(250);
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const displayUI = useUIStore((state) => state.displayUI);
   const hideUI = useUIStore((state) => state.hideUI);
   // chakra color mode
   const { colorMode, toggleColorMode } = useColorMode();
+  const toast = useToast();
 
   // Apps
   const apps = useThrottleApps(250);
   const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
+  const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // User
   const { user, accessId } = useUser();
@@ -95,9 +97,8 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
-    let state = {} as AppState;
+    const state = {} as AppState;
     // Check if the app is enabled in the config
-    if (appName === 'JupyterLab' && config.features && !config.features.apps.includes('jupyter')) return;
     if (appName === 'SageCell' && config.features && !config.features.apps.includes('SageCell')) return;
     if (appName === 'Screenshare' && config.features && !config.features.apps.includes('Screenshare')) {
       return;
@@ -106,20 +107,64 @@ export function Alfred(props: props) {
     }
 
     // Get around  the center of the board
-    const x = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+    const bx = useUIStore.getState().boardPosition.x;
+    const by = useUIStore.getState().boardPosition.y;
+    const scale = useUIStore.getState().scale;
+    const x = Math.floor(-bx + window.innerWidth / scale / 2);
+    const y = Math.floor(-by + window.innerHeight / scale / 2);
 
     createApp({
       title: appName,
       roomId: props.roomId,
       boardId: props.boardId,
-      position: { x, y, z: 0 },
+      position: { x: x - 200, y: y - 200, z: 0 },
       size: { width: 400, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as AppState), ...state },
       raised: true,
       dragging: false,
+      pinned: false,
+    });
+  };
+
+  const saveBoard = (name: string) => {
+    const selectedapps = useUIStore.getState().savedSelectedAppsIds;
+    // Use selected apps if any or all apps
+    const apps = selectedapps.length > 0 ?
+      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
+      : useAppStore.getState().apps;
+    let filename = name || 'board.s3json';
+    if (!filename.endsWith('.s3json')) filename += '.s3json';
+    const namespace = useConfigStore.getState().config.namespace;
+    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+      if (app.data.state.assetid) {
+        // Generate a public URL of the file
+        const token = uuidv5(app.data.state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+        }
+      }
+      return arr;
+    }, []);
+    // Data structure to save
+    const session = {
+      assets: assets,
+      apps: apps,
+    }
+    const payload = JSON.stringify(session, null, 2);
+    const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
+    // Trigger the download
+    downloadFile(jsonurl, filename);
+    // Success message
+    toast({
+      title: 'Board saved',
+      description: apps.length + ' apps saved to ' + filename,
+      status: 'info',
+      duration: 4000,
+      isClosable: true,
     });
   };
 
@@ -162,6 +207,7 @@ export function Alfred(props: props) {
             state: { ...initialValues['WebpageLink'], url: processContentURL(loc) },
             raised: true,
             dragging: false,
+            pinned: false,
           });
         }
       } else if (terms[0] === 'g' || terms[0] === 'goo' || terms[0] === 'google') {
@@ -178,6 +224,7 @@ export function Alfred(props: props) {
           state: { ...initialValues['WebpageLink'], url: processContentURL(searchURL) },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
         const content = terms.slice(1).join(' ');
@@ -192,6 +239,7 @@ export function Alfred(props: props) {
           state: { ...(initialValues['Stickie'] as AppState), text: content },
           raised: true,
           dragging: false,
+          pinned: false,
         });
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
         newApplication('SageCell');
@@ -205,6 +253,24 @@ export function Alfred(props: props) {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
+      } else if (terms[0] === 'save') {
+        saveBoard(terms[1]);
+      } else if (terms[0] === 'tag') {
+        // search apps with tags
+        const tags = terms.slice(1);
+        const tag = tags[0];
+        if (tag) {
+          const toSelect: string[] = [];
+          useInsightStore.getState().insights.forEach((insight) => {
+            if (insight.data.labels && insight.data.labels.includes(tag)) {
+              toSelect.push(insight.data.app_id);
+            }
+          });
+          if (toSelect.length > 0) {
+            setSelectedApps(toSelect);
+            fitApps(apps.filter((a) => toSelect.includes(a._id)));
+          }
+        }
       } else if (terms[0] === 'clear' || terms[0] === 'clearall' || terms[0] === 'closeall') {
         // Batch delete all the apps
         const ids = apps.map((a) => a._id);
@@ -214,7 +280,9 @@ export function Alfred(props: props) {
     [user, apps, props.boardId, boardCursor, colorMode]
   );
 
-  return <AlfredComponent onAction={alfredAction} roomId={props.roomId} boardId={props.boardId} />;
+  return (
+    <AlfredComponent onAction={alfredAction} roomId={props.roomId} boardId={props.boardId} isOpen={props.isOpen} onClose={props.onClose} />
+  );
 }
 
 /**
@@ -225,18 +293,20 @@ type AlfredUIProps = {
   onAction: (command: string) => void;
   roomId: string;
   boardId: string;
+  isOpen: boolean;
+  onClose: () => void;
 };
 
 /**
  * React component to get and display the asset list
  */
-function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
+function AlfredUI(props: AlfredUIProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
   // List of elements
   const listRef = useRef<HTMLDivElement>(null);
   const [term, setTerm] = useState<string>();
-  const { isOpen, onOpen, onClose } = useDisclosure({ id: 'alfred' });
+
   // Apps
   const createApp = useAppStore((state) => state.create);
   // Assets store
@@ -247,19 +317,8 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   const users = useUsersStore((state) => state.users);
   // check if user is a guest
   const { user } = useUser();
-  const { cursor: cursorPosition } = useCursorBoardPosition();
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
-
-  useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
-    // Open the window
-    onOpen();
-    setListIndex(0);
-    // Clear the search
-    setTerm('');
-    // Returning false stops the event and prevents default browser events
-    return false;
-  });
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -298,13 +357,13 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      onClose();
+      props.onClose();
       if (listIndex > 0) {
         const elt = filteredList[listIndex - 1];
         if (elt) openFile(elt.id);
       } else {
         if (term) {
-          onAction(term);
+          props.onAction(term);
         }
       }
     } else if (e.key === 'ArrowDown') {
@@ -332,7 +391,7 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
 
   useEffect(() => {
     // Filter the asset keys for this room
-    const filterbyRoom = assets.filter((k) => k.data.room === roomId && k.data.owner === user?._id);
+    const filterbyRoom = assets.filter((k) => k.data.room === props.roomId && k.data.owner === user?._id);
     // Create entries
     const newList = filterbyRoom
       .map((item) => {
@@ -359,16 +418,23 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
         return b.dateAdded - a.dateAdded;
       });
     setAssetsList(newList);
-  }, [assets, roomId, user]);
+  }, [assets, props.roomId, user]);
 
   // Open the file
   const openFile = async (id: string) => {
-    onClose();
+    props.onClose();
     if (!user) return;
     // Create the app
     const file = assetsList.find((a) => a.id === id);
     if (file) {
-      const setup = await setupAppForFile(file, cursorPosition.x, cursorPosition.y, roomId, boardId, user);
+      // Get around  the center of the board
+      const bx = useUIStore.getState().boardPosition.x;
+      const by = useUIStore.getState().boardPosition.y;
+      const scale = useUIStore.getState().scale;
+      const x = Math.floor(-bx + window.innerWidth / scale / 2);
+      const y = Math.floor(-by + window.innerHeight / scale / 2);
+      // Create the app
+      const setup = await setupAppForFile(file, x, y, props.roomId, props.boardId, user);
       if (setup) createApp(setup);
     }
   };
@@ -408,7 +474,14 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
   }, [filteredList, listIndex]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef} blockScrollOnMount={false} scrollBehavior={'inside'}>
+    <Modal
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      size="xl"
+      initialFocusRef={initialRef}
+      blockScrollOnMount={false}
+      scrollBehavior={'inside'}
+    >
       <ModalOverlay />
       <ModalContent maxH={'30vh'} top={'4rem'}>
         <HStack>
@@ -467,6 +540,12 @@ function AlfredUI({ onAction, roomId, boardId }: AlfredUIProps): JSX.Element {
                   </ListItem>
                   <ListItem>
                     <b>dark</b> : Switch to dark mode
+                  </ListItem>
+                  <ListItem>
+                    <b>tag</b> : Search applications with tags
+                  </ListItem>
+                  <ListItem>
+                    <b>save</b> [filename]: Save the board to a file
                   </ListItem>
                   <ListItem>
                     <b>clear</b> : Close all applications

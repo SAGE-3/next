@@ -59,7 +59,7 @@ function AppComponent(props: App): JSX.Element {
 
   // supportedApps currently hardcoded in frontend
   // TODO Need to let backend set supportedApps
-  const supportedApps = ['ImageViewer', 'Notepad', 'PDFViewer'];
+  const supportedApps = ['ImageViewer', 'PDFViewer'];
 
   // Checks for apps on or off the pane
   useEffect(() => {

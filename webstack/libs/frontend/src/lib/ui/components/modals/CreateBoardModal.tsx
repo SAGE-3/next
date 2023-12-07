@@ -26,7 +26,6 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-
 import { BoardSchema } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
@@ -43,7 +42,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Configuration information
   const config = useConfigStore((state) => state.config);
 
-  const { user } = useUser();
+  const { user, saveBoard } = useUser();
   const toast = useToast();
 
   const createBoard = useBoardStore((state) => state.create);
@@ -91,12 +90,13 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     }
   };
 
-  const create = () => {
+  const create = async () => {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
       // list of board names in the room
-      const boardNames = boards.map((board) => board.data.name);
+      const roomsBoards = boards.filter((board) => board.data.roomId === props.roomId);
+      const boardNames = roomsBoards.map((board) => board.data.name);
 
       if (cleanedName.split(' ').join('').length === 0) {
         toast({
@@ -117,7 +117,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         // Create the board
-        createBoard({
+        const board = await createBoard({
           name: cleanedName,
           description,
           roomId: props.roomId,
@@ -127,6 +127,18 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           privatePin: isProtected ? key : '',
           executeInfo: { executeFunc: '', params: {} },
         });
+        if (board) {
+          toast({
+            title: 'Board created successfully',
+            status: 'success',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
+          // Save the room to the user's profile
+          if (saveBoard) {
+            saveBoard(board._id);
+          }
+        }
         props.onClose();
       }
     }
@@ -182,7 +194,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text"
+              type="text" autoCapitalize='off'
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
