@@ -49,9 +49,9 @@ function AppComponent(props: App): JSX.Element {
   // const [pdbId, setPdbId] = useState('4KTC');
   // const [pdbId, setPdbId] = useState('1KFN');
 
+  // Background color, to HEX values
   const bg = useColorModeValue('gray.50', 'gray.700');
   const background = useToken('colors', bg);
-  console.log('background', background);
 
   useEffect(() => {
     async function setup() {
@@ -81,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
       }
     }
     setup().then(() => {
-      console.log("Molstar setup done");
+      console.log("Molstar> setup done");
     });
 
   }, [canvasRef, parentRef]);
