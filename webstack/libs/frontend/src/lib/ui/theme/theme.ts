@@ -24,7 +24,7 @@ const styles = {
   global: (props: StyleFunctionProps) => ({
     // styles for the `body`
     body: {
-      bg: mode('gray.50', '#212121')(props),
+      bg: mode('gray.50', '#323232')(props),
     },
   }),
 };
@@ -32,12 +32,20 @@ const styles = {
 const components = {
   Drawer: {
     variants: {
-      fifty: {
+      code: {
+        dialogContainer: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
         dialog: {
-          maxW: '50vw',
+          pointerEvents: 'auto',
         },
       },
       alwaysOpen: {
+        overlay: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
         dialog: {
           pointerEvents: 'auto',
         },

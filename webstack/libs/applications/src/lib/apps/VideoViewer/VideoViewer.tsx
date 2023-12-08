@@ -47,7 +47,7 @@ import {
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, downloadFile, useHexColor } from '@sage3/frontend';
+import { useAppStore, useAssetStore, downloadFile, useHexColor, useUIStore } from '@sage3/frontend';
 
 import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
@@ -82,6 +82,8 @@ function AppComponent(props: App): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
+  // Used to deselect the app
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Get Asset from store
   useEffect(() => {
@@ -178,6 +180,10 @@ function AppComponent(props: App): JSX.Element {
           }
           break;
         }
+        case 'Escape': {
+          // Deselect the app
+          setSelectedApp('');
+        }
       }
     },
     [s, file, props.data.position]
@@ -262,15 +268,15 @@ function ToolbarComponent(props: App): JSX.Element {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timer | null = null;
+    let interval: number | null = null;
     const setTime = () => {
       if (videoRef) {
         setCurrentTime(videoRef.currentTime);
       }
     };
-    interval = setInterval(setTime, 500);
+    interval = window.setInterval(setTime, 500);
     return () => {
-      if (interval) clearInterval(interval);
+      if (interval) window.clearInterval(interval);
     };
   }, [videoRef]);
 
@@ -650,7 +656,6 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           <MdAccessTime />
         </Button>
       </Tooltip>
-
     </ButtonGroup>
   );
 };

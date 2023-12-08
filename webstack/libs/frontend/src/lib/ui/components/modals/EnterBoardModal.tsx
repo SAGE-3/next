@@ -136,6 +136,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
                   width="full"
                   value={privateText}
                   type="password"
+                  autoCapitalize="off"
                   onChange={updatePrivateText}
                 />
               </InputGroup>

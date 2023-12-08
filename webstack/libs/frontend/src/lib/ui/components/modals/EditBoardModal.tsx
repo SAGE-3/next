@@ -125,6 +125,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
    */
   const handleDeleteBoard = () => {
     delConfirmOnClose();
+    props.onClose();
     fetchBoardApps(props.board._id)
       .then((apps) => {
         // delete all apps in the board
@@ -189,6 +190,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}

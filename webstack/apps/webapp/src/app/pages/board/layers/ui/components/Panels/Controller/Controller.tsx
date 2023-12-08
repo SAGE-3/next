@@ -6,13 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { HStack, useToast } from '@chakra-ui/react';
+import {
+  HStack, useToast, Button, Text,
+  Popover, PopoverArrow, PopoverBody, PopoverContent,
+  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+} from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 
-import { PanelUI, StuckTypes, useData, usePanelStore, useRoomStore, useRouteNav, useUser, useAbility } from '@sage3/frontend';
+import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
 
 export interface ControllerProps {
@@ -27,7 +31,6 @@ export function Controller(props: ControllerProps) {
   const room = rooms.find((el) => el._id === props.roomId);
 
   // Can Annotate
-  const { user } = useUser();
   const canAnnotate = useAbility('update', 'boards');
   const canCreateApps = useAbility('create', 'apps');
   const canDownload = useAbility('download', 'assets');
@@ -48,11 +51,11 @@ export function Controller(props: ControllerProps) {
   const { toHome, back } = useRouteNav();
   function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (event.shiftKey) {
+      // Just go back to the previous room
+      back();
+    } else {
       // Back to the homepage with the room id
       toHome(props.roomId);
-    } else {
-      // Just go back to the previous page
-      back();
     }
   }
 
@@ -86,15 +89,30 @@ export function Controller(props: ControllerProps) {
     bringPanelForward(panel.name);
   };
 
+  // Popover for long press
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
+
   return (
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
-        <IconButtonPanel
-          icon={<MdArrowBack />}
-          isActive={false}
-          onClick={handleHomeClick}
-          description={`Navigate back (Shift+Click to go back to ${room?.data.name})`}
-        />
+        <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+          <IconButtonPanel
+            icon={<MdArrowBack />}
+            isActive={false}
+            onClick={handleHomeClick}
+            onLongPress={popOnOpen}
+            description={`Back to ${room?.data.name} (Long-press for more options)`}
+          />
+          <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
+            <PopoverArrow />
+            <PopoverBody userSelect={"text"}>
+              <VStack display={"block"}>
+                <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
+                <Button variant={"link"} fontSize={"sm"} onClick={back}>Back to previous board</Button>
+              </VStack>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
 
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
         <IconButtonPanel

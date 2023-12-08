@@ -57,6 +57,7 @@ export function PluginsPanel(props: PluginProps) {
       state: { pluginName },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 

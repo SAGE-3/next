@@ -16,6 +16,8 @@ import {
   PresenceCollection,
   MessageCollection,
   PluginsCollection,
+  InsightCollection,
+  RoomMembersCollection,
 } from '../collections';
 
 export * from './apps';
@@ -26,6 +28,8 @@ export * from './assets';
 export * from './presence';
 export * from './message';
 export * from './plugins';
+export * from './insight';
+export * from './roommembers';
 
 /**
  * Load the various models at startup.
@@ -39,6 +43,8 @@ export async function loadCollections(): Promise<void> {
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
   await PresenceCollection.initialize(true);
   await PluginsCollection.initialize();
+  await InsightCollection.initialize();
+  await RoomMembersCollection.initialize();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {

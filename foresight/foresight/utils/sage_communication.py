@@ -43,11 +43,14 @@ class SageCommunication(Borg):
             "get_rooms": "/api/rooms/",
             "get_apps": "/api/apps/",
             "get_boards": "/api/boards/",
+            "get_tags": "/api/insight/",
+            "get_tag": "/api/insight/{}",
             "send_update": "/api/apps/{}",
             "delete_app": "/api/apps/{}",
             "send_batch_update": "/api/apps/",
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
+            "upload_file": "/api/assets/upload",
             "get_time": "/api/time",
             "get_configuration": "/api/configuration",
         }
@@ -95,6 +98,51 @@ class SageCommunication(Borg):
         """
         r = self.httpx_client.post(
             self.conf[self.prod_type]["web_server"] + self.routes["create_app"],
+            headers=self.__headers,
+            json=data,
+        )
+        return r
+
+    def upload_file(self, files, payload):
+        """
+        :return:
+        """
+        r = self.httpx_client.post(
+            self.conf[self.prod_type]["web_server"] + self.routes["upload_file"],
+            headers=self.__headers,
+            files=files,
+            data=payload,
+        )
+        return r
+
+    def get_alltags(self):
+        """
+        :return:
+        """
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]["web_server"] + self.routes["get_tags"],
+            headers=self.__headers,
+        )
+        return r
+
+    def get_tags(self, app_id):
+        """
+        :return:
+        """
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]["web_server"]
+            + self.routes["get_tag"].format(app_id),
+            headers=self.__headers,
+        )
+        return r
+
+    def update_tags(self, app_id, data):
+        """
+        :return:
+        """
+        r = self.httpx_client.put(
+            self.conf[self.prod_type]["web_server"]
+            + self.routes["get_tag"].format(app_id),
             headers=self.__headers,
             json=data,
         )

@@ -92,7 +92,7 @@ async function startServer() {
 
   // Log Level
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))
-  const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'MESSAGE', 'PLUGINS', 'ROOMS'];
+  const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'MESSAGE', 'PLUGINS', 'ROOMS', 'INSIGHT'];
   // all: all logs are sent to fluentd
   if (config.fluentd.databaseLevel === 'all') logCollections.push('USERS', 'PRESENCE');
   // none: no logs are sent to fluentd

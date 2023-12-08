@@ -32,12 +32,12 @@ export function usePluginListener() {
           const stateUpdate = structuredClone(message.state.state);
           const appUpdate = structuredClone(message.state);
           delete appUpdate.state;
-          update(message.id, appUpdate);
-          updateState(message.id, stateUpdate);
+          if (Object.keys(appUpdate).length > 0) update(message.id, appUpdate);
+          if (Object.keys(stateUpdate).length > 0) updateState(message.id, stateUpdate);
         } else {
           const appUpdate = structuredClone(message.state);
           delete appUpdate.state;
-          update(message.id, appUpdate);
+          if (Object.keys(appUpdate).length > 0) update(message.id, appUpdate);
         }
       }
     }

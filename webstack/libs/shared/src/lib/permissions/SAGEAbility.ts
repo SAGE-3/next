@@ -22,7 +22,10 @@ export type ActionArg =
   | 'lasso'
   | 'execute'
   | 'sub'
-  | 'unsub';
+  | 'unsub'
+  | 'join'
+  | 'pin'
+  | 'lock';
 
 // Roles
 export type Role = RoleArg | 'all';
@@ -30,7 +33,18 @@ export type RoleArg = UserSchema['userRole'];
 
 // Resources
 export type Resource = ResourceArg | 'all';
-export type ResourceArg = 'assets' | 'apps' | 'boards' | 'message' | 'plugins' | 'presence' | 'rooms' | 'users' | 'kernels';
+export type ResourceArg =
+  | 'assets'
+  | 'apps'
+  | 'boards'
+  | 'message'
+  | 'plugins'
+  | 'presence'
+  | 'rooms'
+  | 'users'
+  | 'kernels'
+  | 'insight'
+  | 'roommembers';
 
 // Abliity
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -45,11 +59,15 @@ const config: AbilityConfig = {
     { role: ['user'], resource: ['all'], action: ['all'] },
     { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update', 'sub', 'unsub'] },
     { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
-    { role: ['guest'], resource: ['assets', 'boards', 'message', 'plugins', 'rooms'], action: ['read', 'sub', 'unsub'] },
+    {
+      role: ['guest'],
+      resource: ['assets', 'boards', 'message', 'plugins', 'rooms', 'insight', 'roommembers'],
+      action: ['read', 'sub', 'unsub'],
+    },
     { role: ['guest'], resource: ['assets'], action: ['download'] },
     {
       role: ['spectator'],
-      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users'],
+      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users', 'insight'],
       action: ['read', 'sub', 'unsub'],
     },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },

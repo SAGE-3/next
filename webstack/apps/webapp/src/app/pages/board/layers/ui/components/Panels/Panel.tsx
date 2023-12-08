@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect, createRef } from 'react';
+import { useState, useEffect, createRef, useRef, useCallback } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -60,16 +60,18 @@ export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   description: string;
   isDisabled?: boolean;
+  onLongPress?: () => void;
 }
 
 // Button with a title and using the font size from parent panel
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
+  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
-      <Tooltip label={props.description} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+      <Tooltip label={props.description} maxWidth={"400px"} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
           borderRadius="md"
           h="auto"
@@ -86,6 +88,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
+          {...longPressEvent}
         />
       </Tooltip>
     </Box>
@@ -317,6 +320,7 @@ export function Panel(props: PanelProps) {
                     fontWeight="bold"
                     cursor="move"
                     onDoubleClick={props.titleDblClick}
+                    userSelect={'none'}
                   >
                     {props.title}
                   </Text>
@@ -362,3 +366,54 @@ export function Panel(props: PanelProps) {
     );
   } else return null;
 }
+
+//
+// useLongPress hook adapted from react-use
+//
+const isTouchEvent = (ev: Event): ev is TouchEvent => {
+  return 'touches' in ev;
+};
+
+const preventDefault = (ev: Event) => {
+  if (!isTouchEvent(ev)) return;
+
+  if (ev.touches.length < 2 && ev.preventDefault) {
+    ev.preventDefault();
+  }
+};
+
+const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
+  const timeout = useRef<ReturnType<typeof setTimeout>>();
+  const target = useRef<EventTarget>();
+  const isPreventDefault = true;
+  const delay = 300;
+
+  const start = useCallback(
+    (event: TouchEvent | MouseEvent) => {
+      // prevent ghost click on mobile devices
+      if (isPreventDefault && event.target) {
+        event.target.addEventListener('touchend', preventDefault, { passive: false });
+        target.current = event.target;
+      }
+      timeout.current = setTimeout(() => callback(event), delay);
+    },
+    [callback, delay, isPreventDefault]
+  );
+
+  const clear = useCallback(() => {
+    // clearTimeout and removeEventListener
+    timeout.current && clearTimeout(timeout.current);
+
+    if (isPreventDefault && target.current) {
+      target.current.removeEventListener('touchend', preventDefault);
+    }
+  }, [isPreventDefault]);
+
+  return {
+    onMouseDown: (e: any) => start(e),
+    onTouchStart: (e: any) => start(e),
+    onMouseUp: clear,
+    onMouseLeave: clear,
+    onTouchEnd: clear,
+  } as const;
+};

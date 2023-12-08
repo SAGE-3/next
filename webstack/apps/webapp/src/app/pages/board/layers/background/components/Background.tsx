@@ -43,11 +43,12 @@ import {
   isValidURL,
   setupApp,
   useAbility,
+  processContentURL,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 
-import { HelpModal } from './HelpModal';
+import { HelpModal } from '@sage3/frontend';
 
 type BackgroundProps = {
   roomId: string;
@@ -102,7 +103,7 @@ export function Background(props: BackgroundProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
-  const gc = useColorModeValue('gray.100', 'gray.800');
+  const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
   const [dropPosition, setDropPosition] = useState({ x: 0, y: 0 });
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
@@ -162,6 +163,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+
     if (!user) return;
 
     if (!canDrop) {
@@ -182,7 +184,6 @@ export function Background(props: BackgroundProps) {
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
-
       // Collect all the files dropped into an array
       collectFiles(event.dataTransfer)
         .then(async (files) => {
@@ -223,8 +224,18 @@ export function Background(props: BackgroundProps) {
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
+            const title = event.dataTransfer.getData('title') || 'Image';
             // it's a base64 image
-            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+            getImageDimensionsFromBase64(pastedText).then((res) => {
+              const ar = res.w / res.h;
+              let w = res.w;
+              let h = w / ar;
+              if (ar < 1) {
+                w = res.h * ar;
+                h = res.h;
+              }
+              createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+            });
           } else {
             // Is it a valid URL
             const valid = isValidURL(pastedText);
@@ -254,6 +265,7 @@ export function Background(props: BackgroundProps) {
               state: { ...(initialValues[appName] as AppState), ...appstate },
               raised: true,
               dragging: false,
+              pinned: false,
             };
             createApp(newState);
           } else {
@@ -364,11 +376,13 @@ export function Background(props: BackgroundProps) {
   useEffect(() => {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
+
     if (isShiftPressed) {
       document.onselectstart = function () {
         return false;
       };
     }
+
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
@@ -388,6 +402,14 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
   const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
     createApp(
       setupApp(
         'Webview',
@@ -396,8 +418,8 @@ export function Background(props: BackgroundProps) {
         dropPosition.y,
         props.roomId,
         props.boardId,
-        { w: 800, h: 1000 },
-        { webviewurl: validURL }
+        { w: w, h: h },
+        { webviewurl: final_url }
       )
     );
     popOnClose();
@@ -479,7 +501,7 @@ export function Background(props: BackgroundProps) {
       className="board-handle"
       width="100%"
       height="100%"
-      backgroundSize={'50px 50px'}
+      backgroundSize={'100px 100px'}
       bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
         }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
@@ -498,9 +520,7 @@ export function Background(props: BackgroundProps) {
       onPointerOut={onPointerUp}
       onPointerLeave={onPointerUp}
     >
-      <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
-        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-      </Modal>
+      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
         <Portal>
@@ -587,4 +607,21 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
       }
     }
   });
+}
+
+/**
+ * Get the dimensions of an image from a base64 string
+ *
+ * @export
+ * @param {string} file
+ * @returns {Promise<{w: number, h: number}>}
+ */
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+  return new Promise(function (resolved, rejected) {
+    var i = new Image()
+    i.onload = function () {
+      resolved({ w: i.width, h: i.height })
+    };
+    i.src = file
+  })
 }

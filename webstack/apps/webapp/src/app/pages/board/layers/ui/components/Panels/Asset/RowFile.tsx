@@ -12,26 +12,50 @@ import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
+// UUID generator
+import { v5 as uuidv5 } from 'uuid';
 
 // Chakra UI
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody,
-  Box, Button, Flex, useEventListener, useDisclosure, Portal, useColorModeValue,
-  useToast, Tooltip,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  Box,
+  Button,
+  Flex,
+  useEventListener,
+  useDisclosure,
+  Portal,
+  useColorModeValue,
+  useToast,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
 
 import {
-  humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore,
-  useCursorBoardPosition, AssetHTTPService, useAbility, apiUrls
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition,
+  AssetHTTPService,
+  useAbility,
+  apiUrls,
+  setupAppForFile,
+  useConfigStore,
 } from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
 
-import { FileEntry } from './types';
-import { setupAppForFile } from './CreateApp';
 import './menu.scss';
+import { FileEntry } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -111,8 +135,12 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         downloadFile(url, file.originalfilename);
       }
     } else if (id === 'copy') {
+      // Get the namespace UUID of the server
+      const namespace = useConfigStore.getState().config.namespace;
+      // Generate a public URL of the file
+      const token = uuidv5(file.id, namespace);
+      const publicUrl = window.location.origin + apiUrls.assets.getPublicURL(file.id, token);
       // Copy the file URL to the clipboard
-      const publicUrl = window.location.origin + apiUrls.assets.getAssetById(file.filename);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(publicUrl);
         // Notify the user
@@ -177,11 +205,22 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
+      case 'url':
+        return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+      case 'py':
+        return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
       case 'jpeg':
+      case 'png':
+      case 'gif':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+      case 'geotiff':
+      case 'geojson':
+        return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
       case 'mp4':
+      case 'qt':
+        return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'json':
@@ -273,13 +312,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             }}
           >
             <li className="s3contextmenuitem" id={'copy'} onClick={actionClick}>
-              Copy URL
+              Copy Public URL
             </li>
             <li className="s3contextmenuitem" id={'down'} onClick={actionClick}>
-              Download
+              Download File
             </li>
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
-              Delete
+              Delete File
             </li>
           </ul>
         </Portal>

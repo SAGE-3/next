@@ -33,6 +33,8 @@ interface CreateKernelModalProps {
   onClose: () => void;
 }
 
+const availableKernelTypes = ['python3'];
+
 export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
   // Params
   const { boardId, roomId } = useParams();
@@ -47,6 +49,7 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
 
   // Kernel Store
   const { kernelTypes, apiStatus, createKernel } = useKernelStore((state) => state);
+  const kernelTypeFilter = (kernel: string) => availableKernelTypes.includes(kernel);
 
   // Toast
   const toast = useToast();
@@ -129,7 +132,7 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
             mt="1"
           >
             {kernelTypes.length > 0 ? (
-              kernelTypes.map((kernel) => (
+              kernelTypes.filter(kernelTypeFilter).map((kernel) => (
                 <option key={kernel} value={kernel}>
                   {kernel}
                 </option>

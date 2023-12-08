@@ -41,7 +41,7 @@ services:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
   python:
-    image: "sage3/foresight:arm64"
+    image: "ghcr.io/sage-3/foresight:arm64"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
@@ -80,7 +80,7 @@ services:
       restart_policy:
         condition: on-failure
   jupyter:
-    image: "jupyter/datascience-notebook:ed2908bbb62e"
+    image: "jupyter/datascience-notebook:latest"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
@@ -88,7 +88,8 @@ services:
     ports:
       - "8888:8888"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"

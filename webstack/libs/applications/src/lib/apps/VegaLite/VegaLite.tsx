@@ -11,10 +11,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 // Library imports
-import { Button, ButtonGroup, Box } from '@chakra-ui/react';
+import { Button, ButtonGroup, Box, useColorModeValue } from '@chakra-ui/react';
 
 // Import Monaco Editor
-import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
+import Editor from '@monaco-editor/react';
 
 // Sage3 Imports
 import { useAppStore, useUser } from '@sage3/frontend';
@@ -35,12 +35,11 @@ function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  // Styling
+  const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
   // LocalState
   const [spec, setSpec] = useState(s.spec);
-
-  // Editor ref
-  const editor = useRef<Monaco>();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -83,10 +82,11 @@ function AppComponent(props: App): JSX.Element {
         <Editor
           defaultValue={spec}
           onChange={handleTextChange}
+          theme={defaultTheme}
           height={'95%'}
           language={'json'}
           options={{
-            // fontSize: '10px',
+            fontSize: 18,
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
             overviewRulerBorder: false,
@@ -125,6 +125,7 @@ function ToolbarComponent(props: App): JSX.Element {
       },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 

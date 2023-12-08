@@ -121,13 +121,13 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
     // features disabled
     let state = {} as AppState;
-    if (appName === 'JupyterLab' && !appsList.includes('JupyterLab')) return;
     if (appName === 'SageCell' && !appsList.includes('SageCell')) return;
     if (appName === 'Screenshare' && !appsList.includes('Screenshare')) return;
     let width = 400;
     let height = 420;
     if (appName === 'SageCell') {
-      width = 650;
+      width = 900;
+      height = 800;
     }
     if (appName === 'Screenshare') {
       width = 1280;
@@ -150,28 +150,7 @@ export function BoardContextMenu(props: ContextProps) {
       state: { ...(initialValues[appName] as any), ...state },
       raised: true,
       dragging: false,
-    });
-  };
-
-  const openJupyter = () => {
-    // Not logged in
-    if (!user) return;
-
-    const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-    const width = 700;
-    const height = 700;
-    // Open a webview into the SAGE3 builtin Jupyter instance
-    createApp({
-      title: 'JupyterLab',
-      roomId: props.roomId,
-      boardId: props.boardId,
-      position: { ...position, z: 0 },
-      size: { width, height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'JupyterLab',
-      state: { ...initialValues['JupyterLab'], jupyterURL: '' },
-      raised: true,
-      dragging: false,
+      pinned: false,
     });
   };
 
@@ -194,6 +173,7 @@ export function BoardContextMenu(props: ContextProps) {
       state: { ...initialValues['Chat'] },
       raised: true,
       dragging: false,
+      pinned: false,
     });
   };
 

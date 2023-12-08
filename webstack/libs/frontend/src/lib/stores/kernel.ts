@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -20,6 +20,8 @@ type KernelStoreState = {
   kernels: KernelInfo[];
   apiStatus: boolean;
   kernelTypes: string[];
+  keepChecking: () => void;
+  stopChecking: () => void;
   fetchKernels: () => Promise<KernelInfo[]>;
   fetchKernelTypes: () => Promise<string[]>;
   createKernel: (kernelInfo: KernelInfo) => Promise<boolean>;
@@ -33,15 +35,12 @@ type KernelStoreState = {
 /**
  * The Kernel Store
  */
-export const useKernelStore = create<KernelStoreState>((set, get) => {
+export const useKernelStore = create<KernelStoreState>()((set, get) => {
   // Heartbeat check for status of the API
   const checkFastAPIStatus = async () => {
     const online = await FastAPI.checkStatus();
     set({ apiStatus: online });
   };
-  checkFastAPIStatus();
-  // 5 second interval
-  setInterval(checkFastAPIStatus, 5000);
 
   // Get Kernel Types
   const fetchKernelTypes = async () => {
@@ -49,9 +48,6 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     set({ kernelTypes });
     return kernelTypes;
   };
-  fetchKernelTypes();
-  // 30 Second interval
-  setInterval(fetchKernelTypes, 30000);
 
   // Fetch kernels
   const fetchKernels = async () => {
@@ -59,9 +55,6 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     set({ kernels });
     return kernels;
   };
-  fetchKernels();
-  // 5 second interval
-  setInterval(fetchKernels, 5000);
 
   // Create a kernel
   const createKernel = async (kernelInfo: KernelInfo): Promise<boolean> => {
@@ -100,6 +93,33 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     return response;
   };
 
+  let timerAPI: number | null = null;
+  let timerTypes: number | null = null;
+  let timerKernels: number | null = null;
+
+  const keepChecking = () => {
+    // 5 second interval
+    timerAPI = window.setInterval(checkFastAPIStatus, 5000);
+
+    // 30 Second interval
+    timerTypes = window.setInterval(fetchKernelTypes, 30000);
+
+    // 5 second interval
+    timerKernels = window.setInterval(fetchKernels, 5000);
+  };
+
+  const stopChecking = () => {
+    // Clear the timers
+    if (timerAPI) window.clearInterval(timerAPI);
+    if (timerTypes) window.clearInterval(timerTypes);
+    if (timerKernels) window.clearInterval(timerKernels);
+  };
+
+  // First checks
+  checkFastAPIStatus();
+  fetchKernelTypes();
+  fetchKernels();
+
   return {
     kernels: [],
     apiStatus: false,
@@ -112,6 +132,8 @@ export const useKernelStore = create<KernelStoreState>((set, get) => {
     restartKernel: restartKernel,
     executeCode: executeCode,
     fetchResults: fetchResults,
+    keepChecking: keepChecking,
+    stopChecking: stopChecking,
   };
 });
 

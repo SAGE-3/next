@@ -25,7 +25,7 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Room, RoomSchema, Board } from '@sage3/shared/types';
+import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
@@ -35,7 +35,6 @@ interface EditRoomModalProps {
   onOpen: () => void;
   onClose: () => void;
   room: Room;
-  boards: Board[];
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
@@ -56,6 +55,9 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   // Apps
   const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
   const deleteApp = useAppStore((state) => state.delete);
+
+  // Boards
+  const { boards } = useBoardStore((state) => state);
   const deleteBoard = useBoardStore((state) => state.delete);
 
   const [isListed, setIsListed] = useState(props.room.data.isListed);
@@ -130,7 +132,10 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
    */
   const handleDeleteRoom = () => {
     delConfirmOnClose();
-    props.boards.forEach((b) => {
+    props.onClose();
+    boards.forEach((b) => {
+      // Skip if this board doesn't belong to the room
+      if (b.data.roomId !== props.room._id) return;
       fetchBoardApps(b._id)
         .then((apps) => {
           // delete all apps in the board
@@ -204,6 +209,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}

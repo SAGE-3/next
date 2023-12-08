@@ -6,7 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import { MdApps } from 'react-icons/md';
+
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -25,6 +27,9 @@ import {
   useThrottleApps,
   useAbility,
   apiUrls,
+  useHotkeys,
+  Alfred,
+  HotkeysEvent,
 } from '@sage3/frontend';
 
 import {
@@ -32,7 +37,6 @@ import {
   ClearBoardModal,
   AppToolbar,
   Twilio,
-  Alfred,
   LassoToolbar,
   Controller,
   AssetsPanel,
@@ -60,6 +64,9 @@ export function UILayer(props: UILayerProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
+    (state) => state
+  );
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -86,6 +93,9 @@ export function UILayer(props: UILayerProps) {
 
   // Clear board modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
+
+  // Alfred Modal
+  const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
@@ -165,26 +175,63 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
+  // Zoom to the saved selected apps
+  const goToSavedSelectedApps = () => {
+    if (savedSelectedAppsIds.length < 1) return;
+    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
+  };
+
+  // Deselect all apps when the escape key is pressed
+  useHotkeys('esc', () => {
+    setWhiteboardMode('none');
+    setSelectedApp('');
+    clearSavedSelectedAppsIds();
+    setSelectedAppsIds([]);
+  });
+
+  // Open Alfred
+  useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
+    // Open the window
+    alredOnOpen();
+    return false;
+  });
+
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
-        <MainButton
-          buttonStyle="solid"
-          backToRoom={() => toHome(props.roomId)}
-          boardInfo={{
-            boardId: props.boardId,
-            roomId: props.roomId,
-            boardName: board ? board?.data.name : '',
-            roomName: room ? room?.data.name : '',
-          }}
-          config={config}
-        />
+        <Box display="flex" gap="2">
+          <MainButton
+            buttonStyle="solid"
+            backToRoom={() => toHome(props.roomId)}
+            boardInfo={{
+              boardId: props.boardId,
+              roomId: props.roomId,
+              boardName: board ? board?.data.name : '',
+              roomName: room ? room?.data.name : '',
+            }}
+            config={config}
+          />
+          <Tooltip
+            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
+          >
+            <IconButton
+              size="sm"
+              disabled={savedSelectedAppsIds.length < 1}
+              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
+              icon={<MdApps />}
+              fontSize="xl"
+              variant={'outline'}
+              aria-label={'selected-apps'}
+              onClick={goToSavedSelectedApps}
+            ></IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
       {/* Buttons Middle Bottom */}
@@ -193,12 +240,12 @@ export function UILayer(props: UILayerProps) {
       </Box> */}
 
       {/* ServerName Top Left */}
-      <Box position="absolute" left="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" display={showUI ? 'flex' : 'none'}>
+      <Box position="absolute" right="1" top="1" display={showUI ? 'initial' : 'none'}>
         <Clock isBoard={true} />
       </Box>
 
@@ -235,13 +282,13 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config ? config.features.plugins : false} />
+      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar />}
 
       {/* Alfred modal dialog */}
-      <Alfred boardId={props.boardId} roomId={props.roomId} />
+      <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
 
       {/* Presence Follow Component. Doesnt Render Anything */}
       <PresenceFollow />

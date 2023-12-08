@@ -23,11 +23,17 @@ class SmartBitFactory:
         "Note": "note",
         "Stickie": "stickie",
         "DataTable": "data_table",
+        "CSVViewer": "csvviewer",
         "SageCell": "sagecell",
         "VegaLite": "vegalite",
         "PDFViewer": "pdfviewer",
         "VegaLiteViewer": "vegaliteviewer",
         "ImageViewer": "imageviewer",
+        "Chat": "chat",
+        "MapGL": "mapgl",
+        "webview": "webview",
+        "VideoViewer": "videoviewer",
+        "IFrame": "iframe",
         "Seer": "seer",
     }
 

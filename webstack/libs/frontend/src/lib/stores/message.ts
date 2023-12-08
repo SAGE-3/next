@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -35,7 +33,7 @@ interface MessageState {
 /**
  * The MessageStore.
  */
-const MessageStore = createVanilla<MessageState>((set, get) => {
+const MessageStore = create<MessageState>()((set, get) => {
   let msgSub: (() => void) | null = null;
   return {
     messages: [],
@@ -140,8 +138,8 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useMessageStore = createReact(MessageStore);
+// Export the Zustand store
+export const useMessageStore = MessageStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('MessageStore', useMessageStore);
