@@ -37,6 +37,7 @@ import {
   MenuItem,
   MenuList,
   Link,
+  useMediaQuery,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -84,6 +85,8 @@ import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
  * @returns JSX.Element
  */
 export function HomePage() {
+  // Media Query
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)')
   // URL Params
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
@@ -1151,9 +1154,12 @@ export function HomePage() {
         alt="sage3"
         userSelect={'auto'}
         draggable={false}
+        display={isLargerThan800 ? 'flex' : 'none'}
       />
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef}>
+      <Box position="absolute" right="1" top="1" ref={clockRef}
+        display={isLargerThan800 ? 'flex' : 'none'}
+      >
         <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
       </Box>
     </Box>
