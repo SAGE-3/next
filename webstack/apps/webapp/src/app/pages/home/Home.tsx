@@ -550,7 +550,7 @@ export function HomePage() {
 
   return (
     // Main Container
-    <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
+    <Box display="flex" width="100%" height="100svh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
       {/* Joyride */}
       <Joyride
         ref={joyrideRef}
@@ -631,7 +631,7 @@ export function HomePage() {
         width="400px"
         minWidth="400px"
         transition="width 0.5s"
-        height="100vh"
+        height="100svh"
         display="flex"
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
@@ -944,8 +944,8 @@ export function HomePage() {
           flex="1"
           flexDirection="column"
           backgroundColor={mainBackgroundColor}
-          maxHeight="100vh"
-          height="100vh"
+          maxHeight="100svh"
+          height="100svh"
           overflow="hidden"
           pt={4}
           pr={4}
@@ -1038,7 +1038,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100vh - 270px)' }}
+                      style={{ height: 'calc(100svh - 270px)' }}
                       overflowY="scroll"
                       minWidth="420px"
                       css={{
@@ -1119,7 +1119,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100vh - 340px)' }}
+                      style={{ height: 'calc(100svh - 340px)' }}
                       overflowY="scroll"
                       alignContent="left"
                       css={{
