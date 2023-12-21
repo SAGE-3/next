@@ -66,6 +66,7 @@
     "maplibre-gl": "^3.5.0",
     "markdown-to-jsx": "^7.1.1",
     "mime": "^3.0.0",
+    "molstar": "^3.43.1",
     "monaco-editor": "^0.43.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",

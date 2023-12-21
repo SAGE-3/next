@@ -80,7 +80,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       state.accessId = accessId;
     }
 
-    const title = appName == 'Stickie' ? user.data.name : ''; // Gross
+    const title = appName == 'Stickie' ? user.data.name : appName; // Gross
     createApp({
       title: title,
       roomId: props.roomId,
