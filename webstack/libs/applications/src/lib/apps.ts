@@ -1,6 +1,5 @@
 // SAGE3 Generated from apps.json file
 
-import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
@@ -32,7 +31,6 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
-import { name as PollName } from './apps/poll';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -66,8 +64,8 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
-import Poll from './apps/poll/Poll';
 import React from 'react';
+import { App, AppGroup } from './schema';
 
 
 export const Applications = {
@@ -102,7 +100,6 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-  [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
 
 export * from './components';

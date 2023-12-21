@@ -31,7 +31,6 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as PollState, name as PollName } from './apps/poll';
 
 
 export type AppState =
@@ -66,8 +65,7 @@ export type AppState =
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState
-  | PollState;
+  | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName | typeof PollName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
