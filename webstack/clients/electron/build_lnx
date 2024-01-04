@@ -4,9 +4,21 @@
 rm -fr node_modules
 npm install
 
+archi=$(arch)
+myarch=""
+if "$archi" = "x86_64"; then
+  myarch="x64"
+fi
+if "$archi" = "aarch64"; then
+  myarch="arm64"
+fi
+
 # package the app
-./node_modules/.bin/electron-packager ./ --platform=linux --arch=x64 --icon=sage3.icns --overwrite
+./node_modules/.bin/electron-packager ./ --platform=linux --arch=$myarch --icon=sage3.icns --overwrite
 
 # add some utility files
-cp README.lnx     SAGE3-linux-x64/README.txt
+cp README.lnx SAGE3-linux-$myarch/README.txt
+chmod +x SAGE3-linux-$myarch64/SAGE3
 
+# create the tar file
+tar -cvfz SAGE3-linux-$myarch.tar SAGE3-linux-$myarch
