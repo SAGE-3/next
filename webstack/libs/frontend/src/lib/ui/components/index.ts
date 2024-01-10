@@ -7,6 +7,7 @@
  */
 
 export * from './modals';
+export * from './portals';
 
 export * from './context-menu/context-menu';
 

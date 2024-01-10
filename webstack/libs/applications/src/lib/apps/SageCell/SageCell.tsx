@@ -17,6 +17,7 @@ import {
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   useDisclosure,
   Button,
+  VStack,
 } from '@chakra-ui/react';
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
 
@@ -45,7 +46,7 @@ import { throttle } from 'throttle-debounce';
 // SAGE3 Component imports
 import {
   useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser,
-  useUsersStore, useUIStore, useCursorBoardPosition
+  useUsersStore, useUIStore, useCursorBoardPosition, HPortal,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -800,7 +801,7 @@ function AppComponent(props: App): JSX.Element {
     editorRef2.current = editor;
 
     // set the editor options
-    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
+    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel, fontSize: 18 });
     // Default width and font size
     const preference = localStorage.getItem('sage_preferred_drawer_width');
     setDrawerWidth(preference || '50vw');
@@ -1017,7 +1018,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <>
-        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
+        {/* <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
           closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
@@ -1039,7 +1040,17 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             </DrawerBody>
           </DrawerContent>
-        </Drawer>
+        </Drawer> */}
+
+        <HPortal position="right" width={800} isOpen={isOpen} onClose={closingDrawer}>
+          <Flex direction="column" bg={"white"}>
+            <Text m={0} top={0} position={"absolute"}>SageCell</Text>
+            <Box h={"94vh"} w={"100%"} border="1px solid darkgray">
+              {drawerEditor}
+            </Box>
+          </Flex>
+
+        </HPortal>
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
           <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
