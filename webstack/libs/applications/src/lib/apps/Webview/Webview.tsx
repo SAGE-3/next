@@ -227,17 +227,17 @@ function AppComponent(props: App): JSX.Element {
     if (domReady === false || attached === false) return;
     const webview = webviewNode.current;
 
-    const openUrlInNewWebviewApp = (url: string): void => {
+    const openUrlInNewWebviewApp = (aUrl: string): void => {
       if (!user) return;
       createApp({
-        title: url,
+        title: aUrl,
         roomId: roomId!,
         boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 15, y: props.data.position.y, z: 0 },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Webview',
-        state: { webviewurl: processContentURL(url) },
+        state: { webviewurl: processContentURL(aUrl) },
         raised: true,
         dragging: false,
         pinned: false,
@@ -271,8 +271,7 @@ function AppComponent(props: App): JSX.Element {
     };
 
     const didNavigate = (event: any) => {
-      // if (event.url != 'about:blank' && event.isInPlace && event.isMainFrame) {
-      if (event.url != 'about:blank' && event.isMainFrame) {
+      if (event.url != 'about:blank' && event.isMainFrame && !event.url.includes('.pdf')) {
         setUrl(event.url);
         setLocalURL(props._id, event.url);
       }
@@ -319,11 +318,11 @@ function AppComponent(props: App): JSX.Element {
       {isElectron() ? (
         <div>
           {/* button */}
-          <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          {/* <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
             <Button colorScheme="teal" variant="ghost" top={0} right={0} position={'absolute'} size={'lg'} onClick={handleOpen}>
               <MdOpenInNew />
             </Button>
-          </Tooltip>
+          </Tooltip> */}
           {/* Webview */}
 
           {/* Warning Icon to show your view might not match others */}
@@ -463,12 +462,12 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   const saveInAssetManager = useCallback((val: string) => {
-    // save cell code in asset manager
+    // save URL in asset manager
     if (!val.endsWith('.url')) {
       val += '.url';
     }
     // Generate the content of the file
-    const content = `[InternetShortcut]\nURL=${s.webviewurl}\n`;
+    const content = `[InternetShortcut]\nURL=${viewURL}\n`;
     // Save the code in the asset manager
     if (roomId) {
       // Create a form to upload the file
@@ -498,7 +497,7 @@ function ToolbarComponent(props: App): JSX.Element {
           });
         });
     }
-  }, [s.webviewurl, roomId]);
+  }, [viewURL, roomId]);
 
   return (
     <HStack>
