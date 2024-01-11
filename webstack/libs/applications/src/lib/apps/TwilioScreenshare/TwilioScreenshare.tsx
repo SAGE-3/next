@@ -253,7 +253,7 @@ function AppComponent(props: App): JSX.Element {
           description: (
             <Box>
               <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
-                Show Screenshare
+                Focus on their screen?
               </Button>
             </Box>
           ),
