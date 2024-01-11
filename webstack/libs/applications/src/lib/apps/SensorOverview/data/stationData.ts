@@ -231,4 +231,17 @@ export const stationDataTemplate: SensorTypes[] = [
     windDirection: 0,
     selected: false,
   },
+  {
+    lat: 22.1975,
+    lon: -159.421,
+    name: '036HI',
+    temperatureC: 0,
+    temperatureF: 0,
+    soilMoisture: 0,
+    relativeHumidity: 0,
+    windSpeed: 0,
+    solarRadiation: 0,
+    windDirection: 0,
+    selected: false,
+  },
 ];

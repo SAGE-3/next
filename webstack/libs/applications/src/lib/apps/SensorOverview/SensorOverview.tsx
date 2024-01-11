@@ -1175,4 +1175,10 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     name: '024HI',
     selected: false,
   },
+  {
+    lat: 20.89072,
+    lon: -156.65493,
+    name: '036HI',
+    selected: false,
+  },
 ];
