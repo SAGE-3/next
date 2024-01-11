@@ -51,6 +51,8 @@ function AppComponent(props: App): JSX.Element {
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
 
+  // Track if I did the update
+  const [didIt, setDidIt] = useState(false);
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
   const locked = s.lock;
@@ -66,8 +68,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    if (!updatedByYou) {
+    // If the text was updated by someone else, update the local value
+    if (!updatedByYou || !didIt) {
       setNote(s.text);
+    }
+    if (didIt) {
+      // Flip the flag
+      setDidIt(false);
     }
   }, [s.text, updatedByYou]);
 
@@ -79,6 +86,8 @@ function AppComponent(props: App): JSX.Element {
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(100, (val) => {
     updateState(props._id, { text: val });
+    // I modified the text, so I did it
+    setDidIt(true);
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);

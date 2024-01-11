@@ -150,9 +150,13 @@ export function Alfred(props: props) {
       return arr;
     }, []);
     // Data structure to save
+    const savedapps = apps.map((app) => {
+      // making sure apps have the right state
+      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state, } } };
+    });
     const session = {
       assets: assets,
-      apps: apps,
+      apps: savedapps, // apps,
     }
     const payload = JSON.stringify(session, null, 2);
     const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);

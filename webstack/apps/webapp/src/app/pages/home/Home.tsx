@@ -37,6 +37,7 @@ import {
   MenuItem,
   MenuList,
   Link,
+  useMediaQuery,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -84,6 +85,8 @@ import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
  * @returns JSX.Element
  */
 export function HomePage() {
+  // Media Query
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)')
   // URL Params
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
@@ -547,7 +550,7 @@ export function HomePage() {
 
   return (
     // Main Container
-    <Box display="flex" width="100%" height="100vh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
+    <Box display="flex" width="100%" height="100svh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
       {/* Joyride */}
       <Joyride
         ref={joyrideRef}
@@ -628,7 +631,7 @@ export function HomePage() {
         width="400px"
         minWidth="400px"
         transition="width 0.5s"
-        height="100vh"
+        height="100svh"
         display="flex"
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
@@ -941,8 +944,8 @@ export function HomePage() {
           flex="1"
           flexDirection="column"
           backgroundColor={mainBackgroundColor}
-          maxHeight="100vh"
-          height="100vh"
+          maxHeight="100svh"
+          height="100svh"
           overflow="hidden"
           pt={4}
           pr={4}
@@ -1035,7 +1038,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100vh - 270px)' }}
+                      style={{ height: 'calc(100svh - 270px)' }}
                       overflowY="scroll"
                       minWidth="420px"
                       css={{
@@ -1116,7 +1119,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100vh - 340px)' }}
+                      style={{ height: 'calc(100svh - 340px)' }}
                       overflowY="scroll"
                       alignContent="left"
                       css={{
@@ -1151,9 +1154,12 @@ export function HomePage() {
         alt="sage3"
         userSelect={'auto'}
         draggable={false}
+        display={isLargerThan800 ? 'flex' : 'none'}
       />
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef}>
+      <Box position="absolute" right="1" top="1" ref={clockRef}
+        display={isLargerThan800 ? 'flex' : 'none'}
+      >
         <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
       </Box>
     </Box>
