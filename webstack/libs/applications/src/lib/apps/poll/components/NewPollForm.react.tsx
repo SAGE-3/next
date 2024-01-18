@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Button } from '@chakra-ui/react';
+import { Text, Button } from '@chakra-ui/react';
 import React, { useState, useRef, useEffect } from 'react';
+import { MdOutlineDelete } from 'react-icons/md';
 
 interface NewPollFormProps {
   onSave: (question: string, options: string[]) => void;
@@ -59,22 +60,22 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
 
   return (
     <div className="p-5">
-      <label htmlFor="poll-question" className="block text-gray-200 text-sm font-bold mb-2">
+      <Text>
         Poll Question
-      </label>
+        </Text>
       <input
         id="poll-question"
         type="text"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         placeholder="Enter poll question"
-        className="w-full p-2 mb-4 border rounded text-black focus:border-blue-500 focus:outline-none"
+        className="w-full p-2 focus:border-blue-500 focus:outline-none"
       />
       {options.map((option, index) => (
         <div key={index} className="mb-3 flex items-center gap-4 border-top">
-          <label htmlFor={`poll-option-${index}`} className="block text-gray-200 text-sm font-bold mb-2 mr-2 nowrap whitespace-nowrap">
+          <Text className="nowrap whitespace-nowrap">
             Option {index + 1}
-          </label>
+          </Text>
           <input
             ref={el => optionRefs.current[index] = el}
             id={`poll-option-${index}`}
@@ -83,12 +84,12 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
             onChange={(e) => handleOptionChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyPress(e, index)}
             placeholder="Enter option"
-            className="w-full p-2 border rounded text-black focus:border-blue-500 focus:outline-none mr-2"
+            className="w-full p-2  focus:border-blue-500 focus:outline-none mr-2"
           />
           <Button colorScheme='red' 
             onClick={() => handleRemoveOption(index)} 
           >
-            Remove
+            <MdOutlineDelete size={40} />
           </Button>
         </div>
       ))}
