@@ -55,7 +55,7 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
         {editMode ? (
           <input
             type="text"
-            className="p-2 border rounded text-black"
+            className="p-2 border rounded"
             value={editedQuestion}
             onChange={(e) => setEditedQuestion(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleQuestionEdit()}
@@ -70,7 +70,7 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
 
       <ul className="mt-4">
         {options.map((option) => (
-          <li key={option.id} className="poll-list mt-2 gap-6 border-top">
+          <li key={option.id} className="poll-list border-top">
             <span className="option-text">{option.option}</span>
             <div className="w-full h-4 bg-gray-200 rounded progress-bar">
               <div className="h-4 bg-blue-500 rounded" style={{ width: `${option.votes <= 0 ? 0 : (option.votes / maxValue) * 100}%` }} />
@@ -87,7 +87,7 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
             )}
           </li>
         ))}
-        <li className="flex items-center justify-between mt-2 gap-6 border-top">
+        <li className="flex justify-between border-top">
           <input 
             type="text" 
             value={newOption} 

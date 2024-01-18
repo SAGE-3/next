@@ -59,8 +59,8 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
   };
 
   return (
-    <div className="p-5">
-      <Text>
+    <div>
+      <Text className="mb-3 font-bold">
         Poll Question
         </Text>
       <input
