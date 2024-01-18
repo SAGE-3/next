@@ -6,20 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState, useCallback } from 'react';
+
 import { useAppStore } from '@sage3/frontend';
+
 import { App, AppGroup } from '../../schema';
-
 import { state as AppState } from './index';
-
-import { useState, useCallback, useSyncExternalStore, useEffect } from 'react';
 import NewPollForm from './components/NewPollForm.react';
 import PollView from './components/PollView.react';
 import ConfirmationModal from './components/ConfirmationModal.react';
 import { usePollsStore } from './stores/pollStore';
+import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
-import { AppWindow } from '../../components';
 
 /* App component for poll */
 
