@@ -31,7 +31,7 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as PollState, name as PollName } from './apps/poll';
+import { state as PollState, name as PollName } from './apps/Poll';
 
 
 export type AppState =

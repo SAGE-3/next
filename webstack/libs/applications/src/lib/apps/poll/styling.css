@@ -78,8 +78,6 @@ input[type="text"] {
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  color: #f0f0f0;
-  /* Light color for visibility on dark backgrounds */
 }
 
 /* Poll options list styles */
@@ -179,7 +177,6 @@ label {
 
 /* Light Theme Styles */
 @media (prefers-color-scheme: light) {
-
   /* Override styles for light mode */
   label,
   input[type="text"],

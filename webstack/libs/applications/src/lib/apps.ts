@@ -32,7 +32,7 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
-import { name as PollName } from './apps/poll';
+import { name as PollName } from './apps/Poll';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -66,7 +66,7 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
-import Poll from './apps/poll/Poll';
+import Poll from './apps/Poll/Poll';
 import React from 'react';
 
 
