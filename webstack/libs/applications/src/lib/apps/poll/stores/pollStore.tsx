@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { useMemo } from 'react';
-import { PollData, PollOption, state as AppState } from '../index';
+import { PollData, PollOption } from '../index';
 import { v4 as uuidv4 } from 'uuid';
 
 export const usePollsStore = function (updateStore: (state: PollData | null) => Promise<void>) {
@@ -26,7 +26,7 @@ export const usePollsStore = function (updateStore: (state: PollData | null) => 
         updateStore(null);
       },
       addPollOption(poll: PollData, optionText: string): void {
-        const newOption: PollOption = {id: uuidv4(), option: optionText, votes: 0 };
+        const newOption: PollOption = { id: uuidv4(), option: optionText, votes: 0 };
         poll = { ...poll, options: [...poll.options, newOption] };
         updateStore(poll);
       },

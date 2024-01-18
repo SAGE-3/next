@@ -7,9 +7,10 @@
  */
 
 import React, { useState } from 'react';
-import { PollOption } from '../index';
-import { MdEdit, MdSave  } from 'react-icons/md';
+
+import { MdEdit, MdSave } from 'react-icons/md';
 import { Button } from '@chakra-ui/react';
+import { PollOption } from '../index';
 
 interface PollProps {
   question: string;
@@ -63,7 +64,7 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
         ) : (
           <h2 className="text-lg font-bold">{question}</h2>
         )}
-        <Button  colorScheme='green' onClick={handleQuestionEdit}>
+        <Button colorScheme='green' onClick={handleQuestionEdit}>
           {editMode ? <MdSave size={20} /> : <MdEdit size={20} />}
         </Button>
       </div>
@@ -88,16 +89,16 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
           </li>
         ))}
         <li className="flex justify-between border-top">
-          <input 
-            type="text" 
-            value={newOption} 
-            onChange={(e) => setNewOption(e.target.value)} 
+          <input
+            type="text"
+            value={newOption}
+            onChange={(e) => setNewOption(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddOption(newOption)}
             placeholder="New option"
           />
-          <Button 
+          <Button
             colorScheme="green"
-            onClick={() => handleAddOption(newOption)} 
+            onClick={() => handleAddOption(newOption)}
             disabled={newOption.trim().length === 0}
           >
             Add

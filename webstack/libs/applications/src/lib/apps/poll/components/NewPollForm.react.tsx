@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Text, Button } from '@chakra-ui/react';
 import React, { useState, useRef, useEffect } from 'react';
+import { Text, Button } from '@chakra-ui/react';
 import { MdOutlineDelete } from 'react-icons/md';
 
 interface NewPollFormProps {
@@ -24,7 +24,7 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
   }, [options]);
 
   useEffect(() => {
-    optionRefs.current[options.length-1]?.focus();
+    optionRefs.current[options.length - 1]?.focus();
   }, [options.length]);
 
   const handleAddOption = () => {
@@ -62,7 +62,7 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
     <div>
       <Text className="mb-3 font-bold">
         Poll Question
-        </Text>
+      </Text>
       <input
         id="poll-question"
         type="text"
@@ -86,8 +86,8 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
             placeholder="Enter option"
             className="w-full p-2  focus:border-blue-500 focus:outline-none mr-2"
           />
-          <Button colorScheme='red' 
-            onClick={() => handleRemoveOption(index)} 
+          <Button colorScheme='red'
+            onClick={() => handleRemoveOption(index)}
           >
             <MdOutlineDelete size={40} />
           </Button>
