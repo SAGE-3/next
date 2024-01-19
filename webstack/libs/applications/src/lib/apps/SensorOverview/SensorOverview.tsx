@@ -141,17 +141,11 @@ function AppComponent(props: App): JSX.Element {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
-      if (props.data.state.widget.visualizationType === 'variableCard') {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-          s.stationNames
-        )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-          new Date()
-        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      } else {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-          props.data.state.widget.startDate
-        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      }
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+        s.stationNames
+      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
+        new Date()
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
 
       const response = await fetch(url);
       const sensor = await response.json();
@@ -159,7 +153,6 @@ function AppComponent(props: App): JSX.Element {
         const sensorData = sensor['STATION'];
         tmpStationMetadata = sensorData;
       }
-
       const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
       availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
       availableVariableNames.push('Elevation & Current Temperature');
@@ -877,6 +870,9 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
 
   const handleVisualizationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
+    props.apps.forEach((app: App) => {
+      updateState(app._id, { widget: { ...app.data.state.widget, visualizationType: value } });
+    });
   };
 
   const availableVisualizations = (): any => {
@@ -884,6 +880,8 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
     for (let i = 0; i < props.apps.length; i++) {
       availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
     }
+
+    console.log(availableVis);
     return findDuplicateElementsInArrayObjects(...availableVis);
   };
 
@@ -926,6 +924,7 @@ export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 // Will return an array of variables that are common between all stations
 function findDuplicateElementsInArrayObjects(...arrays: any) {
   const elementCount: any = [];
+  const duplicates = [];
   arrays.forEach((array: any[]) => {
     array.forEach((element) => {
       let found = false;
@@ -941,14 +940,15 @@ function findDuplicateElementsInArrayObjects(...arrays: any) {
       }
     });
   });
-  const duplicates = [];
+
   for (let i = 0; i < elementCount.length; i++) {
     if (elementCount[i].count === arrays.length) {
-      duplicates.push(elementCount.element);
+      duplicates.push(elementCount[i].element);
+      console.log(elementCount);
     }
   }
-
-  return [];
+  console.log(duplicates);
+  return duplicates;
 }
 
 // This function is used to only display common variables between all stations
