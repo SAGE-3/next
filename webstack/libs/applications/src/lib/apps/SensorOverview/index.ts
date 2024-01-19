@@ -8,6 +8,7 @@
 
 import { z } from 'zod';
 import { getFormattedDateTime } from './utils';
+
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 
 export type Baselayer = z.infer<typeof Baselayer>;
