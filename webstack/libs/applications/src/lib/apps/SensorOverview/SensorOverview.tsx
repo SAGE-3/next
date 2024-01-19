@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 // React Imports
 import {
   Box,
@@ -30,6 +30,7 @@ import {
   Heading,
   Checkbox,
   Portal,
+  Switch,
 } from '@chakra-ui/react';
 
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdLockClock } from 'react-icons/md';
@@ -649,12 +650,17 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { stationNames: tmpSelectedStations });
   };
 
+  const handleChangeLiveData = (val: ChangeEvent<HTMLInputElement>) => {
+    const checked = val.target.checked;
+    updateState(props._id, { widget: { ...s.widget, liveData: checked } });
+    ``;
+  };
+
   return (
     <>
       <Button mr="1rem" size="xs" onClick={onOpen}>
         Select Stations
       </Button>
-
       <Modal size="xl" isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent maxH="60rem" maxW="60rem">
@@ -764,27 +770,33 @@ function ToolbarComponent(props: App): JSX.Element {
         </ModalContent>
       </Modal>
       <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+      <Text fontSize={'sm'} mx="1rem">
+        Live Data
+      </Text>
+      <Switch colorScheme={'green'} isChecked={s.widget.liveData} onChange={handleChangeLiveData} />
+      {s.widget.liveData ? (
+        <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
+          <Select
+            mx="1rem"
+            size="xs"
+            w="10rem"
+            placeholder={'Select time period'}
+            value={s.widget.timePeriod}
+            onChange={handleSelectDateChange}
+          >
+            <option value={'previous24Hours'}>24 hours</option>
+            <option value={'previous1Week'}>1 week</option>
+            <option value={'previous1Month'}>1 month</option>
+            <option value={'previous1Year'}>1 year</option>
+          </Select>
+        </Tooltip>
+      ) : null}
 
-      <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
-        <Select
-          mx="1rem"
-          size="xs"
-          w="10rem"
-          placeholder={'Select time period'}
-          value={s.widget.timePeriod}
-          onChange={handleSelectDateChange}
-        >
-          <option value={'previous24Hours'}>24 hours</option>
-          <option value={'previous1Week'}>1 week</option>
-          <option value={'previous1Month'}>1 month</option>
-          <option value={'previous1Year'}>1 year</option>
-        </Select>
-      </Tooltip>
       {/* <Text mx="1rem">OR</Text> */}
       {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
         <Input
           w="10rem"
-          mr="1rem"
+
           size="xs"
           onChange={handleDateChange}
           value={convertToChakraDateTime(s.widget.startDate)}
@@ -795,17 +807,9 @@ function ToolbarComponent(props: App): JSX.Element {
           // }
         />
       </Tooltip> */}
-      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
-        <Select
-          size="xs"
-          mx="1rem"
-          w="10rem"
-          placeholder={'Select Variable'}
-          value={s.widget.yAxisNames[0]}
-          onChange={handleChangeVariable}
-        >
+        <Select size="xs" w="10rem" placeholder={'Select Variable'} value={s.widget.yAxisNames[0]} onChange={handleChangeVariable}>
           {s.availableVariableNames.map((name: string, index: number) => {
             return (
               <option key={index} value={name}>
@@ -815,13 +819,11 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
-      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip">
         <Select
           size="xs"
           w="10rem"
-          ml="1rem"
           placeholder={'Select Visualization Type'}
           value={s.widget.visualizationType}
           onChange={handleVisualizationTypeChange}
@@ -842,7 +844,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-
       {s.widget.visualizationType === 'variableCard' ? (
         <ButtonGroup size="xs" isAttached variant="outline">
           {/* <Button >Celcius</Button>

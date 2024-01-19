@@ -33,6 +33,7 @@ const widget = {
   startDate: getFormattedDateTime24HoursBefore(),
   endDate: getFormattedDateTime(),
   timePeriod: 'previous24Hours',
+  liveData: false,
   layout: { x: 0, y: 0, w: 11, h: 130 },
 };
 // [
