@@ -13,7 +13,7 @@ import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 // UUID generation
 import { v1 as uuidv1 } from 'uuid';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 // Icons
 import { MdFileDownload, MdOpenInNew } from 'react-icons/md';
 
@@ -188,7 +188,7 @@ function ToolbarComponent(props: App): JSX.Element {
             // Generate a filename using date and board name
             const boardName = boards.find((b) => b._id === boardId)?.data.name || 'session';
             // Current date
-            const prettyDate = dateFormat(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+            const prettyDate = format(new Date(), 'yyyy-MM-dd-HH-mm-ss');
             // Make a filename with board name and date
             const filename = s.notebook || `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.ipynb`;
             // Convert JSON object to string
@@ -236,6 +236,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -837,13 +837,7 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
-      <ButtonGroup size="xs" isAttached>
-        <Tooltip label={'Lock Time Period'} aria-label="A tooltip">
-          <Button ml="0.5rem" color={'#55DDAA'} border="1px">
-            <MdLockClock size={'1rem'} />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+
       {s.widget.visualizationType === 'variableCard' ? (
         <ButtonGroup size="xs" isAttached variant="outline">
           {/* <Button >Celcius</Button>
