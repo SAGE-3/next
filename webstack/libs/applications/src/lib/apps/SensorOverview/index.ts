@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { getFormattedDateTime } from './utils';
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 
 export type Baselayer = z.infer<typeof Baselayer>;
@@ -30,6 +31,7 @@ const widget = {
   xAxisNames: ['date_time'],
   color: '#5AB2D3',
   startDate: getFormattedDateTime24HoursBefore(),
+  endDate: getFormattedDateTime(),
   timePeriod: 'previous24Hours',
   layout: { x: 0, y: 0, w: 11, h: 130 },
 };

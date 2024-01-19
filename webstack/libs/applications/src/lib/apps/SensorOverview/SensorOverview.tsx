@@ -32,7 +32,7 @@ import {
   Portal,
 } from '@chakra-ui/react';
 
-import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
+import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdLockClock } from 'react-icons/md';
 
 // Sage Imports
 import { useAppStore } from '@sage3/frontend';
@@ -65,6 +65,21 @@ export const getFormattedTimePeriod = (timePeriod: string) => {
       return '1 month';
     case 'previous1Year':
       return '1 year';
+    default:
+      return 'Custom date range';
+  }
+};
+
+const resolveTimePeriod = (timePeriod: string) => {
+  switch (timePeriod) {
+    case 'previous24Hours':
+      return getFormattedDateTime24HoursBefore();
+    case 'previous1Week':
+      return getFormattedDateTime1WeekBefore();
+    case 'previous1Month':
+      return getFormattedDateTime1MonthBefore();
+    case 'previous1Year':
+      return getFormattedDateTime1YearBefore();
     default:
       return 'Custom date range';
   }
@@ -137,44 +152,43 @@ function AppComponent(props: App): JSX.Element {
   }, [lastUpdate]);
 
   useEffect(() => {
-    const fetchStationData = async () => {
-      setIsLoaded(false);
-      let tmpStationMetadata: any = [];
-      let url = '';
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        s.stationNames
-      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-
-      const response = await fetch(url);
-      const sensor = await response.json();
-      if (sensor) {
-        const sensorData = sensor['STATION'];
-        tmpStationMetadata = sensorData;
-      }
-      const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
-      availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
-      availableVariableNames.push('Elevation & Current Temperature');
-
-      updateState(props._id, { availableVariableNames: availableVariableNames });
-      setStationMetadata(tmpStationMetadata);
-      setIsLoaded(true);
-    };
-    fetchStationData().catch((err) => {
-      fetchStationData();
-      console.log(err);
-    });
     const interval = setInterval(
       () => {
-        fetchStationData();
+        fetchStationData(resolveTimePeriod(s.widget.timePeriod), convertToFormattedDateTime(new Date()));
         setLastUpdate(Date.now());
       },
-      60 * 10000
+
+      60 * 1000
       //10 minutes
     );
+    fetchStationData(resolveTimePeriod(s.widget.timePeriod), convertToFormattedDateTime(new Date()));
+
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
+
+  const fetchStationData = async (startDate: string, endDate: string) => {
+    setIsLoaded(false);
+    let tmpStationMetadata: any = [];
+    let url = '';
+
+    url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+      s.stationNames
+    )}&showemptystations=1&start=${startDate}&end=${endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+
+    const response = await fetch(url);
+    const sensor = await response.json();
+    if (sensor) {
+      const sensorData = sensor['STATION'];
+      tmpStationMetadata = sensorData;
+    }
+    const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
+    availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+    availableVariableNames.push('Elevation & Current Temperature');
+
+    updateState(props._id, { availableVariableNames: availableVariableNames });
+    setStationMetadata(tmpStationMetadata);
+    setIsLoaded(true);
+  };
 
   const handleLockAspectRatio = () => {
     const visualizationType = s.widget.visualizationType;
@@ -430,11 +444,9 @@ function ToolbarComponent(props: App): JSX.Element {
       let tmpStationMetadata: any = [];
       let url = '';
       const stationNames = stationData.map((station) => station.name);
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        stationNames
-      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+        s.widget.timePeriod
+      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
 
       const response = await fetch(url);
       const sensor = await response.json();
@@ -823,6 +835,13 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
+      <ButtonGroup size="xs" isAttached>
+        <Tooltip label={'Lock Time Period'} aria-label="A tooltip">
+          <Button ml="0.5rem" color={'#55DDAA'} border="1px">
+            <MdLockClock size={'1rem'} />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
       {s.widget.visualizationType === 'variableCard' ? (
         <ButtonGroup size="xs" isAttached variant="outline">
