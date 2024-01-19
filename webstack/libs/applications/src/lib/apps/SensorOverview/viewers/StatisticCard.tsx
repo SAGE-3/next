@@ -12,7 +12,6 @@ import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 import { AppState } from '@sage3/applications/schema';
 
 import variableUnits from '../data/variableUnits';
-import { getFormattedTimePeriod } from '../SensorOverview';
 import { VariableProps } from '../types/types';
 
 // Calculate the average of all the numbers
@@ -338,7 +337,7 @@ const Content = (props: {
                 border={`${scaleToFontSize / 100}px solid grey`}
                 style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
               >
-                <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>
+                <Text>{props.timePeriod}</Text>
                 <Box mt={scaleToFontSize / 25} display="flex" flexDir="row" justifyContent="space-between">
                   <Box>
                     <Text>Low</Text>

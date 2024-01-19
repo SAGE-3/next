@@ -34,6 +34,7 @@ import {
 } from '@chakra-ui/react';
 
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdLockClock } from 'react-icons/md';
+import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
 import { useAppStore } from '@sage3/frontend';
@@ -56,30 +57,49 @@ import MapGL from './MapGL';
 // Styling
 import './styling.css';
 
-export const getFormattedTimePeriod = (timePeriod: string) => {
-  switch (timePeriod) {
-    case 'previous24Hours':
-      return '24 hours';
-    case 'previous1Week':
-      return '1 week';
-    case 'previous1Month':
-      return '1 month';
-    case 'previous1Year':
-      return '1 year';
+const convertToStringFormat = (date: string) => {
+  const year = date.substring(0, 4);
+  const month = date.substring(4, 6);
+  const day = date.substring(6, 8);
+  switch (month) {
+    case '01':
+      return `Jan ${day}, ${year}`;
+    case '02':
+      return `Feb ${day}, ${year}`;
+    case '03':
+      return `Mar ${day}, ${year}`;
+    case '04':
+      return `Apr ${day}, ${year}`;
+    case '05':
+      return `May ${day}, ${year}`;
+    case '06':
+      return `Jun ${day}, ${year}`;
+    case '07':
+      return `Jul ${day}, ${year}`;
+    case '08':
+      return `Aug ${day}, ${year}`;
+    case '09':
+      return `Sep ${day}, ${year}`;
+    case '10':
+      return `Oct ${day}, ${year}`;
+    case '11':
+      return `Nov ${day}, ${year}`;
+    case '12':
+      return `Dec ${day}, ${year}`;
     default:
-      return 'Custom date range';
+      return `${month}/${day}/${year}`;
   }
 };
 
 const resolveTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {
-    case 'previous24Hours':
+    case '24 hours':
       return getFormattedDateTime24HoursBefore();
-    case 'previous1Week':
+    case '1 week':
       return getFormattedDateTime1WeekBefore();
-    case 'previous1Month':
+    case '1 month':
       return getFormattedDateTime1MonthBefore();
-    case 'previous1Year':
+    case '1 year':
       return getFormattedDateTime1YearBefore();
     default:
       return 'Custom date range';
@@ -155,26 +175,31 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     const interval = setInterval(
       () => {
-        fetchStationData(resolveTimePeriod(s.widget.timePeriod), convertToFormattedDateTime(new Date()));
+        fetchStationData();
         setLastUpdate(Date.now());
       },
 
       60 * 1000
       //10 minutes
     );
-    fetchStationData(resolveTimePeriod(s.widget.timePeriod), convertToFormattedDateTime(new Date()));
-
+    fetchStationData();
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
-  const fetchStationData = async (startDate: string, endDate: string) => {
+  const fetchStationData = async () => {
     setIsLoaded(false);
     let tmpStationMetadata: any = [];
     let url = '';
 
-    url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-      s.stationNames
-    )}&showemptystations=1&start=${startDate}&end=${endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+        s.widget.timePeriod
+      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    } else if (!s.widget.liveData) {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+        s.widget.startDate
+      }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    }
 
     const response = await fetch(url);
     const sensor = await response.json();
@@ -182,12 +207,14 @@ function AppComponent(props: App): JSX.Element {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
     }
+    console.log(sensor, s.widget.endDate);
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
     availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
     availableVariableNames.push('Elevation & Current Temperature');
 
     updateState(props._id, { availableVariableNames: availableVariableNames });
     setStationMetadata(tmpStationMetadata);
+
     setIsLoaded(true);
   };
 
@@ -421,6 +448,15 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
+const convertFormattedTimeToDateTime = (formattedTime: string) => {
+  const year = Number(formattedTime.substring(0, 4));
+  const month = Number(formattedTime.substring(4, 6));
+  const day = Number(formattedTime.substring(6, 8));
+  const hour = Number(formattedTime.substring(8, 10));
+  const minute = Number(formattedTime.substring(10, 12));
+  return new Date(year, month - 1, day, hour, minute);
+};
+
 /* App toolbar component for the app Sensor Overview */
 
 function ToolbarComponent(props: App): JSX.Element {
@@ -428,6 +464,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   const updateState = useAppStore((state) => state.updateState);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([
+    convertFormattedTimeToDateTime(s.widget.startDate),
+    convertFormattedTimeToDateTime(s.widget.endDate),
+  ]);
 
   const [stationMetadata, setStationMetadata] = useState([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -439,31 +479,42 @@ function ToolbarComponent(props: App): JSX.Element {
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
   const stationNameRef = useRef<any>(s.stationNames);
+
   useEffect(() => {
-    const fetchStationData = async () => {
-      setIsLoaded(false);
-      let tmpStationMetadata: any = [];
-      let url = '';
-      const stationNames = stationData.map((station) => station.name);
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
-        s.widget.timePeriod
-      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-
-      const response = await fetch(url);
-      const sensor = await response.json();
-      if (sensor) {
-        const sensorData = sensor['STATION'];
-        tmpStationMetadata = sensorData;
+    if (selectedDates.length === 2) {
+      if (selectedDates[0] instanceof Date && selectedDates[1] instanceof Date) {
+        const startDate = convertToFormattedDateTime(selectedDates[0]);
+        const endDate = convertToFormattedDateTime(selectedDates[1]);
+        updateState(props._id, { widget: { ...s.widget, startDate: startDate, endDate: endDate } });
       }
-      setStationMetadata(tmpStationMetadata);
-      setIsLoaded(true);
-    };
+    }
+  }, [selectedDates]);
 
-    fetchStationData().catch((err) => {
-      fetchStationData();
-      console.log(err);
-    });
-  }, []);
+  // useEffect(() => {
+  //   const fetchStationData = async () => {
+  //     setIsLoaded(false);
+  //     let tmpStationMetadata: any = [];
+  //     let url = '';
+  //     const stationNames = stationData.map((station) => station.name);
+  //     url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+  //       s.widget.timePeriod
+  //     )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+
+  //     const response = await fetch(url);
+  //     const sensor = await response.json();
+  //     if (sensor) {
+  //       const sensorData = sensor['STATION'];
+  //       tmpStationMetadata = sensorData;
+  //     }
+  //     setStationMetadata(tmpStationMetadata);
+  //     setIsLoaded(true);
+  //   };
+
+  //   fetchStationData().catch((err) => {
+  //     fetchStationData();
+  //     console.log(err);
+  //   });
+  // }, []);
 
   const handleVisualizeAllVariables = async () => {
     let url = '';
@@ -562,19 +613,19 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const timePeriod = e.target.value;
     switch (timePeriod) {
-      case 'previous24Hours':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+      case '24 hours':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: '24 hours' } });
         break;
-      case 'previous1Week':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1WeekBefore(), timePeriod: 'previous1Week' } });
+      case '1 week':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1WeekBefore(), timePeriod: '1 week' } });
 
         break;
-      case 'previous1Month':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: 'previous1Month' } });
+      case '1 month':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: '1 month' } });
 
         break;
-      case 'previous1Year':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: 'previous1Year' } });
+      case '1 year':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: '1 year' } });
 
         break;
       default:
@@ -652,8 +703,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const handleChangeLiveData = (val: ChangeEvent<HTMLInputElement>) => {
     const checked = val.target.checked;
-    updateState(props._id, { widget: { ...s.widget, liveData: checked } });
-    ``;
+    if (checked) {
+      updateState(props._id, { widget: { ...s.widget, liveData: checked, timePeriod: '24 hours' } });
+    } else {
+      const customDateRange = convertToStringFormat(s.widget.startDate) + ' - ' + convertToStringFormat(s.widget.endDate);
+      updateState(props._id, { widget: { ...s.widget, liveData: checked, timePeriod: customDateRange } });
+    }
   };
 
   return (
@@ -784,13 +839,19 @@ function ToolbarComponent(props: App): JSX.Element {
             value={s.widget.timePeriod}
             onChange={handleSelectDateChange}
           >
-            <option value={'previous24Hours'}>24 hours</option>
-            <option value={'previous1Week'}>1 week</option>
-            <option value={'previous1Month'}>1 month</option>
-            <option value={'previous1Year'}>1 year</option>
+            <option value={'24 hours'}>24 hours</option>
+            <option value={'1 week'}>1 week</option>
+            <option value={'1 month'}>1 month</option>
+            <option value={'1 year'}>1 year</option>
           </Select>
         </Tooltip>
-      ) : null}
+      ) : (
+        <RangeDatepicker
+          propsConfigs={{ inputProps: { size: 'xs', width: '10rem', ml: '1rem' } }}
+          selectedDates={selectedDates}
+          onDateChange={setSelectedDates}
+        />
+      )}
 
       {/* <Text mx="1rem">OR</Text> */}
       {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
@@ -895,7 +956,6 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
       availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
     }
 
-    console.log(availableVis);
     return findDuplicateElementsInArrayObjects(...availableVis);
   };
 
@@ -958,10 +1018,8 @@ function findDuplicateElementsInArrayObjects(...arrays: any) {
   for (let i = 0; i < elementCount.length; i++) {
     if (elementCount[i].count === arrays.length) {
       duplicates.push(elementCount[i].element);
-      console.log(elementCount);
     }
   }
-  console.log(duplicates);
   return duplicates;
 }
 

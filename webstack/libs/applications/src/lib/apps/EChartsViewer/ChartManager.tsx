@@ -8,7 +8,6 @@
 
 import type { EChartsOption } from 'echarts';
 
-import { getFormattedTimePeriod } from '../SensorOverview/SensorOverview';
 import variableUnits from '../SensorOverview/data/variableUnits';
 
 //Types
@@ -376,7 +375,7 @@ function createTitle(
 
   for (let i = 0; i < yAxisAttributes.length; i++) {
     options.title = {
-      text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${getFormattedTimePeriod(timePeriod)}`,
+      text: `${finalVariableName} versus ${xAxisAttributes[0]} for ${timePeriod}`,
       textStyle: {
         fontSize: 40,
       },

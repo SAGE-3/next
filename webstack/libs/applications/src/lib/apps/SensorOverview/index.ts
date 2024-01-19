@@ -32,8 +32,8 @@ const widget = {
   color: '#5AB2D3',
   startDate: getFormattedDateTime24HoursBefore(),
   endDate: getFormattedDateTime(),
-  timePeriod: 'previous24Hours',
-  liveData: false,
+  timePeriod: '24 hours',
+  liveData: true,
   layout: { x: 0, y: 0, w: 11, h: 130 },
 };
 // [
