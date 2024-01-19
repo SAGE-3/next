@@ -27,7 +27,7 @@ function getFormattedDateTime24HoursBefore() {
 
 const widget = {
   visualizationType: 'map',
-  yAxisNames: ['air_temp_set_1'],
+  yAxisNames: ['soil_moisture_set_1'],
   xAxisNames: ['date_time'],
   color: '#5AB2D3',
   startDate: getFormattedDateTime24HoursBefore(),

@@ -173,6 +173,7 @@ function AppComponent(props: App): JSX.Element {
   }, [lastUpdate]);
 
   useEffect(() => {
+    console.log(s.stationNames);
     const interval = setInterval(
       () => {
         fetchStationData();
@@ -203,11 +204,12 @@ function AppComponent(props: App): JSX.Element {
 
     const response = await fetch(url);
     const sensor = await response.json();
+
     if (sensor) {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
     }
-    console.log(sensor, s.widget.endDate);
+    console.log(tmpStationMetadata);
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
     availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
     availableVariableNames.push('Elevation & Current Temperature');
@@ -490,31 +492,31 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [selectedDates]);
 
-  // useEffect(() => {
-  //   const fetchStationData = async () => {
-  //     setIsLoaded(false);
-  //     let tmpStationMetadata: any = [];
-  //     let url = '';
-  //     const stationNames = stationData.map((station) => station.name);
-  //     url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
-  //       s.widget.timePeriod
-  //     )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+  useEffect(() => {
+    const fetchStationData = async () => {
+      setIsLoaded(false);
+      let tmpStationMetadata: any = [];
+      let url = '';
+      const stationNames = stationData.map((station) => station.name);
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+        s.widget.timePeriod
+      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
 
-  //     const response = await fetch(url);
-  //     const sensor = await response.json();
-  //     if (sensor) {
-  //       const sensorData = sensor['STATION'];
-  //       tmpStationMetadata = sensorData;
-  //     }
-  //     setStationMetadata(tmpStationMetadata);
-  //     setIsLoaded(true);
-  //   };
+      const response = await fetch(url);
+      const sensor = await response.json();
+      if (sensor) {
+        const sensorData = sensor['STATION'];
+        tmpStationMetadata = sensorData;
+      }
+      setStationMetadata(tmpStationMetadata);
+      setIsLoaded(true);
+    };
 
-  //   fetchStationData().catch((err) => {
-  //     fetchStationData();
-  //     console.log(err);
-  //   });
-  // }, []);
+    fetchStationData().catch((err) => {
+      fetchStationData();
+      console.log(err);
+    });
+  }, []);
 
   const handleVisualizeAllVariables = async () => {
     let url = '';
@@ -1062,9 +1064,45 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 20.79532,
+    lon: -156.35991,
+    name: '042HI',
+    selected: false,
+  },
+  {
     lat: 20.7579,
     lon: -156.32,
     name: '001HI',
+    selected: false,
+  },
+  {
+    lat: 20.7458,
+    lon: -156.4306,
+    name: '039HI',
+    selected: false,
+  },
+  {
+    lat: 20.89072,
+    lon: -156.65493,
+    name: '036HI',
+    selected: false,
+  },
+  // {
+  //   lat: 20.64422,
+  //   lon: -156.342056,
+  //   name: '028HI',
+  //   selected: false, // this station has no observations
+  // },
+  {
+    lat: 20.63395,
+    lon: -156.27389,
+    name: '019HI',
+    selected: false,
+  },
+  {
+    lat: 20.644215,
+    lon: -156.284703,
+    name: '032HI',
     selected: false,
   },
   {
@@ -1073,12 +1111,7 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     name: '002HI',
     selected: false,
   },
-  {
-    lat: 20.64422,
-    lon: -156.342056,
-    name: '028HI',
-    selected: false,
-  },
+
   {
     lat: 20.7382,
     lon: -156.2458,
@@ -1089,6 +1122,85 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     lat: 20.7104,
     lon: -156.2567,
     name: '003HI',
+    selected: false,
+  },
+  {
+    lat: 20.7736,
+    lon: -156.2223,
+    name: '020HI',
+    selected: false,
+  },
+  {
+    lat: 20.7195,
+    lon: -156.00236,
+    name: '023HI',
+    selected: false,
+  },
+  {
+    lat: 19.415215,
+    lon: -155.238394,
+    name: '004HI',
+    selected: false,
+  },
+  {
+    lat: 19.6061748,
+    lon: -155.051523,
+    name: '033HI',
+    selected: false,
+  },
+  {
+    lat: 19.845036,
+    lon: -155.362586,
+    name: '022HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.7064,
+    lon: -155.1874,
+    name: '040HI',
+    selected: false,
+  },
+  {
+    lat: 19.1689,
+    lon: -155.5704,
+    name: '018HI',
+    selected: false,
+  },
+  {
+    lat: 19.6687,
+    lon: -155.9575,
+    name: '029HI',
+    selected: false,
+  },
+  {
+    lat: 19.77241,
+    lon: -155.83118,
+    name: '034HI',
+    selected: false,
+  },
+  {
+    lat: 19.2068247,
+    lon: -155.81098,
+    name: '035HI',
+    selected: false,
+  },
+  {
+    lat: 20.12283,
+    lon: -155.749328,
+    name: '025HI',
+    selected: false,
+  },
+
+  {
+    lat: 20.019528,
+    lon: -155.677085,
+    name: '027HI',
     selected: false,
   },
   {
@@ -1128,102 +1240,6 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    selected: false,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    selected: false,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    selected: false,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    selected: false,
-  },
-  {
-    lat: 20.63395,
-    lon: -156.27389,
-    name: '019HI',
-    selected: false,
-  },
-  {
-    lat: 20.644215,
-    lon: -156.284703,
-    name: '032HI',
-    selected: false,
-  },
-  {
-    lat: 20.7736,
-    lon: -156.2223,
-    name: '020HI',
-    selected: false,
-  },
-  {
-    lat: 20.7195,
-    lon: -156.00236,
-    name: '023HI',
-    selected: false,
-  },
-  {
-    lat: 19.6061748,
-    lon: -155.051523,
-    name: '033HI',
-    selected: false,
-  },
-  {
-    lat: 19.845036,
-    lon: -155.362586,
-    name: '022HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.6687,
-    lon: -155.9575, //missing a negative here in tom's website
-    name: '029HI',
-    selected: false,
-  },
-  {
-    lat: 19.1689,
-    lon: -155.5704,
-    name: '018HI',
-    selected: false,
-  },
-  {
-    lat: 20.12283,
-    lon: -155.749328,
-    name: '025HI',
-    selected: false,
-  },
-  {
-    lat: 20.019528,
-    lon: -155.677085,
-    name: '027HI',
-    selected: false,
-  },
-  {
     lat: 21.145283,
     lon: -156.729459,
     name: '030HI',
@@ -1236,21 +1252,60 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 21.333,
+    lon: -157.8025,
+    name: '011HI',
+    selected: false,
+  },
+  {
+    lat: 21.3391,
+    lon: -157.8369,
+    name: '012HI',
+    selected: false,
+  },
+  {
+    lat: 21.3467,
+    lon: -157.8364,
+    name: '037HI',
+    selected: false,
+  },
+  {
+    lat: 21.3376,
+    lon: -157.8409,
+    name: '038HI',
+    selected: false,
+  },
+
+  {
+    lat: 21.506875,
+    lon: -158.145114,
+    name: '03HI',
+    selected: false,
+  },
+  {
     lat: 21.506875,
     lon: -158.145114,
     name: '026HI',
     selected: false,
   },
+
+  {
+    lat: 22.2026,
+    lon: -159.5188,
+    name: '014HI',
+    selected: false,
+  },
+  {
+    lat: 22.1975,
+    lon: -159.421,
+    name: '015HI',
+    selected: false,
+  },
+
   {
     lat: 22.2198,
     lon: -159.57525,
     name: '024HI',
-    selected: false,
-  },
-  {
-    lat: 20.89072,
-    lon: -156.65493,
-    name: '036HI',
     selected: false,
   },
 ];

@@ -95,13 +95,19 @@ export const ChartManager = async (
   // These attributes are not in the data, so add them
   // They are single values for each station, rather than multiple values
   for (let i = 0; i < data.length; i++) {
-    data[i].OBSERVATIONS['elevation'] = [data[i].ELEVATION];
+    console.log(data[i].OBSERVATIONS['elevation']);
+
+    if (Object.prototype.hasOwnProperty.call(data[i], 'ELEVATION')) {
+      data[i].OBSERVATIONS['elevation'] = [data[i].ELEVATION];
+    }
     data[i].OBSERVATIONS['latitude'] = [data[i].LATITUDE];
     data[i].OBSERVATIONS['longitude'] = [data[i].LONGITUDE];
     data[i].OBSERVATIONS['name'] = [data[i].NAME];
-    data[i].OBSERVATIONS['current temperature'] = [
-      data[i].OBSERVATIONS['air_temp_set_1'][data[i].OBSERVATIONS['air_temp_set_1'].length - 1],
-    ];
+    if (data[i].OBSERVATIONS['air_temp_set_1']) {
+      data[i].OBSERVATIONS['current temperature'] = [
+        data[i].OBSERVATIONS['air_temp_set_1'][data[i].OBSERVATIONS['air_temp_set_1'].length - 1],
+      ];
+    }
   }
 
   // This generates the data for charts, NOT the chart itself
