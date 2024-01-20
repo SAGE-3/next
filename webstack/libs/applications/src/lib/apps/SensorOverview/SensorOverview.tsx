@@ -189,6 +189,7 @@ function AppComponent(props: App): JSX.Element {
 
   const fetchStationData = async () => {
     setIsLoaded(false);
+    console.log(s.widget.startDate, s.widget.endDate);
     let tmpStationMetadata: any = [];
     let url = '';
 
@@ -493,21 +494,28 @@ function ToolbarComponent(props: App): JSX.Element {
   }, [selectedDates]);
 
   useEffect(() => {
+    console.log(stationMetadata, 'stationMetadata');
     const fetchStationData = async () => {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
       const stationNames = stationData.map((station) => station.name);
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
-        s.widget.timePeriod
-      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-
+      if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+          s.widget.timePeriod
+        )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      } else if (!s.widget.liveData) {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${
+          s.widget.startDate
+        }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      }
       const response = await fetch(url);
       const sensor = await response.json();
       if (sensor) {
         const sensorData = sensor['STATION'];
         tmpStationMetadata = sensorData;
       }
+      console.log(tmpStationMetadata, 'tmp');
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
     };
