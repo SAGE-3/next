@@ -18,7 +18,7 @@ import Quill from 'quill';
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 
 // Styles
 import 'quill/dist/quill.snow.css';
@@ -46,10 +46,10 @@ import { debounce } from 'throttle-debounce';
 import { create } from 'zustand';
 
 interface NotepadStore {
-  editor: { [key: string]: Quill },
-  setEditor: (id: string, ed: Quill) => void,
-  reinit: { [key: string]: boolean },
-  setReinit: (id: string, value: boolean) => void,
+  editor: { [key: string]: Quill };
+  setEditor: (id: string, ed: Quill) => void;
+  reinit: { [key: string]: boolean };
+  setReinit: (id: string, value: boolean) => void;
 }
 
 const useStore = create<NotepadStore>()((set) => ({
@@ -190,7 +190,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the content as an HTML file
   const downloadHTML = () => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     const header = `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -418,6 +418,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
