@@ -31,7 +31,7 @@ import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownloa
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Date management
 import { formatDistance } from 'date-fns';
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 // OpenAI API v4
@@ -551,8 +551,10 @@ function AppComponent(props: App): JSX.Element {
                                 status: 'success',
                               });
                             }
-                          }}>
-                          <Box pl={3}
+                          }}
+                        >
+                          <Box
+                            pl={3}
                             draggable={true}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
@@ -608,10 +610,14 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
         <HStack>
-          <Tooltip fontSize={"xs"}
-            placement="top" hasArrow={true} label={newMessages ? "New Messages" : "No New Messages"} openDelay={400}>
-            <IconButton aria-label='Messages' size={"xs"}
-              p={0} m={0} colorScheme={newMessages ? "green" : "blue"} variant='ghost'
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
+            <IconButton
+              aria-label="Messages"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={newMessages ? 'green' : 'blue'}
+              variant="ghost"
               icon={<MdExpandCircleDown size="24px" />}
               isDisabled={!newMessages}
               isLoading={processing}
@@ -619,19 +625,27 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={"xs"}
-            placement="top" hasArrow={true} label={"Stop Geppetto"} openDelay={400}>
-            <IconButton aria-label='stop' size={"xs"}
-              p={0} m={0} colorScheme={"blue"} variant='ghost'
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
+            <IconButton
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
               icon={<MdStopCircle size="24px" />}
               onClick={stopGeppetto}
               width="34%"
             />
           </Tooltip>
-          <Tooltip fontSize={"xs"}
-            placement="top" hasArrow={true} label={"Reset Chat"} openDelay={400}>
-            <IconButton aria-label='reset' size={"xs"}
-              p={0} m={0} colorScheme={"blue"} variant='ghost'
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
+            <IconButton
+              aria-label="reset"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
               icon={<MdChangeCircle size="24px" />}
               onClick={resetGepetto}
               width="33%"
@@ -687,7 +701,7 @@ function ToolbarComponent(props: App): JSX.Element {
     });
 
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with date
@@ -719,6 +733,8 @@ function getDateString(epoch: number): string {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
