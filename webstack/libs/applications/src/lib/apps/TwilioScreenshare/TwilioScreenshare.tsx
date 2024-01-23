@@ -42,7 +42,6 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { de } from 'date-fns/locale';
 
 type ElectronSource = {
   appIcon: null | string;
