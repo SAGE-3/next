@@ -29,12 +29,12 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
 
   const handleVote = (optionId: string) => {
     onUpVote(optionId);
-    setVotes(prev => ({ ...prev, [optionId]: true }));
+    setVotes((prev) => ({ ...prev, [optionId]: true }));
   };
 
   const removeVote = (optionId: string) => {
     onDownVote(optionId);
-    setVotes(prev => ({ ...prev, [optionId]: false }));
+    setVotes((prev) => ({ ...prev, [optionId]: false }));
   };
 
   const handleQuestionEdit = () => {
@@ -46,61 +46,61 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
 
   const handleAddOption = (optionText: string) => {
     addNewOption(optionText);
-    setNewOption("");
+    setNewOption('');
   };
 
   const maxValue = Math.max(...options.map((opt) => opt.votes), 0);
   return (
-    <div className="p-4 border rounded shadow-sm mb-4">
-      <div className="grid-container">
+    <div className="poll-p-4 poll-border poll-rounded poll-shadow-sm poll-mb-4">
+      <div className="poll-grid-container">
         {editMode ? (
           <input
             type="text"
-            className="p-2 border rounded"
+            className="poll-p-2 poll-border poll-rounded"
             value={editedQuestion}
             onChange={(e) => setEditedQuestion(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleQuestionEdit()}
           />
         ) : (
-          <h2 className="text-lg font-bold">{question}</h2>
+          <h2 className="poll-text-lg poll-font-bold">{question}</h2>
         )}
-        <Button colorScheme='green' onClick={handleQuestionEdit}>
+        <Button colorScheme="green" onClick={handleQuestionEdit}>
           {editMode ? <MdSave size={20} /> : <MdEdit size={20} />}
         </Button>
       </div>
 
-      <ul className="mt-4">
+      <ul className="poll-mt-4">
         {options.map((option) => (
-          <li key={option.id} className="poll-list border-top">
-            <span className="option-text">{option.option}</span>
-            <div className="w-full h-4 bg-gray-200 rounded progress-bar">
-              <div className="h-4 bg-blue-500 rounded" style={{ width: `${option.votes <= 0 ? 0 : (option.votes / maxValue) * 100}%` }} />
+          <li key={option.id} className="poll-mb-3 poll-flex poll-items-center poll-gap-4 poll-border-top">
+            <span className="poll-option-text">{option.option}</span>
+            <div className="poll-w-full poll-h-4 poll-bg-gray-200 poll-rounded poll-progress-bar">
+              <div
+                className="poll-h-4 poll-bg-blue-500 poll-rounded"
+                style={{ width: `${option.votes <= 0 ? 0 : (option.votes / maxValue) * 100}%` }}
+              />
             </div>
             <div>{option.votes}</div>
             {!votes[option.id] ? (
-              <Button className='w-100' colorScheme="blue" onClick={() => handleVote(option.id)} >
+              <Button className="poll-w-100" colorScheme="blue" onClick={() => handleVote(option.id)}>
                 Vote
               </Button>
             ) : (
-              <Button className='w-100' colorScheme="red" onClick={() => removeVote(option.id)} >
+              <Button className="poll-w-100" colorScheme="red" onClick={() => removeVote(option.id)}>
                 Undo
               </Button>
             )}
           </li>
         ))}
-        <li className="flex justify-between border-top">
+        <li className="poll-mb-3 poll-flex poll-items-center poll-gap-4 poll-border-top">
           <input
             type="text"
             value={newOption}
             onChange={(e) => setNewOption(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddOption(newOption)}
             placeholder="New option"
+            className="poll-input-text"
           />
-          <Button
-            colorScheme="green"
-            onClick={() => handleAddOption(newOption)}
-            disabled={newOption.trim().length === 0}
-          >
+          <Button colorScheme="green" onClick={() => handleAddOption(newOption)} disabled={newOption.trim().length === 0}>
             Add
           </Button>
         </li>

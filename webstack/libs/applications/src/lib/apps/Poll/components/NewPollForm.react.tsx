@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Text, Button } from '@chakra-ui/react';
 import { MdOutlineDelete } from 'react-icons/md';
 
@@ -27,77 +27,81 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
     optionRefs.current[options.length - 1]?.focus();
   }, [options.length]);
 
-  const handleAddOption = () => {
+  const handleAddOption = useCallback(() => {
     setOptions([...options, '']);
-  };
+  }, [options]);
 
-  const handleRemoveOption = (index: number) => {
-    const newOptions = options.filter((_, i) => i !== index);
-    setOptions(newOptions);
-  };
+  const handleRemoveOption = useCallback(
+    (index: number) => {
+      const newOptions = options.filter((_, i) => i !== index);
+      setOptions(newOptions);
+    },
+    [options]
+  );
 
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = options.map((option, i) => (i === index ? value : option));
-    setOptions(newOptions);
-  };
+  const handleOptionChange = useCallback(
+    (index: number, value: string) => {
+      const newOptions = options.map((option, i) => (i === index ? value : option));
+      setOptions(newOptions);
+    },
+    [options]
+  );
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (index === options.length - 1) {
-        handleAddOption();
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (index === options.length - 1) {
+          handleAddOption();
+        }
       }
-    }
-  };
+    },
+    [handleAddOption, options]
+  );
 
-  const handleSubmit = () => {
-    if (question && options.every(option => option.trim() !== '')) {
+  const isEmpty = useMemo(() => question.trim() === '' || options.every((option) => option.trim() === ''), [question, options]);
+  const handleSubmit = useCallback(() => {
+    if (!isEmpty) {
       onSave(question, options);
       setQuestion('');
       setOptions(['']);
     }
-  };
+  }, [onSave, question, options]);
 
   return (
     <div>
-      <Text className="mb-3 font-bold">
-        Poll Question
-      </Text>
+      <Text className="poll-mb-3 poll-font-bold">Poll Question</Text>
       <input
         id="poll-question"
         type="text"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         placeholder="Enter poll question"
-        className="w-full p-2 focus:border-blue-500 focus:outline-none"
+        className="poll-input-text poll-w-full poll-p-2 poll-focus:border-blue-500 poll-focus:outline-none"
       />
       {options.map((option, index) => (
-        <div key={index} className="mb-3 flex items-center gap-4 border-top">
-          <Text className="nowrap whitespace-nowrap">
-            Option {index + 1}
-          </Text>
+        <div key={index} className="poll-mb-3 poll-flex poll-items-center poll-gap-4 poll-border-top">
+          <Text className="poll-nowrap whitespace-nowrap">Option {index + 1}</Text>
           <input
-            ref={el => optionRefs.current[index] = el}
+            ref={(el) => (optionRefs.current[index] = el)}
             id={`poll-option-${index}`}
             type="text"
             value={option}
             onChange={(e) => handleOptionChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyPress(e, index)}
             placeholder="Enter option"
-            className="w-full p-2  focus:border-blue-500 focus:outline-none mr-2"
+            className="poll-input-text poll-w-full poll-p-2 poll-focus:border-blue-500 poll-focus:outline-none"
           />
-          <Button colorScheme='red'
-            onClick={() => handleRemoveOption(index)}
-          >
+          <Button colorScheme="red" onClick={() => handleRemoveOption(index)}>
             <MdOutlineDelete size={40} />
           </Button>
         </div>
       ))}
-      <div className="flex justify-between border-top">
-        <Button colorScheme='blue' onClick={handleAddOption}>
+      <div className="poll-flex poll-justify-between poll-border-top">
+        <Button colorScheme="blue" onClick={handleAddOption}>
           Add Another Option
         </Button>
-        <Button colorScheme='green' onClick={handleSubmit}>
+        <Button colorScheme="green" onClick={handleSubmit} className={isEmpty ? 'poll-button-disabled' : ''}>
           Create Poll
         </Button>
       </div>

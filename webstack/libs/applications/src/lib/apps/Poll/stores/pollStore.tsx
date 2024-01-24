@@ -18,7 +18,7 @@ export const usePollsStore = function (updateStore: (state: PollData | null) => 
       createPoll(question: string, options: string[]): void {
         const newPoll = {
           question,
-          options: options.map(option => ({ id: uuidv4(), option, votes: 0 })),
+          options: options.map((option) => ({ id: uuidv4(), option, votes: 0 })),
         };
         updateStore(newPoll);
       },
@@ -31,7 +31,7 @@ export const usePollsStore = function (updateStore: (state: PollData | null) => 
         updateStore(poll);
       },
       vote(poll: PollData, optionId: string, direction: number = 1): void {
-        const targetIndex = poll.options.findIndex(option => option.id === optionId);
+        const targetIndex = poll.options.findIndex((option) => option.id === optionId);
         if (targetIndex === -1) {
           throw new Error('Option does not exist ');
         }
@@ -43,4 +43,4 @@ export const usePollsStore = function (updateStore: (state: PollData | null) => 
       },
     };
   }, [updateStore]);
-}
+};

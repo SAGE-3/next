@@ -10,7 +10,7 @@ import { useState, useCallback } from 'react';
 
 import { useAppStore } from '@sage3/frontend';
 
-import { App, AppGroup } from '../../schema';
+import { App } from '../../schema';
 import { state as AppState } from './index';
 import NewPollForm from './components/NewPollForm.react';
 import PollView from './components/PollView.react';
@@ -20,6 +20,7 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
+import { Button } from '@chakra-ui/react';
 
 /* App component for poll */
 
@@ -31,17 +32,23 @@ function AppComponent(props: App): JSX.Element {
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [shouldRemovePoll, setShouldRemovePoll] = useState<boolean>(false);
 
-  const handleSavePoll = useCallback((question: string, options: string[]) => {
-    pollStore.createPoll(question, options);
-  }, [poll, pollStore]);
+  const handleSavePoll = useCallback(
+    (question: string, options: string[]) => {
+      pollStore.createPoll(question, options);
+    },
+    [poll, pollStore]
+  );
 
-  const updatePollQuestion = useCallback((newQuestion: string) => {
-    if (poll === null) {
-      throw new Error('Failed to update poll question - Poll does not exist');
-    }
-    const updatedPoll = { ...poll, question: newQuestion };
-    pollStore.updatePoll(updatedPoll);
-  }, [poll, pollStore]);
+  const updatePollQuestion = useCallback(
+    (newQuestion: string) => {
+      if (poll === null) {
+        throw new Error('Failed to update poll question - Poll does not exist');
+      }
+      const updatedPoll = { ...poll, question: newQuestion };
+      pollStore.updatePoll(updatedPoll);
+    },
+    [poll, pollStore]
+  );
 
   const handleRemovePoll = useCallback(() => {
     setShouldRemovePoll(true);
@@ -61,32 +68,47 @@ function AppComponent(props: App): JSX.Element {
     setIsRemoveModalOpen(false);
   }, []);
 
-  const handleAddOption = useCallback((option: string) => {
-    poll && pollStore.addPollOption(poll, option);
-  }, [pollStore]);
+  const handleAddOption = useCallback(
+    (option: string) => {
+      poll && pollStore.addPollOption(poll, option);
+    },
+    [pollStore]
+  );
 
-  const handleUpVote = useCallback((optionId: string) => {
-    poll && pollStore.vote(poll, optionId);
-  }, [pollStore]);
+  const handleUpVote = useCallback(
+    (optionId: string) => {
+      poll && pollStore.vote(poll, optionId);
+    },
+    [pollStore]
+  );
 
-  const handleDownVote = useCallback((optionId: string) => {
-    poll && pollStore.vote(poll, optionId, -1);
-  }, [pollStore]);
+  const handleDownVote = useCallback(
+    (optionId: string) => {
+      poll && pollStore.vote(poll, optionId, -1);
+    },
+    [pollStore]
+  );
 
   return (
     <AppWindow app={props}>
-
-      <div className="container mx-auto p-4 overflow-y-auto h-max">
-
-        {poll == null ? <NewPollForm onSave={handleSavePoll} /> : (<><PollView
-          question={poll.question}
-          options={poll.options}
-          updatePollQuestion={updatePollQuestion}
-          addNewOption={handleAddOption}
-          onUpVote={handleUpVote}
-          onDownVote={handleDownVote}
-        />
-          <button onClick={() => handleRemovePoll()}>Clear Poll</button></>)}
+      <div className="poll-container poll-mx-auto poll-p-4 poll-overflow-y-auto poll-h-max">
+        {poll == null ? (
+          <NewPollForm onSave={handleSavePoll} />
+        ) : (
+          <>
+            <PollView
+              question={poll.question}
+              options={poll.options}
+              updatePollQuestion={updatePollQuestion}
+              addNewOption={handleAddOption}
+              onUpVote={handleUpVote}
+              onDownVote={handleDownVote}
+            />
+            <Button colorScheme="red" onClick={() => handleRemovePoll()}>
+              Clear Poll
+            </Button>
+          </>
+        )}
 
         {isRemoveModalOpen && (
           <ConfirmationModal
@@ -98,20 +120,17 @@ function AppComponent(props: App): JSX.Element {
       </div>
     </AppWindow>
   );
-};
+}
 
 /* App toolbar component for the app poll */
-function ToolbarComponent(props: App): JSX.Element {
-  return (
-    <>
-    </>
-  );
+function ToolbarComponent(): JSX.Element {
+  return <></>;
 }
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = () => {
   return null;
 };
 

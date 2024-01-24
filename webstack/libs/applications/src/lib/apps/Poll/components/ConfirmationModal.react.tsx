@@ -19,14 +19,14 @@ interface ConfirmationModalProps {
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ message, onConfirm, onCancel }) => {
   return (
-    <div className="modal-backdrop">
-      <div className="modal">
-        <p className="modal-message">{message}</p>
-        <div className="modal-actions">
-          <Button colorScheme='green' className="modal-button confirm" onClick={onConfirm}>
+    <div className="poll-modal-backdrop">
+      <div className="poll-modal">
+        <p className="poll-modal-message">{message}</p>
+        <div className="poll-modal-actions">
+          <Button colorScheme="green" className="poll-modal-button poll-confirm" onClick={onConfirm}>
             Confirm
           </Button>
-          <Button colorScheme='red' className="modal-button cancel" onClick={onCancel}>
+          <Button colorScheme="red" className="poll-modal-button poll-cancel" onClick={onCancel}>
             Cancel
           </Button>
         </div>
