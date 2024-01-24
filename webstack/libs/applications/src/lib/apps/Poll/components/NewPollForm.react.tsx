@@ -66,7 +66,7 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
       setQuestion('');
       setOptions(['']);
     }
-  }, [onSave, question, options]);
+  }, [onSave, question, options, isEmpty]);
 
   return (
     <div>
