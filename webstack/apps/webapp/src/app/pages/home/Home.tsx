@@ -495,7 +495,7 @@ export function HomePage() {
         await navigator.clipboard.writeText(selectedBoard.data.code);
         toast({
           title: 'Success',
-          description: 'BoardID Copied to Clipboard',
+          description: 'Board ID Copied to Clipboard',
           duration: 3000,
           isClosable: true,
           status: 'success',
@@ -1111,8 +1111,8 @@ export function HomePage() {
 
                           <HStack>
                             <Tooltip placement="top" hasArrow={true} openDelay={400}
-                              label={'Use this ID to enter a room, instead of a URL'}>
-                              <Text fontSize="lg" fontWeight={'normal'}>Room ID</Text>
+                              label={'Use this ID to enter a board, instead of a URL'}>
+                              <Text fontSize="lg" fontWeight={'normal'}>Board ID</Text>
                             </Tooltip>
                             <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>{selectedBoard?.data.code}</Text>
                           </HStack>

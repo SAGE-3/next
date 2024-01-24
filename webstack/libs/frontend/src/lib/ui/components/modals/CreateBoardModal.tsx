@@ -210,8 +210,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
           <HStack>
             <Tooltip placement="top" hasArrow={true} openDelay={400}
-              label={'Use this ID to enter a room, instead of a URL'}>
-              <Text my={2}>Room ID:</Text>
+              label={'Use this ID to enter a board, instead of a URL'}>
+              <Text my={2}>Board ID:</Text>
             </Tooltip>
             <Text my={2} onDoubleClick={handleCopyId}>{roomID}</Text>
           </HStack>
