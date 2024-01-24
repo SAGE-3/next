@@ -103,6 +103,8 @@ function AppComponent(props: App): JSX.Element {
   const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
   const [closeApp, setCloseApp] = useState(false);
 
+  // Check if user already has a screenshare going
+  // Will toast the user and delete the app if they do
   function checkForScreenShare(): boolean {
     if (otherScreenshares.length > 0) {
       toast({
@@ -111,19 +113,22 @@ function AppComponent(props: App): JSX.Element {
         duration: 2000,
         isClosable: false,
       });
+      // Set close app to true so the useEffect will delete the app
       setCloseApp(true);
       return true;
     }
     return false;
   }
 
+  // Useeffect to delete the app if the user already has a screenshare going
   useEffect(() => {
     if (closeApp) {
-      // Show a notification
+      // Delete this app. Could be due to a user attempting to share a screen while already sharing
       deleteApp(props._id);
     }
   }, [closeApp]);
 
+  // Close the toast
   function closeToast() {
     if (toastIdRef.current) {
       toast.close(toastIdRef.current);
