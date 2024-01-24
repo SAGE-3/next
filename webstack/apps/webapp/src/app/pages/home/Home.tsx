@@ -38,6 +38,7 @@ import {
   MenuList,
   Link,
   useMediaQuery,
+  HStack,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -473,6 +474,23 @@ export function HomePage() {
       });
     }
   };
+
+  // Copy the board id to the clipboard
+  const handleCopyId = async () => {
+    if (navigator.clipboard) {
+      if (selectedBoard) {
+        await navigator.clipboard.writeText(selectedBoard.data.code);
+        toast({
+          title: 'Success',
+          description: `BoardID Copied to Clipboard`,
+          duration: 3000,
+          isClosable: true,
+          status: 'success',
+        });
+      }
+    }
+  };
+
 
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
@@ -1072,10 +1090,20 @@ export function HomePage() {
                             {selectedBoard.data.name}
                           </Text>
                           <Text fontSize="lg" fontWeight={'normal'}>
-                            {selectedBoard?.data.description}
+                            Description: {selectedBoard?.data.description}
                           </Text>
-                          <Text>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
-                          <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+
+                          <Text fontSize="lg" fontWeight={'normal'}>Created by: {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>Created on: {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+
+                          <HStack>
+                            <Tooltip placement="top" hasArrow={true} openDelay={400}
+                              label={'Use this ID to enter a room, instead of a URL'}>
+                              <Text fontSize="lg" fontWeight={'normal'}>Room ID:</Text>
+                            </Tooltip>
+                            <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>{selectedBoard?.data.code}</Text>
+                          </HStack>
+
                           <Box mt="2" borderRadius="md" as="button" onClick={enterBoardModalOnOpen}>
                             <BoardPreview board={selectedBoard} width={316} height={177} />
                           </Box>
