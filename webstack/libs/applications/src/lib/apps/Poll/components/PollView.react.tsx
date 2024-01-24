@@ -100,7 +100,11 @@ const PollView: React.FC<PollProps> = ({ question, options, updatePollQuestion, 
             placeholder="New option"
             className="poll-input-text"
           />
-          <Button colorScheme="green" onClick={() => handleAddOption(newOption)} disabled={newOption.trim().length === 0}>
+          <Button
+            colorScheme="green"
+            onClick={() => handleAddOption(newOption)}
+            className={newOption.trim().length === 0 ? 'poll-button-disabled' : ''}
+          >
             Add
           </Button>
         </li>
