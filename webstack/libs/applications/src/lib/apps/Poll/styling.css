@@ -28,7 +28,7 @@
 }
 
 .poll-shadow-sm {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0poll-05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .poll-mb-4 {
@@ -83,7 +83,7 @@
 .poll-label {
   color: #f0f0f0;
   /* Light color for visibility on dark backgrounds */
-  font-size: 0poll-875rem;
+  font-size: 0.875rem;
   /* 14px */
   font-weight: bold;
   margin-bottom: 8px;
@@ -131,7 +131,7 @@
 .poll-edit-button {
   padding: 4px 8px;
   /* Smaller padding for a smaller button */
-  font-size: 0poll-875rem;
+  font-size: 0.875rem;
   /* Smaller font size */
   text-align: right;
   /* Align text to the right */
@@ -239,13 +239,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(0, 0, 0, 0poll-6);
+  background-color: rgba(0, 0, 0, 0.6);
 }
 .poll-modal {
   background-color: white;
   padding: 20px;
   border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0poll-25);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
   text-align: center;
 }
 .poll-modal-message {
@@ -273,7 +273,7 @@
 /* Dark mode styles */
 @media (prefers-color-scheme: dark) {
   .poll-modal-backdrop {
-    background-color: rgba(0, 0, 0, 0poll-8);
+    background-color: rgba(0, 0, 0, 0.8);
   }
   .poll-modal {
     background-color: #222;
