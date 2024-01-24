@@ -50,7 +50,7 @@ import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
-import { SAGE3Ability } from '@sage3/shared';
+import { SAGE3Ability, generateReadableID } from '@sage3/shared';
 import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
@@ -123,7 +123,7 @@ export function HomePage() {
   } = useRoomStore((state) => state);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
+  const { boards, subscribeToAllBoards: subscribeToBoards, update: updateBoard } = useBoardStore((state) => state);
 
   // User and Presence Store
   const { users, subscribeToUsers } = useUsersStore((state) => state);
@@ -441,6 +441,12 @@ export function HomePage() {
       const room = rooms.find((r) => r._id === board.data.roomId);
       setSelectedRoom(room);
       setSelectedUser(undefined);
+
+      // Fixing data model: adding the board code
+      if (!board.data.code) {
+        const newCode = generateReadableID();
+        updateBoard(board._id, { code: newCode });
+      }
     } else {
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
@@ -467,7 +473,7 @@ export function HomePage() {
       copyBoardUrlToClipboard(roomId, boardId);
       toast({
         title: 'Success',
-        description: `Sharable Board link copied to clipboard.`,
+        description: 'Sharable Board link copied to clipboard.',
         duration: 3000,
         isClosable: true,
         status: 'success',
@@ -476,13 +482,20 @@ export function HomePage() {
   };
 
   // Copy the board id to the clipboard
-  const handleCopyId = async () => {
+  const handleCopyId = async (e: React.MouseEvent<HTMLParagraphElement>) => {
     if (navigator.clipboard) {
       if (selectedBoard) {
+        // Select the whole text
+        const range = document.createRange();
+        range.selectNode(e.currentTarget);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        // Copy the board ID into the clipboard
         await navigator.clipboard.writeText(selectedBoard.data.code);
         toast({
           title: 'Success',
-          description: `BoardID Copied to Clipboard`,
+          description: 'BoardID Copied to Clipboard',
           duration: 3000,
           isClosable: true,
           status: 'success',
@@ -639,7 +652,7 @@ export function HomePage() {
         cancelText={'Cancel'}
         confirmText="Clear"
         confirmColor="red"
-        message={`Are you sure you want to clear your recent boards?`}
+        message={'Are you sure you want to clear your recent boards?'}
         onConfirm={handleClearRecentBoards}
       />
 
@@ -803,7 +816,7 @@ export function HomePage() {
                             openDelay={400}
                             hasArrow
                             placement="top"
-                            label={`Description: ${room.data.description}`}
+                            label={`Description ${room.data.description}`}
                           >
                             <Box
                               key={room._id}
@@ -1090,16 +1103,16 @@ export function HomePage() {
                             {selectedBoard.data.name}
                           </Text>
                           <Text fontSize="lg" fontWeight={'normal'}>
-                            Description: {selectedBoard?.data.description}
+                            Description {selectedBoard?.data.description}
                           </Text>
 
-                          <Text fontSize="lg" fontWeight={'normal'}>Created by: {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
-                          <Text fontSize="lg" fontWeight={'normal'}>Created on: {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
 
                           <HStack>
                             <Tooltip placement="top" hasArrow={true} openDelay={400}
                               label={'Use this ID to enter a room, instead of a URL'}>
-                              <Text fontSize="lg" fontWeight={'normal'}>Room ID:</Text>
+                              <Text fontSize="lg" fontWeight={'normal'}>Room ID</Text>
                             </Tooltip>
                             <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>{selectedBoard?.data.code}</Text>
                           </HStack>
