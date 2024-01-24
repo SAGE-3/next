@@ -71,6 +71,7 @@
     "monaco-editor": "^0.43.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "nanoid": "^3",
     "node-nlp": "^4.24.0",
     "openai": "^4.0.0",
     "openid-client": "^5.4.3",
