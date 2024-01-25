@@ -599,7 +599,7 @@ export function HomePage() {
           },
         }}
       />
-      {/* Check if the user wanted to join a board through a URL */}
+      {/* Check if the user wanted to join a board through a URL / ID */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
@@ -659,8 +659,8 @@ export function HomePage() {
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
-        width="400px"
-        minWidth="400px"
+        width="350px"
+        minWidth="350px"
         transition="width 0.5s"
         height="100svh"
         display="flex"
@@ -692,7 +692,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'400px'}>
+              <MenuList width={'350px'}>
                 {servers.map((server) => {
                   return (
                     <MenuItem
@@ -775,7 +775,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using a shared URL'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
               <Box
                 h="40px"
                 display="flex"
@@ -787,7 +787,7 @@ export function HomePage() {
                 onClick={enterBoardByURLModalOnOpen}
                 ref={enterBoardByURLRef}
               >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join a Board</Text>
               </Box>
             </Tooltip>
 
