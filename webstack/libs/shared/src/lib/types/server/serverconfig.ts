@@ -140,6 +140,12 @@ export interface TwilioConfiguration {
   apiSecret: string; // API Secret
 }
 
+// The Zoom Configuration
+export interface ZoomSDKConfiguration {
+  apiKey: string; // API Key
+  apiSecret: string; // API Secret
+}
+
 // The OpenAI Configuration
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
