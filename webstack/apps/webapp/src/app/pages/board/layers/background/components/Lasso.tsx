@@ -115,8 +115,6 @@ function checkContain(pos: Position, size: Size, pt: Position, size2: Size) {
 }
 
 function checkOverlap(pos: Position, size: Size, pt: Position, size2: Size) {
-  // if rectangle has area 0, no overlap
-  if (size.width === 0 || size.height === 0 || size2.width === 0 || size2.height === 0) return false;
   // If one rectangle is on left side of other
   if (pos.x > pt.x + size2.width || pt.x > pos.x + size.width) return false;
   // If one rectangle is above other
@@ -148,7 +146,7 @@ const DrawBox = (props: BoxProps) => {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Used only to update store once # of selected apps change
-  const [localSelectedApps, setLocalSelectedApps] = useState<string[]>([]);
+  const [localSelectedApps, setLocalSelectedApps] = useState<string[]>(props.selectedApps);
 
   // Color state
   const strokeColor = useHexColor('teal');
@@ -168,14 +166,6 @@ const DrawBox = (props: BoxProps) => {
       // Add apps as they are overlap the box area
       if (checkOverlap(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
         if (!localSelectedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
-      } else {
-        // Remove apps if not in box area
-        if (localSelectedApps.includes(app._id)) {
-          const newArray = localSelectedApps;
-          const index = newArray.indexOf(app._id);
-          newArray.splice(index, 1);
-          setLocalSelectedApps([...newArray]);
-        }
       }
     }
   }, [width, height, rx, ry, localSelectedApps, boardApps]);
