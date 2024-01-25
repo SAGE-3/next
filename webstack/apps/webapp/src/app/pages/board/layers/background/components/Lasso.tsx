@@ -11,6 +11,7 @@ import { useEffect, useState } from 'react';
 // SAGE Imports
 import { useCursorBoardPosition, useHexColor, useKeyPress, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
+import { set } from 'date-fns';
 
 type LassoProps = {
   boardId: string;
@@ -146,7 +147,8 @@ const DrawBox = (props: BoxProps) => {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Used only to update store once # of selected apps change
-  const [localSelectedApps, setLocalSelectedApps] = useState<string[]>(props.selectedApps);
+  const [clickSelectedApps, setClickSelectedApps] = useState<string[]>(props.selectedApps);
+  const [rectSelectedApps, setRectSelectedApps] = useState<string[]>([]);
 
   // Color state
   const strokeColor = useHexColor('teal');
@@ -156,8 +158,9 @@ const DrawBox = (props: BoxProps) => {
     clearSelectedApps();
   }, []);
 
-  // Checks for apps on or off the pane
+  // This use effect is used to update the selected apps when the rectangle changes
   useEffect(() => {
+    if (width == 0 && height == 0) return;
     // Check all apps on board
     for (const app of boardApps) {
       // Add apps as they are enveloped in box area
@@ -165,10 +168,40 @@ const DrawBox = (props: BoxProps) => {
 
       // Add apps as they are overlap the box area
       if (checkOverlap(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
-        if (!localSelectedApps.includes(app._id)) setLocalSelectedApps((prev) => [...prev, app._id]);
+        if (!rectSelectedApps.includes(app._id)) setRectSelectedApps((prev) => [...prev, app._id]);
+      } else {
+        // Remove apps if not in box area
+        if (rectSelectedApps.includes(app._id)) {
+          const newArray = rectSelectedApps;
+          const index = newArray.indexOf(app._id);
+          newArray.splice(index, 1);
+          setRectSelectedApps([...newArray]);
+        }
       }
     }
-  }, [width, height, rx, ry, localSelectedApps, boardApps]);
+  }, [width, height, rx, ry, clickSelectedApps, boardApps]);
+
+  // This use effect is used to update the selected apps when the user clicks on an app
+  useEffect(() => {
+    if (width == 0 && height == 0) {
+      for (const app of boardApps) {
+        // Add apps as they are enveloped in box area
+        // if (checkContain(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
+
+        // Add apps as they are overlap the box area
+        if (checkOverlap(app.data.position, app.data.size, { x: rx, y: ry, z: 0 }, { width, height, depth: 0 })) {
+          if (!clickSelectedApps.includes(app._id)) setClickSelectedApps((prev) => [...prev, app._id]);
+
+          if (clickSelectedApps.includes(app._id)) {
+            const newArray = clickSelectedApps;
+            const index = newArray.indexOf(app._id);
+            newArray.splice(index, 1);
+            setClickSelectedApps([...newArray]);
+          }
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // If app is selected while starting lasso mode, clear app that is selected
@@ -176,8 +209,8 @@ const DrawBox = (props: BoxProps) => {
       setSelectedApp('');
     }
     // Only update UI store when local state changes
-    setSelectedApps(localSelectedApps);
-  }, [localSelectedApps]);
+    setSelectedApps([...rectSelectedApps, ...clickSelectedApps]);
+  }, [rectSelectedApps, clickSelectedApps]);
 
   return (
     <rect
