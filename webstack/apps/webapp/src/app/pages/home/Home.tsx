@@ -787,7 +787,7 @@ export function HomePage() {
                 onClick={enterBoardByURLModalOnOpen}
                 ref={enterBoardByURLRef}
               >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join a Board</Text>
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
               </Box>
             </Tooltip>
 
