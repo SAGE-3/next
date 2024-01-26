@@ -219,7 +219,7 @@ export function MainButton(props: MainButtonProps) {
             </Box>
           </MenuButton>
         )}
-        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '400px'}>
+        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}>
           <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>
