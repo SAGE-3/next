@@ -33,6 +33,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const boardLocked = useUIStore((state) => state.boardLocked);
@@ -71,8 +72,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     setBoardDrag(false);
   }
 
+  function deselectApps() {
+    setSelectedApp('');
+    clearSelectedApps();
+    clearSavedSelectedAppsIds();
+  }
+
   return (
-    <Box transform={`scale(${scale})`} transformOrigin={'top left'}>
+    <Box transform={`scale(${scale})`} transformOrigin={'top left'} onDoubleClick={deselectApps}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd
