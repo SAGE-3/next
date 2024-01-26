@@ -11,7 +11,6 @@ import { useEffect, useState } from 'react';
 // SAGE Imports
 import { useCursorBoardPosition, useHexColor, useKeyPress, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
-import { set } from 'date-fns';
 
 type LassoProps = {
   boardId: string;
