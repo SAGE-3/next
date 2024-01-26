@@ -637,8 +637,14 @@ function createWindow() {
   // If the window opens before the server is ready,
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
-  mainWindow.webContents.on('did-fail-load', function () {
-    mainWindow.loadFile('./html/landing.html');
+  mainWindow.webContents.on('did-fail-load', function (ev, code, desc, vurl) {
+    if (code === -27) {
+      // -27 ERR_BLOCKED_BY_RESPONSE
+      // ignore it
+      console.log('Electron> warning: failed to load', code, desc, vurl);
+    } else {
+      mainWindow.loadFile('./html/landing.html');
+    }
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {

@@ -21,6 +21,7 @@ import { state as MapGLState, name as MapGLName } from './apps/MapGL';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
+import { state as PollState, name as PollName } from './apps/Poll';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SeerState, name as SeerName } from './apps/Seer';
@@ -57,6 +58,7 @@ export type AppState =
   | PDFResultState
   | PDFViewerState
   | PluginAppState
+  | PollState
   | RTCChatState
   | SageCellState
   | SeerState
@@ -70,4 +72,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeViewerName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeViewerName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
