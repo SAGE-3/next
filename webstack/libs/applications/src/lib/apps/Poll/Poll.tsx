@@ -7,6 +7,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { Button } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 
@@ -20,7 +21,6 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
-import { Button } from '@chakra-ui/react';
 
 /* App component for poll */
 

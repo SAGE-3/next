@@ -7,9 +7,9 @@
  */
 
 import React, { useState } from 'react';
-
-import { MdEdit, MdSave } from 'react-icons/md';
 import { Button } from '@chakra-ui/react';
+import { MdEdit, MdSave } from 'react-icons/md';
+
 import { PollOption } from '../index';
 
 interface PollProps {
