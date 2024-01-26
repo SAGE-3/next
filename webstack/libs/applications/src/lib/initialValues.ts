@@ -20,6 +20,7 @@ import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
+import { name as RAPIDName, init as defaultRAPID } from './apps/RAPID';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
@@ -53,6 +54,7 @@ export const initialValues = {
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
+  [RAPIDName]: defaultRAPID,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
   [SeerName]: defaultSeer,
