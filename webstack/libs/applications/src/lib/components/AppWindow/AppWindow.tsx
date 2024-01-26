@@ -31,6 +31,7 @@ type WindowProps = {
   lockToBackground?: boolean;
   processing?: boolean;
   disableResize?: boolean;
+  background?: boolean;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -84,6 +85,8 @@ export function AppWindow(props: WindowProps) {
   const bc = useColorModeValue('gray.300', 'gray.600');
   const borderColor = useHexColor(bc);
   const selectColor = useHexColor('teal');
+  const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
+  const savedSelectedColor = useHexColor('red');
 
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
@@ -93,6 +96,9 @@ export function AppWindow(props: WindowProps) {
   // Resize Handle scale
   const enableResize = props.disableResize === undefined ? true : !props.disableResize;
   const isPinned = props.app.data.pinned === undefined ? false : props.app.data.pinned;
+  // Background
+  const background = props.background === undefined ? true : props.background;
+
   // Make the handles a little bigger when the scale is small
   const invScale = Math.round(1 / scale);
   const handleScale = Math.max(2, Math.min(invScale, 10));
@@ -353,7 +359,7 @@ export function AppWindow(props: WindowProps) {
       <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />
 
       {/* Border Box around app to show it is selected */}
-      <WindowBorder
+      {/* <WindowBorder
         size={size}
         selected={selected}
         isGrouped={isGrouped}
@@ -364,7 +370,7 @@ export function AppWindow(props: WindowProps) {
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
-      />
+      /> */}
 
       {/* The Application */}
       <Box
@@ -373,8 +379,10 @@ export function AppWindow(props: WindowProps) {
         height="100%"
         overflow="hidden"
         zIndex={2}
-        background={backgroundColor}
+        background={background ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
+        outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : selected || isGrouped ? `${borderWidth}px solid ${selectColor}` : 'unset'}
+        boxShadow={isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
       >
         {props.children}
       </Box>
