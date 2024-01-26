@@ -15,7 +15,7 @@ import { Box, Button, ButtonGroup, Tooltip, useColorModeValue, useDisclosure, us
 import { debounce } from 'throttle-debounce';
 import { MdFileDownload, MdFileUpload } from 'react-icons/md';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format as dateFormat } from 'date-fns/format';
 
 // Import Monaco Editor
 import Editor, { OnMount } from '@monaco-editor/react';
