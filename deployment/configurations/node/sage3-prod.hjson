@@ -61,13 +61,13 @@
   "features": {
     // Enable Plugins
     "plugins": true,
-    // Which Apps to enable.  Available Apps: 
-    // ChartMaker, MapGL, Notepad, SageCell, Stickie, Screenshare, Webview
+    // Which Apps to enable
     "apps": [
       "Chat",
       "ChartMaker",
       "MapGL",
       "Notepad",
+      "Poll",
       "SageCell",
       "Stickie",
       "Screenshare",

@@ -29,5 +29,6 @@
     "VegaLiteViewer",
     "VideoViewer",
     "WebpageLink",
-    "Webview"
+    "Webview",
+    "Poll"
 ]
