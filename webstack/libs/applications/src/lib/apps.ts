@@ -1,6 +1,5 @@
 // SAGE3 Generated from apps.json file
 
-import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
@@ -22,6 +21,7 @@ import { name as MapGLName } from './apps/MapGL';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
+import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
@@ -33,7 +33,6 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
-import { name as PollName } from './apps/Poll';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -57,6 +56,7 @@ import MapGL from './apps/MapGL/MapGL';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
+import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
@@ -68,8 +68,8 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
-import Poll from './apps/Poll/Poll';
 import React from 'react';
+import { App, AppGroup } from './schema';
 
 
 export const Applications = {
@@ -94,6 +94,7 @@ export const Applications = {
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent, GroupedToolbarComponent: PDFResult.GroupedToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent, GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent },
   [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
+  [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent, GroupedToolbarComponent: RTCChat.GroupedToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent, GroupedToolbarComponent: SageCell.GroupedToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
@@ -105,7 +106,6 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-  [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
 
 export * from './components';
