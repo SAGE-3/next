@@ -32,9 +32,16 @@ import { state as AppState } from '.';
 // Store between the app and the toolbar
 import { create } from 'zustand';
 
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { MonacoBinding } from 'y-monaco';
+// Throttle
+import { throttle } from 'throttle-debounce';
+
 interface CodeStore {
-  readonly: { [key: string]: boolean },
-  setReadonly: (id: string, r: boolean) => void,
+  readonly: { [key: string]: boolean };
+  setReadonly: (id: string, r: boolean) => void;
 }
 
 const useStore = create<CodeStore>()((set) => ({
@@ -77,7 +84,7 @@ function AppComponent(props: App): JSX.Element {
   // Initialize the readonly state
   useEffect(() => {
     setReadonly(props._id, true);
-    update(props._id, { title: 'CodeViewer: ' + s.language })
+    update(props._id, { title: 'CodeViewer: ' + s.language });
   }, []);
 
   // Update local value with value from the server
@@ -91,9 +98,19 @@ function AppComponent(props: App): JSX.Element {
       const myselection = editorRef.current.getSelection();
       if (!myselection) return;
       const newselection = s.selection;
-      if (myselection.startLineNumber === newselection[0] && myselection.startColumn === newselection[1]
-        && myselection.endLineNumber === newselection[2] && myselection.endColumn === newselection[3]) return;
-      editorRef.current.setSelection({ startLineNumber: newselection[0], startColumn: newselection[1], endLineNumber: newselection[2], endColumn: newselection[3] });
+      if (
+        myselection.startLineNumber === newselection[0] &&
+        myselection.startColumn === newselection[1] &&
+        myselection.endLineNumber === newselection[2] &&
+        myselection.endColumn === newselection[3]
+      )
+        return;
+      editorRef.current.setSelection({
+        startLineNumber: newselection[0],
+        startColumn: newselection[1],
+        endLineNumber: newselection[2],
+        endColumn: newselection[3],
+      });
     }
   }, [s.selection]);
 
@@ -125,8 +142,10 @@ function AppComponent(props: App): JSX.Element {
   const handleMount: OnMount = (editor) => {
     // save the editorRef
     editorRef.current = editor;
+    // Connect to Yjs
+    connectToYjs(editor);
     editor.onDidScrollChange(function (event) {
-      updateState(props._id, { scrollPosition: event.scrollTop })
+      updateState(props._id, { scrollPosition: event.scrollTop });
     });
     // Add an event listener for the CursorSelection event
     editor.onDidChangeCursorSelection(function (event) {
@@ -134,20 +153,50 @@ function AppComponent(props: App): JSX.Element {
       const selection = event.selection;
       // test if actual selection and not just cursot movement
       if (selection.startLineNumber !== selection.endLineNumber || selection.startColumn !== selection.endColumn) {
-        updateState(props._id, { selection: [selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn] })
+        updateState(props._id, {
+          selection: [selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn],
+        });
+      }
+    });
+  };
+
+  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const doc = new Y.Doc();
+    const yText = doc.getText('monaco');
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    const model = editor.getModel();
+    if (model) model.setEOL(0);
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+
+    provider.on('sync', () => {
+      const users = provider.awareness.getStates();
+      const count = users.size;
+
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count == 1) {
+        // Does the app have code?
+        if (spec) {
+          // Clear any existing lines
+          yText.delete(0, yText.length);
+          // Set the lines from the database
+          yText.insert(0, spec);
+        }
       }
     });
   };
 
   return (
     <AppWindow app={props}>
-      <Box p={0} border={'none'} overflow='hidden' height="100%">
+      <Box p={0} border={'none'} overflow="hidden" height="100%">
         <Editor
-          value={spec}
+          // value={spec}
           onChange={handleTextChange}
           onMount={handleMount}
           theme={defaultTheme}
-          height={"100%"}
+          height={'100%'}
           language={s.language}
           options={{
             readOnly: readonly,
@@ -179,7 +228,7 @@ function AppComponent(props: App): JSX.Element {
           }}
         />
       </Box>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -202,7 +251,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Download the code into a local file
   const downloadCode = (): void => {
-    const lang = languageExtensions.find(obj => obj.name === s.language)?.extension;
+    const lang = languageExtensions.find((obj) => obj.name === s.language)?.extension;
     const extension = lang || 'txt';
     // Current date
     const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
@@ -215,37 +264,40 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   // Save the code in the asset manager
-  const handleSave = useCallback((val: string) => {
-    // Save the code in the asset manager
-    if (roomId) {
-      // Create a form to upload the file
-      const fd = new FormData();
-      const codefile = new File([new Blob([s.content])], val);
-      fd.append('files', codefile);
-      // Add fields to the upload form
-      fd.append('room', roomId);
-      // Upload with a POST request
-      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
-        .catch((error: Error) => {
-          toast({
-            title: 'Upload',
-            description: 'Upload failed: ' + error.message,
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
+  const handleSave = useCallback(
+    (val: string) => {
+      // Save the code in the asset manager
+      if (roomId) {
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([s.content])], val);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
           });
-        })
-        .finally(() => {
-          toast({
-            title: 'Upload',
-            description: 'Upload complete',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  }, [s.content, roomId]);
+      }
+    },
+    [s.content, roomId]
+  );
 
   // Larger font size
   function handleIncreaseFont() {
@@ -259,14 +311,22 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { fontSize: fs });
   }
 
-
   return (
     <>
       <ConfirmValueModal
-        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={handleSave}
-        title="Save Code in Asset Manager" message="Select a file name:"
-        initiaValue={'code-' + dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.' + languageExtensions.find(obj => obj.name === s.language)?.extension || 'txt'}
-        cancelText="Cancel" confirmText="Save"
+        isOpen={saveIsOpen}
+        onClose={saveOnClose}
+        onConfirm={handleSave}
+        title="Save Code in Asset Manager"
+        message="Select a file name:"
+        initiaValue={
+          'code-' +
+            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+            '.' +
+            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+        }
+        cancelText="Cancel"
+        confirmText="Save"
         confirmColor="green"
       />
 
@@ -290,7 +350,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={readonly ? 'Read only' : 'Edit'} openDelay={400}>
-          <Button onClick={() => readonly ? setReadonly(props._id, false) : setReadonly(props._id, true)} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+          <Button
+            onClick={() => (readonly ? setReadonly(props._id, false) : setReadonly(props._id, true))}
+            size="xs"
+            p="0"
+            mx="2px"
+            colorScheme={'teal'}
+          >
             {readonly ? <MdLock /> : <MdLockOpen />}
           </Button>
         </Tooltip>
