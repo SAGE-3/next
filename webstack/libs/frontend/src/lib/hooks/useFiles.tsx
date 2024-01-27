@@ -30,6 +30,8 @@ import {
   isFileURL,
   isTiff,
   isSessionFile,
+  isCode,
+  stringContainsCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -360,6 +362,24 @@ export function useFiles(): UseFiles {
             }
           }
           return null;
+        }
+      }
+    } else if (isCode(fileType)) {
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          });
+          const text = await response.text();
+          const lang = stringContainsCode(text);
+          // Create a note from the text
+          return setupApp('CodeViewer', 'CodeViewer', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
         }
       }
     } else if (isGIF(fileType)) {

@@ -16,10 +16,7 @@ import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader
 import { initialValues } from '@sage3/applications/initialValues';
 import { isValidURL, setupApp, processContentURL, truncateWithEllipsis } from '@sage3/frontend';
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
-
-import hljs from 'highlight.js';
-
-hljs.configure({ languages: ['json', 'yaml', 'typescript', 'javascript', 'python', 'html', 'css'] });
+import { stringContainsCode } from '@sage3/shared';
 
 type PasteProps = {
   boardId: string;
@@ -173,7 +170,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           });
         } else {
           // Create a new stickie
-          const lang = containsCode(pastedText);
+          const lang = stringContainsCode(pastedText);
           if (lang === 'plaintext') {
             createApp({
               title: user.data.name,
@@ -277,21 +274,3 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     </Popover>
   );
 };
-
-/**
- * Determine the language of the code
- * @param code string to check
- * @returns string of the language
- */
-function containsCode(code: string) {
-  try {
-    const lang = hljs.highlightAuto(code).language;
-    if (lang) {
-      return lang;
-    } else {
-      return 'plaintext';
-    }
-  } catch (error) {
-    return 'plaintext';
-  }
-}
