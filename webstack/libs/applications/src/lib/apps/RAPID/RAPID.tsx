@@ -12,12 +12,10 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import LineChart from './components/LineChart';
-import { ParentSize } from '@visx/responsive';
+import LineGraph from './components/LineGraph';
 
 // Styling
 import './styling.css';
-import { useEffect } from 'react';
 
 /* App component for RAPID */
 
@@ -26,15 +24,9 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  
-
   return (
     <AppWindow app={props}>
-      <ParentSize>
-        {(parent) => (
-          <LineChart width={parent.width} height={parent.height} />
-        )}
-      </ParentSize>
+      <LineGraph />
     </AppWindow>
   );
 }
