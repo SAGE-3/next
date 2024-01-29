@@ -213,19 +213,19 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
 
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Enter Board by URL or ID</ModalHeader>
+        <ModalHeader>Join Board with ID or URL</ModalHeader>
         <ModalBody mb="2">
           {submitStatus === 'pending' ? (
             <Box mx={2} width="500px">
               <form onSubmit={handleSubmit}>
                 <InputGroup>
-                  <InputLeftAddon children="Reference" />
+                  <InputLeftAddon children="Board" />
                   <Input
                     value={boardUrl}
                     onChange={handleInputChange}
                     onSubmit={handleSubmit}
                     fontSize="sm"
-                    placeholder="Enter URL or Board ID"
+                    placeholder="Board ID or URL"
                     spellCheck={false}
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                   />
