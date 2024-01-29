@@ -11,7 +11,7 @@ import { customAlphabet } from 'nanoid';
 
 // Custom alphabet without vowels and numbers that look like letters
 // Used by generateReadableID
-const nanoidGenerator = customAlphabet('ABCDEFGHIJKLMNPQRSTUVWXYZ0123456789');
+const nanoidGenerator = customAlphabet('ABCDEFGHIJKLMNPQRSTUVWXYZ123456789');
 
 /**
  * Generates a unique string Id.
@@ -28,7 +28,7 @@ export function genId(): string {
  */
 export function generateReadableID(): string {
   // 10 characters long ID
-  // --> 7M IDs needed, in order to have a 1% probability of at least one collision.
+  // --> 6M IDs needed, in order to have a 1% probability of at least one collision.
   const id = nanoidGenerator(10);
   // Split in 2 parts of 5 characters
   const s1 = id.substring(0, 5);
