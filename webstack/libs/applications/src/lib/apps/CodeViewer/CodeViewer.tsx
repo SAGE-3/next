@@ -61,8 +61,6 @@ const languageExtensions = [
   { name: 'cpp', extension: 'cpp' },
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
-  { name: 'json', extension: 'json' },
-  { name: 'yaml', extension: 'yaml' },
 ];
 
 /* App component for CodeViewer */
