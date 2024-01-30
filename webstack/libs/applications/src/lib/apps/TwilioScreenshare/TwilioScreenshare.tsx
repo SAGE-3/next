@@ -60,10 +60,6 @@ function AppComponent(props: App): JSX.Element {
   const { user, accessId } = useUser();
   const yours = user?._id === props._createdBy && accessId === s.accessId;
 
-  // Other apps
-  const apps = useAppStore((state) => state.apps);
-  const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
-
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
   const tracks = useTwilioStore((state) => state.tracks);
@@ -102,6 +98,37 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
   const toastIdRef = useRef<ToastId>();
 
+  // Other apps
+  const apps = useAppStore((state) => state.apps);
+  const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
+  const [closeApp, setCloseApp] = useState(false);
+
+  // Check if user already has a screenshare going
+  // Will toast the user and delete the app if they do
+  function checkForScreenShare(): boolean {
+    if (otherScreenshares.length > 0) {
+      toast({
+        title: 'You can only have one screenshare at a time.',
+        status: 'error',
+        duration: 2000,
+        isClosable: false,
+      });
+      // Set close app to true so the useEffect will delete the app
+      setCloseApp(true);
+      return true;
+    }
+    return false;
+  }
+
+  // Useeffect to delete the app if the user already has a screenshare going
+  useEffect(() => {
+    if (closeApp) {
+      // Delete this app. Could be due to a user attempting to share a screen while already sharing
+      deleteApp(props._id);
+    }
+  }, [closeApp]);
+
+  // Close the toast
   function closeToast() {
     if (toastIdRef.current) {
       toast.close(toastIdRef.current);
@@ -167,24 +194,6 @@ function AppComponent(props: App): JSX.Element {
       shareScreen();
     }
   }, [room]);
-
-  function checkForScreenShare(): boolean {
-    if (otherScreenshares.length > 0) {
-      closeToast();
-      // Show a notification
-      toastIdRef.current = toast({
-        title: 'You can only have one screenshare at a time.',
-        status: 'error',
-        duration: 2000,
-        onCloseComplete: () => {
-          deleteApp(props._id);
-        },
-        isClosable: false,
-      });
-      return true;
-    }
-    return false;
-  }
 
   const shareScreen = async () => {
     // Lets check if user already has a screen share going
