@@ -24,6 +24,8 @@ pip3 install matplotlib plotly  imageio openai
 # Getting All the NodeJS-based Language Servers
 # jlpm add --dev bash-language-server vscode-css-languageserver-bin dockerfile-language-server-nodejs vscode-html-languageserver-bin javascript-typescript-langserver vscode-json-languageserver-bin yaml-language-server
 
+# Extra modules
+pip3 install plotly imageio openai
 # foresight
 pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 # LSP

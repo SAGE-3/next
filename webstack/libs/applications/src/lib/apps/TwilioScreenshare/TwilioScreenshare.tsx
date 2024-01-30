@@ -7,7 +7,7 @@
  */
 
 // Chakra and React imports
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -28,6 +28,7 @@ import {
   ModalFooter,
   ModalBody,
   useToast,
+  ToastId,
 } from '@chakra-ui/react';
 
 // Twilio Imports
@@ -55,8 +56,6 @@ const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const toast = useToast({ id: `toast-${props._id}` });
-
   // Current User
   const { user, accessId } = useUser();
   const yours = user?._id === props._createdBy && accessId === s.accessId;
@@ -77,7 +76,7 @@ function AppComponent(props: App): JSX.Element {
   // UI
   const red = useHexColor('red');
   const teal = useHexColor('teal');
-  const fitApps = useUIStore((state) => state.fitApps);
+  const fitAppsById = useUIStore((state) => state.fitAppsById);
   const boardLocked = useUIStore((state) => state.boardLocked);
 
   // Electron media sources
@@ -94,6 +93,47 @@ function AppComponent(props: App): JSX.Element {
 
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
+
+  // Toasts
+  const toast = useToast();
+  const toastIdRef = useRef<ToastId>();
+
+  // Other apps
+  const apps = useAppStore((state) => state.apps);
+  const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
+  const [closeApp, setCloseApp] = useState(false);
+
+  // Check if user already has a screenshare going
+  // Will toast the user and delete the app if they do
+  function checkForScreenShare(): boolean {
+    if (otherScreenshares.length > 0) {
+      toast({
+        title: 'You can only have one screenshare at a time.',
+        status: 'error',
+        duration: 2000,
+        isClosable: false,
+      });
+      // Set close app to true so the useEffect will delete the app
+      setCloseApp(true);
+      return true;
+    }
+    return false;
+  }
+
+  // Useeffect to delete the app if the user already has a screenshare going
+  useEffect(() => {
+    if (closeApp) {
+      // Delete this app. Could be due to a user attempting to share a screen while already sharing
+      deleteApp(props._id);
+    }
+  }, [closeApp]);
+
+  // Close the toast
+  function closeToast() {
+    if (toastIdRef.current) {
+      toast.close(toastIdRef.current);
+    }
+  }
 
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
@@ -156,6 +196,10 @@ function AppComponent(props: App): JSX.Element {
   }, [room]);
 
   const shareScreen = async () => {
+    // Lets check if user already has a screen share going
+    const alreadySharing = checkForScreenShare();
+    if (alreadySharing) return;
+
     stopStream();
     if (room && videoRef.current) {
       // Load electron and the IPCRender
@@ -193,8 +237,10 @@ function AppComponent(props: App): JSX.Element {
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
 
+          // Close Toast
+          closeToast();
           // Show a notification
-          toast({
+          toastIdRef.current = toast({
             title: 'Screenshare started',
             status: 'success',
             duration: 3000,
@@ -233,32 +279,34 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
-  const goToScreenshare = () => {
+  const goToScreenshare = useCallback(() => {
     if (!boardLocked) {
       // Close the popups
-      toast.closeAll();
+      closeToast();
       // Zoom in
-      fitApps([props]);
+      fitAppsById([props._id]);
     }
-  };
+  }, [props, boardLocked]);
 
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
       if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
+        // Close other toasts by this app
+        closeToast();
         // Show a notification
-        toast({
+        toastIdRef.current = toast({
           title: `${props.data.title} started a screenshare`,
           description: (
             <Box>
               <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
-                Show Screenshare
+                Focus on their screen?
               </Button>
             </Box>
           ),
           status: 'info',
-          duration: null,
+          duration: 5000,
           isClosable: true,
         });
       }
@@ -270,8 +318,10 @@ function AppComponent(props: App): JSX.Element {
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
       if (yours) {
+        // Close other toasts by this app
+        closeToast();
         // Show a notification
-        toast({
+        toastIdRef.current = toast({
           title: 'Your screenshare has ended',
           status: 'success',
           duration: 3000,
@@ -279,7 +329,7 @@ function AppComponent(props: App): JSX.Element {
         });
         stopStream();
       }
-      toast.close(`toast-${props._id}`);
+      closeToast();
     };
   }, []);
 
@@ -321,8 +371,10 @@ function AppComponent(props: App): JSX.Element {
       //   if (isElectron()) window.electron.send('hide-main-window', {});
       // }
 
+      // Close other toasts by this app
+      closeToast();
       // Show a notification
-      toast({
+      toastIdRef.current = toast({
         title: 'Screenshare started',
         status: 'success',
         duration: 3000,
