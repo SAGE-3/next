@@ -142,7 +142,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         setUnits(variableUnits[i].unit);
       }
     }
-  }, []);
+  }, [JSON.stringify(s.widget.yAxisNames)]);
 
   // Convert asset to URL
   useEffect(() => {
