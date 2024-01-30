@@ -198,8 +198,9 @@ function AppComponent(props: App): JSX.Element {
         s.widget.timePeriod
       )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     } else if (!s.widget.liveData) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${s.widget.startDate
-        }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+        s.widget.startDate
+      }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     }
 
     const response = await fetch(url);
@@ -285,6 +286,10 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  const duplicateMenuBackground = useColorModeValue('gray.50', 'gray.800');
+  const duplicateMenuItems = useColorModeValue('gray.100', 'gray.700');
+  const duplicateHoverMenuItem = useColorModeValue('rgb(178, 216, 243)', 'cyan.600');
+
   return (
     <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
@@ -312,16 +317,18 @@ function AppComponent(props: App): JSX.Element {
                 top={`${buttonPosition.top}px`}
                 left={`${buttonPosition.left}px`}
                 // bg="blue.200"
-                borderRadius="md"
+                borderRadius="lg"
                 p={4}
-                boxShadow="md"
                 zIndex={1}
-                className="selectableList"
+                border={'solid 1px grey'}
+                borderLeft={'solid #60CDBA 3px'}
+                bg={duplicateMenuBackground}
                 transform={`scale(0.9) translateY(-${buttonPosition.top / 4}px)`}
                 transformOrigin={'top left'}
+                shadow={'xl'}
               >
                 {/* Content of the opened div */}
-                <Box ml="0.4rem">Duplicate as:</Box>
+                <Text fontWeight={'bold'}>Duplicate as:</Text>
                 {/* <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip"> */}
                 {checkAvailableVisualizations(s.widget.yAxisNames[0]).map(
                   (visualization: { value: string; name: string }, index: number) => {
@@ -332,6 +339,9 @@ function AppComponent(props: App): JSX.Element {
                           handleDuplicateVisualizationsAs(visualization.value);
                         }}
                         className="selectableListItem"
+                        backgroundColor={duplicateMenuItems}
+                        border={'grey solid 2px'}
+                        _hover={{ backgroundColor: duplicateHoverMenuItem }}
                       >
                         {visualization.name}
                       </Text>
@@ -389,8 +399,8 @@ function AppComponent(props: App): JSX.Element {
                   />
                 ) : null}
                 {props.data.state.widget.visualizationType === 'line' ||
-                  props.data.state.widget.visualizationType === 'bar' ||
-                  props.data.state.widget.visualizationType === 'scatter' ? (
+                props.data.state.widget.visualizationType === 'bar' ||
+                props.data.state.widget.visualizationType === 'scatter' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
                     isLoaded={isLoaded}
@@ -534,8 +544,9 @@ function ToolbarComponent(props: App): JSX.Element {
         new Date()
       )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     } else {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${props.data.state.widget.startDate
-        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+        props.data.state.widget.startDate
+      }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     }
 
     const response = await fetch(url);
@@ -793,25 +804,25 @@ function ToolbarComponent(props: App): JSX.Element {
                   {!isLoaded
                     ? null
                     : stationMetadata.map((station: any, index: number) => {
-                      const isSelected = s.stationNames.includes(station.STID);
-                      return (
-                        <tr key={index}>
-                          <td style={{ textAlign: 'center', width: '10px' }}>
-                            <Checkbox
-                              colorScheme="teal"
-                              isChecked={isSelected}
-                              onChange={(e) => handleChangeSelectedStation(e, station.STID)}
-                            />
-                          </td>
-                          <td>{station.NAME}</td>
-                          <td>{station.COUNTY}</td>
-                          <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
-                          <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
-                          <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
-                          {/* <td>variable</td> */}
-                        </tr>
-                      );
-                    })}
+                        const isSelected = s.stationNames.includes(station.STID);
+                        return (
+                          <tr key={index}>
+                            <td style={{ textAlign: 'center', width: '10px' }}>
+                              <Checkbox
+                                colorScheme="teal"
+                                isChecked={isSelected}
+                                onChange={(e) => handleChangeSelectedStation(e, station.STID)}
+                              />
+                            </td>
+                            <td>{station.NAME}</td>
+                            <td>{station.COUNTY}</td>
+                            <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
+                            {/* <td>variable</td> */}
+                          </tr>
+                        );
+                      })}
                 </table>
                 {!isLoaded ? (
                   <Box width="100%" height="100%" position="relative">
@@ -986,7 +997,7 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
         mr="1rem"
         // value={widget.visualizationType}
         onChange={handleVisualizationChange}
-      // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
+        // isDisabled={props.data.state.widget.yAxisNames[0] === 'Elevation, Longitude, Latitude, Name, Time'}
       >
         {availableVisualizations().map((visualization: { value: string; name: string }, index: number) => {
           return (

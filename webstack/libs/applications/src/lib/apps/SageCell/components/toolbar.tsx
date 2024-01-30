@@ -305,7 +305,7 @@ export function ToolbarComponent(props: App): JSX.Element {
 
       {/* Modals */}
       <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
-      <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+      {isOpen && <CreateKernelModal isOpen={isOpen} onClose={onClose} />}
       <ConfirmValueModal
         isOpen={saveIsOpen}
         onClose={saveOnClose}
@@ -506,7 +506,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+      {isOpen && <CreateKernelModal isOpen={isOpen} onClose={onClose} />}
     </HStack>
   );
 };
