@@ -29,7 +29,6 @@ type KernelStoreState = {
   interruptKernel: (kernelId: string) => Promise<boolean>;
   restartKernel: (kernelId: string) => Promise<boolean>;
   executeCode: (code: string, kernelId: string, userId: string) => Promise<{ ok: boolean; msg_id: string }>;
-  sendPrompt: (textPrompt: string, kernelId: string, userId: string) => Promise<{ ok: boolean; code: string }>;
   fetchResults: (msgId: string) => Promise<{ ok: boolean; execOutput: ExecOutput }>;
 };
 
@@ -89,12 +88,6 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
     return response;
   };
 
-  // Generate code from a prompt
-  const sendPrompt = async (textPrompt: string, kernelId: string, userId: string): Promise<{ ok: boolean; code: string }> => {
-    const response = await FastAPI.sendPrompt(textPrompt, kernelId, userId);
-    return response;
-  };
-
   const fetchResults = async (msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> => {
     const response = await FastAPI.fetchResults(msgId);
     return response;
@@ -138,7 +131,6 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
     interruptKernel: interruptKernel,
     restartKernel: restartKernel,
     executeCode: executeCode,
-    sendPrompt: sendPrompt,
     fetchResults: fetchResults,
     keepChecking: keepChecking,
     stopChecking: stopChecking,

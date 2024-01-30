@@ -43,8 +43,9 @@ import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
 import Markdown from 'markdown-to-jsx';
-import { update } from 'plotly.js';
-import { set } from 'date-fns';
+
+// Seer API
+import { SeerAPI } from '@sage3/frontend';
 
 /**
  * Seer App
@@ -56,8 +57,11 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const userId = user?._id;
 
+  // State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+
+  // Local State
   const [prompt, setPrompt] = useState<string>(s.prompt);
   const [generatedCode, setGeneratedCode] = useState<string>('');
   const [generatedMarkdown, setGeneratedMarkdown] = useState<string>('');
@@ -68,17 +72,17 @@ function AppComponent(props: App): JSX.Element {
   // Styles
   const green = useHexColor('green');
   const yellow = useHexColor('yellow');
+  const SPACE = 2;
   // const red = useHexColor('red');
 
   // Local state
   const [access, setAccess] = useState(true);
 
   // Kernel Store
-  const {
-    apiStatus,
-    kernels,
-    // sendPrompt
-  } = useKernelStore((state) => state);
+  const { apiStatus, kernels } = useKernelStore((state) => state);
+
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -96,121 +100,12 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [access, apiStatus, kernels, s.kernel]);
 
-  // const ping = async () => {
-  //   await fetch('http://localhost:8090/ping', {
-  //     method: 'GET',
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       console.log('Success:', data);
-  //     })
-  //     .catch((error) => {
-  //       console.error('Error:', error);
-  //     });
-  // };
-
-  const handleGenerate = async () => {
-    // updateState(props._id, {
-    //   prompt: prompt,
-    //   markdown: '',
-    //   streaming: false,
-    //   msgId: '',
-    // });
-    const payload = {
-      kernel: s.kernel,
-      prompt: prompt,
-      user: userId,
-    };
-    // console.log('Sending payload:', payload);
-    await fetch('http://localhost:8090/api/v1/seer/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Success:', data);
-        if (data.code) {
-          console.log('Updating state');
-          setGeneratedMarkdown('');
-          setGeneratedCode(data.code);
-          updateState(props._id, {
-            code: data.code,
-          });
-        } else if (data.message) {
-          console.log('Message:', data.message);
-        } else if (data.markdown) {
-          setGeneratedCode('');
-          setGeneratedMarkdown(data.markdown);
-          updateState(props._id, {
-            markdown: data.markdown,
-          });
-        } else if (data.error) {
-          console.error('Error:', data.error);
-          updateState(props._id, {
-            markdown: data.error,
-            code: '',
-            streaming: false,
-            msgId: '',
-            history: [],
-          });
-        }
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-  };
-
   // Update everyone's local state after a state change
   useEffect(() => {
     if (s.markdown !== generatedMarkdown) {
       setGeneratedMarkdown(s.markdown);
     }
   }, [s.markdown]);
-
-  // const handleGenerate = async () => {
-  //   const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
-  //   if (!user || !apiStatus || !access || !canExec) return;
-  //   if (prompt) {
-  //     try {
-  //       const response = await sendPrompt(prompt, s.kernel, user?._id);
-  //       if (response.ok) {
-  //         console.log('Response', response);
-  //         // const data = await response.json();
-  //         // updateState(props._id, {
-  //         //  code: data.code,
-  //         //  prompt: data.prompt,
-  //         //  streaming: data.streaming,
-  //         //  kernel: data.kernel,
-  //         // }
-  //       } else {
-  //         console.log('Error generating code');
-  //       }
-  //     } catch (error) {
-  //       if (error instanceof TypeError) {
-  //         console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-  //         updateState(props._id, {
-  //           streaming: false,
-  //           prompt: '',
-  //           kernel: '',
-  //           kernels: [],
-  //           history: [],
-  //           msgId: '',
-  //         });
-  //       }
-  //     }
-  //   }
-  // };
-
-  // const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
-  // const [showCode, setShowCode] = useState<boolean>(false);
-  // const [showOutput, setShowOutput] = useState<boolean>(false);
-
-  const SPACE = 2;
-  // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -237,6 +132,24 @@ function AppComponent(props: App): JSX.Element {
       msgId: '',
     });
     setGeneratedCode('');
+  };
+
+  const handleGenerate = async () => {
+    if (prompt === '' || userId === undefined) {
+      return;
+    }
+    const response = await SeerAPI.sendPrompt(prompt, userId);
+    if (response) {
+      console.log(response);
+      // updateState(props._id, {
+      //   prompt: prompt,
+      //   output: response.output,
+      //   streaming: response.streaming,
+      //   msgId: response.msgId,
+      // });
+    } else {
+      console.log('No response');
+    }
   };
 
   return (
