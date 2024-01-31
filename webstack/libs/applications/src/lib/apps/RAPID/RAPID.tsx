@@ -14,6 +14,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useEffect } from 'react';
 import ComponentSelector from './components/ComponentSelector';
+import { AppSchema } from '../../schema';
 
 // Styling
 import './styling.css';
@@ -23,13 +24,13 @@ import { CATEGORIES } from './constants';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  console.log('counter', props.data.state);
 
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
-  // Creates rapid apps
+  // Creates rapid charts
   // TODO: Try to create 2 apps, one with graph, and another one with min, max, average
-  // TODO: Make toolbar for control panel more comprehensive
   async function createRAPIDCharts() {
     try {
       const promises = [];
@@ -57,6 +58,7 @@ function AppComponent(props: App): JSX.Element {
               initialized: true,
               parent: props._id,
               category: CATEGORIES[`${category}` as keyof typeof CATEGORIES].name,
+              counter: s.counter,
             },
             raised: true,
             dragging: false,
@@ -92,10 +94,11 @@ function AppComponent(props: App): JSX.Element {
     }
   }, []);
 
+  console.log('props.data', props.data);
   // console.log("children", s.children);
   return (
     <AppWindow app={props}>
-      <ComponentSelector category={s.category} />
+      <ComponentSelector propsData={props as App} />
     </AppWindow>
   );
 }

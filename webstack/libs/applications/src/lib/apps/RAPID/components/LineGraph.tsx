@@ -5,14 +5,17 @@ import worker from '../worker/script';
 import { useWebWorker } from '../worker/useWebWorker';
 import LoadingSpinner from './LoadingSpinner';
 import { Result } from '../worker/useWebWorker';
+import { RAPIDState } from './ComponentSelector';
 
-function LineGraph() {
+function LineGraph({ s }: RAPIDState) {
   // Web worker
   const workerInstance = useMemo(() => createWebWorker(worker), []);
   const { result, startProcessing } = useWebWorker(workerInstance);
   useEffect(() => {
     startProcessing({});
   }, [startProcessing]);
+
+  console.log("s.counter from LineGraph", s);
 
   return (
     <>
