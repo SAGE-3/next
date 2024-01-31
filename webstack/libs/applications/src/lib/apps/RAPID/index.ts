@@ -14,12 +14,18 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  test: z.number(),
+  initialized: z.boolean(),
+  parent: z.string(),
+  children: z.array(z.string()),
+  category: z.enum(['Control Panel', 'Graph'])
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  test: 10,
+  initialized: false,
+  parent: '',
+  children: [],
+  category: 'Control Panel'
 };
 
 export const name = 'RAPID';
