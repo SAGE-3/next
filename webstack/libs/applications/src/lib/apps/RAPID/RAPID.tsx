@@ -30,55 +30,54 @@ function AppComponent(props: App): JSX.Element {
   // Creates rapid apps
   // TODO: Try to create 2 apps, one with graph, and another one with min, max, average
   // TODO: Make toolbar for control panel more comprehensive
-  async function createRAPIDApp() {
-    const promises = [];
+  async function createRAPIDCharts() {
+    try {
+      const promises = [];
 
-    for (const category in CATEGORIES) {
-      if (CATEGORIES[`${category}` as keyof typeof CATEGORIES].name === 'Control Panel') continue;
-      promises.push(
-        createApp({
-          title: 'RAPID',
-          roomId: props.data.roomId!,
-          boardId: props.data.boardId!,
-          position: {
-            x: props.data.position.x + props.data.size.width * (Number(CATEGORIES[`${category as keyof typeof CATEGORIES}`].order)),
-            y: props.data.position.y,
-            z: 0,
-          },
-          size: {
-            width: props.data.size.width,
-            height: props.data.size.height,
-            depth: 0,
-          },
-          type: 'RAPID',
-          rotation: { x: 0, y: 0, z: 0 },
-          state: {
-            initialized: true,
-            parent: props._id,
-            category: CATEGORIES[`${category}` as keyof typeof CATEGORIES].name,
-          },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        })
-      );
+      for (const category in CATEGORIES) {
+        if (CATEGORIES[`${category}` as keyof typeof CATEGORIES].name === 'Control Panel') continue;
+        promises.push(
+          createApp({
+            title: 'RAPID',
+            roomId: props.data.roomId!,
+            boardId: props.data.boardId!,
+            position: {
+              x: props.data.position.x + props.data.size.width * Number(CATEGORIES[`${category as keyof typeof CATEGORIES}`].order),
+              y: props.data.position.y,
+              z: 0,
+            },
+            size: {
+              width: props.data.size.width,
+              height: props.data.size.height,
+              depth: 0,
+            },
+            type: 'RAPID',
+            rotation: { x: 0, y: 0, z: 0 },
+            state: {
+              initialized: true,
+              parent: props._id,
+              category: CATEGORIES[`${category}` as keyof typeof CATEGORIES].name,
+            },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          })
+        );
+      }
+
+      const resolution = await Promise.all(promises);
+
+      // console.log(
+      //   'resultion',
+      //   resolution.map((res) => res.data._id)
+      // );
+
+      updateState(props._id, {
+        children: [...s.children, ...resolution.map((res) => res.data._id)],
+      });
+    } catch (e) {
+      console.log('ERROR in RAPID:', e);
     }
-
-    console.log(await Promise.all(promises));
-
-    updateState(props._id, {
-      children: [...s.children],
-    });
-
-    // console.log(app);
-    // if (app.success) {
-    //   console.log('id of app', app.data._id);
-    //   updateState(props._id, {
-    //     children: [...s.children, app.data._id],
-    //   });
-    // } else {
-    //   console.log('Failed to create control panel:', app.message);
-    // }
   }
 
   useEffect(() => {
@@ -86,7 +85,7 @@ function AppComponent(props: App): JSX.Element {
     if (!s.initialized) {
       console.log('creating charts');
       // creates charts
-      createRAPIDApp();
+      createRAPIDCharts();
       updateState(props._id, {
         initialized: true,
       });
