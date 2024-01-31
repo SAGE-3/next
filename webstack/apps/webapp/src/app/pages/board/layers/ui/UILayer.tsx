@@ -48,6 +48,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  Zoom,
 } from './components';
 
 type UILayerProps = {
@@ -280,7 +281,7 @@ export function UILayer(props: UILayerProps) {
         <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
-      <Twilio roomName={props.boardId} connect={twilioConnect} />
+      <Zoom sessionId={props.boardId} connect={twilioConnect} />
 
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
