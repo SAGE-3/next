@@ -7,6 +7,7 @@
  */
 
 import { URLMetadata } from '@sage3/backend';
+import { generateReadableID } from '@sage3/shared';
 import {
   AppsCollection,
   BoardsCollection,
@@ -73,6 +74,7 @@ export async function loadCollections(): Promise<void> {
               color: 'green',
               roomId: res._id,
               ownerId: '-',
+              code: generateReadableID(),
               isPrivate: false,
               privatePin: '',
               executeInfo: { executeFunc: '', params: {} },

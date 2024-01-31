@@ -103,7 +103,8 @@ function AppComponent(props: App): JSX.Element {
   }, [url, sizes, displaySize, scale]);
 
   return (
-    <AppWindow app={props} lockAspectRatio={aspectRatio}>
+    // background false to handle alpha channel
+    <AppWindow app={props} lockAspectRatio={aspectRatio} background={false}>
       <div
         ref={ref}
         style={{

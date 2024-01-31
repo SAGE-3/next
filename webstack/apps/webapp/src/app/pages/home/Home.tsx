@@ -38,6 +38,7 @@ import {
   MenuList,
   Link,
   useMediaQuery,
+  HStack,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -49,7 +50,7 @@ import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
-import { SAGE3Ability } from '@sage3/shared';
+import { SAGE3Ability, generateReadableID } from '@sage3/shared';
 import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
@@ -122,7 +123,7 @@ export function HomePage() {
   } = useRoomStore((state) => state);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
+  const { boards, subscribeToAllBoards: subscribeToBoards, update: updateBoard } = useBoardStore((state) => state);
 
   // User and Presence Store
   const { users, subscribeToUsers } = useUsersStore((state) => state);
@@ -440,6 +441,12 @@ export function HomePage() {
       const room = rooms.find((r) => r._id === board.data.roomId);
       setSelectedRoom(room);
       setSelectedUser(undefined);
+
+      // Fixing data model: adding the board code
+      if (!board.data.code) {
+        const newCode = generateReadableID();
+        updateBoard(board._id, { code: newCode });
+      }
     } else {
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
@@ -466,13 +473,37 @@ export function HomePage() {
       copyBoardUrlToClipboard(roomId, boardId);
       toast({
         title: 'Success',
-        description: `Sharable Board link copied to clipboard.`,
+        description: 'Sharable Board link copied to clipboard.',
         duration: 3000,
         isClosable: true,
         status: 'success',
       });
     }
   };
+
+  // Copy the board id to the clipboard
+  const handleCopyId = async (e: React.MouseEvent<HTMLParagraphElement>) => {
+    if (navigator.clipboard) {
+      if (selectedBoard) {
+        // Select the whole text
+        const range = document.createRange();
+        range.selectNode(e.currentTarget);
+        const selection = window.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        // Copy the board ID into the clipboard
+        await navigator.clipboard.writeText(selectedBoard.data.code);
+        toast({
+          title: 'Success',
+          description: 'Board ID Copied to Clipboard',
+          duration: 3000,
+          isClosable: true,
+          status: 'success',
+        });
+      }
+    }
+  };
+
 
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
@@ -568,7 +599,7 @@ export function HomePage() {
           },
         }}
       />
-      {/* Check if the user wanted to join a board through a URL */}
+      {/* Check if the user wanted to join a board through a URL / ID */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
@@ -621,15 +652,15 @@ export function HomePage() {
         cancelText={'Cancel'}
         confirmText="Clear"
         confirmColor="red"
-        message={`Are you sure you want to clear your recent boards?`}
+        message={'Are you sure you want to clear your recent boards?'}
         onConfirm={handleClearRecentBoards}
       />
 
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
-        width="400px"
-        minWidth="400px"
+        width="350px"
+        minWidth="350px"
         transition="width 0.5s"
         height="100svh"
         display="flex"
@@ -661,7 +692,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'400px'}>
+              <MenuList width={'350px'}>
                 {servers.map((server) => {
                   return (
                     <MenuItem
@@ -744,7 +775,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using a shared URL'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
               <Box
                 h="40px"
                 display="flex"
@@ -756,7 +787,7 @@ export function HomePage() {
                 onClick={enterBoardByURLModalOnOpen}
                 ref={enterBoardByURLRef}
               >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
               </Box>
             </Tooltip>
 
@@ -785,7 +816,7 @@ export function HomePage() {
                             openDelay={400}
                             hasArrow
                             placement="top"
-                            label={`Description: ${room.data.description}`}
+                            label={`Description ${room.data.description}`}
                           >
                             <Box
                               key={room._id}
@@ -1072,10 +1103,20 @@ export function HomePage() {
                             {selectedBoard.data.name}
                           </Text>
                           <Text fontSize="lg" fontWeight={'normal'}>
-                            {selectedBoard?.data.description}
+                            Description {selectedBoard?.data.description}
                           </Text>
-                          <Text>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
-                          <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+
+                          <Text fontSize="lg" fontWeight={'normal'}>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+
+                          <HStack>
+                            <Tooltip placement="top" hasArrow={true} openDelay={400}
+                              label={'Use this ID to enter a board, instead of a URL'}>
+                              <Text fontSize="lg" fontWeight={'normal'}>Board ID</Text>
+                            </Tooltip>
+                            <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>{selectedBoard?.data.code}</Text>
+                          </HStack>
+
                           <Box mt="2" borderRadius="md" as="button" onClick={enterBoardModalOnOpen}>
                             <BoardPreview board={selectedBoard} width={316} height={177} />
                           </Box>
