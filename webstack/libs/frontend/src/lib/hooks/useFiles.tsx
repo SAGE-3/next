@@ -379,7 +379,7 @@ export function useFiles(): UseFiles {
           const text = await response.text();
           const lang = stringContainsCode(text);
           // Create a note from the text
-          return setupApp('CodeViewer', 'CodeViewer', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
+          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
         }
       }
     } else if (isGIF(fileType)) {
