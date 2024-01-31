@@ -16,7 +16,7 @@ function LineGraph() {
 
   return (
     <>
-    {console.log(result)}
+    {/* {console.log(result)} */}
       {result ? (
         <div style={{ background: '#fff', width: '100%', height: '100%', padding: '30px' }}>
           <ResponsiveContainer width="100%" height="100%">
