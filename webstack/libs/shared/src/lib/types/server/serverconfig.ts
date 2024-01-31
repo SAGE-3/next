@@ -52,6 +52,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
+    zoom: ZoomSDKConfiguration;
   };
 
   // Feature flags

@@ -51,7 +51,6 @@ export class SAGEZoomJWTHelper {
       app_key: this.config.apiKey,
       tpc: roomId,
       role_type: 0,
-      user_identity: userId,
       version: 1,
       iat: iat,
       exp: exp,
