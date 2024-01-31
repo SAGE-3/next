@@ -41,7 +41,7 @@
 
   // Seer python server
   "seer": {
-    "url": "http://seer:8000"
+    "url": "http://seer:8001"
   },
 
   // External Services

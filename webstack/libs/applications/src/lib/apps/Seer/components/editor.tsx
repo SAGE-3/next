@@ -331,12 +331,14 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   // Insert room/board info into the editor
   const handleInsertInfo = (ed: editor.ICodeEditor) => {
+    if (!ed) return;
     const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
     ed.focus();
     ed.trigger('keyboard', 'type', { text: info });
   };
 
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
+    if (!ed) return;
     let code = 'from foresight.config import config as conf, prod_type\n';
     code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
     code += `room_id = '${roomId}'\nboard_id = '${boardId}'\n`;
@@ -525,6 +527,7 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
 
   // Insert generated code
   const handleInsertCode = (ed: editor.ICodeEditor) => {
+    if (!ed) return;
     ed.focus();
     ed.setValue(props.generatedCode);
   };

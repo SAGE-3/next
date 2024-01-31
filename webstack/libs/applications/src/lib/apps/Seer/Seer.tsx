@@ -140,18 +140,22 @@ function AppComponent(props: App): JSX.Element {
     }
     const response = await SeerAPI.sendPrompt(prompt, userId);
     if (response) {
-      console.log(response);
-      // updateState(props._id, {
-      //   prompt: prompt,
-      //   output: response.output,
-      //   streaming: response.streaming,
-      //   msgId: response.msgId,
-      // });
+      if (response.ok) {
+        updateState(props._id, {
+          code: response.code,
+        });
+      }
     } else {
       console.log('No response');
     }
   };
 
+  // Code Update
+  useEffect(() => {
+    if (s.code !== generatedCode) {
+      setGeneratedCode(s.code);
+    }
+  }, [s.code]);
   return (
     <AppWindow app={props}>
       <Box // main container

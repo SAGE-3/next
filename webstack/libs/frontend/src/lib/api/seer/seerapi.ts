@@ -19,10 +19,8 @@ async function sendPrompt(textPrompt: string, userId: string): Promise<{ ok: boo
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      data: {
-        text_prompt: textPrompt,
-        user_id: userId,
-      },
+      text_prompt: textPrompt,
+      user_id: userId,
     }),
   });
   const ok = response.ok;
@@ -30,7 +28,8 @@ async function sendPrompt(textPrompt: string, userId: string): Promise<{ ok: boo
     return { ok, code: 'x=1' };
   } else {
     const data = await response.json();
-    return { ok, code: data.code };
+    const d = JSON.parse(data);
+    return { ok, code: d.code };
   }
 }
 
