@@ -63,7 +63,7 @@ const languageExtensions = [
   { name: 'java', extension: 'java' },
 ];
 
-/* App component for CodeViewer */
+/* App component for CodeEditor */
 
 function AppComponent(props: App): JSX.Element {
   // SAGE state
@@ -82,7 +82,7 @@ function AppComponent(props: App): JSX.Element {
   // Initialize the readonly state
   useEffect(() => {
     setReadonly(props._id, true);
-    update(props._id, { title: 'CodeViewer: ' + s.language });
+    update(props._id, { title: 'CodeEditor: ' + s.language });
   }, []);
 
   // Update local value with value from the server
@@ -230,7 +230,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app CodeViewer */
+/* App toolbar component for the app CodeEditor */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Room and board
@@ -319,9 +319,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-            '.' +
-            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+          '.' +
+          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"

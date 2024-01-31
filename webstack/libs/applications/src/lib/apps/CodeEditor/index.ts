@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: CodeViewer
+ * SAGE3 application: CodeEditor
  * created by: SAGE3 team
  */
 
@@ -28,4 +28,4 @@ export const init: Partial<state> = {
   fontSize: 18,
 };
 
-export const name = 'CodeViewer';
+export const name = 'CodeEditor';

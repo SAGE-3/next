@@ -7,7 +7,7 @@ import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
-import { name as CodeViewerName } from './apps/CodeViewer';
+import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
@@ -42,7 +42,7 @@ import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
-import CodeViewer from './apps/CodeViewer/CodeViewer';
+import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
@@ -80,7 +80,7 @@ export const Applications = {
   [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent, GroupedToolbarComponent: Chat.GroupedToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent, GroupedToolbarComponent: Clock.GroupedToolbarComponent },
   [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent, GroupedToolbarComponent: Cobrowse.GroupedToolbarComponent },
-  [CodeViewerName]: { AppComponent: React.memo(CodeViewer.AppComponent), ToolbarComponent: CodeViewer.ToolbarComponent, GroupedToolbarComponent: CodeViewer.GroupedToolbarComponent },
+  [CodeEditorName]: { AppComponent: React.memo(CodeEditor.AppComponent), ToolbarComponent: CodeEditor.ToolbarComponent, GroupedToolbarComponent: CodeEditor.GroupedToolbarComponent },
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent, GroupedToolbarComponent: Counter.GroupedToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent, GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent },
   [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent, GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent },

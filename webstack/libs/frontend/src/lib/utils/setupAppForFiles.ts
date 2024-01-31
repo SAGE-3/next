@@ -113,14 +113,14 @@ export async function setupAppForFile(
     const text = await response.text();
     const lang = stringContainsCode(text);
     return {
-      title: 'CodeViewer',
+      title: 'CodeEditor',
       roomId: roomId,
       boardId: boardId,
       position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
       size: { width: 850, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
-      type: 'CodeViewer',
-      state: { ...(initialValues['CodeViewer'] as AppState), content: text, language: lang },
+      type: 'CodeEditor',
+      state: { ...(initialValues['CodeEditor'] as AppState), content: text, language: lang },
       raised: true,
       dragging: false,
       pinned: false,
