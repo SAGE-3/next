@@ -1,17 +1,33 @@
 /**
  * Uses web worker to send API call to prevent main thread from lagging.
  */
+export type SageNodeQuery = {
+  start: string;
+  end?: string;
+  filter: {
+    name: string;
+    vsn: string;
+  }
+}
+
+export type MesonetQuery = {
+  start?: string;
+  end?: string;
+  metric: string;
+}
+
+export type RAPIDQueries = {
+  sageNode: SageNodeQuery;
+  mesonet: MesonetQuery;
+}
+
 export default () => {
-  async function getSageNodeData() {
+  async function getSageNodeData(query: SageNodeQuery) {
+    console.log("sage node query", query);
+    console.log("sage node query stringified", JSON.stringify(query));
     const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
       method: 'POST',
-      body: JSON.stringify({
-        start: '-24h',
-        filter: {
-          name: 'env.temperature',
-          vsn: 'W097',
-        },
-      }),
+      body: JSON.stringify(query),
     });
 
     const data = await res.text();
@@ -61,13 +77,15 @@ export default () => {
     return formattedData;
   }
 
-  async function getMesonetData() {
+  async function getMesonetData(query: MesonetQuery) {
+    console.log("mesonet query", query.metric)
     const res = await fetch(
       'https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=1440&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba'
     );
-    // console.log("mesonet token", import.meta.env.VITE_MESONET_PUBLIC_TOKEN);
+
     const data = await res.json();
-    //console.log("mesonet data", data);
+    // console.log("mesonet data", data);
+    // console.log("date_time", data?.STATION[0].OBSERVATIONS["date_time"])
 
     const date_time = data?.STATION[0].OBSERVATIONS?.date_time?.map((date: string) => {
       return new Date(date).toLocaleTimeString([], {
@@ -79,34 +97,35 @@ export default () => {
       });
     });
 
-    const air_temp = data?.STATION[0].OBSERVATIONS?.air_temp_set_1?.map((temp: number) => {
+
+    const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`]?.map((temp: number) => {
       return temp;
     });
 
     // Mesonet data has date_time and other fields in separate arrays
-    if (date_time?.length !== air_temp?.length) {
-      console.log('date_time and air_temp are not the same length');
+    if (date_time?.length !== metric?.length) {
+      console.log(`date_time and ${metric} are not the same length`);
       return;
     }
 
     const formattedData = date_time?.map((date: string, index: number) => {
       return {
         x: date,
-        y: air_temp[index],
+        y: metric[index],
       };
     });
 
     return formattedData;
   }
 
-  async function mergeData() {
-    const sageData = await getSageNodeData();
-    const mesonetData = await getMesonetData();
+  async function mergeData(data: RAPIDQueries) {
+    const sageData = await getSageNodeData(data.sageNode);
+    const mesonetData = await getMesonetData(data.mesonet);
 
     const sageMap = new Map(sageData.map(obj => [obj.x, obj.y]));
-    console.log("sagemap", sageMap);
+    // console.log("sagemap", sageMap);
     const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number; }) => [obj.x, obj.y]));
-    console.log("mesonetmap", mesonetMap);
+    // console.log("mesonetmap", mesonetMap);
 
     const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
 
@@ -124,11 +143,12 @@ export default () => {
       // const { num } = e.data;
       // TODO: Use event to pass query to API
       console.log("e", e);
+      // console.log(e.data)
 
       console.time('Worker run');
 
       const result = {
-        data: await mergeData(),
+        data: await mergeData(e.data),
       };
       // console.log(e);
       console.timeEnd('Worker run');

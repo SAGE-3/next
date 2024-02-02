@@ -20,6 +20,17 @@ export const schema = z.object({
   children: z.array(z.string()),
   category: z.string(),
   counter: z.number(),
+  metricData: z
+    .object({
+      data: z.array(
+        z.object({
+          x: z.string(),
+          'Sage Node': z.number(),
+          Mesonet: z.number(),
+        })
+      ),
+    })
+    .nullable(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -29,6 +40,7 @@ export const init: Partial<state> = {
   children: [],
   category: CATEGORIES.CONTROL_PANEL.name,
   counter: 10,
+  metricData: null,
 };
 
 export const name = 'RAPID';
