@@ -16,24 +16,12 @@ export type ControlPanelProps = {
 };
 
 function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
+  // used for multiapp state update
   const { updateStateBatch } = useAppStore((state) => state);
 
-  // Testing multiapp update
-  const handleIncreaseCounter = () => {
-    console.log('clicked');
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-
-    ps.push({ id: id, updates: { counter: s.counter + 1 } });
-
-    s.children.forEach((id: string) => {
-      ps.push({ id: id, updates: { counter: s.counter + 1 } });
-    });
-
-    updateStateBatch(ps);
-  };
-
+  // web worker
   const workerInstance = useMemo(() => createWebWorker(worker), []);
-  const { result, startProcessing } = useWebWorker(workerInstance);
+  const { startProcessing } = useWebWorker(workerInstance);
 
   // initial render
   useEffect(() => {
@@ -57,6 +45,21 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
       console.log('rerendered');
     }
   }, [startProcessing, s.children.length]);
+  
+  // Testing multiapp update
+  const handleIncreaseCounter = () => {
+    console.log('clicked');
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+
+    ps.push({ id: id, updates: { counter: s.counter + 1 } });
+
+    s.children.forEach((id: string) => {
+      ps.push({ id: id, updates: { counter: s.counter + 1 } });
+    });
+
+    updateStateBatch(ps);
+  };
+
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,7 +68,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     const selection = form.get('selection');
     const selectionParsed = JSON.parse(selection as string);
 
-    console.log('selection', selection, selectionParsed);
+    // initialize web worker
     const arr = s.children.concat([id]);
     startProcessing({
       apps: arr,

@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { CATEGORIES } from './constants';
+import { CATEGORIES } from './components/ComponentSelector';
 
 /**
  * SAGE3 application: RAPID

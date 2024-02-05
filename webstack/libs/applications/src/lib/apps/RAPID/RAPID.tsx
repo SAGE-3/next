@@ -7,18 +7,16 @@
  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Button } from '@chakra-ui/react';
 import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useEffect } from 'react';
 import ComponentSelector from './components/ComponentSelector';
-import { AppSchema } from '../../schema';
 
 // Styling
 import './styling.css';
-import { CATEGORIES } from './constants';
+import { CATEGORIES } from './components/ComponentSelector';
 
 /* App component for RAPID */
 
@@ -29,13 +27,13 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
-  // Creates rapid charts
-  // TODO: Try to create 2 apps, one with graph, and another one with min, max, average
+  // Create RAPID charts
   async function createRAPIDCharts() {
     try {
       const promises = [];
 
       for (const category in CATEGORIES) {
+        // ignore creation of Control Panel
         if (CATEGORIES[`${category}` as keyof typeof CATEGORIES].name === 'Control Panel') continue;
         promises.push(
           createApp({
@@ -69,11 +67,6 @@ function AppComponent(props: App): JSX.Element {
 
       const resolution = await Promise.all(promises);
 
-      // console.log(
-      //   'resultion',
-      //   resolution.map((res) => res.data._id)
-      // );
-
       updateState(props._id, {
         children: [...s.children, ...resolution.map((res) => res.data._id)],
       });
@@ -94,7 +87,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }, []);
 
-  console.log('props.data', props.data);
+  // console.log('props.data', props.data);
   // console.log("children", s.children);
   return (
     <AppWindow app={props}>
@@ -109,9 +102,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   return (
-    <div>
-      <Button colorScheme="green">Action</Button>
-    </div>
+    <></>
   );
 }
 
