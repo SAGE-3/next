@@ -27,25 +27,27 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
   useEffect(() => {
     if (s.children.length > 0) {
       const arr = s.children.concat([id]);
-      console.log('arr', arr);
-      console.log('children', s.children);
+      // console.log('arr', arr);
+      // console.log('children', s.children);
+      console.log('metric', s.metric);
       startProcessing({
         apps: arr,
+        metric: s.metric,
         sageNode: {
           start: '-24h',
           filter: {
-            name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
+            name: s.metric.SAGE_NODE,
             vsn: 'W097',
           },
         },
         mesonet: {
-          metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+          metric: s.metric.MESONET,
         },
       });
-      console.log('rerendered');
+      // console.log('rerendered');
     }
   }, [startProcessing, s.children.length]);
-  
+
   // Testing multiapp update
   const handleIncreaseCounter = () => {
     console.log('clicked');
@@ -60,7 +62,6 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     updateStateBatch(ps);
   };
 
-
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     // get data from form
@@ -72,6 +73,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     const arr = s.children.concat([id]);
     startProcessing({
       apps: arr,
+      metric: selectionParsed,
       sageNode: {
         start: '-24h',
         filter: {
@@ -86,19 +88,27 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
   }
 
   return (
-    <Box padding="5">
-      <h1>Control Panel</h1>
-      <div>Counter: {s.counter}</div>
-      <Button onClick={handleIncreaseCounter}>Increase Count</Button>
-      <form onSubmit={handleSubmit}>
-        <Select name="selection">
-          <option value={JSON.stringify(QUERY_FIELDS.TEMPERATURE)}>{QUERY_FIELDS.TEMPERATURE.NAME}</option>
-          <option value={JSON.stringify(QUERY_FIELDS.RELATIVE_HUMIDITY)}>{QUERY_FIELDS.RELATIVE_HUMIDITY.NAME}</option>
-          <option value={JSON.stringify(QUERY_FIELDS.PRESSURE)}>{QUERY_FIELDS.PRESSURE.NAME}</option>
-        </Select>
-        <Button type="submit">Submit</Button>
-      </form>
-    </Box>
+    <>
+      {s && (
+        <Box padding="5">
+          <h1>Control Panel</h1>
+          <div>current metric: {s.metric.NAME}</div>
+          <div>Counter: {s.counter}</div>
+          <Button onClick={handleIncreaseCounter}>Increase Count</Button>
+          <Box marginTop="4">Filter</Box>
+          <form onSubmit={handleSubmit}>
+            <Select name="selection" placeholder="Select Metric" paddingY="3">
+              <option value={JSON.stringify(QUERY_FIELDS.TEMPERATURE)}>{QUERY_FIELDS.TEMPERATURE.NAME}</option>
+              <option value={JSON.stringify(QUERY_FIELDS.RELATIVE_HUMIDITY)}>{QUERY_FIELDS.RELATIVE_HUMIDITY.NAME}</option>
+              <option value={JSON.stringify(QUERY_FIELDS.PRESSURE)}>{QUERY_FIELDS.PRESSURE.NAME}</option>
+            </Select>
+            <Box display="flex" justifyContent="end">
+              <Button type="submit">Submit</Button>
+            </Box>
+          </form>
+        </Box>
+      )}
+    </>
   );
 }
 

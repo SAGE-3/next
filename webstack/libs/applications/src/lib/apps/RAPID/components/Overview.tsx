@@ -5,7 +5,7 @@ import { ResultDataPoint } from '../worker/useWebWorker';
 
 function Overview({ s }: RAPIDState): JSX.Element {
   const getAverage = (arr: ResultDataPoint[], org: string) => {
-    console.log('arr', arr);
+    // console.log('arr', arr);
     if (org === 'Sage Node') {
       return (arr.reduce((prev, curr) => prev + curr['Sage Node'], 0) / arr.length).toFixed(2);
     }

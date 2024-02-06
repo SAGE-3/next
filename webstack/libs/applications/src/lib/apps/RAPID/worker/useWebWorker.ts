@@ -25,15 +25,18 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
   const [error, setError] = useState<any>();
   const [result, setResult] = useState<Result>();
 
-  // using useRef to keep track of ids independently of state, might not be best practice
-  const idsRef = useRef<string[]>([]);
+  // using useRef to keep track of ids and metric independently of state, might not be best practice
+  const ids = useRef<string[]>([]);
+  const metric = useRef<string>('');
 
   // initialize web worker
   const startProcessing = useCallback(
     (data: TWorkerPayload) => {
       // console.log('data from start process', data);
       setRunning(true);
-      idsRef.current = (data as any).apps;
+      ids.current = (data as any).apps;
+      metric.current = (data as any).metric;
+      // console.log('metric', metric.current);
       // console.log("idsRef.current", idsRef.current);
       worker.postMessage(data);
     },
@@ -44,22 +47,22 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
   const updateRAPIDData = (result: Result) => {
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     // console.log('ids', ids);
-    // console.log('result', result); 
+    // console.log('result', result);
 
-    idsRef.current.forEach((id) => {
+    ids.current.forEach((id) => {
       ps.push({
         id,
         updates: {
+          metric: metric.current,
           metricData: result,
         },
       });
     });
-    
+
     updateStateBatch(ps);
-  }
+  };
 
   useEffect(() => {
-    // 
     const onMessage = (event: MessageEvent<IBaseWorkerResponse<Result>>) => {
       //console.log(event);
       setRunning(false);

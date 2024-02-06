@@ -41,7 +41,7 @@ export type RAPIDState = {
 function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
   const s = propsData.data.state as AppState;
 
-  if (propsData.data.state.category === CATEGORIES.CONTROL_PANEL.name) {
+  if (s.category === CATEGORIES.CONTROL_PANEL.name) {
     return (
       <ControlPanel id={propsData._id} s={s} />
     );

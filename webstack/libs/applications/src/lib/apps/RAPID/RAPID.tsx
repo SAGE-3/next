@@ -11,8 +11,9 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
+import { useUser } from '@sage3/frontend';
 
 // Styling
 import './styling.css';
@@ -22,10 +23,13 @@ import { CATEGORIES } from './components/ComponentSelector';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  console.log('counter', props.data.state);
+  // console.log('counter', props.data.state);
 
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+
+  const { user } = useUser();
+  console.log('user', user);
 
   // Create RAPID charts
   async function createRAPIDCharts() {
@@ -33,6 +37,7 @@ function AppComponent(props: App): JSX.Element {
       const promises = [];
 
       for (const category in CATEGORIES) {
+        console.log('catergory', category);
         // ignore creation of Control Panel
         if (CATEGORIES[`${category}` as keyof typeof CATEGORIES].name === 'Control Panel') continue;
         promises.push(
@@ -53,7 +58,6 @@ function AppComponent(props: App): JSX.Element {
             type: 'RAPID',
             rotation: { x: 0, y: 0, z: 0 },
             state: {
-              initialized: true,
               parent: props._id,
               category: CATEGORIES[`${category}` as keyof typeof CATEGORIES].name,
               counter: s.counter,
@@ -65,6 +69,8 @@ function AppComponent(props: App): JSX.Element {
         );
       }
 
+      console.log('promises.length', promises.length);
+
       const resolution = await Promise.all(promises);
 
       updateState(props._id, {
@@ -75,23 +81,44 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
+  // Add user id to state to prevent multiple charts to go off
   useEffect(() => {
-    // create charts upon creation of application
-    if (!s.initialized) {
-      console.log('creating charts');
-      // creates charts
-      createRAPIDCharts();
-      updateState(props._id, {
-        initialized: true,
+    async function isUniqueClient() {
+      await updateState(props._id, {
+        unique: user?._id,
       });
     }
+    if (!s.unique) {
+      isUniqueClient();
+    }
   }, []);
+
+  useEffect(() => {
+    console.log("s", s);
+    if (s.unique === user?._id) {
+      console.log('unique');
+        if (s.initialized === false) {
+          updateState(props._id, {
+            initialized: true,
+          });
+          console.log('creating charts');
+          // creates charts
+          createRAPIDCharts();
+        }
+    } else {
+      console.log('not unique');
+    }
+  }, [s.unique]);
+
 
   // console.log('props.data', props.data);
   // console.log("children", s.children);
   return (
     <AppWindow app={props}>
-      <ComponentSelector propsData={props as App} />
+      <>
+        {/* <button onClick={createRAPIDCharts}>Click me to generate charts</button> */}
+        <ComponentSelector propsData={props as App} />
+      </>
     </AppWindow>
   );
 }
@@ -101,9 +128,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <></>
-  );
+  return <></>;
 }
 
 /**
