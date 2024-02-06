@@ -296,7 +296,15 @@ export function isGLTF(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isCode(mimeType: string): boolean {
-  const formats = ['text/x-c', 'text/x-csharp', 'text/x-java-source', 'application/json', 'text/yaml', 'application/typescript'];
+  const formats = [
+    'text/javascript',
+    'text/x-c',
+    'text/x-csharp',
+    'text/x-java-source',
+    'application/json',
+    'text/yaml',
+    'application/typescript',
+  ];
   return formats.includes(mimeType);
 }
 

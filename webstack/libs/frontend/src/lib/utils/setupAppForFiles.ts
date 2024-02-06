@@ -25,7 +25,6 @@ import {
   isFileURL,
 } from '@sage3/shared';
 import { apiUrls } from '@sage3/frontend';
-import { stringContainsCode } from '@sage3/shared';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -100,18 +99,6 @@ export async function setupAppForFile(
       }
     }
   } else if (isCode(file.type)) {
-    // Look for the file in the asset store
-    const localurl = apiUrls.assets.getAssetById(file.filename);
-    // Get the content of the file
-    const response = await fetch(localurl, {
-      headers: {
-        'Content-Type': 'text/plain',
-        Accept: 'text/plain',
-      },
-    });
-    // Get the content of the file
-    const text = await response.text();
-    const lang = stringContainsCode(text);
     return {
       title: 'CodeEditor',
       roomId: roomId,
@@ -120,7 +107,7 @@ export async function setupAppForFile(
       size: { width: 850, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeEditor',
-      state: { ...(initialValues['CodeEditor'] as AppState), content: text, language: lang },
+      state: { ...(initialValues['CodeEditor'] as AppState), assetid: file.id, content: '', language: '' },
       raised: true,
       dragging: false,
       pinned: false,

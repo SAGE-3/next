@@ -368,18 +368,9 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
-          const localurl = apiUrls.assets.getAssetById(a.data.file);
-          // Get the content of the file
-          const response = await fetch(localurl, {
-            headers: {
-              'Content-Type': 'text/plain',
-              Accept: 'text/plain',
-            },
-          });
-          const text = await response.text();
-          const lang = stringContainsCode(text);
           // Create a note from the text
-          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
+          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
+            { assetid: apiUrls.assets.getAssetById(a.data.file), content: '', language: '' });
         }
       }
     } else if (isGIF(fileType)) {

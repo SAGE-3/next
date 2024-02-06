@@ -11,9 +11,12 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams } from 'react-router';
 
 // Library imports
-import { Box, Button, ButtonGroup, Tooltip, useColorModeValue, useDisclosure, useToast } from '@chakra-ui/react';
+import {
+  Box, Button, ButtonGroup, Tooltip, useColorModeValue, useDisclosure, useToast,
+  Menu, MenuButton, MenuList, MenuItem
+} from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdFileDownload, MdFileUpload } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdMenu, MdTipsAndUpdates } from 'react-icons/md';
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 
@@ -21,10 +24,12 @@ import { format as dateFormat } from 'date-fns/format';
 import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
-import { MdLock, MdLockOpen, MdRemove, MdAdd } from 'react-icons/md';
 
 // Sage3 Imports
-import { useAppStore, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
+import { useAppStore, useAssetStore, downloadFile, ConfirmValueModal, isUUIDv4, apiUrls, setupApp } from '@sage3/frontend';
+import { stringContainsCode } from '@sage3/shared';
+import { Asset } from '@sage3/shared/types';
+
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from '.';
@@ -36,17 +41,19 @@ import { create } from 'zustand';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
-// Throttle
-// import { throttle } from 'throttle-debounce';
 
 interface CodeStore {
   readonly: { [key: string]: boolean };
   setReadonly: (id: string, r: boolean) => void;
+  yText: { [key: string]: Y.Text };
+  setYText: (id: string, text: Y.Text) => void;
 }
 
 const useStore = create<CodeStore>()((set) => ({
   readonly: {} as { [key: string]: boolean },
   setReadonly: (id: string, r: boolean) => set((s) => ({ ...s, readonly: { ...s.readonly, ...{ [id]: r } } })),
+  yText: {} as { [key: string]: Y.Text },
+  setYText: (id: string, text: Y.Text) => set((s) => ({ ...s, yText: { ...s.yText, ...{ [id]: text } } })),
 }));
 
 const languageExtensions = [
@@ -64,26 +71,74 @@ const languageExtensions = [
 ];
 
 /* App component for CodeEditor */
-
 function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
+  const assets = useAssetStore((state) => state.assets);
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
+  // Asset data structure
+  const [file, setFile] = useState<Asset>();
+
   // LocalState
   const [spec, setSpec] = useState(s.content);
   const readonly = useStore((state) => state.readonly[props._id]);
   const setReadonly = useStore((state) => state.setReadonly);
+  const yText = useStore((state) => state.yText[props._id]);
+  const setYText = useStore((state) => state.setYText);
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Initialize the readonly state
   useEffect(() => {
     setReadonly(props._id, true);
-    update(props._id, { title: 'CodeEditor: ' + s.language });
   }, []);
+
+  // Convert the ID to an asset
+  useEffect(() => {
+    const isUUID = isUUIDv4(s.assetid);
+    if (isUUID) {
+      const myasset = assets.find((a) => a._id === s.assetid);
+      if (myasset) {
+        setFile(myasset);
+        // Update the app title
+        update(props._id, { title: myasset?.data.originalfilename });
+      }
+    } else {
+      update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
+    }
+  }, [s.assetid, assets]);
+
+  // Once we have the asset, get the data
+  useEffect(() => {
+    async function fetchAsset() {
+      if (file) {
+        // Look for the file in the asset store
+        const localurl = apiUrls.assets.getAssetById(file.data.file);
+        // Get the content of the file
+        const response = await fetch(localurl, {
+          headers: {
+            'Content-Type': 'text/plain',
+            Accept: 'text/plain',
+          },
+        });
+        // Get the content of the file
+        const text = await response.text();
+        const lang = stringContainsCode(text);
+        updateState(props._id, { language: lang });
+        console.log('Set spec', text.length);
+        setSpec(text);
+        if (yText) {
+          yText.insert(0, spec);
+        } else {
+          console.log('No yText');
+        }
+      }
+    }
+    fetchAsset();
+  }, [file, yText]);
 
   // Update local value with value from the server
   useEffect(() => {
@@ -141,7 +196,9 @@ function AppComponent(props: App): JSX.Element {
     // save the editorRef
     editorRef.current = editor;
     // Connect to Yjs
+    console.log('Before connect', spec.length)
     connectToYjs(editor);
+    // Track the scroll position
     editor.onDidScrollChange(function (event) {
       updateState(props._id, { scrollPosition: event.scrollTop });
     });
@@ -162,25 +219,26 @@ function AppComponent(props: App): JSX.Element {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
     const doc = new Y.Doc();
-    const yText = doc.getText('monaco');
+    const lyText = doc.getText('monaco');
+    setYText(props._id, lyText);
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
-    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+    new MonacoBinding(lyText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
       const count = users.size;
-
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
         // Does the app have code?
+        console.log('Spec', spec.length)
         if (spec) {
           // Clear any existing lines
-          yText.delete(0, yText.length);
+          lyText.delete(0, lyText.length);
           // Set the lines from the database
-          yText.insert(0, spec);
+          lyText.insert(0, spec);
         }
       }
     });
@@ -234,7 +292,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // Room and board
-  const { roomId } = useParams();
+  const { roomId, boardId } = useParams();
   // display some notifications
   const toast = useToast();
   // Save Confirmation  Modal
@@ -243,6 +301,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const readonly = useStore((state) => state.readonly[props._id]);
   const setReadonly = useStore((state) => state.setReadonly);
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
 
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
@@ -309,6 +368,154 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { fontSize: fs });
   }
 
+  // Explain the code
+  function explainCode() {
+    const modelHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    const modelBody = {
+      inputs: `[INST]Explain the following ${s.language} code: ${s.content}[/INST]`,
+      parameters: {
+        max_new_tokens: 400
+      }
+    };
+    console.log('Request Code', JSON.stringify(modelBody, null, 4));
+    // Send the request
+    fetch("https://astrolab.evl.uic.edu:4343/generate", {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(modelBody),
+    }).then((response) => response.json())
+      .then((data) => {
+        if (roomId && boardId && data) {
+          const result = data.generated_text || 'No result';
+          console.log(result);
+          const w = props.data.size.width;
+          const h = props.data.size.height;
+          const x = props.data.position.x + w + 20;
+          const y = props.data.position.y;
+          createApp(setupApp('Explain Code', 'Stickie', x, y, roomId, boardId,
+            { w, h }, { text: result, fontSize: 24, color: 'yellow' }));
+        }
+      });
+  }
+
+  // Refector the code
+  function refactorCode() {
+    const modelHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    const modelBody = {
+      inputs: `[INST]Can you refactor this ${s.language} code: ${s.content}[/INST]`,
+      parameters: {
+        max_new_tokens: 400
+      }
+    };
+    console.log('Request Code', JSON.stringify(modelBody, null, 4));
+    // Send the request
+    fetch("https://astrolab.evl.uic.edu:4343/generate", {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(modelBody),
+    }).then((response) => response.json())
+      .then((data) => {
+        if (roomId && boardId && data) {
+          const result = data.generated_text || 'No result';
+          console.log(result);
+          const w = props.data.size.width;
+          const h = props.data.size.height;
+          const x = props.data.position.x + w + 20;
+          const y = props.data.position.y;
+          createApp(setupApp('Explain Code', 'Stickie', x, y, roomId, boardId,
+            { w, h }, { text: result, fontSize: 24, color: 'orange' }));
+        }
+      });
+  }
+
+  // Comment the code
+  function commentCode() {
+    const modelHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    const modelBody = {
+      inputs: `[INST] <<SYS>> You are a good programmer. Return only the new version code. <<SYS>> Can you add comments in this ${s.language} code to explain clearly what each instruction is supposed to do: ${s.content} [/INST]`,
+      parameters: {
+        max_new_tokens: 400
+      }
+    };
+    console.log('Request Code', JSON.stringify(modelBody, null, 4));
+    // Send the request
+    fetch("https://astrolab.evl.uic.edu:4343/generate", {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(modelBody),
+    }).then((response) => response.json())
+      .then((data) => {
+        if (roomId && boardId && data) {
+          const result = data.generated_text || 'No result';
+          console.log(result);
+          const w = props.data.size.width;
+          const h = props.data.size.height;
+          const x = props.data.position.x + w + 20;
+          const y = props.data.position.y;
+          createApp(setupApp('CodeEditor', 'CodeEditor', x, y, roomId, boardId,
+            { w, h }, { content: result, language: s.language, fontSize: s.fontSize }));
+        }
+      });
+  }
+
+  // Generate code
+  function generateCode() {
+    const modelHeaders: Record<string, string> = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    /*
+    for follow up prompt:
+      [INST] {prompt1} [/INST]
+      {response1}
+      [INST] {prompt2} [/INST]
+      {response2}
+    */
+
+    const query = `Load a CSV file into a pandas dataframe and display the data using matplotlib, using 300dpi resolution.`;
+    // const query = `Load a CSV file into a pandas dataframe and display the first 5 rows.`;
+    // const query = `Write an input text box with React. Use Typescruipt and Material UI.`;
+    // const query = `Write a python function to integrate x**2 from x_min to x_max`;
+    // const query = `Write a python function to generate the nth fibonacci number.`;
+    const modelBody = {
+      inputs: `[INST] <<SYS>> You are an expert programmer that helps to write Python code based on the user request. Don't be too verbose. Return only commented code. <<SYS>> ${query} [/INST]`,
+      parameters: {
+        max_new_tokens: 400
+      }
+    };
+    console.log('Request Code', JSON.stringify(modelBody, null, 4));
+    // Send the request
+    fetch("https://astrolab.evl.uic.edu:4343/generate", {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(modelBody),
+    }).then((response) => response.json())
+      .then((data) => {
+        if (roomId && boardId && data) {
+          const result: string = data.generated_text || 'No result';
+          const lines = result.split('\n');
+          lines.shift();
+          lines.pop();
+          const w = props.data.size.width;
+          const h = props.data.size.height;
+          const x = props.data.position.x + w + 20;
+          const y = props.data.position.y;
+          createApp(setupApp('CodeEditor', 'CodeEditor', x, y, roomId, boardId,
+            { w, h }, { content: lines.join('\n'), language: 'python', fontSize: s.fontSize }));
+        }
+      });
+  }
+
+
   return (
     <>
       <ConfirmValueModal
@@ -372,6 +579,32 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
+      {/* Smart Action */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdMenu />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={explainCode}>
+              Explain Code
+            </MenuItem>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={refactorCode}>
+              Refactor Code
+            </MenuItem>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={commentCode}>
+              Comment Code
+            </MenuItem>
+            <MenuItem icon={<MdTipsAndUpdates />} onClick={generateCode}>
+              Generate Code
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
     </>
   );
 }
