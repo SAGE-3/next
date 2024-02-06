@@ -87,7 +87,7 @@ import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
  */
 export function HomePage() {
   // Media Query
-  const [isLargerThan800] = useMediaQuery('(min-width: 800px)')
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
   // URL Params
   const { roomId, boardId } = useParams();
   const { toHome } = useRouteNav();
@@ -319,6 +319,11 @@ export function HomePage() {
     localStorage.setItem('s3_intro_done', 'false');
   };
 
+  const handleBoardDoubleClick = (board: Board) => {
+    setSelectedBoard(board);
+    enterBoardModalOnOpen();
+  };
+
   // Load the steps when the component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
@@ -504,7 +509,6 @@ export function HomePage() {
     }
   };
 
-
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
     const isOwner = selectedRoom?.data.ownerId === userId;
@@ -512,6 +516,26 @@ export function HomePage() {
       leaveRoomMembership(selectedRoom._id);
       handleLeaveRoom();
       leaveRoomModalOnClose();
+    }
+  };
+
+  // Handle Join room membership
+  const handleJoinRoomMembership = (room: Room) => {
+    if (canJoin) {
+      joinRoomMembership(room._id);
+      toast({
+        title: `You have successfully joined ${room.data.name}`,
+        status: 'success',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'You do not have permission to join rooms',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
     }
   };
 
@@ -882,6 +906,7 @@ export function HomePage() {
                               backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
                               _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                               onClick={() => handleBoardClick(board)}
+                              onDoubleClick={() => handleBoardDoubleClick(board)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
                                 <Text fontSize="md">{board.data.name}</Text>
@@ -930,6 +955,7 @@ export function HomePage() {
                             height="28px"
                             backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
                             onClick={() => handleBoardClick(board)}
+                            onDoubleClick={() => handleBoardDoubleClick(board)}
                             _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                           >
                             <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
@@ -1036,14 +1062,20 @@ export function HomePage() {
                   placement="top"
                 >
                   <Button
-                    colorScheme="red"
+                    colorScheme={rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'red' : 'teal'}
                     variant="outline"
                     size="sm"
                     width="120px"
-                    onClick={leaveRoomModalOnOpen}
+                    onClick={() => {
+                      if (rooms.filter(roomMemberFilter).includes(selectedRoom)) {
+                        leaveRoomModalOnOpen();
+                      } else {
+                        handleJoinRoomMembership(selectedRoom);
+                      }
+                    }}
                     isDisabled={selectedRoom.data.ownerId === userId}
                   >
-                    Unjoin Room
+                    {rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'Unjoin' : 'Join'}
                   </Button>
                 </Tooltip>
               </Box>
@@ -1106,15 +1138,27 @@ export function HomePage() {
                             Description {selectedBoard?.data.description}
                           </Text>
 
-                          <Text fontSize="lg" fontWeight={'normal'}>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
-                          <Text fontSize="lg" fontWeight={'normal'}>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>
+                            Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}
+                          </Text>
+                          <Text fontSize="lg" fontWeight={'normal'}>
+                            Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}
+                          </Text>
 
                           <HStack>
-                            <Tooltip placement="top" hasArrow={true} openDelay={400}
-                              label={'Use this ID to enter a board, instead of a URL'}>
-                              <Text fontSize="lg" fontWeight={'normal'}>Board ID</Text>
+                            <Tooltip
+                              placement="top"
+                              hasArrow={true}
+                              openDelay={400}
+                              label={'Use this ID to enter a board, instead of a URL'}
+                            >
+                              <Text fontSize="lg" fontWeight={'normal'}>
+                                Board ID
+                              </Text>
                             </Tooltip>
-                            <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>{selectedBoard?.data.code}</Text>
+                            <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>
+                              {selectedBoard?.data.code}
+                            </Text>
                           </HStack>
 
                           <Box mt="2" borderRadius="md" as="button" onClick={enterBoardModalOnOpen}>
@@ -1198,9 +1242,7 @@ export function HomePage() {
         display={isLargerThan800 ? 'flex' : 'none'}
       />
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef}
-        display={isLargerThan800 ? 'flex' : 'none'}
-      >
+      <Box position="absolute" right="1" top="1" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
         <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
       </Box>
     </Box>
