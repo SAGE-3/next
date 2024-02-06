@@ -28,8 +28,8 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
+  // used to get userId
   const { user } = useUser();
-  console.log('user', user);
 
   // Create RAPID charts
   async function createRAPIDCharts() {
@@ -81,7 +81,10 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
-  // Add user id to state to prevent multiple charts to go off
+  /**
+   * Add userid to unique field. This is used to prevent useEffect to be triggered
+   * by multiple clients upon generation of the apps
+   */
   useEffect(() => {
     async function isUniqueClient() {
       await updateState(props._id, {
@@ -93,30 +96,27 @@ function AppComponent(props: App): JSX.Element {
     }
   }, []);
 
+  // create charts
   useEffect(() => {
-    console.log("s", s);
     if (s.unique === user?._id) {
       console.log('unique');
-        if (s.initialized === false) {
-          updateState(props._id, {
-            initialized: true,
-          });
-          console.log('creating charts');
-          // creates charts
-          createRAPIDCharts();
-        }
+      // prevents charts from infinitely generating
+      if (s.initialized === false) {
+        updateState(props._id, {
+          initialized: true,
+        });
+        console.log('creating charts');
+        // creates charts
+        createRAPIDCharts();
+      }
     } else {
       console.log('not unique');
     }
   }, [s.unique]);
 
-
-  // console.log('props.data', props.data);
-  // console.log("children", s.children);
   return (
     <AppWindow app={props}>
       <>
-        {/* <button onClick={createRAPIDCharts}>Click me to generate charts</button> */}
         <ComponentSelector propsData={props as App} />
       </>
     </AppWindow>
