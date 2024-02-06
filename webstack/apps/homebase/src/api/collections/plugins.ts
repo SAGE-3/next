@@ -111,7 +111,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             const item = result.files[key];
             // Replace the first directory with the plugin name
             const filePath = key.split('/');
-            if (filePath[0] !== '__MACOSX') {
+            if (filePath[0] !== '' && filePath[0] !== '__MACOSX' && filePath[0] !== '.DS_Store') {
               if (filePath[1] !== '' && filePath[1] !== '.DS_Store') {
                 if (filePath[1] === 'index.html') foundIndex = true;
                 filePath[0] = pluginName;
