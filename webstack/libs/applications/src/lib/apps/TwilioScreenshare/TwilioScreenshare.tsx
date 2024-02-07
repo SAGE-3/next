@@ -7,7 +7,7 @@
  */
 
 // Chakra and React imports
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -21,19 +21,27 @@ import {
   TabPanel,
   Image,
   ButtonGroup,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  useToast,
+  ToastId,
 } from '@chakra-ui/react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody } from '@chakra-ui/react';
-
-import { App } from '../../schema';
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-
-// SAGE imports
-import { useAppStore, useUser, useTwilioStore, useHexColor, isElectron } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
 
 // Twilio Imports
 import { LocalVideoTrack } from 'twilio-video';
+
+// SAGE imports
+import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectron, apiUrls } from '@sage3/frontend';
+import { genId } from '@sage3/shared';
+
+// App
+import { App } from '../../schema';
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -42,15 +50,15 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 60 * 60 * 1000; // 1 hour
+const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
   // Current User
-  const { user } = useUser();
-  const yours = user?._id === props._createdBy;
+  const { user, accessId } = useUser();
+  const yours = user?._id === props._createdBy && accessId === s.accessId;
 
   // Twilio Store
   const room = useTwilioStore((state) => state.room);
@@ -68,10 +76,13 @@ function AppComponent(props: App): JSX.Element {
   // UI
   const red = useHexColor('red');
   const teal = useHexColor('teal');
+  const fitAppsById = useUIStore((state) => state.fitAppsById);
+  const boardLocked = useUIStore((state) => state.boardLocked);
 
   // Electron media sources
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
   const [selectedSource, setSelectedSource] = useState<ElectronSource | null>(null);
+  // const [currentDisplay, setCurrentDisplay] = useState<string | null>(null);
 
   // Modal window
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -83,9 +94,50 @@ function AppComponent(props: App): JSX.Element {
   // The user that is sharing only sets the selTrack
   const [selTrack, setSelTrack] = useState<LocalVideoTrack | null>(null);
 
+  // Toasts
+  const toast = useToast();
+  const toastIdRef = useRef<ToastId>();
+
+  // Other apps
+  const apps = useAppStore((state) => state.apps);
+  const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
+  const [closeApp, setCloseApp] = useState(false);
+
+  // Check if user already has a screenshare going
+  // Will toast the user and delete the app if they do
+  function checkForScreenShare(): boolean {
+    if (otherScreenshares.length > 0) {
+      toast({
+        title: 'You can only have one screenshare at a time.',
+        status: 'error',
+        duration: 2000,
+        isClosable: false,
+      });
+      // Set close app to true so the useEffect will delete the app
+      setCloseApp(true);
+      return true;
+    }
+    return false;
+  }
+
+  // Useeffect to delete the app if the user already has a screenshare going
+  useEffect(() => {
+    if (closeApp) {
+      // Delete this app. Could be due to a user attempting to share a screen while already sharing
+      deleteApp(props._id);
+    }
+  }, [closeApp]);
+
+  // Close the toast
+  function closeToast() {
+    if (toastIdRef.current) {
+      toast.close(toastIdRef.current);
+    }
+  }
+
   useEffect(() => {
     // If the user changes the dimensions of the shared window, resize the app
-    const updateDimensions = (track: any) => {
+    const updateDimensions = (track: LocalVideoTrack) => {
       if (track.dimensions.width && track.dimensions.height) {
         const aspect = track.dimensions.width / track.dimensions.height;
         let w = props.data.size.width;
@@ -118,7 +170,7 @@ function AppComponent(props: App): JSX.Element {
   // Get server time
   useEffect(() => {
     async function getServerTime() {
-      const response = await fetch('/api/time');
+      const response = await fetch(apiUrls.misc.getTime);
       const time = await response.json();
       setServerTimeDifference(Date.now() - time.epoch);
     }
@@ -144,11 +196,20 @@ function AppComponent(props: App): JSX.Element {
   }, [room]);
 
   const shareScreen = async () => {
+    // Lets check if user already has a screen share going
+    const alreadySharing = checkForScreenShare();
+    if (alreadySharing) return;
+
     stopStream();
     if (room && videoRef.current) {
       // Load electron and the IPCRender
       if (isElectron()) {
         try {
+          // window.electron.on('current-display', (display: number) => {
+          //   setCurrentDisplay(display.toString());
+          // });
+          // window.electron.send('request-current-display');
+
           // Get sources from the main process
           window.electron.on('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
@@ -175,6 +236,16 @@ function AppComponent(props: App): JSX.Element {
           room.localParticipant.publishTrack(screenTrack);
           await updateState(props._id, { videoId });
           setSelTrack(screenTrack);
+
+          // Close Toast
+          closeToast();
+          // Show a notification
+          toastIdRef.current = toast({
+            title: 'Screenshare started',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
         } catch (err) {
           deleteApp(props._id);
         }
@@ -197,6 +268,8 @@ function AppComponent(props: App): JSX.Element {
       });
       videoRef.current.srcObject = null;
     }
+    // Hide Electron window
+    // if (isElectron()) window.electron.send('show-main-window', {});
   };
 
   useEffect(() => {
@@ -206,11 +279,36 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [stopStreamId]);
 
+  const goToScreenshare = useCallback(() => {
+    if (!boardLocked) {
+      // Close the popups
+      closeToast();
+      // Zoom in
+      fitAppsById([props._id]);
+    }
+  }, [props, boardLocked]);
+
   useEffect(() => {
     if (yours) return;
     tracks.forEach((track) => {
-      if (track.name === s.videoId && videoRef.current) {
+      if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
         track.attach(videoRef.current);
+        // Close other toasts by this app
+        closeToast();
+        // Show a notification
+        toastIdRef.current = toast({
+          title: `${props.data.title} started a screenshare`,
+          description: (
+            <Box>
+              <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
+                Focus on their screen?
+              </Button>
+            </Box>
+          ),
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+        });
       }
     });
   }, [tracks, s.videoId]);
@@ -219,7 +317,19 @@ function AppComponent(props: App): JSX.Element {
     stopStream();
     if (yours) update(props._id, { title: `${user.data.name}` });
     return () => {
-      stopStream();
+      if (yours) {
+        // Close other toasts by this app
+        closeToast();
+        // Show a notification
+        toastIdRef.current = toast({
+          title: 'Your screenshare has ended',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        stopStream();
+      }
+      closeToast();
     };
   }, []);
 
@@ -255,6 +365,21 @@ function AppComponent(props: App): JSX.Element {
       await updateState(props._id, { videoId });
       setSelTrack(screenTrack);
       onClose();
+
+      // Hide Electron window if on same screen
+      // if (selectedSource.display_id === currentDisplay) {
+      //   if (isElectron()) window.electron.send('hide-main-window', {});
+      // }
+
+      // Close other toasts by this app
+      closeToast();
+      // Show a notification
+      toastIdRef.current = toast({
+        title: 'Screenshare started',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
@@ -344,7 +469,7 @@ function AppComponent(props: App): JSX.Element {
               <Button colorScheme="red" mr="2" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button colorScheme="teal" disabled={!selectedSource} onClick={electronShareHandle}>
+              <Button colorScheme="teal" isDisabled={!selectedSource} onClick={electronShareHandle}>
                 Share
               </Button>
             </ModalFooter>
@@ -364,17 +489,24 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Twilio Store
   const stopStream = useTwilioStore((state) => state.setStopStream);
+
   return (
-    <>
-      <ButtonGroup>
-        {yours ? (
-          <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
-            Stop Stream
-          </Button>
-        ) : null}
-      </ButtonGroup>
-    </>
+    <ButtonGroup>
+      {yours ? (
+        <Button onClick={() => stopStream(props._id)} colorScheme="red" size="xs">
+          Stop Stream
+        </Button>
+      ) : null}
+    </ButtonGroup>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => {
+  return null;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -6,17 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-
-// The React Version of Zustand
-import createReact from 'zustand';
-
-// Application specific schema
-import { User, UserSchema } from '@sage3/shared/types';
-
+// Zustand
+import { create } from 'zustand';
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
+
+// Application specific schema
+import { User } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
+
 import { APIHttp, SocketAPI } from '../api';
 
 interface UserState {
@@ -31,7 +29,7 @@ interface UserState {
  * The UserStore of others users.
  * The current user is a hook 'useUser'.
  */
-const UsersStore = createVanilla<UserState>((set, get) => {
+const UsersStore = create<UserState>()((set, get) => {
   let usersSub: (() => void) | null = null;
   return {
     users: [],
@@ -40,11 +38,12 @@ const UsersStore = createVanilla<UserState>((set, get) => {
       set({ error: null });
     },
     get: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'users')) return null;
       const user = get().users.find((user) => user._id === id);
       if (user) {
         return user;
       } else {
-        const response = await APIHttp.GET<UserSchema, User>('/users/' + id);
+        const response = await APIHttp.GET<User>('/users/' + id);
         if (response.success && response.data) {
           const user = response.data[0] as User;
           set({ users: [...get().users, user] });
@@ -57,7 +56,8 @@ const UsersStore = createVanilla<UserState>((set, get) => {
     },
 
     subscribeToUsers: async () => {
-      const response = await APIHttp.GET<UserSchema, User>('/users');
+      if (!SAGE3Ability.canCurrentUser('read', 'users')) return;
+      const response = await APIHttp.GET<User>('/users');
       if (response.success) {
         set({ users: response.data });
       } else {
@@ -73,29 +73,31 @@ const UsersStore = createVanilla<UserState>((set, get) => {
       // Socket Subscribe Message
       const route = '/users';
       // Socket Listenting to updates from server about the current users
-      usersSub = await SocketAPI.subscribe<UserSchema>(route, (message) => {
-        const doc = message.doc as User;
+      usersSub = await SocketAPI.subscribe<User>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ users: [...get().users, doc] });
+            const docs = message.doc as User[];
+            set({ users: [...get().users, ...docs] });
             break;
           }
           case 'UPDATE': {
+            const docs = message.doc as User[];
             const users = [...get().users];
-            const idx = users.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              users[idx] = doc;
-            }
-            set({ users: users });
+            docs.forEach((doc) => {
+              const idx = users.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                users[idx] = doc;
+              }
+            });
+            set({ users });
             break;
           }
           case 'DELETE': {
+            const docs = message.doc as User[];
+            const ids = docs.map((d) => d._id);
             const users = [...get().users];
-            const idx = users.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              users.splice(idx, 1);
-            }
-            set({ users: users });
+            const remainingUsers = users.filter((a) => !ids.includes(a._id));
+            set({ users: remainingUsers });
           }
         }
       });
@@ -103,8 +105,8 @@ const UsersStore = createVanilla<UserState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useUsersStore = createReact(UsersStore);
+// Export the Zustand store
+export const useUsersStore = UsersStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('UsersStore', useUsersStore);

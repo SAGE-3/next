@@ -15,26 +15,29 @@ import * as packageInfo from 'package.json';
 const { version } = packageInfo;
 
 // Import some definitions for the server
-import { serverConfiguration } from '@sage3/shared/types';
+import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
  * Server configuration file that can be imported around the app.
  * loadConfig() is the first thing that runs at server start which sets this variable.
  */
-let config: serverConfiguration;
+let config: ServerConfiguration;
 
 /**
  * loads the initial configuration file for production or development
  *
  * @returns object
  */
-async function loadConfig(): Promise<serverConfiguration> {
+async function loadConfig(): Promise<ServerConfiguration> {
   // Test if development or production mode
   let production = false;
-  console.log('Mode>', process.env.NODE_ENV);
+  console.log('NODE_ENV =', process.env.NODE_ENV);
   if (process.env.NODE_ENV && process.env.NODE_ENV.indexOf('production') > -1) {
     production = true;
   }
+  // HOT FIX, NX bug in 16.1
+  // if (!process.env.NODE_ENV) production = true;
+  console.log('Mode>', production ? 'Production' : 'Development');
 
   // Pick the correct filename
   let filename: string;
@@ -50,10 +53,9 @@ async function loadConfig(): Promise<serverConfiguration> {
   config = conf;
   // adding the version information
   config.version = version;
-  config.isSage3 = true;
 
   // Return the typed value
-  return conf as serverConfiguration;
+  return conf as ServerConfiguration;
 }
 
 export { loadConfig, config };

@@ -6,20 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The JS version of Zustand
-import createVanilla from 'zustand/vanilla';
-
-// The React Version of Zustand
-import createReact from 'zustand';
+// Zustand
+import { create } from 'zustand';
+// Dev Tools
+import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Message, MessageSchema } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket
 import { APIHttp, SocketAPI } from '../api';
-
-// Dev Tools
-import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 interface MessageState {
   messages: Message[];
@@ -36,7 +33,7 @@ interface MessageState {
 /**
  * The MessageStore.
  */
-const MessageStore = createVanilla<MessageState>((set, get) => {
+const MessageStore = create<MessageState>()((set, get) => {
   let msgSub: (() => void) | null = null;
   return {
     messages: [],
@@ -47,12 +44,14 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       set({ error: null });
     },
     create: async (newMsg: MessageSchema) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'message')) return;
       const res = await SocketAPI.sendRESTMessage(`/message/`, 'POST', newMsg);
       if (!res.success) {
         set({ error: res.message });
       }
     },
     delete: async (id: string) => {
+      if (!SAGE3Ability.canCurrentUser('delete', 'message')) return;
       const res = await SocketAPI.sendRESTMessage(`/message/${id}`, 'DELETE');
       if (!res.success) {
         set({ error: res.message });
@@ -68,9 +67,10 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       }
     },
     subscribe: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'message')) return;
       set({ ...get(), messages: [] });
 
-      const msg = await APIHttp.GET<MessageSchema, Message>('/message');
+      const msg = await APIHttp.GET<Message>('/message');
       if (msg.success) {
         set({ messages: msg.data });
       } else {
@@ -106,29 +106,31 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
       // Socket Subscribe Message
       const route = '/message';
       // Socket Listenting to updates from server
-      msgSub = await SocketAPI.subscribe<MessageSchema>(route, (message) => {
-        const doc = message.doc as Message;
+      msgSub = await SocketAPI.subscribe<Message>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
-            set({ messages: [...get().messages, doc], lastone: doc });
+            const docs = message.doc as Message[];
+            set({ messages: [...get().messages, ...docs] });
             break;
           }
           case 'UPDATE': {
-            const msg = [...get().messages];
-            const idx = msg.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              msg[idx] = doc;
-            }
-            set({ messages: msg });
+            const docs = message.doc as Message[];
+            const messages = [...get().messages];
+            docs.forEach((doc) => {
+              const idx = messages.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                messages[idx] = doc;
+              }
+            });
+            set({ messages });
             break;
           }
           case 'DELETE': {
-            const msg = [...get().messages];
-            const idx = msg.findIndex((el) => el._id === doc._id);
-            if (idx > -1) {
-              msg.splice(idx, 1);
-            }
-            set({ messages: msg });
+            const docs = message.doc as Message[];
+            const ids = docs.map((d) => d._id);
+            const messages = [...get().messages];
+            const remainingMessages = messages.filter((a) => !ids.includes(a._id));
+            set({ messages: remainingMessages });
           }
         }
       });
@@ -136,8 +138,8 @@ const MessageStore = createVanilla<MessageState>((set, get) => {
   };
 });
 
-// Convert the Zustand JS store to Zustand React Store
-export const useMessageStore = createReact(MessageStore);
+// Export the Zustand store
+export const useMessageStore = MessageStore;
 
 // Add Dev tools
 if (process.env.NODE_ENV === 'development') mountStoreDevtool('MessageStore', useMessageStore);

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   useToast,
   Button,
@@ -23,10 +23,11 @@ import {
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useData, useRouteNav } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
+import { useRouteNav } from 'libs/frontend/src/lib/hooks';
+
 import { timeout } from '../../../utils';
 import { Board } from '@sage3/shared/types';
+import { useConfigStore } from '@sage3/frontend';
 
 export interface EnterBoardProps {
   isOpen: boolean;
@@ -35,37 +36,65 @@ export interface EnterBoardProps {
 }
 
 export const EnterBoardModal = (props: EnterBoardProps) => {
+  // Navigation
   const { toBoard } = useRouteNav();
-  const [privateText, setPrivateText] = useState('');
-  const toast = useToast();
-  const initialRef = useRef<HTMLInputElement>(null);
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
 
-  const [loading, setLoading] = useState(false);
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
+
+  // Toast for information feedback
+  const toast = useToast();
+
+  // Reference to the input field
+  const initialRef = useRef<HTMLInputElement>(null);
+
+  // Private information setter and getter
+  const [privateText, setPrivateText] = useState<string | undefined>(undefined);
+  const updatePrivateText = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrivateText(e.target.value);
+  };
+
+  // State for loading and password prompt
+  const isPrivate = props.board.data.isPrivate;
+  const [loading, setLoading] = useState(isPrivate ? false : true);
+  const [passwordPrompt, setPasswordPrompt] = useState(isPrivate ? true : false);
 
   useEffect(() => {
-    async function attemptToEnter() {
-      if (props.isOpen && !props.board.data.isPrivate) {
-        setLoading(true);
-        await timeout(600);
-        toBoard(props.board.data.roomId, props.board._id);
-      }
+    setLoading(isPrivate ? false : true);
+    setPasswordPrompt(isPrivate ? true : false);
+    setPrivateText(undefined);
+  }, [JSON.stringify(props.board)]);
+
+  const enterBoard = useCallback(async () => {
+    if (props.isOpen) {
+      setPrivateText(undefined);
+      setLoading(true);
+      setPasswordPrompt(false);
+      await timeout(600);
+      toBoard(props.board.data.roomId, props.board._id);
+      props.onClose();
     }
-    attemptToEnter();
+  }, [props, toBoard, setLoading]);
+
+  // Check if the board is private
+  // If it is, prompt the user for a password
+  useEffect(() => {
+    if (!isPrivate && props.isOpen) {
+      enterBoard();
+    }
     // if the room is not protected, go ahead and enter the room
-  }, [props.isOpen, props.board.data.isPrivate, props.board._id, props.board.data.roomId]);
+  }, [enterBoard, isPrivate, props.isOpen]);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {
+    if (!privateText) return;
     // Feature of UUID v5: private key to 'sign' a string
     // Hash the PIN: the namespace comes from the server configuration
     const key = uuidv5(privateText, config.namespace);
+
     // compare the hashed keys
     if (key === props.board.data.privatePin) {
-      setLoading(true);
-      await timeout(600);
-      toBoard(props.board.data.roomId, props.board._id);
+      enterBoard();
     } else {
       toast({
         title: `The password you have entered is incorrect`,
@@ -73,6 +102,12 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
         duration: 4 * 1000,
         isClosable: true,
       });
+    }
+  };
+
+  const handleKeyClick = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      compareKey();
     }
   };
 
@@ -91,21 +126,18 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
       <ModalContent>
         <ModalHeader>{loading ? 'Entering Board' : 'Enter the Board Password'}</ModalHeader>
         <ModalBody>
-          {loading ? (
-            <Progress size="md" colorScheme="teal" isIndeterminate mb="4" borderRadius="md" />
-          ) : (
+          {passwordPrompt && !loading ? (
             <>
               <InputGroup>
                 <InputLeftAddon children="Password" />
                 <Input
-                  onKeyDown={(e: React.KeyboardEvent) => {
-                    if (e.key === 'Enter') compareKey();
-                  }}
+                  onKeyDown={handleKeyClick}
                   ref={initialRef}
                   width="full"
                   value={privateText}
                   type="password"
-                  onChange={(e) => setPrivateText(e.target.value)}
+                  autoCapitalize="off"
+                  onChange={updatePrivateText}
                 />
               </InputGroup>
               <ModalFooter>
@@ -117,6 +149,8 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
                 </Button>
               </ModalFooter>
             </>
+          ) : (
+            <Progress size="md" colorScheme="teal" isIndeterminate mb="4" borderRadius="md" />
           )}
         </ModalBody>
       </ModalContent>

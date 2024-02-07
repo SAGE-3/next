@@ -17,7 +17,8 @@ const store = new Store({ name: 'sage3-window' });
 
 // Default Window State
 const defaultWindowState = {
-  server: 'https://sage3.app',
+  // server: 'https://sage3.app',
+  server: 'file://html/landing.html',
   fullscreen: false,
   x: 0,
   y: 0,
@@ -25,6 +26,7 @@ const defaultWindowState = {
   height: 720,
 };
 store.get('window-state', defaultWindowState);
+store.get('clean', false);
 
 module.exports = {
   getWindow: function () {
@@ -32,6 +34,15 @@ module.exports = {
   },
   setWindow: function (value) {
     return store.set('window-state', value);
+  },
+  getClean: function () {
+    return store.get('clean', false);
+  },
+  setClean: function (value) {
+    return store.set('clean', value);
+  },
+  default: function () {
+    store.set('window-state', defaultWindowState);
   },
   clear: function () {
     return store.clear();

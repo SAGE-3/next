@@ -19,9 +19,18 @@ const validChannels = [
   'close-connect-page',
   'take-screenshot',
   'streamview',
+  'streamview_stop',
   'paint',
   'load-landing',
   'store-interface',
+  'hide-main-window',
+  'show-main-window',
+  'request-current-display',
+  'current-display',
+  'open-external-url',
+  'open-webview',
+  'get-servers-request',
+  'get-servers-response',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

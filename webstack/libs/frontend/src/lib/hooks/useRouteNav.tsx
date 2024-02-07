@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 
 /**
@@ -37,5 +36,10 @@ export function useRouteNav() {
   function toAdmin() {
     navigate(`/admin`);
   }
-  return { toHome, toBoard, toLogin, toAdmin };
+
+  function back() {
+    navigate(-1);
+  }
+
+  return { toHome, toBoard, toLogin, toAdmin, back };
 }

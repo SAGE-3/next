@@ -49,7 +49,7 @@ function AppComponent(props: App): JSX.Element {
     if (s.result === '') return;
     const json = JSON.parse(s.result);
     // console.log('JSON>', json);
-    setKeywords(json.exif_tool['PDF:Keywords'] ?? '')
+    setKeywords(json.exif_tool['PDF:Keywords'] ?? '');
     setTitle(json.exif_tool['PDF:Title'] ?? '');
     setAuthors(json.exif_tool['PDF:Author'] ?? '');
     setPages(json.exif_tool['PDF:PageCount'] ? json.exif_tool['PDF:PageCount'].toString() : '');
@@ -62,7 +62,7 @@ function AppComponent(props: App): JSX.Element {
     });
     setReferences(refs);
     // Table of contents
-    if (json.toc) setToc(json.toc)
+    if (json.toc) setToc(json.toc);
   }, [s.result]);
 
   const openUrlInNewWebviewApp = (url: string): void => {
@@ -77,6 +77,8 @@ function AppComponent(props: App): JSX.Element {
       type: 'Webview',
       state: { webviewurl: url },
       raised: true,
+      dragging: false,
+      pinned: false,
     });
   };
 
@@ -89,38 +91,79 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box overflowX="clip" overflowY="scroll" height={props.data.size.height + 'px'}>
-        <Text fontSize='4xl' fontWeight="bold" m='3'>PDF Metadata</Text>
+        <Text fontSize="4xl" fontWeight="bold" m="3">
+          PDF Metadata
+        </Text>
         <UnorderedList ml={10}>
-          {title && <ListItem> <b>Title</b>: {title} </ListItem>}
-          {authors && <ListItem> <b>Authors</b>: {authors}</ListItem>}
-          {keywords && <ListItem> <b>PDF Keywords</b>:
-            {keywords.map((k) => ' ' + k + ',')}
-          </ListItem>
-          }
-          {pages && <ListItem> <b>Pages</b>: {pages}</ListItem>}
-          {file_size && <ListItem> <b>File size</b>: {file_size}</ListItem>}
-          {references &&
-            <ListItem> <b>References</b>:
+          {title && (
+            <ListItem>
+              {' '}
+              <b>Title</b>: {title}{' '}
+            </ListItem>
+          )}
+          {authors && (
+            <ListItem>
+              {' '}
+              <b>Authors</b>: {authors}
+            </ListItem>
+          )}
+          {keywords && (
+            <ListItem>
+              {' '}
+              <b>PDF Keywords</b>:{keywords.map((k) => ' ' + k + ',')}
+            </ListItem>
+          )}
+          {pages && (
+            <ListItem>
+              {' '}
+              <b>Pages</b>: {pages}
+            </ListItem>
+          )}
+          {file_size && (
+            <ListItem>
+              {' '}
+              <b>File size</b>: {file_size}
+            </ListItem>
+          )}
+          {references && (
+            <ListItem>
+              {' '}
+              <b>References</b>:
               <UnorderedList>
-                {references.map((r, i) => (<ListItem key={i}><Link href={r} isExternal onClick={handleLink}>{r}</Link></ListItem>))}
+                {references.map((r, i) => (
+                  <ListItem key={i}>
+                    <Link href={r} isExternal onClick={handleLink}>
+                      {r}
+                    </Link>
+                  </ListItem>
+                ))}
               </UnorderedList>
-            </ListItem>}
+            </ListItem>
+          )}
 
-          {toc &&
-            <ListItem> <b>Table of Content</b>:
+          {toc && (
+            <ListItem>
+              {' '}
+              <b>Table of Content</b>:
               <UnorderedList>
-                {toc.children.map((r: TocItem, i) => (<ListItem key={i}>
-                  {r.name}
-                  {r.children.length > 0 && <UnorderedList>
-                    {r.children.map((c: TocItem, j) => (<ListItem key={j}>{c.name}</ListItem>))}
-                  </UnorderedList>}
-                </ListItem>))}
+                {toc.children.map((r: TocItem, i) => (
+                  <ListItem key={i}>
+                    {r.name}
+                    {r.children.length > 0 && (
+                      <UnorderedList>
+                        {r.children.map((c: TocItem, j) => (
+                          <ListItem key={j}>{c.name}</ListItem>
+                        ))}
+                      </UnorderedList>
+                    )}
+                  </ListItem>
+                ))}
               </UnorderedList>
-            </ListItem>}
-
-        </UnorderedList >
+            </ListItem>
+          )}
+        </UnorderedList>
       </Box>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -130,10 +173,13 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <>
-    </>
-  );
+  return <></>;
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

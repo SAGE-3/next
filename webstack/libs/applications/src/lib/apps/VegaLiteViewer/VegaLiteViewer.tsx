@@ -18,12 +18,17 @@ import { state as AppState } from './index';
 import vegaEmbed from 'vega-embed';
 import { Button } from '@chakra-ui/react';
 
-import create from 'zustand';
+import { create } from 'zustand';
+
+interface VegaStore {
+  view: { [key: string]: any },
+  setView: (id: string, view: any) => void,
+}
 
 // Store to communicate with toolbar
-export const useStore = create((set: any) => ({
-  view: {} as { [key: string]: any },
-  setView: (id: string, view: any) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
+const useStore = create<VegaStore>()((set) => ({
+  view: {},
+  setView: (id: string, view: any) => set((state) => ({ view: { ...state.view, ...{ [id]: view } } })),
 }));
 
 /* App component for VegaLiteViewer */
@@ -73,7 +78,7 @@ function AppComponent(props: App): JSX.Element {
 /* App toolbar component for the app VegaLiteViewer */
 
 function ToolbarComponent(props: App): JSX.Element {
-  const view = useStore((state: any) => state.view[props._id]);
+  const view = useStore((state) => state.view[props._id]);
 
   const downloadAction = () => {
     // generate a PNG snapshot and then download the image
@@ -95,4 +100,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

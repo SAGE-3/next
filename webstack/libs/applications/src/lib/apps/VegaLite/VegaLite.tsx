@@ -11,11 +11,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 // Library imports
-import { Button, ButtonGroup, Box } from '@chakra-ui/react';
+import { Button, ButtonGroup, Box, useColorModeValue } from '@chakra-ui/react';
 
 // Import Monaco Editor
-import Editor, { Monaco, useMonaco } from "@monaco-editor/react";
-
+import Editor from '@monaco-editor/react';
 
 // Sage3 Imports
 import { useAppStore, useUser } from '@sage3/frontend';
@@ -23,7 +22,6 @@ import { App } from '../../schema';
 import { state as AppState } from '.';
 import { AppWindow } from '../../components';
 import { debounce } from 'throttle-debounce';
-
 
 /* App component for VegaLite */
 
@@ -37,12 +35,11 @@ function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  // Styling
+  const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
   // LocalState
   const [spec, setSpec] = useState(s.spec);
-
-  // Editor ref
-  const editor = useRef<Monaco>();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -68,30 +65,32 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box style={{
-        width: '95%',
-        height: '100%',
-        border: 'none',
-        marginTop: 15,
-        marginLeft: 15,
-        marginRight: 0,
-        marginBottom: 10,
-        padding: 0,
-        overflow: 'hidden',
-        borderRadius: '8px',
-      }}
+      <Box
+        style={{
+          width: '95%',
+          height: '100%',
+          border: 'none',
+          marginTop: 15,
+          marginLeft: 15,
+          marginRight: 0,
+          marginBottom: 10,
+          padding: 0,
+          overflow: 'hidden',
+          borderRadius: '8px',
+        }}
       >
         <Editor
           defaultValue={spec}
           onChange={handleTextChange}
-          height={"95%"}
+          theme={defaultTheme}
+          height={'95%'}
           language={'json'}
           options={{
-            fontSize: '10px',
+            fontSize: 18,
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
-            "overviewRulerBorder": false,
-            "overviewRulerLanes": 0,
+            overviewRulerBorder: false,
+            overviewRulerLanes: 0,
           }}
         />
       </Box>
@@ -125,6 +124,8 @@ function ToolbarComponent(props: App): JSX.Element {
         spec: s.spec,
       },
       raised: true,
+      dragging: false,
+      pinned: false,
     });
   };
 
@@ -137,4 +138,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

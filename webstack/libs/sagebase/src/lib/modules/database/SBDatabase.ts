@@ -11,6 +11,7 @@ import { RedisClientType } from 'redis';
 import { SBCollectionRef } from './SBCollection';
 export { SBCollectionRef };
 import { SBJSON } from './SBDocument';
+import { SBLogConfig } from '../logger/SBLogger';
 export type { SBDocumentRef, SBDocument, SBJSON, SBPrimitive, SBDocumentUpdate, SBDocumentMessage } from './SBDocument';
 
 /**
@@ -18,6 +19,7 @@ export type { SBDocumentRef, SBDocument, SBJSON, SBPrimitive, SBDocumentUpdate, 
  */
 export class SBDatabase {
   private _redisClient!: RedisClientType;
+  private _logconfig!: SBLogConfig;
 
   private prefix!: string;
 

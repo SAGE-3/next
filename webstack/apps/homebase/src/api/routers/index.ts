@@ -8,4 +8,4 @@
 
 export * from './wsRouter';
 export * from './httpRouter';
-export * from './config';
+export * from './custom/config';

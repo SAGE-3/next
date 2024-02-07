@@ -6,14 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Electorn
+// Electron
 const electron = require('electron');
+const { app, dialog, Menu, Tray, nativeImage } = require('electron');
+const shell = electron.shell;
+const path = require('path');
 
-// Store
+// Stores
+const windowStore = require('./windowstore');
 const bookmarkStore = require('./bookmarkstore');
 
 // Utils
-const { updateLandingPage, dialogUserTextInput, checkServerIsSage } = require('./utils');
+const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
 const updater = require('./updater');
 
 /**
@@ -21,10 +25,38 @@ const updater = require('./updater');
  * @param {*} window
  * @returns
  */
-function buildSageMenu(window) {
+function buildSageMenu(window, commander) {
+  let tray = null;
+  app.whenReady().then(() => {
+    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Show Main Window',
+        click: function () {
+          window.show();
+        },
+      },
+      {
+        label: 'Hide Main Window',
+        click: function () {
+          window.blur();
+        },
+      },
+      {
+        label: 'Quit SAGE3',
+        accelerator: 'CommandOrControl+Q',
+        click: function () {
+          electron.app.quit();
+        },
+      },
+    ]);
+    tray.setToolTip('SAGE3 controls');
+    tray.setContextMenu(contextMenu);
+  });
+
   // Clear Bookmarks button
   const clearBookmarks = {
-    label: 'Restore Original Bookmarks',
+    label: 'Restore Original Server List',
     click: () => {
       bookmarkStore.clear();
       buildMenu(window);
@@ -34,12 +66,12 @@ function buildSageMenu(window) {
 
   // Add the current location to the bookmarks
   const addBookmark = {
-    label: 'Bookmark This Server',
+    label: 'Save current Server',
     click: async () => {
       const url = window.webContents.getURL();
       const isSage = await checkServerIsSage(url);
       if (!isSage) return;
-      const name = await dialogUserTextInput('Name of Bookmark', 'Name', '');
+      const name = await dialogUserTextInput('Name of Server', 'Name', '');
       if (name) {
         bookmarkStore.addBookmark(name, url);
         buildMenu(window);
@@ -100,16 +132,39 @@ function buildSageMenu(window) {
           },
         },
         {
-          label: 'Clear Preferences',
+          label: 'Clear Caches',
           click: function () {
+            windowStore.default();
+            bookmarkStore.clear();
+            // Clear the caches, useful to remove password cookies
+            const session = electron.session.defaultSession;
+            session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+              console.log('Electron>	Caches cleared');
+
+              dialog.showMessageBox({
+                type: 'warning',
+                title: 'Preferences Cleared',
+                message: 'Preferences have been cleared. Restart SAGE3 to continue.',
+                buttons: ['Ok'],
+              });
+            });
+          },
+        },
+        {
+          label: 'Clear Preferences on Quit',
+          type: 'checkbox',
+          checked: windowStore.getClean(),
+          click: function (e) {
+            console.log('Electron>	Clear preferences on quit: ', e.checked);
             // clear on quit
-            commander.clear = true;
+            commander.clear = e.checked;
+            windowStore.setClean(e.checked);
           },
         },
         {
           label: 'Take Screenshot',
           click() {
-            TakeScreenshot();
+            takeScreenshot(window);
           },
         },
         {
@@ -265,7 +320,7 @@ function buildSageMenu(window) {
       ],
     },
     {
-      label: 'Bookmarks',
+      label: 'Servers',
       role: 'bookmarks',
       submenu: [
         ...bookmarks,
@@ -277,7 +332,7 @@ function buildSageMenu(window) {
           type: 'separator',
         },
         {
-          label: 'Remove Bookmark',
+          label: 'Remove Server',
           submenu: removeBookmarks,
         },
         clearBookmarks,
@@ -304,7 +359,31 @@ function buildSageMenu(window) {
       role: 'help',
       submenu: [
         {
-          label: 'Learn More',
+          label: 'Quick Start Guide',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-v1.0.16-2024a.pdf');
+          },
+        },
+        {
+          label: 'Discord Server (Online Forum)',
+          click: function () {
+            shell.openExternal('https://discord.gg/hHsKu47buY');
+          },
+        },
+        {
+          label: 'Keyboard Shortcuts',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/Shortcuts');
+          },
+        },
+        {
+          label: 'Developer Site',
+          click: function () {
+            shell.openExternal('https://sage-3.github.io/docs/intro');
+          },
+        },
+        {
+          label: 'Main Site',
           click: function () {
             shell.openExternal('http://sage3.sagecommons.org/');
           },
@@ -382,8 +461,8 @@ function buildSageMenu(window) {
  * Build the electron Menu system
  * @param {Electron.BrowserWindow} The electron browser window menu to build
  */
-function buildMenu(window) {
-  const menu = buildSageMenu(window);
+function buildMenu(window, commander) {
+  const menu = buildSageMenu(window, commander);
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
 

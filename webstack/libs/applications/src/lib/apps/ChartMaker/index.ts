@@ -21,6 +21,8 @@ export const schema = z.object({
   headers: z.string().array(),
   dataRow: z.string().array(),
   propertyList: z.any(),
+  storyIndex: z.number(),
+  currentAppCreated: z.any(),
   messages: z
     .object({
       id: z.string(),
@@ -42,6 +44,8 @@ export const init: Partial<state> = {
   headers: [],
   dataRow: [],
   propertyList: [],
+  storyIndex: 0,
+  currentAppCreated: [],
   messages: [
     {
       id: 'starting',
@@ -49,7 +53,7 @@ export const init: Partial<state> = {
       creationDate: 0,
       userName: '',
       query: '',
-      response: `Hi, I'm Arti. Use the dropdown menu in the App Toolbar to load in a dataset.`,
+      response: `Hi! Would you like to access the Hawaii Climate Data Portal? Use the app toolbar to respond.`,
       userId: '',
     },
   ],

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 
 // Yjs Imports
@@ -18,7 +18,7 @@ import Quill from 'quill';
 // Utility functions from SAGE3
 import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 
 // Styles
 import 'quill/dist/quill.snow.css';
@@ -37,28 +37,58 @@ import {
   MdFormatAlignRight,
   MdOutlineFormatListNumbered,
   MdOutlineList,
+  MdRefresh,
 } from 'react-icons/md';
 
-// Store between the app and the toolbar
-import create from 'zustand';
+import { debounce } from 'throttle-debounce';
 
-export const useStore = create((set: any) => ({
+// Store between the app and the toolbar
+import { create } from 'zustand';
+
+interface NotepadStore {
+  editor: { [key: string]: Quill };
+  setEditor: (id: string, ed: Quill) => void;
+  reinit: { [key: string]: boolean };
+  setReinit: (id: string, value: boolean) => void;
+}
+
+const useStore = create<NotepadStore>()((set) => ({
   editor: {} as { [key: string]: Quill },
-  setEditor: (id: string, ed: Quill) => set((s: any) => ({ editor: { ...s.editor, ...{ [id]: ed } } })),
+  setEditor: (id: string, ed: Quill) => set((s) => ({ ...s, editor: { ...s.editor, ...{ [id]: ed } } })),
+  reinit: {} as { [key: string]: boolean },
+  setReinit: (id: string, value: boolean) => set((s) => ({ ...s, reinit: { ...s.reinit, ...{ [id]: value } } })),
 }));
 
 function AppComponent(props: App): JSX.Element {
+  // State
   const s = props.data.state as AppState;
-  const quillRef = useRef(null);
-  const toolbarRef = useRef(null);
-  const setEditor = useStore((s: any) => s.setEditor);
   const updateState = useAppStore((state) => state.updateState);
 
-  useEffect(() => {
-    // Setup Yjs stuff
-    let provider: WebsocketProvider | null = null;
-    let ydoc: Y.Doc | null = null;
-    let binding: QuillBinding | null = null;
+  // Quill and Toolbar Refs
+  const quillRef = useRef(null);
+  const toolbarRef = useRef(null);
+
+  // Set the editor in the Notepad Store
+  const setEditor = useStore((s) => s.setEditor);
+  // Reinitialize the editor when the state changes due to the user refreshing
+  const reinit = useStore((s) => s.reinit[props._id]);
+
+  // Yjs and Quill State
+  const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
+  const [wsProvider, setWsProvider] = useState<WebsocketProvider | null>(null);
+  const [quillBinding, setQuillBinding] = useState<QuillBinding | null>(null);
+  const [quill, setQuill] = useState<Quill | null>(null);
+
+  // Debounce Updates
+  const debounceUpdate = debounce(1000, () => {
+    if (quill) {
+      const content = quill.getContents();
+      updateState(props._id, { content });
+    }
+  });
+
+  // Set up the editor
+  const setupEditor = () => {
     if (quillRef.current && toolbarRef.current) {
       const quill = new Quill(quillRef.current, {
         modules: {
@@ -75,20 +105,23 @@ function AppComponent(props: App): JSX.Element {
       setEditor(props._id, quill);
 
       // A Yjs document holds the shared data
-      ydoc = new Y.Doc();
+      const ydoc = new Y.Doc();
 
       // WS Provider
+
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
+      const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
 
       // Define a shared text type on the document
-      ydoc.getText('quill');
+      const ytext = ydoc.getText('quill');
+
+      // Bind The ydoc and quidd
+      const binding = new QuillBinding(ytext, quill, provider.awareness);
 
       // Observe changes on the text, if user is source of the change, update sage
       quill.on('text-change', (delta, oldDelta, source) => {
-        if (source == 'user') {
-          const content = quill.getContents();
-          updateState(props._id, { content }).then(() => {});
+        if (source == 'user' && quill) {
+          debounceUpdate();
         }
       });
 
@@ -106,19 +139,39 @@ function AppComponent(props: App): JSX.Element {
         }
       });
     }
+  };
+
+  // Remove Editor and disconnect
+  const removeEditor = () => {
+    if (yDoc) yDoc.destroy();
+    if (quillBinding) quillBinding.destroy();
+    if (wsProvider) wsProvider.disconnect();
+    setYdoc(null);
+    setQuillBinding(null);
+    setWsProvider(null);
+    setQuill(null);
+  };
+
+  // Initialize the editor at start and when the the user clicks the refresh button in the toolbar
+  useEffect(() => {
+    if (quillRef && toolbarRef) {
+      removeEditor();
+      setupEditor();
+    }
+  }, [reinit, quillRef, toolbarRef]);
+
+  // Remove the editor when the component unmounts
+  useEffect(() => {
     return () => {
-      // Remove the bindings and disconnect the provider
-      if (ydoc) ydoc.destroy();
-      if (binding) binding.destroy();
-      if (provider) provider.disconnect();
+      removeEditor();
     };
-  }, [quillRef, toolbarRef]);
+  }, []);
 
   return (
     <AppWindow app={props}>
-      <Box position="relative" width="100%" height="100%" backgroundColor="#e5e5e5">
-        <div ref={toolbarRef} hidden style={{ pointerEvents: 'none' }}></div>
-        <div ref={quillRef}></div>
+      <Box w="100%" h="100%">
+        <div ref={toolbarRef} hidden style={{ display: 'none' }}></div>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5', zIndex: 10000 }}></div>
       </Box>
     </AppWindow>
   );
@@ -128,11 +181,16 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   // const s = props.data.state as AppState;
-  const editor: Quill = useStore((state: any) => state.editor[props._id]);
+  const editor: Quill = useStore((state) => state.editor[props._id]);
+
+  // Reinitialize the editor when the user clicks refresh
+  const setReinit = useStore((s) => s.setReinit);
+  const reinit = useStore((s) => s.reinit[props._id]);
+
   // Download the content as an HTML file
   const downloadHTML = () => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     const header = `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -347,8 +405,21 @@ function ToolbarComponent(props: App): JSX.Element {
           <MdFileDownload />
         </Button>
       </Tooltip>
+      <Tooltip placement="top" hasArrow={true} label={'Attempt to reconnect the Notepad'} openDelay={400}>
+        <Button onClick={() => setReinit(props._id, !reinit)} size="xs" colorScheme="teal" mx="1">
+          <MdRefresh />
+        </Button>
+      </Tooltip>
     </>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => {
+  return null;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

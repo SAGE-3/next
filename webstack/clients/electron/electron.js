@@ -18,6 +18,7 @@
 
 // Node modules
 const path = require('path');
+const dns = require('node:dns');
 
 // Get platform and hostname
 var os = require('os');
@@ -44,10 +45,16 @@ const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = req
 // MenuBuilder
 const { buildMenu } = require('./src/menuBuilder');
 
-// Store
+// Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-const bookmarkStore = require('./src/bookmarkStore');
+const bookmarkStore = require('./src/bookmarkstore');
+
+// Analytics
+var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
+var analytics_enabled = true;
+// random user id
+const userId = genUserId();
 
 // handle install/update for Windows
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
@@ -66,10 +73,57 @@ const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
-const Menu = electron.Menu;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
+const autoUpdater = electron.autoUpdater;
+
+// Restore the network order
+dns.setDefaultResultOrder('ipv4first');
+
+/////////////////////////////////////////////////////////////////
+// Auto updater
+/////////////////////////////////////////////////////////////////
+console.log('APP Updater> current version', app.getVersion());
+
+// autoUpdater.on('error', (error) => {
+//   console.log('APP Updater> error', error);
+// });
+// autoUpdater.on('checking-for-update', (e) => {
+//   console.log('APP Updater> checking-for-update', e);
+// });
+// autoUpdater.on('update-available', (e) => {
+//   console.log('APP Updater> update-available', e);
+// });
+// autoUpdater.on('update-not-available', (e) => {
+//   console.log('APP Updater> update-not-available', e);
+// });
+// autoUpdater.on('before-quit-for-update', (e) => {
+//   console.log('APP Updater> before-quit-for-update', e);
+// });
+// autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+//   const dialogOpts = {
+//     type: 'info',
+//     buttons: ['Restart', 'Later'],
+//     title: 'Application Update',
+//     message: process.platform === 'win32' ? releaseNotes : releaseName,
+//     detail: 'A new version has been downloaded. Restart the application to apply the updates.',
+//   };
+//   dialog.showMessageBox(dialogOpts).then((returnValue) => {
+//     if (returnValue.response === 0) autoUpdater.quitAndInstall();
+//   });
+// });
+
+// autoUpdater.setFeedURL({
+//   url: 'https://update.electronjs.org/SAGE-3/next/darwin-arm64/client-1.0.0-beta.31',
+//   requestHeaders: { 'User-Agent': 'update-electron-app/2.0.1 (darwin: arm64)' },
+// });
+// autoUpdater.checkForUpdates();
+
+// Auto update
+require('update-electron-app')({ repo: 'SAGE-3/next' });
+
+/////////////////////////////////////////////////////////////////
 
 // Registering a custom protocol sage3://
 if (process.defaultApp) {
@@ -97,7 +151,7 @@ program
   .option('-f, --fullscreen', 'Fullscreen (boolean)', windowState.fullscreen)
   .option('-m, --monitor <n>', 'Select a monitor (int)', myParseInt, null)
   .option('-n, --no_decoration', 'Remove window decoration (boolean)', false)
-  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'https://sage3.app')
+  .option('-s, --server <s>', 'Server URL (string)', windowState.server || 'file://html/landing.html')
   .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
   .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
@@ -131,8 +185,14 @@ if (commander.disableHardware) {
 
 if (commander.clear) {
   console.log('Preferences> clear all');
-  windowStore.clear();
+  windowStore.default();
   bookmarkStore.clear();
+
+  // clear the caches, useful to remove password cookies
+  const session = electron.session.defaultSession;
+  session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+    console.log('Electron>	Caches cleared');
+  });
 }
 
 if (process.platform === 'win32') {
@@ -204,7 +264,7 @@ if (commander.debug) {
 app.setAboutPanelOptions({
   applicationName: 'SAGE3',
   applicationVersion: version,
-  copyright: 'Copyright © 2022 Project SAGE3',
+  copyright: 'Copyright © 2023 Project SAGE3',
   website: 'https://www.sage3.app/',
 });
 
@@ -213,6 +273,23 @@ app.setAboutPanelOptions({
  * be closed automatically when the JavaScript object is garbage collected.
  */
 var mainWindow;
+
+function showHidingWindow() {
+  const res = electron.dialog.showMessageBoxSync(mainWindow, {
+    title: 'Notification from SAGE3',
+    message: 'Do you want to hide the SAGE3 window ?',
+    detail: 'SAGE3 will keep running in the menu bar during screen sharing.',
+    type: 'question',
+    defaultId: 0,
+    cancelId: 1,
+    // icon: path.join(__dirname, 'images/s3.png'),
+    buttons: ['OK', 'Cancel'],
+  });
+  if (!res) {
+    // Hide the window
+    mainWindow.blur();
+  }
+}
 
 /**
  * Opens a window.
@@ -268,6 +345,78 @@ function disableGeolocation(session) {
   }
 }
 
+// Size and position of the window
+let state = {};
+const defaultSize = {
+  frame: !commander.no_decoration,
+  fullscreen: commander.fullscreen,
+  x: commander.xorigin,
+  y: commander.yorigin,
+  width: commander.width,
+  height: commander.height,
+};
+
+// Function to save the state in the data store
+const saveState = async () => {
+  if (!mainWindow.isMinimized()) {
+    Object.assign(state, getCurrentPosition());
+  }
+  state.fullscreen = mainWindow.isFullScreen();
+
+  // Save the board URL in a format that can be used to re-enter the board
+  var boardURL = mainWindow.webContents.getURL();
+  boardURL = boardURL.replace('/board/', '/enter/');
+  state.server = boardURL;
+
+  // Save the state
+  windowStore.setWindow(state);
+
+  if (commander.clear) {
+    console.log('Preferences> clear all');
+    windowStore.default();
+    bookmarkStore.clear();
+
+    // clear the caches, useful to remove password cookies
+    const session = electron.session.defaultSession;
+    session.clearStorageData({ storages: ['appcache', 'cookies', 'local storage', 'serviceworkers'] }).then(() => {
+      console.log('Electron>	Caches cleared');
+    });
+  }
+};
+
+// Function to get values back from the store
+const restore = () => windowStore.getWindow();
+// Function to get the current position and size
+const getCurrentPosition = () => {
+  const position = mainWindow.getPosition();
+  const size = mainWindow.getSize();
+  return {
+    x: position[0],
+    y: position[1],
+    width: size[0],
+    height: size[1],
+  };
+};
+
+// Function to check if window is within some bounds
+const windowWithinBounds = (windowState, bounds) => {
+  return (
+    windowState.x >= bounds.x &&
+    windowState.y >= bounds.y &&
+    windowState.x + windowState.width <= bounds.x + bounds.width &&
+    windowState.y + windowState.height <= bounds.y + bounds.height
+  );
+};
+
+// Function to return default values: center of primary screen
+const resetToDefaults = () => {
+  const bounds = electron.screen.getPrimaryDisplay().bounds;
+  return Object.assign({}, defaultSize, {
+    x: (bounds.width - defaultSize.width) / 2,
+    y: (bounds.height - defaultSize.height) / 2,
+  });
+};
+
 /**
  * Creates an electron window.
  *
@@ -309,47 +458,6 @@ function createWindow() {
     },
   };
 
-  // Size and position of the window
-  let state = {};
-  const defaultSize = {
-    frame: !commander.no_decoration,
-    fullscreen: commander.fullscreen,
-    x: commander.xorigin,
-    y: commander.yorigin,
-    width: commander.width,
-    height: commander.height,
-  };
-
-  // Function to get values back from the store
-  const restore = () => windowStore.getWindow();
-  // Function to get the current position and size
-  const getCurrentPosition = () => {
-    const position = mainWindow.getPosition();
-    const size = mainWindow.getSize();
-    return {
-      x: position[0],
-      y: position[1],
-      width: size[0],
-      height: size[1],
-    };
-  };
-  // Function to check if window is within some bounds
-  const windowWithinBounds = (windowState, bounds) => {
-    return (
-      windowState.x >= bounds.x &&
-      windowState.y >= bounds.y &&
-      windowState.x + windowState.width <= bounds.x + bounds.width &&
-      windowState.y + windowState.height <= bounds.y + bounds.height
-    );
-  };
-  // Function to return default values: center of primary screen
-  const resetToDefaults = () => {
-    const bounds = electron.screen.getPrimaryDisplay().bounds;
-    return Object.assign({}, defaultSize, {
-      x: (bounds.width - defaultSize.width) / 2,
-      y: (bounds.height - defaultSize.height) / 2,
-    });
-  };
   // Function to calculate if window is visible
   const ensureVisibleOnSomeDisplay = (windowState) => {
     const visible = electron.screen.getAllDisplays().some((display) => {
@@ -362,19 +470,7 @@ function createWindow() {
     }
     return windowState;
   };
-  // Function to save the state in the data store
-  const saveState = () => {
-    if (!mainWindow.isMinimized()) {
-      Object.assign(state, getCurrentPosition());
-    }
-    state.fullscreen = mainWindow.isFullScreen();
-    state.server = mainWindow.webContents.getURL();
-    windowStore.setWindow(state);
-    if (commander.clear) {
-      console.log('Preferences> clear all');
-      windowStore.clear();
-    }
-  };
+
   // Restore the state
   state = ensureVisibleOnSomeDisplay(restore());
 
@@ -403,7 +499,14 @@ function createWindow() {
   mainWindow = new BrowserWindow({ ...state, ...options });
 
   // Build a menu
-  buildMenu(mainWindow);
+  buildMenu(mainWindow, commander);
+
+  // Analytics on start
+  if (!commander.server.includes('localhost') && analytics_enabled) {
+    analyticsOnStart(userId, state.server);
+  } else {
+    analytics_enabled = false;
+  }
 
   if (commander.cache) {
     // clear the caches, useful to remove password cookies
@@ -451,8 +554,8 @@ function createWindow() {
       if (state === 'completed') {
         // Send a message to the renderer process to show a notification
         mainWindow.webContents.send('download', {
-          filename: evt.sender.getFilename(),
-          bytes: evt.sender.getTotalBytes(),
+          filename: item.getFilename(),
+          bytes: item.getTotalBytes(),
           completed: true,
         });
       } else {
@@ -484,7 +587,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  mainWindow.on('close', saveState);
+  // mainWindow.on('close', saveState);
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
     // Dereference the window object
@@ -498,6 +601,12 @@ function createWindow() {
   mainWindow.on('leave-full-screen', function () {
     mainWindow.setMenuBarVisibility(true);
   });
+  // mainWindow.on('blur', function () {
+  //   console.log('Electron>	Window blurred');
+  // });
+  // mainWindow.on('focus', function () {
+  //   console.log('Electron>	Window show');
+  // });
 
   // when the display client is loaded
   mainWindow.webContents.on('did-finish-load', function () {
@@ -509,7 +618,7 @@ function createWindow() {
     if (firstRun) {
       const currentURL = mainWindow.webContents.getURL();
       const parsedURL = new URL(currentURL);
-      updater.checkForUpdates(parsedURL.origin, false);
+      // updater.checkForUpdates(parsedURL.origin, false);
       firstRun = false;
     }
   });
@@ -528,8 +637,14 @@ function createWindow() {
   // If the window opens before the server is ready,
   // wait 1 sec. and try again 4 times
   // Finally, redirect to the main server
-  mainWindow.webContents.on('did-fail-load', function () {
-    mainWindow.loadFile('./html/landing.html');
+  mainWindow.webContents.on('did-fail-load', function (ev, code, desc, vurl) {
+    if (code === -27) {
+      // -27 ERR_BLOCKED_BY_RESPONSE
+      // ignore it
+      console.log('Electron> warning: failed to load', code, desc, vurl);
+    } else {
+      mainWindow.loadFile('./html/landing.html');
+    }
   });
 
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
@@ -553,20 +668,32 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
-    ipcMain.on('streamview', (e, args) => {
-      // console.log('Webview> IPC Message', evt.frameId, evt.processId, evt.reply);
-      // console.log('Webview>    message', channel, args);
+    ipcMain.on('streamview_stop', (e, args) => {
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
-      viewContent.beginFrameSubscription(true, (image, dirty) => {
+      if (viewContent) viewContent.endFrameSubscription();
+    });
+    ipcMain.on('streamview', (e, args) => {
+      // console.log('Webview>    message', channel, args);
+      // console.log('Webview> IPC Message', args.id, args.width, args.height);
+
+      // Message for the webview pixel streaming
+      const viewContent = electron.webContents.fromId(args.id);
+
+      viewContent.enableDeviceEmulation({
+        screenPosition: 'mobile',
+        screenSize: { width: args.width, height: args.height },
+      });
+
+      viewContent.beginFrameSubscription(false, (image, dirty) => {
         let dataenc;
         let neww, newh;
         const devicePixelRatio = 2;
-        const quality = 50;
+        const quality = 60;
         if (devicePixelRatio > 1) {
           neww = dirty.width / devicePixelRatio;
           newh = dirty.height / devicePixelRatio;
-          const resizedimage = image.resize({ width: neww, height: newh });
+          const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
           dataenc = resizedimage.toJPEG(quality);
         } else {
           dataenc = image.toJPEG(quality);
@@ -574,6 +701,7 @@ function createWindow() {
           newh = dirty.height;
         }
         mainWindow.webContents.send('paint', {
+          id: args.id,
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });
@@ -586,23 +714,39 @@ function createWindow() {
     //   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36';
   });
 
-  // Probably not used anymore
   app.on('web-contents-created', function (webContentsCreatedEvent, contents) {
     if (contents.getType() === 'webview') {
-      contents.on('new-window', function (newWindowEvent, url) {
-        newWindowEvent.preventDefault();
+      // OLD API
+      // contents.on('new-window', function (newWindowEvent, url) {
+      //   console.log('Webview> New window', url);
+      //   newWindowEvent.preventDefault();
+      // });
+
+      // NEW API
+      contents.on('dom-ready', () => {
+        // Block creating new windows from webviews
+        contents.setWindowOpenHandler((details) => {
+          // tell the renderer to create another webview
+          mainWindow.webContents.send('open-webview', { url: details.url });
+          // do nothing in the main process
+          return { action: 'deny' };
+        });
       });
 
-      // Block automatic download from webviews
-      contents.session.on('will-download', (event, item, webContents) => {
-        event.preventDefault();
-      });
+      // Block automatic download from webviews (seems to block all downloads)
+      // contents.session.on('will-download', (event, item, webContents) => {
+      //   event.preventDefault();
+      // });
     }
   });
 
   // Handle the new window event now
   mainWindow.webContents.setWindowOpenHandler((details) => {
     if (details.frameName === 'sage3') {
+      shell.openExternal(details.url);
+    }
+    // Allow to open discord links
+    if (details.url.startsWith('https://discord.gg/')) {
       shell.openExternal(details.url);
     }
     return { action: 'deny' };
@@ -673,6 +817,24 @@ function createWindow() {
     mainWindow.loadFile('./html/landing.html');
   });
 
+  // Request from the renderer process
+  ipcMain.on('hide-main-window', () => {
+    showHidingWindow();
+  });
+  ipcMain.on('show-main-window', () => {
+    mainWindow.show();
+  });
+  ipcMain.on('request-current-display', () => {
+    const winBounds = mainWindow.getBounds();
+    const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
+    mainWindow.webContents.send('current-display', whichScreen.id);
+  });
+
+  // Open external links in the default browser
+  ipcMain.on('open-external-url', (event, arg) => {
+    if (arg && arg.url) shell.openExternal(arg.url);
+  });
+
   // Request for a screenshot from the web client
   ipcMain.on('take-screenshot', () => {
     takeScreenshot(mainWindow);
@@ -686,11 +848,17 @@ function createWindow() {
     mainWindow.webContents.send('client-info-response', info);
   });
 
+  // Request from Client for bookmarks
+  ipcMain.on('get-servers-request', () => {
+    const bookmarks = bookmarkStore.getBookmarks();
+    mainWindow.webContents.send('get-servers-response', bookmarks);
+  });
+
   // Request from user to check for updates to the client
   ipcMain.on('client-update-check', () => {
     const currentURL = mainWindow.webContents.getURL();
     const parsedURL = new URL(currentURL);
-    updater.checkForUpdates(parsedURL.origin, true);
+    // updater.checkForUpdates(parsedURL.origin, true);
   });
 
   // Request from the renderer process
@@ -777,8 +945,12 @@ if (process.platform === 'win32') {
 // Protocol handler for osx while application is not running in the background.
 app.on('open-url', (event, url) => {
   event.preventDefault();
+  // Parsing the URL to find if there is a port number
+  // Asuming that if there is a port number, it is a local server with http
+  // Otherwise, it is a remote server with https
+  const parsedURL = new URL(url);
   // make it a valid URL
-  const newurl = url.replace('sage3://', 'https://');
+  const newurl = url.replace('sage3://', parsedURL.port ? 'http://' : 'https://');
   if (mainWindow) {
     mainWindow.loadURL(newurl);
   } else {
@@ -807,6 +979,16 @@ app.on('activate', function () {
   if (mainWindow === null) {
     createWindow();
   }
+});
+
+app.on('before-quit', async function (event) {
+  event.preventDefault();
+  saveState();
+  // Analytics on stop
+  if (analytics_enabled) {
+    await analyticsOnStop(userId);
+  }
+  process.exit(0);
 });
 
 /**

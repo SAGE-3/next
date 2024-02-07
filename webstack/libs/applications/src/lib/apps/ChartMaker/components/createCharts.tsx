@@ -72,7 +72,6 @@ export const createCharts = async (
     specifications[i].title = createTitle(extractedHeaders, extractedChartType, extractedFilterValues);
     // specifications[i].transform = createTransform(extractedFilterValues, propertyList);
     const filter = createTransform(extractedFilterValues, propertyList);
-    console.log(specifications);
 
     if (specifications[i].hasOwnProperty('layer')) {
       // specifications[i].transform = createTransform(extractedFilterValues, propertyList);

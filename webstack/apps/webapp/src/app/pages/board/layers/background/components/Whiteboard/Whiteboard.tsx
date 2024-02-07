@@ -13,31 +13,40 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useBoardStore, useHotkeys, useKeyPress, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
+import { useParams } from 'react-router';
 
-type WhiteboardProps = {
-  boardId: string;
-};
+type WhiteboardProps = {};
 
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
 
+  // Params
+  const { boardId } = useParams();
+
+  const scale = useThrottleScale(250);
+  // Can annotate
+  const canAnnotate = useAbility('update', 'boards');
+
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const scale = useUIStore((state) => state.scale);
   const whiteboardMode = useUIStore((state) => state.whiteboardMode);
+  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
+  const undoLastMaker = useUIStore((state) => state.undoLastMarker);
+  const setUndoLastMaker = useUIStore((state) => state.setUndoLastMarker);
+  const markerOpacity = useUIStore((state) => state.markerOpacity);
+  const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   const updateBoard = useBoardStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === props.boardId);
+  const board = boards.find((el) => el._id === boardId);
 
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
@@ -49,9 +58,9 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
-    if (yLines) {
+    if (yLines && boardId) {
       const lines = yLines.toJSON();
-      updateBoard(props.boardId, { whiteboardLines: lines });
+      updateBoard(boardId, { whiteboardLines: lines });
     }
   }
 
@@ -61,7 +70,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // WS Provider
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + props.boardId, ydoc);
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + boardId, ydoc);
 
     // Lines array
     const yLines = ydoc.getArray('lines') as Y.Array<Y.Map<any>>;
@@ -89,7 +98,9 @@ export function Whiteboard(props: WhiteboardProps) {
               ydoc.transact(() => {
                 yLine.set('id', line.id);
                 yLine.set('points', yPoints);
-                yLine.set('userColor', line.color);
+                yLine.set('userColor', line.userColor);
+                yLine.set('alpha', line.alpha);
+                yLine.set('size', line.size);
                 yLine.set('isComplete', true);
                 yLine.set('userId', line.userId);
               });
@@ -105,7 +116,7 @@ export function Whiteboard(props: WhiteboardProps) {
       if (ydoc) ydoc.destroy();
       if (provider) provider.disconnect();
     };
-  }, []);
+  }, [boardId]);
 
   const getPoint = useCallback(
     (x: number, y: number) => {
@@ -119,26 +130,31 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc) {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        const id = Date.now().toString();
-        const yPoints = new Y.Array<number>();
+      if (yLines && yDoc && canAnnotate) {
+        // if primary pointing device and left button
+        if (e.isPrimary && e.button === 0) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const id = Date.now().toString();
+          const yPoints = new Y.Array<number>();
 
-        const yLine = new Y.Map();
+          const yLine = new Y.Map();
 
-        yDoc.transact(() => {
-          yLine.set('id', id);
-          yLine.set('points', yPoints);
-          yLine.set('userColor', color);
-          yLine.set('isComplete', false);
-          yLine.set('userId', user?._id);
-        });
+          yDoc.transact(() => {
+            yLine.set('id', id);
+            yLine.set('points', yPoints);
+            yLine.set('userColor', color);
+            yLine.set('alpha', markerOpacity);
+            yLine.set('size', markerSize);
+            yLine.set('isComplete', false);
+            yLine.set('userId', user?._id);
+          });
 
-        rCurrentLine.current = yLine;
-        yLines.push([yLine]);
+          rCurrentLine.current = yLine;
+          yLines.push([yLine]);
+        }
       }
     },
-    [yDoc, yLines, user, color]
+    [yDoc, yLines, user, color, markerOpacity, markerSize]
   );
 
   useEffect(() => {
@@ -162,21 +178,23 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer move, update awareness and (if down) update the current line
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      const point = getPoint(e.clientX, e.clientY);
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        const currentLine = rCurrentLine.current;
+      if (whiteboardMode === 'pen') {
+        const point = getPoint(e.clientX, e.clientY);
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          const currentLine = rCurrentLine.current;
 
-        if (!currentLine) return;
+          if (!currentLine) return;
 
-        const points = currentLine.get('points');
+          const points = currentLine.get('points');
 
-        // Don't add the new point to the line
-        if (!points) return;
+          // Don't add the new point to the line
+          if (!points) return;
 
-        points.push([...point]);
+          points.push([...point]);
+        }
       }
     },
-    [rCurrentLine.current]
+    [rCurrentLine.current, whiteboardMode]
   );
 
   // On pointer up, complete the current line
@@ -185,13 +203,10 @@ export function Whiteboard(props: WhiteboardProps) {
       e.currentTarget.releasePointerCapture(e.pointerId);
 
       const currentLine = rCurrentLine.current;
-
       if (!currentLine) return;
 
       currentLine.set('isComplete', true);
-
       rCurrentLine.current = undefined;
-
       updateBoardLines();
     },
     [rCurrentLine.current]
@@ -208,57 +223,89 @@ export function Whiteboard(props: WhiteboardProps) {
   // Clear only your markers
   useEffect(() => {
     if (yLines && clearMarkers) {
-      const indices: number[] = [];
-      yLines.forEach((line, idx) => {
-        if (line.get('userId') === user?._id) indices.push(idx);
-      });
-      indices.reverse().forEach((idx) => yLines.delete(idx, 1));
-      setClearMarkers(false);
+      // delete all the users strokes
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          yLines.delete(index, 1);
+        }
+      }
       updateBoardLines();
+      setClearMarkers(false);
     }
   }, [clearMarkers]);
 
-  const spacebarPressed = useKeyPress(' ');
+  // Undo last mark
+  useEffect(() => {
+    if (yLines && undoLastMaker) {
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('userId') === user?._id) {
+          // delete the first stroke that belongs to the user and stop
+          yLines.delete(index, 1);
+          break;
+        }
+      }
+      updateBoardLines();
+      setUndoLastMaker(false);
+    }
+  }, [undoLastMaker]);
 
-  useHotkeys('esc', () => {
-    setWhiteboardMode(false);
-  });
+  const spacebarPressed = useKeyPress(' ');
 
   // Deselect all apps
   useHotkeys(
     'shift+w',
     () => {
-      setWhiteboardMode(!whiteboardMode);
+      if (canAnnotate) {
+        setWhiteboardMode(whiteboardMode === 'none' ? 'pen' : 'none');
+      }
     },
     { dependencies: [whiteboardMode] }
   );
 
+  // Delete a line when it is clicked
+  const lineClicked = (id: string) => {
+    if (yLines) {
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('id') === id) {
+          yLines.delete(index, 1);
+        }
+      }
+    }
+  };
+
   return (
-    <>
-      <div className="canvas-container" style={{ pointerEvents: whiteboardMode && !spacebarPressed ? 'auto' : 'none' }}>
-        <svg
-          className="canvas-layer"
-          style={{
-            position: 'absolute',
-            width: boardWidth + 'px',
-            height: boardHeight + 'px',
-            left: 0,
-            top: 0,
-            zIndex: 200,
-            cursor: 'crosshair',
-          }}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-        >
-          <g>
-            {/* Lines */}
-            {lines.map((line, i) => (
-              <Line key={i} line={line} scale={scale} />
-            ))}
-          </g>
-        </svg>
-      </div>
-    </>
+    <div
+      className="canvas-container"
+      style={{
+        pointerEvents: whiteboardMode !== 'none' && !spacebarPressed ? 'auto' : 'none',
+        touchAction: whiteboardMode !== 'none' && !spacebarPressed ? 'none' : 'auto',
+      }}
+    >
+      <svg
+        className="canvas-layer"
+        style={{
+          position: 'absolute',
+          width: boardWidth + 'px',
+          height: boardHeight + 'px',
+          left: 0,
+          top: 0,
+          zIndex: 1000,
+          cursor: 'crosshair',
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+      >
+        <g>
+          {/* Lines */}
+          {lines.map((line, i) => (
+            <Line key={i} line={line} onClick={lineClicked} />
+          ))}
+        </g>
+      </svg>
+    </div>
   );
 }

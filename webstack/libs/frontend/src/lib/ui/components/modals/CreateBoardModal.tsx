@@ -21,18 +21,18 @@ import {
   useToast,
   Button,
   Checkbox,
+  Text,
+  Tooltip,
+  HStack,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-
 import { BoardSchema } from '@sage3/shared/types';
-import { SAGEColors, randomSAGEColor } from '@sage3/shared';
+import { SAGEColors, randomSAGEColor, generateReadableID } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
-import { useBoardStore } from '../../../stores';
+import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
 
 interface CreateBoardModalProps {
@@ -42,10 +42,10 @@ interface CreateBoardModalProps {
 }
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
-  const { user } = useUser();
+  const { user, saveBoard } = useUser();
   const toast = useToast();
 
   const createBoard = useBoardStore((state) => state.create);
@@ -55,6 +55,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
+  const [roomID, setRoomID] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
@@ -74,6 +75,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       return result;
     };
     setPassword(makeid(6));
+    setRoomID(generateReadableID());
     // Reset the form fields
     setName('');
     setDescription('');
@@ -93,12 +95,13 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     }
   };
 
-  const create = () => {
+  const create = async () => {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
       // list of board names in the room
-      const boardNames = boards.map((board) => board.data.name);
+      const roomsBoards = boards.filter((board) => board.data.roomId === props.roomId);
+      const boardNames = roomsBoards.map((board) => board.data.name);
 
       if (cleanedName.split(' ').join('').length === 0) {
         toast({
@@ -119,16 +122,29 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         // Create the board
-        createBoard({
+        const board = await createBoard({
           name: cleanedName,
           description,
           roomId: props.roomId,
           ownerId: user._id,
           color: color,
           isPrivate: isProtected,
+          code: roomID,
           privatePin: isProtected ? key : '',
           executeInfo: { executeFunc: '', params: {} },
         });
+        if (board) {
+          toast({
+            title: 'Board created successfully',
+            status: 'success',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
+          // Save the room to the user's profile
+          if (saveBoard) {
+            saveBoard(board._id);
+          }
+        }
         props.onClose();
       }
     }
@@ -142,6 +158,20 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     setPassword(e.target.value);
   };
 
+  // Copy the board id to the clipboard
+  const handleCopyId = async () => {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(roomID);
+      toast({
+        title: 'Success',
+        description: `BoardID Copied to Clipboard`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
+  };
+
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
@@ -149,7 +179,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -163,7 +193,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Board Description'}
@@ -178,29 +208,37 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
-          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+          <HStack>
+            <Tooltip placement="top" hasArrow={true} openDelay={400}
+              label={'Use this ID to enter a board, instead of a URL'}>
+              <Text my={2}>Board ID:</Text>
+            </Tooltip>
+            <Text my={2} onDoubleClick={handleCopyId}>{roomID}</Text>
+          </HStack>
+
+          <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
           </Checkbox>
-          <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+          <InputGroup mt={2}>
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text"
+              type="text" autoCapitalize='off'
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description || (isProtected && !password)}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description || (isProtected && !password)}>
             Create
           </Button>
         </ModalFooter>
       </ModalContent>
-    </Modal>
+    </Modal >
   );
 }

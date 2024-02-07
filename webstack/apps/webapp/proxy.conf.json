@@ -23,5 +23,15 @@
     "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
+  },
+  "/logs": {
+    "target": "http://127.0.0.1:3333",
+    "secure": false,
+    "ws": true
+  },
+  "/plugins": {
+    "target": "http://127.0.0.1:3333",
+    "secure": false,
+    "ws": true
   }
 }

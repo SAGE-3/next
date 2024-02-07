@@ -21,9 +21,7 @@ import {
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-
+import { useConfigStore } from '@sage3/frontend';
 export interface EnterRoomProps {
   isOpen: boolean;
   onClose: () => void;
@@ -35,8 +33,8 @@ export interface EnterRoomProps {
 }
 
 export const EnterRoomModal = (props: EnterRoomProps) => {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [privateText, setPrivateText] = useState('');
   const toast = useToast();
@@ -92,7 +90,7 @@ export const EnterRoomModal = (props: EnterRoomProps) => {
               ref={initialRef}
               width="full"
               value={privateText}
-              type="password"
+              type="password" autoCapitalize='off'
               onChange={(e) => setPrivateText(e.target.value)}
             />
           </InputGroup>

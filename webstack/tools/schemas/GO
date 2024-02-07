@@ -1,0 +1,15 @@
+#!/bin/sh
+
+
+for f in "output"/*-schema.json
+do
+	echo "$f"
+	file=`basename "$f" .json`
+	echo "   $file"
+
+    /Users/luc/opt/miniconda3/envs/s3-next/bin/jsonschema2md "$f" "output/$file.md"
+
+
+done
+
+

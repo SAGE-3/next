@@ -6,14 +6,17 @@ rm -fr configurations/jupyter/notebooks/ipynb/*.ipynb
 rm -fr configurations/jupyter/notebooks/boards/.ipynb_checkpoints
 rm -fr configurations/jupyter/notebooks/boards/*mipynb
 rm -fr configurations/jupyter/notebooks/.ipynb_checkpoints
-rm -f  configurations/redis/data/dump.rdb
+rm -f configurations/redis/data/dump.rdb
 cd configurations/node/assets && rm -f *.webp *.jpg *.json *.geojson *.pdf && cd -
 
 # Pick a compose file
 cp docker-compose-arm64.yml docker-compose.yml
+cp .env.template .env
 
-VERSION=1.0-macos-arm64
+# Switch fluent to prod mode
+cp configurations/fluentd/conf/fluent-prod.conf configurations/fluentd/conf/fluent.conf
+
+VERSION=1.1-macos-arm64
 rm -f SAGE3-${VERSION}.tgz
 
-tar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.0\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env
-
+gtar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.1\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env

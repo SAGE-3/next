@@ -6,10 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './Alfred';
 export * from './AppToolbar';
 export * from './BoardContextMenu';
 export * from './ClearBoardModal';
 export * from './LassoToolbar';
 export * from './Panels';
 export * from './Twilio';
+export * from './PresenceFollow';
+export * from './BoardTitle';

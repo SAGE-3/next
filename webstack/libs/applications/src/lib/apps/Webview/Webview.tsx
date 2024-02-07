@@ -7,8 +7,9 @@
  */
 
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack } from '@chakra-ui/react';
+import { useParams } from 'react-router';
 
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure } from '@chakra-ui/react';
 import {
   MdArrowBack,
   MdArrowForward,
@@ -18,11 +19,16 @@ import {
   MdVolumeOff,
   MdOutlineSubdirectoryArrowLeft,
   MdVolumeUp,
+  MdOpenInNew,
+  MdCopyAll,
+  MdFileUpload,
 } from 'react-icons/md';
+import { FaEyeSlash } from 'react-icons/fa';
 
+import { create } from 'zustand';
+
+import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { App } from '../../schema';
-
-import { useAppStore, useUser, processContentURL } from '@sage3/frontend';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
@@ -31,33 +37,51 @@ import { isElectron } from './util';
 // @ts-ignore
 import { WebviewTag } from 'electron';
 
-import create from 'zustand';
-import { useParams } from 'react-router';
+interface WebviewStore {
+  title: { [key: string]: string },
+  setTitle: (id: string, title: string) => void,
 
-export const useStore = create((set: any) => ({
-  title: {} as { [key: string]: string },
-  setTitle: (id: string, title: string) => set((state: any) => ({ title: { ...state.title, ...{ [id]: title } } })),
+  mute: { [key: string]: boolean },
+  setMute: (id: string, mute: boolean) => void,
 
-  mute: {} as { [key: string]: boolean },
-  setMute: (id: string, mute: boolean) => set((state: any) => ({ mute: { ...state.mute, ...{ [id]: mute } } })),
+  view: { [key: string]: WebviewTag },
+  setView: (id: string, view: WebviewTag) => void,
 
-  view: {} as { [key: string]: WebviewTag },
-  setView: (id: string, view: WebviewTag) => set((state: any) => ({ view: { ...state.view, ...{ [id]: view } } })),
+  localURL: { [key: string]: string },
+  setLocalURL: (id: string, url: string) => void
+}
+
+export const useStore = create<WebviewStore>()((set) => ({
+  title: {},
+  setTitle: (id: string, title: string) => set((state) => ({ title: { ...state.title, ...{ [id]: title } } })),
+
+  mute: {},
+  setMute: (id: string, mute: boolean) => set((state) => ({ mute: { ...state.mute, ...{ [id]: mute } } })),
+
+  view: {},
+  setView: (id: string, view: WebviewTag) => set((state) => ({ view: { ...state.view, ...{ [id]: view } } })),
+
+  localURL: {},
+  setLocalURL: (id: string, url: string) => set((state) => ({ localURL: { ...state.localURL, ...{ [id]: url } } })),
 }));
 
 /* App component for Webview */
 
 function AppComponent(props: App): JSX.Element {
+  // App State
   const s = props.data.state as AppState;
   const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
+
+  // Local State
   const webviewNode = useRef<WebviewTag>();
   const [url, setUrl] = useState<string>(s.webviewurl);
-  const setView = useStore((state: any) => state.setView);
+  const setView = useStore((state) => state.setView);
   const [zoom, setZoom] = useState(s.zoom ?? 1.0);
-  const mute = useStore((state: any) => state.mute[props._id]);
-  const setMute = useStore((state: any) => state.setMute);
+  const mute = useStore((state) => state.mute[props._id]);
+  const setMute = useStore((state) => state.setMute);
   const createApp = useAppStore((state) => state.create);
+
+  // User and board info
   const { boardId, roomId } = useParams();
   const { user } = useUser();
 
@@ -65,10 +89,10 @@ function AppComponent(props: App): JSX.Element {
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
 
-  // Update from backend
-  useEffect(() => {
-    setUrl(s.webviewurl);
-  }, [s.webviewurl]);
+  // Track if your URL matches the state's URL
+  const [urlMatchesState, setUrlMatchesState] = useState(true);
+  const matchIconColor = useHexColor('red');
+  const setLocalURL = useStore((state) => state.setLocalURL);
 
   // Init the webview
   const setWebviewRef = useCallback((node: WebviewTag) => {
@@ -135,23 +159,46 @@ function AppComponent(props: App): JSX.Element {
     }
   }, []);
 
-  useEffect(() => {
+  // Load the new URL
+  const loadURL = (url: string) => {
     if (domReady === false || attached === false) return;
-    // Start page muted
-    webviewNode.current.setAudioMuted(true);
-    setMute(props._id, true);
-  }, [domReady, attached]);
+    webviewNode.current.stop();
+    webviewNode.current.loadURL(url).catch((err: any) => {
+      console.log('Webview> Error loading URL:', url, err);
+      if (err.code === 'ERR_ABORTED') return;
+    });
+  };
+
+  // If the URL changes, check if it matches the state's URL
+  useEffect(() => {
+    setUrlMatchesState(url === s.webviewurl);
+  }, [s.webviewurl, url]);
+
+  // Update to URL from backend
+  useEffect(() => {
+    setUrl(s.webviewurl);
+    setLocalURL(props._id, s.webviewurl);
+    if (s.webviewurl !== url) {
+      loadURL(s.webviewurl);
+    }
+  }, [s.webviewurl]);
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
+    // Start page muted if you are not a wall
+    const isWall = user?.data.userType === 'wall' ? true : false;
+    webviewNode.current.setAudioMuted(!isWall);
+    setMute(props._id, isWall);
+  }, [domReady, attached]);
+
+  // First Load
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
     if (webviewNode.current) {
-      webviewNode.current.stop();
-      webviewNode.current.loadURL(url).catch((err: any) => {
-        console.log('Webview> Error loading URL:', url, err);
-        if (err.code === 'ERR_ABORTED') return;
-      });
+      loadURL(url);
+      setLocalURL(props._id, url);
     }
-  }, [url, domReady, attached]);
+  }, [domReady, attached]);
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
@@ -159,48 +206,7 @@ function AppComponent(props: App): JSX.Element {
       setZoom(s.zoom);
       webviewNode.current.setZoomFactor(s.zoom);
     }
-  }, [s.zoom, domReady]);
-
-  /**
-   * Observes for Page Changes
-   */
-  useEffect(() => {
-    if (!isElectron()) return;
-    if (domReady === false || attached === false) return;
-    const webview = webviewNode.current;
-
-    if (webview) {
-      if (webview.getURL() !== url) {
-        try {
-          webviewNode.current
-            .loadURL(url)
-            .then(() => {
-              console.log('Loaded URL:', url);
-            })
-            .catch((err: any) => {
-              console.log('Webview> Error loading URL:', url, err);
-            });
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    }
-
-    /**
-     * If a user changes the page by clicking/interacting a link on the webpage
-     */
-    const didNavigateInPage = (evt: any) => {
-      console.log('Webview> did-navigate-in-page', evt.url);
-    };
-
-    webview.addEventListener('did-navigate-in-page', didNavigateInPage);
-
-    return () => {
-      if (webview) {
-        webview.removeEventListener('did-navigate-in-page', didNavigateInPage);
-      }
-    };
-  }, [url, attached, domReady]);
+  }, [s.zoom, domReady, attached]);
 
   /**
    * Observes for Mute Changes
@@ -220,27 +226,30 @@ function AppComponent(props: App): JSX.Element {
     if (!isElectron()) return;
     if (domReady === false || attached === false) return;
     const webview = webviewNode.current;
-    const openUrlInNewWebviewApp = (url: string): void => {
+
+    const openUrlInNewWebviewApp = (aUrl: string): void => {
       if (!user) return;
       createApp({
-        title: url,
+        title: aUrl,
         roomId: roomId!,
         boardId: boardId!,
         position: { x: props.data.position.x + props.data.size.width + 15, y: props.data.position.y, z: 0 },
         size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Webview',
-        state: { webviewurl: processContentURL(url) },
+        state: { webviewurl: processContentURL(aUrl) },
         raised: true,
+        dragging: false,
+        pinned: false,
       });
     };
 
     // When the webview tries to open a new window
     const newWindow = (event: any) => {
-      // console.log('new-window', event);
       if (event.url.includes(window.location.hostname)) {
         // Allow jupyter to stay within the same window
         setUrl(event.url);
+        setLocalURL(props._id, s.webviewurl);
       }
       // Open a new window
       else if (event.url !== 'about:blank') {
@@ -248,25 +257,28 @@ function AppComponent(props: App): JSX.Element {
       }
     };
 
-    // Check if destination is a PDF document and open another webview if so
     const willNavigate = (event: any) => {
+      // Check if destination is a PDF document and open another webview if so
       if (event.url && event.url.includes('.pdf')) {
         // Dont try to download a PDF
         event.preventDefault();
         webview.stop();
-        openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit');
+        openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit&pagemode=none');
       } else {
         setUrl(event.url);
-        updateState(props._id, { webviewurl: event.url });
+        setLocalURL(props._id, event.url);
       }
     };
 
     const didNavigate = (event: any) => {
-      // if (event.url != 'about:blank' && event.isInPlace && event.isMainFrame) {
-      if (event.url != 'about:blank' && event.isMainFrame) {
+      if (event.url != 'about:blank' && event.isMainFrame && !event.url.includes('.pdf')) {
         setUrl(event.url);
-        updateState(props._id, { webviewurl: event.url });
+        setLocalURL(props._id, event.url);
       }
+    };
+
+    const openWebview = ({ url }: { url: string }) => {
+      openUrlInNewWebviewApp(url);
     };
 
     // Webview opened a new window
@@ -275,16 +287,26 @@ function AppComponent(props: App): JSX.Element {
     webview.addEventListener('will-navigate', willNavigate);
     webview.addEventListener('did-start-navigation', didNavigate);
 
+    window.electron.on('open-webview', openWebview);
+
     return () => {
       if (webview) {
         webview.removeEventListener('new-window', newWindow);
         webview.removeEventListener('will-navigate', willNavigate);
         webview.removeEventListener('did-start-navigation', didNavigate);
+        window.electron.removeAllListeners('open-webview');
       }
     };
   }, [props.data.position, domReady]);
 
-  const nodeStyle: React.CSSProperties = {
+  // Open the url in the default browser or a new tab
+  const handleOpen = () => {
+    if (isElectron()) {
+      window.electron.send('open-external-url', { url: s.webviewurl });
+    }
+  };
+
+  const webviewStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
     objectFit: 'contain',
@@ -294,13 +316,34 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       {isElectron() ? (
-        <webview ref={setWebviewRef} style={nodeStyle} allowpopups={'true' as any}></webview>
+        <div>
+          {/* button */}
+          {/* <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+            <Button colorScheme="teal" variant="ghost" top={0} right={0} position={'absolute'} size={'lg'} onClick={handleOpen}>
+              <MdOpenInNew />
+            </Button>
+          </Tooltip> */}
+          {/* Webview */}
+
+          {/* Warning Icon to show your view might not match others */}
+          {!urlMatchesState && (
+            <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  bottom: 0,
+                }}
+              >
+                <FaEyeSlash size={64} color={matchIconColor}></FaEyeSlash>
+              </div>
+            </Tooltip>
+          )}
+
+          <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
+        </div>
       ) : (
-        <ElectronRequired
-          appName={props.data.type}
-          link={s.webviewurl}
-          title={props.data.title}
-        />
+        <ElectronRequired appName={props.data.type} link={s.webviewurl} title={props.data.title} />
       )}
     </AppWindow>
   );
@@ -311,18 +354,36 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  const [urlValue, setUrlValue] = useState(s.webviewurl);
-  const mute = useStore((state: any) => state.mute[props._id]);
-  const setMute = useStore((state: any) => state.setMute);
-  const view = useStore((state: any) => state.view[props._id]);
+  const mute = useStore((state) => state.mute[props._id]);
+  const setMute = useStore((state) => state.setMute);
+  const view = useStore((state) => state.view[props._id]);
+
+  // Local URL
+  const setLocalURL = useStore((state) => state.setLocalURL);
+  const localURL = useStore((state) => state.localURL[props._id]);
+  const [viewURL, setViewURL] = useState(localURL);
+  // Save Confirmation  Modal
+  const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  // Room and board
+  const { roomId } = useParams();
+
+  useEffect(() => {
+    setViewURL(localURL);
+  }, [localURL]);
+
+  // Is Electron
+  const clientIsElectron = isElectron();
+
+  // Toast
+  const toast = useToast();
 
   // from the UI to the react state
-  const handleUrlChange = (event: any) => setUrlValue(event.target.value);
+  const handleUrlChange = (event: any) => setLocalURL(props._id, event.target.value);
 
   // Used by electron to change the url, usually be in-page navigation.
   const changeUrl = (evt: any) => {
     evt.preventDefault();
-    let url = urlValue.trim();
+    let url = localURL.trim();
     // Check for spaces. If they exist the this isn't a url. Create a google search
     if (url.indexOf(' ') !== -1) {
       url = 'https://www.google.com/search?q=' + url.replace(' ', '+');
@@ -344,19 +405,28 @@ function ToolbarComponent(props: App): JSX.Element {
       url = new URL(url).toString();
       updateState(props._id, { webviewurl: url });
       // update the address bar
-      setUrlValue(url);
+      setLocalURL(props._id, url);
     } catch (error) {
       console.log('Webview> Invalid URL', url);
+      toast({
+        title: 'Invalid URL',
+        status: 'error',
+        duration: 3000,
+      });
     }
   };
 
+  // Go back in the webview history
   const goBack = () => {
     view.goBack();
   };
+
+  // Go forward in the webview history
   const goForward = () => {
     view.goForward();
   };
 
+  // Zooming
   const handleZoom = (dir: string) => {
     const v = view as WebviewTag;
     if (dir === 'zoom-in') {
@@ -369,9 +439,69 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: v.zoomFactor });
   };
 
+  // Open the url in the default browser or a new tab
+  const handleOpen = () => {
+    if (clientIsElectron) {
+      window.electron.send('open-external-url', { url: s.webviewurl });
+    } else {
+      // Open in new tab
+      window.open(s.webviewurl, '_blank');
+    }
+  };
+
+  // Copy the url to the clipboard
+  const handleCopy = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(localURL);
+      toast({
+        title: 'Copied URL to clipboard',
+        status: 'success',
+        duration: 3000,
+      });
+    }
+  };
+
+  const saveInAssetManager = useCallback((val: string) => {
+    // save URL in asset manager
+    if (!val.endsWith('.url')) {
+      val += '.url';
+    }
+    // Generate the content of the file
+    const content = `[InternetShortcut]\nURL=${viewURL}\n`;
+    // Save the code in the asset manager
+    if (roomId) {
+      // Create a form to upload the file
+      const fd = new FormData();
+      const codefile = new File([new Blob([content])], val);
+      fd.append('files', codefile);
+      // Add fields to the upload form
+      fd.append('room', roomId);
+      // Upload with a POST request
+      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+        .catch((error: Error) => {
+          toast({
+            title: 'Upload',
+            description: 'Upload failed: ' + error.message,
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        })
+        .finally(() => {
+          toast({
+            title: 'Upload',
+            description: 'Upload complete',
+            status: 'info',
+            duration: 4000,
+            isClosable: true,
+          });
+        });
+    }
+  }, [viewURL, roomId]);
+
   return (
     <HStack>
-      {isElectron() && (
+      {clientIsElectron ? (
         <>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
@@ -397,7 +527,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <InputGroup size="xs" minWidth="200px">
               <Input
                 placeholder="Web Address"
-                value={urlValue}
+                value={viewURL}
                 onChange={handleUrlChange}
                 onPaste={(event) => {
                   event.stopPropagation();
@@ -429,11 +559,55 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
               <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
             </Tooltip>
+
+            <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+              <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
+                <MdFileUpload />
+              </Button>
+            </Tooltip>
+
+            <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
+              <Button onClick={handleCopy}>{<MdCopyAll />}</Button>
+            </Tooltip>
+
+            <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+              <Button onClick={handleOpen}>
+                <MdOpenInNew />
+              </Button>
+            </Tooltip>
           </ButtonGroup>
+
+          <ConfirmValueModal
+            isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
+            title="Save URL in Asset Manager" message="Select a file name:"
+            initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+            cancelText="Cancel" confirmText="Save"
+            confirmColor="green"
+          />
+
+        </>
+      ) : (
+        <>
+          <Tooltip placement="top-start" hasArrow={true} label={'Open page in new tab.'} openDelay={400}>
+            <Button onClick={handleOpen} size="xs" variant="solid" colorScheme="teal">
+              Open
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
+            <Button onClick={handleCopy} size="xs" variant="solid" colorScheme="teal">
+              Copy
+            </Button>
+          </Tooltip>
         </>
       )}
     </HStack>
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

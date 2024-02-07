@@ -22,12 +22,13 @@
 import { WebSocket } from 'ws';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collections';
+import { AppsCollection, BoardsCollection, InsightCollection, RoomsCollection } from '../../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';
 import { APIClientWSMessage } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
+import { PresenceThrottle } from './presencethrottle';
 
 /**
  * This class is for CUSTOM SUBSCRIPTIONS
@@ -90,9 +91,18 @@ export async function subscriptionWSRouter(
         if (appsSub) subs.push(appsSub);
         if (subs) cache.add(message.id, subs);
       }
+      // Subscribe to the presence collection
+      // Presence collection is unique in that it is throttled
+      else if (message.route === '/api/subscription/presence') {
+        PresenceThrottle.addSubscription(message.id, socket);
+      } else {
+        console.log('Subscription> Not found', message.route);
+      }
       break;
     }
     case 'UNSUB': {
+      // Attempt to remove the subscription from presence. It might not be for presence but have to check to avoid memory leak
+      PresenceThrottle.removeClient(message.id);
       // Unsubscribe Message
       cache.delete(message.id);
       break;

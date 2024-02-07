@@ -15,14 +15,14 @@ export const schema = z.object({
   lock: z.boolean(),
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
   text: 'stickie note',
-  fontSize: 42,
+  fontSize: 36,
   color: 'yellow',
   lock: false,
   executeInfo: { executeFunc: '', params: {} },

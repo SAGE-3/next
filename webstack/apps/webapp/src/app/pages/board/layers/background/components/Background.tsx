@@ -6,80 +6,58 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId } from '@chakra-ui/react';
-
-import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
-
-// To do upload with progress bar
-import axios, { AxiosProgressEvent } from 'axios';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
+import {
+  Box,
+  Button,
+  useColorModeValue,
+  useToast,
+  ToastId,
+  Modal,
+  useDisclosure,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  Portal,
+  Center,
+} from '@chakra-ui/react';
 
 import {
   useUIStore,
   useAppStore,
   useUser,
-  useAssetStore,
   useHexColor,
-  GetConfiguration,
   useMessageStore,
-  processContentURL,
   useHotkeys,
   useCursorBoardPosition,
   useKeyPress,
   useAuth,
+  useFiles,
+  isValidURL,
+  setupApp,
+  useAbility,
+  processContentURL,
 } from '@sage3/frontend';
-import { AppName } from '@sage3/applications/schema';
+import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
 
-// File information
-import {
-  getMime,
-  isValid,
-  isImage,
-  isPDF,
-  isCSV,
-  isMD,
-  isJSON,
-  isDZI,
-  isGeoJSON,
-  isVideo,
-  isPython,
-  isGLTF,
-  isGIF,
-  isPythonNotebook,
-} from '@sage3/shared';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
-import { setupApp } from './Drops';
-
-import imageHelp from './sage3-help.jpg';
-
-type HelpProps = {
-  onClose: () => void;
-  isOpen: boolean;
-};
-
-export function HelpModal(props: HelpProps) {
-  return (
-    <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="5xl">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>SAGE3 Help</ModalHeader>
-        <ModalBody>
-          <img src={imageHelp} alt="SAGE3 Help" />
-        </ModalBody>
-        <ModalFooter>
-          <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
-            Close
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  );
-}
+import { HelpModal } from '@sage3/frontend';
 
 type BackgroundProps = {
   roomId: string;
   boardId: string;
 };
+
+// Global vars to cache event state
+const evCache = new Array();
+let prevDiff = -1;
 
 export function Background(props: BackgroundProps) {
   // display some notifications
@@ -88,9 +66,14 @@ export function Background(props: BackgroundProps) {
   const toastIdRef = useRef<ToastId>();
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Modal for opening lots of files
+  const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
+  // Popover
+  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
-  // Assets
-  const assets = useAssetStore((state) => state.assets);
+  // Hooks
+  const { uploadFiles, openAppForFile, uploadInProgress } = useFiles();
+
   // Messsages
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
@@ -98,14 +81,21 @@ export function Background(props: BackgroundProps) {
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
+  const createBatch = useAppStore((state) => state.createBatch);
+
   // User
-  const { user } = useUser();
+  const { user, accessId } = useUser();
   const { auth } = useAuth();
-  const { position: cursorPosition, mouse: mousePosition } = useCursorBoardPosition();
+  const { cursor, boardCursor } = useCursorBoardPosition();
+
+  // Abilities
+  const canDrop = useAbility('upload', 'assets');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
+  const zoomIn = useUIStore((state) => state.zoomIn);
+  const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -113,101 +103,14 @@ export function Background(props: BackgroundProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
 
   // Chakra Color Mode for grid color
-  const gc = useColorModeValue('gray.100', 'gray.800');
+  const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
+  const [dropPosition, setDropPosition] = useState({ x: 0, y: 0 });
+  const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
+  const [validURL, setValidURL] = useState('');
 
   // For Lasso
   const isShiftPressed = useKeyPress('Shift');
-
-  // Perform the actual upload
-  const uploadFunction = (input: File[], dx: number, dy: number) => {
-    if (input) {
-      let filenames = '';
-      // Uploaded with a Form object
-      const fd = new FormData();
-      // Add each file to the form
-      const fileListLength = input.length;
-      for (let i = 0; i < fileListLength; i++) {
-        // check the mime type we got from the browser, and check with mime lib. if needed
-        const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
-
-        if (isValid(filetype)) {
-          if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
-            // 100MB
-            toast({
-              title: 'File too large',
-              description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
-              status: 'error',
-              duration: 6000,
-              isClosable: true,
-            });
-          } else {
-            fd.append('files', input[i]);
-            if (filenames) filenames += ', ' + input[i].name;
-            else filenames = input[i].name;
-          }
-        } else {
-          toast({
-            title: 'Invalid file type',
-            description: `Type not recognized: ${input[i].type} for file ${input[i].name}`,
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-          });
-        }
-      }
-
-      // Add fields to the upload form
-      fd.append('room', props.roomId);
-      fd.append('board', props.boardId);
-
-      // Position to open the asset
-      fd.append('targetX', dx.toString());
-      fd.append('targetY', dy.toString());
-
-      toastIdRef.current = toast({
-        title: 'Upload',
-        description: 'Starting upload of ' + filenames,
-        status: 'info',
-        // no duration, so it doesn't disappear
-        duration: null,
-        isClosable: true,
-      });
-
-      // Upload with a POST request
-      axios({
-        method: 'post',
-        url: '/api/assets/upload',
-        data: fd,
-        onUploadProgress: (p: AxiosProgressEvent) => {
-          if (toastIdRef.current && p.progress) {
-            const progress = (p.progress * 100).toFixed(0);
-            toast.update(toastIdRef.current, {
-              title: 'Upload',
-              description: 'Progress: ' + progress + '%',
-              isClosable: true,
-            });
-          }
-        },
-      })
-        .catch((error: Error) => {
-          console.log('Upload> Error: ', error);
-        })
-        .finally(() => {
-          // Close the modal UI
-          // props.onClose();
-
-          if (!filenames) {
-            toast({
-              title: 'Upload with Errors',
-              status: 'warning',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
-        });
-    }
-  };
 
   // Subscribe to messages
   useEffect(() => {
@@ -251,251 +154,56 @@ export function Background(props: BackgroundProps) {
 
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
-    createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    if (type === 'Screenshare') {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
+    } else {
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+    }
   };
 
-  // Create an app for a file
-  function OpenFile(fileID: string, fileType: string, xDrop: number, yDrop: number) {
-    if (!user) return;
-    const w = 400;
-    if (isGIF(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          createApp(
-            setupApp(
-              a.data.originalfilename,
-              'ImageViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              { w: w, h: w },
-              { assetid: '/api/assets/static/' + a.data.file }
-            )
-          );
-        }
-      });
-    } else if (isImage(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const extras = a.data.derived as ExtraImageType;
-          createApp(
-            setupApp(
-              a.data.originalfilename,
-              'ImageViewer',
-              xDrop,
-              yDrop,
-              props.roomId,
-              props.boardId,
-              { w: w, h: w / (extras.aspectRatio || 1) },
-              { assetid: fileID }
-            )
-          );
-        }
-      });
-    } else if (isVideo(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const extras = a.data.derived as ExtraImageType;
-          const vw = 800;
-          const vh = vw / (extras.aspectRatio || 1);
-          createApp(setupApp('', 'VideoViewer', xDrop, yDrop, props.roomId, props.boardId, { w: vw, h: vh }, { assetid: fileID }));
-        }
-      });
-    } else if (isCSV(fileType)) {
-      createApp(setupApp('', 'CSVViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isDZI(fileType)) {
-      createApp(setupApp('', 'DeepZoomImage', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isGLTF(fileType)) {
-      createApp(setupApp('', 'GLTFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 600, h: 600 }, { assetid: fileID }));
-    } else if (isGeoJSON(fileType)) {
-      createApp(setupApp('', 'LeafLet', xDrop, yDrop, props.roomId, props.boardId, { w: 800, h: 400 }, { assetid: fileID }));
-    } else if (isMD(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'text/plain',
-              Accept: 'text/plain',
-            },
-          })
-            .then(function (response) {
-              return response.text();
-            })
-            .then(async function (text) {
-              // Create a note from the text
-              createApp(setupApp(user.data.name, 'Stickie', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { text: text }));
-            });
-        }
-      });
-    } else if (isPython(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'text/plain',
-              Accept: 'text/plain',
-            },
-          })
-            .then(function (response) {
-              return response.text();
-            })
-            .then(async function (text) {
-              // Create a note from the text
-              createApp(setupApp('', 'SageCell', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 }, { code: text }));
-            });
-        }
-      });
-    } else if (isPythonNotebook(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (json) {
-              // Create a notebook file in Jupyter with the content of the file
-              GetConfiguration().then((conf) => {
-                if (conf.token) {
-                  // Create a new notebook
-                  let base: string;
-                  if (conf.production) {
-                    base = `https://${window.location.hostname}:4443`;
-                  } else {
-                    base = `http://${window.location.hostname}`;
-                  }
-                  // Talk to the jupyter server API
-                  const j_url = base + '/api/contents/notebooks/' + a.data.originalfilename;
-                  const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-                  // Create a new notebook
-                  fetch(j_url, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: 'Token ' + conf.token,
-                    },
-                    body: JSON.stringify(payload),
-                  })
-                    .then((response) => response.json())
-                    .then((res) => {
-                      console.log('Jupyter> notebook created', res);
-                      // Create a note from the json
-                      createApp(
-                        setupApp(
-                          '',
-                          'JupyterLab',
-                          xDrop,
-                          yDrop,
-                          props.roomId,
-                          props.boardId,
-
-                          { w: 700, h: 700 },
-                          { notebook: a.data.originalfilename }
-                        )
-                      );
-                    });
-                }
-              });
-            });
-        }
-      });
-    } else if (isJSON(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const localurl = '/api/assets/static/' + a.data.file;
-          // Get the content of the file
-          fetch(localurl, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-          })
-            .then(function (response) {
-              return response.json();
-            })
-            .then(async function (spec) {
-              // Create a vis from the json spec
-              createApp(
-                setupApp(
-                  '',
-                  'VegaLite',
-                  xDrop,
-                  yDrop,
-                  props.roomId,
-                  props.boardId,
-                  { w: 500, h: 600 },
-                  { spec: JSON.stringify(spec, null, 2) }
-                )
-              );
-            });
-        }
-      });
-    } else if (isPDF(fileType)) {
-      // Look for the file in the asset store
-      assets.forEach((a) => {
-        if (a._id === fileID) {
-          const pages = a.data.derived as ExtraPDFType;
-          let aspectRatio = 1;
-          if (pages) {
-            // First page
-            const page = pages[0];
-            // First image of the page
-            aspectRatio = page[0].width / page[0].height;
-          }
-          createApp(
-            setupApp('', 'PDFViewer', xDrop, yDrop, props.roomId, props.boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID })
-          );
-        }
-      });
-    }
-  }
-
   // Drop event
-  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+  async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+
     if (!user) return;
 
+    if (!canDrop) {
+      toast({
+        title: 'Guests and Spectators cannot upload assets',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     // Get the position of the drop
     const xdrop = event.nativeEvent.offsetX;
     const ydrop = event.nativeEvent.offsetY;
+    setDropCursor({ x: event.clientX, y: event.clientY });
+    setDropPosition({ x: xdrop, y: ydrop });
 
     if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
       event.preventDefault();
       event.stopPropagation();
-
-      // Block guests from uploading assets
-      if (auth?.provider === 'guest') {
-        toast({
-          title: 'Guests cannot upload assets',
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
-
       // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer).then((files) => {
-        // do the actual upload
-        uploadFunction(Array.from(files), xdrop, ydrop);
-      });
+      collectFiles(event.dataTransfer)
+        .then(async (files) => {
+          if (!uploadInProgress) {
+            toast.closeAll();
+            // do the actual upload
+            uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+          } else {
+            toast({
+              title: 'Upload in progress - Please wait',
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          }
+        })
+        .catch((err) => {
+          console.log('Error> uploading files', err);
+          lotsOnOpen();
+        });
     } else {
       // Drag/Drop a URL
       if (event.dataTransfer.types.includes('text/uri-list')) {
@@ -516,37 +224,78 @@ export function Background(props: BackgroundProps) {
         const pastedText = event.dataTransfer.getData('Url');
         if (pastedText) {
           if (pastedText.startsWith('data:image/png;base64')) {
+            const title = event.dataTransfer.getData('title') || 'Image';
             // it's a base64 image
-            createApp(setupApp('', 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w: 800, h: 600 }, { assetid: pastedText }));
+            getImageDimensionsFromBase64(pastedText).then((res) => {
+              const ar = res.w / res.h;
+              let w = res.w;
+              let h = w / ar;
+              if (ar < 1) {
+                w = res.h * ar;
+                h = res.h;
+              }
+              createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+            });
           } else {
-            const final_url = processContentURL(pastedText);
-            let w, h;
-            if (final_url !== pastedText) {
-              // it must be a video
-              w = 1280;
-              h = 720;
-            } else {
-              w = 800;
-              h = 800;
+            // Is it a valid URL
+            const valid = isValidURL(pastedText);
+            if (valid) {
+              // Create a link or view app
+              popOnOpen();
+              setValidURL(valid);
             }
-            createApp(setupApp('', 'Webview', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { webviewurl: final_url }));
           }
         }
       } else {
         // if no files were dropped, create an application
         const appName = event.dataTransfer.getData('app') as AppName;
         if (appName) {
-          newApp(appName, xdrop, ydrop);
+          // if a specific app was setup, create it
+          const appstatestr = event.dataTransfer.getData('app_state');
+          if (appstatestr) {
+            const appstate = JSON.parse(appstatestr);
+            const newState = {
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xdrop, y: ydrop, z: 0 },
+              size: { width: 600, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: appName,
+              state: { ...(initialValues[appName] as AppState), ...appstate },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            };
+            createApp(newState);
+          } else {
+            newApp(appName, xdrop, ydrop);
+          }
         } else {
           // Get information from the drop
           const ids = event.dataTransfer.getData('file');
           const types = event.dataTransfer.getData('type');
-          const fileIDs = JSON.parse(ids);
-          const fileTypes = JSON.parse(types);
-          // Open the file at the drop location
-          const num = fileIDs.length;
-          for (let i = 0; i < num; i++) {
-            OpenFile(fileIDs[i], fileTypes[i], xdrop + i * 415, ydrop);
+          if (ids && types) {
+            // if it's files from the asset manager
+            const fileIDs = JSON.parse(ids);
+            const fileTypes = JSON.parse(types);
+            // Open the file at the drop location
+            const num = fileIDs.length;
+            if (num < 20) {
+              const batch: AppSchema[] = [];
+              let xpos = xdrop;
+              for (let i = 0; i < num; i++) {
+                const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+                if (res) {
+                  batch.push(res);
+                  xpos += res.size.width + 10;
+                }
+              }
+              createBatch(batch);
+            } else {
+              // Too many assets selected, not doing it.
+              lotsOnOpen();
+            }
           }
         }
       }
@@ -558,20 +307,13 @@ export function Background(props: BackgroundProps) {
     'shift+/',
     (event: KeyboardEvent): void | boolean => {
       if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
-
+      // Open the help panel
       helpOnOpen();
-
-      // show image or open doc
-      // const doc = 'https://sage3.sagecommons.org/wp-content/uploads/2022/11/SAGE3-2022.pdf';
-      // window.open(doc, '_blank');
-
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    { dependencies: [] }
   );
 
   // Move the board with the arrow keys
@@ -593,7 +335,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y, selectedAppId, boardPosition.x, boardPosition.y] }
+    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] }
   );
 
   // Zoom in/out of the board with the -/+ keys
@@ -602,15 +344,15 @@ export function Background(props: BackgroundProps) {
     (event: KeyboardEvent): void | boolean => {
       if (selectedAppId !== '') return;
       if (event.key === '-') {
-        zoomOutDelta(-10, mousePosition);
+        zoomOutDelta(-10, cursor);
       } else if (event.key === '=') {
-        zoomInDelta(10, mousePosition);
+        zoomInDelta(10, cursor);
       }
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [mousePosition.x, mousePosition.y, selectedAppId] }
+    { dependencies: [selectedAppId] }
   );
 
   // Stickies Shortcut
@@ -618,38 +360,150 @@ export function Background(props: BackgroundProps) {
     'shift+s',
     (event: KeyboardEvent): void | boolean => {
       if (!user) return;
-      const x = cursorPosition.x;
-      const y = cursorPosition.y;
+      const x = boardCursor.x;
+      const y = boardCursor.y;
       createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 400 }, { color: user.data.color || 'yellow' })
+        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
       );
 
       // Returning false stops the event and prevents default browser events
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [cursorPosition.x, cursorPosition.y] }
+    { dependencies: [] }
   );
 
   useEffect(() => {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
+
     if (isShiftPressed) {
       document.onselectstart = function () {
         return false;
       };
     }
+
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
+
+  const createWeblink = () => {
+    createApp(
+      setupApp(
+        'WebpageLink',
+        'WebpageLink',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: 400, h: 400 },
+        { url: validURL }
+      )
+    );
+    popOnClose();
+  };
+  const createWebview = () => {
+    const final_url = processContentURL(validURL);
+    let w = 800;
+    let h = 800;
+    if (final_url !== validURL) {
+      // might be a video
+      w = 1280;
+      h = 720;
+    }
+    createApp(
+      setupApp(
+        'Webview',
+        'Webview',
+        dropPosition.x,
+        dropPosition.y,
+        props.roomId,
+        props.boardId,
+        { w: w, h: h },
+        { webviewurl: final_url }
+      )
+    );
+    popOnClose();
+  };
+
+  // Functions for zooming with touch events
+  function remove_event(ev: any) {
+    // Remove this event from the target's cache
+    for (var i = 0; i < evCache.length; i++) {
+      if (evCache[i].pointerId == ev.pointerId) {
+        evCache.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  const onPointerDown = (ev: any) => {
+    evCache.push(ev);
+  };
+
+  /**
+   * This function implements a 2-pointer horizontal pinch/zoom gesture.
+   * If the distance between the two pointers has increased (zoom in),
+   * and if the distance is decreasing (zoom out)
+   *
+   * @param ev
+   */
+  const onPointerMove = (ev: any) => {
+    // Find this event in the cache and update its record with this event
+    for (var i = 0; i < evCache.length; i++) {
+      if (ev.pointerId == evCache[i].pointerId) {
+        evCache[i] = ev;
+        break;
+      }
+    }
+
+    // If two pointers are down, check for pinch gestures
+    if (evCache.length == 2) {
+      // Calculate the distance between the two pointers
+      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
+      if (prevDiff > 0) {
+        if (curDiff > prevDiff) {
+          // The distance between the two pointers has increased
+          zoomIn();
+        }
+        if (curDiff < prevDiff) {
+          // The distance between the two pointers has decreased
+          zoomOut();
+        }
+      }
+      // Cache the distance for the next move event
+      prevDiff = curDiff;
+    }
+  };
+  const onPointerUp = (ev: any) => {
+    // Remove this pointer from the cache
+    remove_event(ev);
+    // If the number of pointers down is less than two then reset diff tracker
+    if (evCache.length < 2) prevDiff = -1;
+  };
+
+  // Throttle The wheel event
+  const throttleWheel = throttle(50, (evt: any) => {
+    evt.stopPropagation();
+    const cursor = { x: evt.clientX, y: evt.clientY };
+    if (evt.deltaY < 0) {
+      zoomInDelta(evt.deltaY, cursor);
+    } else if (evt.deltaY > 0) {
+      zoomOutDelta(evt.deltaY, cursor);
+    }
+  });
+  const throttleWheelRef = useCallback(throttleWheel, []);
+  const onWheelEvent = (ev: any) => {
+    throttleWheelRef(ev);
+  };
 
   return (
     <Box
       className="board-handle"
       width="100%"
       height="100%"
-      backgroundSize={`50px 50px`}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px),
-               linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      backgroundSize={'100px 100px'}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -657,18 +511,49 @@ export function Background(props: BackgroundProps) {
       onScroll={(evt) => {
         evt.stopPropagation();
       }}
-      onWheel={(evt: any) => {
-        evt.stopPropagation();
-        const cursor = { x: evt.clientX, y: evt.clientY };
-        if (evt.deltaY < 0) {
-          zoomInDelta(evt.deltaY, cursor);
-        } else if (evt.deltaY > 0) {
-          zoomOutDelta(evt.deltaY, cursor);
-        }
-      }}
+      onWheel={onWheelEvent}
+      // Zoom touch events
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onPointerOut={onPointerUp}
+      onPointerLeave={onPointerUp}
     >
-      <Modal isCentered isOpen={helpIsOpen} onClose={helpOnClose}>
-        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+
+      <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+        <Portal>
+          <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+            <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+              <Center>Create a Link or open URL</Center>
+            </PopoverHeader>
+            <PopoverBody>
+              <Center>
+                <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
+                  Create Link
+                </Button>
+                <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
+                  Open URL
+                </Button>
+              </Center>
+            </PopoverBody>
+          </PopoverContent>
+        </Portal>
+      </Popover>
+
+      {/* Too many assets selected */}
+      <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Opening Assets</ModalHeader>
+          <ModalBody>Too many assets selected</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
+              OK
+            </Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
     </Box>
   );
@@ -696,6 +581,11 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
 
     const dt = evdt;
     const length = evdt.items.length;
+    if (length > 20) {
+      reject('Too many files');
+      return;
+    }
+
     for (let i = 0; i < length; i++) {
       const entry = dt.items[i].webkitGetAsEntry();
       if (entry?.isFile) {
@@ -717,4 +607,21 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
       }
     }
   });
+}
+
+/**
+ * Get the dimensions of an image from a base64 string
+ *
+ * @export
+ * @param {string} file
+ * @returns {Promise<{w: number, h: number}>}
+ */
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+  return new Promise(function (resolved, rejected) {
+    var i = new Image()
+    i.onload = function () {
+      resolved({ w: i.width, h: i.height })
+    };
+    i.src = file
+  })
 }

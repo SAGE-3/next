@@ -6,13 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// React
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
 // Date manipulation functions for file manager
 import { format as formatDate, formatDistanceStrict } from 'date-fns';
-import { AssetHTTPService } from '@sage3/frontend';
+// UUID generator
+import { v5 as uuidv5 } from 'uuid';
 
+// Chakra UI
 import {
   Modal,
   ModalOverlay,
@@ -32,13 +35,27 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
 
-import { humanFileSize, downloadFile, useUser, useAuth, useAppStore, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
+import {
+  humanFileSize,
+  downloadFile,
+  useUser,
+  useAuth,
+  useAppStore,
+  useUIStore,
+  useCursorBoardPosition,
+  AssetHTTPService,
+  useAbility,
+  apiUrls,
+  setupAppForFile,
+  useConfigStore,
+} from '@sage3/frontend';
 import { getExtension } from '@sage3/shared';
-import { FileEntry } from './types';
-import { setupAppForFile } from './CreateApp';
+
 import './menu.scss';
+import { FileEntry } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -76,9 +93,14 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const { position: cursorPosition } = useCursorBoardPosition();
+  const { boardCursor: cursorPosition } = useCursorBoardPosition();
 
   const scale = useUIStore((state) => state.scale);
+
+  // Abilities
+  const canCreateApp = useAbility('create', 'apps');
+  const canDelete = useAbility('delete', 'assets');
+  const canDownload = useAbility('download', 'assets');
 
   // Select the file when clicked
   const onSingleClick = (e: MouseEvent): void => {
@@ -99,27 +121,44 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const actionClick = (e: React.MouseEvent<HTMLLIElement>): void => {
     const id = e.currentTarget.id;
     if (id === 'down') {
-      // download a file
-      downloadFile('api/assets/static/' + file.filename, file.originalfilename);
+      if (!canDownload) {
+        toast({
+          title: 'You do not have the permission to download this file',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      } else {
+        // download a file
+        const url = apiUrls.assets.getAssetById(file.filename);
+        downloadFile(url, file.originalfilename);
+      }
     } else if (id === 'copy') {
+      // Get the namespace UUID of the server
+      const namespace = useConfigStore.getState().config.namespace;
+      // Generate a public URL of the file
+      const token = uuidv5(file.id, namespace);
+      const publicUrl = window.location.origin + apiUrls.assets.getPublicURL(file.id, token);
       // Copy the file URL to the clipboard
-      const publicUrl = window.location.origin + '/api/assets/static/' + file.filename;
-      navigator.clipboard.writeText(publicUrl);
-      // Notify the user
-      toast({
-        title: 'Success',
-        description: `URL Copied to Clipboard`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(publicUrl);
+        // Notify the user
+        toast({
+          title: 'Success',
+          description: `URL Copied to Clipboard`,
+          duration: 3000,
+          isClosable: true,
+          status: 'success',
+        });
+      }
     } else if (id === 'del') {
-      if (auth?.provider !== 'guest') {
+      if (canDelete) {
         // Delete a file
         onDeleteOpen();
       } else {
         toast({
-          title: 'Guests cannot delete assets',
+          title: 'You do not have the permission to delete this file',
           status: 'warning',
           duration: 3000,
           isClosable: true,
@@ -166,11 +205,23 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // pick an icon based on file type (extension string)
   const whichIcon = (type: string) => {
     switch (type) {
+      case 'url':
+        return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+      case 'py':
+        return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
       case 'jpeg':
+      case 'png':
+      case 'gif':
         return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+      case 'geotiff':
+      case 'geojson':
+        return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
       case 'mp4':
+      case 'qt':
+        return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
+      case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'json':
         return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
@@ -185,8 +236,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const added = formatDistanceStrict(new Date(file.dateAdded), new Date(), { addSuffix: false });
 
   // Select the color when item is selected
-  const highlight = selected ? 'teal.600' : 'inherit';
-  const colorHover = useColorModeValue('gray.400', 'gray.600');
+  const highlight = selected ? useColorModeValue('teal.400', 'teal.600') : 'inherit';
+  const colorHover = useColorModeValue('gray.200', 'gray.600');
   const hover = selected ? highlight : colorHover;
   const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
   const border = useColorModeValue('1px solid #4A5568', '1px solid #E2E8F0');
@@ -204,7 +255,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
 
   // Create an app for a file
   const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!user) return;
+    if (!user || !canCreateApp) return;
     // Get around  the center of the board
     const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
     const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
@@ -261,13 +312,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             }}
           >
             <li className="s3contextmenuitem" id={'copy'} onClick={actionClick}>
-              Copy URL
+              Copy Public URL
             </li>
             <li className="s3contextmenuitem" id={'down'} onClick={actionClick}>
-              Download
+              Download File
             </li>
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
-              Delete
+              Delete File
             </li>
           </ul>
         </Portal>

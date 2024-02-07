@@ -7,22 +7,22 @@
  */
 
 import { useState, useEffect, Suspense, useRef } from 'react';
-
 import { Box, Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
+
 // Icons
 import { MdFileDownload } from 'react-icons/md';
 
+// Threejs
 import { Canvas, useLoader, useThree, useFrame } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as THREE from 'three';
 
-import { useAppStore, useAssetStore, useUIStore } from '@sage3/frontend';
+// SAGE3
+import { useAppStore, useAssetStore, useUIStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-// Utility functions from SAGE3
-import { downloadFile } from '@sage3/frontend';
-
+// App
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -39,20 +39,15 @@ const CameraController = (props: CameraProps) => {
   const { camera, gl, invalidate } = useThree();
   const updateState = useAppStore((state) => state.updateState);
 
-  // useFrame(() => {
-  //   console.log('Frame>', props.id);
-  // });
-
   useEffect(() => {
-    console.log('Need to update camera state>', props.state.p, props.state.a, props.state.d);
-    // const sph = new THREE.Spherical(props.state.d, props.state.p, props.state.a);
+    // console.log('Need to update camera state>', props.state.p, props.state.a, props.state.d);
   }, [props.state.p, props.state.a, props.state.d]);
 
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
     controls.minDistance = 1;
     controls.maxDistance = 200;
-    controls.zoomO = 4;
+    // controls.zoom0 = 4;
 
     controls.addEventListener('change', (e: any) => {
       // redraw
@@ -94,15 +89,15 @@ function FrameLimiter({ limit = 2 }) {
  */
 function Model3D({ url }: { url: string }) {
   const gltf = useLoader(GLTFLoader, url);
-  const mesh = useRef<THREE.Group>();
+  return <primitive object={gltf.scene} />;
+
+  // const mesh = useRef<THREE.Group>();
   // useFrame(() => {
   //   if (mesh.current) {
   //     mesh.current.rotation.x = mesh.current.rotation.y += 0.01;
   //   }
   // });
   // return <primitive ref={mesh} object={gltf.scene} />;
-
-  return <primitive object={gltf.scene} />;
 }
 
 function AppComponent(props: App): JSX.Element {
@@ -139,7 +134,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the URL from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       setUrl(localurl);
     }
   }, [file]);
@@ -154,10 +149,10 @@ function AppComponent(props: App): JSX.Element {
           frameloop={'demand'}
           gl={{ powerPreference: 'low-power', antialias: false }}
         >
-          {/* <FrameLimiter limit={20} /> */}
+          {/* <FrameLimiter limit={10} /> */}
           <CameraController id={props._id} state={orientation} />
-          <ambientLight intensity={0.1} />
-          <spotLight intensity={0.5} position={[15, 100, 50]} />
+          <ambientLight intensity={1} />
+          <spotLight intensity={0.75} position={[15, 100, 50]} />
           <primitive object={new THREE.AxesHelper(5)} />
           <Suspense fallback={null}>
             <Model3D url={url} />
@@ -188,7 +183,8 @@ function ToolbarComponent(props: App): JSX.Element {
               if (file) {
                 const url = file?.data.file;
                 const filename = file?.data.originalfilename;
-                downloadFile('api/assets/static/' + url, filename);
+                const dl = apiUrls.assets.getAssetById(url);
+                downloadFile(dl, filename);
               }
             }}
           >
@@ -200,4 +196,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

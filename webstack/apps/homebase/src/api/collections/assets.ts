@@ -13,16 +13,20 @@
  * @version 1.0.0
  */
 
+// Node modules
+import * as fs from 'fs';
+
 // Express web server framework
 import * as express from 'express';
 
-import { AssetSchema } from '@sage3/shared/types';
+// SAGE3 modules
+import { AssetSchema, ExtraVideoType } from '@sage3/shared/types';
 import { getStaticAssetUrl, SAGE3Collection, sageRouter } from '@sage3/backend';
 import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
-import { uploadHandler } from '../routers/custom/asset';
+import { uploadHandler } from '../routers/custom';
 import { config } from '../../config';
 
 class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
@@ -46,6 +50,8 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     this.router().use('/static', express.static(assetFolder));
     // Finish the initialization by adding file processors
     this.setup();
+    // Check the consistency of the collection
+    await this.check();
   }
 
   /**
@@ -68,72 +74,108 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   }
 
   /**
-   * Process a file for metadata, and pdf/image processing
+   * Checking up the asset DB at startup.
    */
-  public async processFile(id: string, file: string, fileType: string): Promise<any> {
-    return new Promise((resolve) => {
-      const tasks = [] as Promise<any>[];
-      // extract metadata
-      const t1 = this.metaQ.addFile(id, file);
-      tasks.push(t1);
-      // convert image to multiple sizes
-      if (isImage(fileType) && !isGIF(fileType)) {
-        const t2 = this.imgQ.addFile(id, file);
-        tasks.push(t2);
-      } else if (isPDF(fileType)) {
-        // convert PDF to images
-        const t2 = this.pdfQ.addFile(id, file);
-        tasks.push(t2);
+  public async check() {
+    const all = await AssetsCollection.getAll();
+    console.log('Assets> count', all?.length);
+    if (all) {
+      for (const asset of all) {
+        const exists = fs.existsSync(asset.data.path);
+        if (!exists) {
+          console.log('Assets> not present, deleting from DB', asset._id, asset.data.originalfilename);
+          await AssetsCollection.delete(asset._id);
+        }
       }
-      Promise.all(tasks).then(async ([r1, r2]) => {
-        const exif = r1.data;
-        // Find a creation date from all the exif dates
-        let realDate = new Date();
-        if (!isNaN(Date.parse(exif.CreateDate))) {
-          realDate = new Date(exif.CreateDate);
-        } else if (!isNaN(Date.parse(exif.DateTimeOriginal))) {
-          realDate = new Date(exif.DateTimeOriginal);
-        } else if (!isNaN(Date.parse(exif.ModifyDate))) {
-          realDate = new Date(exif.ModifyDate);
-        } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
-          realDate = new Date(exif.FileModifyDate);
-        }
-        if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
-          // image or pdf processed
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-            derived: r2.result,
-          });
-        } else if (isVideo(fileType)) {
-          // get the dimensions of the video from the medata
-          const imgWidth = exif['ImageWidth'] || 1280;
-          const imgHeight = exif['ImageHeight'] || 720;
-          // video file: store width and height in the derived field
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-            derived: {
-              filename: file,
-              url: '/' + getStaticAssetUrl(file),
-              fullSize: '/' + getStaticAssetUrl(file),
-              // video size
-              width: imgWidth,
-              height: imgHeight,
-              // save the image aspect ratio
-              aspectRatio: imgWidth / imgHeight,
-              sizes: [],
-            },
-          });
-        } else {
-          // everything else
-          resolve({
-            dateCreated: realDate.toISOString(),
-            metadata: r1.result,
-          });
-        }
+    }
+  }
+
+  /**
+   * Process a file for metadata
+   */
+  public async metadataFile(id: string, file: string, fileType: string) {
+    // extract metadata
+    const t1 = await this.metaQ.addFile(id, file);
+
+    const exif = t1.data;
+    // Find a creation date from all the exif dates
+    let realDate = new Date();
+    if (!isNaN(Date.parse(exif.CreateDate))) {
+      realDate = new Date(exif.CreateDate);
+    } else if (!isNaN(Date.parse(exif.DateTimeOriginal))) {
+      realDate = new Date(exif.DateTimeOriginal);
+    } else if (!isNaN(Date.parse(exif.ModifyDate))) {
+      realDate = new Date(exif.ModifyDate);
+    } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
+      realDate = new Date(exif.FileModifyDate);
+    }
+    if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
+      // image or pdf processed
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+      };
+    } else if (isVideo(fileType)) {
+      // get the dimensions of the video from the medata
+      let imgWidth = exif['ImageWidth'] || 1280;
+      let imgHeight = exif['ImageHeight'] || 720;
+      const rotation = exif['Rotation'] || 0;
+      if (rotation === 90 || rotation === 270) {
+        // swap width and height
+        const tmp = imgWidth;
+        imgWidth = imgHeight;
+        imgHeight = tmp;
+      }
+      const derived: ExtraVideoType = {
+        filename: file,
+        url: '/' + getStaticAssetUrl(file),
+        // video size
+        width: imgWidth,
+        height: imgHeight,
+        // save the image aspect ratio
+        aspectRatio: imgWidth / imgHeight,
+        // video metadata
+        duration: exif['Duration'] || '',
+        birate: exif['AvgBitrate'] || '',
+        framerate: exif['VideoFrameRate'] || 0,
+        compressor: exif['CompressorName'] || exif['CompressorID'] || '',
+        audioFormat: exif['AudioFormat'] || '',
+        rotation: rotation,
+      };
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+        derived: derived,
+      };
+    } else {
+      // everything else
+      return {
+        dateCreated: realDate.toISOString(),
+        metadata: t1.result,
+      };
+    }
+  }
+
+  /**
+   * Process a file for conversion: pdf/image processing
+   */
+  public async processFile(id: string, file: string, fileType: string) {
+    let t2;
+    // convert image to multiple sizes
+    if (isImage(fileType) && !isGIF(fileType)) {
+      t2 = await this.imgQ.addFile(id, file);
+    } else if (isPDF(fileType)) {
+      // convert PDF to images
+      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
+        return Promise.reject(err);
       });
-    });
+    }
+    if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
+      // image or pdf processed
+      return t2.result;
+    } else {
+      return null;
+    }
   }
 }
 

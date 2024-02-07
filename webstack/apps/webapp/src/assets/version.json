@@ -1,10 +1,10 @@
 {
-  "currentRelease": "1.0.0-beta.4",
+  "currentRelease": "1.0.16",
   "releases": [
     {
-      "version": "1.0.0-beta.4",
+      "version": "1.0.16",
       "notes": "Bug fixes and performances issues",
-      "name": "Beta release 1.0.0",
+      "name": "Release 1.0.16",
       "darwinintel": {
         "pub_date": "2021-12-10T00:00:00.000Z",
         "url": "https://sage3.sagecommons.org/?download=next-macos-intel"

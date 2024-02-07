@@ -20,6 +20,9 @@ import {
   RoomsCollection,
   UsersCollection,
   MessageCollection,
+  PluginsCollection,
+  InsightCollection,
+  RoomMembersCollection,
 } from '../collections';
 
 // Lib Imports
@@ -36,12 +39,18 @@ const wsRoutes = {
     BoardsCollection.wsRouter(socket, message, user, cache),
   '/rooms': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     RoomsCollection.wsRouter(socket, message, user, cache),
+  '/roommembers': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    RoomMembersCollection.wsRouter(socket, message, user, cache),
   '/users': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     UsersCollection.wsRouter(socket, message, user, cache),
   '/presence': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     PresenceCollection.wsRouter(socket, message, user, cache),
   '/message': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     MessageCollection.wsRouter(socket, message, user, cache),
+  '/plugins': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    PluginsCollection.wsRouter(socket, message, user, cache),
+  '/insight': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    InsightCollection.wsRouter(socket, message, user, cache),
   '/subscription': subscriptionWSRouter,
 } as {
   [key: string]: (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) => Promise<void>;

@@ -24,10 +24,54 @@ const styles = {
   global: (props: StyleFunctionProps) => ({
     // styles for the `body`
     body: {
-      bg: mode('gray.50', '#212121')(props),
+      bg: mode('gray.50', '#323232')(props),
     },
   }),
 };
 
+const components = {
+  Drawer: {
+    variants: {
+      code: {
+        dialogContainer: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
+        dialog: {
+          pointerEvents: 'auto',
+        },
+      },
+      alwaysOpen: {
+        overlay: {
+          pointerEvents: 'none',
+          background: 'transparent',
+        },
+        dialog: {
+          pointerEvents: 'auto',
+        },
+        dialogContainer: {
+          pointerEvents: 'none',
+        },
+      },
+    },
+  },
+  Radio: {
+    variants: {
+      primary: ({ colorScheme = 'primary' }) => ({
+        color: `${colorScheme}.500`,
+        control: {
+          _checked: {
+            color: 'secondary.500',
+          },
+        },
+      }),
+    },
+    defaultProps: {
+      variant: 'primary',
+      colorScheme: 'primary',
+    },
+  },
+};
+
 // Extend the theme
-export const theme = extendTheme({ config, colors, styles });
+export const theme = extendTheme({ config, colors, styles, components });

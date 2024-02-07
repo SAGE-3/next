@@ -14,3 +14,4 @@ export * from './servertime';
 export * from './copyboardurl';
 export * from './isElectron';
 export * from './browserType';
+export * from './setupAppForFiles';

@@ -27,12 +27,14 @@ const schema = z.object({
   // Is the board password protected?
   isPrivate: z.boolean(),
   privatePin: z.string(),
+  // Code for the room
+  code: z.string(),
   // The lines on the board
   whiteboardLines: z.any(),
   // function to execute on the baord
   executeInfo: z.object({
     executeFunc: z.string(),
-    params: z.record(z.any()),
+    params: z.any(),
   }),
 });
 

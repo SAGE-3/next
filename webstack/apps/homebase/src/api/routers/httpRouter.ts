@@ -17,7 +17,6 @@
 import * as express from 'express';
 
 // Asset imports
-import { FilesRouter } from './custom/files';
 
 // Collection Imports
 import {
@@ -28,12 +27,18 @@ import {
   RoomsCollection,
   UsersCollection,
   MessageCollection,
+  PluginsCollection,
+  InsightCollection,
+  RoomMembersCollection,
 } from '../collections';
-import { ConfigRouter, InfoRouter, TimeRouter } from './config';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
-import { NLPRouter } from './custom/nlp';
+
+// Custom Routes
+import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, FastAPIRouter, PresenceThrottle } from './custom';
+
+import { config } from '../../config';
 
 /**
  * API Loader function
@@ -48,6 +53,7 @@ export function expressAPIRouter(): express.Router {
   // Before auth, so can be accessed by anyone
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
+  router.use('/logs', LogsRouter());
 
   // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token
@@ -55,6 +61,9 @@ export function expressAPIRouter(): express.Router {
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
+
+  // FastAPI Routes
+  router.use('/fastapi', FastAPIRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());
@@ -64,9 +73,22 @@ export function expressAPIRouter(): express.Router {
   router.use('/rooms', RoomsCollection.router());
   router.use('/presence', PresenceCollection.router());
   router.use('/message', MessageCollection.router());
+  router.use('/insight', InsightCollection.router());
+  router.use('/roommembers', RoomMembersCollection.router());
 
+  // Check to see if plugins module is enabled.
+  if (config.features.plugins) {
+    router.use('/plugins', PluginsCollection.router());
+  }
+
+  // Configuration Route
   router.use('/configuration', ConfigRouter());
+
+  // Experimental NLP route
   router.use('/nlp', NLPRouter());
+
+  // Initialize Custom Presence Throttle
+  PresenceThrottle.init();
 
   return router;
 }

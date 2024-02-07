@@ -6,14 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Box } from '@chakra-ui/react';
 
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useAppStore, useUIStore } from '@sage3/frontend';
+import { useUIStore, useAbility } from '@sage3/frontend';
 
-import { Background, Apps, Cursors, Viewports, Whiteboard, UserPresenceUpdate, Lasso } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -21,41 +22,31 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
-  // Apps Store
-  const apps = useAppStore((state) => state.apps);
-  const appsFetched = useAppStore((state) => state.fetched);
+  // Abilities
+  const canLasso = useAbility('lasso', 'apps');
 
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
-  const fitApps = useUIStore((state) => state.fitApps);
   const boardLocked = useUIStore((state) => state.boardLocked);
+  const lassoMode = useUIStore((state) => state.lassoMode);
 
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
 
-  // Position board when entering board
-  useEffect(() => {
-    if (appsFetched) {
-      if (apps.length > 0) {
-        fitApps(apps);
-      } else {
-        setBoardPosition({ x: -boardWidth / 2, y: -boardHeight / 2 });
-        setScale(1);
-      }
-    }
-  }, [appsFetched]);
-
   // Drag start of the board
   function handleDragBoardStart() {
     setBoardDragging(true);
+    if (selectedApp) {
+      setSelectedApp('');
+    }
   }
 
   // Handle Dragging
@@ -81,7 +72,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }
 
   return (
-    <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
+    <Box transform={`scale(${scale})`} transformOrigin={'top left'}>
       {/* Board. Uses lib react-rnd for drag events.
        * Draggable Background below is the actual target for drag events.*/}
       <Rnd
@@ -101,22 +92,18 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         dragHandleClassName={'board-handle'}
         disableDragging={boardLocked}
       >
-        {/*Whiteboard */}
-        <Whiteboard boardId={props.boardId} />
-        {/*Lasso */}
-        <Lasso boardId={props.boardId} />
         {/* The board's apps */}
         <Apps />
-        {/* User Cursors */}
-        <Cursors boardId={props.boardId} />
-        {/* User Viewports */}
-        <Viewports boardId={props.boardId} />
-        {/* This user updating prensence */}
-        <UserPresenceUpdate />
+        {/*Whiteboard */}
+        <Whiteboard />
+        {/*Lasso */}
+        {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
+        {/* Presence of the users */}
+        <PresenceComponent boardId={props.boardId} />
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
       </Rnd>
-    </div>
+    </Box>
   );
 }

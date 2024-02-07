@@ -3,5 +3,9 @@
  *
  * See: https://github.com/zloirock/core-js#babel
  */
+
+// To support react and browsers
 import 'core-js/stable';
-import 'regenerator-runtime/runtime';
+
+// Not sure why this is needed
+// import 'regenerator-runtime/runtime';

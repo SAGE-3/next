@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, Text } from '@chakra-ui/react';
-import { MdCloudQueue } from 'react-icons/md';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
+import { MdApps } from 'react-icons/md';
+
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
@@ -20,10 +21,15 @@ import {
   useBoardStore,
   MainButton,
   useRouteNav,
-  useData,
-  serverConfiguration,
   useRoomStore,
+  useConfigStore,
   Clock,
+  useThrottleApps,
+  useAbility,
+  apiUrls,
+  useHotkeys,
+  Alfred,
+  HotkeysEvent,
 } from '@sage3/frontend';
 
 import {
@@ -31,7 +37,6 @@ import {
   ClearBoardModal,
   AppToolbar,
   Twilio,
-  Alfred,
   LassoToolbar,
   Controller,
   AssetsPanel,
@@ -39,6 +44,10 @@ import {
   NavigationPanel,
   UsersPanel,
   AnnotationsPanel,
+  PluginsPanel,
+  PresenceFollow,
+  BoardTitle,
+  KernelsPanel,
 } from './components';
 
 type UILayerProps = {
@@ -47,23 +56,30 @@ type UILayerProps = {
 };
 
 export function UILayer(props: UILayerProps) {
+  // Abilities
+  const canLasso = useAbility('lasso', 'apps');
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
+  const showUI = useUIStore((state) => state.showUI);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
+    (state) => state
+  );
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
   // Board store
-
   const boards = useBoardStore((state) => state.boards);
   const board = boards.find((el) => el._id === props.boardId);
-
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
-
   // Apps
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
 
   // Logo
@@ -71,14 +87,15 @@ export function UILayer(props: UILayerProps) {
 
   // Navigation
   const { toHome } = useRouteNav();
-  const config = useData('/api/configuration') as serverConfiguration;
-  const textColor = useColorModeValue('gray.800', 'gray.100');
 
   // Toast
   const toast = useToast();
 
   // Clear board modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
+
+  // Alfred Modal
+  const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
@@ -88,7 +105,9 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    apps.forEach((a) => deleteApp(a._id));
+    // apps.forEach((a) => deleteApp(a._id));
+    const ids = apps.map((a) => a._id);
+    deleteApp(ids);
     setClearAllMarkers(true);
     // close the modal
     clearOnClose();
@@ -119,16 +138,18 @@ export function UILayer(props: UILayerProps) {
         if (assetid) {
           // Get the asset from the store
           const asset = assets.find((a) => a._id === assetid);
-          // Derive the public URL
-          const url = 'api/assets/static/' + asset?.data.file;
-          // Get the filename for the asset
-          const filename = asset?.data.originalfilename;
-          // if all set, add the file to the zip
-          if (asset && url && filename && session) {
-            // Download the file contents
-            const buffer = await fetch(url).then((r) => r.arrayBuffer());
-            // add to zip
-            session.file(filename, buffer);
+          if (asset) {
+            // Derive the public URL
+            const url = apiUrls.assets.getAssetById(asset.data.file);
+            // Get the filename for the asset
+            const filename = asset.data.originalfilename;
+            // if all set, add the file to the zip
+            if (url && filename && session) {
+              // Download the file contents
+              const buffer = await fetch(url).then((r) => r.arrayBuffer());
+              // add to zip
+              session.file(filename, buffer);
+            }
           }
         }
       } else if (a.data.type === 'Stickie') {
@@ -154,34 +175,81 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
+  // Zoom to the saved selected apps
+  const goToSavedSelectedApps = () => {
+    if (savedSelectedAppsIds.length < 1) return;
+    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
+  };
+
+  // Deselect all apps when the escape key is pressed
+  useHotkeys('esc', () => {
+    setWhiteboardMode('none');
+    setSelectedApp('');
+    clearSavedSelectedAppsIds();
+    setSelectedAppsIds([]);
+  });
+
+  // Open Alfred
+  useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
+    // Open the window
+    alredOnOpen();
+    return false;
+  });
+
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7}>
+      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </Box>
 
-      {/* The clock Top Right */}
-      <Clock style={{ position: 'absolute', right: 0, top: 0, marginRight: '8px' }} opacity={0.7} />
-
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101}>
-        <MainButton
-          buttonStyle="solid"
-          backToRoom={() => toHome(props.roomId)}
-          boardInfo={{ boardId: props.boardId, roomId: props.roomId }}
-        />
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
+        <Box display="flex" gap="2">
+          <MainButton
+            buttonStyle="solid"
+            backToRoom={() => toHome(props.roomId)}
+            boardInfo={{
+              boardId: props.boardId,
+              roomId: props.roomId,
+              boardName: board ? board?.data.name : '',
+              roomName: room ? room?.data.name : '',
+            }}
+            config={config}
+          />
+          <Tooltip
+            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
+          >
+            <IconButton
+              size="sm"
+              disabled={savedSelectedAppsIds.length < 1}
+              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
+              icon={<MdApps />}
+              fontSize="xl"
+              variant={'outline'}
+              aria-label={'selected-apps'}
+              onClick={goToSavedSelectedApps}
+            ></IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
-      {/* ServerName Top Left */}
-      <HStack position="absolute" left="2">
-        <MdCloudQueue fontSize={'18px'} color={'darkgray'} />
-        <Text fontSize={'lg'} opacity={0.7} color={textColor} userSelect="none" whiteSpace="nowrap">
-          {config?.serverName} / {(room?.data.name ? room.data.name : '') + ' / ' + (board?.data.name ? board.data.name : '')}
-        </Text>
-      </HStack>
+      {/* Buttons Middle Bottom */}
+      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
+        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
+      </Box> */}
 
-      <AppToolbar roomId={props.roomId} boardId={props.boardId}></AppToolbar>
+      {/* ServerName Top Left */}
+      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
+        <BoardTitle room={room} board={board} config={config} />
+      </Box>
+
+      {/* The clock Top Right */}
+      <Box position="absolute" right="1" top="1" display={showUI ? 'initial' : 'none'}>
+        <Clock isBoard={true} />
+      </Box>
+
+      {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
       <ContextMenu divId="board">
         <BoardContextMenu
@@ -201,6 +269,10 @@ export function UILayer(props: UILayerProps) {
 
       <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
 
+      <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
+
+      <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
+
       <AnnotationsPanel />
 
       {/* Clear board dialog */}
@@ -210,13 +282,16 @@ export function UILayer(props: UILayerProps) {
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
-      <Controller boardId={props.boardId} roomId={props.roomId} />
+      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
-      <LassoToolbar />
+      {canLasso && <LassoToolbar />}
 
       {/* Alfred modal dialog */}
-      <Alfred boardId={props.boardId} roomId={props.roomId} />
+      <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
+
+      {/* Presence Follow Component. Doesnt Render Anything */}
+      <PresenceFollow />
     </>
   );
 }

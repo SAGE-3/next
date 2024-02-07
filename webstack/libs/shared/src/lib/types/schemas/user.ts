@@ -12,7 +12,7 @@ import { SBDoc } from './SBSchema';
 const UserType = z.enum(['wall', 'client']);
 export type UserType = z.infer<typeof UserType>;
 
-const UserRole = z.enum(['admin', 'user', 'guest']);
+const UserRole = z.enum(['admin', 'user', 'guest', 'spectator']);
 export type UserRole = z.infer<typeof UserRole>;
 
 /**
@@ -28,10 +28,14 @@ const schema = z.object({
   color: z.string(),
   // Picture of the user.
   profilePicture: z.string(),
-  // Type of the user.
+  // Type of the user: wall, client
   userType: UserType,
-  // Role of the user in SAGE3
+  // Role of the user in SAGE3: admin, user, guest, spectator
   userRole: UserRole,
+  // Saved Boards IDs of the user
+  savedBoards: z.array(z.string()),
+  // Recent Boards
+  recentBoards: z.array(z.string()),
 });
 
 export type UserSchema = z.infer<typeof schema>;

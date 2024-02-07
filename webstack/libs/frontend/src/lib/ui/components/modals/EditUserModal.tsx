@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -26,10 +26,13 @@ import {
   FormControl,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
+import { formatDistance } from 'date-fns';
+
 import { UserSchema } from '@sage3/shared/types';
+import { SAGEColors } from '@sage3/shared';
 import { useAuth } from '@sage3/frontend';
-import { useUser } from '../../../hooks';
-import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+
+import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
 
 interface EditUserModalProps {
@@ -40,8 +43,16 @@ interface EditUserModalProps {
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
-  const { auth } = useAuth();
-  const isGuest = auth?.provider === 'guest';
+  // Get the user auth information
+  const { auth, expire } = useAuth();
+  const [isGuest, setIsGuest] = useState(true);
+
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
 
   const [name, setName] = useState<UserSchema['name']>(user?.data.name || '');
   const [color, setColor] = useState(user?.data.color as SAGEColors);
@@ -51,20 +62,14 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const handleColorChange = (color: string) => setColor(color as SAGEColors);
   const handleTypeChange = (type: UserSchema['userType']) => setType(type);
 
-  // const modalBackground = useColorModeValue('white', 'gray.700');
-
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   initialRef.current?.select();
-  // }, [initialRef.current]);
 
-  const setRef = useCallback((_node: HTMLInputElement) => {
-    if (initialRef.current) {
-      initialRef.current.select();
+  useEffect(() => {
+    if (user?.data.name) {
+      setName(user.data.name);
     }
-  }, []);
+  }, [user?.data.name]);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -75,8 +80,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   const updateAccount = () => {
-    if (name !== user?.data.name && update) {
-      update({ name });
+    const newname = name.trim();
+    if (newname !== user?.data.name && update) {
+      update({ name: newname });
     }
     if (color !== user?.data.color && update) {
       update({ color });
@@ -97,11 +103,11 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             <FormLabel htmlFor="color">Name</FormLabel>
 
             <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
               <Input
                 ref={initialRef}
                 type="string"
-                placeholder={user?.data.name}
+                placeholder={'Enter a username'}
                 _placeholder={{ opacity: 1, color: 'gray.600' }}
                 mr={4}
                 value={name}
@@ -118,15 +124,16 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           </FormControl>
           <FormControl mt="2">
             <FormLabel htmlFor="type">Type</FormLabel>
-            <RadioGroup onChange={handleTypeChange} value={type}>
+            <RadioGroup onChange={handleTypeChange} value={type} colorScheme="green">
               <Stack direction="row">
                 {['client', 'wall'].map((value, i) => (
                   <Radio value={value} key={i}>
-                    {value[0].toUpperCase() + value.substring(1)}
+                    {' '}
+                    {value[0].toUpperCase() + value.substring(1)}{' '}
                   </Radio>
                 ))}
               </Stack>
-            </RadioGroup>{' '}
+            </RadioGroup>
           </FormControl>
 
           <Text mt={5} fontSize={'md'}>
@@ -135,6 +142,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
               {auth?.provider} {!isGuest && <>- {auth?.email}</>}
             </em>
           </Text>
+          <Text fontSize={'md'}>
+            Login expiration: <em>{formatDistance(new Date(expire), new Date(), { includeSeconds: true, addSuffix: true })}</em>
+          </Text>
           {isGuest && (
             <Text mt={1} fontSize={'md'}>
               Limited functionality as Guest
@@ -142,7 +152,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           )}
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => updateAccount()} disabled={!name}>
+          <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name.trim()}>
             Update
           </Button>
         </ModalFooter>

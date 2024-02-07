@@ -7,10 +7,10 @@
  */
 
 import * as passport from 'passport';
-
-import { SBAuthDB } from '../SBAuthDatabase';
 import { Strategy } from 'passport-local';
 import { v4 } from 'uuid';
+
+import { SBAuthDB } from '../SBAuthDatabase';
 
 export type SBAuthGuestConfig = {
   routeEndpoint: string;
@@ -24,8 +24,7 @@ export function passportGuestSetup(): boolean {
   try {
     passport.use(
       'guest',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      new Strategy(async (username: string, password: string, done: any) => {
+      new Strategy(async (username: string, password: string, done) => {
         const providerId = v4();
         const extras = { displayName: '', email: '', picture: '' };
         const authRecord = await SBAuthDB.findOrAddAuth('guest', providerId, extras);

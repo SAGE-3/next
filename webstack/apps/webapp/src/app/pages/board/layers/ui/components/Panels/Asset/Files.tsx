@@ -32,11 +32,11 @@ import {
 } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
+import { AppSchema } from '@sage3/applications/schema';
+import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile } from '@sage3/frontend';
 
-import { useUser, useUIStore, useAppStore, AssetHTTPService } from '@sage3/frontend';
-import { FileEntry } from './types';
 import { RowFile } from './RowFile';
-import { setupAppForFile } from './CreateApp';
+import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];
@@ -50,6 +50,7 @@ type sortType = {
 
 export function Files(props: FilesProps): JSX.Element {
   const { user } = useUser();
+
   // The data list
   const [filesList, setList] = useState(props.files);
   // Room and board
@@ -58,19 +59,21 @@ export function Files(props: FilesProps): JSX.Element {
 
   // Modal for delete
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure({ id: 'delete' });
+  // Modal for opening lots of files
+  const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
 
   // The table object
   const virtuoso = useRef<VirtuosoHandle>(null);
 
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
-  const [sorted, setSorted] = useState<sortType>({ order: 'file', reverse: false });
+  const [sorted, setSorted] = useState<sortType>({ order: 'added', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>('');
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
   // How to create some applications
-  const createApp = useAppStore((state) => state.create);
+  const createBatch = useAppStore((state) => state.createBatch);
 
   // Update the file list to the list passed through props
   useEffect(() => {
@@ -112,7 +115,7 @@ export function Files(props: FilesProps): JSX.Element {
   );
   headerSize = (
     <Flex>
-      <Spacer /> <Box>Size</Box> <Spacer /> <Box w="1rem"></Box>{' '}
+      <Spacer /> <Box>Size</Box> <Spacer /> <Box w="1rem"></Box>
     </Flex>
   );
   switch (sorted.order) {
@@ -366,8 +369,30 @@ export function Files(props: FilesProps): JSX.Element {
     e.dataTransfer.setData('type', JSON.stringify(tlist));
   };
 
+  // Perform the files opening
+  const doOpenFiles = async () => {
+    if (!user) return;
+    const selected = filesList.filter((k) => k.selected);
+    // Get around  the center of the board
+    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+    // Array for batch creation
+    const setupArray: AppSchema[] = [];
+    let xpos = xDrop;
+    for (let k in selected) {
+      // Create the apps, 400 pixels + 20 padding
+      const setup = await setupAppForFile(selected[k], xpos, yDrop, roomId, boardId, user);
+      if (setup) {
+        setupArray.push(setup);
+        xpos += setup.size.width + 10;
+      }
+    }
+    // Create all the apps in batch
+    createBatch(setupArray);
+  };
+
   // Select the file when clicked
-  const onKeyboard = async (e: React.KeyboardEvent<'div'>) => {
+  const onKeyboard = (e: React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -399,20 +424,15 @@ export function Files(props: FilesProps): JSX.Element {
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       onDeleteOpen();
     } else if (e.key === 'Enter') {
-      if (!user) return;
-      // Get around  the center of the board
-      const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-      const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
       // Get the selected files
       const selected = filesList.filter((k) => k.selected);
-      selected.forEach((k, i) => {
-        // Create the apps, 400 pixels + 20 padding
-        setupAppForFile(k, xDrop + i * 420, yDrop, roomId, boardId, user).then((setup) => {
-          if (setup) {
-            createApp(setup);
-          }
-        });
-      });
+      // If small number of files, do open the apps
+      if (selected.length <= 20) {
+        doOpenFiles();
+      } else {
+        // Otherwise a modal to check
+        lotsOnOpen();
+      }
     }
   };
 
@@ -496,6 +516,31 @@ export function Files(props: FilesProps): JSX.Element {
               }}
             >
               Yes, Delete it
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Opening Assets</ModalHeader>
+          <ModalBody>Are you sure you want to open {filesList.filter((k) => k.selected).length} assets?</ModalBody>
+          <ModalFooter>
+            <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="green"
+              size="sm"
+              onClick={async () => {
+                // Do open the files
+                doOpenFiles();
+                // Close the modal
+                lotsOnClose();
+              }}
+            >
+              Yes, Open all of them
             </Button>
           </ModalFooter>
         </ModalContent>

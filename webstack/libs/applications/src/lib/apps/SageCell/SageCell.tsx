@@ -6,51 +6,59 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+// React imports
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
+
+// Chakra Imports
 import {
-  Box,
+  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
+  Alert, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
+  Spacer, Spinner, Tooltip, Text, useColorModeValue, useToast,
+  Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
+  useDisclosure,
   Button,
-  HStack,
-  useColorModeValue,
-  useColorMode,
-  Tooltip,
-  ButtonGroup,
-  Select,
-  Badge,
-  Text,
-  Image,
-  Alert,
-  AlertIcon,
-  Toast,
-  useToast,
-  IconButton,
-  VStack,
-  Flex,
-  Spinner,
 } from '@chakra-ui/react';
+import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
 
-import { MdFileDownload, MdAdd, MdRemove, MdArrowDropDown, MdPlayArrow, MdClearAll, MdRefresh, MdStop } from 'react-icons/md';
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 
-import Editor, { Monaco, useMonaco } from '@monaco-editor/react';
-
-// UUID generation
-import { v4 as getUUID } from 'uuid';
-
-// Needed to help render the trace
+// Ansi library
 import Ansi from 'ansi-to-react';
+// Plotly library
+import Plot, { PlotParams } from 'react-plotly.js';
+// Vega library
+import { Vega, VisualizationSpec } from 'react-vega';
+// VegaLite library
+import { VegaLite } from 'react-vega';
+// Monaco Imports
+import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
+import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { MonacoBinding } from 'y-monaco';
+// Throttle
+import { throttle } from 'throttle-debounce';
 
-// Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+// SAGE3 Component imports
+import {
+  useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser,
+  useUsersStore, useUIStore, useCursorBoardPosition
+} from '@sage3/frontend';
+import { KernelInfo, ContentItem } from '@sage3/shared/types';
+import { SAGE3Ability } from '@sage3/shared';
 
-// SAGE3 imports
-import { useAppStore, useUser, downloadFile, truncateWithEllipsis } from '@sage3/frontend';
-import { User } from '@sage3/shared/types';
-
+// App Imports
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
+import { useStore } from './components/store';
 
-const MARGIN = 2;
+// Styling
+import './SageCell.css';
 
 /**
  * SageCell - SAGE3 application
@@ -58,293 +66,183 @@ const MARGIN = 2;
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-const AppComponent = (props: App): JSX.Element => {
+
+function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
+  if (!user) return <></>;
+
+  // Abilties
+  const canExecuteCode = useAbility('execute', 'kernels');
+
+  // App state
   const s = props.data.state as AppState;
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
-  const [access, setAccess] = useState(true);
-  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
+  // Apps selection
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
+  // Store between app window and toolbar
+  const drawer = useStore((state) => state.drawer[props._id]);
+  const setDrawer = useStore((state) => state.setDrawer);
+  const execute = useStore((state) => state.execute[props._id]);
+  const interrupt = useStore((state) => state.interrupt[props._id]);
+  const setExecute = useStore((state) => state.setExecute);
+  const setInterrupt = useStore((state) => state.setInterrupt);
+  const setKernel = useStore((state) => state.setKernel);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-  function getKernels() {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
-      },
-    });
-  }
+  // Styling
+  const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
-  // Set the title on start
-  useEffect(() => {
-    // update the title of the app
-    if (props.data.title !== 'SageCell') {
-      update(props._id, { title: 'SageCell' });
-    }
-    getKernels();
-  }, []);
+  // Users
+  const users = useUsersStore((state) => state.users);
+  const userId = user?._id;
+  const userInfo = users.find((u) => u._id === userId)?.data;
+  const userColor = useHexColor(userInfo?.color as string);
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
 
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.availableKernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
-        }
-      } else {
-        kernels.push(kernel);
-      }
-    });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.availableKernels)]);
+  // Room and Board info
+  const roomId = props.data.roomId;
+  const boardId = props.data.boardId;
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+  const { uiToBoard } = useCursorBoardPosition();
 
-  useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key === s.kernel);
-      setAccess(access ? true : false);
-      if (access) {
-        const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
-        // update the title of the app
-        update(props._id, { title: 'Sage Cell: kernel [' + name + ']' });
-      }
-    }
-  }, [s.kernel, myKernels]);
+  // Local state
+  const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
+  const [content, setContent] = useState<ContentItem[] | null>(null);
+  const [executionCount, setExecutionCount] = useState<number>(0);
+  const [fontSize, setFontSize] = useState<number>(s.fontSize);
 
-  return (
-    <AppWindow app={props}>
-      <Box
-        id="sc-container"
-        w={'100%'}
-        h={'100%'}
-        bg={access ? bgColor : accessDeniedColor}
-        overflowY={'scroll'}
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '.1em',
-          },
-          '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'teal',
-            outline: '2px solid teal',
-          },
-        }}
-        pointerEvents={access ? 'auto' : 'none'}
-      >
-        <InputBox app={props} access={access} />
-        {!s.output ? null : <OutputBox output={s.output} app={props} user={user!} />}
-      </Box>
-    </AppWindow>
-  );
-};
-
-/**
- * UI toolbar for the SageCell application
- *
- * @param {App} props
- * @returns {JSX.Element}
- */
-function ToolbarComponent(props: App): JSX.Element {
-  // Access the global app state
-  const s = props.data.state as AppState;
-  const { user } = useUser();
-  // Update functions from the store
-  const update = useAppStore((state) => state.update);
-  const updateState = useAppStore((state) => state.updateState);
-  const [selected, setSelected] = useState<string>('');
-  const [myKernels, setMyKernels] = useState(s.availableKernels);
-  const [access, setAccess] = useState(true);
-
-  function getKernels() {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'get_available_kernels',
-        params: { user_uuid: user._id },
-      },
-    });
-  }
-
-  useEffect(() => {
-    getKernels();
-  }, []);
-
-  useEffect(() => {
-    // Get all kernels that I'm available to see
-    const kernels: any[] = [];
-    s.availableKernels.forEach((kernel) => {
-      if (kernel.value.is_private) {
-        if (kernel.value.owner_uuid == user?._id) {
-          kernels.push(kernel);
-        }
-      } else {
-        kernels.push(kernel);
-      }
-    });
-    setMyKernels(kernels);
-  }, [JSON.stringify(s.availableKernels)]);
-
-  useEffect(() => {
-    if (s.kernel == '') {
-      setAccess(true);
-    } else {
-      const access = myKernels.find((kernel) => kernel.key == s.kernel);
-      setAccess(access ? true : false);
-    }
-  }, [s.kernel, myKernels]);
-
-  // Update from the props
-  useEffect(() => {
-    s.kernel ? setSelected(s.kernel) : setSelected('Select kernel');
-  }, [s.kernel]);
-
-  function selectKernel(e: React.ChangeEvent<HTMLSelectElement>) {
-    if (e.target.value) {
-      // save local state
-      setSelected(e.target.value);
-      // updae the app
-      updateState(props._id, { kernel: e.target.value });
-      // update the app description
-      update(props._id, { title: `SageCell> ${e.currentTarget.selectedOptions[0].text}` });
-    }
-  }
-
-  // Download the stickie as a text file
-  const downloadPy = () => {
-    // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    const content = `${s.code}`;
-    // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
-    // Go for download
-    downloadFile(txturl, filename);
-  };
-
-  return (
-    <HStack>
-      {
-        <>
-          {/* check if there are any available kernels and if one is selected */}
-          {!myKernels || !s.kernel ? (
-            // show a red light if the kernel is not running
-            <Badge colorScheme="red" rounded="sm" size="lg">
-              Offline
-            </Badge>
-          ) : (
-            // show a green light if the kernel is running
-            <Badge colorScheme="green" rounded="sm" size="lg">
-              Online
-            </Badge>
-          )}
-          <Select
-            placeholder="Select Kernel"
-            rounded="lg"
-            size="sm"
-            width="150px"
-            ml={2}
-            px={0}
-            colorScheme="teal"
-            icon={<MdArrowDropDown />}
-            onChange={selectKernel}
-            value={selected ?? undefined}
-            variant={'outline'}
-          >
-            {myKernels.map((kernel) => (
-              <option value={kernel.key} key={kernel.key}>
-                {kernel.value.kernel_alias} (
-                {
-                  // show kernel name as Python, R, or Julia
-                  kernel.value.kernel_name === 'python3' ? 'Python' : kernel.value.kernel_name === 'r' ? 'R' : 'Julia'
-                }
-                )
-              </option>
-            ))}
-          </Select>
-
-          <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
-            <Button onClick={getKernels} size="xs" mx="1" colorScheme="teal">
-              <MdRefresh />
-            </Button>
-          </Tooltip>
-
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-              <Button isDisabled={s.fontSize <= 8} onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}>
-                <MdRemove />
-              </Button>
-            </Tooltip>
-            <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-              <Button isDisabled={s.fontSize > 42} onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}>
-                <MdAdd />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-              <Button onClick={downloadPy}>
-                <MdFileDownload />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-        </>
-      }
-    </HStack>
-  );
-}
-
-export default { AppComponent, ToolbarComponent };
-
-type InputBoxProps = {
-  app: App;
-  access: boolean; //Does this user have access to the sagecell's selected kernel
-};
-
-/**
- *
- * @param props
- * @returns
- */
-const InputBox = (props: InputBoxProps): JSX.Element => {
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  // Reference to the editor
-  const editor = useRef<Monaco>();
-  const [code, setCode] = useState<string>(s.code);
-  const { user } = useUser();
-  const { colorMode } = useColorMode();
-  const [fontSize, setFontSize] = useState(s.fontSize);
-  const [lines, setLines] = useState(s.code.split('\n').length);
-  const [position, setPosition] = useState({ r: 1, c: 1 });
-  // Make a toast to show errors
+  // Toast
   const toast = useToast();
-  // Handle to the Monoco API
-  const monaco = useMonaco();
+  const toastRef = useRef(false);
 
-  // Register a new command to evaluate the code
+  // YJS and Monaco
+  const monaco = useMonaco();
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
+
+  // Local state
+  const [access, setAccess] = useState(true);
+
+  // Styles
+  const [editorHeight, setEditorHeight] = useState(350);
+  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
+  const executionCountColor = useHexColor('red');
+
+  // Kernel Store
+  const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  // Memos and errors
+  const renderedContent = useMemo(() => processedContent(content || []), [content]);
+  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
+
+  // Drawer size: user's preference from local storage or default
+  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || "50vw");
+
   useEffect(() => {
-    if (editor.current) {
-      editor.current.addAction({
-        id: 'execute',
-        label: 'Execute',
-        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-        run: () => handleExecute(s.kernel),
+    // If the API Status is down, set the publicKernels to empty array
+    if (!apiStatus) {
+      setAccess(false);
+      return;
+    } else {
+      const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+      setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
+      const isPrivate = selectedKernel?.is_private;
+      const owner = selectedKernel?.owner;
+      if (!isPrivate) setAccess(true);
+      else if (isPrivate && owner === userId) setAccess(true);
+      else setAccess(false);
+    }
+  }, [access, apiStatus, kernels, s.kernel]);
+
+  /**
+   * Update local state if the online status changes
+   * @param {boolean} online
+   */
+  useEffect(() => {
+    if (!apiStatus) {
+      updateState(props._id, {
+        streaming: false,
+        kernel: '',
+        msgId: '',
       });
     }
-  }, [s.kernel, editor.current]);
+  }, [apiStatus]);
 
-  const handleExecute = (kernel: string) => {
-    const code = editor.current?.getValue();
+  // handle mouse move event
+  const handleMouseMove = (e: MouseEvent) => {
+    const deltaY = e.movementY;
+    handleEditorResize(deltaY);
+  };
+
+  // handle mouse up event
+  const handleMouseUp = () => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleEditorResize = (deltaY: number) => {
+    setEditorHeight((prevHeight) => {
+      const newHeight = prevHeight + deltaY;
+      // set the minimum height of the editor to 150px
+      if (newHeight < 150) return 150;
+      // set the maximum height of the editor to 50% of the window height
+      if (newHeight > props.data.size.height * 0.8) return props.data.size.height * 0.8;
+      return newHeight;
+    }); // update the Monaco editor height
+  };
+
+  useEffect(() => {
+    handleEditorResize(0);
+  }, [props.data.size.height]);
+
+  /**
+   * Resizes the editor when the window is resized
+   * or when the editorHeight changes.
+   */
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+  }, [props.data.size.width, editorHeight]);
+
+  // Debounce Updates
+  const throttleUpdate = throttle(1000, () => {
+    if (!editorRef.current) return;
+    updateState(props._id, { code: editorRef.current.getValue() });
+  });
+
+  // Keep a copy of the function
+  const throttleFunc = useCallback(throttleUpdate, [editorRef.current]);
+
+  /**
+   * Executes the code in the editor
+   * @returns void
+   */
+  const handleExecuteDrawer = async () => {
+    // Copy the drawer code to the editor
+    editorRef.current?.setValue(editorRef2.current?.getValue() || '');
+    // Execute the code
+    handleExecute();
+  };
+
+  const handleExecute = async () => {
+    const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
+    if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
+    updateState(props._id, { code: editorRef.current.getValue() });
+    // Get the kernel from the store, since function executed from monoaco editor
+    const kernel = useStore.getState().kernel[props._id];
     if (!kernel) {
+      if (toastRef.current) return;
+      toastRef.current = true;
       toast({
         title: 'No kernel selected',
         description: 'Please select a kernel from the toolbar',
@@ -352,397 +250,928 @@ const InputBox = (props: InputBoxProps): JSX.Element => {
         duration: 4000,
         isClosable: true,
         position: 'bottom',
+        onCloseComplete: () => {
+          toastRef.current = false;
+        },
       });
       return;
     }
-    if (code) {
-      updateState(props.app._id, {
-        code: code,
-        output: '',
-        executeInfo: { executeFunc: 'execute', params: { user_uuid: getUUID() } },
+    if (kernel && !access) {
+      if (toastRef.current) return;
+      toastRef.current = true;
+      toast({
+        title: 'You do not have access to this kernel',
+        description: 'Please select a different kernel from the toolbar',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'bottom',
+        onCloseComplete: () => {
+          toastRef.current = false;
+        },
       });
+      return;
+    }
+    if (editorRef.current.getValue() && editorRef.current.getValue().slice(0, 6) === '%%info') {
+      const info = `sage_room_id = '${roomId}'\nsage_board_id = '${boardId}'\nsage_app_id = '${props._id}'\nprint('sage_room_id = ' + sage_room_id)\nprint('sage_board_id = ' + sage_board_id)\nprint('sage_app_id = ' + sage_app_id)`;
+      editorRef.current.setValue(info);
+    }
+    try {
+      const selectedAppsIds = useUIStore.getState().savedSelectedAppsIds;
+      let code2execute = editorRef.current.getValue();
+      code2execute = code2execute.replaceAll('%%sage_room_id', `'${roomId}'`);
+      code2execute = code2execute.replaceAll('%%sage_board_id', `'${boardId}'`);
+      code2execute = code2execute.replaceAll('%%sage_app_id', `'${props._id}'`);
+      code2execute = code2execute.replaceAll('%%sage_selected_apps', `${JSON.stringify(selectedAppsIds)}`);
+      const response = await executeCode(code2execute, kernel, user._id);
+      if (response.ok) {
+        const msgId = response.msg_id;
+        updateState(props._id, {
+          msgId: msgId,
+          session: user._id,
+        });
+      } else {
+        updateState(props._id, {
+          streaming: false,
+          msgId: '',
+        });
+      }
+    } catch (error) {
+      if (error instanceof TypeError) {
+        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
+        updateState(props._id, {
+          streaming: false,
+          kernel: '',
+          kernels: [],
+          msgId: '',
+        });
+      }
     }
   };
 
-  const handleClear = () => {
-    updateState(props.app._id, {
-      code: '',
-      output: '',
-      executeInfo: { executeFunc: '', params: {} },
-    });
-    editor.current?.setValue('');
-  };
-
+  // Track the execute flag from the store in the toolbar
   useEffect(() => {
-    if (s.code !== code) {
-      setCode(s.code);
+    if (execute) {
+      handleExecute();
+      setExecute(props._id, false);
     }
-  }, [s.code]);
+  }, [execute]);
+  // Track the interrupt flag from the store in the toolbar
+  useEffect(() => {
+    if (interrupt) {
+      handleInterrupt();
+      setInterrupt(props._id, false);
+    }
+  }, [interrupt]);
 
-  // handle interrupt
+  /**
+   * Clears the code and the msgId from the state
+   * and resets the editor to an empty string
+   * @returns void
+   */
+  const handleClear = () => {
+    if (!editorRef.current) return;
+
+    // Clear the code in the backend
+    updateState(props._id, {
+      code: '',
+      msgId: '',
+      streaming: false,
+    });
+
+    const model = editorRef.current.getModel();
+    if (model) {
+      // Clear the cell editor
+      editorRef.current.executeEdits('update-value', [{
+        range: model.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+      // Ensure we are always operating on the same line endings
+      model.setEOL(0);
+    }
+    if (!editorRef2.current) return;
+    const model2 = editorRef2.current.getModel();
+    if (model2) {
+      // Clear the drawer editor
+      editorRef2.current.executeEdits('update-value', [{
+        range: model2.getFullModelRange(),
+        text: '',
+        forceMoveMarkers: false
+      }]);
+      // Ensure we are always operating on the same line endings
+      model2.setEOL(0);
+    }
+
+  };
+
+  // Handle interrupt
   const handleInterrupt = () => {
-    if (!user) return;
-    updateState(props.app._id, {
-      executeInfo: { executeFunc: 'interrupt', params: { user_uuid: user._id } },
+    // send signal to interrupt the kernel via http request
+    interruptKernel(s.kernel);
+    updateState(props._id, {
+      msgId: '',
+      streaming: false,
     });
   };
 
-  // Update from Monaco Editor
-  function updateCode(value: string | undefined) {
-    if (value) {
-      // Store the code in the state
-      setCode(value);
-      // Update the number of lines
-      setLines(value.split('\n').length);
+  // Insert room/board info into the editor
+  const handleInsertInfo = (ed: editor.ICodeEditor) => {
+    const info = `room_id = '${roomId}'\nboard_id = '${boardId}'\napp_id = '${props._id}'\n`;
+    ed.focus();
+    ed.trigger('keyboard', 'type', { text: info });
+  };
+
+  const handleInsertAPI = (ed: editor.ICodeEditor) => {
+    let code = 'from foresight.config import config as conf, prod_type\n';
+    code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
+    code += `sage_room_id = %%sage_room_id\nsage_board_id = %%sage_board_id\nsage_app_id = %%sage_app_id\nsage_selected_apps = %%sage_selected_apps\n`;
+    code += 'ps3 = PySage3(conf, prod_type)\n\n';
+    ed.focus();
+    ed.setValue(code);
+  };
+
+  async function getResults(msgId: string) {
+    if (s.streaming || s.msgId) return;
+    const response = await fetchResults(msgId);
+    if (response.ok) {
+      const result = response.execOutput;
+      if (result.msg_type === 'error') {
+        setContent(null);
+        setExecutionCount(0);
+        const error = result.content.reduce((acc, item) => {
+          if ('traceback' in item) {
+            acc.traceback = item.traceback;
+          }
+          if ('ename' in item) {
+            acc.ename = item.ename;
+          }
+          if ('evalue' in item) {
+            acc.evalue = item.evalue;
+          }
+          return acc;
+        }, {} as { traceback?: string[]; ename?: string; evalue?: string });
+        setError(error);
+        return;
+      }
+      if (result.completed) {
+        setError(null);
+        setContent(result.content);
+        setExecutionCount(result.execution_count);
+      }
+    } else {
+      setError({
+        traceback: ['Error fetching results'],
+        ename: 'Error',
+        evalue: 'Error fetching results',
+      });
+      setContent(null);
+      setExecutionCount(0);
     }
   }
 
   useEffect(() => {
-    // update local state from global state
+    if (!s.history) return;
+    if (s.history.length === 0 || s.streaming || s.msgId) return;
+    const msgId = s.history[s.history.length - 1];
+    getResults(msgId);
+  }, [s.history]);
+
+  useEffect(() => {
+    function setEventSource() {
+      // Controller to stop the event source if needed
+      const ctrl = new AbortController();
+      // Get the URL of the stream
+      const streamURL = apiUrls.fastapi.getMessageStream(s.msgId);
+      // Fetch the evet source
+      fetchEventSource(streamURL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+        signal: ctrl.signal,
+        onmessage(event) {
+          setError(null);
+          if (!event.data) return;
+          try {
+            const parsedData = JSON.parse(event.data);
+            setContent(parsedData.content);
+            if (parsedData.execution_count) {
+              setExecutionCount(parsedData.execution_count);
+            }
+          } catch (error) {
+            console.log('EventSource> error', error);
+            ctrl.abort();
+          }
+        },
+        onclose() {
+          updateState(props._id, { streaming: false, history: [...s.history, s.msgId], msgId: '' });
+        },
+      });
+    }
+
+    if (s.msgId && s.session === user?._id) {
+      setEventSource();
+    }
+  }, [s.msgId]);
+
+  function processedContent(content: ContentItem[]) {
+    if (!content) return <></>;
+    return content.map((item) => {
+      return Object.keys(item).map((key) => {
+        const value = item[key];
+        switch (key) {
+          // error messages are handled above
+          case 'traceback':
+          case 'ename':
+          case 'evalue':
+            return null;
+          case 'stdout':
+          case 'stderr':
+            return <Ansi key={key}>{value as string}</Ansi>;
+          case 'text/html':
+            if (!value) return null; // hides other outputs if html is present
+            // remove extra \n from html
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/plain':
+            if (item['text/html']) return null;
+            return <Ansi key={key}>{value as string}</Ansi>;
+          case 'image/png':
+            return <Image key={key} src={`data:image/png;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
+          case 'image/jpeg':
+            return <Image key={key} src={`data:image/jpeg;base64,${value}`} onDragStart={(e) => {
+              // set the title in the drag transfer data
+              if (item['text/plain']) {
+                const title = item['text/plain'];
+                // remove the quotes from the title
+                e.dataTransfer.setData('title', title.slice(1, -1));
+              }
+            }} />;
+          case 'image/svg+xml':
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/markdown':
+            return <Markdown key={key} data={value} openInWebview={openInWebview} />;
+          case 'application/vnd.vegalite.v4+json':
+          case 'application/vnd.vegalite.v3+json':
+          case 'application/vnd.vegalite.v2+json':
+            return <VegaLite key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+          case 'application/vnd.vega.v5+json':
+          case 'application/vnd.vega.v4+json':
+          case 'application/vnd.vega.v3+json':
+          case 'application/vnd.vega.v2+json':
+          case 'application/vnd.vega.v1+json':
+            return <Vega key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+          case 'application/vnd.plotly.v1+json': {
+            // Configure plotly
+            const value = item[key] as unknown as PlotParams;
+            const config = value.config || {};
+            const layout = value.layout || {};
+            config.displaylogo = false;
+            config.displayModeBar = false;
+            config.scrollZoom = false;
+            config.showTips = false;
+            config.showLink = false;
+            config.linkText = 'Edit in Chart Studio';
+            config.plotlyServerURL = `https://chart-studio.plotly.com`;
+            config.responsive = true;
+            config.autosizable = true;
+            layout.dragmode = 'pan';
+            layout.hovermode = 'closest';
+            layout.showlegend = true;
+            layout.font = { size: s.fontSize };
+            layout.hoverlabel = {
+              font: { size: s.fontSize },
+            };
+            layout.xaxis = {
+              title: { font: { size: s.fontSize } },
+              tickfont: { size: s.fontSize },
+            };
+            layout.yaxis = {
+              title: { font: { size: s.fontSize } },
+              tickfont: { size: s.fontSize },
+            };
+            layout.legend ? (layout.legend.font = { size: s.fontSize }) : (layout.legend = { font: { size: s.fontSize } });
+            layout.margin = { l: 2, r: 2, b: 2, t: 2, pad: 2 };
+            layout.paper_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+            layout.plot_bgcolor = useColorModeValue(`#f4f4f4`, `#1b1b1b`);
+            layout.height = window.innerHeight * 0.5;
+            layout.width = window.innerWidth * 0.5;
+            return (
+              <>
+                <Plot key={key} data={value.data} layout={layout} config={config} />
+              </>
+            );
+          }
+          case 'application/pdf':
+            return <PdfViewer key={key} data={value as string} />;
+          case 'application/json':
+            return <pre key={key}>{JSON.stringify(value as string, null, 2)}</pre>;
+          default:
+            return (
+              <Box key={key}>
+                <Accordion allowToggle>
+                  <AccordionItem>
+                    <AccordionButton>
+                      <Box flex="1" textAlign="left">
+                        <Text color={executionCountColor} fontSize={s.fontSize}>
+                          Error: {key} is not supported in this version of SAGECell.
+                        </Text>
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                    <AccordionPanel pb={4}>
+                      <pre>{JSON.stringify(value as string, null, 2)}</pre>
+                    </AccordionPanel>
+                  </AccordionItem>
+                </Accordion>
+              </Box>
+            );
+        }
+      });
+    });
+  }
+
+  // Get the color of the kernel owner
+  useEffect(() => {
+    if (s.kernel && users) {
+      const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
+      const ownerColor = users.find((el) => el._id === owner)?.data.color;
+      setOwnerColor(ownerColor || '#000000');
+    }
+  }, [s.kernel, kernels, users]);
+
+  /**
+   * This function will create a new webview app
+   * with the url provided
+   *
+   * @param url
+   */
+  const openInWebview = (url: string): void => {
+    createApp({
+      title: 'Webview',
+      roomId: props.data.roomId,
+      boardId: props.data.boardId,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: 600, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: { webviewurl: url },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
+  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const doc = new Y.Doc();
+    const yText = doc.getText('monaco');
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    const model = editor.getModel();
+    if (model) model.setEOL(0);
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+
+    provider.on('sync', () => {
+      const users = provider.awareness.getStates();
+      const count = users.size;
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count == 1) {
+        // Does the app have code?
+        if (s.code) {
+          // Clear any existing lines
+          yText.delete(0, yText.length);
+          // Set the lines from the database
+          yText.insert(0, s.code);
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({ fontSize });
+    // if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
+    updateState(props._id, { fontSize });
+  }, [fontSize]);
+
+  useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  // Get the reference to the Monaco Editor after it mounts
-  function handleEditorDidMount(ed: Monaco) {
-    editor.current = ed;
-    editor.current.onDidChangeCursorPosition((ev: any) => {
-      setPosition({ r: ev.position.lineNumber, c: ev.position.column });
+  const handleFontIncrease = () => {
+    setFontSize((prev) => Math.min(48, prev + 2));
+  };
+  const handleFontDecrease = () => {
+    setFontSize((prev) => Math.max(8, prev - 2));
+  };
+  const handleSaveCode = () => {
+    if (editorRef2.current) {
+      // Copy the drawer code to the editor in the board
+      editorRef.current?.setValue(editorRef2.current.getValue());
+    }
+  };
+
+  /**
+   *
+   * @param editor
+   * @param monaco
+   * @returns
+   */
+  const handleMount: OnMount = (editor, monaco) => {
+    // set the editorRef
+    editorRef.current = editor;
+
+    // Connect to Yjs
+    connectToYjs(editor);
+
+    // set the editor options
+    editor.updateOptions({
+      fontSize: s.fontSize,
+      readOnly: !access || !apiStatus || !s.kernel,
     });
+    // set the editor theme
+    monaco.editor.setTheme(defaultTheme);
+    // set the editor language
+    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
+    // set the editor cursor position
+    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
+    // set the editor cursor selection
+    editor.setSelection({
+      startLineNumber: cursorPosition.r,
+      startColumn: cursorPosition.c,
+      endLineNumber: cursorPosition.r,
+      endColumn: cursorPosition.c,
+    });
+    // set the editor layout
+    editor.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
+    });
+    editor.addAction({
+      id: 'execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: handleExecute,
+    });
+    editor.addAction({
+      id: 'interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+      run: handleInterrupt,
+    });
+
+    editor.addAction({
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        return;
+      }
+      throttleFunc();
+    });
+
+    // Not in drawer to start
+    setDrawer(props._id, false);
+  };
+
+  const handleMountDrawer: OnMount = (editor, monaco) => {
+    // set the editorRef
+    editorRef2.current = editor;
+
+    // set the editor options
+    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
+    // Default width and font size
+    const preference = localStorage.getItem('sage_preferred_drawer_width');
+    setDrawerWidth(preference || '50vw');
+
+    // set the editor theme
+    monaco.editor.setTheme(defaultTheme);
+    // set the editor language
+    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
+    // set the editor cursor position
+    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
+    // set the editor cursor selection
+    editor.setSelection({
+      startLineNumber: cursorPosition.r,
+      startColumn: cursorPosition.c,
+      endLineNumber: cursorPosition.r,
+      endColumn: cursorPosition.c,
+    });
+    // set the editor layout
+    editor.layout({
+      width: props.data.size.width - 60,
+      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      minHeight: '100%',
+      minWidth: '100%',
+    } as editor.IDimension);
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
+    });
+    editor.addAction({
+      id: 'execute',
+      label: 'Cell Execute',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+      run: handleExecuteDrawer,
+    });
+    editor.addAction({
+      id: 'interrupt',
+      label: 'Cell Interrupt',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+      run: handleInterrupt,
+    });
+    editor.addAction({
+      id: 'syncForServer',
+      label: 'Cell Save',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '2_sage3',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: handleSaveCode,
+    });
+
+    editor.addAction({
+      id: 'setup_sage3',
+      label: 'Setup SAGE API',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertAPI,
+    });
+    editor.addAction({
+      id: 'insert_vars',
+      label: 'Insert Board Variables',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '3_sagecell',
+      run: handleInsertInfo,
+    });
+    editor.addAction({
+      id: 'clear',
+      label: 'Clear Cell',
+      contextMenuOrder: 2,
+      contextMenuGroupId: '3_sagecell',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+      run: handleClear,
+    });
+
+    editor.addAction({
+      id: 'increaseFontSize',
+      label: 'Increase Font Size',
+      contextMenuOrder: 0,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+      run: handleFontIncrease,
+    });
+    editor.addAction({
+      id: 'decreaseFontSize',
+      label: 'Decrease Font Size',
+      contextMenuOrder: 1,
+      contextMenuGroupId: '4_font',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+      run: handleFontDecrease,
+    });
+
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        setSelectedApp('');
+        closingDrawer();
+        return;
+      }
+    });
+  };
+
+  /**
+   * Put the kernel in the store, read from the action in Monaco
+   */
+  useEffect(() => {
+    setKernel(props._id, s.kernel);
+  }, [s.kernel]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({
+      readOnly: !access || !apiStatus || !s.kernel,
+    });
+  }, [access, apiStatus, s.kernel]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    editorRef.current.updateOptions({
+      fontSize: s.fontSize,
+    });
+  }, [s.fontSize]);
+
+
+  useEffect(() => {
+    if (drawer) {
+      onOpen();
+      // If the right side of the app is beyond the center of the board, move the board
+      const xw = props.data.position.x + props.data.size.width;
+      let position = 1;
+      if (drawerWidth === '25vw') {
+        position = 3 * innerWidth / 4;
+      } else if (drawerWidth === '50vw') {
+        position = innerWidth / 2;
+      } else if (drawerWidth === '75vw') {
+        position = innerWidth / 4;
+      }
+      const center = uiToBoard(position, innerHeight);
+      if (xw > center.x) {
+        const offset = xw - center.x + 10 / scale;
+        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
+      }
+    }
+  }, [drawer]);
+
+  const closingDrawer = () => {
+    setDrawer(props._id, false);
+    if (editorRef2.current) {
+      // Copy the drawer code to the editor in the board
+      editorRef.current?.setValue(editorRef2.current.getValue());
+    }
+    onClose();
+  };
+
+  const drawerEditor = <Editor
+    defaultValue={editorRef.current?.getValue()}
+    loading={<Spinner />}
+    options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
+    onMount={handleMountDrawer}
+    height={"100%"}
+    width={"100%"}
+    theme={defaultTheme}
+    language={s.language}
+  />;
+
+  const make25W = () => {
+    setDrawerWidth('25vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '25vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+  const make50W = () => {
+    setDrawerWidth('50vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '50vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+  const make75W = () => {
+    setDrawerWidth('75vw');
+    // save the value in local storage, user's preference
+    localStorage.setItem('sage_preferred_drawer_width', '75vw');
+    const base = 6;
+    const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
+    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  };
+
+  // Start dragging
+  function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  }
+  // Drop event
+  function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+    // Get the infos from the drag transfer data
+    const ids = event.dataTransfer.getData('file');
+    const types = event.dataTransfer.getData('type');
+    if (editorRef.current) {
+      const pos = editorRef.current.getPosition();
+      if (pos) {
+        // insert variables at the cursor position in the editor
+        const text = `sage_assets_types = ${types}\nsage_assets_ids = ${ids}\n`;
+        editorRef.current.focus();
+        editorRef.current.trigger('keyboard', 'type', { text });
+      }
+    }
   }
 
   return (
-    <Box>
-      <HStack>
-        <Box
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            marginTop: '0.5rem',
-            marginLeft: '0.5rem',
-            marginRight: '0rem',
-            marginBottom: 10,
-            padding: 0,
-            overflow: 'hidden',
-            backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-            boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-          }}
-        >
-          <Editor
-            onMount={handleEditorDidMount}
-            value={code}
-            onChange={updateCode}
-            height={Math.max(Math.min(20 * 32, lines * 32), 4 * 32)}
-            language={s.language}
-            theme={colorMode === 'light' ? 'vs-light' : 'vs-dark'}
-            options={{
-              fontSize: fontSize,
-              minimap: { enabled: false },
-              lineNumbersMinChars: 4,
-              acceptSuggestionOnCommitCharacter: true,
-              acceptSuggestionOnEnter: 'on',
-              accessibilitySupport: 'auto',
-              autoIndent: 'full',
-              automaticLayout: true,
-              codeLens: true,
-              colorDecorators: true,
-              contextmenu: false,
-              cursorBlinking: 'blink',
-              cursorSmoothCaretAnimation: false,
-              cursorStyle: 'line',
-              disableLayerHinting: false,
-              disableMonospaceOptimizations: false,
-              dragAndDrop: false,
-              fixedOverflowWidgets: false,
-              folding: true,
-              foldingStrategy: 'auto',
-              fontLigatures: false,
-              formatOnPaste: false,
-              formatOnType: false,
-              hideCursorInOverviewRuler: false,
-              links: true,
-              mouseWheelZoom: false,
-              multiCursorMergeOverlapping: true,
-              multiCursorModifier: 'alt',
-              overviewRulerBorder: false,
-              overviewRulerLanes: 0,
-              quickSuggestions: false,
-              quickSuggestionsDelay: 100,
-              readOnly: false,
-              renderControlCharacters: false,
-              renderFinalNewline: true,
-              renderLineHighlight: 'all',
-              renderWhitespace: 'none',
-              revealHorizontalRightPadding: 30,
-              roundedSelection: true,
-              rulers: [],
-              scrollBeyondLastColumn: 5,
-              scrollBeyondLastLine: true,
-              selectOnLineNumbers: true,
-              selectionClipboard: true,
-              selectionHighlight: true,
-              showFoldingControls: 'mouseover',
-              smoothScrolling: false,
-              suggestOnTriggerCharacters: true,
-              wordBasedSuggestions: true,
-              wordWrap: 'off',
-              wordWrapColumn: 80,
-              wrappingIndent: 'none',
-            }}
-          />
+    <AppWindow app={props}>
+      <>
+        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
+          closeOnOverlayClick={true}>
+          <DrawerContent maxW={drawerWidth}>
+            <DrawerCloseButton />
+            <DrawerHeader p={1} m={1}><Flex p={0} m={0}>
+              <Text flex={1} mr={"10px"}>SageCell</Text>
+              <Box flex={2} width={"100px"} overflow={"clip"}>
+                <Text fontSize={"md"} pt={1} whiteSpace={"nowrap"} textOverflow={"ellipsis"}>
+                  Use right-click for cell functions
+                </Text>
+              </Box>
+              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 10px"} onClick={make25W}>25%</Button></Tooltip>
+              <Tooltip hasArrow label="Medium Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make50W}>50%</Button></Tooltip>
+              <Tooltip hasArrow label="Large Editor"><Button size={"sm"} p={2} m={"0 40px 0 1px"} onClick={make75W}>75%</Button></Tooltip>
+            </Flex>
+            </DrawerHeader>
+            <DrawerBody p={0} m={0} boxSizing='border-box'>
+              <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
+                {drawerEditor}
+              </Box>
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
+
+        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
+          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
+          <Box
+            w={'100%'}
+            h={'100%'}
+            display="flex"
+            flex="1"
+            flexDirection="column"
+            whiteSpace={'pre-wrap'}
+            overflowWrap="break-word"
+            overflowY="auto"
+            onDrop={OnDrop}
+            onDragOver={OnDragOver}
+          >
+            <Flex direction={'row'}>
+              {/* The editor status info (bottom) */}
+              <Flex direction={'column'}>
+                <Editor
+                  loading={<Spinner />}
+                  options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
+                  onMount={handleMount}
+                  height={editorHeight && editorHeight > 150 ? editorHeight : 150}
+                  width={props.data.size.width - 60}
+                  theme={defaultTheme}
+                  language={s.language}
+                />
+                <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
+                  {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+                  <Spacer />
+                </Flex>
+              </Flex>
+              {/* The editor action panel (right side) */}
+              <Box p={1}>
+                <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
+                  <Tooltip hasArrow label="Execute" placement="right-start">
+                    <IconButton
+                      onClick={handleExecute}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Stop" placement="right-start">
+                    <IconButton
+                      onClick={handleInterrupt}
+                      aria-label={''}
+                      isDisabled={!s.msgId || !canExecuteCode}
+                      icon={<MdStop size={'1.5em'} color="#008080" />}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Clear Cell" placement="right-start">
+                    <IconButton
+                      onClick={handleClear}
+                      aria-label={''}
+                      isDisabled={!s.kernel}
+                      icon={<MdDelete size={'1.5em'} color="#008080" />}
+                    />
+                  </Tooltip>
+                </ButtonGroup>
+              </Box>
+            </Flex>
+            {/* The grab bar */}
+            <Box
+              className="grab-bar"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            />
+            {/* The output area */}
+            <Box
+              // height={window.innerHeight - editorHeight - 20 + 'px'}
+              overflow={'scroll'}
+              mr={"8px"}
+              css={{
+                '&::-webkit-scrollbar': {
+                  background: `${bgColor}`,
+                  width: '28px',
+                  height: '2px',
+                  // reserver space for scrollbar
+                  scrollbarGutter: 'stable',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'teal',
+                  borderRadius: '8px',
+                },
+              }}
+            >
+              <Flex align="start">
+                {!executionCount || executionCount < 1 ? null : (
+                  <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
+                    [{executionCount}]:
+                  </Text>
+                )}
+                <Box
+                  flex="1"
+                  borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
+                  p={1}
+                  className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
+                  fontSize={s.fontSize}
+                >
+                  {error && (
+                    <Alert status="error">
+                      <Icon as={MdError} />
+                      <Code
+                        style={{
+                          fontFamily: 'monospace',
+                          display: 'inline-block',
+                          marginLeft: '0.5em',
+                          marginRight: '0.5em',
+                          fontWeight: 'bold',
+                          background: 'transparent',
+                          fontSize: s.fontSize,
+                        }}
+                      >
+                        {error.ename}: <Ansi>{error.evalue}</Ansi>
+                      </Code>
+                    </Alert>
+                  )}
+                  {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
+                  {renderedContent}
+                </Box>
+              </Flex>
+              {/* End of Flex container */}
+            </Box>
+          </Box>
         </Box>
-        <VStack pr={2}>
-          {props.access ? (
-            <Tooltip hasArrow label="Execute" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={() => handleExecute(s.kernel)}
-                aria-label={''}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={
-                  s.executeInfo?.executeFunc === 'execute' ? (
-                    <Spinner size="sm" color="teal.500" />
-                  ) : (
-                    <MdPlayArrow size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />
-                  )
-                }
-              />
-            </Tooltip>
-          ) : null}
-
-          {props.access ? (
-            <Tooltip hasArrow label="Stop" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleInterrupt}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdStop size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-
-          {props.access ? (
-            <Tooltip hasArrow label="Clear All" placement="right-start">
-              <IconButton
-                boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-                onClick={handleClear}
-                aria-label={''}
-                disabled={user?._id !== s.kernel ? false : true}
-                bg={useColorModeValue('#FFFFFF', '#000000')}
-                variant="ghost"
-                icon={<MdClearAll size={'1.5em'} color={useColorModeValue('#008080', '#008080')} />}
-              />
-            </Tooltip>
-          ) : null}
-        </VStack>
-      </HStack>
-      <Flex pr={14} h={'24px'} fontSize={'16px'} color={'GrayText'} justifyContent={'right'}>
-        Ln: {position.r}, Col: {position.c}
-      </Flex>
-    </Box>
+      </>
+    </AppWindow >
   );
-};
+}
 
-type OutputBoxProps = {
-  output: string;
-  app: App;
-  user: User;
-};
-/**
- * This function is used to render the output box
- * The output is a string from a python script that
- * is executed in the kernel, serialized using JSON.dumps(),
- * and then sent back to the client.
- * The output is then parsed using JSON.parse() and displayed
- * in the output box.
- *
- * @param props OutputBoxProps
- * @returns {JSX.Element}
- */
-const OutputBox = (props: OutputBoxProps): JSX.Element => {
-  const parsedJSON = JSON.parse(props.output);
-  const s = props.app.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-
-  if (!props.output) return <></>;
-  if (typeof props.output === 'object' && Object.keys(props.output).length === 0) return <></>;
-  return (
-    <Box
-      p={MARGIN}
-      m={MARGIN}
-      hidden={!parsedJSON ? true : false}
-      className="sc-output"
-      style={{
-        overflow: 'auto',
-        backgroundColor: useColorModeValue('#F0F2F6', '#111111'),
-        boxShadow: '0 0 0 2px ' + useColorModeValue('rgba(0,0,0,0.4)', 'rgba(0, 128, 128, 0.5)'),
-        borderRadius: '4px',
-        fontFamily: 'monospace',
-        fontSize: s.fontSize + 'px',
-        color: useColorModeValue('#000000', '#FFFFFF'),
-        whiteSpace: 'pre-wrap',
-        wordWrap: 'break-word',
-        overflowWrap: 'break-word',
-      }}
-    >
-      {!parsedJSON.execute_result || !parsedJSON.execute_result.execution_count ? null : (
-        <Text
-          fontSize="xs"
-          color="gray.500"
-          style={{
-            fontFamily: 'monospace',
-          }}
-        >
-          {`Out [${parsedJSON.execute_result.execution_count}]`}
-        </Text>
-      )}
-      {parsedJSON.request_id ? null : null}
-      {!parsedJSON.error ? null : !Array.isArray(parsedJSON.error) ? (
-        <Alert status="error">{`${parsedJSON.error.ename}: ${parsedJSON.error.evalue}`}</Alert>
-      ) : (
-        <Alert status="error" variant="left-accent">
-          <AlertIcon />
-          <Ansi>{parsedJSON.error[parsedJSON.error.length - 1]}</Ansi>
-        </Alert>
-      )}
-
-      {!parsedJSON.stream ? null : parsedJSON.stream.name === 'stdout' ? (
-        <Text id="sc-stdout">{parsedJSON.stream.text}</Text>
-      ) : (
-        <Text id="sc-stderr" color="red">
-          {parsedJSON.stream.text}
-        </Text>
-      )}
-
-      {!parsedJSON.display_data
-        ? null
-        : Object.keys(parsedJSON.display_data).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.display_data.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.display_data.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.display_data.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.display_data.data[key] }} />;
-                  default:
-                    return MapJSONObject(parsedJSON.display_data[key]);
-                }
-              });
-            }
-            return null;
-          })}
-
-      {!parsedJSON.execute_result
-        ? null
-        : Object.keys(parsedJSON.execute_result).map((key) => {
-            if (key === 'data') {
-              return Object.keys(parsedJSON.execute_result.data).map((key, i) => {
-                switch (key) {
-                  case 'text/plain':
-                    if (parsedJSON.execute_result.data['text/html']) return null; // don't show plain text if there is html
-                    return (
-                      <Text key={i} id="sc-stdout">
-                        {parsedJSON.execute_result.data[key]}
-                      </Text>
-                    );
-                  case 'text/html':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  case 'image/png':
-                    return <Image key={i} src={`data:image/png;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/jpeg':
-                    return <Image key={i} src={`data:image/jpeg;base64,${parsedJSON.execute_result.data[key]}`} />;
-                  case 'image/svg+xml':
-                    return <div key={i} dangerouslySetInnerHTML={{ __html: parsedJSON.execute_result.data[key] }} />;
-                  default:
-                    return null;
-                }
-              });
-            }
-            return null;
-          })}
-      {!s.privateMessage
-        ? null
-        : s.privateMessage.map(({ userId, message }) => {
-            // find the user name that matches the userId
-            if (userId !== props.user._id) {
-              return null;
-            }
-            return (
-              <Toast
-                status="error"
-                position="bottom"
-                description={message + ', ' + props.user.data.name}
-                duration={4000}
-                isClosable
-                onClose={() => updateState(props.app._id, { privateMessage: [] })}
-                hidden={userId !== props.user._id}
-              />
-            );
-          })}
-    </Box>
-  );
-};
-
-/**
- * Recursively map the object and display the output
- * This is used to display the output similar to JSON
- * when the output is an unhandled type
- * @param {Object} obj
- */
-const MapJSONObject = (obj: any): JSX.Element => {
-  if (!obj) return <></>;
-  if (typeof obj === 'object' && Object.keys(obj).length === 0) return <></>;
-  return (
-    <Box
-      pl={2}
-      ml={2}
-      bg={useColorModeValue('#FFFFFF', '#000000')}
-      boxShadow={'2px 2px 4px rgba(0, 0, 0, 0.6)'}
-      rounded={'md'}
-      fontSize={'16px'}
-      color={useColorModeValue('#000000', '#FFFFFF')}
-    >
-      {typeof obj === 'object'
-        ? Object.keys(obj).map((key) => {
-            if (typeof obj[key] === 'object') {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {MapJSONObject(obj[key])}
-                  </Box>
-                </Box>
-              );
-            } else {
-              return (
-                <Box key={key}>
-                  <Box as="span" fontWeight="bold">
-                    {key}:
-                  </Box>
-                  <Box as="span" ml={2}>
-                    {obj[key]}
-                  </Box>
-                </Box>
-              );
-            }
-          })
-        : null}
-    </Box>
-  );
-};
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

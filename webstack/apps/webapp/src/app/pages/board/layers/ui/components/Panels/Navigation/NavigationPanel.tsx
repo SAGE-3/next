@@ -13,17 +13,18 @@ import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove,
 
 import {
   ConfirmModal,
-  useAppStore,
+  useAbility,
   useBoardStore,
+  useThrottleScale,
+  useThrottleApps,
   useHexColor,
-  usePresenceStore,
   useUIStore,
   useUser,
-  useUsersStore,
 } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-import { Panel } from '../Panel';
 import { Presence, User } from '@sage3/shared/types';
+
+import { Panel } from '../Panel';
 
 export interface NavProps {
   fitApps: () => void;
@@ -33,17 +34,26 @@ export interface NavProps {
 
 export function NavigationPanel(props: NavProps) {
   // App Store
-  const apps = useAppStore((state) => state.apps);
+  const apps = useThrottleApps(250);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);
   // UI Store
-  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom, scale } = useUIStore((state) => state);
+  const scale = useThrottleScale(250);
+  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
-  // Users and Presecnes for cursors
-  const presences = usePresenceStore((state) => state.presences);
-  const users = useUsersStore((state) => state.users);
+
+  // User viewport
   const { user } = useUser();
+
+  // Abilities
+  const canOrganize = useAbility('update', 'apps');
+  const canDelete = useAbility('delete', 'apps');
+
+  // User viewport
+  const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
+  const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
+  const userViewport = useUIStore((state) => state.viewport);
 
   // Clear board modal
   const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
@@ -116,14 +126,14 @@ export function NavigationPanel(props: NavProps) {
   // Organize board using python function
   function organizeApps() {
     // get presence of current user for its viewport
-    const presence = presences.filter((el) => el.data.boardId === props.boardId).filter((el) => el.data.userId === user?._id)[0];
+
     // Trigger the smart function
     updateBoard(props.boardId, {
       executeInfo: {
         executeFunc: 'reorganize_layout',
         params: {
-          viewport_position: presence.data.viewport.position,
-          viewport_size: presence.data.viewport.size,
+          viewport_position: userViewport.position,
+          viewport_size: userViewport.size,
           by: 'app_type',
           mode: 'tiles',
         },
@@ -191,16 +201,24 @@ export function NavigationPanel(props: NavProps) {
                     </Tooltip>
                   );
                 })}
-              {/* Draw the cursors: filter by board and not myself */}
-              {presences
-                .filter((el) => el.data.boardId === props.boardId)
-                .map((presence) => {
-                  const u = users.find((el) => el._id === presence.data.userId);
-                  if (!u) return null;
-                  return (
-                    <NavMapCursor key={presence._id} presence={presence} user={u} mapScale={mapScale} boardShift={{ x: appsX, y: appsY }} />
-                  );
-                })}
+              {/* View of the User's Viewport */}
+              {userViewport && (
+                <Box
+                  backgroundColor={userViewportBGColor}
+                  position="absolute"
+                  left={(userViewport.position.x - appsX) * mapScale + 'px'}
+                  top={(userViewport.position.y - appsY) * mapScale + 'px'}
+                  width={userViewport.size.width * mapScale + 'px'}
+                  height={userViewport.size.height * mapScale + 'px'}
+                  transition={'all .5s'}
+                  _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                  borderWidth="2px"
+                  borderStyle="solid"
+                  borderColor={viewportBorderColor}
+                  borderRadius="sm"
+                  pointerEvents={'none'}
+                ></Box>
+              )}
             </Box>
           </Box>
 
@@ -218,14 +236,29 @@ export function NavigationPanel(props: NavProps) {
                 />
               </Tooltip>
               <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdDelete />} colorScheme="teal" size="sm" aria-label="clear" onClick={props.clearBoard} />
+                <IconButton
+                  icon={<MdDelete />}
+                  colorScheme="teal"
+                  size="sm"
+                  aria-label="clear"
+                  onClick={props.clearBoard}
+                  isDisabled={!canDelete}
+                />
               </Tooltip>
             </Box>
 
             {/* Organize Apps and Fit View */}
             <Box display="flex" mb="2">
               <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdGridView />} onClick={organizeOnOpen} colorScheme="teal" mr="2" size="sm" aria-label="clear" />
+                <IconButton
+                  icon={<MdGridView />}
+                  onClick={organizeOnOpen}
+                  colorScheme="teal"
+                  mr="2"
+                  size="sm"
+                  aria-label="clear"
+                  isDisabled={!canOrganize}
+                />
               </Tooltip>
               <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
                 <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />

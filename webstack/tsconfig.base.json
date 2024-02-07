@@ -3,6 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
+    "resolveJsonModule": true,
     "declaration": false,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
@@ -27,8 +28,10 @@
       "@sage3/backend": ["libs/backend/src/index.ts"],
       "@sage3/frontend": ["libs/frontend/src/index.ts"],
       "@sage3/sagebase": ["libs/sagebase/src/index.ts"],
+      "@sage3/sageplugin": ["libs/sageplugin/src/index.ts"],
       "@sage3/shared": ["libs/shared/src/index.ts"],
-      "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"]
+      "@sage3/shared/types": ["libs/shared/src/lib/types/index.ts"],
+      "@sage3/workers": ["libs/workers/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

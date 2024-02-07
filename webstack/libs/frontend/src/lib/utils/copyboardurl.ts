@@ -6,12 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export function copyBoardUrlToClipboard(roomId: string, boardId: string): void {
-  const link = `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
-  navigator.clipboard.writeText(link);
+export function getHTTPBoardUrl(roomId: string, boardId: string): string {
+  return `${window.location.origin}/#/enter/${roomId}/${boardId}`;
 }
 
-export function generateSaveBoardURL(roomId: string, boardId: string): string {
-  const link = `http://${window.location.host}/#/enter/${roomId}/${boardId}`;
-  return link;
+export function getSAGE3BoardUrl(roomId: string, boardId: string): string {
+  return `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
+}
+
+export function copyBoardUrlToClipboard(roomId: string, boardId: string): void {
+  const link = getSAGE3BoardUrl(roomId, boardId);
+  if (navigator.clipboard) navigator.clipboard.writeText(link);
 }

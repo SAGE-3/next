@@ -6,12 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useDisclosure, useToast } from '@chakra-ui/react';
-import { Board } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import { useDisclosure, useToast } from '@chakra-ui/react';
+
+import { Board } from '@sage3/shared/types';
+
 import { useRouteNav } from '../hooks';
 import { EnterBoardModal } from '../ui';
+import { apiUrls } from '../config';
 
 /**
  * Checks the url for a board id and stores it in local storage for the JoinBoardCheck component to check for later.
@@ -37,16 +40,23 @@ export const CheckUrlForBoardId = () => {
  * @returns
  */
 export function JoinBoardCheck() {
+  // Routing
+  const { toHome } = useRouteNav();
   // To handle the user entering a url containing the boardId
   const boardId = localStorage.getItem('boardId');
   localStorage.removeItem('boardId');
-  const [boardByUrl, setBoardByUrl] = useState<Board>();
+
+  // Board to enter and modal
+  const [boardByUrl, setBoardByUrl] = useState<Board | null>(null);
   const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
+
+  // Toast for information feedback
   const toast = useToast();
+
   // Enter a board if the url contains it
   useEffect(() => {
-    async function joinBoard() {
-      const res = await fetch(`/api/boards/${boardId}`);
+    async function joinBoard(bid: string) {
+      const res = await fetch(apiUrls.boards.getBoard(bid));
       const resjson = await res.json();
       if (resjson.success) {
         const board = resjson.data[0] as Board;
@@ -55,23 +65,21 @@ export function JoinBoardCheck() {
       } else {
         toast({
           title: 'Board not found',
-          description: `Sorry, we couldn't find a board with the id "${boardId}"`,
-          duration: 3000,
+          description: `Sorry, we could not find a board with the id "${boardId}"`,
+          duration: 5000,
           isClosable: true,
           status: 'error',
         });
+        toHome();
       }
     }
     if (boardId) {
-      joinBoard();
+      joinBoard(boardId);
     }
   }, []);
 
-  return (
-    <>
-      {boardByUrl !== undefined ? (
-        <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>
-      ) : null}
-    </>
-  );
+  if (boardByUrl) {
+    return <EnterBoardModal board={boardByUrl} isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard}></EnterBoardModal>;
+  }
+  return null;
 }

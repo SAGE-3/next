@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 
 export function Twilio(props: { roomName: string; connect: boolean }) {
   // User information
-  const { user } = useUser();
+  const { user, accessId } = useUser();
 
   // Twilio Store to join and leave room when joining board
   const { joinRoom, leaveRoom } = useTwilioStore((state) => state);
@@ -20,7 +20,7 @@ export function Twilio(props: { roomName: string; connect: boolean }) {
   useEffect(() => {
     // Join Twilio room
     if (user && props.connect) {
-      joinRoom(user._id, props.roomName);
+      joinRoom(user._id, accessId, props.roomName);
     }
     // Uncmounting
     return () => {
@@ -32,7 +32,7 @@ export function Twilio(props: { roomName: string; connect: boolean }) {
   // Handle joining and leaving twilio room when props.connect changes
   useEffect(() => {
     if (user && props.connect) {
-      joinRoom(user?._id, props.roomName);
+      joinRoom(user?._id, accessId, props.roomName);
     } else {
       leaveRoom();
     }

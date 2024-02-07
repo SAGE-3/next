@@ -27,6 +27,7 @@ import {
 
 import { MdAttachFile } from 'react-icons/md';
 import { useParams } from 'react-router';
+import { apiUrls } from '../../../config';
 
 // Fix the missing attribute 'webkitdirectory' to upload folders
 declare module 'react' {
@@ -80,7 +81,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       fd.append('room', roomId!);
 
       // Upload with a POST request
-      fetch('/api/assets/upload', {
+      fetch(apiUrls.assets.upload, {
         method: 'POST',
         body: fd,
       })
@@ -123,7 +124,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
                   padding={'4px 35px'}
                   id="files"
                   type="file"
-                  accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain'}
+                  accept={'image/*, video/*, application/pdf, application/json, text/csv, text/plain, .ipynb'}
                   multiple
                   onChange={handleInputChange}
                   onClick={() => setInput([])}

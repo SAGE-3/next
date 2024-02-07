@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// The React version of Zustand
-import create from 'zustand';
+// Zustand
+import { create } from 'zustand';
 
 // Dev Tools
 import { mountStoreDevtool } from 'simple-zustand-devtools';
@@ -24,7 +24,7 @@ export enum StuckTypes {
   BottomLeft, // 9
 }
 
-export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations';
+export type PanelNames = 'assets' | 'applications' | 'users' | 'navigation' | 'controller' | 'annotations' | 'plugins' | 'kernels';
 
 // Typescript interface defining the store
 export interface PanelUI {
@@ -46,7 +46,7 @@ interface UIState {
 /**
  * The UIStore.
  */
-export const usePanelStore = create<UIState>((set, get) => ({
+export const usePanelStore = create<UIState>()((set, get) => ({
   panels: [
     {
       position: { x: 5, y: 105 },
@@ -84,11 +84,25 @@ export const usePanelStore = create<UIState>((set, get) => ({
       show: false,
     },
     {
-      position: { x: 5, y: 25 },
+      position: { x: 5, y: 35 },
       name: 'controller',
       stuck: StuckTypes.Left,
       minimized: false,
       show: true,
+    },
+    {
+      position: { x: 5, y: 105 },
+      name: 'plugins',
+      stuck: StuckTypes.None,
+      minimized: false,
+      show: false,
+    },
+    {
+      position: { x: 5, y: 105 },
+      name: 'kernels',
+      stuck: StuckTypes.None,
+      minimized: false,
+      show: false,
     },
   ],
   getPanel: (name: PanelNames) => get().panels.find((el) => el.name === name),
@@ -108,7 +122,7 @@ export const usePanelStore = create<UIState>((set, get) => ({
       z.push(panel[0]);
       set((state) => ({ ...state, panelZ: z }));
     }
-  }
+  },
 }));
 
 // Add Dev tools

@@ -25,13 +25,11 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { useData } from 'libs/frontend/src/lib/hooks';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-
 import { RoomSchema } from '@sage3/shared/types';
 import { randomSAGEColor, SAGEColors } from '@sage3/shared';
-import { useRoomStore } from '../../../stores';
-import { useUser } from '../../../hooks';
+
+import { useRoomStore, useConfigStore } from '../../../stores';
+import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
 
 interface CreateRoomModalProps {
@@ -40,14 +38,14 @@ interface CreateRoomModalProps {
 }
 
 export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const toast = useToast();
 
   const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
-  const rooms = useRoomStore((state) => state.rooms);
+  const { rooms, joinRoomMembership } = useRoomStore((state) => state);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
@@ -91,7 +89,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     }
   };
 
-  const create = () => {
+  const create = async () => {
     if (name && description && user) {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
@@ -113,7 +111,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       } else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
-        createRoom({
+        const room = await createRoom({
           name: cleanedName,
           description,
           color: color,
@@ -122,6 +120,16 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           privatePin: isProtected ? key : '',
           isListed: isListed,
         });
+        if (room) {
+          toast({
+            title: 'Room created successfully',
+            status: 'success',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
+          // Join the room membership
+          joinRoomMembership(room._id);
+        }
         props.onClose();
       }
     }
@@ -145,7 +153,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
           <InputGroup>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -159,7 +167,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={'Room Description'}
@@ -181,21 +189,22 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             Room Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} disabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description}>
             Create
           </Button>
         </ModalFooter>

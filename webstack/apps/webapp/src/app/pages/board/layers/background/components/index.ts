@@ -8,9 +8,6 @@
 
 export * from './Apps';
 export * from './Background';
-export * from './Cursors';
-export * from './Drops';
 export * from './Lasso';
-export * from './UserPresenceUpdate';
-export * from './Viewports';
 export * from './Whiteboard';
+export * from './Presence';

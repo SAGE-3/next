@@ -8,8 +8,9 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { HStack, InputGroup, Input, ButtonGroup, Tooltip, Button, useColorModeValue } from '@chakra-ui/react';
+import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
 
-import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 import { App } from '../../schema';
 
@@ -24,18 +25,22 @@ import { MapContainer, TileLayer, LayersControl } from 'react-leaflet';
 // Import the CSS style sheet from the node_modules folder
 import 'leaflet/dist/leaflet.css';
 
-import create from 'zustand';
-import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
+import { create } from 'zustand';
 
 // Zustand store to communicate with toolbar
-export const useStore = create((set: any) => ({
+interface MapStore {
+  map: { [key: string]: Leaflet.Map },
+  saveMap: (id: string, map: Leaflet.Map) => void,
+}
+
+const useStore = create<MapStore>()((set) => ({
   map: {} as { [key: string]: Leaflet.Map },
-  saveMap: (id: string, map: Leaflet.Map) => set((state: any) => ({ map: { ...state.map, ...{ [id]: map } } })),
+  saveMap: (id: string, map: Leaflet.Map) => set((state) => ({ map: { ...state.map, ...{ [id]: map } } })),
 }));
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
-  return `api/assets/static/${filename}`;
+  return apiUrls.assets.getAssetById(filename);
 }
 
 const maxZoom = 18;
@@ -57,7 +62,7 @@ function AppComponent(props: App): JSX.Element {
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
-  const saveMap = useStore((state: any) => state.saveMap);
+  const saveMap = useStore((state) => state.saveMap);
   // Convert ID to asset
   useEffect(() => {
     const myasset = assets.find((a) => a._id === s.assetid);
@@ -297,7 +302,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [addrValue, setAddrValue] = useState('');
-  const map = useStore((state: any) => state.map[props._id]);
+  const map = useStore((state) => state.map[props._id]);
   const update = useAppStore((state) => state.update);
 
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -395,4 +400,10 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

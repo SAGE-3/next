@@ -7,13 +7,11 @@
  */
 
 import { RedisClientType } from 'redis';
-import * as passport from 'passport';
-import { Express, NextFunction, Request, Response } from 'express';
+import RedisStore from 'connect-redis';
 
-// eslint-disable-next-line
-const session = require('express-session');
-// eslint-disable-next-line
-const connectRedis = require('connect-redis');
+import { Express, NextFunction, Request, Response } from 'express';
+import * as session from 'express-session';
+import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
@@ -21,22 +19,28 @@ export type { JWTPayload } from './adapters';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
+  passportAppleSetup,
+  SBAuthAppleConfig,
   passportJWTSetup,
   SBAuthJWTConfig,
   passportGuestSetup,
   SBAuthGuestConfig,
   passportCILogonSetup,
   SBAuthCILogonConfig,
+  passportSpectatorSetup,
+  SBAuthSpectatorConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator')[];
   googleConfig?: SBAuthGoogleConfig;
+  appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
+  spectatorConfig?: SBAuthSpectatorConfig;
 };
 
 /**
@@ -52,16 +56,16 @@ export class SBAuth {
   private _sessionParser!: any;
 
   public async init(redisclient: RedisClientType, prefix: string, config: SBAuthConfig, express: Express): Promise<SBAuth> {
-    this._redisClient = redisclient.duplicate({ legacyMode: true });
+    // Get a REDIS client
+    this._redisClient = redisclient.duplicate();
     await this._redisClient.connect();
 
     this._database = SBAuthDB;
     this._prefix = `${prefix}:AUTH`;
     await this._database.init(this._redisClient, this._prefix);
 
-    // Passport session stuff
-    const RedisStore = connectRedis(session);
-
+    // Setup the session parser
+    // @ts-ignore
     this._sessionParser = session({
       store: new RedisStore({ client: this._redisClient, prefix: this._prefix + ':SESS:', ttl: config.sessionMaxAge / 1000 }),
       secret: config.sessionSecret,
@@ -69,19 +73,21 @@ export class SBAuth {
       saveUninitialized: false,
       cookie: {
         secure: false, // if true only transmit cookie over https
-        httpOnly: false, // if true prevent client side JS from reading the cookie
+        httpOnly: true, // if true prevent client side JS from reading the cookie
         maxAge: config.sessionMaxAge, // session max age in miliseconds
       },
     });
+    // Setup the express session parser
     express.use(this._sessionParser);
 
+    // Initialize passport
     express.use(passport.initialize());
     express.use(passport.session());
 
-    /* Passport serialize function in order to support login sessions. */
+    // Passport serialize function in order to support login sessions.
     passport.serializeUser(this.serializeUser);
 
-    /* Passport deserialize function in order to support login sessions. */
+    // Passport deserialize function in order to support login sessions.
     passport.deserializeUser(this.deserializeUser);
 
     if (config.strategies) {
@@ -93,6 +99,14 @@ export class SBAuth {
             passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
           );
           express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+        }
+      }
+
+      // Apple Setup
+      if (config.strategies.includes('apple') && config.appleConfig) {
+        if (passportAppleSetup(config.appleConfig)) {
+          express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
+          express.post(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
@@ -112,9 +126,20 @@ export class SBAuth {
         }
       }
 
+      // Spectator Setup
+      if (config.strategies.includes('spectator') && config.spectatorConfig) {
+        if (passportSpectatorSetup()) {
+          express.post(
+            config.spectatorConfig.routeEndpoint,
+            passport.authenticate('spectator', { successRedirect: '/', failureRedirect: '/' })
+          );
+        }
+      }
+
       // CILogon Setup
       if (config.strategies.includes('cilogon') && config.cilogonConfig) {
-        if (passportCILogonSetup(config.cilogonConfig)) {
+        const ready = await passportCILogonSetup(config.cilogonConfig);
+        if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
             passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
@@ -128,12 +153,14 @@ export class SBAuth {
     }
 
     // Route to logout
-    express.get('/auth/logout', (req, res) => this.logout(req, res));
+    express.get('/auth/logout', (req, res, next) => this.logout(req, res, next));
 
     // Route to quickly verify authentication
     express.get('/auth/verify', this.authenticate, (req, res) => {
       const user = req.user as SBAuthSchema;
-      res.status(200).send({ success: true, authentication: true, auth: user });
+      // Get the expiration date from the session cookie
+      const exp = req.session.cookie.expires || new Date();
+      res.status(200).send({ success: true, authentication: true, auth: user, expire: exp.getTime() });
     });
 
     return this;
@@ -167,18 +194,24 @@ export class SBAuth {
   /**
    * Log the current user out of the session.
    */
-  public logout(req: any, res: Response): void {
+  public logout(req: any, res: Response, next: NextFunction): void {
     const user = req.user;
     if (!user) {
       res.send({ success: true });
       return;
     }
-    if (req.user.provider == 'guest') {
+    if (req.user?.provider == 'guest') {
       this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
-    req.session.destroy();
-    req.logout();
-    res.send({ success: true });
+    // req.session.destroy();
+    req.session.user = null;
+
+    req.logout({ keepSessionInfo: false }, function (err: Error) {
+      if (err) {
+        return next(err);
+      }
+      res.send({ success: true });
+    });
   }
 
   private serializeUser(user: Express.User, done: (err: unknown, id?: unknown) => void): void {

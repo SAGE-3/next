@@ -27,10 +27,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore, useAppStore, ConfirmModal } from '@sage3/frontend';
+import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { serverConfiguration } from 'libs/frontend/src/lib/config';
-import { useData } from 'libs/frontend/src/lib/hooks';
 import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {
@@ -41,8 +39,8 @@ interface EditBoardModalProps {
 }
 
 export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
-  // Fetch configuration from the server
-  const config = useData('/api/configuration') as serverConfiguration;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<BoardSchema['name']>(props.board.data.name);
   const [description, setEmail] = useState<BoardSchema['description']>(props.board.data.description);
@@ -127,6 +125,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
    */
   const handleDeleteBoard = () => {
     delConfirmOnClose();
+    props.onClose();
     fetchBoardApps(props.board._id)
       .then((apps) => {
         // delete all apps in the board
@@ -155,7 +154,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
         <ModalHeader fontSize="3xl">Edit Board: {props.board.data.name}</ModalHeader>
         <ModalBody>
           <InputGroup mb={2}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
@@ -169,7 +168,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             />
           </InputGroup>
           <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
               placeholder={props.board.data.description}
@@ -188,16 +187,17 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             Board Protected with a Password
           </Checkbox>
           <InputGroup mt={4}>
-            <InputLeftElement pointerEvents="none" children={<MdLock size={'1.5rem'} />} />
+            <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
               value={password}
               onChange={handlePassword}
               isRequired={isProtected}
-              disabled={!isProtected}
+              isDisabled={!isProtected}
             />
           </InputGroup>
         </ModalBody>
@@ -206,7 +206,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} disabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !description || !valid}>
               Update
             </Button>
           </Box>

@@ -1,31 +1,42 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as React from 'react';
-
+import { useEffect, useState, memo } from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor } from '@sage3/frontend';
+import { useHexColor, useUIStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
-  scale: number;
+  onClick: (id: string) => void;
 }
 
-export const Line = React.memo(function Line({ line, scale }: LineProps) {
-  const { points, color, isComplete } = useLine(line);
-
+export const Line = memo(function Line({ line, onClick }: LineProps) {
+  const { points, color, isComplete, alpha, size } = useLine(line);
   const c = useHexColor(color ? color : 'red');
+  const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
+  const hoverC = useHexColor(hoverColor);
+  const id = line.get('id') as string;
+  const [hover, setHover] = useState(false);
+  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
+
+  const handleClick = (ev: any) => {
+    // If Right Click
+    if ((ev.button === 2 && whiteboardMode === 'pen') || (ev.button === 0 && whiteboardMode === 'eraser')) {
+      onClick(id);
+    }
+  };
 
   const pathData = getSvgPathFromStroke(
     getStroke(points, {
-      size: 12,
+      size: size,
       thinning: 0.5,
       streamline: 0.6,
       smoothing: 0.7,
@@ -34,8 +45,16 @@ export const Line = React.memo(function Line({ line, scale }: LineProps) {
   );
 
   return (
-    <g fill={color}>
-      <path className="canvas-line" d={pathData} fill={c} />
+    <g>
+      <path
+        className="canvas-line"
+        d={pathData}
+        fill={hover ? hoverC : c}
+        fillOpacity={alpha}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onMouseDown={handleClick}
+      />
     </g>
   );
 });
@@ -57,17 +76,21 @@ export function getSvgPathFromStroke(stroke: number[][]) {
 }
 
 export function useLine(line: Y.Map<any>) {
-  const [isComplete, setIsComplete] = React.useState<boolean>();
-  const [color, setColor] = React.useState<string>();
-  const [pts, setPts] = React.useState<number[][]>([]);
+  const [isComplete, setIsComplete] = useState<boolean>();
+  const [color, setColor] = useState<string>();
+  const [pts, setPts] = useState<number[][]>([]);
+  const [alpha, setAlpha] = useState<number>(0.6);
+  const [size, setSize] = useState<number>(5);
 
   // Subscribe to changes to the line itself and sync
   // them into React state.
-  React.useEffect(() => {
+  useEffect(() => {
     function handleChange() {
       const current = line.toJSON();
       setIsComplete(current.isComplete);
       setColor(current.userColor);
+      setAlpha(current.alpha);
+      setSize(current.size);
     }
 
     handleChange();
@@ -81,7 +104,7 @@ export function useLine(line: Y.Map<any>) {
 
   // Subscribe to changes in the line's points array and sync
   // them into React state.
-  React.useEffect(() => {
+  useEffect(() => {
     const points = line.get('points') as Y.Array<number>;
 
     function handleChange() {
@@ -106,7 +129,7 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  return { points: pts, color, isComplete };
+  return { points: pts, color, isComplete, alpha, size };
 }
 
 export function toPairs<T>(arr: T[]): T[][] {

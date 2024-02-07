@@ -6,16 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect } from 'react';
-import { useAppStore, useAssetStore } from '@sage3/frontend';
-import { App } from '../../schema';
+import { useState, useEffect, useRef } from 'react';
+import { MdFileDownload } from 'react-icons/md';
+import { Button, ButtonGroup, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { TableVirtuoso, VirtuosoHandle } from 'react-virtuoso';
+import { parse } from 'csv-parse/browser/esm';
 
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
+import { useAppStore, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { TableVirtuoso } from 'react-virtuoso';
-import { parse } from 'csv-parse/browser/esm';
+import { state as AppState } from './index';
+import { App } from '../../schema';
+import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
@@ -34,6 +36,9 @@ function AppComponent(props: App): JSX.Element {
   // Get the headers
   const [headers, setHeaders] = useState<string[]>([]);
   const [tableWidth, setTableWidth] = useState(1);
+  const table = useRef<VirtuosoHandle>(null);
+  const theme = useColorModeValue('hoverTable', 'hoverTableDark');
+  const bg = useColorModeValue('#F5F5F5', '#808080');
 
   // Get the asset from the state id value
   useEffect(() => {
@@ -48,7 +53,7 @@ function AppComponent(props: App): JSX.Element {
   // Get the data from the asset
   useEffect(() => {
     if (file) {
-      const localurl = '/api/assets/static/' + file.data.file;
+      const localurl = apiUrls.assets.getAssetById(file.data.file);
       if (localurl) {
         fetch(localurl, {
           headers: {
@@ -73,55 +78,109 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [file]);
 
+  // const [visibleRange, setVisibleRange] = useState({ startIndex: 0, endIndex: 0 });
+  // useEffect(() => {
+  //   console.log('CSVViewer> getState', visibleRange);
+  //   if (table.current) {
+  //     table.current.getState((s) => {
+  //       console.log('CSVViewer> getState', s)
+  //     });
+  //   }
+  // }, [visibleRange, table]);
+
   return (
     <AppWindow app={props}>
-      <>
-        <TableVirtuoso
-          style={{
-            height: '100%',
-            width: '100%',
-            borderCollapse: 'collapse',
-          }}
-          data={data}
-          totalCount={data.length}
-          // Headers of the table
-          fixedHeaderContent={() => {
-            return (
-              <tr>
-                <th style={{ width: '5%' }}>#</th>
-                {headers.map((h) => (
-                  <th key={h} style={{ width: tableWidth + '%' }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            );
-          }}
-          // Content of the table
-          itemContent={(idx, val) => (
-            <>
-              <td style={{ border: '1px solid darkgray', textAlign: 'center' }}>{idx + 1}</td>
+      <TableVirtuoso
+        className={theme}
+        style={{
+          height: '100%',
+          width: '100%',
+          borderCollapse: 'collapse',
+          background: bg
+        }}
+        ref={table}
+        data={data}
+        totalCount={data.length}
+        // Headers of the table
+        fixedHeaderContent={() => {
+          return (<>
+            <tr style={{ background: bg, fontSize: "1.2em" }}>
+              <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}> {file?.data.originalfilename}</th>
+            </tr >
+            <tr style={{ background: bg }}>
+              <th style={{ textAlign: 'center' }}>#</th>
               {headers.map((h) => (
-                <td key={h} style={{ width: tableWidth + '%', border: '1px solid darkgray' }}>
-                  {val[h]}
-                </td>
+                <th key={h} style={{ width: tableWidth + '%', textAlign: 'center' }}>
+                  {h}
+                </th>
               ))}
-            </>
-          )}
-        />
-      </>
-    </AppWindow>
+            </tr>
+          </>
+          );
+        }}
+        fixedFooterContent={() => {
+          return (<>
+            <tr style={{ background: bg, fontSize: "0.8em" }}>
+              <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}> {data.length} rows  - {file?.data.size} bytes</th>
+            </tr >
+          </>
+          );
+        }}
+        // rangeChanged={setVisibleRange}
+        // Content of the table
+        itemContent={(idx, val) => (
+          <>
+            <td style={{ border: '1px solid darkgray', textAlign: 'center' }}>{idx + 1}</td>
+            {headers.map((h) => (
+              <td key={h} style={{ width: tableWidth + '%', border: '1px solid darkgray' }}>
+                {val[h]}
+              </td>
+            ))}
+          </>
+        )}
+      />
+    </AppWindow >
   );
 }
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
 
-  return <></>;
+  useEffect(() => {
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (asset) {
+      setFile(asset);
+    }
+  }, [s.assetid, assets]);
+
+  return (
+    <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+      <Tooltip placement="top-start" hasArrow={true} label={'Download CSV'} openDelay={400}>
+        <Button onClick={() => {
+          if (file) {
+            const url = file?.data.file;
+            const filename = file?.data.originalfilename;
+            const dl = apiUrls.assets.getAssetById(url);
+            downloadFile(dl, filename);
+          }
+        }}
+        >
+          <MdFileDownload />
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
+  );
 }
 
-export default { AppComponent, ToolbarComponent };
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
 
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 // Convert the csv to an array using the csv-parse library
 async function csvToArray(str: string): Promise<Record<string, string>[]> {
   // use the csv parser library to parse the csv

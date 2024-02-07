@@ -1,0 +1,56 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
+/* CSS definitions for the app Sensor Overview */
+#stationTable {
+  font-family: Arial, Helvetica, sans-serif;
+  /* border-collapse: collapse; */
+  width: 100%;
+  table-layout: fixed;
+}
+
+#stationTable td,
+#stationTable th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#stationTable tr:nth-child(even) {
+  background-color: #727272;
+}
+
+/* #stationTable tr:hover {
+  background-color: #ddd;
+} */
+
+.rightAlign {
+  text-align: right;
+}
+
+#stationTable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #181c25;
+  color: white;
+  text-shadow: 0.1px 0.1px 3px #000000;
+}
+
+/* 4d4d4d */
+.selectableListItem {
+  /* background-image: linear-gradient(to bottom right, rgb(75, 72, 97), rgb(62, 80, 103)); */
+  padding: 5px;
+  border-radius: 5px;
+  margin: 5px;
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+.selectableListItem:hover {
+  cursor: pointer;
+}
