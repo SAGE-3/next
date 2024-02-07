@@ -177,8 +177,6 @@ function RoomRow(props: RoomRowProps) {
   // Is password protected
   const isPasswordProtected = props.room.data.isPrivate;
 
-  console.log(props.room.data.name + ',' + isPasswordProtected);
-
   // Toast
   const toast = useToast();
 

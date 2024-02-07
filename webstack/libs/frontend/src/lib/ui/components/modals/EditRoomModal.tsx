@@ -30,7 +30,6 @@ import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
-import { set } from 'date-fns';
 
 interface EditRoomModalProps {
   isOpen: boolean;
