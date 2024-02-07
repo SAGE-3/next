@@ -145,6 +145,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       // Ignore .DS_Store and empty files
       const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
       setInput(filteredList);
+      // Pre-populate the name and description fields with the filename
+      setName(sanitizeFilename(filteredList[0].name.split('.')[0]));
+      setDescription(sanitizeFilename(filteredList[0].name.split('.')[0]));
     }
   };
 

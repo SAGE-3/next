@@ -36,6 +36,7 @@ export const apiUrls = {
     upload: '/api/plugins/upload',
   },
   boards: {
+    getBoards: () => `/api/boards`,
     getBoard: (id: string) => `/api/boards/${id}`,
   },
   misc: {

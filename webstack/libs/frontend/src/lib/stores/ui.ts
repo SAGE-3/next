@@ -112,6 +112,7 @@ interface UIState {
   zoomOut: () => void;
   zoomInDelta: (d: number, cursor?: { x: number; y: number }) => void;
   zoomOutDelta: (d: number, cursor?: { x: number; y: number }) => void;
+  fitAppsById: (appId: string[]) => void;
   fitApps: (apps: App[]) => void;
   fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
@@ -154,6 +155,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
   viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
+  fitAppsById: (appIds: string[]) => {
+    const apps = useAppStore.getState().apps;
+    const filteredApps = apps.filter((app) => appIds.includes(app._id));
+    if (filteredApps.length > 0) {
+      get().fitApps(filteredApps);
+    }
+  },
   fitApps: (apps: App[]) => {
     if (apps.length <= 0) {
       return;

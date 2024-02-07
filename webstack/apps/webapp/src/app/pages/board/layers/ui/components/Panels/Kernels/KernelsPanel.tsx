@@ -258,7 +258,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
             Create Kernel
           </Button>
         </Flex>
-        <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+        {isOpen && <CreateKernelModal isOpen={isOpen} onClose={onClose} />}
       </Box>
     </Panel>
   );
