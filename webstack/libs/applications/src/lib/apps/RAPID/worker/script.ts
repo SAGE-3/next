@@ -6,6 +6,7 @@ export type SageNodeQuery = {
   end?: string;
   filter: {
     name: string;
+    sensor: string;
     vsn: string;
   }
 }

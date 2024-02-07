@@ -37,6 +37,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
           start: '-24h',
           filter: {
             name: s.metric.SAGE_NODE,
+            sensor: 'bme680',
             vsn: 'W097',
           },
         },
@@ -78,6 +79,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
         start: '-24h',
         filter: {
           name: selectionParsed.SAGE_NODE,
+          sensor: 'bme680',
           vsn: 'W097',
         },
       },
