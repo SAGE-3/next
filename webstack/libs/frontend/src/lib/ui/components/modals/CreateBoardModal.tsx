@@ -62,6 +62,9 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (color: SAGEColors) => setColor(color);
 
+  // Pending create board sever reponse useState
+  const [pendingCreate, setPendingCreate] = useState(false);
+
   // Run on every open of the dialog
   useEffect(() => {
     // Generate a PIN
@@ -122,6 +125,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         // Create the board
+        setPendingCreate(true);
         const board = await createBoard({
           name: cleanedName,
           description,
@@ -144,7 +148,15 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           if (saveBoard) {
             saveBoard(board._id);
           }
+        } else {
+          toast({
+            title: 'Board creation failed',
+            status: 'error',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
         }
+        setPendingCreate(false);
         props.onClose();
       }
     }
@@ -209,11 +221,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
           <HStack>
-            <Tooltip placement="top" hasArrow={true} openDelay={400}
-              label={'Use this ID to enter a board, instead of a URL'}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} label={'Use this ID to enter a board, instead of a URL'}>
               <Text my={2}>Board ID:</Text>
             </Tooltip>
-            <Text my={2} onDoubleClick={handleCopyId}>{roomID}</Text>
+            <Text my={2} onDoubleClick={handleCopyId}>
+              {roomID}
+            </Text>
           </HStack>
 
           <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
@@ -222,7 +235,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <InputGroup mt={2}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text" autoCapitalize='off'
+              type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
@@ -234,11 +248,15 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description || (isProtected && !password)}>
+          <Button
+            colorScheme="green"
+            onClick={() => create()}
+            isDisabled={!name || !description || (isProtected && !password) || pendingCreate}
+          >
             Create
           </Button>
         </ModalFooter>
       </ModalContent>
-    </Modal >
+    </Modal>
   );
 }
