@@ -249,7 +249,7 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
-      {selectedApp && <AppToolbar></AppToolbar>}
+      {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
       <ContextMenu divId="board">
         <BoardContextMenu
