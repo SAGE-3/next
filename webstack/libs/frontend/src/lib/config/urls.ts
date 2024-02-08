@@ -32,6 +32,9 @@ export const apiUrls = {
     statusKernel: (id: string) => `/api/fastapi/status/${id}`,
     interruptKernel: (id: string) => `/api/fastapi/interrupt/${id}`,
   },
+  seer: {
+    sendNL2Code: () => `/api/seer/nl2code`,
+  },
   plugins: {
     upload: '/api/plugins/upload',
   },

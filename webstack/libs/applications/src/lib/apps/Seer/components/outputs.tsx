@@ -21,11 +21,12 @@ import {
   AccordionIcon,
   AccordionButton,
   AccordionPanel,
+  Flex,
 } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 
-// import { v4 } from 'uuid';
-
+// Event Source import
+import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Ansi library
 import Ansi from 'ansi-to-react';
 // Markdown library
@@ -40,176 +41,165 @@ import { VegaLite } from 'react-vega';
 // PdfViewer
 import { PdfViewer } from './pdfviewer';
 
-import { useAppStore, useHexColor, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useUser, useHexColor, useUsersStore, useKernelStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
-import { KernelInfo } from '@sage3/shared/types';
 
-import { ContentItemType } from '../index';
+// import { ContentItemType } from '../index';
+import { KernelInfo, ContentItem } from '@sage3/shared/types';
 
 interface OutputsProps {
   app: App;
+  msgId: string;
   online: boolean;
 }
 
 export function Outputs(props: OutputsProps): JSX.Element {
+  const { user } = useUser();
+  if (!user) return <></>;
+
+  // App state
   const s = props.app.data.state as AppState;
-  // Data stores
-  const users = useUsersStore((state) => state.users);
-  const createApp = useAppStore((state) => state.create);
-  // Local state
-  const [content, setContent] = useState<ContentItemType[] | null>(null);
-  const [executionCount, setExecutionCount] = useState<number>(0);
-  const [msgType, setMsgType] = useState<string>('');
-  const [msgId, setMsgId] = useState<string>();
-  const [ownerColor, setOwnerColor] = useState<string>('#000000');
-
-  useEffect(() => {
-    if (!s.msgId) {
-      setContent(null);
-      setExecutionCount(0);
-      setMsgType('');
-      return;
-    }
-    if (msgId !== s.msgId) setMsgId(s.msgId);
-    fetchMessageResults(s.msgId);
-  }, [s.msgId]);
-
   const updateState = useAppStore((state) => state.updateState);
-  const baseURL = 'http://localhost:81';
+  const createApp = useAppStore((state) => state.create);
 
-  /**
-   * This function will fetch the status of a kernel
-   * and return the final status
-   */
-  const fetchMessageResults = async (msg_id: string) => {
-    if (!msg_id) {
-      // console.log('No message id to get status');
-      return;
-    }
-    try {
-      const response = await fetch(`${baseURL}/status/${msg_id}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) {
-        console.log('Error getting status');
-        return;
-      }
-      const result = await response.json();
-      // if the message is completed, then we can get the results
-      // and push the id to the set of completed messages
-      if (result.completed) {
-        updateState(props.app._id, {
-          streaming: false,
-        });
-        setContent(result.content as ContentItemType[]);
-        setExecutionCount(result.execution_count);
-        setMsgType(result.msg_type);
-        console.log('Finished execution before starting stream');
-      } else {
-        startStream(msg_id);
-      }
-    } catch (error) {
-      if (error instanceof TypeError) {
-        console.log(`The Jupyter proxy server appears to be offline. (${error.message})`);
-        updateState(props.app._id, {
-          kernel: '',
-          kernelSpecs: ['python3'],
-          kernels: [],
-          online: false,
-          streaming: false,
-        });
-      }
-    }
-  };
+  // Users
+  const users = useUsersStore((state) => state.users);
 
-  /**
-   * This function will start a stream to get the output of a kernel
-   * and update the state with the output
-   * @param msg_id
-   * @returns
-   */
-  const startStream = async (msg_id: string) => {
-    if (!msg_id) {
-      // console.log('No message id to start stream');
-      return;
-    }
-    const url = `${baseURL}/status/${msg_id}/stream`;
-    const eventSource = new EventSource(url);
-    // console.log('Starting stream...for msg_id: ', msg_id);
-    eventSource.addEventListener('new_message', function (event) {
-      const result = JSON.parse(event.data);
-      setContent(result.content as ContentItemType[]);
-      if (result.completed) {
-        setContent(result.content as ContentItemType[]);
-        setExecutionCount(result.execution_count);
-        setMsgType(result.msg_type);
-        updateState(props.app._id, {
-          streaming: false,
-        });
-        eventSource.close();
-      }
-    });
-  };
+  // Local state
+  const [content, setContent] = useState<ContentItem[] | null>(null);
+  const [executionCount, setExecutionCount] = useState<number>(0);
+  const [ownerColor, setOwnerColor] = useState<string>('#000000');
+  const [history, setHistory] = useState<string[]>(s.history || []);
 
-  /**
-   * This function will create a new webview app
-   * with the url provided
-   *
-   * @param url
-   */
-  const openInWebview = (url: string): void => {
-    createApp({
-      title: 'Webview',
-      roomId: props.app.data.roomId,
-      boardId: props.app.data.boardId,
-      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
-      size: { width: 600, height: props.app.data.size.height, depth: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'Webview',
-      state: { webviewurl: url },
-      raised: true,
-      dragging: false,
-      pinned: false,
-    });
-  };
+  // Kernel Store
+  const { apiStatus, kernels, fetchResults } = useKernelStore((state) => state);
+  // Memos and errors
+  const renderedContent = useMemo(() => processedContent(content || []), [content]);
+  const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
+  const executionCountColor = useHexColor('red');
 
   // Get the color of the kernel owner
   useEffect(() => {
     if (s.kernel && users) {
-      const kernels = s.kernels;
       const owner = kernels.find((el: KernelInfo) => el.kernel_id === s.kernel)?.owner;
       const ownerColor = users.find((el) => el._id === owner)?.data.color;
       setOwnerColor(ownerColor || '#000000');
     }
-    return () => {
-      setOwnerColor('#000000');
-    };
-  }, [s.kernel, users]);
+  }, [s.kernel, kernels, users]);
 
-  // Get the error message and put it back together since it streamed in parts
-  const error =
-    content &&
-    content.reduce((acc, item) => {
-      if ('traceback' in item) {
-        acc.traceback = item.traceback;
-      }
-      if ('ename' in item) {
-        acc.ename = item.ename;
-      }
-      if ('evalue' in item) {
-        acc.evalue = item.evalue;
-      }
-      return acc;
-    }, {} as { traceback?: string[]; ename?: string; evalue?: string });
+  useEffect(() => {
+    setHistory(s.history);
+  }, [s.history]);
 
-  const processedContent = useMemo(() => {
-    if (!content || msgType === 'error') return null;
+  /**
+   * Update local state if the online status changes
+   * @param {boolean} online
+   */
+  useEffect(() => {
+    if (!apiStatus) {
+      updateState(props.app._id, {
+        streaming: false,
+        kernel: '',
+        msgId: '',
+        history: [],
+      });
+      console.log('kernel store is not available');
+    }
+  }, [apiStatus]);
+
+  /**
+   * This effect will fetch the results of the last
+   * executed cell if the app is online and the
+   * msgId is not empty.
+   */
+  useEffect(() => {
+    if (!s.streaming) return;
+    function setEventSource() {
+      const ctrl = new AbortController();
+      fetchEventSource(`/api/fastapi/status/${s.msgId}/stream`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'text/event-stream',
+          Connection: 'keep-alive',
+          'Cache-Control': 'no-cache',
+        },
+        signal: ctrl.signal,
+        onmessage(event) {
+          setError(null);
+          if (!event.data) return;
+          try {
+            const parsedData = JSON.parse(event.data);
+            setContent(parsedData.content);
+            if (parsedData.execution_count) {
+              setExecutionCount(parsedData.execution_count);
+            }
+          } catch (error) {
+            console.log('EventSource> error', error);
+            ctrl.abort();
+          }
+        },
+        onclose() {
+          updateState(props.app._id, { streaming: false, history: [...s.history, props.msgId], msgId: '' });
+        },
+      });
+    }
+
+    if (s.msgId && s.session === user?._id) {
+      setEventSource();
+    }
+  }, [props.msgId]);
+
+  async function getResults() {
+    if (!history || history.length === 0 || s.streaming) return;
+    const msgId = history[history.length - 1];
+    console.log('Attempting to fetch results');
+    const response = await fetchResults(msgId);
+    if (response.ok) {
+      const result = response.execOutput;
+      if (result.msg_type === 'error') {
+        setContent(null);
+        setExecutionCount(0);
+        const error = result.content.reduce((acc, item) => {
+          if ('traceback' in item) {
+            acc.traceback = item.traceback;
+          }
+          if ('ename' in item) {
+            acc.ename = item.ename;
+          }
+          if ('evalue' in item) {
+            acc.evalue = item.evalue;
+          }
+          return acc;
+        }, {} as { traceback?: string[]; ename?: string; evalue?: string });
+        setError(error);
+        return;
+      }
+      if (result.completed) {
+        setError(null);
+        setContent(result.content);
+        setExecutionCount(result.execution_count);
+      }
+    } else {
+      setError({
+        traceback: ['Error fetching results'],
+        ename: 'Error',
+        evalue: 'Error fetching results',
+      });
+      setContent(null);
+      setExecutionCount(0);
+    }
+  }
+
+  useEffect(() => {
+    getResults();
+  }, [history.length]);
+
+  function processedContent(content: ContentItem[]) {
+    // if (!content) return <></>;
     return content.map((item) => {
       return Object.keys(item).map((key) => {
-        // console.log(msgType, key);
         const value = item[key];
         switch (key) {
           // error messages are handled above
@@ -287,10 +277,8 @@ export function Outputs(props: OutputsProps): JSX.Element {
             );
           }
           case 'application/pdf':
-            // Open a iframe with the pdf
             return <PdfViewer key={key} data={value as string} />;
           case 'application/json':
-            // Render the json as string into a PRE tag
             return <pre key={key}>{JSON.stringify(value as string, null, 2)}</pre>;
           default:
             return (
@@ -299,7 +287,7 @@ export function Outputs(props: OutputsProps): JSX.Element {
                   <AccordionItem>
                     <AccordionButton>
                       <Box flex="1" textAlign="left">
-                        <Text color="red" fontSize={s.fontSize}>
+                        <Text color={executionCountColor} fontSize={s.fontSize}>
                           Error: {key} is not supported in this version of SAGECell.
                         </Text>
                       </Box>
@@ -315,35 +303,85 @@ export function Outputs(props: OutputsProps): JSX.Element {
         }
       });
     });
-  }, [content, s.fontSize]);
+  }
+
+  /**
+   * This function will create a new webview app
+   * with the url provided
+   *
+   * @param url
+   */
+  const openInWebview = (url: string): void => {
+    createApp({
+      title: 'Webview',
+      roomId: props.app.data.roomId,
+      boardId: props.app.data.boardId,
+      position: { x: props.app.data.position.x + props.app.data.size.width + 20, y: props.app.data.position.y, z: 0 },
+      size: { width: 600, height: props.app.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Webview',
+      state: { webviewurl: url },
+      raised: true,
+      pinned: false,
+      dragging: false,
+    });
+  };
 
   return (
-    <Box flex="1" borderLeft={`.4rem solid ${useHexColor(ownerColor)}`} display={'flex'} flexDirection={'row'}>
-      {!executionCount && executionCount < 1 ? null : (
-        <Text padding={'0.25rem'} fontSize={s.fontSize} color="red">{`[${executionCount}]:`}</Text>
-      )}
-      <Box p={1} className={'output ' + useColorModeValue('output-area-light', 'output-area-dark')}>
-        {error && error.ename && error.evalue ? (
-          <Alert status="error">
-            <Icon as={MdError} />
-            <Code
-              style={{
-                fontFamily: 'monospace',
-                display: 'inline-block',
-                marginLeft: '0.5em',
-                marginRight: '0.5em',
-                fontWeight: 'bold',
-                background: 'transparent',
-                fontSize: s.fontSize,
-              }}
-            >
-              {error.ename}: <Ansi>{error.evalue}</Ansi>
-            </Code>
-          </Alert>
-        ) : null}
-        {error && error.traceback ? Object(error.traceback).map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>) : null}
-        {processedContent}
-      </Box>
+    <Box
+      p={1}
+      w={'100%'}
+      h={'100%'}
+      minHeight="150px"
+      // border={`1px solid ${useHexColor(ownerColor)}`}
+      overflow={'auto'}
+      css={{
+        '&::-webkit-scrollbar': {
+          background: 'black',
+          width: '6px',
+          height: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'teal',
+          borderRadius: '24px',
+        },
+      }}
+    >
+      <Flex align="start">
+        {!executionCount || executionCount < 1 ? null : (
+          <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
+            [{executionCount}]:
+          </Text>
+        )}
+        <Box
+          flex="1"
+          borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
+          p={1}
+          className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
+          fontSize={s.fontSize}
+        >
+          {error && (
+            <Alert status="error">
+              <Icon as={MdError} />
+              <Code
+                style={{
+                  fontFamily: 'monospace',
+                  display: 'inline-block',
+                  marginLeft: '0.5em',
+                  marginRight: '0.5em',
+                  fontWeight: 'bold',
+                  background: 'transparent',
+                  fontSize: s.fontSize,
+                }}
+              >
+                {error.ename}: <Ansi>{error.evalue}</Ansi>
+              </Code>
+            </Alert>
+          )}
+          {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
+          {renderedContent}
+        </Box>
+      </Flex>
     </Box>
   );
 }

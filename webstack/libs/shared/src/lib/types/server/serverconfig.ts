@@ -48,6 +48,9 @@ export interface ServerConfiguration {
   // FastAPI
   fastapi: { url: string };
 
+  // FastAPI
+  seer: { url: string };
+
   // External Services
   services: {
     twilio: TwilioConfiguration;

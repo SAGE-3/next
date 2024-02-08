@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { truncateWithEllipsis, useAppStore, useHexColor, useUser } from '@sage3/frontend';
+import { useAppStore, useKernelStore, useUser, useHexColor } from '@sage3/frontend';
 import {
   Badge,
   Box,
@@ -19,13 +19,16 @@ import {
   Textarea,
   Tooltip,
   useColorModeValue,
-  useToast,
+  // useToast,
   useDisclosure,
-  Code,
+  // Code,
 } from '@chakra-ui/react';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
+
+// import { KernelInfo, ContentItem } from '@sage3/shared/types';
+// import { SAGE3Ability } from '@sage3/shared';
 
 // Styling
 import './styles.css';
@@ -33,14 +36,16 @@ import './styles.css';
 import { MdClearAll, MdHelp, MdPlayArrow, MdStop } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 
-import { v4 as getUUID } from 'uuid';
+// import { v4 as getUUID } from 'uuid';
 
 import { ToolbarComponent } from './components/toolbar';
 import { HelpModal } from './components/help';
 import { Outputs } from './components/outputs';
 import { CodeEditor } from './components/editor';
-import { KernelInfo } from '@sage3/shared/types';
-// import { BiHide, BiShow } from 'react-icons/bi';
+import Markdown from 'markdown-to-jsx';
+
+// Seer API
+import { SeerAPI } from '@sage3/frontend';
 
 /**
  * Seer App
@@ -48,117 +53,59 @@ import { KernelInfo } from '@sage3/shared/types';
 
 /* App component for Seer */
 function AppComponent(props: App): JSX.Element {
-  // Make a toast to show errors
-  const toast = useToast();
+  // Users
   const { user } = useUser();
+  const userId = user?._id;
+
+  // State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
-  // const update = useAppStore((state) => state.update);
+
+  // Local State
   const [prompt, setPrompt] = useState<string>(s.prompt);
+  const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [generatedMarkdown, setGeneratedMarkdown] = useState<string>('');
   const defaultPlaceHolderValue = 'Tell me what you want to do...';
   const [placeHolderValue, setPlaceHolderValue] = useState<string>(defaultPlaceHolderValue);
-  const [myKernels, setMyKernels] = useState<KernelInfo[]>(s.kernels);
-  const [access, setAccess] = useState<boolean>(false);
-  const boardId = props.data.boardId;
-  // Needed for Div resizing
-  // const [editorHeight, setEditorHeight] = useState(150); // not beign used?
-  // const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A');
-  const accessDeniedColor = '#EE4B2B';
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+
+  // Styles
   const green = useHexColor('green');
-  const [online, setOnline] = useState(false);
-  const [kernel, setKernel] = useState<string>(s.kernel);
-
-  /**
-   * Populate the user's kernels and check if the user has access to the kernel
-   */
-  useEffect(() => {
-    let kernelId = '';
-    if (s.kernels) {
-      const myKernels = s.kernels.reduce((kernels, kernel) => {
-        if (kernel.board === boardId && (!kernel.is_private || (kernel.is_private && kernel.owner === user?._id))) {
-          kernels.push(kernel);
-        }
-        return kernels;
-      }, [] as KernelInfo[]);
-      if (s.kernel) {
-        const kernel = myKernels.find((kernel: KernelInfo) => kernel.kernel_id === s.kernel);
-        setAccess(kernel ? true : false);
-        kernelId = kernel ? kernel.kernel_id : 'restricted';
-      }
-      setKernel(kernelId);
-    }
-  }, [JSON.stringify(s.kernels), s.kernel]);
-
-  useEffect(() => {
-    setOnline(s.online);
-  }, [s.online]);
-
-  // const [isMarkdown, setIsMarkdown] = useState<boolean>(false);
-  // const [showCode, setShowCode] = useState<boolean>(false);
-  // const [showOutput, setShowOutput] = useState<boolean>(false);
-
+  const yellow = useHexColor('yellow');
   const SPACE = 2;
+  // const red = useHexColor('red');
+
+  // Local state
+  const [access, setAccess] = useState(true);
+
+  // Kernel Store
+  const { apiStatus, kernels } = useKernelStore((state) => state);
+
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
-  // const accessDeniedColor = useColorModeValue('#EFDEDD', '#9C7979');
 
-  // useEffect(() => {
-  //   if (!s.output) return;
-  //   // set the parsed output if execute_result or display_data is present
-  //   const parsed = JSON.parse(s.output);
-  //   parsed['display_data'] && parsed['display_data']['data'] && parsed['display_data']['data']['text/markdown']
-  //     ? setShowCode(true)
-  //     : setShowCode(false);
-  //   console.log('markdown', isMarkdown);
-  // }, [s.output]);
+  useEffect(() => {
+    // If the API Status is down, set the publicKernels to empty array
+    if (!apiStatus) {
+      setAccess(false);
+      return;
+    } else {
+      const selectedKernel = kernels.find((kernel: { kernel_id: string }) => kernel.kernel_id === s.kernel);
+      setSelectedKernelName(selectedKernel ? selectedKernel.alias : '');
+      const isPrivate = selectedKernel?.is_private;
+      const owner = selectedKernel?.owner;
+      if (!isPrivate) setAccess(true);
+      else if (isPrivate && owner === userId) setAccess(true);
+      else setAccess(false);
+    }
+  }, [access, apiStatus, kernels, s.kernel]);
 
-  // function getKernels() {
-  //   if (!user) return;
-  //   updateState(props._id, {
-  //     executeInfo: {
-  //       executeFunc: 'get_available_kernels',
-  //       params: { _uuid: user._id },
-  //     },
-  //   });
-  // }
-
-  // Set the title on start
-  // useEffect(() => {
-  //   // update the title of the app
-  //   if (props.data.title !== 'Seer') {
-  //     update(props._id, { title: 'Seer' });
-  //   }
-  //   getKernels();
-  // }, []);
-
-  // useEffect(() => {
-  //   // Get all kernels that I'm available to see
-  //   const kernels: { value: Record<string, any>; key: string }[] = [];
-  //   s.availableKernels.forEach((kernel) => {
-  //     if (kernel.value.is_private) {
-  //       if (kernel.value.owner_uuid == user?._id) {
-  //         kernels.push(kernel);
-  //       }
-  //     } else {
-  //       kernels.push(kernel);
-  //     }
-  //   });
-  //   setMyKernels(kernels);
-  // }, [JSON.stringify(s.availableKernels)]);
-
-  // useEffect(() => {
-  //   if (s.kernel == '') {
-  //     setAccess(true); // need to check this...it's weird
-  //   } else {
-  //     const access = myKernels.find((kernel) => kernel.key === s.kernel);
-  //     setAccess(access ? true : false);
-  //     if (access) {
-  //       const name = truncateWithEllipsis(access ? access.value.kernel_alias : s.kernel, 8);
-  //       // update the title of the app
-  //       update(props._id, { title: 'Seer: kernel [' + name + ']' });
-  //     }
-  //   }
-  // }, [s.kernel, myKernels]);
+  // Update everyone's local state after a state change
+  useEffect(() => {
+    if (s.markdown !== generatedMarkdown) {
+      setGeneratedMarkdown(s.markdown);
+    }
+  }, [s.markdown]);
 
   const handleUpdatePrompt = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
@@ -170,42 +117,45 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.prompt]);
 
-  const handleGenerate = (kernel: string) => {
-    if (!kernel) {
-      toast({
-        title: 'No kernel selected',
-        description: 'Please select a kernel from the toolbar',
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-        position: 'bottom',
-      });
-      return;
-    }
-    if (prompt) {
-      updateState(props._id, {
-        prompt: prompt,
-        code: '',
-        output: '',
-        executeInfo: { executeFunc: 'generate', params: { _uuid: getUUID() } },
-      });
-    }
-  };
+  // The prompt is local only.
+
   // handle interrupt
   const handleInterrupt = () => {
-    if (!user) return;
-    updateState(props._id, {
-      executeInfo: { executeFunc: 'interrupt', params: {} },
-    });
+    console.log('Interrupting...');
+    updateState(props._id, { streaming: false });
   };
   const handleClear = () => {
     updateState(props._id, {
       prompt: '',
       output: '',
-      executeInfo: { executeFunc: '', params: {} },
+      streaming: false,
+      msgId: '',
     });
+    setGeneratedCode('');
   };
 
+  const handleGenerate = async () => {
+    if (prompt === '' || userId === undefined) {
+      return;
+    }
+    const response = await SeerAPI.sendPrompt(prompt, userId);
+    if (response) {
+      if (response.ok) {
+        updateState(props._id, {
+          code: response.code,
+        });
+      }
+    } else {
+      console.log('No response');
+    }
+  };
+
+  // Code Update
+  useEffect(() => {
+    if (s.code !== generatedCode) {
+      setGeneratedCode(s.code);
+    }
+  }, [s.code]);
   return (
     <AppWindow app={props}>
       <Box // main container
@@ -262,17 +212,10 @@ function AppComponent(props: App): JSX.Element {
             >
               Create a visualization
             </Badge>
+            <Badge variant="ghost" color={selectedKernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
+              {selectedKernelName ? `Kernel: ${selectedKernelName}` : 'No Kernel Selected'}
+            </Badge>
             <Spacer />
-            {/* <Tooltip label="Show/Hide Code" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowCode(!showCode)}>
-                {showCode ? 'Show Code' : 'Hide Code'}
-              </Badge>
-            </Tooltip>
-            <Tooltip label="Show/Hide Output" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
-                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
-              </Badge>
-            </Tooltip> */}
             <Tooltip label="Click for help" placement="top">
               <IconButton
                 onClick={() => helpOnOpen()}
@@ -319,7 +262,7 @@ function AppComponent(props: App): JSX.Element {
               <Textarea
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && e.shiftKey && access && s.kernel) {
-                    handleGenerate(s.kernel);
+                    handleGenerate();
                   }
                 }}
                 value={prompt}
@@ -350,7 +293,7 @@ function AppComponent(props: App): JSX.Element {
                 {access ? (
                   <Tooltip hasArrow label="Generate" placement="right-start">
                     <IconButton
-                      onClick={() => handleGenerate(s.kernel)}
+                      onClick={handleGenerate}
                       aria-label={''}
                       icon={
                         s.executeInfo?.executeFunc === 'generate' ? (
@@ -374,7 +317,7 @@ function AppComponent(props: App): JSX.Element {
                   </Tooltip>
                 ) : null}
                 {access ? (
-                  <Tooltip hasArrow label="Clear All" placement="right-start">
+                  <Tooltip hasArrow label="Clear" placement="right-start">
                     <IconButton
                       onClick={handleClear}
                       aria-label={''}
@@ -403,31 +346,40 @@ function AppComponent(props: App): JSX.Element {
             }}
             hidden={false}
           >
-            <CodeEditor app={props} access={access} editorHeight={150} online={online} />
+            <CodeEditor
+              app={props}
+              access={access}
+              editorHeight={150}
+              online={apiStatus}
+              generatedCode={generatedCode ? generatedCode : ''}
+              setGeneratedCode={setGeneratedCode}
+            />
           </Box>
           <Stack direction="row" hidden={false}>
             <Badge variant="outline" colorScheme="red" mb={-1}>
               Outputs
             </Badge>
-            {/* <Tooltip label="Show/Hide Output" placement="top">
-              <Badge variant="outline" colorScheme="red" onClick={() => setShowOutput(!showOutput)}>
-                {showOutput ? 'Show Outputs' : 'Hide Outputs'}
-              </Badge>
-            </Tooltip> */}
-            {/* <Badge variant="ghost" colorScheme="facebook" onClick={() => setShowOutput(!showOutput)}>
-              {showOutput ? <BiShow aria-label="Show Output Editor" size="16px" /> : <BiHide aria-label="Hide Output" size="16px" />}
-            </Badge> */}
           </Stack>
           <Box // output section container
             style={{
               backgroundColor: useColorModeValue('#FFFFFE', '#202020'),
-              minHeight: '150px',
+              width: '100%',
+              height: '100%',
+              // minHeight: 'calc(100vh - 475px)',
+              // height: 'calc(100vh - 475px)',
               border: '2px solid',
               borderColor: '#008080',
             }}
             hidden={false}
           >
-            {!s.msgId ? <></> : <Outputs app={props} online={online} />}
+            {generatedMarkdown && (
+              <Box p={1} mx={5}>
+                <Markdown source={generatedMarkdown} escapeHtml={false}>
+                  {generatedMarkdown}
+                </Markdown>
+              </Box>
+            )}
+            {s.history && !generatedMarkdown && <Outputs app={props} online={apiStatus} msgId={s.msgId} />}
           </Box>
         </Stack>
       </Box>
@@ -439,6 +391,8 @@ function AppComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
