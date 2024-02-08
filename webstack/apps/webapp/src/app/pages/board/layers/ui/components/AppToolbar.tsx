@@ -27,7 +27,7 @@ import {
   UnorderedList,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdFullscreen } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -400,7 +400,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
             <Tooltip placement="top" hasArrow={true} label={'Present inside Viewport'} openDelay={400} ml="1">
               <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <MdFullscreen size="14px" color={buttonTextColor} />
+                <MdTv size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
 
