@@ -260,7 +260,7 @@ export function BoardContextMenu(props: ContextProps) {
             Show all Apps
           </Button>
 
-          {/* <Button
+          <Button
             w="100%"
             borderRadius={2}
             h="auto"
@@ -271,8 +271,8 @@ export function BoardContextMenu(props: ContextProps) {
             justifyContent="flex-start"
             onClick={props.downloadBoard}
           >
-            Download Opened Assets
-          </Button> */}
+            Download Assets
+          </Button>
         </VStack>
 
         <VStack w={'100%'}>
