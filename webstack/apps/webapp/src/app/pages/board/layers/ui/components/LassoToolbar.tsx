@@ -24,8 +24,8 @@ import {
   MenuDivider,
 } from '@chakra-ui/react';
 
+// Packing algorithm
 import potpack from 'potpack';
-import { Box as Rectangle, Point, Polygon, BooleanOperations, Relations } from '@flatten-js/core';
 
 import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
@@ -279,9 +279,9 @@ for b in bits:
     updateBatch(ps);
   };
 
-  // Calculate a new layout for the selected apps
-  // based on: https://twitter.com/hialexwang/status/1714612402527109504
-  const autoLayout_nice = () => {
+  // Calculate a new layout using Binary Tree Algorithm for 2D Bin Packing
+  // based on: https://github.com/jakesgordon/bin-packing
+  const autoLayout_binpacking = () => {
     const padding = 30 / 2; // half in each dimension
     const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
     const boxes = selectedApps.map((el) => {
@@ -292,13 +292,13 @@ for b in bits:
       return {
         app: el,
         id: el._id,
-        width: w,
-        height: h,
+        w: w,
+        h: h,
         x: x,
         y: y,
         bbox: [x, y, x + w, y + h],
         area: w * h,
-        rect: new Rectangle(x, y, x + w, y + h),
+        fit: { x: 0, y: 0 }
       }
     });
     // Sort by size
@@ -309,130 +309,30 @@ for b in bits:
     const maxx = Math.max(...boxes.map((el) => el.bbox[2]));
     const miny = Math.min(...boxes.map((el) => el.bbox[1]));
     const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
-    const center = new Point((minx + maxx) / 2, (miny + maxy) / 2);
+    const center = [(minx + maxx) / 2, (miny + maxy) / 2];
 
-    // Move the big one to the center
-    const big = boxes[0];
-
-    const newpos = { x: center.x - big.width / 2, y: center.y - big.height / 2 };
-    update(big.id, { position: { ...big.app.data.position, ...newpos } });
-
-    // Shape representing the big one
-    const shape1 = new Rectangle(
-      newpos.x,
-      newpos.y,
-      newpos.x + big.width,
-      newpos.y + big.height);
-
-    // Move a second one to the right and with an offset down
-    const secondpos = {
-      x: center.x + big.width / 2,
-      y: center.y - big.height / 2 + (big.height / 3),
-    };
-    const second = boxes[1];
-    update(second.id, { position: { ...second.app.data.position, ...secondpos } });
-
-    // Shape representing the second one
-    const shape2 = new Rectangle(
-      secondpos.x,
-      secondpos.y,
-      secondpos.x + second.width,
-      secondpos.y + second.height);
-
-    // Shape representing both of them
-    let union = BooleanOperations.unify(new Polygon(shape1.toPoints()), new Polygon(shape2.toPoints()));
-
-    let index = 2;
-    let closest = 0; // try first with the closest point
-    const shift = 3; // an offset to avoid touching
-    while (index < boxes.length) {
-      const third = boxes[index];
-
-      const res = union.vertices.map((pt, i) => ({ idx: i, d: pt.distanceTo(center)[0] }));
-      res.sort((a, b) => a.d - b.d);
-      const p = union.vertices[res[closest].idx];
-
-      let done = false;
-
-      // Q1: up right
-      let px = p.x + shift;
-      let py = p.y - shift - third.height;
-      const shape3a = new Rectangle(
-        px, py,
-        px + third.width,
-        py + third.height);
-      let isTouching = Relations.touch(union, shape3a) || Relations.intersect(union, shape3a);
-      if (!isTouching && !done) {
-        done = true;
-        update(third.id, { position: { ...third.app.data.position, x: p.x, y: p.y - third.height } });
-        const moved = new Rectangle(px, py, p.x + third.width, p.y);
-        union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
-        index++;
-        closest = 0;
-      }
-
-      // Q2: down right
-      if (!done) {
-        px = p.x + shift;
-        py = p.y + shift;
-        const shape3b = new Rectangle(
-          px, py,
-          px + third.width,
-          py + third.height);
-        isTouching = Relations.touch(union, shape3b) || Relations.intersect(union, shape3b);
-        if (!isTouching) {
-          done = true;
-          update(third.id, { position: { ...third.app.data.position, x: p.x, y: p.y } });
-          const moved = new Rectangle(px, py, p.x + third.width, p.y + third.height);
-          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
-          index++;
-          closest = 0;
+    // Packer algorithm
+    // @ts-ignore
+    var packer = new GrowingPacker();
+    packer.fit(boxes);
+    // Get the size of the packed rectangle
+    const pw = packer.root.w;
+    const ph = packer.root.h;
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+    for (var n = 0; n < boxes.length; n++) {
+      var block = boxes[n];
+      if (block.fit) {
+        const app = apps.find((a) => a._id === block.id);
+        const x = center[0] + block.fit.x - pw / 2;
+        const y = center[1] + block.fit.y - ph / 2;
+        if (app) {
+          ps.push({ id: app._id, updates: { position: { ...app.data.position, x, y } } });
         }
-      }
-
-      // Q3: up left
-      if (!done) {
-        px = p.x - shift - third.width;
-        py = p.y - shift - third.height;
-        const shape3c = new Rectangle(
-          px, py,
-          px + third.width,
-          py + third.height);
-        isTouching = Relations.touch(union, shape3c) || Relations.intersect(union, shape3c);
-        if (!isTouching) {
-          done = true;
-          update(third.id, { position: { ...third.app.data.position, x: p.x - third.width, y: p.y - third.height } });
-          const moved = new Rectangle(px, px, p.x, p.y);
-          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
-          index++;
-          closest = 0;
-        }
-      }
-
-      // Q4: down left
-      if (!done) {
-        px = p.x - shift - third.width;
-        py = p.y + shift;
-        const shape3d = new Rectangle(
-          px, py,
-          px + third.width,
-          py + third.height);
-        isTouching = Relations.touch(union, shape3d) || Relations.intersect(union, shape3d);
-        if (!isTouching) {
-          done = true;
-          update(third.id, { position: { ...third.app.data.position, x: p.x - third.width, y: p.y } });
-          const moved = new Rectangle(px, py, p.x, p.y + third.height);
-          union = BooleanOperations.unify(union, new Polygon(moved.toPoints()));
-          index++;
-          closest = 0;
-        }
-      }
-
-      if (!done) {
-        // Failed to place, try with the next closest point
-        closest += 1;
       }
     }
+    // Update all the apps at once
+    updateBatch(ps);
   };
 
   return (
@@ -508,14 +408,14 @@ for b in bits:
                   <MenuDivider />
 
                   <MenuGroup title="Layouts" m="1">
-                    <Tooltip placement="top" hasArrow={true} label={'Spiral Layout around largest app'} openDelay={400}>
-                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_nice} icon={<MdAutoAwesomeMosaic />} py="0" m="0">
-                        Swirl Layout
+                    <Tooltip placement="top" hasArrow={true} label={'Bin Packing Algorithm'} openDelay={400}>
+                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_binpacking} icon={<MdAutoAwesomeMosaic />} py="0" m="0">
+                        Compact Layout
                       </MenuItem>
                     </Tooltip>
-                    <Tooltip placement="top" hasArrow={true} label={'Packs apps into a near-square container'} openDelay={400}>
+                    <Tooltip placement="top" hasArrow={true} label={'Fits apps into a rectangle'} openDelay={400}>
                       <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_pack} icon={<MdAutoAwesomeMotion />} py="0" m="0">
-                        2D Pack Layout
+                        Rectangle Layout
                       </MenuItem>
                     </Tooltip>
                   </MenuGroup>
@@ -568,3 +468,87 @@ for b in bits:
     </>
   );
 }
+
+/**
+ * Packing function
+ */
+
+const GrowingPacker = function () { };
+
+GrowingPacker.prototype = {
+
+  fit: function (blocks: any[]) {
+    var n,
+      node,
+      block,
+      len = blocks.length;
+    var w = len > 0 ? blocks[0].w : 0;
+    var h = len > 0 ? blocks[0].h : 0;
+    this.root = { x: 0, y: 0, w: w, h: h };
+    for (n = 0; n < len; n++) {
+      block = blocks[n];
+      if ((node = this.findNode(this.root, block.w, block.h)))
+        block.fit = this.splitNode(node, block.w, block.h);
+      else block.fit = this.growNode(block.w, block.h);
+    }
+  },
+
+  findNode: function (root: any, w: number, h: number) {
+    if (root.used)
+      return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
+    else if (w <= root.w && h <= root.h) return root;
+    else return null;
+  },
+
+  splitNode: function (node: any, w: number, h: number) {
+    node.used = true;
+    node.down = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
+    node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
+    return node;
+  },
+
+  growNode: function (w: number, h: number) {
+    var canGrowDown = w <= this.root.w;
+    var canGrowRight = h <= this.root.h;
+
+    var shouldGrowRight = canGrowRight && this.root.h >= this.root.w + w; // attempt to keep square-ish by growing right when height is much greater than width
+    var shouldGrowDown = canGrowDown && this.root.w >= this.root.h + h; // attempt to keep square-ish by growing down  when width  is much greater than height
+
+    if (shouldGrowRight) return this.growRight(w, h);
+    else if (shouldGrowDown) return this.growDown(w, h);
+    else if (canGrowRight) return this.growRight(w, h);
+    else if (canGrowDown) return this.growDown(w, h);
+    else return null; // need to ensure sensible root starting size to avoid this happening
+  },
+
+  growRight: function (w: number, h: number) {
+    this.root = {
+      used: true,
+      x: 0,
+      y: 0,
+      w: this.root.w + w,
+      h: this.root.h,
+      down: this.root,
+      right: { x: this.root.w, y: 0, w: w, h: this.root.h },
+    };
+    const node = this.findNode(this.root, w, h);
+    if (node) return this.splitNode(node, w, h);
+    else return null;
+  },
+
+  growDown: function (w: number, h: number) {
+    this.root = {
+      used: true,
+      x: 0,
+      y: 0,
+      w: this.root.w,
+      h: this.root.h + h,
+      down: { x: 0, y: this.root.h, w: this.root.w, h: h },
+      right: this.root,
+    };
+    const node = this.findNode(this.root, w, h);
+    if (node) return this.splitNode(node, w, h);
+    else return null;
+  },
+};
+
