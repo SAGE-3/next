@@ -1,4 +1,4 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
 import { RAPIDState } from './ComponentSelector';
 
@@ -19,10 +19,14 @@ function LineGraph({ s }: RAPIDState) {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="x" tick={{ fontSize: 6 }} />
-              <YAxis />
+              <XAxis dataKey="x" tick={{ fontSize: 6 }}>
+                <Label value="Time" offset={0} position="insideBottom" />
+              </XAxis>
+              <YAxis>
+                <Label value={s.metric.NAME} angle={-90} position="insideLeft" offset={20} style={{textAnchor: "middle"}} />
+              </YAxis>
               <Tooltip labelStyle={{ color: 'black' }} />
-              <Legend />
+              <Legend verticalAlign="top" height={45} />
               <Line type="monotone" dataKey="Mesonet" stroke="#8884d8" connectNulls dot={false} activeDot={{ r: 5 }} />
               <Line type="monotone" dataKey="Sage Node" dot={false} stroke="#82ca9d" connectNulls activeDot={{ r: 5 }} />
             </LineChart>

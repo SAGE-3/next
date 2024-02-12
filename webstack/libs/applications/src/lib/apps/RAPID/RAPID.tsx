@@ -69,7 +69,7 @@ function AppComponent(props: App): JSX.Element {
         );
       }
 
-      console.log('promises.length', promises.length);
+      // console.log('promises.length', promises.length);
 
       const resolution = await Promise.all(promises);
 
