@@ -87,6 +87,7 @@
     "perfect-freehand": "^1.2.0",
     "plotly.js": "^2.18.2",
     "plotty": "^0.4.9",
+    "potpack": "^2.0.0",
     "quill": "^1.3.7",
     "quill-cursors": "^4.0.2",
     "react": "^18.2.0",

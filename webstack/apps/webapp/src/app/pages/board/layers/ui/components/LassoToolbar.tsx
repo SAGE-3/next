@@ -24,7 +24,10 @@ import {
   MenuDivider,
 } from '@chakra-ui/react';
 
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdLock, MdAdd, MdLink, MdRepeat, MdEdit, MdMenu, MdPin, MdPinDrop } from 'react-icons/md';
+// Packing algorithm
+import potpack from 'potpack';
+
+import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
@@ -58,6 +61,7 @@ export function LassoToolbar() {
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
+  const update = useAppStore((state) => state.update);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
   // UI Store
@@ -84,6 +88,7 @@ export function LassoToolbar() {
   // Abiities
   const canDeleteApp = useAbility('delete', 'apps');
   const canCreateApp = useAbility('create', 'apps');
+  const canMoveApp = useAbility('move', 'apps');
   const canPin = useAbility('pin', 'apps');
 
   // Submenu for duplicating to another board
@@ -128,7 +133,6 @@ export function LassoToolbar() {
       const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
       selectedApps.forEach((el) => {
         ps.push({ id: el._id, updates: { pinned: !pinned } });
-        // updateS!pinned;
       });
       // Update all the apps at once
       updateBatch(ps);
@@ -182,7 +186,6 @@ export function LassoToolbar() {
             acc += el.data.state.text + '\n';
             return acc;
           }, '');
-          console.log('All', context);
         }
       }
       createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
@@ -231,6 +234,105 @@ for b in bits:
       }
       createApp(setupApp('SageCell', 'SageCell', x, y, roomId, boardId, { w: 960, h: 860 }, { fontSize: 24, code }));
     }
+  };
+
+  // Calculate a new layout for the selected apps
+  const autoLayout_pack = () => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const boxes = selectedApps.map((el) => {
+      return {
+        app: el,
+        bbox: [el.data.position.x, el.data.position.y, el.data.position.x + el.data.size.width, el.data.position.y + el.data.size.height],
+        area: el.data.size.width * el.data.size.height,
+      }
+    });
+    // sort by size
+    boxes.sort((a, b) => b.area - a.area);
+
+    const padding = 30;
+    // calculate the center of the bounding boxes
+    const minx = Math.min(...boxes.map((el) => el.bbox[0]));
+    const maxx = Math.max(...boxes.map((el) => el.bbox[2]));
+    const miny = Math.min(...boxes.map((el) => el.bbox[1]));
+    const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
+    const center = [padding / 2 + (minx + maxx) / 2, padding / 2 + (miny + maxy) / 2];
+
+    const data = boxes.map((el) => ({
+      w: el.app.data.size.width + padding, h: el.app.data.size.height + padding,
+      id: el.app._id, x: 0, y: 0
+    }));
+
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+    // Packing algorithm
+    const { w, h, fill } = potpack(data);
+    // Build batched updates
+    data.forEach((el) => {
+      const app = apps.find((a) => a._id === el.id);
+      const x = center[0] + el.x - w / 2;
+      const y = center[1] + el.y - h / 2;
+      if (app) {
+        ps.push({ id: app._id, updates: { position: { ...app.data.position, x, y } } });
+      }
+    });
+    // Update all the apps at once
+    updateBatch(ps);
+  };
+
+  // Calculate a new layout using Binary Tree Algorithm for 2D Bin Packing
+  // based on: https://github.com/jakesgordon/bin-packing
+  const autoLayout_binpacking = () => {
+    const padding = 30 / 2; // half in each dimension
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const boxes = selectedApps.map((el) => {
+      const w = el.data.size.width + 2 * padding;
+      const h = el.data.size.height + 2 * padding;
+      const x = el.data.position.x - padding;
+      const y = el.data.position.y - padding;
+      return {
+        app: el,
+        id: el._id,
+        w: w,
+        h: h,
+        x: x,
+        y: y,
+        bbox: [x, y, x + w, y + h],
+        area: w * h,
+        fit: { x: 0, y: 0 }
+      }
+    });
+    // Sort by size
+    boxes.sort((a, b) => b.area - a.area);
+
+    // Calculate the center of the bounding boxes
+    const minx = Math.min(...boxes.map((el) => el.bbox[0]));
+    const maxx = Math.max(...boxes.map((el) => el.bbox[2]));
+    const miny = Math.min(...boxes.map((el) => el.bbox[1]));
+    const maxy = Math.max(...boxes.map((el) => el.bbox[3]));
+    const center = [(minx + maxx) / 2, (miny + maxy) / 2];
+
+    // Packer algorithm
+    // @ts-ignore
+    var packer = new GrowingPacker();
+    packer.fit(boxes);
+    // Get the size of the packed rectangle
+    const pw = packer.root.w;
+    const ph = packer.root.h;
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
+    for (var n = 0; n < boxes.length; n++) {
+      var block = boxes[n];
+      if (block.fit) {
+        const app = apps.find((a) => a._id === block.id);
+        const x = center[0] + block.fit.x - pw / 2;
+        const y = center[1] + block.fit.y - ph / 2;
+        if (app) {
+          ps.push({ id: app._id, updates: { position: { ...app.data.position, x, y } } });
+        }
+      }
+    }
+    // Update all the apps at once
+    updateBatch(ps);
   };
 
   return (
@@ -304,6 +406,22 @@ for b in bits:
                     </Menu>
                   </MenuGroup>
                   <MenuDivider />
+
+                  <MenuGroup title="Layouts" m="1">
+                    <Tooltip placement="top" hasArrow={true} label={'Bin Packing Algorithm'} openDelay={400}>
+                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_binpacking} icon={<MdAutoAwesomeMosaic />} py="0" m="0">
+                        Compact Layout
+                      </MenuItem>
+                    </Tooltip>
+                    <Tooltip placement="top" hasArrow={true} label={'Fits apps into a rectangle'} openDelay={400}>
+                      <MenuItem isDisabled={!canMoveApp} onClick={autoLayout_pack} icon={<MdAutoAwesomeMotion />} py="0" m="0">
+                        Rectangle Layout
+                      </MenuItem>
+                    </Tooltip>
+                  </MenuGroup>
+
+                  <MenuDivider />
+
                   <MenuGroup title="AI Actions" m="1">
                     <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
@@ -314,38 +432,17 @@ for b in bits:
                   </MenuGroup>
                 </MenuList>
               </Menu>
-              {/* <Tooltip placement="top" hasArrow={true} label={'Zoom to selected Apps'} openDelay={400}>
-                <Button onClick={fitSelectedApps} size="xs" p="0" mr="2px" colorScheme={'teal'}>
-                  <MdZoomOutMap />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Pin/Unpin Apps'} openDelay={400}>
-                <Button onClick={() => pin()} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canPin}>
-                  <MdLock />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps'} openDelay={400}>
-                <Button onClick={() => duplicate(lassoApps)} size="xs" p="0" mx="2px" colorScheme={'teal'} isDisabled={!canDuplicateApp}>
-                  <MdCopyAll />
-                </Button>
-              </Tooltip> */}
 
-              {/* <Menu preventOverflow={false} placement={'top'}>
-                <Tooltip placement="top" hasArrow={true} label={'Duplicate Apps to a different Board'} openDelay={400}>
-                  <MenuButton mx="2px" size={'xs'} as={Button} colorScheme={'teal'} isDisabled={!canDuplicateApp}>
-                    <MdSend />
-                  </MenuButton>
-                </Tooltip>
-                <MenuList>
-                  {boards.map((b) => {
-                    return (
-                      <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)}>
-                        {b.data.name}
-                      </MenuItem>
-                    );
-                  })}
-                </MenuList>
-              </Menu> */}
+              <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
+                <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <MdChat size="18px" />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" hasArrow={true} label={'Open in SageCell'} openDelay={400}>
+                <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
+                  <FaPython size="18px" />
+                </Button>
+              </Tooltip>
 
               <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
                 <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
@@ -371,3 +468,87 @@ for b in bits:
     </>
   );
 }
+
+/**
+ * Packing function
+ */
+
+const GrowingPacker = function () { };
+
+GrowingPacker.prototype = {
+
+  fit: function (blocks: any[]) {
+    var n,
+      node,
+      block,
+      len = blocks.length;
+    var w = len > 0 ? blocks[0].w : 0;
+    var h = len > 0 ? blocks[0].h : 0;
+    this.root = { x: 0, y: 0, w: w, h: h };
+    for (n = 0; n < len; n++) {
+      block = blocks[n];
+      if ((node = this.findNode(this.root, block.w, block.h)))
+        block.fit = this.splitNode(node, block.w, block.h);
+      else block.fit = this.growNode(block.w, block.h);
+    }
+  },
+
+  findNode: function (root: any, w: number, h: number) {
+    if (root.used)
+      return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
+    else if (w <= root.w && h <= root.h) return root;
+    else return null;
+  },
+
+  splitNode: function (node: any, w: number, h: number) {
+    node.used = true;
+    node.down = { x: node.x, y: node.y + h, w: node.w, h: node.h - h };
+    node.right = { x: node.x + w, y: node.y, w: node.w - w, h: h };
+    return node;
+  },
+
+  growNode: function (w: number, h: number) {
+    var canGrowDown = w <= this.root.w;
+    var canGrowRight = h <= this.root.h;
+
+    var shouldGrowRight = canGrowRight && this.root.h >= this.root.w + w; // attempt to keep square-ish by growing right when height is much greater than width
+    var shouldGrowDown = canGrowDown && this.root.w >= this.root.h + h; // attempt to keep square-ish by growing down  when width  is much greater than height
+
+    if (shouldGrowRight) return this.growRight(w, h);
+    else if (shouldGrowDown) return this.growDown(w, h);
+    else if (canGrowRight) return this.growRight(w, h);
+    else if (canGrowDown) return this.growDown(w, h);
+    else return null; // need to ensure sensible root starting size to avoid this happening
+  },
+
+  growRight: function (w: number, h: number) {
+    this.root = {
+      used: true,
+      x: 0,
+      y: 0,
+      w: this.root.w + w,
+      h: this.root.h,
+      down: this.root,
+      right: { x: this.root.w, y: 0, w: w, h: this.root.h },
+    };
+    const node = this.findNode(this.root, w, h);
+    if (node) return this.splitNode(node, w, h);
+    else return null;
+  },
+
+  growDown: function (w: number, h: number) {
+    this.root = {
+      used: true,
+      x: 0,
+      y: 0,
+      w: this.root.w,
+      h: this.root.h + h,
+      down: { x: 0, y: this.root.h, w: this.root.w, h: h },
+      right: this.root,
+    };
+    const node = this.findNode(this.root, w, h);
+    if (node) return this.splitNode(node, w, h);
+    else return null;
+  },
+};
+
