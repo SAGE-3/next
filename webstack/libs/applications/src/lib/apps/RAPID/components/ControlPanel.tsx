@@ -95,8 +95,6 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
         <Box padding="5">
           <h1>Control Panel</h1>
           <div>current metric: {s.metric.NAME}</div>
-          <div>Counter: {s.counter}</div>
-          <Button onClick={handleIncreaseCounter}>Increase Count</Button>
           <Box marginTop="4">Filter</Box>
           <form onSubmit={handleSubmit}>
             <Select name="selection" placeholder="Select Metric" paddingY="3">
