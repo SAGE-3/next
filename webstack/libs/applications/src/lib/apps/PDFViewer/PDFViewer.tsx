@@ -41,7 +41,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
-  const [aspectRatio, setAspecRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState(1);
   const [displayRatio, setDisplayRatio] = useState(1);
   // App functions
   const createApp = useAppStore((state) => state.create);
@@ -95,7 +95,9 @@ function AppComponent(props: App): JSX.Element {
         setUrls(allurls);
         // First image of the page
         const firstpage = pages[0];
-        setAspecRatio(firstpage[0].width / firstpage[0].height);
+        const ar = firstpage[0].width / firstpage[0].height;
+        setAspectRatio(ar);
+        setDisplayRatio(ar * s.displayPages);
       }
     }
   }, [file]);
@@ -291,8 +293,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
-  const [aspectRatio, setAspecRatio] = useState(1);
-  const [displayRatio, setDisplayRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState(1);
   // User information
   const { user } = useUser();
 
@@ -310,7 +311,7 @@ function ToolbarComponent(props: App): JSX.Element {
         // First page
         const page = pages[0];
         // First image of the page
-        setAspecRatio(page[0].width / page[0].height);
+        setAspectRatio(page[0].width / page[0].height);
       }
     }
   }, [file]);
@@ -343,7 +344,6 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleAddPage() {
     if (s.displayPages < s.numPages) {
       const pageCount = s.displayPages + 1;
-      setDisplayRatio(aspectRatio * pageCount);
       updateState(props._id, { displayPages: pageCount });
       update(props._id, {
         size: {
@@ -359,7 +359,6 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleRemovePage() {
     if (s.displayPages > 1) {
       const pageCount = s.displayPages - 1;
-      setDisplayRatio(aspectRatio * pageCount);
       updateState(props._id, { displayPages: pageCount });
       update(props._id, {
         size: {

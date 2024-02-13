@@ -44,6 +44,7 @@ import {
   usePresenceStore,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
+import { Presence, Position, Size } from '@sage3/shared/types';
 
 type AppToolbarProps = {
   boardId: string;
@@ -252,10 +253,11 @@ export function AppToolbar(props: AppToolbarProps) {
   };
 
   /**
-   * Scale the app to fit inside the viewport
+   * Scale the app to fit inside the smallest overlapping viewport
    */
   function scaleApp() {
     if (app) {
+      const potentialPresences: { position: Position, size: Size, sizeRatio: number }[] = [];
       const res = presences
         .filter((el) => el.data.boardId === props.boardId)
         .map((presence) => {
@@ -266,7 +268,8 @@ export function AppToolbar(props: AppToolbarProps) {
           return isWall ? viewport : null;
         });
       const r1 = [app.data.position.x, app.data.position.y, app.data.position.x + app.data.size.width, app.data.position.y + app.data.size.height];
-      let done = false;
+      const appSize = app.data.size.width * app.data.size.height;
+      const appRatio = app.data.size.width / app.data.size.height;
       res.forEach(v => {
         // first true result will be used
         if (v) {
@@ -277,25 +280,33 @@ export function AppToolbar(props: AppToolbarProps) {
           const r2 = [x, y, x + w, y + h];
           const overlapping = isRectangleOverlap(r1, r2);
           if (overlapping) {
-            const appRatio = app.data.size.width / app.data.size.height;
-            const viewportRatio = w / h;
-            let newsize = structuredClone(v.size);
-            let newpos = structuredClone(v.position);
-            if (viewportRatio > appRatio) {
-              newsize.width = h * 0.9 * appRatio;
-              newsize.height = h * 0.9;
-            } else {
-              newsize.width = w * 0.9;
-              newsize.height = w * 0.9 / appRatio;
-            }
-            newpos.x = x + (w - newsize.width) / 2;
-            newpos.y = y + (h - newsize.height) / 2;
-            update(app._id, { size: newsize, position: newpos });
-            done = true;
-            return;
+            potentialPresences.push({ ...v, sizeRatio: w * h / appSize });
           }
         }
       });
+      // Sort by area ratio to the app size
+      potentialPresences.sort((a, b) => a.sizeRatio - b.sizeRatio);
+      // Pick the smallest area ratio
+      if (potentialPresences[0]) {
+        const v = potentialPresences[0];
+        const x = v.position.x;
+        const y = v.position.y;
+        const w = v.size.width;
+        const h = v.size.height;
+        const viewportRatio = w / h;
+        let newsize = structuredClone(v.size);
+        let newpos = structuredClone(v.position);
+        if (viewportRatio > appRatio) {
+          newsize.width = h * 0.9 * appRatio;
+          newsize.height = h * 0.9;
+        } else {
+          newsize.width = w * 0.9;
+          newsize.height = w * 0.9 / appRatio;
+        }
+        newpos.x = x + (w - newsize.width) / 2;
+        newpos.y = y + (h - newsize.height) / 2;
+        update(app._id, { size: newsize, position: newpos });
+      }
     }
   }
 
