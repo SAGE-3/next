@@ -8,6 +8,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
+import { v5 as uuidv5 } from 'uuid';
+// Packing algorithm
+import potpack from 'potpack';
 
 import {
   Box,
@@ -22,12 +25,10 @@ import {
   MenuList,
   MenuGroup,
   MenuDivider,
+  useToast,
 } from '@chakra-ui/react';
 
-// Packing algorithm
-import potpack from 'potpack';
-
-import { MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
+import { MdDownload, MdSaveAlt, MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
@@ -41,20 +42,30 @@ import {
   useUIStore,
   setupApp,
   useCursorBoardPosition,
+  useConfigStore,
+  apiUrls,
+  useAssetStore,
+  downloadFile,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
 import { Board } from '@sage3/shared/types';
+import { initialValues } from '@sage3/applications/initialValues';
+
+type LassoToolbarProps = {
+  downloadAssets: () => void;
+};
 
 /**
  * Lasso Toolbar Component
  *
  * @export
- * @param {AppToolbarProps} props
+ * @param {LassoToolbarProps} props
  * @returns
  */
-export function LassoToolbar() {
+export function LassoToolbar(props: LassoToolbarProps) {
   const { roomId, boardId } = useParams();
+  const toast = useToast();
 
   // App Store
   const apps = useThrottleApps(250);
@@ -90,6 +101,7 @@ export function LassoToolbar() {
   const canCreateApp = useAbility('create', 'apps');
   const canMoveApp = useAbility('move', 'apps');
   const canPin = useAbility('pin', 'apps');
+  const canDownload = useAbility('download', 'assets');
 
   // Submenu for duplicating to another board
   const hoverColorMode = useColorModeValue('gray.100', 'whiteAlpha.100');
@@ -170,6 +182,53 @@ export function LassoToolbar() {
   // Duplicate all the selected apps to a different board
   const duplicateToBoard = (board: Board) => {
     duplicate(lassoApps, board);
+  };
+
+  /**
+   * Save the selected apps into a session file
+   */
+  const saveSelectedSession = () => {
+    const boardName = boards.find((b) => b._id === boardId)?.data.name || 'session';
+    const filename = boardName + '.s3json';
+    const selectedapps = useUIStore.getState().savedSelectedAppsIds;
+    // Use selected apps if any or all apps
+    const apps = selectedapps.length > 0 ?
+      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
+      : useAppStore.getState().apps;
+    const namespace = useConfigStore.getState().config.namespace;
+    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+      if (app.data.state.assetid) {
+        // Generate a public URL of the file
+        const token = uuidv5(app.data.state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+        }
+      }
+      return arr;
+    }, []);
+    // Data structure to save
+    const savedapps = apps.map((app) => {
+      // making sure apps have the right state
+      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state, } } };
+    });
+    const session = {
+      assets: assets,
+      apps: savedapps, // apps,
+    }
+    const payload = JSON.stringify(session, null, 2);
+    const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
+    // Trigger the download
+    downloadFile(jsonurl, filename);
+    // Success message
+    toast({
+      title: 'Board saved',
+      description: apps.length + ' apps saved to ' + filename,
+      status: 'info',
+      duration: 4000,
+      isClosable: true,
+    });
   };
 
   const openInChat = () => {
@@ -404,6 +463,17 @@ for b in bits:
                         })}
                       </MenuList>
                     </Menu>
+                  </MenuGroup>
+
+                  <MenuDivider />
+
+                  <MenuGroup title="Download" m="1">
+                    <MenuItem isDisabled={!canDownload} onClick={props.downloadAssets} icon={<MdDownload />} py="0" m="0">
+                      Download Selected Assets
+                    </MenuItem>
+                    <MenuItem isDisabled={!canDownload} onClick={saveSelectedSession} icon={<MdSaveAlt />} py="0" m="0">
+                      Save Selected to Session
+                    </MenuItem>
                   </MenuGroup>
                   <MenuDivider />
 
