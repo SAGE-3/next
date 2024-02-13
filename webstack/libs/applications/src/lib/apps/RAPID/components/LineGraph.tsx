@@ -23,7 +23,7 @@ function LineGraph({ s }: RAPIDState) {
                 <Label value="Time" offset={0} position="insideBottom" />
               </XAxis>
               <YAxis>
-                <Label value={s.metric.NAME} angle={-90} position="insideLeft" offset={20} style={{textAnchor: "middle"}} />
+                <Label value={s.metric.NAME} angle={-90} position="insideLeft" offset={10} style={{textAnchor: "middle"}} />
               </YAxis>
               <Tooltip labelStyle={{ color: 'black' }} />
               <Legend verticalAlign="top" height={45} />

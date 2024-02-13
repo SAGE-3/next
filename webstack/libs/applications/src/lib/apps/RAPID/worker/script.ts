@@ -8,24 +8,24 @@ export type SageNodeQuery = {
     name: string;
     sensor: string;
     vsn: string;
-  }
-}
+  };
+};
 
 export type MesonetQuery = {
   start?: string;
   end?: string;
   metric: string;
-}
+};
 
 export type RAPIDQueries = {
   sageNode: SageNodeQuery;
   mesonet: MesonetQuery;
-}
+};
 
 export default () => {
   async function getSageNodeData(query: SageNodeQuery) {
-    console.log("sage node query", query);
-    console.log("sage node query stringified", JSON.stringify(query));
+    console.log('sage node query', query);
+    console.log('sage node query stringified', JSON.stringify(query));
     const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
       method: 'POST',
       body: JSON.stringify(query),
@@ -72,14 +72,14 @@ export default () => {
           minute: '2-digit',
           hour: '2-digit',
         }),
-        y: data.value,
+        y: (query.filter.name === "env.pressure" ? data.value / 100 : data.value), // Convert pressure from Pa to millibars
       };
     });
     return formattedData;
   }
 
   async function getMesonetData(query: MesonetQuery) {
-    console.log("mesonet query", query.metric)
+    console.log('mesonet query', query.metric);
     const res = await fetch(
       'https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=1440&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba'
     );
@@ -97,7 +97,6 @@ export default () => {
         hour: '2-digit',
       });
     });
-
 
     const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`]?.map((temp: number) => {
       return temp;
@@ -123,17 +122,17 @@ export default () => {
     const sageData = await getSageNodeData(data.sageNode);
     const mesonetData = await getMesonetData(data.mesonet);
 
-    const sageMap = new Map(sageData.map(obj => [obj.x, obj.y]));
+    const sageMap = new Map(sageData.map((obj) => [obj.x, obj.y]));
     // console.log("sagemap", sageMap);
-    const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number; }) => [obj.x, obj.y]));
+    const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number }) => [obj.x, obj.y]));
     // console.log("mesonetmap", mesonetMap);
 
     const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
 
-    const mergedArray = Array.from((allXValues as Set<string>), (x: string) => ({
+    const mergedArray = Array.from(allXValues as Set<string>, (x: string) => ({
       x,
-      "Sage Node": sageMap.get(x) || null,
-      "Mesonet": mesonetMap.get(x) || null,
+      'Sage Node': sageMap.get(x) || null,
+      Mesonet: mesonetMap.get(x) || null,
     }));
 
     return mergedArray;
@@ -143,7 +142,7 @@ export default () => {
     try {
       // const { num } = e.data;
       // TODO: Use event to pass query to API
-      console.log("e", e);
+      console.log('e', e);
       // console.log(e.data)
 
       console.time('Worker run');
