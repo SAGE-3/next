@@ -119,7 +119,7 @@ export function UILayer(props: UILayerProps) {
   };
 
   // How to save a board opened files into a ZIP archive
-  const downloadBoard = async () => {
+  const downloadRoomAssets = async (ids: string[]) => {
     // Create a ZIP object
     const zip = new JSZip();
     // Generate a filename using date and board name
@@ -129,11 +129,52 @@ export function UILayer(props: UILayerProps) {
     // Create a folder in the archive
     const session = zip.folder(`SAGE3-${boardName}`);
     // Iterate over all the apps
-    await apps.reduce(async (promise, a) => {
+    await assets.reduce(async (promise, asset) => {
       // wait for the last async function to finish
       await promise;
+      // Assets from the room and in the list
+      if (asset.data.room === props.roomId && ids.includes(asset._id)) {
+        // Derive the public URL
+        const url = apiUrls.assets.getAssetById(asset.data.file);
+        // Get the filename for the asset
+        const filename = asset.data.originalfilename;
+        // if all set, add the file to the zip
+        if (url && filename && session) {
+          // Download the file contents
+          const buffer = await fetch(url).then((r) => r.arrayBuffer());
+          // add to zip
+          session.file(filename, buffer);
+        }
+      }
+    }, Promise.resolve());
+    // Display a message
+    toast({ title: 'Assets Packaged', status: 'info', duration: 4000, isClosable: true });
+    // Finish the zip and trigger the download
+    zip.generateAsync({ type: 'blob' }).then(function (content) {
+      // Create a URL from the blob
+      const url = URL.createObjectURL(content);
+      // Trigger the download
+      downloadFile(url, name);
+      toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
+    });
+  };
+
+  const downloadBoardAssets = async () => {
+    // Create a ZIP object
+    const zip = new JSZip();
+    // Generate a filename using date and board name
+    const boardName = boards.find((b) => b._id === props.boardId)?.data.name || 'session';
+    const prettyDate = formatDate(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+    const name = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.zip`;
+    // Create a folder in the archive
+    const session = zip.folder(`SAGE3-${boardName}`);
+    // Iterate over all the apps
+    await savedSelectedAppsIds.reduce(async (promise, id) => {
+      // wait for the last async function to finish
+      await promise;
+      const a = apps.find((a) => a._id === id);
       // process the next app with an asset
-      if ('assetid' in a.data.state) {
+      if (a && 'assetid' in a.data.state) {
         const assetid = a.data.state.assetid;
         if (assetid) {
           // Get the asset from the store
@@ -152,7 +193,7 @@ export function UILayer(props: UILayerProps) {
             }
           }
         }
-      } else if (a.data.type === 'Stickie') {
+      } else if (a && a.data.type === 'Stickie') {
         // Stickies are saved as text files
         if ('text' in a.data.state) {
           const filename = `stickie-${a._id}.txt`;
@@ -164,7 +205,7 @@ export function UILayer(props: UILayerProps) {
       }
     }, Promise.resolve());
     // Display a message
-    toast({ title: 'Assets Packaged', status: 'info', duration: 2000, isClosable: true });
+    toast({ title: 'Assets Packaged', status: 'info', duration: 4000, isClosable: true });
     // Finish the zip and trigger the download
     zip.generateAsync({ type: 'blob' }).then(function (content) {
       // Create a URL from the blob
@@ -257,7 +298,6 @@ export function UILayer(props: UILayerProps) {
           roomId={props.roomId}
           clearBoard={clearOnOpen}
           showAllApps={showAllApps}
-          downloadBoard={downloadBoard}
         />
       </ContextMenu>
 
@@ -267,7 +307,7 @@ export function UILayer(props: UILayerProps) {
 
       <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
 
-      <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
+      <AssetsPanel boardId={props.boardId} roomId={props.roomId} downloadRoomAssets={downloadRoomAssets} />
 
       <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
 
@@ -285,7 +325,7 @@ export function UILayer(props: UILayerProps) {
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
-      {canLasso && <LassoToolbar />}
+      {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
