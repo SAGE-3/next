@@ -173,7 +173,7 @@ function AppComponent(props: App): JSX.Element {
   }, [lastUpdate]);
 
   useEffect(() => {
-    console.log(s.stationNames);
+    console.log(s.widget.startDate, s.widget.endDate);
     const interval = setInterval(
       () => {
         fetchStationData();

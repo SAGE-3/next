@@ -16,9 +16,11 @@
     "LeafLet",
     "Linker",
     "MapGL",
+    "NLChartGenerator",
     "PDFResult",
     "PDFViewer",
     "PluginApp",
+    "Poll",
     "RTCChat",
     "SageCell",
     "Seer",
@@ -29,6 +31,5 @@
     "VegaLiteViewer",
     "VideoViewer",
     "WebpageLink",
-    "Webview",
-    "Poll"
+    "Webview"
 ]
