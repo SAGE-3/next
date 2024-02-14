@@ -19,11 +19,11 @@ function LineGraph({ s }: RAPIDState) {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="x" tick={{ fontSize: 6 }}>
+              <XAxis dataKey="x" tick={{ fontSize: 6 }} interval={40}>
                 <Label value="Time" offset={0} position="insideBottom" />
               </XAxis>
               <YAxis>
-                <Label value={s.metric.NAME} angle={-90} position="insideLeft" offset={10} style={{textAnchor: "middle"}} />
+                <Label value={s.metric.NAME} angle={-90} position="insideLeft" offset={10} style={{ textAnchor: 'middle' }} />
               </YAxis>
               <Tooltip labelStyle={{ color: 'black' }} />
               <Legend verticalAlign="top" height={45} />
