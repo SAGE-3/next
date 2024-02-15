@@ -21,13 +21,16 @@ import {
   useToast,
   Button,
   Checkbox,
+  Text,
+  Tooltip,
+  HStack,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { BoardSchema } from '@sage3/shared/types';
-import { SAGEColors, randomSAGEColor } from '@sage3/shared';
+import { SAGEColors, randomSAGEColor, generateReadableID } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
@@ -52,6 +55,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
+  const [roomID, setRoomID] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
@@ -71,6 +75,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       return result;
     };
     setPassword(makeid(6));
+    setRoomID(generateReadableID());
     // Reset the form fields
     setName('');
     setDescription('');
@@ -124,6 +129,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           ownerId: user._id,
           color: color,
           isPrivate: isProtected,
+          code: roomID,
           privatePin: isProtected ? key : '',
           executeInfo: { executeFunc: '', params: {} },
         });
@@ -150,6 +156,20 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+  };
+
+  // Copy the board id to the clipboard
+  const handleCopyId = async () => {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(roomID);
+      toast({
+        title: 'Success',
+        description: `BoardID Copied to Clipboard`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   return (
@@ -188,10 +208,18 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
-          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+          <HStack>
+            <Tooltip placement="top" hasArrow={true} openDelay={400}
+              label={'Use this ID to enter a board, instead of a URL'}>
+              <Text my={2}>Board ID:</Text>
+            </Tooltip>
+            <Text my={2} onDoubleClick={handleCopyId}>{roomID}</Text>
+          </HStack>
+
+          <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
           </Checkbox>
-          <InputGroup mt={4}>
+          <InputGroup mt={2}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text" autoCapitalize='off'
@@ -211,6 +239,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           </Button>
         </ModalFooter>
       </ModalContent>
-    </Modal>
+    </Modal >
   );
 }

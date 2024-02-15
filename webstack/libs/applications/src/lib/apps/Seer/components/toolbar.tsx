@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdHelp, MdRefresh, MdRemove } from 'react-icons/md';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 
 import { downloadFile, useAppStore, useUser, useUsersStore, useBoardStore } from '@sage3/frontend';
 import { App } from '../../../schema';
@@ -192,7 +192,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   const downloadPy = (): void => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // Get the text of the note
     const content = `${s.code}`;
     // generate a URL containing the text of the note

@@ -174,6 +174,9 @@ function RoomRow(props: RoomRowProps) {
   const isMember = roomMember ? roomMember.data.members.includes(userId) : false;
   const isOwner = props.room.data.ownerId === userId;
 
+  // Is password protected
+  const isPasswordProtected = props.room.data.isPrivate;
+
   // Toast
   const toast = useToast();
 
@@ -183,7 +186,7 @@ function RoomRow(props: RoomRowProps) {
       return;
     }
     // Check Password
-    if (props.room.data.privatePin) {
+    if (isPasswordProtected) {
       onOpen();
     } else {
       // Join Room
@@ -237,7 +240,7 @@ function RoomRow(props: RoomRowProps) {
               onClick={handleMembershipClick}
             >
               <Box mr="1">Join</Box>
-              {props.room.data.privatePin && <MdLock />}
+              {isPasswordProtected && <MdLock />}
             </Button>
           )}
         </Box>

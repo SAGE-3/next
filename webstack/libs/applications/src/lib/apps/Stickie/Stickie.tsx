@@ -9,16 +9,40 @@
 // Import the React library
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
-import { Box, Button, ButtonGroup, Menu, MenuButton, MenuItem, MenuList, Textarea, Tooltip, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Textarea,
+  Tooltip,
+  useColorModeValue,
+  useToast,
+  useDisclosure,
+} from '@chakra-ui/react';
 import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 
 // SAGE3 store hooks and utility functions
-import { ColorPicker, useAppStore, useHexColor, useUIStore, useUser, useUsersStore, downloadFile, useInsightStore, ConfirmValueModal, apiUrls } from '@sage3/frontend';
+import {
+  ColorPicker,
+  useAppStore,
+  useHexColor,
+  useUIStore,
+  useUser,
+  useUsersStore,
+  downloadFile,
+  useInsightStore,
+  ConfirmValueModal,
+  apiUrls,
+} from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
 
@@ -51,6 +75,8 @@ function AppComponent(props: App): JSX.Element {
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
 
+  // Track if I did the update
+  const [didIt, setDidIt] = useState(false);
   const yours = user?._id === props._createdBy;
   const updatedByYou = user?._id === props._updatedBy;
   const locked = s.lock;
@@ -66,8 +92,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    if (!updatedByYou) {
+    // If the text was updated by someone else, update the local value
+    if (!updatedByYou || !didIt) {
       setNote(s.text);
+    }
+    if (didIt) {
+      // Flip the flag
+      setDidIt(false);
     }
   }, [s.text, updatedByYou]);
 
@@ -79,6 +110,8 @@ function AppComponent(props: App): JSX.Element {
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(100, (val) => {
     updateState(props._id, { text: val });
+    // I modified the text, so I did it
+    setDidIt(true);
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);
@@ -224,7 +257,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the stickie as a text file
   const downloadTxt = () => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     const content = `${s.text}`;
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
@@ -237,7 +270,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Download the stickie as a Mardown file
   const downloadMd = () => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
     const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
@@ -251,41 +284,44 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const handleSave = useCallback((val: string) => {
-    // save cell code in asset manager
-    if (!val.endsWith('.md')) {
-      val += '.md';
-    }
-    // Save the code in the asset manager
-    if (roomId) {
-      // Create a form to upload the file
-      const fd = new FormData();
-      const codefile = new File([new Blob([s.text])], val);
-      fd.append('files', codefile);
-      // Add fields to the upload form
-      fd.append('room', roomId);
-      // Upload with a POST request
-      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
-        .catch((error: Error) => {
-          toast({
-            title: 'Upload',
-            description: 'Upload failed: ' + error.message,
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
+  const handleSave = useCallback(
+    (val: string) => {
+      // save cell code in asset manager
+      if (!val.endsWith('.md')) {
+        val += '.md';
+      }
+      // Save the code in the asset manager
+      if (roomId) {
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([s.text])], val);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
           });
-        })
-        .finally(() => {
-          toast({
-            title: 'Upload',
-            description: 'Upload complete',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  }, [s.text, roomId]);
+      }
+    },
+    [s.text, roomId]
+  );
 
   const handleColorChange = (color: string) => {
     // Save the previous color
@@ -357,13 +393,16 @@ function ToolbarComponent(props: App): JSX.Element {
         </Menu>
       </ButtonGroup>
 
-
       {/* Modal for saving stickie in asset manager */}
       <ConfirmValueModal
-        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={handleSave}
-        title="Save Code in Asset Manager" message="Select a file name:"
-        initiaValue={'stickie-' + dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.md'}
-        cancelText="Cancel" confirmText="Save"
+        isOpen={saveIsOpen}
+        onClose={saveOnClose}
+        onConfirm={handleSave}
+        title="Save Code in Asset Manager"
+        message="Select a file name:"
+        initiaValue={'stickie-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.md'}
+        cancelText="Cancel"
+        confirmText="Save"
         confirmColor="green"
       />
 
@@ -413,7 +452,6 @@ function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
   }
   return [];
 }
-
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected

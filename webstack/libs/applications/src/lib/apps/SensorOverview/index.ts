@@ -11,34 +11,17 @@ const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 
 export type Baselayer = z.infer<typeof Baselayer>;
 
-function getFormattedDateTime24HoursBefore() {
-  const now = new Date();
-  now.setHours(now.getHours() - 24);
-
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-  return `${year}${month}${day}${hours}${minutes}`;
-}
-
 const widget = {
   visualizationType: 'map',
-  yAxisNames: ['air_temp_set_1'],
+  yAxisNames: ['soil_moisture_set_1'],
   xAxisNames: ['date_time'],
   color: '#5AB2D3',
-  startDate: getFormattedDateTime24HoursBefore(),
-  timePeriod: 'previous24Hours',
+  startDate: '202401181356',
+  endDate: '202401191356',
+  timePeriod: '24 hours',
+  liveData: true,
   layout: { x: 0, y: 0, w: 11, h: 130 },
 };
-// [
-//   { visualizationType: 'variableCard', yAxisNames: ['wind_speed_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
-//   { visualizationType: 'variableCard', yAxisNames: ['relative_humidity_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
-//   { visualizationType: 'variableCard', yAxisNames: ['air_temp_set_1'], xAxisNames: [''], layout: { x: 0, y: 0, w: 11, h: 130 } },
-//   { visualizationType: 'line', yAxisNames: ['soil_moisture_set_1'], xAxisNames: ['date_time'], layout: { x: 0, y: 0, w: 11, h: 130 } },
-// ];
 
 /**
  * SAGE3 application: Sensor Overview

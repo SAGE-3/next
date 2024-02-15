@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Box, Button, useToast, Text } from '@chakra-ui/react';
+import variableUnits from '../data/variableUnits';
 
 // Data store
 import { create } from 'zustand';
@@ -59,6 +60,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   const update = useAppStore((state) => state.update);
   const saveMap = useStore((state) => state.saveMap);
   const map = useStore((state) => state.map[props._id + '0']);
+  const [units, setUnits] = useState<string>('');
+
   // Assets store
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
@@ -132,6 +135,14 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       update(props._id, { title: myasset?.data.originalfilename });
     }
   }, [s.assetid, assets]);
+
+  useEffect(() => {
+    for (let i = 0; i < variableUnits.length; i++) {
+      if (s.widget.yAxisNames[0].includes(variableUnits[i].variable)) {
+        setUnits(variableUnits[i].unit);
+      }
+    }
+  }, [JSON.stringify(s.widget.yAxisNames)]);
 
   // Convert asset to URL
   useEffect(() => {
@@ -332,7 +343,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       {/* <Box id={'container' + props._id + "0"} w={props.data.size.width} h={props.data.size.height}> */}
       <Box zIndex={999999999} bg="#2D62D2" textAlign={'center'}>
         <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 10}>
-          {variableName.join(' ')}
+          {variableName.join(' ') + ' (' + units + ')'}
         </Text>
       </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />
