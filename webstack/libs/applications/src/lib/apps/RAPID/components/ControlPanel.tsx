@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { useAppStore } from '@sage3/frontend';
 import { AppState } from '../../../types';
 import { Box, Button, Select } from '@chakra-ui/react';
@@ -17,51 +17,49 @@ export type ControlPanelProps = {
 
 function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
   // used for multiapp state update
-  const { updateStateBatch } = useAppStore((state) => state);
+  // const { updateStateBatch } = useAppStore((state) => state);
 
   // web worker
   const workerInstance = useMemo(() => createWebWorker(worker), []);
   const { startProcessing } = useWebWorker(workerInstance);
 
-  // initial render
+  const interval = useRef<NodeJS.Timeout | undefined>();
+
+  const fetchData = (arr: string[], metric: { SAGE_NODE: string; MESONET: string }) => {
+    console.log('s.metric', s.metric);
+    startProcessing({
+      apps: arr,
+      metric: metric,
+      sageNode: {
+        start: '-24h',
+        filter: {
+          name: metric.SAGE_NODE,
+          sensor: 'bme680',
+          vsn: 'W097',
+        },
+      },
+      mesonet: {
+        metric: metric.MESONET,
+      },
+    });
+    // console.log('rerendered');
+  };
+
   useEffect(() => {
     if (s.children.length > 0) {
-      const arr = s.children.concat([id]);
-      // console.log('arr', arr);
-      // console.log('children', s.children);
-      console.log('metric', s.metric);
-      startProcessing({
-        apps: arr,
-        metric: s.metric,
-        sageNode: {
-          start: '-24h',
-          filter: {
-            name: s.metric.SAGE_NODE,
-            sensor: 'bme680',
-            vsn: 'W097',
-          },
-        },
-        mesonet: {
-          metric: s.metric.MESONET,
-        },
-      });
-      // console.log('rerendered');
+      // Fetch data on initial render
+      fetchData(s.children.concat([id]), s.metric);
+      // set interval to fetch data every 10 seconds
+      if (s.liveData) {
+        interval.current = setInterval(() => {
+          console.log('interval triggered');
+          fetchData(s.children.concat([id]), s.metric);
+        }, 10000);
+      }
     }
-  }, [startProcessing, s.children.length]);
-
-  // Testing multiapp update
-  const handleIncreaseCounter = () => {
-    console.log('clicked');
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-
-    ps.push({ id: id, updates: { counter: s.counter + 1 } });
-
-    s.children.forEach((id: string) => {
-      ps.push({ id: id, updates: { counter: s.counter + 1 } });
-    });
-
-    updateStateBatch(ps);
-  };
+    // clear interval on unmount
+    return () => clearInterval(interval.current);
+  }, [s.children.length]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,21 +70,15 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
 
     // initialize web worker
     const arr = s.children.concat([id]);
-    startProcessing({
-      apps: arr,
-      metric: selectionParsed,
-      sageNode: {
-        start: '-24h',
-        filter: {
-          name: selectionParsed.SAGE_NODE,
-          sensor: 'bme680',
-          vsn: 'W097',
-        },
-      },
-      mesonet: {
-        metric: selectionParsed.MESONET,
-      },
-    });
+    // clear existing interval
+    clearInterval(interval.current);
+    // fetch data
+    fetchData(arr, selectionParsed);
+    // set interval to fetch data every 10 seconds
+    interval.current = setInterval(() => {
+      console.log('interval triggered here');
+      fetchData(arr, selectionParsed);
+    }, 10000);
   }
 
   return (
@@ -95,6 +87,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
         <Box padding="5">
           <h1>Control Panel</h1>
           <div>current metric: {s.metric.NAME}</div>
+          <div>Last Updated: {s.lastUpdated}</div>
           <Box marginTop="4">Filter</Box>
           <form onSubmit={handleSubmit}>
             <Select name="selection" placeholder="Select Metric" paddingY="3">

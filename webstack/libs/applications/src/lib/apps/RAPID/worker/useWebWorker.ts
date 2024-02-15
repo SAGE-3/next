@@ -53,12 +53,13 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
       ps.push({
         id,
         updates: {
+          lastUpdated: new Date().toLocaleString(),
           metric: metric.current,
           metricData: result,
         },
       });
     });
-
+    console.log("metric from updateRapid", metric.current);
     updateStateBatch(ps);
   };
 

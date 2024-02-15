@@ -18,6 +18,8 @@ import { QUERY_FIELDS } from './data/queryfields';
 export const schema = z.object({
   unique: z.string().nullable(),
   initialized: z.boolean(),
+  liveData: z.boolean(),
+  lastUpdated: z.string().nullable(),
   parent: z.string(),
   children: z.array(z.string()),
   category: z.string(),
@@ -44,6 +46,8 @@ export type state = z.infer<typeof schema>;
 export const init: Partial<state> = {
   unique: null,
   initialized: false,
+  liveData: true,
+  lastUpdated: null,
   parent: '',
   metric: QUERY_FIELDS.TEMPERATURE,
   children: [],
