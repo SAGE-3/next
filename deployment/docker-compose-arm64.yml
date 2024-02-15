@@ -40,6 +40,10 @@ services:
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
   python:
     image: "ghcr.io/sage-3/foresight:arm64"
     environment:
