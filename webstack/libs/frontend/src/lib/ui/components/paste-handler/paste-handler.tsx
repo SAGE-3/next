@@ -150,8 +150,12 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         const isValid = isValidURL(pastedText.trim());
         // If the start of pasted text is http, can assume is a url
         if (isValid) {
-          setValidURL(isValid);
-          popOnOpen();
+          if (pastedText.startsWith('https://drive.google.com')) {
+            console.log('Google Drive link detected');
+          } else {
+            setValidURL(isValid);
+            popOnOpen();
+          }
         } else if (pastedText.startsWith('sage3://')) {
           // Create a board link app
           createApp({

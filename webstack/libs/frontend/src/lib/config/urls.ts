@@ -19,6 +19,7 @@ export const apiUrls = {
     getPublicURL: (id: string, token: string) => `/api/files/${id}/${token}`,
     getNotebookByName: (name: string) => `/api/contents/notebooks/${name}`,
     upload: '/api/assets/upload',
+    uploadByURL: '/api/assets/uploadByURL',
   },
   fastapi: {
     heartbeat: `/api/fastapi/heartbeat`,

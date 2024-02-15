@@ -6,6 +6,7 @@ import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewe
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
+import { name as CloudLinkName, init as defaultCloudLink } from './apps/CloudLink';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
@@ -20,6 +21,7 @@ import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
+import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
@@ -31,7 +33,6 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as PollName, init as defaultpoll } from './apps/Poll';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -40,6 +41,7 @@ export const initialValues = {
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
+  [CloudLinkName]: defaultCloudLink,
   [CobrowseName]: defaultCobrowse,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
@@ -54,6 +56,7 @@ export const initialValues = {
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
+  [PollName]: defaultPoll,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
   [SeerName]: defaultSeer,
@@ -65,6 +68,5 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
-  [PollName]: defaultpoll,
 };
 
