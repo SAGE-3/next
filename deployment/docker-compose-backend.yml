@@ -16,6 +16,10 @@ services:
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
   fastapi:
     image: "ghcr.io/mahdi-b/sagekernelserver:latest"
     ports:

@@ -40,20 +40,10 @@ services:
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
-  python:
-    image: "ghcr.io/sage-3/foresight:amd64"
-    environment:
-      - ENVIRONMENT=production
-      - SAGE3_SERVER=${SAGE3_SERVER}
-      - TOKEN=${TOKEN}
-    restart: always
-    working_dir: /app/foresight
-    command: python proxy.py
-    depends_on:
-      node-server:
-        condition: service_healthy
-      jupyter:
-        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
   fastapi:
     image: "ghcr.io/mahdi-b/sagekernelserver:amd64"
     ports:
@@ -86,7 +76,7 @@ services:
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
       - ./redis-client:/home/jovyan/work
     ports:
-      - "8888:8888"
+      - "127.0.0.1:8888:8888"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
