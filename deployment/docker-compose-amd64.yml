@@ -44,20 +44,6 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-  python:
-    image: "ghcr.io/sage-3/foresight:amd64"
-    environment:
-      - ENVIRONMENT=production
-      - SAGE3_SERVER=${SAGE3_SERVER}
-      - TOKEN=${TOKEN}
-    restart: always
-    working_dir: /app/foresight
-    command: python proxy.py
-    depends_on:
-      node-server:
-        condition: service_healthy
-      jupyter:
-        condition: service_healthy
   fastapi:
     image: "ghcr.io/mahdi-b/sagekernelserver:amd64"
     ports:
