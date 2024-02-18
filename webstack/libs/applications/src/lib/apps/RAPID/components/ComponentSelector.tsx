@@ -5,7 +5,7 @@ import { App, AppState } from '@sage3/applications/schema';
 import LineGraph from './LineGraph';
 import Overview from './Overview';
 import ControlPanel from './ControlPanel';
-import Map from './Map';
+import LocationMap from './Map';
 
 export const CATEGORIES = {
   CONTROL_PANEL: {
@@ -56,7 +56,7 @@ function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
   }
 
   if (s.category === CATEGORIES.MAP.name) {
-    return <Map />;
+    return <LocationMap />;
   }
 
   return <div>ERROR: Category Not Found</div>;
