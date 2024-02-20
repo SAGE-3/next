@@ -86,6 +86,7 @@ export async function loadCollections(): Promise<void> {
           );
           if (res2?._id) {
             console.log('Boards> default board addedd');
+            // Add an annotation document for the board
             AnnotationsCollection.add({ whiteboardLines: [] }, '-', res2._id);
           }
         }
