@@ -29,9 +29,9 @@ const pkg = JSON.parse(await fs.readFile(new URL('./package.json', import.meta.u
 const version = pkg.version;
 
 // HTTP protocol
-import { loginGuestUser, getUserInfo, getBoardsInfo, getBoardState, createBoard } from './src/http_routes.js';
+import { loginGuestUser, getUserInfo, getBoardsInfo, createBoard } from './src/http_routes.js';
 // WS protocol
-import { socketConnection, boardConnect, boardDisconnect, presenceUpdate, cursorUpdate } from './src/socket_routes.js';
+import { socketConnection } from './src/socket_routes.js';
 
 /**
  * Setup the command line argument parsing (commander module)
@@ -57,41 +57,41 @@ async function start() {
   console.log('CLI> Logged in');
 
   // Get my own info: uid, name, email, color, emailVerified, profilePicture
-  const userData = await getUserInfo();
-  console.log('CLI> user:', userData.name, userData.color, userData.id);
-  // save my ID for later
-  const myID = userData.id;
+  // const userData = await getUserInfo();
+  // console.log('CLI> user:', userData.name, userData.color, userData.id);
+  // // save my ID for later
+  // const myID = userData.id;
 
-  const boardData = await getBoardsInfo();
-  console.log('CLI> boards', boardData);
+  // const boardData = await getBoardsInfo();
+  // console.log('CLI> boards', boardData);
 
-  // Create a websocket with the auth cookies
-  const socket = socketConnection(params.server, cookies);
+  // // Create a websocket with the auth cookies
+  // const socket = socketConnection(params.server, cookies);
 
-  // When socket connected
-  socket.on('connect', () => {
-    console.log('socket> connected');
+  // // When socket connected
+  // socket.on('connect', () => {
+  //   console.log('socket> connected');
 
-    let w = 300;
-    let h = 400;
-    for (let index = 0; index < 100; index++) {
-      createBoard({ name: 'newboard' + index, width: w, height: h, scaleBy: 1 });
-      w += 30;
-      h += 20;
-    }
+  //   let w = 300;
+  //   let h = 400;
+  //   for (let index = 0; index < 100; index++) {
+  //     createBoard({ name: 'newboard' + index, width: w, height: h, scaleBy: 1 });
+  //     w += 30;
+  //     h += 20;
+  //   }
 
-    // Set a limit on runtime
-    setTimeout(() => {
-      console.log('CLI> done');
-      // and quit
-      process.exit(1);
-    }, params.timeout * 1000);
+  //   // Set a limit on runtime
+  //   setTimeout(() => {
+  //     console.log('CLI> done');
+  //     // and quit
+  //     process.exit(1);
+  //   }, params.timeout * 1000);
 
-    socket.on('boards-update', (updates) => {
-      console.log('Updates> state', updates);
-      console.log('-----------------');
-    });
-  });
+  //   socket.on('boards-update', (updates) => {
+  //     console.log('Updates> state', updates);
+  //     console.log('-----------------');
+  //   });
+  // });
 }
 
 // Start the whole thing

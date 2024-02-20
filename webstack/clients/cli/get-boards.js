@@ -33,10 +33,11 @@ const version = pkg.version;
 // Some utitlity functions
 import { randomNumber, clamp } from './src/utils.js';
 // WS protocol
-import { loginJWT, loadToken, getBoards, getRooms } from './src/jwt_routes.js';
-import { boardConnect, boardDisconnect, socketConnectionJWT } from './src/socket_routes.js';
+import { loginJWT, loadToken, getBoards, getRooms, createRoom, createBoard, uploadFile } from './src/jwt_routes.js';
+import { socketConnectionJWT } from './src/socket_routes.js';
 
 import { faker } from '@faker-js/faker';
+import { performance } from 'perf_hooks';
 
 /**
  * Setup the command line argument parsing (commander module)
@@ -52,6 +53,7 @@ commander.program
   .option('-r, --rate <n>', 'framerate (number)', 2)
   .option('-d, --delay <n>', 'delay between stickies in sec (number)', 2)
   .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333')
+  .option('-f, --file <s>', 'File to upload (path)')
   .option('-e, --sensitivity <n>', 'sensitivity (number)', 5);
 
 // Parse the arguments
@@ -94,8 +96,34 @@ function createStickie(socket, roomId, boardId, title, x, y) {
   );
 }
 
+function openImage(socket, roomId, boardId, title, assetid, x, y) {
+  console.log('CLI> open image', roomId, boardId);
+  const body = {
+    boardId: boardId,
+    dragging: false,
+    position: { x: x, y: y, z: 0 },
+    raised: true,
+    roomId: roomId,
+    rotation: { x: 0, y: 0, z: 0 },
+    size: { width: 600, height: 420, depth: 0 },
+    state: { assetid: assetid },
+    title: title,
+    type: 'ImageViewer',
+  };
+
+  socket.send(
+    JSON.stringify({
+      id: v4(),
+      route: '/api/apps/',
+      method: 'POST',
+      body: body,
+    })
+  );
+}
+
 async function start() {
   // Test login through HTTP and set token to the axios instance
+  // const token = loadToken('token-alpha.json');
   const token = loadToken('token.json');
   console.log('JWT> got token');
 
@@ -103,63 +131,30 @@ async function start() {
   console.log('CLI> user', me.user);
   myID = me.user.id;
 
-  // board name from command argument (or board0)
-  // const boardId = params.board;
-  // const roomId = params.room;
-
-  const boardData = await getBoards();
-  console.log('CLI> boards', boardData.length, boardData[0]);
-  const roomData = await getRooms();
-  console.log('CLI> rooms', roomData.length, roomData[0]);
-
   // Create a websocket with the auth cookies
   const socket = socketConnectionJWT('ws://' + params.server + '/api', token);
 
   // When socket connected
-  socket.on('open', () => {
+  socket.on('open', async () => {
     console.log('socket> connected');
 
-    //   // Default size of the board
-    //   const totalWidth = 3000;
-    //   const totalHeight = 3000;
+    // let start = performance.now();
+    // const roomData = await getRooms();
+    // let end = performance.now();
+    // console.log('CLI> rooms', roomData.length, roomData[0]);
+    // console.log(`Time taken to execute getRooms is ${end - start}ms.`);
 
-    //   // Random position within a safe margin
-    //   var px = randomNumber(1500000, 1501000);
-    //   var py = randomNumber(1500000, 1501000);
-    //   var incx = randomNumber(1, 2) % 2 ? 1 : -1;
-    //   var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    //   var sensitivity = params.sensitivity;
+    let start = performance.now();
+    const boardData = await getBoards();
+    let end = performance.now();
+    console.log('CLI> boards', boardData.length, JSON.stringify(boardData).length);
+    boardData.sort((a, b) => JSON.stringify(a).length - JSON.stringify(b).length);
+    for (let i = 0; i < boardData.length; i++) {
+      console.log('CLI> board ->', i, JSON.stringify(boardData[i]).length);
+    }
+    console.log(`Time taken to execute getBoards is ${end - start}ms.`);
 
-    //   // Set a limit on runtime
-    //   setTimeout(() => {
-    //     console.log('CLI> done');
-    //     // Leave the board
-    //     boardDisconnect(socket, boardId);
-    //     // and quit
-    //     process.exit(1);
-    //   }, params.timeout * 1000);
-
-    //   // Calculate cursor position
-    //   setInterval(() => {
-    //     // step between 0 and 10 pixels
-    //     const movementX = randomNumber(1, 20);
-    //     const movementY = randomNumber(1, 20);
-    //     // scaled up for wall size
-    //     const dx = Math.round(movementX * sensitivity);
-    //     const dy = Math.round(movementY * sensitivity);
-    //     // detect wall size limits and reverse course
-    //     if (px >= totalWidth + 1500000) incx *= -1;
-    //     if (px <= 1500000) incx *= -1;
-    //     if (py >= totalHeight + 1500000) incy *= -1;
-    //     if (py <= 1500000) incy *= -1;
-    //     // update global position
-    //     px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
-    //     py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
-    //   }, updateRate);
-
-    // setInterval(() => {
-    //   createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
-    // }, params.delay * 1000);
+    console.log(JSON.stringify(boardData[boardData.length - 1]));
   });
 }
 
