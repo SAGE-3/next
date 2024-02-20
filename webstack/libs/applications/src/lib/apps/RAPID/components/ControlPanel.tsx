@@ -1,5 +1,4 @@
 import { useMemo, useEffect, useRef } from 'react';
-import { useAppStore } from '@sage3/frontend';
 import { AppState } from '../../../types';
 import { Box, Button, Select } from '@chakra-ui/react';
 

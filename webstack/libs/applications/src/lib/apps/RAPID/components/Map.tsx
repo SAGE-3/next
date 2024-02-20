@@ -112,9 +112,9 @@ function LocationMap(props: App) {
     <Box width="100%" height="100%">
       <Map
         initialViewState={{
-          longitude: -155.23806729,
-          latitude: 19.415128084,
-          zoom: 18,
+          longitude: -155.2384,
+          latitude: 19.4152,
+          zoom: 20,
         }}
         reuseMaps
         mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`}
@@ -126,7 +126,7 @@ function LocationMap(props: App) {
             setPinInfo(Object.keys(sensorInfo)[0]);
           }}
         >
-          <Pin size={18} />
+          <Pin size={18} text="Sage Node" />
         </Marker>
         <Marker
           latitude={sensorInfo.mesonet.lat}
@@ -135,7 +135,7 @@ function LocationMap(props: App) {
             setPinInfo(Object.keys(sensorInfo)[1]);
           }}
         >
-          <Pin size={18} />
+          <Pin size={18} text="Mesonet Sensor" />
         </Marker>
 
         {pinInfo && (
