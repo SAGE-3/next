@@ -26,25 +26,22 @@ export const CATEGORIES = {
   },
 };
 
-
 export type ComponentSelectorProps = {
   propsData: App;
 };
 
 export type RAPIDState = {
   s: AppState;
-}
+};
 
-/** 
+/**
  * Selects the correct component to render based on the category
  */
 function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
   const s = propsData.data.state as AppState;
 
   if (s.category === CATEGORIES.CONTROL_PANEL.name) {
-    return (
-      <ControlPanel id={propsData._id} s={s} />
-    );
+    return <ControlPanel id={propsData._id} s={s} />;
   }
 
   if (s.category === CATEGORIES.GRAPH.name) {
@@ -56,7 +53,7 @@ function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
   }
 
   if (s.category === CATEGORIES.MAP.name) {
-    return <LocationMap />;
+    return <LocationMap {...propsData} />;
   }
 
   return <div>ERROR: Category Not Found</div>;

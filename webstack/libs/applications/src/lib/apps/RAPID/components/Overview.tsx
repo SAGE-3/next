@@ -19,20 +19,20 @@ function Overview({ s }: RAPIDState): JSX.Element {
 
   const getMin = (arr: ResultDataPoint[], org: string) => {
     if (org === 'Sage Node') {
-      return Math.min(...arr.filter((d: ResultDataPoint) => d['Sage Node'] !== null).map((d: ResultDataPoint) => Number(d['Sage Node'])));
+      return Math.min(...arr.filter((d: ResultDataPoint) => d['Sage Node'] !== null).map((d: ResultDataPoint) => Number(d['Sage Node']))).toFixed(2);
     }
     if (org === 'Mesonet') {
-      return Math.min(...arr.filter((d: ResultDataPoint) => d['Mesonet'] !== null).map((d: ResultDataPoint) => Number(d['Mesonet'])));
+      return Math.min(...arr.filter((d: ResultDataPoint) => d['Mesonet'] !== null).map((d: ResultDataPoint) => Number(d['Mesonet']))).toFixed(2);
     }
     return;
   };
 
   const getMax = (arr: ResultDataPoint[], org: string) => {
     if (org === 'Sage Node') {
-      return Math.max(...arr.filter((d: ResultDataPoint) => d['Sage Node'] !== null).map((d: ResultDataPoint) => Number(d['Sage Node'])));
+      return Math.max(...arr.filter((d: ResultDataPoint) => d['Sage Node'] !== null).map((d: ResultDataPoint) => Number(d['Sage Node']))).toFixed(2);
     }
     if (org === 'Mesonet') {
-      return Math.max(...arr.filter((d: ResultDataPoint) => d['Mesonet'] !== null).map((d: ResultDataPoint) => Number(d['Mesonet'])));
+      return Math.max(...arr.filter((d: ResultDataPoint) => d['Mesonet'] !== null).map((d: ResultDataPoint) => Number(d['Mesonet']))).toFixed(2);
     }
     return;
   };
@@ -40,7 +40,7 @@ function Overview({ s }: RAPIDState): JSX.Element {
   return (
     <>
       {s.metricData ? (
-        <Box>
+        <Box padding="5">
           <h1>Overview</h1>
           <div> Average Measurements Over 24 Hours</div>
           <h1>Sage Node</h1>
