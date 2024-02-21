@@ -14,7 +14,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useAbility, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
+import { useAbility, useAnnotationStore, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 import { useParams } from 'react-router';
 
@@ -45,9 +45,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
 
-  const updateBoard = useBoardStore((state) => state.update);
+  // const updateBoard = useBoardStore((state) => state.update);
+  const updateAnnotation = useAnnotationStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
-  const board = boards.find((el) => el._id === boardId);
 
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
@@ -61,7 +61,8 @@ export function Whiteboard(props: WhiteboardProps) {
   function updateBoardLines() {
     if (yLines && boardId) {
       const lines = yLines.toJSON();
-      updateBoard(boardId, { whiteboardLines: lines });
+      updateAnnotation(boardId, { whiteboardLines: lines });
+      // updateBoard(boardId, { whiteboardLines: lines });
     }
   }
 
@@ -87,6 +88,7 @@ export function Whiteboard(props: WhiteboardProps) {
         const count = users.size;
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
+          const board = boards.find((el) => el._id === boardId);
           // Does the board have lines?
           if (board?.data.whiteboardLines && ydoc) {
             // Clear any existing lines
