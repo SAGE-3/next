@@ -20,10 +20,12 @@ import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
+import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
+import { name as SpeechRecognitionName, init as defaultSpeechRecognition } from './apps/SpeechRecognition';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -31,7 +33,6 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as PollName, init as defaultpoll } from './apps/Poll';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -54,10 +55,12 @@ export const initialValues = {
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
+  [PollName]: defaultPoll,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
   [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
+  [SpeechRecognitionName]: defaultSpeechRecognition,
   [StickieName]: defaultStickie,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
@@ -65,6 +68,5 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
-  [PollName]: defaultpoll,
 };
 

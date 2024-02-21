@@ -20,10 +20,12 @@ import { state as MapGLState, name as MapGLName } from './apps/MapGL';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
+import { state as PollState, name as PollName } from './apps/Poll';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SeerState, name as SeerName } from './apps/Seer';
 import { state as SensorOverviewState, name as SensorOverviewName } from './apps/SensorOverview';
+import { state as SpeechRecognitionState, name as SpeechRecognitionName } from './apps/SpeechRecognition';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
@@ -31,7 +33,6 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as PollState, name as PollName } from './apps/Poll';
 
 
 export type AppState =
@@ -56,18 +57,19 @@ export type AppState =
   | PDFResultState
   | PDFViewerState
   | PluginAppState
+  | PollState
   | RTCChatState
   | SageCellState
   | SeerState
   | SensorOverviewState
+  | SpeechRecognitionState
   | StickieState
   | TwilioScreenshareState
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState
-  | PollState;
+  | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName | typeof PollName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof SpeechRecognitionName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;

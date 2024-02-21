@@ -19,16 +19,17 @@
     "PDFResult",
     "PDFViewer",
     "PluginApp",
+    "Poll",
     "RTCChat",
     "SageCell",
     "Seer",
     "SensorOverview",
+    "SpeechRecognition",
     "Stickie",
     "TwilioScreenshare",
     "VegaLite",
     "VegaLiteViewer",
     "VideoViewer",
     "WebpageLink",
-    "Webview",
-    "Poll"
+    "Webview"
 ]
