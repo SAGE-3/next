@@ -42,9 +42,10 @@ import {
   useInsightStore,
   ConfirmModal,
   usePresenceStore,
+  useUserSettings,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
-import { Presence, Position, Size } from '@sage3/shared/types';
+import { Position, Size } from '@sage3/shared/types';
 
 type AppToolbarProps = {
   boardId: string;
@@ -77,8 +78,11 @@ export function AppToolbar(props: AppToolbarProps) {
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
 
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+
   // UI store
-  const showUI = useUIStore((state) => state.showUI);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const scale = useUIStore((state) => state.scale);
@@ -241,23 +245,20 @@ export function AppToolbar(props: AppToolbarProps) {
 
   /**
    * Are two rectangles overlapping
-   * @param rec1 
-   * @param rec2 
-   * @returns 
+   * @param rec1
+   * @param rec2
+   * @returns
    */
   function isRectangleOverlap(rec1: number[], rec2: number[]) {
-    return (
-      Math.min(rec1[2], rec2[2]) - Math.max(rec1[0], rec2[0]) > 0 &&
-      Math.min(rec1[3], rec2[3]) - Math.max(rec1[1], rec2[1]) > 0
-    );
-  };
+    return Math.min(rec1[2], rec2[2]) - Math.max(rec1[0], rec2[0]) > 0 && Math.min(rec1[3], rec2[3]) - Math.max(rec1[1], rec2[1]) > 0;
+  }
 
   /**
    * Scale the app to fit inside the smallest overlapping viewport
    */
   function scaleApp() {
     if (app) {
-      const potentialPresences: { position: Position, size: Size, sizeRatio: number }[] = [];
+      const potentialPresences: { position: Position; size: Size; sizeRatio: number }[] = [];
       const res = presences
         .filter((el) => el.data.boardId === props.boardId)
         .map((presence) => {
@@ -267,10 +268,15 @@ export function AppToolbar(props: AppToolbarProps) {
           const isWall = u.data.userType === 'wall';
           return isWall ? viewport : null;
         });
-      const r1 = [app.data.position.x, app.data.position.y, app.data.position.x + app.data.size.width, app.data.position.y + app.data.size.height];
+      const r1 = [
+        app.data.position.x,
+        app.data.position.y,
+        app.data.position.x + app.data.size.width,
+        app.data.position.y + app.data.size.height,
+      ];
       const appSize = app.data.size.width * app.data.size.height;
       const appRatio = app.data.size.width / app.data.size.height;
-      res.forEach(v => {
+      res.forEach((v) => {
         // first true result will be used
         if (v) {
           const x = v.position.x;
@@ -280,7 +286,7 @@ export function AppToolbar(props: AppToolbarProps) {
           const r2 = [x, y, x + w, y + h];
           const overlapping = isRectangleOverlap(r1, r2);
           if (overlapping) {
-            potentialPresences.push({ ...v, sizeRatio: w * h / appSize });
+            potentialPresences.push({ ...v, sizeRatio: (w * h) / appSize });
           }
         }
       });
@@ -301,7 +307,7 @@ export function AppToolbar(props: AppToolbarProps) {
           newsize.height = h * 0.9;
         } else {
           newsize.width = w * 0.9;
-          newsize.height = w * 0.9 / appRatio;
+          newsize.height = (w * 0.9) / appRatio;
         }
         newpos.x = x + (w - newsize.width) / 2;
         newpos.y = y + (h - newsize.height) / 2;
@@ -373,21 +379,37 @@ export function AppToolbar(props: AppToolbarProps) {
                     <PopoverArrow />
                     <PopoverCloseButton />
                     <PopoverHeader>Application Information</PopoverHeader>
-                    <PopoverBody userSelect={"text"}>
+                    <PopoverBody userSelect={'text'}>
                       <UnorderedList>
-                        <ListItem><b>ID</b>: {app._id}</ListItem>
-                        <ListItem><b>Type</b>: {app.data.type}</ListItem>
-                        <ListItem><b>Owner</b>: {ownerName}</ListItem>
-                        <ListItem><b>Created</b>: {when}</ListItem>
-                        <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
-                          width="300px" m={0} p={0} size="xs" variant='filled'
-                          value={inputLabel}
-                          placeholder="Enter tags here separated by spaces"
-                          _placeholder={{ opacity: 1, color: 'gray.400' }}
-                          focusBorderColor="gray.500"
-                          onChange={handleChange}
-                          onKeyDown={(e) => { onSubmit(e, onClose) }}
-                        />
+                        <ListItem>
+                          <b>ID</b>: {app._id}
+                        </ListItem>
+                        <ListItem>
+                          <b>Type</b>: {app.data.type}
+                        </ListItem>
+                        <ListItem>
+                          <b>Owner</b>: {ownerName}
+                        </ListItem>
+                        <ListItem>
+                          <b>Created</b>: {when}
+                        </ListItem>
+                        <ListItem whiteSpace={'nowrap'}>
+                          <b>Tags</b>:{' '}
+                          <Input
+                            width="300px"
+                            m={0}
+                            p={0}
+                            size="xs"
+                            variant="filled"
+                            value={inputLabel}
+                            placeholder="Enter tags here separated by spaces"
+                            _placeholder={{ opacity: 1, color: 'gray.400' }}
+                            focusBorderColor="gray.500"
+                            onChange={handleChange}
+                            onKeyDown={(e) => {
+                              onSubmit(e, onClose);
+                            }}
+                          />
                         </ListItem>
                       </UnorderedList>
                     </PopoverBody>

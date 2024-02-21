@@ -9,7 +9,15 @@
 import { useCallback, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 
-import { useCursorBoardPosition, usePresenceStore, useUIStore, useUser, useUsersStore, useWindowResize } from '@sage3/frontend';
+import {
+  useCursorBoardPosition,
+  usePresenceStore,
+  useUIStore,
+  useUser,
+  useUserSettings,
+  useUsersStore,
+  useWindowResize,
+} from '@sage3/frontend';
 import { User, Presence, Position, Size } from '@sage3/shared/types';
 
 import { Cursors } from './Cursors';
@@ -48,9 +56,13 @@ export function PresenceComponent(props: PresenceProps) {
     } as Awareness;
   });
 
+  // Settings
+  const { settings } = useUserSettings();
+  const showCursors = settings.showCursors;
+  const showViewports = settings.showViewports;
+
   // UI Store
   const scale = useUIStore((state) => state.scale);
-  const showPresence = useUIStore((state) => state.showPresence);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const setViewport = useUIStore((state) => state.setViewport);
@@ -94,14 +106,8 @@ export function PresenceComponent(props: PresenceProps) {
 
   return (
     <>
-      {showPresence && (
-        <>
-          {/* User Cursors */}
-          <Cursors users={awareness} rate={FastUpdateRate} />
-          {/* User Viewports */}
-          <Viewports users={awareness} rate={SlowUpdateRate} />
-        </>
-      )}
+      {showCursors && <Cursors users={awareness} rate={FastUpdateRate} />}
+      {showViewports && <Viewports users={awareness} rate={SlowUpdateRate} />}
     </>
   );
 }

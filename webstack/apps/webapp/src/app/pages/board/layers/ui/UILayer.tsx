@@ -30,6 +30,7 @@ import {
   useHotkeys,
   Alfred,
   HotkeysEvent,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import {
@@ -59,10 +60,13 @@ export function UILayer(props: UILayerProps) {
   // Abilities
   const canLasso = useAbility('lasso', 'apps');
 
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-  const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
     (state) => state
@@ -286,19 +290,14 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" display={showUI ? 'initial' : 'none'}>
+      <Box position="absolute" right="1" top="1">
         <Clock isBoard={true} />
       </Box>
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
       <ContextMenu divId="board">
-        <BoardContextMenu
-          boardId={props.boardId}
-          roomId={props.roomId}
-          clearBoard={clearOnOpen}
-          showAllApps={showAllApps}
-        />
+        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
       <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />

@@ -8,8 +8,18 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Box, Button, useToast, Tooltip, Text, HStack, VStack,
-  Slider, SliderFilledTrack, SliderThumb, SliderTrack, useDisclosure,
+  Box,
+  Button,
+  useToast,
+  Tooltip,
+  Text,
+  HStack,
+  VStack,
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+  useDisclosure,
 } from '@chakra-ui/react';
 
 import { MdGraphicEq } from 'react-icons/md';
@@ -17,8 +27,15 @@ import { BsPencilFill, BsEraserFill } from 'react-icons/bs';
 import { FaEraser, FaTrash, FaCamera, FaUndo } from 'react-icons/fa';
 
 import {
-  ColorPicker, useUIStore, usePanelStore, useUser, isElectron,
-  useHexColor, useThrottleApps, ConfirmModal,
+  ColorPicker,
+  useUIStore,
+  usePanelStore,
+  useUser,
+  isElectron,
+  useHexColor,
+  useThrottleApps,
+  ConfirmModal,
+  useUserSettings,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -26,8 +43,8 @@ import { Panel } from '../Panel';
 
 export function AnnotationsPanel() {
   // UI Store
-  const hideUI = useUIStore((state) => state.hideUI);
-  const showUI = useUIStore((state) => state.displayUI);
+  const { toggleShowUI } = useUserSettings();
+
   const fitApps = useUIStore((state) => state.fitApps);
   const apps = useThrottleApps(250);
   // User
@@ -89,7 +106,7 @@ export function AnnotationsPanel() {
     if (event.shiftKey) {
       // Cleanup the board
       toast.closeAll();
-      hideUI();
+      toggleShowUI();
       fitApps(apps);
     }
     // Ask electron to take a screenshot
@@ -102,7 +119,7 @@ export function AnnotationsPanel() {
       // Restore the UI
       setTimeout(() => {
         if (event.shiftKey) {
-          showUI();
+          toggleShowUI();
         }
       }, 3000);
     }
@@ -124,9 +141,8 @@ export function AnnotationsPanel() {
     return () => {
       // Disable marker on leave
       setWhiteboardMode('none');
-    }
+    };
   }, []);
-
 
   return (
     <>
@@ -135,13 +151,23 @@ export function AnnotationsPanel() {
           <VStack width="100%" alignItems="left" spacing="0">
             <HStack m={0} p={0} spacing={'inherit'}>
               <Tooltip placement="top" hasArrow label={whiteboardMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
-                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' ? 'none' : 'pen')} size="sm" mr="2" colorScheme={whiteboardMode === 'pen' ? 'green' : 'gray'}>
+                <Button
+                  onClick={() => setWhiteboardMode(whiteboardMode === 'pen' ? 'none' : 'pen')}
+                  size="sm"
+                  mr="2"
+                  colorScheme={whiteboardMode === 'pen' ? 'green' : 'gray'}
+                >
                   <BsPencilFill />
                 </Button>
               </Tooltip>
 
               <Tooltip placement="top" hasArrow label={whiteboardMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
-                <Button onClick={() => setWhiteboardMode(whiteboardMode === 'pen' || whiteboardMode === 'none' ? 'eraser' : 'none')} size="sm" mr="2" colorScheme={whiteboardMode === 'eraser' ? 'green' : 'gray'}>
+                <Button
+                  onClick={() => setWhiteboardMode(whiteboardMode === 'pen' || whiteboardMode === 'none' ? 'eraser' : 'none')}
+                  size="sm"
+                  mr="2"
+                  colorScheme={whiteboardMode === 'eraser' ? 'green' : 'gray'}
+                >
                   <BsEraserFill />
                 </Button>
               </Tooltip>
@@ -233,7 +259,9 @@ export function AnnotationsPanel() {
         cancelText="Cancel"
         confirmText="Erase"
         cancelColor="green"
-        confirmColor="red" size="lg" />
+        confirmColor="red"
+        size="lg"
+      />
       <ConfirmModal
         isOpen={allIsOpen}
         onClose={allOnClose}
@@ -243,7 +271,9 @@ export function AnnotationsPanel() {
         cancelText="Cancel"
         confirmText="Erase"
         cancelColor="green"
-        confirmColor="red" size="lg" />
+        confirmColor="red"
+        size="lg"
+      />
     </>
   );
 }

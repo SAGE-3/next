@@ -68,13 +68,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
             recentBoards: [],
           });
         }
-        // Check for settings
-        if (!user.data.settings) {
-          console.log('updating settings');
-          APIHttp.PUT<User>(`/users/${user._id}`, {
-            settings: { showCursor: true, showViewport: true, showOthersCursors: true, showOthersViewports: true },
-          });
-        }
         setAbilityUser(user);
         setUser(user);
       } else {
