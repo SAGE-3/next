@@ -98,6 +98,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+  const [previousSize, setPreviousSize] = useState({ x: 0, y: 0, w: 0, h: 0, set: false, app: '' });
 
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
@@ -258,60 +259,83 @@ export function AppToolbar(props: AppToolbarProps) {
    */
   function scaleApp() {
     if (app) {
-      const potentialPresences: { position: Position; size: Size; sizeRatio: number }[] = [];
-      const res = presences
-        .filter((el) => el.data.boardId === props.boardId)
-        .map((presence) => {
-          const u = users.find((el) => el._id === presence.data.userId);
-          if (!u) return null;
-          const viewport = presence.data.viewport;
-          const isWall = u.data.userType === 'wall';
-          return isWall ? viewport : null;
+      if (previousSize.set && previousSize.app === app._id) {
+        // Restore the previous size
+        update(app._id, {
+          size: { ...app.data.size, width: previousSize.w, height: previousSize.h },
+          position: { ...app.data.position, x: previousSize.x, y: previousSize.y },
         });
-      const r1 = [
-        app.data.position.x,
-        app.data.position.y,
-        app.data.position.x + app.data.size.width,
-        app.data.position.y + app.data.size.height,
-      ];
-      const appSize = app.data.size.width * app.data.size.height;
-      const appRatio = app.data.size.width / app.data.size.height;
-      res.forEach((v) => {
-        // first true result will be used
-        if (v) {
+        // Clear the settings
+        setPreviousSize({ ...previousSize, set: false, app: '' });
+        return;
+      } else {
+        const potentialPresences: { position: Position; size: Size; sizeRatio: number }[] = [];
+        const res = presences
+          .filter((el) => el.data.boardId === props.boardId)
+          .map((presence) => {
+            const u = users.find((el) => el._id === presence.data.userId);
+            if (!u) return null;
+            const viewport = presence.data.viewport;
+            const isWall = u.data.userType === 'wall';
+            return isWall ? viewport : null;
+          });
+        const r1 = [
+          app.data.position.x,
+          app.data.position.y,
+          app.data.position.x + app.data.size.width,
+          app.data.position.y + app.data.size.height,
+        ];
+        const appSize = app.data.size.width * app.data.size.height;
+        const appRatio = app.data.size.width / app.data.size.height;
+        res.forEach((v) => {
+          // first true result will be used
+          if (v) {
+            const x = v.position.x;
+            const y = v.position.y;
+            const w = v.size.width;
+            const h = v.size.height;
+            const r2 = [x, y, x + w, y + h];
+            const overlapping = isRectangleOverlap(r1, r2);
+            if (overlapping) {
+              potentialPresences.push({ ...v, sizeRatio: (w * h) / appSize });
+            }
+          }
+        });
+        // Sort by area ratio to the app size
+        potentialPresences.sort((a, b) => a.sizeRatio - b.sizeRatio);
+        // Pick the smallest area ratio
+        if (potentialPresences[0]) {
+          const v = potentialPresences[0];
           const x = v.position.x;
           const y = v.position.y;
           const w = v.size.width;
           const h = v.size.height;
-          const r2 = [x, y, x + w, y + h];
-          const overlapping = isRectangleOverlap(r1, r2);
-          if (overlapping) {
-            potentialPresences.push({ ...v, sizeRatio: (w * h) / appSize });
+          const viewportRatio = w / h;
+          let newsize = structuredClone(v.size);
+          let newpos = structuredClone(v.position);
+          if (viewportRatio > appRatio) {
+            newsize.width = h * 0.9 * appRatio;
+            newsize.height = h * 0.9;
+          } else {
+            newsize.width = w * 0.9;
+            newsize.height = (w * 0.9) / appRatio;
           }
+          newpos.x = x + (w - newsize.width) / 2;
+          newpos.y = y + (h - newsize.height) / 2;
+
+          // Save the previous size
+          setPreviousSize({
+            x: app.data.position.x,
+            y: app.data.position.y,
+            w: app.data.size.width,
+            h: app.data.size.height,
+            set: true,
+            app: app._id,
+          });
+
+          // Update the app size and position
+          update(app._id, { size: newsize, position: newpos });
         }
-      });
-      // Sort by area ratio to the app size
-      potentialPresences.sort((a, b) => a.sizeRatio - b.sizeRatio);
-      // Pick the smallest area ratio
-      if (potentialPresences[0]) {
-        const v = potentialPresences[0];
-        const x = v.position.x;
-        const y = v.position.y;
-        const w = v.size.width;
-        const h = v.size.height;
-        const viewportRatio = w / h;
-        let newsize = structuredClone(v.size);
-        let newpos = structuredClone(v.position);
-        if (viewportRatio > appRatio) {
-          newsize.width = h * 0.9 * appRatio;
-          newsize.height = h * 0.9;
-        } else {
-          newsize.width = w * 0.9;
-          newsize.height = (w * 0.9) / appRatio;
-        }
-        newpos.x = x + (w - newsize.width) / 2;
-        newpos.y = y + (h - newsize.height) / 2;
-        update(app._id, { size: newsize, position: newpos });
       }
     }
   }
@@ -431,7 +455,13 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={'Present inside Viewport'} openDelay={400} ml="1">
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
+              openDelay={400}
+              ml="1"
+            >
               <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
                 <MdTv size="14px" color={buttonTextColor} />
               </Button>

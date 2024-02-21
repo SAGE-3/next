@@ -95,13 +95,11 @@ const convertToStringFormat = (date: string) => {
 const resolveTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {
     case '24 hours':
-      return getFormattedDateTime24HoursBefore();
+      return 1440;
     case '1 week':
-      return getFormattedDateTime1WeekBefore();
+      return 10080;
     case '1 month':
-      return getFormattedDateTime1MonthBefore();
-    case '1 year':
-      return getFormattedDateTime1YearBefore();
+      return 43200;
     default:
       return 'Custom date range';
   }
@@ -196,9 +194,12 @@ function AppComponent(props: App): JSX.Element {
     let url = '';
 
     if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
         s.widget.timePeriod
-      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+      //   s.widget.timePeriod
+      // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     } else if (!s.widget.liveData) {
       url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
         s.widget.startDate
@@ -510,9 +511,11 @@ function ToolbarComponent(props: App): JSX.Element {
       let url = '';
       const stationNames = stationData.map((station) => station.name);
       if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+          s.stationNames
+        )}&showemptystations=1&recent=${resolveTimePeriod(
           s.widget.timePeriod
-        )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
       } else if (!s.widget.liveData) {
         url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${
           s.widget.startDate
@@ -566,10 +569,6 @@ function ToolbarComponent(props: App): JSX.Element {
         break;
       case '1 month':
         updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: '1 month' } });
-
-        break;
-      case '1 year':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: '1 year' } });
 
         break;
       default:
@@ -785,7 +784,6 @@ function ToolbarComponent(props: App): JSX.Element {
             <option value={'24 hours'}>24 hours</option>
             <option value={'1 week'}>1 week</option>
             <option value={'1 month'}>1 month</option>
-            <option value={'1 year'}>1 year</option>
           </Select>
         </Tooltip>
       ) : (
