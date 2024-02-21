@@ -54,14 +54,26 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     if (auth) {
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
+        console.log('userResponse', userResponse);
         const user = userResponse.data[0];
         // Check for savedBoards
         if (!user.data.savedBoards) {
-          update({ savedBoards: [] });
+          APIHttp.PUT<User>(`/users/${user._id}`, {
+            savedBoards: [],
+          });
         }
         // Check for recentBoards
         if (!user.data.recentBoards) {
-          update({ recentBoards: [] });
+          APIHttp.PUT<User>(`/users/${user._id}`, {
+            recentBoards: [],
+          });
+        }
+        // Check for settings
+        if (!user.data.settings) {
+          console.log('updating settings');
+          APIHttp.PUT<User>(`/users/${user._id}`, {
+            settings: { showCursor: true, showViewport: true, showOthersCursors: true, showOthersViewports: true },
+          });
         }
         setAbilityUser(user);
         setUser(user);

@@ -77,6 +77,12 @@ export function CreateUserModal(props: CreateUserProps): JSX.Element {
         profilePicture: '',
         savedBoards: [],
         recentBoards: [],
+        settings: {
+          showCursor: true,
+          showViewport: true,
+          showOthersCursors: true,
+          showOthersViewports: true,
+        },
       } as UserSchema;
       props.createUser(newUser);
     }
