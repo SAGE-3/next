@@ -8,7 +8,9 @@
 
 // Web request
 import axios from 'axios';
-import { readFileSync } from 'fs';
+import { readFileSync, createReadStream } from 'fs';
+// Prepare a form data structure for upload
+import FormData from 'form-data';
 
 // An axios instance to store the auth token in
 var axiosInstance;
@@ -68,8 +70,80 @@ export async function getBoards() {
     const response = await axiosInstance.get('/api/boards/');
     // handle success
     console.log('CLI> get boards:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
-    if (response.data) {
-      return response.data.boards;
+    if (response.data.success) {
+      return response.data.data;
+    }
+  } catch (e) {
+    // handle error
+    console.log('Error>', e.message);
+  }
+}
+
+export async function getRooms() {
+  try {
+    const response = await axiosInstance.get('/api/rooms/');
+    // handle success
+    console.log('CLI> get rooms:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
+    if (response.data.success) {
+      return response.data.data;
+    }
+  } catch (e) {
+    // handle error
+    console.log('Error>', e.message);
+  }
+}
+
+export async function createRoom(roomInfo) {
+  try {
+    const response = await axiosInstance.post('/api/rooms/', roomInfo);
+    // handle success
+    console.log('CLI> createRoom:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
+    if (response.data.success) {
+      return response.data.data;
+    }
+  } catch (e) {
+    // handle error
+    console.log('Error>', e.message);
+  }
+}
+
+export async function createBoard(boardInfo) {
+  try {
+    const response = await axiosInstance.post('/api/boards/', boardInfo);
+    // handle success
+    console.log('CLI> createBoard:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
+    if (response.data.success) {
+      return response.data.data;
+    }
+  } catch (e) {
+    // handle error
+    console.log('Error>', e.message);
+  }
+}
+
+export async function uploadFile(filePath, roomId) {
+  try {
+    var bodyFormData = new FormData();
+    bodyFormData.append('files', createReadStream(filePath));
+    // bodyFormData.append('targetX', x);
+    // bodyFormData.append('targetY', y);
+    bodyFormData.append('room', roomId);
+
+    const response = await axiosInstance.request({
+      method: 'post',
+      url: '/api/assets/upload',
+      withCredentials: true,
+      // add the right headers for the form
+      headers: {
+        ...bodyFormData.getHeaders(),
+      },
+      // the form
+      data: bodyFormData,
+    });
+    // handle success
+    console.log('CLI> uploadFile:', response.request.res.responseUrl, '-', response.status, '-', response.statusText);
+    if (response.status === 200) {
+      return response.data;
     }
   } catch (e) {
     // handle error
