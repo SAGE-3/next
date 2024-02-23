@@ -124,8 +124,9 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       } else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
-        // Create the board
+        // set the pending state to true so that the button is disabled
         setPendingCreate(true);
+        // Create the board
         const board = await createBoard({
           name: cleanedName,
           description,
@@ -144,7 +145,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             duration: 2 * 1000,
             isClosable: true,
           });
-          // Save the room to the user's profile
+          // Save the board to the user's starred boards
           if (saveBoard) {
             saveBoard(board._id);
           }
