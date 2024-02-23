@@ -27,7 +27,6 @@
   "dependencies": {
     "@casl/ability": "^6.0.0",
     "@chakra-ui/react": "^2.8.2",
-    "@chengsokdara/use-whisper": "^0.2.0",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fluent-org/logger": "^1.0.10",

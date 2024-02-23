@@ -12,38 +12,84 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import '@babel/polyfill';
+// import { Socket, io } from 'socket.io-client';
 
-// @ts-ignore
-import { useWhisper } from '@chengsokdara/use-whisper';
+import React, { useEffect } from 'react';
 
 // Styling
 import './styling.css';
 import { useState } from 'react';
-import { OpenConfiguration } from '@sage3/shared/types';
 
 /* App component for SpeechRecognition */
 
 function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  // Configuration information
-  const config = useConfigStore((state: { config: OpenConfiguration }) => state.config);
-  const { recording, speaking, transcribing, transcript, pauseRecording, startRecording, stopRecording } = useWhisper({
-    apiKey: config.openai.apiKey, // YOUR_OPEN_AI_TOKEN
-  });
+  const [socketInstance, setSocketInstance] = useState<null>(null);
+
+  const [prediction, setPrediction] = useState('0');
+
+  // useEffect(() => {
+  //   const socket = io('http://127.0.0.1:5000/', {
+  //     transports: ['websocket'],
+  //     // cors: {
+  //     //   origin: "*",
+  //     // },
+  //   });
+
+  //   setSocketInstance(socket);
+  //   socket.on('conection', (data: string) => {
+  //     const output = JSON.parse(data);
+  //     console.log(output);
+  //   });
+
+  //   socket.on('disconnect', (data: string) => {
+  //     console.log(data);
+  //   });
+
+  //   socket.on('prediction', (data: string) => {
+  //     setPrediction(JSON.parse(data)[0][0]);
+  //   });
+
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
+
+  const record_and_send = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+    const chunks: BlobPart[] | undefined = [];
+    recorder.ondataavailable = (e) => chunks.push(e.data);
+    recorder.onstop = () => {
+      console.log('Blob Recorded');
+      const blob = new Blob(chunks, { type: 'audio/webm' });
+      if (socketInstance) {
+        // socketInstance.emit('stream_audio', blob);
+      }
+    };
+    setTimeout(() => {
+      recorder.stop();
+    }, 5000);
+    recorder.start();
+  };
+
+  const startRecording = async () => {
+    setInterval(record_and_send, 3100);
+  };
 
   const updateState = useAppStore((state) => state.updateState);
 
   return (
     <AppWindow app={props}>
       <>
-        <p>Recording: {recording}</p>
+        <button onClick={startRecording}>Start</button>
+
+        {/* <p>Recording: {recording}</p>
         <p>Speaking: {speaking}</p>
         <p>Transcribing: {transcribing}</p>
         <p>Transcribed Text: {transcript.text}</p>
         <button onClick={() => startRecording()}>Start</button>
         <button onClick={() => pauseRecording()}>Pause</button>
-        <button onClick={() => stopRecording()}>Stop</button>
+        <button onClick={() => stopRecording()}>Stop</button> */}
       </>
     </AppWindow>
   );
