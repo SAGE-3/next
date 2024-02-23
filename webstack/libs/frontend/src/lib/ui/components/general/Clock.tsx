@@ -123,10 +123,10 @@ export function Clock(props: ClockProps) {
             borderRadius="md"
             h="auto"
             p={0}
-            m={-2}
+            mr={-2}
             justifyContent="center"
             aria-label={'Presence'}
-            icon={<MdRemoveRedEye size="22px" />}
+            icon={<MdRemoveRedEye size="24px" />}
             background={'transparent'}
             colorScheme="gray"
             transition={'all 0.2s'}

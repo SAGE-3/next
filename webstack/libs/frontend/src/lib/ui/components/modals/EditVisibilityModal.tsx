@@ -17,15 +17,23 @@ import {
   Switch,
   ModalFooter,
   Button,
+  Tooltip,
+  Icon,
 } from '@chakra-ui/react';
 
 import { useUserSettings } from '../../../providers';
+import { MdInfo } from 'react-icons/md';
 
 interface EditPresenceSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/**
+ * The modal for editing the visibility settings of the user interface
+ * @param props Disclousre for the visibility settings modal
+ * @returns
+ */
 export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.Element {
   const {
     settings: userSettings,
@@ -52,24 +60,30 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-cursors" mb="0">
               Cursors
+              <InfoTooltip label={'The cursors of other users.'} />
             </FormLabel>
+
             <Switch id="other-cursors" colorScheme="teal" isChecked={showCursors} onChange={toggleShowCursors} />
           </FormControl>
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-viewports" mb="0">
               Viewports
+              <InfoTooltip label={'The rectangular outlines of clients sharing their viewport location.'} />
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showViewports} onChange={toggleShowViewports} />
           </FormControl>
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-app-titles" mb="0">
-              App Titles
+              Application Titles
+              <InfoTooltip label={'The text title above each application window.'} />
             </FormLabel>
+
             <Switch id="other-cursors" colorScheme="teal" isChecked={showAppTitles} onChange={toggleShowAppTitles} />
           </FormControl>
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-interface" mb="0">
               User Interface
+              <InfoTooltip label={'The SAGE3 interface of menus and buttons.'} />
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
           </FormControl>
@@ -81,5 +95,14 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
         </ModalFooter>
       </ModalContent>
     </Modal>
+  );
+}
+
+// Info Icon with tooltips
+function InfoTooltip(props: { label: string }): JSX.Element {
+  return (
+    <Tooltip label={props.label} placement="top" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+      <Icon transform={`translate(4px, 2px)`} as={MdInfo}></Icon>
+    </Tooltip>
   );
 }
