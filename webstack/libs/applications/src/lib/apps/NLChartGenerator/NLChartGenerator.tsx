@@ -61,19 +61,21 @@ function convertObjectToArray(dataObject: any) {
   return dataArray;
 }
 
-function cleanJsonInput(jsonInput: string) {
+function getCode(jsonInput: string) {
   // Remove the ```json and ``` characters
   const cleanJson = jsonInput
     .replace(/```json/g, '')
     .replace(/```/g, '')
+    .replace('url', 'values')
+    // .replace('"data.json"', '`${data}`')
     .trim();
   return cleanJson;
 }
 
-function replaceData(jsonInput: string) {
-  const cleanJson = jsonInput.replace('data', '${data}');
-  return cleanJson;
-}
+// function replaceData(jsonInput: string) {
+//   const cleanJson = jsonInput.replace('data');
+//   return cleanJson;
+// }
 
 // LLAMA2 API
 //  - API: https://huggingface.github.io/text-generation-inference/
@@ -91,7 +93,7 @@ heat_index_set_1d, dew_point_temperature_set_1d, altimeter_set_1d, sea_level_pre
  You are an expert at creating data visualizations in vega-lite. you are strictly answering my questions only in vega-lite code.';
 
 // OpenAI API
-let OPENAI_API_KEY = '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';
+let OPENAI_API_KEY = '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';
 let OPENAI_ENGINE = 'gpt-4-turbo-preview';
 const OPENAI_TOKENS = 300;
 const OPENAI_SYSTEM_PROMPT =
@@ -102,7 +104,7 @@ soil_moisture_set_2, soil_moisture_set_3, volt_set_1, net_radiation_set_1, net_r
 outgoing_radiation_lw_set_1, outgoing_radiation_sw_set_1, incoming_radiation_lw_set_1, outgoing_radiation_lw_set_1, wind_cardinal_direction_set_1d, \
 heat_index_set_1d, dew_point_temperature_set_1d, altimeter_set_1d, sea_level_pressure_set_1d\
  You are an expert at creating data visualizations in vega-lite. you are strictly answering my questions only in vega-lite code.\
- Within the code, use ```json data: {values: ${data}}``` to refer to the data. Answer very concisely and in vega-lite code only. Remove the "$schema": "https://vega.github.io/schema/vega-lite/v5.json" from the vega-lite code';
+ Answer very concisely and in vega-lite code only. Remove the "$schema": "https://vega.github.io/schema/vega-lite/v5.json" from the vega-lite code';
 
 /* App component for Chat */
 
@@ -147,7 +149,7 @@ function AppComponent(props: App): JSX.Element {
   const ctrlRef = useRef<null | AbortController>(null);
 
   const [spec, setSpec] = useState<any>(null);
-
+  console.log(spec);
   // Display some notifications
   const toast = useToast();
 
@@ -212,10 +214,7 @@ function AppComponent(props: App): JSX.Element {
     // Get server time
     const now = await serverTime();
     // Is it a question to Geppetto?
-    const isGeppettoQuestion = new_input.startsWith('@G');
-    const isOpenAIQuestion = new_input.startsWith('@A');
-    const isQuestion = isGeppettoQuestion || isOpenAIQuestion;
-    const name = isQuestion ? (isOpenAIQuestion ? 'OpenAI' : 'Geppetto') : user?.data.name;
+
     // Add messages
     const initialAnswer = {
       id: genId(),
@@ -224,10 +223,10 @@ function AppComponent(props: App): JSX.Element {
       creationDate: now.epoch,
       userName: name,
       query: new_input,
-      response: isQuestion ? 'Working on it...' : '',
+      response: 'Working on it...',
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
+    if (openai) {
       setProcessing(true);
       // Remove the @X
       const request = new_input.slice(2);
@@ -239,143 +238,68 @@ function AppComponent(props: App): JSX.Element {
       let tempText = '';
       setStreamText(tempText);
 
-      if (isOpenAIQuestion && openai) {
-        const messages = [
-          { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-          { role: 'user', content: request },
-        ];
-        let complete_request;
-        if (previousQuestion && previousAnswer) {
-          complete_request = [
-            { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-            { role: 'user', content: previousQuestion },
-            { role: 'assistant', content: previousAnswer },
-            { role: 'user', content: request },
-          ];
-        } else {
-          complete_request = messages;
+      const messages = [
+        { role: 'system', content: OPENAI_SYSTEM_PROMPT },
+        { role: 'user', content: request },
+      ];
+      const complete_request = messages;
+      // if (previousQuestion && previousAnswer) {
+      //   complete_request = [
+      //     { role: 'system', content: OPENAI_SYSTEM_PROMPT },
+      //     { role: 'user', content: previousQuestion },
+      //     { role: 'assistant', content: previousAnswer },
+      //     { role: 'user', content: request },
+      //   ];
+      // } else {
+      // }
+
+      const stream = await openai.chat.completions.create({
+        model: OPENAI_ENGINE,
+        // @ts-expect-error
+        messages: complete_request || messages,
+        // max_tokens: OPENAI_TOKENS,
+        temperature: 0.2,
+        stream: true,
+      });
+      for await (const part of stream) {
+        const text = part.choices[0]?.delta?.content;
+
+        if (text) {
+          tempText += part.choices[0]?.delta?.content;
+          setStreamText(tempText);
+          goToBottom('auto');
         }
-
-        const stream = await openai.chat.completions.create({
-          model: OPENAI_ENGINE,
-          // @ts-expect-error
-          messages: complete_request || messages,
-          // max_tokens: OPENAI_TOKENS,
-          temperature: 0.2,
-          stream: true,
-        });
-        for await (const part of stream) {
-          const text = part.choices[0]?.delta?.content;
-
-          if (text) {
-            tempText += part.choices[0]?.delta?.content;
-            setStreamText(tempText);
-            goToBottom('auto');
-          }
-        }
-        setProcessing(false);
-        // Clear the stream text
-        setStreamText('');
-        ctrlRef.current = null;
-        setPreviousAnswer(tempText);
-
-        setSpec(JSON.parse(replaceData(cleanJsonInput(tempText))));
-        // Add messages
-        updateState(props._id, {
-          ...s,
-          previousQ: request,
-          previousA: tempText,
-          messages: [
-            ...s.messages,
-            initialAnswer,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch + 1,
-              userName: 'OpenAI',
-              query: '',
-              response: tempText,
-            },
-          ],
-        });
-      } else {
-        let complete_request = '';
-        if (previousQuestion && previousAnswer) {
-          /*
-            schema for follow up questions:
-            https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            <s>[INST] {{ user_msg_2 }} [/INST]
-          */
-          complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
-        } else {
-          // Test to tweak the system prompt
-          complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
-        }
-
-        // URL for the request
-        const modelURL = LLAMA2_URL;
-        // Build the body of the request
-        const modelBody = {
-          inputs: complete_request || request,
-          parameters: { max_new_tokens: LLAMA2_TOKENS },
-        };
-        const modelHeaders: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        // Post the request and handle server-sent events
-        fetchEventSource(modelURL, {
-          method: 'POST',
-          headers: modelHeaders,
-          body: JSON.stringify(modelBody),
-          signal: ctrl.signal,
-          onmessage(msg) {
-            // if the server emits an error message, throw an exception
-            // so it gets handled by the onerror callback below:
-            if (msg.event === 'FatalError') {
-              console.log('LLM> Error', msg.data);
-              setStreamText('');
-              ctrlRef.current = null;
-            } else {
-              const message = JSON.parse(msg.data);
-              if (message.generated_text) {
-                setProcessing(false);
-                // Clear the stream text
-                setStreamText('');
-                ctrlRef.current = null;
-                setPreviousAnswer(message.generated_text);
-
-                // Add messages
-                updateState(props._id, {
-                  ...s,
-                  previousQ: request,
-                  previousA: message.generated_text,
-                  messages: [
-                    ...s.messages,
-                    initialAnswer,
-                    {
-                      id: genId(),
-                      userId: user._id,
-                      creationId: '',
-                      creationDate: now.epoch + 1,
-                      userName: 'Geppetto',
-                      query: '',
-                      response: message.generated_text,
-                    },
-                  ],
-                });
-              } else {
-                if (message.token.text) {
-                  tempText += message.token.text;
-                  setStreamText(tempText);
-                  goToBottom('auto');
-                }
-              }
-            }
-          },
-        });
       }
+      setProcessing(false);
+      // Clear the stream text
+      setStreamText('');
+      ctrlRef.current = null;
+      setPreviousAnswer(tempText);
+      const codeFromText = getCode(tempText);
+      console.log(codeFromText);
+      let code = JSON.parse(codeFromText);
+      code.data.values = data;
+
+      setSpec(code);
+      // Add messages
+      updateState(props._id, {
+        ...s,
+        previousQ: request,
+        previousA: tempText,
+        messages: [
+          ...s.messages,
+          initialAnswer,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch + 1,
+            userName: 'OpenAI',
+            query: '',
+            response: tempText,
+          },
+        ],
+      });
     }
 
     setTimeout(() => {
@@ -467,298 +391,290 @@ function AppComponent(props: App): JSX.Element {
     }
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
-  console.log(spec);
   return (
     <AppWindow app={props}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+      <Box>
         <Box height="300px" width="300px">
-          {spec ? (
-            <VegaLite
-              spec={{
-                data: { values: data },
-                mark: 'line',
-                encoding: {
-                  x: { field: 'date_time', type: 'temporal', axis: { title: 'Date Time' } },
-                  y: { field: 'air_temp_set_1', type: 'quantitative', axis: { title: 'Air Temperature' } },
-                },
-              }}
-              actions={false}
-              renderer="svg"
-            />
-          ) : (
-            'no chart'
-          )}
+          {spec ? <VegaLite spec={spec} actions={false} renderer="svg" /> : 'no chart'}
         </Box>
-        {/* Display Messages */}
-        <Box
-          flex={1}
-          bg={bgColor}
-          borderRadius={'md'}
-          overflowY="scroll"
-          ref={chatBox}
-          css={{
-            '&::-webkit-scrollbar': {
-              width: '12px',
-            },
-            '&::-webkit-scrollbar-track': {
-              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: `${scrollColor}`,
-              borderRadius: '6px',
-              outline: `3px solid ${bgColor}`,
-            },
-          }}
-        >
-          {sortedMessages.map((message, index) => {
-            const isMe = user?._id == message.userId;
-            const time = getDateString(message.creationDate);
-            const previousTime = message.creationDate;
-            const now = Date.now();
-            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-            const last = index === sortedMessages.length - 1;
+        <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+          {/* Display Messages */}
+          <Box
+            flex={1}
+            bg={bgColor}
+            borderRadius={'md'}
+            overflowY="scroll"
+            ref={chatBox}
+            css={{
+              '&::-webkit-scrollbar': {
+                width: '12px',
+              },
+              '&::-webkit-scrollbar-track': {
+                '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: `${scrollColor}`,
+                borderRadius: '6px',
+                outline: `3px solid ${bgColor}`,
+              },
+            }}
+          >
+            {sortedMessages.map((message, index) => {
+              const isMe = user?._id == message.userId;
+              const time = getDateString(message.creationDate);
+              const previousTime = message.creationDate;
+              const now = Date.now();
+              const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
+              const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+              const last = index === sortedMessages.length - 1;
 
-            return (
-              <Fragment key={index}>
-                {/* Start of User Messages */}
-                {message.query.length ? (
-                  <Box position="relative" my={1}>
-                    {isMe ? (
-                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName}
-                        </Text>
-                      </Box>
-                    )}
-
-                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={time}
-                        openDelay={400}
-                      >
-                        <Box
-                          color="white"
-                          rounded={'md'}
-                          boxShadow="md"
-                          fontFamily="arial"
-                          textAlign={isMe ? 'right' : 'left'}
-                          bg={isMe ? myColor : otherUserColor}
-                          p={1}
-                          m={3}
-                          maxWidth="70%"
-                          userSelect={'none'}
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.query);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                          draggable={true}
-                          // Store the query into the drag/drop events to create stickies
-                          onDragStart={(e) => {
-                            e.dataTransfer.clearData();
-                            // Will create a new sticky
-                            e.dataTransfer.setData('app', 'Stickie');
-                            // Get the color of the user
-                            const colorMessage = isMe
-                              ? user?.data.color
-                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                            // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData(
-                              'app_state',
-                              JSON.stringify({
-                                color: colorMessage,
-                                text: message.query,
-                                fontSize: 24,
-                              })
-                            );
-                          }}
-                        >
-                          {message.query}
+              return (
+                <Fragment key={index}>
+                  {/* Start of User Messages */}
+                  {message.query.length ? (
+                    <Box position="relative" my={1}>
+                      {isMe ? (
+                        <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
+                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                            Me
+                          </Text>
                         </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
+                      ) : (
+                        <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
+                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                            {message.userName}
+                          </Text>
+                        </Box>
+                      )}
 
-                {/* Start of Geppetto Messages */}
-                {message.response.length ? (
-                  <Box position="relative" my={1} maxWidth={'70%'}>
-                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName}
-                      </Text>
-                    </Box>
-
-                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={time}
-                        openDelay={400}
-                      >
-                        <Box
-                          boxShadow="md"
-                          color="white"
-                          rounded={'md'}
-                          textAlign={'left'}
-                          bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
-                          p={1}
-                          m={3}
-                          fontFamily="arial"
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.response);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
+                      <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
+                        <Tooltip
+                          whiteSpace={'nowrap'}
+                          textOverflow="ellipsis"
+                          fontSize={'xs'}
+                          placement="top"
+                          hasArrow={true}
+                          label={time}
+                          openDelay={400}
                         >
                           <Box
-                            pl={3}
+                            color="white"
+                            rounded={'md'}
+                            boxShadow="md"
+                            fontFamily="arial"
+                            textAlign={isMe ? 'right' : 'left'}
+                            bg={isMe ? myColor : otherUserColor}
+                            p={1}
+                            m={3}
+                            maxWidth="70%"
+                            userSelect={'none'}
+                            onDoubleClick={() => {
+                              if (navigator.clipboard) {
+                                // Copy into clipboard
+                                navigator.clipboard.writeText(message.query);
+                                // Notify the user
+                                toast({
+                                  title: 'Success',
+                                  description: `Content Copied to Clipboard`,
+                                  duration: 3000,
+                                  isClosable: true,
+                                  status: 'success',
+                                });
+                              }
+                            }}
                             draggable={true}
+                            // Store the query into the drag/drop events to create stickies
                             onDragStart={(e) => {
-                              // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
+                              // Will create a new sticky
                               e.dataTransfer.setData('app', 'Stickie');
+                              // Get the color of the user
+                              const colorMessage = isMe
+                                ? user?.data.color
+                                : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                              // Put the state of the app into the drag/drop events
                               e.dataTransfer.setData(
                                 'app_state',
                                 JSON.stringify({
-                                  color: message.userName === 'OpenAI' ? 'green' : 'purple',
-                                  text: message.response,
+                                  color: colorMessage,
+                                  text: message.query,
                                   fontSize: 24,
                                 })
                               );
                             }}
                           >
-                            <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            {message.query}
                           </Box>
-                        </Box>
-                      </Tooltip>
+                        </Tooltip>
+                      </Box>
                     </Box>
+                  ) : null}
+
+                  {/* Start of Geppetto Messages */}
+                  {message.response.length ? (
+                    <Box position="relative" my={1} maxWidth={'70%'}>
+                      <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          {message.userName}
+                        </Text>
+                      </Box>
+
+                      <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                        <Tooltip
+                          whiteSpace={'nowrap'}
+                          textOverflow="ellipsis"
+                          fontSize={'xs'}
+                          placement="top"
+                          hasArrow={true}
+                          label={time}
+                          openDelay={400}
+                        >
+                          <Box
+                            boxShadow="md"
+                            color="white"
+                            rounded={'md'}
+                            textAlign={'left'}
+                            bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
+                            p={1}
+                            m={3}
+                            fontFamily="arial"
+                            onDoubleClick={() => {
+                              if (navigator.clipboard) {
+                                // Copy into clipboard
+                                navigator.clipboard.writeText(message.response);
+                                // Notify the user
+                                toast({
+                                  title: 'Success',
+                                  description: `Content Copied to Clipboard`,
+                                  duration: 3000,
+                                  isClosable: true,
+                                  status: 'success',
+                                });
+                              }
+                            }}
+                          >
+                            <Box
+                              pl={3}
+                              draggable={true}
+                              onDragStart={(e) => {
+                                // Store the response into the drag/drop events to create stickies
+                                e.dataTransfer.clearData();
+                                e.dataTransfer.setData('app', 'Stickie');
+                                e.dataTransfer.setData(
+                                  'app_state',
+                                  JSON.stringify({
+                                    color: message.userName === 'OpenAI' ? 'green' : 'purple',
+                                    text: message.response,
+                                    fontSize: 24,
+                                  })
+                                );
+                              }}
+                            >
+                              <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  ) : null}
+
+                  {when && !last ? (
+                    <Box position="relative" padding="4">
+                      <Center>
+                        <Divider width={'80%'} borderColor={'ActiveBorder'} />
+                        <AbsoluteCenter bg={bgColor} px="4">
+                          {when}
+                        </AbsoluteCenter>
+                      </Center>
+                    </Box>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+
+            {/* In progress Geppetto Messages */}
+            {streamText && (
+              <Box position="relative" my={1} maxWidth={'70%'}>
+                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                    AI is typing...
+                  </Text>
+                </Box>
+
+                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                    {streamText}
                   </Box>
-                ) : null}
-
-                {when && !last ? (
-                  <Box position="relative" padding="4">
-                    <Center>
-                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                      <AbsoluteCenter bg={bgColor} px="4">
-                        {when}
-                      </AbsoluteCenter>
-                    </Center>
-                  </Box>
-                ) : null}
-              </Fragment>
-            );
-          })}
-
-          {/* In progress Geppetto Messages */}
-          {streamText && (
-            <Box position="relative" my={1} maxWidth={'70%'}>
-              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  AI is typing...
-                </Text>
-              </Box>
-
-              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                  {streamText}
                 </Box>
               </Box>
-            </Box>
-          )}
-        </Box>
-        <HStack>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
-            <IconButton
-              aria-label="Messages"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={newMessages ? 'green' : 'blue'}
-              variant="ghost"
-              icon={<MdExpandCircleDown size="24px" />}
-              isDisabled={!newMessages}
-              isLoading={processing}
-              onClick={() => goToBottom('instant')}
-              width="33%"
+            )}
+          </Box>
+          <HStack>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={newMessages ? 'New Messages' : 'No New Messages'}
+              openDelay={400}
+            >
+              <IconButton
+                aria-label="Messages"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={newMessages ? 'green' : 'blue'}
+                variant="ghost"
+                icon={<MdExpandCircleDown size="24px" />}
+                isDisabled={!newMessages}
+                isLoading={processing}
+                onClick={() => goToBottom('instant')}
+                width="33%"
+              />
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
+              <IconButton
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                icon={<MdStopCircle size="24px" />}
+                onClick={stopGeppetto}
+                width="34%"
+              />
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
+              <IconButton
+                aria-label="reset"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                icon={<MdChangeCircle size="24px" />}
+                onClick={resetGepetto}
+                width="33%"
+              />
+            </Tooltip>
+          </HStack>
+          <InputGroup bg={'blackAlpha.100'}>
+            <Input
+              placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
+              size="md"
+              variant="outline"
+              _placeholder={{ color: 'inherit' }}
+              onChange={handleChange}
+              onKeyDown={onSubmit}
+              value={input}
+              ref={inputRef}
             />
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
-            <IconButton
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdStopCircle size="24px" />}
-              onClick={stopGeppetto}
-              width="34%"
-            />
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
-            <IconButton
-              aria-label="reset"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdChangeCircle size="24px" />}
-              onClick={resetGepetto}
-              width="33%"
-            />
-          </Tooltip>
-        </HStack>
-        <InputGroup bg={'blackAlpha.100'}>
-          <Input
-            placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
-            size="md"
-            variant="outline"
-            _placeholder={{ color: 'inherit' }}
-            onChange={handleChange}
-            onKeyDown={onSubmit}
-            value={input}
-            ref={inputRef}
-          />
-          <InputRightElement onClick={send}>
-            <MdSend color="green.500" />
-          </InputRightElement>
-        </InputGroup>
-      </Flex>
+            <InputRightElement onClick={send}>
+              <MdSend color="green.500" />
+            </InputRightElement>
+          </InputGroup>
+        </Flex>
+      </Box>
     </AppWindow>
   );
 }
