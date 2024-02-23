@@ -280,9 +280,9 @@ function generateWriteResult<Type extends SBJSON>(
     writetime: Date.now(),
     doc,
   } as SBDocWriteResult<Type>;
-  if (success) {
-    const tag = `${collection}.${action}`;
-    SBLogger.log(collection, tag, result);
+  // only the create and delete actions are logged to limit the amount of logs
+  if (success && (action === 'create' || action === 'delete')) {
+    SBLogger.log(collection, action, result);
   }
   return result;
 }

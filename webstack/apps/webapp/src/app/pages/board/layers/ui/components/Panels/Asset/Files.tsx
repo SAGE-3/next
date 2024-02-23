@@ -40,6 +40,7 @@ import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];
+  setSelection: (ids: string[]) => void;
 }
 
 type sortOrder = 'file' | 'owner' | 'type' | 'modified' | 'added' | 'size';
@@ -53,6 +54,7 @@ export function Files(props: FilesProps): JSX.Element {
 
   // The data list
   const [filesList, setList] = useState(props.files);
+  const [updated, setUpdated] = useState(false);
   // Room and board
   const { boardId, roomId } = useParams();
   if (!boardId || !roomId) return <></>;
@@ -85,6 +87,14 @@ export function Files(props: FilesProps): JSX.Element {
     // Scroll to the top
     virtuoso.current?.scrollToIndex({ index: 0 });
   }, [props.files]);
+
+  // Track the selection updates
+  useEffect(() => {
+    if (updated) {
+      props.setSelection(filesList.filter((k) => k.selected).map((k) => k.id));
+      setUpdated(false);
+    }
+  }, [updated]);
 
   // Create the column headers. Add arrows indicating sorting.
   let headerFile, headerType, headerModified, headerAdded, headerSize, headerOwner;
@@ -352,6 +362,7 @@ export function Files(props: FilesProps): JSX.Element {
       });
       return newList;
     });
+    setUpdated(true);
   };
 
   const dragCB = (e: React.DragEvent<HTMLDivElement>) => {
@@ -434,6 +445,7 @@ export function Files(props: FilesProps): JSX.Element {
         lotsOnOpen();
       }
     }
+    setUpdated(true);
   };
 
   return (

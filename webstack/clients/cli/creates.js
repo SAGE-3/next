@@ -33,8 +33,8 @@ const version = pkg.version;
 // Some utitlity functions
 import { randomNumber, clamp } from './src/utils.js';
 // WS protocol
-import { loginJWT, loadToken, getBoards, getRooms } from './src/jwt_routes.js';
-import { boardConnect, boardDisconnect, socketConnectionJWT } from './src/socket_routes.js';
+import { loginJWT, loadToken, getBoards, getRooms, createRoom, createBoard, uploadFile } from './src/jwt_routes.js';
+import { socketConnectionJWT } from './src/socket_routes.js';
 
 import { faker } from '@faker-js/faker';
 
@@ -52,6 +52,7 @@ commander.program
   .option('-r, --rate <n>', 'framerate (number)', 2)
   .option('-d, --delay <n>', 'delay between stickies in sec (number)', 2)
   .option('-s, --server <s>', 'Server URL (string)', 'localhost:3333')
+  .option('-f, --file <s>', 'File to upload (path)')
   .option('-e, --sensitivity <n>', 'sensitivity (number)', 5);
 
 // Parse the arguments
@@ -94,6 +95,31 @@ function createStickie(socket, roomId, boardId, title, x, y) {
   );
 }
 
+function openImage(socket, roomId, boardId, title, assetid, x, y) {
+  console.log('CLI> open image', roomId, boardId);
+  const body = {
+    boardId: boardId,
+    dragging: false,
+    position: { x: x, y: y, z: 0 },
+    raised: true,
+    roomId: roomId,
+    rotation: { x: 0, y: 0, z: 0 },
+    size: { width: 600, height: 420, depth: 0 },
+    state: { assetid: assetid },
+    title: title,
+    type: 'ImageViewer',
+  };
+
+  socket.send(
+    JSON.stringify({
+      id: v4(),
+      route: '/api/apps/',
+      method: 'POST',
+      body: body,
+    })
+  );
+}
+
 async function start() {
   // Test login through HTTP and set token to the axios instance
   const token = loadToken('token.json');
@@ -103,63 +129,75 @@ async function start() {
   console.log('CLI> user', me.user);
   myID = me.user.id;
 
-  // board name from command argument (or board0)
-  // const boardId = params.board;
-  // const roomId = params.room;
-
-  const boardData = await getBoards();
-  console.log('CLI> boards', boardData.length, boardData[0]);
-  const roomData = await getRooms();
-  console.log('CLI> rooms', roomData.length, roomData[0]);
-
   // Create a websocket with the auth cookies
   const socket = socketConnectionJWT('ws://' + params.server + '/api', token);
 
+  const filePath = params.file;
+
   // When socket connected
-  socket.on('open', () => {
+  socket.on('open', async () => {
     console.log('socket> connected');
 
-    //   // Default size of the board
-    //   const totalWidth = 3000;
-    //   const totalHeight = 3000;
+    const boardData = await getBoards();
+    console.log('CLI> boards', boardData.length, boardData[0]);
+    const roomData = await getRooms();
+    console.log('CLI> rooms', roomData.length, roomData[0]);
 
-    //   // Random position within a safe margin
-    //   var px = randomNumber(1500000, 1501000);
-    //   var py = randomNumber(1500000, 1501000);
-    //   var incx = randomNumber(1, 2) % 2 ? 1 : -1;
-    //   var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    //   var sensitivity = params.sensitivity;
+    let roomcount = 0;
+    while (roomcount < 40) {
+      let nr = await createRoom({
+        name: 'newroom' + roomcount,
+        description: 'newroom',
+        color: 'red',
+        ownerId: myID,
+        isPrivate: false,
+        privatePin: '',
+        isListed: true,
+      });
+      console.log('CLI> room', nr[0]);
+      roomcount++;
+      let roomId = nr[0]._id;
 
-    //   // Set a limit on runtime
-    //   setTimeout(() => {
-    //     console.log('CLI> done');
-    //     // Leave the board
-    //     boardDisconnect(socket, boardId);
-    //     // and quit
-    //     process.exit(1);
-    //   }, params.timeout * 1000);
+      var asset;
+      for (let i = 0; i < 25; i++) {
+        const resp = await uploadFile(filePath, roomId);
+        asset = resp[0];
+        console.log('CLI> upload', asset.id);
+      }
 
-    //   // Calculate cursor position
-    //   setInterval(() => {
-    //     // step between 0 and 10 pixels
-    //     const movementX = randomNumber(1, 20);
-    //     const movementY = randomNumber(1, 20);
-    //     // scaled up for wall size
-    //     const dx = Math.round(movementX * sensitivity);
-    //     const dy = Math.round(movementY * sensitivity);
-    //     // detect wall size limits and reverse course
-    //     if (px >= totalWidth + 1500000) incx *= -1;
-    //     if (px <= 1500000) incx *= -1;
-    //     if (py >= totalHeight + 1500000) incy *= -1;
-    //     if (py <= 1500000) incy *= -1;
-    //     // update global position
-    //     px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
-    //     py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
-    //   }, updateRate);
+      let boardcount = 0;
+      while (boardcount < 5) {
+        let nb = await createBoard({
+          name: 'newboard' + boardcount,
+          description: 'newboard',
+          color: 'red',
+          roomId: nr[0]._id,
+          ownerId: myID,
+          isPrivate: false,
+          privatePin: '',
+        });
+        console.log('CLI> board', nb[0]);
+        boardcount++;
+        let boardId = nb[0]._id;
 
-    // setInterval(() => {
-    //   createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
-    // }, params.delay * 1000);
+        let stickiecount = 0;
+        let px, py;
+        const maxstickies = randomNumber(1, 5);
+        while (stickiecount < maxstickies) {
+          px = randomNumber(1500000, 1501000);
+          py = randomNumber(1500000, 1501000);
+          createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
+          stickiecount++;
+        }
+
+        px = randomNumber(1500000, 1501000);
+        py = randomNumber(1500000, 1501000);
+        openImage(socket, roomId, boardId, asset.originalname, asset.id, px, py);
+        px = randomNumber(1500000, 1501000);
+        py = randomNumber(1500000, 1501000);
+        openImage(socket, roomId, boardId, asset.originalname, asset.id, px, py);
+      }
+    }
   });
 }
 

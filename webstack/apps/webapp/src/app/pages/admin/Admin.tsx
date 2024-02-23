@@ -254,10 +254,11 @@ export function AdminPage() {
 
           <TabPanels>
             <TabPanel>
-              <Heading>Rooms</Heading>
+              <Heading>Rooms ({rooms.length})</Heading>
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Name</th>
                     <th>Description</th>
@@ -265,9 +266,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rooms.map((room) => {
+                  {rooms.map((room, i) => {
                     return (
                       <tr key={room._id}>
+                        <td>{i}</td>
                         <td>{room._id}</td>
                         <td>{room.data.name}</td>
                         <td> {room.data.description}</td>
@@ -283,11 +285,12 @@ export function AdminPage() {
               </table>
             </TabPanel>
             <TabPanel>
-              <Heading>Boards</Heading>
+              <Heading>Boards ({boards.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Name</th>
                     <th>Description</th>
@@ -295,9 +298,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {boards.map((board) => {
+                  {boards.map((board, i) => {
                     return (
                       <tr key={board._id}>
+                        <td>{i}</td>
                         <td>{board._id}</td>
                         <td>{board.data.name}</td>
                         <td> {board.data.description}</td>
@@ -313,11 +317,12 @@ export function AdminPage() {
               </table>
             </TabPanel>
             <TabPanel>
-              <Heading>Apps</Heading>
+              <Heading>Apps ({apps.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Title</th>
                     <th>Type</th>
@@ -325,9 +330,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {apps.map((app) => {
+                  {apps.map((app, i) => {
                     return (
                       <tr key={app._id}>
+                        <td>{i}</td>
                         <td>{app._id}</td>
                         <td>{app.data.title}</td>
                         <td>{app.data.type}</td>
@@ -342,21 +348,24 @@ export function AdminPage() {
                 </tbody>
               </table>
             </TabPanel>
+
             <TabPanel>
-              <Heading>Assets</Heading>
+              <Heading>Assets ({assets.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Name</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assets.map((asset) => {
+                  {assets.map((asset, i) => {
                     return (
                       <tr key={asset._id}>
+                        <td>{i}</td>
                         <td>{asset._id}</td>
                         <td>{asset.data.originalfilename}</td>
                         <td>
@@ -370,12 +379,14 @@ export function AdminPage() {
                 </tbody>
               </table>
             </TabPanel>
+
             <TabPanel>
-              <Heading>Users</Heading>
+              <Heading>Users ({users.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -385,9 +396,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {users.map((user) => {
+                  {users.map((user, i) => {
                     return (
                       <tr key={user._id}>
+                        <td>{i}</td>
                         <td>{user._id}</td>
                         <td>{user.data.name}</td>
                         <td>{user.data.email}</td>
@@ -406,11 +418,12 @@ export function AdminPage() {
             </TabPanel>
 
             <TabPanel>
-              <Heading>Presences</Heading>
+              <Heading>Presences ({presences.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>RoomId</th>
                     <th>BoardId</th>
@@ -418,9 +431,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {presences.map((p) => {
+                  {presences.map((p, i) => {
                     return (
                       <tr key={p._id}>
+                        <td>{i}</td>
                         <td>{p._id}</td>
                         <td>{p.data.roomId}</td>
                         <td>{p.data.boardId}</td>
@@ -437,11 +451,12 @@ export function AdminPage() {
             </TabPanel>
 
             <TabPanel>
-              <Heading>Insights</Heading>
+              <Heading>Insights ({insights.length})</Heading>
 
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>app_id</th>
                     <th>labels</th>
@@ -449,9 +464,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {insights.map((p) => {
+                  {insights.map((p, i) => {
                     return (
                       <tr key={p._id}>
+                        <td>{i}</td>
                         <td>{p._id}</td>
                         <td>{p.data.app_id}</td>
                         <td>{p.data.labels.join(', ')}</td>
@@ -468,10 +484,11 @@ export function AdminPage() {
             </TabPanel>
 
             <TabPanel>
-              <Heading>Messages</Heading>
+              <Heading>Messages ({messages.length})</Heading>
               <table className='adminTable'>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>id</th>
                     <th>Type</th>
                     <th>Payload</th>
@@ -479,9 +496,10 @@ export function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {messages.map((message) => {
+                  {messages.map((message, i) => {
                     return (
                       <tr key={message._id}>
+                        <td>{i}</td>
                         <td>{message._id}</td>
                         <td>{message.data.type}</td>
                         <td>{message.data.payload}</td>
