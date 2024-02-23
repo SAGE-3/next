@@ -1,11 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useRef } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -19,10 +20,11 @@ import {
   Button,
   Tooltip,
   Icon,
+  ModalCloseButton,
 } from '@chakra-ui/react';
+import { MdInfo } from 'react-icons/md';
 
 import { useUserSettings } from '../../../providers';
-import { MdInfo } from 'react-icons/md';
 
 interface EditPresenceSettingsModalProps {
   isOpen: boolean;
@@ -49,18 +51,22 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
 
+  const initialRef = useRef(null);
+
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} size="xs">
+    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
+      initialFocusRef={initialRef} size="sm">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl" pb="0">
           Visibility Settings
         </ModalHeader>
-        <ModalBody mb="2">
+        <ModalCloseButton />
+        <ModalBody mb="1">
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-cursors" mb="0">
               Cursors
-              <InfoTooltip label={'The cursors of other users.'} />
+              <InfoTooltip label={'Show/Hide the cursors of other users.'} />
             </FormLabel>
 
             <Switch id="other-cursors" colorScheme="teal" isChecked={showCursors} onChange={toggleShowCursors} />
@@ -68,28 +74,28 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-viewports" mb="0">
               Viewports
-              <InfoTooltip label={'The rectangular outlines of clients sharing their viewport location.'} />
+              <InfoTooltip label={'Show/Hide the outlines of clients sharing their viewport.'} />
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showViewports} onChange={toggleShowViewports} />
           </FormControl>
           <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-app-titles" mb="0">
               Application Titles
-              <InfoTooltip label={'The text title above each application window.'} />
+              <InfoTooltip label={'Show/Hide the title above each application window.'} />
             </FormLabel>
 
             <Switch id="other-cursors" colorScheme="teal" isChecked={showAppTitles} onChange={toggleShowAppTitles} />
           </FormControl>
-          <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
+          <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
             <FormLabel htmlFor="hide-interface" mb="0">
               User Interface
-              <InfoTooltip label={'The SAGE3 interface of menus and buttons.'} />
+              <InfoTooltip label={'Show/Hide SAGE3 menus and buttons.'} />
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
           </FormControl>
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings}>
+          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef} >
             Restore Default Settings
           </Button>
         </ModalFooter>
@@ -101,7 +107,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
 // Info Icon with tooltips
 function InfoTooltip(props: { label: string }): JSX.Element {
   return (
-    <Tooltip label={props.label} placement="top" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+    <Tooltip defaultIsOpen={false} label={props.label} placement="top" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
       <Icon transform={`translate(4px, 2px)`} as={MdInfo}></Icon>
     </Tooltip>
   );
