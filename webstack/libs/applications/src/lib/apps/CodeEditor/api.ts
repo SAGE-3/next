@@ -29,6 +29,7 @@ type CodeEditorAPIResponse = {
 };
 
 const AI_URL = 'https://astrolab.evl.uic.edu:4343/generate';
+const MAX_NEW_TOKENS = 400;
 
 // Explain the code
 async function request(language: string, content: string, type: CodeEditorRequest): Promise<CodeEditorAPIResponse> {
@@ -39,7 +40,7 @@ async function request(language: string, content: string, type: CodeEditorReques
   const modelBody = {
     inputs: generateRequest(language, content, type),
     parameters: {
-      max_new_tokens: 400,
+      max_new_tokens: MAX_NEW_TOKENS,
     },
   };
   // Try/catch block to handle errors
