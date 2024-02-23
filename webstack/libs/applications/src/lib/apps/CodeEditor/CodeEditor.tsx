@@ -12,8 +12,17 @@ import { useParams } from 'react-router';
 
 // Library imports
 import {
-  Box, Button, ButtonGroup, Tooltip, useColorModeValue, useDisclosure, useToast,
-  Menu, MenuButton, MenuList, MenuItem
+  Box,
+  Button,
+  ButtonGroup,
+  Tooltip,
+  useColorModeValue,
+  useDisclosure,
+  useToast,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
 import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdMenu, MdTipsAndUpdates } from 'react-icons/md';
@@ -24,7 +33,6 @@ import { format as dateFormat } from 'date-fns/format';
 import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
-
 // Sage3 Imports
 import { useAppStore, useAssetStore, downloadFile, ConfirmValueModal, isUUIDv4, apiUrls, setupApp } from '@sage3/frontend';
 import { stringContainsCode } from '@sage3/shared';
@@ -34,27 +42,15 @@ import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from '.';
 
-// Store between the app and the toolbar
-import { create } from 'zustand';
-
 // Yjs Imports
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
-interface CodeStore {
-  readonly: { [key: string]: boolean };
-  setReadonly: (id: string, r: boolean) => void;
-  yText: { [key: string]: Y.Text };
-  setYText: (id: string, text: Y.Text) => void;
-}
-
-const useStore = create<CodeStore>()((set) => ({
-  readonly: {} as { [key: string]: boolean },
-  setReadonly: (id: string, r: boolean) => set((s) => ({ ...s, readonly: { ...s.readonly, ...{ [id]: r } } })),
-  yText: {} as { [key: string]: Y.Text },
-  setYText: (id: string, text: Y.Text) => set((s) => ({ ...s, yText: { ...s.yText, ...{ [id]: text } } })),
-}));
+// CodeEditor API
+import { CodeEditorAPI } from './api';
+import { create } from 'zustand';
+import { update } from 'plotly.js';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -69,111 +65,83 @@ const languageExtensions = [
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
 ];
+interface CodeStore {
+  editor: { [key: string]: editor.IStandaloneCodeEditor };
+  setEditor: (id: string, r: editor.IStandaloneCodeEditor) => void;
+}
+
+const useStore = create<CodeStore>()((set) => ({
+  editor: {} as { [key: string]: editor.IStandaloneCodeEditor },
+  setEditor: (id: string, editor: editor.IStandaloneCodeEditor) => set((s) => ({ ...s, editor: { ...s.editor, ...{ [id]: editor } } })),
+}));
 
 /* App component for CodeEditor */
 function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
-  const assets = useAssetStore((state) => state.assets);
   const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update);
-  // Styling
-  const defaultTheme = useColorModeValue('vs', 'vs-dark');
+
+  // Assets
+  const assets = useAssetStore((state) => state.assets);
 
   // Asset data structure
   const [file, setFile] = useState<Asset>();
 
-  // LocalState
-  const [spec, setSpec] = useState(s.content);
-  const readonly = useStore((state) => state.readonly[props._id]);
-  const setReadonly = useStore((state) => state.setReadonly);
-  const yText = useStore((state) => state.yText[props._id]);
-  const setYText = useStore((state) => state.setYText);
-  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  // Styling
+  const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
-  // Initialize the readonly state
-  useEffect(() => {
-    setReadonly(props._id, true);
-  }, []);
+  // Monaco Editor Ref
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const { setEditor } = useStore();
 
   // Convert the ID to an asset
-  useEffect(() => {
-    const isUUID = isUUIDv4(s.assetid);
-    if (isUUID) {
-      const myasset = assets.find((a) => a._id === s.assetid);
-      if (myasset) {
-        setFile(myasset);
-        // Update the app title
-        update(props._id, { title: myasset?.data.originalfilename });
-      }
-    } else {
-      update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
-    }
-  }, [s.assetid, assets]);
+  // useEffect(() => {
+  //   const isUUID = isUUIDv4(s.assetid);
+  //   if (isUUID) {
+  //     const myasset = assets.find((a) => a._id === s.assetid);
+  //     if (myasset) {
+  //       setFile(myasset);
+  //       // Update the app title
+  //       update(props._id, { title: myasset?.data.originalfilename });
+  //     }
+  //   } else {
+  //     update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
+  //   }
+  // }, [s.assetid, assets]);
 
   // Once we have the asset, get the data
-  useEffect(() => {
-    async function fetchAsset() {
-      if (file) {
-        // Look for the file in the asset store
-        const localurl = apiUrls.assets.getAssetById(file.data.file);
-        // Get the content of the file
-        const response = await fetch(localurl, {
-          headers: {
-            'Content-Type': 'text/plain',
-            Accept: 'text/plain',
-          },
-        });
-        // Get the content of the file
-        const text = await response.text();
-        const lang = stringContainsCode(text);
-        updateState(props._id, { language: lang });
-        console.log('Set spec', text.length);
-        setSpec(text);
-        if (yText) {
-          yText.insert(0, spec);
-        } else {
-          console.log('No yText');
-        }
-      }
-    }
-    fetchAsset();
-  }, [file, yText]);
+  // useEffect(() => {
+  //   async function fetchAsset() {
+  //     if (file) {
+  //       // Look for the file in the asset store
+  //       const localurl = apiUrls.assets.getAssetById(file.data.file);
+  //       // Get the content of the file
+  //       const response = await fetch(localurl, {
+  //         headers: {
+  //           'Content-Type': 'text/plain',
+  //           Accept: 'text/plain',
+  //         },
+  //       });
+  //       // Get the content of the file
+  //       const text = await response.text();
+  //       const lang = stringContainsCode(text);
+  //       updateState(props._id, { language: lang });
+  //       console.log('Set spec', text.length);
+  //       setSpec(text);
+  //       if (yText) {
+  //         yText.insert(0, spec);
+  //       } else {
+  //         console.log('No yText');
+  //       }
+  //     }
+  //   }
+  //   fetchAsset();
+  // }, [file, yText]);
 
   // Update local value with value from the server
   useEffect(() => {
-    setSpec(s.content);
+    // setSpec(s.content);
   }, [s.content]);
-
-  // Sync the selection
-  useEffect(() => {
-    if (s.selection && s.selection.length === 4 && editorRef.current) {
-      const myselection = editorRef.current.getSelection();
-      if (!myselection) return;
-      const newselection = s.selection;
-      if (
-        myselection.startLineNumber === newselection[0] &&
-        myselection.startColumn === newselection[1] &&
-        myselection.endLineNumber === newselection[2] &&
-        myselection.endColumn === newselection[3]
-      )
-        return;
-      editorRef.current.setSelection({
-        startLineNumber: newselection[0],
-        startColumn: newselection[1],
-        endLineNumber: newselection[2],
-        endColumn: newselection[3],
-      });
-    }
-  }, [s.selection]);
-
-  // Sync the scroll position
-  useEffect(() => {
-    if (!editorRef.current) return;
-    if (s.scrollPosition !== undefined) {
-      editorRef.current.setScrollPosition({ scrollTop: s.scrollPosition }, 1); // 1: immediate, 0: smooth
-    }
-  }, [s.scrollPosition]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
@@ -187,7 +155,7 @@ function AppComponent(props: App): JSX.Element {
   function handleTextChange(value: string | undefined) {
     if (!value) return;
     // Update the local value
-    setSpec(value);
+    // setSpec(value);
     // Update the text when not typing
     debounceFunc.current(value);
   }
@@ -195,37 +163,23 @@ function AppComponent(props: App): JSX.Element {
   const handleMount: OnMount = (editor) => {
     // save the editorRef
     editorRef.current = editor;
+    // Save the editor in the store
+    setEditor(props._id, editor);
     // Connect to Yjs
-    console.log('Before connect', spec.length)
     connectToYjs(editor);
-    // Track the scroll position
-    editor.onDidScrollChange(function (event) {
-      updateState(props._id, { scrollPosition: event.scrollTop });
-    });
-    // Add an event listener for the CursorSelection event
-    editor.onDidChangeCursorSelection(function (event) {
-      // The event object contains information about the selection change
-      const selection = event.selection;
-      // test if actual selection and not just cursot movement
-      if (selection.startLineNumber !== selection.endLineNumber || selection.startColumn !== selection.endColumn) {
-        updateState(props._id, {
-          selection: [selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn],
-        });
-      }
-    });
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
     const doc = new Y.Doc();
-    const lyText = doc.getText('monaco');
-    setYText(props._id, lyText);
+    const yText = doc.getText('monaco');
+
     const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
-    new MonacoBinding(lyText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
+    new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
     provider.on('sync', () => {
       const users = provider.awareness.getStates();
@@ -233,12 +187,11 @@ function AppComponent(props: App): JSX.Element {
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count == 1) {
         // Does the app have code?
-        console.log('Spec', spec.length)
-        if (spec) {
+        if (s.content) {
           // Clear any existing lines
-          lyText.delete(0, lyText.length);
+          yText.delete(0, yText.length);
           // Set the lines from the database
-          lyText.insert(0, spec);
+          yText.insert(0, s.content);
         }
       }
     });
@@ -255,7 +208,7 @@ function AppComponent(props: App): JSX.Element {
           height={'100%'}
           language={s.language}
           options={{
-            readOnly: readonly,
+            readOnly: s.readonly,
             fontSize: s.fontSize,
             contextmenu: false,
             minimap: { enabled: false },
@@ -298,10 +251,11 @@ function ToolbarComponent(props: App): JSX.Element {
   // Save Confirmation  Modal
   const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
   // State
-  const readonly = useStore((state) => state.readonly[props._id]);
-  const setReadonly = useStore((state) => state.setReadonly);
-  const updateState = useAppStore((state) => state.updateState);
+  const { update, updateState } = useAppStore((state) => state);
   const createApp = useAppStore((state) => state.create);
+
+  // Editor in Store
+  const editor = useStore((state) => state.editor[props._id]);
 
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
@@ -358,163 +312,102 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Larger font size
   function handleIncreaseFont() {
-    const fs = s.fontSize + 4;
+    const fs = Math.min(48, s.fontSize + 4);
     updateState(props._id, { fontSize: fs });
   }
 
   // Smaller font size
   function handleDecreaseFont() {
-    const fs = s.fontSize - 4;
+    const fs = Math.max(8, s.fontSize - 4);
     updateState(props._id, { fontSize: fs });
   }
 
-  // Explain the code
-  function explainCode() {
-    const modelHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    const modelBody = {
-      inputs: `[INST]Explain the following ${s.language} code: ${s.content}[/INST]`,
-      parameters: {
-        max_new_tokens: 400
-      }
-    };
-    console.log('Request Code', JSON.stringify(modelBody, null, 4));
-    // Send the request
-    fetch("https://astrolab.evl.uic.edu:4343/generate", {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(modelBody),
-    }).then((response) => response.json())
-      .then((data) => {
-        if (roomId && boardId && data) {
-          const result = data.generated_text || 'No result';
-          console.log(result);
-          const w = props.data.size.width;
-          const h = props.data.size.height;
-          const x = props.data.position.x + w + 20;
-          const y = props.data.position.y;
-          createApp(setupApp('Explain Code', 'Stickie', x, y, roomId, boardId,
-            { w, h }, { text: result, fontSize: 24, color: 'yellow' }));
-        }
-      });
+  // Handle Toggle Readonly
+  function handleReadonly() {
+    updateState(props._id, { readonly: !s.readonly });
   }
 
-  // Refector the code
-  function refactorCode() {
-    const modelHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    const modelBody = {
-      inputs: `[INST]Can you refactor this ${s.language} code: ${s.content}[/INST]`,
-      parameters: {
-        max_new_tokens: 400
-      }
-    };
-    console.log('Request Code', JSON.stringify(modelBody, null, 4));
-    // Send the request
-    fetch("https://astrolab.evl.uic.edu:4343/generate", {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(modelBody),
-    }).then((response) => response.json())
-      .then((data) => {
-        if (roomId && boardId && data) {
-          const result = data.generated_text || 'No result';
-          console.log(result);
-          const w = props.data.size.width;
-          const h = props.data.size.height;
-          const x = props.data.position.x + w + 20;
-          const y = props.data.position.y;
-          createApp(setupApp('Explain Code', 'Stickie', x, y, roomId, boardId,
-            { w, h }, { text: result, fontSize: 24, color: 'orange' }));
-        }
+  function handleLanguageChange(lang: string) {
+    updateState(props._id, { language: lang });
+    update(props._id, { title: `CodeEditor: ${lang}` });
+  }
+
+  // Explain the code
+  async function explainCode() {
+    if (!roomId || !boardId) return;
+    const result = await CodeEditorAPI.request(s.language, s.content, 'explain');
+    if (result.success && result.generated_text) {
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      createApp(
+        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.generated_text, fontSize: 24, color: 'yellow' })
+      );
+    } else {
+      toast({
+        title: 'Explain Code',
+        description: 'Explain failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
       });
+    }
+  }
+
+  // Refactor the Code
+  async function refactorCode() {
+    if (!roomId || !boardId) return;
+    const result = await CodeEditorAPI.request(s.language, s.content, 'refactor');
+    if (result.success && result.generated_text) {
+      editor.setValue(result.generated_text);
+      updateState(props._id, { content: result });
+    } else {
+      toast({
+        title: 'Refactor',
+        description: 'Refactor failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
   }
 
   // Comment the code
-  function commentCode() {
-    const modelHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    const modelBody = {
-      inputs: `[INST] <<SYS>> You are a good programmer. Return only the new version code. <<SYS>> Can you add comments in this ${s.language} code to explain clearly what each instruction is supposed to do: ${s.content} [/INST]`,
-      parameters: {
-        max_new_tokens: 400
-      }
-    };
-    console.log('Request Code', JSON.stringify(modelBody, null, 4));
-    // Send the request
-    fetch("https://astrolab.evl.uic.edu:4343/generate", {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(modelBody),
-    }).then((response) => response.json())
-      .then((data) => {
-        if (roomId && boardId && data) {
-          const result = data.generated_text || 'No result';
-          console.log(result);
-          const w = props.data.size.width;
-          const h = props.data.size.height;
-          const x = props.data.position.x + w + 20;
-          const y = props.data.position.y;
-          createApp(setupApp('CodeEditor', 'CodeEditor', x, y, roomId, boardId,
-            { w, h }, { content: result, language: s.language, fontSize: s.fontSize }));
-        }
+  async function commentCode() {
+    if (!roomId || !boardId) return;
+    const result = await CodeEditorAPI.request(s.language, s.content, 'comment');
+    if (result.success && result.generated_text) {
+      editor.setValue(result.generated_text);
+      updateState(props._id, { content: result });
+    } else {
+      toast({
+        title: 'Comment',
+        description: 'Comment failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
       });
+    }
   }
 
   // Generate code
-  function generateCode() {
-    const modelHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    /*
-    for follow up prompt:
-      [INST] {prompt1} [/INST]
-      {response1}
-      [INST] {prompt2} [/INST]
-      {response2}
-    */
-
-    const query = `Load a CSV file into a pandas dataframe and display the data using matplotlib, using 300dpi resolution.`;
-    // const query = `Load a CSV file into a pandas dataframe and display the first 5 rows.`;
-    // const query = `Write an input text box with React. Use Typescruipt and Material UI.`;
-    // const query = `Write a python function to integrate x**2 from x_min to x_max`;
-    // const query = `Write a python function to generate the nth fibonacci number.`;
-    const modelBody = {
-      inputs: `[INST] <<SYS>> You are an expert programmer that helps to write Python code based on the user request. Don't be too verbose. Return only commented code. <<SYS>> ${query} [/INST]`,
-      parameters: {
-        max_new_tokens: 400
-      }
-    };
-    console.log('Request Code', JSON.stringify(modelBody, null, 4));
-    // Send the request
-    fetch("https://astrolab.evl.uic.edu:4343/generate", {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(modelBody),
-    }).then((response) => response.json())
-      .then((data) => {
-        if (roomId && boardId && data) {
-          const result: string = data.generated_text || 'No result';
-          const lines = result.split('\n');
-          lines.shift();
-          lines.pop();
-          const w = props.data.size.width;
-          const h = props.data.size.height;
-          const x = props.data.position.x + w + 20;
-          const y = props.data.position.y;
-          createApp(setupApp('CodeEditor', 'CodeEditor', x, y, roomId, boardId,
-            { w, h }, { content: lines.join('\n'), language: 'python', fontSize: s.fontSize }));
-        }
+  async function generateCode() {
+    if (!roomId || !boardId) return;
+    const result = await CodeEditorAPI.request(s.language, s.content, 'generate');
+    if (result.success && result.generated_text) {
+      editor.setValue(result.generated_text);
+      updateState(props._id, { content: result });
+    } else {
+      toast({
+        title: 'Comment',
+        description: 'Comment failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
       });
+    }
   }
-
 
   return (
     <>
@@ -526,14 +419,31 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-          '.' +
-          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+            '.' +
+            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
         confirmColor="green"
       />
+
+      <ButtonGroup isAttached size="xs" ml={1} minWidth="100px">
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="teal" aria-label="layout" minWidth="100px">
+              {s.language}
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="100px" fontSize={'sm'}>
+            {languageExtensions.map((lang) => (
+              <MenuItem key={lang.name} onClick={() => handleLanguageChange(lang.name)}>
+                {lang.name}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
@@ -554,15 +464,9 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top" hasArrow={true} label={readonly ? 'Read only' : 'Edit'} openDelay={400}>
-          <Button
-            onClick={() => (readonly ? setReadonly(props._id, false) : setReadonly(props._id, true))}
-            size="xs"
-            p="0"
-            mx="2px"
-            colorScheme={'teal'}
-          >
-            {readonly ? <MdLock /> : <MdLockOpen />}
+        <Tooltip placement="top" hasArrow={true} label={s.readonly ? 'Read only' : 'Edit'} openDelay={400}>
+          <Button onClick={handleReadonly} size="xs" p="0" mx="2px" colorScheme={'teal'}>
+            {s.readonly ? <MdLock /> : <MdLockOpen />}
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -604,7 +508,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
-
     </>
   );
 }
