@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
 
 import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useAbility } from '@sage3/frontend';
@@ -14,10 +14,12 @@ import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useAb
 import { Panel } from '../Panel';
 import { Files } from './Files';
 import { FileEntry } from '@sage3/shared/types';
+import { set } from 'date-fns';
 
 type AssetsPanelProps = {
   boardId: string;
   roomId: string;
+  downloadRoomAssets: (ids: string[]) => void;
 };
 
 /**
@@ -37,15 +39,18 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   // Access the list of users
   const users = useUsersStore((state) => state.users);
-  const { auth } = useAuth();
+  // const { auth } = useAuth();
 
   // Ablities
   const canUpload = useAbility('upload', 'assets');
+  const canDowload = useAbility('download', 'assets');
 
   const subscribe = useAssetStore((state) => state.subscribe);
   const unsubscribe = useAssetStore((state) => state.unsubscribe);
   const assets = useAssetStore((state) => state.assets);
   const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
+  // List of selected assets: receive from the Files component
+  const [ids, setIds] = useState<string[]>([]);
 
   // subscribe to the asset store
   useEffect(() => {
@@ -84,12 +89,27 @@ export function AssetsPanel(props: AssetsPanelProps) {
     );
   }, [assets, props.roomId]);
 
+  // Download assets: all if none selected, selected ones if some are selected
+  const downloadRoomAssets = useCallback(() => {
+    if (ids.length > 0) {
+      props.downloadRoomAssets(ids);
+    } else {
+      const ids = assetsList.map((a) => a.id);
+      props.downloadRoomAssets(ids);
+    }
+  }, [ids]);
+
+  // Update the list of selected assets from the Files component
+  const newSelection = (ids: string[]) => {
+    setIds(ids);
+  };
+
   return (
     <>
       <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
         <Box display="flex" flexDirection="column">
           <Box alignItems="center" p="1" width={'3xl'} display="flex">
-            <Files files={assetsList} />
+            <Files files={assetsList} setSelection={newSelection} />
           </Box>
           <Divider p={0} mt={1} mb={2} />
           <Flex>
@@ -98,14 +118,33 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
             <Tooltip
               placement="top-start"
-              label={auth?.provider === 'guest' ? 'Guests cannot upload assets' : 'Upload assets'}
+              label={!canDowload ? 'You cannot download assets' : 'Download selected or all assets'}
               openDelay={500}
               hasArrow
             >
               <Button
                 colorScheme="green"
-                width="100px"
+                width="80px"
                 size={'xs'}
+                onClick={downloadRoomAssets}
+                // Block guests from downloading assets
+                isDisabled={!canDowload || assetsList.length === 0}
+              >
+                Download
+              </Button>
+            </Tooltip>
+
+            <Tooltip
+              placement="top-start"
+              label={!canUpload ? 'You cannot upload assets' : 'Upload new assets'}
+              openDelay={500}
+              hasArrow
+            >
+              <Button
+                colorScheme="green"
+                width="80px"
+                size={'xs'}
+                ml={2}
                 onClick={onOpen}
                 // Block guests from uploading assets
                 isDisabled={!canUpload}

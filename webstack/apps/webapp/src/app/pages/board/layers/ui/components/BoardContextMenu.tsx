@@ -30,7 +30,6 @@ type ContextProps = {
   boardId: string;
   clearBoard: () => void;
   showAllApps: () => void;
-  downloadBoard: () => void;
 };
 
 // State of the checkboxes in context menu: grid ui
@@ -259,20 +258,6 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show all Apps
           </Button>
-
-          {/* <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.downloadBoard}
-          >
-            Download Opened Assets
-          </Button> */}
         </VStack>
 
         <VStack w={'100%'}>
