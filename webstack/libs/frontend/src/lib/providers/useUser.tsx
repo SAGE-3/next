@@ -54,7 +54,6 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     if (auth) {
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
-        console.log('userResponse', userResponse);
         const user = userResponse.data[0];
         // Check for savedBoards
         if (!user.data.savedBoards) {
