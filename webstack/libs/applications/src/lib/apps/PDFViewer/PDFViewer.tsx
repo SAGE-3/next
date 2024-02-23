@@ -23,7 +23,6 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
-  MdTipsAndUpdates,
 } from 'react-icons/md';
 
 // Utility functions from SAGE3
@@ -42,7 +41,8 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const [urls, setUrls] = useState([] as string[]);
   const [file, setFile] = useState<Asset>();
-  const [aspectRatio, setAspecRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState(1);
+  const [displayRatio, setDisplayRatio] = useState(1);
   // App functions
   const createApp = useAppStore((state) => state.create);
   // User information
@@ -95,10 +95,20 @@ function AppComponent(props: App): JSX.Element {
         setUrls(allurls);
         // First image of the page
         const firstpage = pages[0];
-        setAspecRatio(firstpage[0].width / firstpage[0].height);
+        const ar = firstpage[0].width / firstpage[0].height;
+        setAspectRatio(ar);
+        setDisplayRatio(ar * s.displayPages);
       }
     }
   }, [file]);
+
+  useEffect(() => {
+    if (s.displayPages > 1) {
+      setDisplayRatio(aspectRatio * s.displayPages);
+    } else {
+      setDisplayRatio(aspectRatio);
+    }
+  }, [s.displayPages]);
 
   useEffect(() => {
     if (file) {
@@ -249,7 +259,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props} processing={processing}>
+    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
@@ -271,13 +281,19 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
+/*
+ * Toolbar component for the PDFViewer app
+ *
+ * @param {App} props
+ * @returns {JSX.Element}
+* */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
-  const [aspectRatio, setAspecRatio] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState(1);
   // User information
   const { user } = useUser();
 
@@ -295,7 +311,7 @@ function ToolbarComponent(props: App): JSX.Element {
         // First page
         const page = pages[0];
         // First image of the page
-        setAspecRatio(page[0].width / page[0].height);
+        setAspectRatio(page[0].width / page[0].height);
       }
     }
   }, [file]);
@@ -455,7 +471,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       {/* Remote Action in Python */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+      {/* <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">
@@ -468,7 +484,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuItem>
           </MenuList>
         </Menu>
-      </ButtonGroup>
+      </ButtonGroup> */}
     </>
   );
 }
