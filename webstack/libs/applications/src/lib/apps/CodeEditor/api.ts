@@ -28,6 +28,8 @@ type CodeEditorAPIResponse = {
   generated_text?: string;
 };
 
+const AI_URL = 'https://astrolab.evl.uic.edu:4343/generate';
+
 // Explain the code
 async function request(language: string, content: string, type: CodeEditorRequest): Promise<CodeEditorAPIResponse> {
   const modelHeaders: Record<string, string> = {
@@ -43,7 +45,7 @@ async function request(language: string, content: string, type: CodeEditorReques
   // Try/catch block to handle errors
   try {
     // Send the request
-    const response = await fetch('https://astrolab.evl.uic.edu:4343/generate', {
+    const response = await fetch(AI_URL, {
       method: 'POST',
       headers: modelHeaders,
       body: JSON.stringify(modelBody),
@@ -54,7 +56,7 @@ async function request(language: string, content: string, type: CodeEditorReques
     if (!jsonResponse.generated_text) {
       return {
         success: false,
-        error_message: "Sorry, I couldn't explain the code. Please try again.",
+        error_message: `Sorry, I couldn't ${type} the code. Please try again.`,
       };
     } else {
       return {
@@ -66,7 +68,7 @@ async function request(language: string, content: string, type: CodeEditorReques
     // Return an error message if the request fails
     return {
       success: false,
-      error_message: "Sorry, I couldn't explain the code. Please try again.",
+      error_message: `Sorry, I couldn't ${type} the code. Please try again.`,
     };
   }
 }
