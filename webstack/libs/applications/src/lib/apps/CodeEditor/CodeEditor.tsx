@@ -25,7 +25,7 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdMenu, MdTipsAndUpdates } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb } from 'react-icons/md';
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 
@@ -50,7 +50,6 @@ import { MonacoBinding } from 'y-monaco';
 // CodeEditor API
 import { CodeEditorAPI } from './api';
 import { create } from 'zustand';
-import { update } from 'plotly.js';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -79,7 +78,7 @@ const useStore = create<CodeStore>()((set) => ({
 function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+  const { update, updateState } = useAppStore((state) => state);
 
   // Assets
   const assets = useAssetStore((state) => state.assets);
@@ -95,48 +94,46 @@ function AppComponent(props: App): JSX.Element {
   const { setEditor } = useStore();
 
   // Convert the ID to an asset
-  // useEffect(() => {
-  //   const isUUID = isUUIDv4(s.assetid);
-  //   if (isUUID) {
-  //     const myasset = assets.find((a) => a._id === s.assetid);
-  //     if (myasset) {
-  //       setFile(myasset);
-  //       // Update the app title
-  //       update(props._id, { title: myasset?.data.originalfilename });
-  //     }
-  //   } else {
-  //     update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
-  //   }
-  // }, [s.assetid, assets]);
+  useEffect(() => {
+    const isUUID = isUUIDv4(s.assetid);
+    if (isUUID) {
+      const myasset = assets.find((a) => a._id === s.assetid);
+      if (myasset) {
+        setFile(myasset);
+        // Update the app title
+        update(props._id, { title: myasset?.data.originalfilename });
+      }
+    } else {
+      update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
+    }
+  }, [s.assetid, assets]);
 
   // Once we have the asset, get the data
-  // useEffect(() => {
-  //   async function fetchAsset() {
-  //     if (file) {
-  //       // Look for the file in the asset store
-  //       const localurl = apiUrls.assets.getAssetById(file.data.file);
-  //       // Get the content of the file
-  //       const response = await fetch(localurl, {
-  //         headers: {
-  //           'Content-Type': 'text/plain',
-  //           Accept: 'text/plain',
-  //         },
-  //       });
-  //       // Get the content of the file
-  //       const text = await response.text();
-  //       const lang = stringContainsCode(text);
-  //       updateState(props._id, { language: lang });
-  //       console.log('Set spec', text.length);
-  //       setSpec(text);
-  //       if (yText) {
-  //         yText.insert(0, spec);
-  //       } else {
-  //         console.log('No yText');
-  //       }
-  //     }
-  //   }
-  //   fetchAsset();
-  // }, [file, yText]);
+  useEffect(() => {
+    async function fetchAsset() {
+      console.log(editorRef.current, file, 'fetchAsset');
+      if (file && editorRef.current) {
+        console.log('get asset');
+        // Look for the file in the asset store
+        const localurl = apiUrls.assets.getAssetById(file.data.file);
+        // Get the content of the file
+        const response = await fetch(localurl, {
+          headers: {
+            'Content-Type': 'text/plain',
+            Accept: 'text/plain',
+          },
+        });
+        // Get the content of the file
+        const text = await response.text();
+        const lang = stringContainsCode(text);
+        updateState(props._id, { language: lang });
+        console.log('Set spec', text.length);
+        editorRef.current;
+      }
+    }
+
+    fetchAsset();
+  }, [file, editorRef.current]);
 
   // Update local value with value from the server
   useEffect(() => {
@@ -255,7 +252,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // Editor in Store
-  const editor = useStore((state) => state.editor[props._id]);
+  const editor = useStore((state) => state.editor[props._id] as editor.IStandaloneCodeEditor);
 
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
@@ -330,6 +327,20 @@ function ToolbarComponent(props: App): JSX.Element {
   function handleLanguageChange(lang: string) {
     updateState(props._id, { language: lang });
     update(props._id, { title: `CodeEditor: ${lang}` });
+  }
+
+  async function refactorSelection() {
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const result = await CodeEditorAPI.request(s.language, selectionText, 'refactor');
+    if (result.success && result.generated_text) {
+      // Create new range with the same start and end line
+      editor.executeEdits('handleHighlight', [{ range: selection, text: result.generated_text }]);
+    }
   }
 
   // Explain the code
@@ -489,22 +500,15 @@ function ToolbarComponent(props: App): JSX.Element {
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">
-              <MdMenu />
+              <MdOutlineLightbulb />
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px" fontSize={'sm'}>
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={explainCode}>
-              Explain Code
-            </MenuItem>
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={refactorCode}>
-              Refactor Code
-            </MenuItem>
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={commentCode}>
-              Comment Code
-            </MenuItem>
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={generateCode}>
-              Generate Code
-            </MenuItem>
+            <MenuItem onClick={explainCode}>Explain Code</MenuItem>
+            <MenuItem onClick={refactorCode}>Refactor Code</MenuItem>
+            <MenuItem onClick={commentCode}>Comment Code</MenuItem>
+            <MenuItem onClick={generateCode}>Generate Code</MenuItem>
+            <MenuItem onClick={refactorSelection}>Refactor Selection</MenuItem>
           </MenuList>
         </Menu>
       </ButtonGroup>
