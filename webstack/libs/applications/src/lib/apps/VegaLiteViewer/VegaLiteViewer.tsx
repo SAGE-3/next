@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // SAGE imports
 import { useAppStore } from '@sage3/frontend';
@@ -20,9 +20,24 @@ import { Button } from '@chakra-ui/react';
 
 import { create } from 'zustand';
 
+function convertObjectToArray(dataObject: any) {
+  const keys = Object.keys(dataObject);
+  const length = dataObject[keys[0]].length;
+  const dataArray = [];
+
+  for (let i = 0; i < length; i++) {
+    const record: any = {};
+    keys.forEach((key) => {
+      record[key] = dataObject[key][i];
+    });
+    dataArray.push(record);
+  }
+  return dataArray;
+}
+
 interface VegaStore {
-  view: { [key: string]: any },
-  setView: (id: string, view: any) => void,
+  view: { [key: string]: any };
+  setView: (id: string, view: any) => void;
 }
 
 // Store to communicate with toolbar
@@ -38,29 +53,60 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const setView = useStore((state) => state.setView);
+  const [spec, setSpec] = useState<string>('{}');
 
+  useEffect(() => {
+    const fetchData = async () => {
+      let tmpStationMetadata: any = [];
+      let url = '';
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&start=202401181356&end=202401191356&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      try {
+        const response = await fetch(url);
+        const sensor = await response.json();
+
+        if (sensor) {
+          const sensorData = sensor['STATION'];
+          tmpStationMetadata = sensorData;
+        }
+        const tmpSpec = JSON.parse(s.spec);
+        tmpSpec.data.values = convertObjectToArray(tmpStationMetadata[0].OBSERVATIONS);
+        setSpec(JSON.stringify(tmpSpec));
+      } catch (error) {
+        console.log('Error in 1');
+        console.log(error);
+      }
+    };
+    if (s.isHCDPChart) {
+      fetchData();
+    } else {
+      setSpec(s.spec);
+    }
+  }, []);
   useEffect(() => {
     // Initilize error in specification to false
     updateState(props._id, { error: false });
 
     // Check if spec causes an error
     try {
-      const VegaLiteSpec = JSON.parse(s.spec);
+      const VegaLiteSpec = JSON.parse(spec);
+      console.log(VegaLiteSpec);
 
       // Resize Vega-Lite chart to div
       VegaLiteSpec.width = 'container';
       VegaLiteSpec.height = 'container';
-
+      VegaLiteSpec.title = '';
       // Render Vega-Lite
       // Put actions to false to hide the menu, but would be nice to add the controlbar
       vegaEmbed(`#vis${props._id}`, VegaLiteSpec as any, { actions: false }).then((result) => {
         setView(props._id, result.view);
       });
     } catch (e) {
+      console.log('Error in 2');
+
       // If error, set error to true that handles displaying error message
       updateState(props._id, { error: true });
     }
-  }, [s.spec, props.data.size.width, props.data.size.height]);
+  }, [s.spec, spec, props.data.size.width, props.data.size.height]);
 
   return (
     <AppWindow app={props}>
@@ -104,6 +150,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

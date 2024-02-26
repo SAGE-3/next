@@ -253,6 +253,7 @@ function AppComponent(props: App): JSX.Element {
 
   const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
     const widget = { ...props.data.state.widget, visualizationType: visualizationType };
+
     await createApp({
       title: 'Hawaii Mesonet',
       roomId: props.data.roomId!,

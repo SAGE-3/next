@@ -46,21 +46,6 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 import { VegaLite } from 'react-vega';
 
-function convertObjectToArray(dataObject: any) {
-  const keys = Object.keys(dataObject);
-  const length = dataObject[keys[0]].length;
-  const dataArray = [];
-
-  for (let i = 0; i < length; i++) {
-    const record: any = {};
-    keys.forEach((key) => {
-      record[key] = dataObject[key][i];
-    });
-    dataArray.push(record);
-  }
-  return dataArray;
-}
-
 function getCode(jsonInput: string) {
   // Remove the ```json and ``` characters
   const cleanJson = jsonInput
@@ -149,7 +134,9 @@ function AppComponent(props: App): JSX.Element {
   const ctrlRef = useRef<null | AbortController>(null);
 
   const [spec, setSpec] = useState<any>(null);
-  console.log(spec);
+
+  const createApp = useAppStore((state) => state.create);
+
   // Display some notifications
   const toast = useToast();
 
@@ -174,25 +161,6 @@ function AppComponent(props: App): JSX.Element {
     setInput('');
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      let tmpStationMetadata: any = [];
-      let url = '';
-
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&start=202401181356&end=202401191356&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-
-      const response = await fetch(url);
-      const sensor = await response.json();
-
-      if (sensor) {
-        const sensorData = sensor['STATION'];
-        tmpStationMetadata = sensorData;
-      }
-
-      setData(convertObjectToArray(tmpStationMetadata[0].OBSERVATIONS));
-    };
-    fetchData();
-  }, []);
   // Update from server
   useEffect(() => {
     setPreviousQuestion(s.previousQ);
@@ -238,25 +206,15 @@ function AppComponent(props: App): JSX.Element {
       let tempText = '';
       setStreamText(tempText);
 
-      const messages = [
+      const complete_request = [
         { role: 'system', content: OPENAI_SYSTEM_PROMPT },
         { role: 'user', content: request },
       ];
-      const complete_request = messages;
-      // if (previousQuestion && previousAnswer) {
-      //   complete_request = [
-      //     { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-      //     { role: 'user', content: previousQuestion },
-      //     { role: 'assistant', content: previousAnswer },
-      //     { role: 'user', content: request },
-      //   ];
-      // } else {
-      // }
 
       const stream = await openai.chat.completions.create({
         model: OPENAI_ENGINE,
         // @ts-expect-error
-        messages: complete_request || messages,
+        messages: complete_request,
         // max_tokens: OPENAI_TOKENS,
         temperature: 0.2,
         stream: true,
@@ -275,31 +233,82 @@ function AppComponent(props: App): JSX.Element {
       setStreamText('');
       ctrlRef.current = null;
       setPreviousAnswer(tempText);
-      const codeFromText = getCode(tempText);
-      console.log(codeFromText);
-      let code = JSON.parse(codeFromText);
-      code.data.values = data;
+      try {
+        const codeFromText = getCode(tempText);
 
-      setSpec(code);
-      // Add messages
-      updateState(props._id, {
-        ...s,
-        previousQ: request,
-        previousA: tempText,
-        messages: [
-          ...s.messages,
-          initialAnswer,
-          {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch + 1,
-            userName: 'OpenAI',
-            query: '',
-            response: tempText,
+        // const code = JSON.parse(codeFromText);
+        // code.data.values = data;
+        tempText = 'I have generated the chart for you.';
+        // setSpec(code);
+
+        await createApp({
+          title: 'VegaLiteViewer',
+          roomId: props.data.roomId!,
+          boardId: props.data.boardId!,
+          //TODO get middle of the screen space
+          position: {
+            x: props.data.position.x + props.data.size.width,
+            y: props.data.position.y,
+            z: 0,
           },
-        ],
-      });
+          size: {
+            width: props.data.size.width,
+            height: props.data.size.height,
+            depth: 0,
+          },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'VegaLiteViewer',
+          state: {
+            spec: codeFromText,
+            error: false,
+            isHCDPChart: true,
+          },
+
+          raised: true,
+          dragging: false,
+          pinned: false,
+        });
+        // Add messages
+        updateState(props._id, {
+          ...s,
+          previousQ: request,
+          previousA: tempText,
+          messages: [
+            ...s.messages,
+            initialAnswer,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'OpenAI',
+              query: '',
+              response: tempText,
+            },
+          ],
+        });
+      } catch (e) {
+        tempText = 'An error occured while generating the chart. Please try again.';
+        console.log(e);
+        updateState(props._id, {
+          ...s,
+          previousQ: request,
+          previousA: tempText,
+          messages: [
+            ...s.messages,
+            initialAnswer,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'OpenAI',
+              query: '',
+              response: tempText,
+            },
+          ],
+        });
+      }
     }
 
     setTimeout(() => {
@@ -393,288 +402,277 @@ function AppComponent(props: App): JSX.Element {
   }, [s.messages]);
   return (
     <AppWindow app={props}>
-      <Box>
-        <Box height="300px" width="300px">
-          {spec ? <VegaLite spec={spec} actions={false} renderer="svg" /> : 'no chart'}
-        </Box>
-        <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
-          {/* Display Messages */}
-          <Box
-            flex={1}
-            bg={bgColor}
-            borderRadius={'md'}
-            overflowY="scroll"
-            ref={chatBox}
-            css={{
-              '&::-webkit-scrollbar': {
-                width: '12px',
-              },
-              '&::-webkit-scrollbar-track': {
-                '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: `${scrollColor}`,
-                borderRadius: '6px',
-                outline: `3px solid ${bgColor}`,
-              },
-            }}
-          >
-            {sortedMessages.map((message, index) => {
-              const isMe = user?._id == message.userId;
-              const time = getDateString(message.creationDate);
-              const previousTime = message.creationDate;
-              const now = Date.now();
-              const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-              const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-              const last = index === sortedMessages.length - 1;
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+        {/* Display Messages */}
+        <Box
+          flex={1}
+          bg={bgColor}
+          borderRadius={'md'}
+          overflowY="scroll"
+          ref={chatBox}
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '12px',
+            },
+            '&::-webkit-scrollbar-track': {
+              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: `${scrollColor}`,
+              borderRadius: '6px',
+              outline: `3px solid ${bgColor}`,
+            },
+          }}
+        >
+          {sortedMessages.map((message, index) => {
+            const isMe = user?._id == message.userId;
+            const time = getDateString(message.creationDate);
+            const previousTime = message.creationDate;
+            const now = Date.now();
+            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
+            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+            const last = index === sortedMessages.length - 1;
 
-              return (
-                <Fragment key={index}>
-                  {/* Start of User Messages */}
-                  {message.query.length ? (
-                    <Box position="relative" my={1}>
-                      {isMe ? (
-                        <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                            Me
-                          </Text>
-                        </Box>
-                      ) : (
-                        <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                            {message.userName}
-                          </Text>
-                        </Box>
-                      )}
+            return (
+              <Fragment key={index}>
+                {/* Start of User Messages */}
+                {message.query.length ? (
+                  <Box position="relative" my={1}>
+                    {isMe ? (
+                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          Me
+                        </Text>
+                      </Box>
+                    ) : (
+                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          {message.userName}
+                        </Text>
+                      </Box>
+                    )}
 
-                      <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                        <Tooltip
-                          whiteSpace={'nowrap'}
-                          textOverflow="ellipsis"
-                          fontSize={'xs'}
-                          placement="top"
-                          hasArrow={true}
-                          label={time}
-                          openDelay={400}
+                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
+                      <Tooltip
+                        whiteSpace={'nowrap'}
+                        textOverflow="ellipsis"
+                        fontSize={'xs'}
+                        placement="top"
+                        hasArrow={true}
+                        label={time}
+                        openDelay={400}
+                      >
+                        <Box
+                          color="white"
+                          rounded={'md'}
+                          boxShadow="md"
+                          fontFamily="arial"
+                          textAlign={isMe ? 'right' : 'left'}
+                          bg={isMe ? myColor : otherUserColor}
+                          p={1}
+                          m={3}
+                          maxWidth="70%"
+                          userSelect={'none'}
+                          onDoubleClick={() => {
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.query);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
+                          }}
+                          draggable={true}
+                          // Store the query into the drag/drop events to create stickies
+                          onDragStart={(e) => {
+                            e.dataTransfer.clearData();
+                            // Will create a new sticky
+                            e.dataTransfer.setData('app', 'Stickie');
+                            // Get the color of the user
+                            const colorMessage = isMe
+                              ? user?.data.color
+                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                            // Put the state of the app into the drag/drop events
+                            e.dataTransfer.setData(
+                              'app_state',
+                              JSON.stringify({
+                                color: colorMessage,
+                                text: message.query,
+                                fontSize: 24,
+                              })
+                            );
+                          }}
+                        >
+                          {message.query}
+                        </Box>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                ) : null}
+
+                {/* Start of Geppetto Messages */}
+                {message.response.length ? (
+                  <Box position="relative" my={1} maxWidth={'70%'}>
+                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                        {message.userName}
+                      </Text>
+                    </Box>
+
+                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                      <Tooltip
+                        whiteSpace={'nowrap'}
+                        textOverflow="ellipsis"
+                        fontSize={'xs'}
+                        placement="top"
+                        hasArrow={true}
+                        label={time}
+                        openDelay={400}
+                      >
+                        <Box
+                          boxShadow="md"
+                          color="white"
+                          rounded={'md'}
+                          textAlign={'left'}
+                          bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
+                          p={1}
+                          m={3}
+                          fontFamily="arial"
+                          onDoubleClick={() => {
+                            if (navigator.clipboard) {
+                              // Copy into clipboard
+                              navigator.clipboard.writeText(message.response);
+                              // Notify the user
+                              toast({
+                                title: 'Success',
+                                description: `Content Copied to Clipboard`,
+                                duration: 3000,
+                                isClosable: true,
+                                status: 'success',
+                              });
+                            }
+                          }}
                         >
                           <Box
-                            color="white"
-                            rounded={'md'}
-                            boxShadow="md"
-                            fontFamily="arial"
-                            textAlign={isMe ? 'right' : 'left'}
-                            bg={isMe ? myColor : otherUserColor}
-                            p={1}
-                            m={3}
-                            maxWidth="70%"
-                            userSelect={'none'}
-                            onDoubleClick={() => {
-                              if (navigator.clipboard) {
-                                // Copy into clipboard
-                                navigator.clipboard.writeText(message.query);
-                                // Notify the user
-                                toast({
-                                  title: 'Success',
-                                  description: `Content Copied to Clipboard`,
-                                  duration: 3000,
-                                  isClosable: true,
-                                  status: 'success',
-                                });
-                              }
-                            }}
+                            pl={3}
                             draggable={true}
-                            // Store the query into the drag/drop events to create stickies
                             onDragStart={(e) => {
+                              // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
-                              // Will create a new sticky
                               e.dataTransfer.setData('app', 'Stickie');
-                              // Get the color of the user
-                              const colorMessage = isMe
-                                ? user?.data.color
-                                : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                              // Put the state of the app into the drag/drop events
                               e.dataTransfer.setData(
                                 'app_state',
                                 JSON.stringify({
-                                  color: colorMessage,
-                                  text: message.query,
+                                  color: message.userName === 'OpenAI' ? 'green' : 'purple',
+                                  text: message.response,
                                   fontSize: 24,
                                 })
                               );
                             }}
                           >
-                            {message.query}
+                            <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
                           </Box>
-                        </Tooltip>
-                      </Box>
+                        </Box>
+                      </Tooltip>
                     </Box>
-                  ) : null}
-
-                  {/* Start of Geppetto Messages */}
-                  {message.response.length ? (
-                    <Box position="relative" my={1} maxWidth={'70%'}>
-                      <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName}
-                        </Text>
-                      </Box>
-
-                      <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                        <Tooltip
-                          whiteSpace={'nowrap'}
-                          textOverflow="ellipsis"
-                          fontSize={'xs'}
-                          placement="top"
-                          hasArrow={true}
-                          label={time}
-                          openDelay={400}
-                        >
-                          <Box
-                            boxShadow="md"
-                            color="white"
-                            rounded={'md'}
-                            textAlign={'left'}
-                            bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
-                            p={1}
-                            m={3}
-                            fontFamily="arial"
-                            onDoubleClick={() => {
-                              if (navigator.clipboard) {
-                                // Copy into clipboard
-                                navigator.clipboard.writeText(message.response);
-                                // Notify the user
-                                toast({
-                                  title: 'Success',
-                                  description: `Content Copied to Clipboard`,
-                                  duration: 3000,
-                                  isClosable: true,
-                                  status: 'success',
-                                });
-                              }
-                            }}
-                          >
-                            <Box
-                              pl={3}
-                              draggable={true}
-                              onDragStart={(e) => {
-                                // Store the response into the drag/drop events to create stickies
-                                e.dataTransfer.clearData();
-                                e.dataTransfer.setData('app', 'Stickie');
-                                e.dataTransfer.setData(
-                                  'app_state',
-                                  JSON.stringify({
-                                    color: message.userName === 'OpenAI' ? 'green' : 'purple',
-                                    text: message.response,
-                                    fontSize: 24,
-                                  })
-                                );
-                              }}
-                            >
-                              <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  ) : null}
-
-                  {when && !last ? (
-                    <Box position="relative" padding="4">
-                      <Center>
-                        <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                        <AbsoluteCenter bg={bgColor} px="4">
-                          {when}
-                        </AbsoluteCenter>
-                      </Center>
-                    </Box>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-
-            {/* In progress Geppetto Messages */}
-            {streamText && (
-              <Box position="relative" my={1} maxWidth={'70%'}>
-                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                    AI is typing...
-                  </Text>
-                </Box>
-
-                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                    {streamText}
                   </Box>
+                ) : null}
+
+                {when && !last ? (
+                  <Box position="relative" padding="4">
+                    <Center>
+                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
+                      <AbsoluteCenter bg={bgColor} px="4">
+                        {when}
+                      </AbsoluteCenter>
+                    </Center>
+                  </Box>
+                ) : null}
+              </Fragment>
+            );
+          })}
+
+          {/* In progress Geppetto Messages */}
+          {streamText && (
+            <Box position="relative" my={1} maxWidth={'70%'}>
+              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                  AI is typing...
+                </Text>
+              </Box>
+
+              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                  {streamText}
                 </Box>
               </Box>
-            )}
-          </Box>
-          <HStack>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={newMessages ? 'New Messages' : 'No New Messages'}
-              openDelay={400}
-            >
-              <IconButton
-                aria-label="Messages"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={newMessages ? 'green' : 'blue'}
-                variant="ghost"
-                icon={<MdExpandCircleDown size="24px" />}
-                isDisabled={!newMessages}
-                isLoading={processing}
-                onClick={() => goToBottom('instant')}
-                width="33%"
-              />
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
-              <IconButton
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                icon={<MdStopCircle size="24px" />}
-                onClick={stopGeppetto}
-                width="34%"
-              />
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
-              <IconButton
-                aria-label="reset"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                icon={<MdChangeCircle size="24px" />}
-                onClick={resetGepetto}
-                width="33%"
-              />
-            </Tooltip>
-          </HStack>
-          <InputGroup bg={'blackAlpha.100'}>
-            <Input
-              placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
-              size="md"
-              variant="outline"
-              _placeholder={{ color: 'inherit' }}
-              onChange={handleChange}
-              onKeyDown={onSubmit}
-              value={input}
-              ref={inputRef}
+            </Box>
+          )}
+        </Box>
+        <HStack>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
+            <IconButton
+              aria-label="Messages"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={newMessages ? 'green' : 'blue'}
+              variant="ghost"
+              icon={<MdExpandCircleDown size="24px" />}
+              isDisabled={!newMessages}
+              isLoading={processing}
+              onClick={() => goToBottom('instant')}
+              width="33%"
             />
-            <InputRightElement onClick={send}>
-              <MdSend color="green.500" />
-            </InputRightElement>
-          </InputGroup>
-        </Flex>
-      </Box>
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
+            <IconButton
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              icon={<MdStopCircle size="24px" />}
+              onClick={stopGeppetto}
+              width="34%"
+            />
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
+            <IconButton
+              aria-label="reset"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              icon={<MdChangeCircle size="24px" />}
+              onClick={resetGepetto}
+              width="33%"
+            />
+          </Tooltip>
+        </HStack>
+        <InputGroup bg={'blackAlpha.100'}>
+          <Input
+            placeholder="Ask the agent to generate a chart..."
+            size="md"
+            variant="outline"
+            _placeholder={{ color: 'inherit' }}
+            onChange={handleChange}
+            onKeyDown={onSubmit}
+            value={input}
+            ref={inputRef}
+          />
+          <InputRightElement onClick={send}>
+            <MdSend color="green.500" />
+          </InputRightElement>
+        </InputGroup>
+      </Flex>
     </AppWindow>
   );
 }

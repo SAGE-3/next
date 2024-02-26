@@ -17,6 +17,7 @@ export const schema = z.object({
   previousQ: z.string(),
   previousA: z.string(),
   context: z.string(),
+  spec: z.any(),
   messages: z
     .object({
       id: z.string(),
@@ -35,6 +36,7 @@ export const init: Partial<state> = {
   previousQ: '',
   previousA: '',
   context: '',
+  spec: {},
   messages: [
     {
       id: 'starting',
