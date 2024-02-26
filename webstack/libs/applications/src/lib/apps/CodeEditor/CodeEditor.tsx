@@ -111,9 +111,7 @@ function AppComponent(props: App): JSX.Element {
   // Once we have the asset, get the data
   useEffect(() => {
     async function fetchAsset() {
-      console.log(editorRef.current, file, 'fetchAsset');
       if (file && editorRef.current) {
-        console.log('get asset');
         // Look for the file in the asset store
         const localurl = apiUrls.assets.getAssetById(file.data.file);
         // Get the content of the file
@@ -127,8 +125,7 @@ function AppComponent(props: App): JSX.Element {
         const text = await response.text();
         const lang = stringContainsCode(text);
         updateState(props._id, { language: lang });
-        console.log('Set spec', text.length);
-        editorRef.current;
+        // Need to set the content in the editor here with 'text'
       }
     }
 
@@ -430,9 +427,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-            '.' +
-            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+          '.' +
+          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"

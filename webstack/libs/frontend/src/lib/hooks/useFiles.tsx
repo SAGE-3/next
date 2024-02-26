@@ -370,7 +370,7 @@ export function useFiles(): UseFiles {
         if (a._id === fileID) {
           // Create a note from the text
           return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
-            { assetid: apiUrls.assets.getAssetById(a.data.file), content: '', language: '' });
+            { assetid: fileID, content: '', language: '' });
         }
       }
     } else if (isGIF(fileType)) {
