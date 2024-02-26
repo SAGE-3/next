@@ -50,7 +50,7 @@ function Overview({ s }: RAPIDState): JSX.Element {
       {s.metricData ? (
         <Box padding="5" display="flex" flexDir="column" height="100%">
           <Box mb="10">
-            <h1>Average Measurements Over 24 Hours</h1>
+            <h1>Average Measurements Over 7 days</h1>
           </Box>
 
           <Box>

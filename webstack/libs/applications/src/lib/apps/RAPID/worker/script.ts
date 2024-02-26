@@ -14,6 +14,7 @@ export type SageNodeQuery = {
 export type MesonetQuery = {
   start?: string;
   end?: string;
+  time: string;
   metric: string;
 };
 
@@ -72,16 +73,15 @@ export default () => {
           minute: '2-digit',
           hour: '2-digit',
         }),
-        y: (query.filter.name === "env.pressure" ? data.value / 100 : data.value), // Convert pressure from Pa to millibars
+        y: query.filter.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
       };
     });
     return formattedData;
   }
 
   async function getMesonetData(query: MesonetQuery) {
-    console.log('mesonet query', query.metric);
     const res = await fetch(
-      'https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=1440&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba'
+      `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
     );
 
     const data = await res.json();

@@ -6,24 +6,28 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useAppStore } from '@sage3/frontend';
+import { apiUrls, useAppStore } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import { useUser } from '@sage3/frontend';
 
 // Styling
 import './styling.css';
 import { CATEGORIES } from './components/ComponentSelector';
+import { Box, Button, Link, Tooltip } from '@chakra-ui/react';
+import { BiDownload } from 'react-icons/bi';
+import { FaDownload } from 'react-icons/fa';
 
 /* App component for RAPID */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // console.log('counter', props.data.state);
+  console.log(s);
 
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
@@ -128,7 +132,48 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return <></>;
+  const jsonBlob = useCallback(() => {
+    const data = new Blob([JSON.stringify(s.metricData)], { type: 'application/json' });
+    const url = URL.createObjectURL(data);
+    return url;
+  }, [s.metricData]);
+
+  console.log(props);
+
+  return (
+    <Box display="flex" gap="2" alignItems="center">
+      <Link href={jsonBlob()} download={`SageNode_Mesonet_${Date.now()}.json`}>
+        <Tooltip label="Download Data" aria-label="Download Current Data">
+          <div>
+            <FaDownload />
+          </div>
+        </Tooltip>
+      </Link>
+      <Button
+        size="xs"
+        onClick={() => {
+          try {
+            console.log('uploading');
+            const fd = new FormData();
+            fd.append(
+              'files',
+              new File([new Blob([JSON.stringify(s.metricData)], { type: 'application/json' })], `SageNode_Mesonet_${Date.now()}.json`)
+            );
+            fd.append('room', props.data.roomId!);
+
+            fetch(apiUrls.assets.upload, {
+              method: 'POST',
+              body: fd,
+            });
+          } catch (error) {
+            console.log('Upload> Error: ', error);
+          }
+        }}
+      >
+        Add to Assets Folder
+      </Button>
+    </Box>
+  );
 }
 
 /**

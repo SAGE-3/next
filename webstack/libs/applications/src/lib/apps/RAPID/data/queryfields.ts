@@ -14,4 +14,18 @@ export const QUERY_FIELDS = {
     SAGE_NODE: 'env.pressure',
     MESONET: 'pressure_set_1',
   },
+  TIME: {
+    "24HR": {
+      SAGE_NODE: "-1d",
+      MESONET: "1440"
+    },
+    "7D": {
+      SAGE_NODE: "-7d",
+      MESONET: "10080"
+    },
+    "30D": {
+      SAGE_NODE: "-30d",
+      MESONET: "40320"
+    }
+  }
 };

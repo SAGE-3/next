@@ -40,6 +40,10 @@ export const schema = z.object({
       ),
     })
     .nullable(),
+  time: z.object({
+    SAGE_NODE: z.string(),
+    MESONET: z.string(),
+  }),
 });
 export type state = z.infer<typeof schema>;
 
@@ -54,6 +58,7 @@ export const init: Partial<state> = {
   category: CATEGORIES.CONTROL_PANEL.name,
   counter: 10,
   metricData: null,
+  time: QUERY_FIELDS.TIME['24HR'],
 };
 
 export const name = 'RAPID';

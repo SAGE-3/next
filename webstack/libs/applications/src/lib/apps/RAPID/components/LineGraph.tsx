@@ -19,7 +19,7 @@ function LineGraph({ s }: RAPIDState) {
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="x" tick={{ fontSize: 6 }} interval={40}>
+              <XAxis dataKey="x" tick={{ fontSize: 6 }} interval={s.metricData.length / 7}>
                 <Label value="Time" offset={0} position="insideBottom" />
               </XAxis>
               <YAxis>
