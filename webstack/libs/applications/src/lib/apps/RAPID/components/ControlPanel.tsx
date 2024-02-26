@@ -97,7 +97,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
           <div>Last Updated: {s.lastUpdated}</div>
           <Box marginTop="4">Filter</Box>
           <form onSubmit={handleSubmit}>
-            <Select name="date_selection">
+            <Select placeholder="Select Date" name="date_selection">
               <option value={JSON.stringify(QUERY_FIELDS.TIME['24HR'])}>Last 24 Hours</option>
               <option value={JSON.stringify(QUERY_FIELDS.TIME['7D'])}>Last 7 days</option>
               <option value={JSON.stringify(QUERY_FIELDS.TIME['30D'])}>Last 30 Days</option>

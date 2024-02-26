@@ -26,9 +26,6 @@ import { FaDownload } from 'react-icons/fa';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // console.log('counter', props.data.state);
-  console.log(s);
-
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
@@ -137,8 +134,6 @@ function ToolbarComponent(props: App): JSX.Element {
     const url = URL.createObjectURL(data);
     return url;
   }, [s.metricData]);
-
-  console.log(props);
 
   return (
     <Box display="flex" gap="2" alignItems="center">
