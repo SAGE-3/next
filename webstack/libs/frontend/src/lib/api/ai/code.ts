@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { apiUrls } from '@sage3/frontend';
+
 type CodeEditorRequest = 'explain' | 'refactor' | 'comment' | 'generate';
 
 // Prompts
@@ -18,7 +20,7 @@ function generateRequest(language: string, content: string, type: CodeEditorRequ
     case 'comment':
       return `[INST] <<SYS>> You are a good programmer. Return only the new version code. <<SYS>> Can you add comments in this ${language} code to explain clearly what each instruction is supposed to do: ${content} [/INST]`;
     case 'generate':
-      return `[INST]<<SYS>> You are an expert programmer that helps to write ${language} code based on the user request. Don't be too verbose. Return only commented code. <<SYS>> ${content} `;
+      return `[INST]<<SYS>> You are an expert programmer that helps to write ${language} code based on the user request. Don't be too verbose. Return only commented code. <<SYS>> ${content}[/INST] `;
   }
 }
 
@@ -28,25 +30,19 @@ type CodeEditorAPIResponse = {
   generated_text?: string;
 };
 
-const AI_URL = 'https://astrolab.evl.uic.edu:4343/generate';
-const MAX_NEW_TOKENS = 400;
-
 // Explain the code
-async function request(language: string, content: string, type: CodeEditorRequest): Promise<CodeEditorAPIResponse> {
+async function generate(language: string, content: string, type: CodeEditorRequest): Promise<CodeEditorAPIResponse> {
   const modelHeaders: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   };
   const modelBody = {
-    inputs: generateRequest(language, content, type),
-    parameters: {
-      max_new_tokens: MAX_NEW_TOKENS,
-    },
+    ai_query: generateRequest(language, content, type),
   };
   // Try/catch block to handle errors
   try {
     // Send the request
-    const response = await fetch(AI_URL, {
+    const response = await fetch(apiUrls.ai.code.generate, {
       method: 'POST',
       headers: modelHeaders,
       body: JSON.stringify(modelBody),
@@ -54,26 +50,48 @@ async function request(language: string, content: string, type: CodeEditorReques
     // Parse the response
     const jsonResponse = await response.json();
     // Check if the response is valid
-    if (!jsonResponse.generated_text) {
+    if (jsonResponse.success) {
       return {
-        success: false,
-        error_message: `Sorry, I couldn't ${type} the code. Please try again.`,
+        success: true,
+        generated_text: jsonResponse.data.generated_text,
       };
     } else {
       return {
-        success: true,
-        generated_text: jsonResponse.generated_text,
+        success: false,
+        error_message: `API AI ERROR> ${jsonResponse.error_message}`,
       };
     }
   } catch (error) {
     // Return an error message if the request fails
     return {
       success: false,
-      error_message: `Sorry, I couldn't ${type} the code. Please try again.`,
+      error_message: `API AI ERROR> ${error}`,
     };
   }
 }
 
-export const CodeEditorAPI = {
-  request,
-};
+// Status Request off API Service
+async function status(): Promise<boolean> {
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.code.status, {
+      method: 'GET',
+    });
+    // Parse the response
+    const jsonResponse = await response.json();
+    // Check if the response is valid
+    if (jsonResponse.online) {
+      return true;
+    } else {
+      console.log('API AI ERROR> ', jsonResponse.error_message);
+      return false;
+    }
+  } catch (error) {
+    // Return an error message if the request fails
+    console.log('API AI ERROR> ', error);
+    return false;
+  }
+}
+
+export { generate, status };

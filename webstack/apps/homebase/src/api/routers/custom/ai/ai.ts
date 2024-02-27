@@ -6,13 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './asset';
-export * from './config';
-export * from './files';
-export * from './time';
-export * from './nlp';
-export * from './subscription';
-export * from './logs';
-export * from './presencethrottle';
-export * from './fastapi';
-export * from './ai';
+import * as express from 'express';
+
+import { AiCodeRouter } from './code';
+
+// Ai Router for all the node Ai backend
+export function AiRouter(): express.Router {
+  const router = express.Router();
+
+  // AI Code router
+  router.use('/code', AiCodeRouter());
+
+  return router;
+}

@@ -48,7 +48,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
-import { CodeEditorAPI } from './api';
+import { AiAPI } from '@sage3/frontend';
 import { create } from 'zustand';
 
 const languageExtensions = [
@@ -254,6 +254,19 @@ function ToolbarComponent(props: App): JSX.Element {
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
 
+  // Ai Online
+  const [aiOnline, setAiOnline] = useState(false);
+
+  useEffect(() => {
+    try {
+      AiAPI.Code.status().then((status) => {
+        setAiOnline(status);
+      });
+    } catch (error) {
+      setAiOnline(false);
+    }
+  }, []);
+
   // Download the code into a local file
   const downloadCode = (): void => {
     const lang = languageExtensions.find((obj) => obj.name === s.language)?.extension;
@@ -333,7 +346,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await CodeEditorAPI.request(s.language, selectionText, 'refactor');
+    const result = await AiAPI.Code.generate(s.language, selectionText, 'refactor');
     if (result.success && result.generated_text) {
       // Create new range with the same start and end line
       editor.executeEdits('handleHighlight', [{ range: selection, text: result.generated_text }]);
@@ -343,7 +356,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Explain the code
   async function explainCode() {
     if (!roomId || !boardId) return;
-    const result = await CodeEditorAPI.request(s.language, s.content, 'explain');
+    const result = await AiAPI.Code.generate(s.language, s.content, 'explain');
     if (result.success && result.generated_text) {
       const w = props.data.size.width;
       const h = props.data.size.height;
@@ -366,7 +379,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Refactor the Code
   async function refactorCode() {
     if (!roomId || !boardId) return;
-    const result = await CodeEditorAPI.request(s.language, s.content, 'refactor');
+    const result = await AiAPI.Code.generate(s.language, s.content, 'refactor');
     if (result.success && result.generated_text) {
       editor.setValue(result.generated_text);
       updateState(props._id, { content: result });
@@ -384,7 +397,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Comment the code
   async function commentCode() {
     if (!roomId || !boardId) return;
-    const result = await CodeEditorAPI.request(s.language, s.content, 'comment');
+    const result = await AiAPI.Code.generate(s.language, s.content, 'comment');
     if (result.success && result.generated_text) {
       editor.setValue(result.generated_text);
       updateState(props._id, { content: result });
@@ -402,7 +415,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Generate code
   async function generateCode() {
     if (!roomId || !boardId) return;
-    const result = await CodeEditorAPI.request(s.language, s.content, 'generate');
+    const result = await AiAPI.Code.generate(s.language, s.content, 'generate');
     if (result.success && result.generated_text) {
       editor.setValue(result.generated_text);
       updateState(props._id, { content: result });
@@ -427,9 +440,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-          '.' +
-          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+            '.' +
+            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
@@ -493,7 +506,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       {/* Smart Action */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={!aiOnline}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">

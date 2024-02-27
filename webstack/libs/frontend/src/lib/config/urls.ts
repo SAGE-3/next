@@ -44,4 +44,10 @@ export const apiUrls = {
     getInfo: '/api/info',
     nlp: '/api/nlp',
   },
+  ai: {
+    code: {
+      status: '/api/ai/code/status',
+      generate: '/api/ai/code/generate',
+    },
+  },
 };
