@@ -255,17 +255,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const fontSizeColor = useColorModeValue('white', 'black');
 
   // Ai Online
-  const [aiOnline, setAiOnline] = useState(false);
-
-  useEffect(() => {
-    try {
-      AiAPI.Code.status().then((status) => {
-        setAiOnline(status);
-      });
-    } catch (error) {
-      setAiOnline(false);
-    }
-  }, []);
+  const [aiOnline, setAiOnline] = useState(true);
 
   // Download the code into a local file
   const downloadCode = (): void => {
@@ -339,7 +329,7 @@ function ToolbarComponent(props: App): JSX.Element {
     update(props._id, { title: `CodeEditor: ${lang}` });
   }
 
-  async function refactorSelection() {
+  async function refactor() {
     if (!editor) return;
     const selection = editor.getSelection();
     // Get the line before the selection
@@ -354,9 +344,15 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   // Explain the code
-  async function explainCode() {
+  async function explain() {
     if (!roomId || !boardId) return;
-    const result = await AiAPI.Code.generate(s.language, s.content, 'explain');
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const result = await AiAPI.Code.generate(s.language, selectionText, 'explain');
     if (result.success && result.generated_text) {
       const w = props.data.size.width;
       const h = props.data.size.height;
@@ -376,57 +372,35 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
-  // Refactor the Code
-  async function refactorCode() {
-    if (!roomId || !boardId) return;
-    const result = await AiAPI.Code.generate(s.language, s.content, 'refactor');
-    if (result.success && result.generated_text) {
-      editor.setValue(result.generated_text);
-      updateState(props._id, { content: result });
-    } else {
-      toast({
-        title: 'Refactor',
-        description: 'Refactor failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-    }
-  }
-
   // Comment the code
-  async function commentCode() {
-    if (!roomId || !boardId) return;
-    const result = await AiAPI.Code.generate(s.language, s.content, 'comment');
+  async function comment() {
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const result = await AiAPI.Code.generate(s.language, selectionText, 'comment');
     if (result.success && result.generated_text) {
-      editor.setValue(result.generated_text);
-      updateState(props._id, { content: result });
-    } else {
-      toast({
-        title: 'Comment',
-        description: 'Comment failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
+      // Remove all instances of ``` from generated_text
+      const cleanedText = result.generated_text.replace(/```/g, '');
+      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
     }
   }
 
   // Generate code
-  async function generateCode() {
-    if (!roomId || !boardId) return;
-    const result = await AiAPI.Code.generate(s.language, s.content, 'generate');
+  async function generate() {
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const result = await AiAPI.Code.generate(s.language, selectionText, 'generate');
     if (result.success && result.generated_text) {
-      editor.setValue(result.generated_text);
-      updateState(props._id, { content: result });
-    } else {
-      toast({
-        title: 'Comment',
-        description: 'Comment failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
+      // Remove all instances of ``` from generated_text
+      const cleanedText = result.generated_text.replace(/```/g, '');
+      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
     }
   }
 
@@ -514,11 +488,10 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px" fontSize={'sm'}>
-            <MenuItem onClick={explainCode}>Explain Code</MenuItem>
-            <MenuItem onClick={refactorCode}>Refactor Code</MenuItem>
-            <MenuItem onClick={commentCode}>Comment Code</MenuItem>
-            <MenuItem onClick={generateCode}>Generate Code</MenuItem>
-            <MenuItem onClick={refactorSelection}>Refactor Selection</MenuItem>
+            <MenuItem onClick={explain}>Explain</MenuItem>
+            <MenuItem onClick={refactor}>Refactor</MenuItem>
+            <MenuItem onClick={comment}>Comment</MenuItem>
+            <MenuItem onClick={generate}>Generate</MenuItem>
           </MenuList>
         </Menu>
       </ButtonGroup>

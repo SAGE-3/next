@@ -36,6 +36,7 @@ export function AiCodeRouter(): express.Router {
       // Fetch the status of the AI Code System
       // Change this fetch to axios
       const response = await axios.get(`${URL}/info`);
+      console.log(response.status);
       // Was the response successful?
       if (response.status === 200) {
         const responseMessage = {
@@ -68,17 +69,12 @@ export function AiCodeRouter(): express.Router {
     // Get the request parameters
     const { ai_query } = req.body;
     // Send the request
-    const modelHeaders: Record<string, string> = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    };
     const modelBody = {
       inputs: ai_query,
       parameters: {
         max_new_tokens: MAX_NEW_TOKENS,
       },
     };
-    console.log(req.body);
     // Try/catch block to handle errors
     try {
       const response = await axios.post(`${URL}/generate`, modelBody);
@@ -88,14 +84,14 @@ export function AiCodeRouter(): express.Router {
           success: true,
           data: response.data,
         } as GenerateResponseType;
-        res.json(responseMessage);
+        res.status(200).json(responseMessage);
       } else {
         // Return an error message if the request fails
         const responseMessage = {
           success: false,
           error_message: `Sorry, I couldn't process the request. Please try again.`,
         } as GenerateResponseType;
-        res.json(responseMessage);
+        res.status(500).json(responseMessage);
       }
     } catch (error) {
       // Return an error message if the request fails
@@ -103,7 +99,7 @@ export function AiCodeRouter(): express.Router {
         success: false,
         error_message: error.message,
       } as GenerateResponseType;
-      res.json(responseMessage);
+      res.status(500).json(responseMessage);
     }
   });
 
