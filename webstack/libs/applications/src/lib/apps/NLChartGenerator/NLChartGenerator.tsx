@@ -116,7 +116,7 @@ function AppComponent(props: App): JSX.Element {
   const [data, setData] = useState({});
 
   const [openai, setOpenai] = useState<OpenAI>();
-
+  console.log(config.openai.apiKey);
   // Input text for query
   const [input, setInput] = useState<string>('');
   const [streamText, setStreamText] = useState<string>('');
