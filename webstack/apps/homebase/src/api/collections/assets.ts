@@ -135,13 +135,20 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
         // save the image aspect ratio
         aspectRatio: imgWidth / imgHeight,
         // video metadata
-        duration: exif['Duration'] || '',
+        duration: exif['TrackDuration'] || exif['MediaDuration'] || exif['Duration'] || '',
         birate: exif['AvgBitrate'] || '',
         framerate: exif['VideoFrameRate'] || 0,
         compressor: exif['CompressorName'] || exif['CompressorID'] || '',
         audioFormat: exif['AudioFormat'] || '',
         rotation: rotation,
       };
+      // Fix video duration if it's object with Scale and Value properties
+      if (!derived.duration && typeof exif['Duration'] !== 'string') {
+        if (exif['Duration'].Scale && exif['Duration'].Value) {
+          const value = exif['Duration'].Value * exif['Duration'].Scale;
+          derived.duration = value.toFixed(2);
+        }
+      }
       return {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
