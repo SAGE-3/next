@@ -80,67 +80,77 @@ export default () => {
   }
 
   async function getMesonetData(query: MesonetQuery) {
-    const res = await fetch(
-      `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
-    );
+    try {
+      const res = await fetch(
+        `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
+      );
 
-    const data = await res.json();
-    // console.log("mesonet data", data);
-    // console.log("date_time", data?.STATION[0].OBSERVATIONS["date_time"])
+      const data = await res.json();
+      // console.log("mesonet data", data);
+      // console.log("date_time", data?.STATION[0].OBSERVATIONS["date_time"])
 
-    const date_time = data?.STATION[0].OBSERVATIONS?.date_time?.map((date: string) => {
-      return new Date(date).toLocaleTimeString([], {
-        month: '2-digit',
-        day: '2-digit',
-        year: '2-digit',
-        minute: '2-digit',
-        hour: '2-digit',
+      const date_time = data?.STATION[0].OBSERVATIONS?.date_time?.map((date: string) => {
+        return new Date(date).toLocaleTimeString([], {
+          month: '2-digit',
+          day: '2-digit',
+          year: '2-digit',
+          minute: '2-digit',
+          hour: '2-digit',
+        });
       });
-    });
 
-    const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`]?.map((temp: number) => {
-      return temp;
-    });
+      const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`]?.map((temp: number) => {
+        return temp;
+      });
 
-    // Mesonet data has date_time and other fields in separate arrays
-    if (date_time?.length !== metric?.length) {
-      console.log(`date_time and ${metric} are not the same length`);
-      return;
+      // Mesonet data has date_time and other fields in separate arrays
+      if (date_time?.length !== metric?.length) {
+        console.log(`date_time and ${metric} are not the same length`);
+        return;
+      }
+
+      const formattedData = date_time?.map((date: string, index: number) => {
+        return {
+          x: date,
+          y: metric[index],
+        };
+      });
+
+      return formattedData;
+    } catch (error) {
+      console.log('error', error);
+      return [];
     }
-
-    const formattedData = date_time?.map((date: string, index: number) => {
-      return {
-        x: date,
-        y: metric[index],
-      };
-    });
-
-    return formattedData;
   }
 
   async function mergeData(data: RAPIDQueries) {
-    const sageData = await getSageNodeData(data.sageNode);
-    const mesonetData = await getMesonetData(data.mesonet);
+    try {
+      const sageData = await getSageNodeData(data.sageNode);
+      const mesonetData = await getMesonetData(data.mesonet);
 
-    const sageMap = new Map(sageData.map((obj) => [obj.x, obj.y]));
-    // console.log("sagemap", sageMap);
-    const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number }) => [obj.x, obj.y]));
-    // console.log("mesonetmap", mesonetMap);
+      const sageMap = new Map(sageData.map((obj) => [obj.x, obj.y]));
+      // console.log("sagemap", sageMap);
+      const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number }) => [obj.x, obj.y]));
+      // console.log("mesonetmap", mesonetMap);
 
-    const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
-    const sortedXValues = Array.from(allXValues as Set<string>).sort((a: string, b: string) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateA.getTime() - dateB.getTime();
-    });
+      const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
+      const sortedXValues = Array.from(allXValues as Set<string>).sort((a: string, b: string) => {
+        const dateA = new Date(a);
+        const dateB = new Date(b);
+        return dateA.getTime() - dateB.getTime();
+      });
 
-    const mergedArray = sortedXValues.map((x: string) => ({
-      x,
-      'Sage Node': sageMap.get(x) || null,
-      Mesonet: mesonetMap.get(x) || null,
-    }));
+      const mergedArray = sortedXValues.map((x: string) => ({
+        x,
+        'Sage Node': sageMap.get(x) || null,
+        Mesonet: mesonetMap.get(x) || null,
+      }));
 
-    return mergedArray;
+      return mergedArray;
+    } catch (error) {
+      console.log('error', error);
+      return [];
+    }
   }
 
   self.addEventListener('message', async (e: MessageEvent) => {

@@ -36,7 +36,7 @@ function Chart({ option }: ChartProps) {
 
   useEffect(() => {
     const render = () => {
-      chartRef.current = echarts.init(divRef.current);
+      chartRef.current = echarts.init(divRef.current, null, { renderer: 'svg' });
       chartRef.current.setOption(option);
     };
     render();

@@ -24,15 +24,28 @@ function LineGraph({ s }: RAPIDState) {
               show: true,
               title: 'Save as Image',
             },
+            dataZoom: {
+              yAxisIndex: false,
+            },
           },
         },
         legend: {
           data: ['Sage Node', 'Mesonet'],
         },
         xAxis: {
-          data: s.metricData ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d.x.replace(", ", "\n"))] : [],
+          data: s.metricData
+            ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d.x.replace(', ', '\n'))]
+            : [],
+          name: 'Time',
         },
-        yAxis: {},
+        yAxis: {
+          name: s.metric.NAME,
+          position: 'left',
+        },
+        grid: {
+          bottom: "25%"
+        },
+        renderer: "svg",
         series: [
           {
             name: 'Sage Node',
@@ -40,6 +53,7 @@ function LineGraph({ s }: RAPIDState) {
             data: s.metricData
               ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
               : [],
+            large: true,
           },
           {
             name: 'Mesonet',
@@ -47,8 +61,17 @@ function LineGraph({ s }: RAPIDState) {
             data: s.metricData.data
               ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
               : [],
+            large: true,
           },
         ],
+        dataZoom: [
+          {
+            type: "inside"
+          },
+          {
+            type: "slider"
+          }
+        ]
       };
       setOption(option);
     }
