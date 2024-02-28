@@ -26,6 +26,12 @@ var os = require('os');
 // NPM modules
 const electron = require('electron');
 
+const slowit = require('throttle-debounce');
+
+// Sharp image processing
+const sharp = require('sharp');
+sharp.concurrency(1);
+
 // parsing command-line arguments
 var program = require('commander');
 
@@ -674,37 +680,55 @@ function createWindow() {
       if (viewContent) viewContent.endFrameSubscription();
     });
     ipcMain.on('streamview', (e, args) => {
-      // console.log('Webview>    message', channel, args);
-      // console.log('Webview> IPC Message', args.id, args.width, args.height);
-
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
-
+      const dpr = args.dpr || 1;
       viewContent.enableDeviceEmulation({
         screenPosition: 'mobile',
         screenSize: { width: args.width, height: args.height },
       });
 
-      viewContent.beginFrameSubscription(false, (image, dirty) => {
+      async function sendFrame(image, dirty) {
         let dataenc;
         let neww, newh;
-        const devicePixelRatio = 2;
-        const quality = 60;
-        if (devicePixelRatio > 1) {
-          neww = dirty.width / devicePixelRatio;
-          newh = dirty.height / devicePixelRatio;
+        const quality = 50;
+        if (dpr > 1) {
+          neww = dirty.width / dpr;
+          newh = dirty.height / dpr;
           const resizedimage = image.resize({ width: neww, height: newh, quality: 'better' });
-          dataenc = resizedimage.toJPEG(quality);
+          // dataenc = resizedimage.toJPEG(quality);
+          const im = sharp(resizedimage.getBitmap(), { raw: { width: neww, height: newh, channels: 4 } });
+          dataenc = await im
+            .recomb([
+              [0, 0, 1],
+              [0, 1, 0],
+              [1, 0, 0],
+            ])
+            .avif({ quality, lossless: false, effort: 2, chromaSubsampling: '4:2:0' })
+            .toBuffer();
         } else {
-          dataenc = image.toJPEG(quality);
           neww = dirty.width;
           newh = dirty.height;
+          // dataenc = image.toJPEG(quality);
+          const im = sharp(image.getBitmap(), { raw: { width: neww, height: newh, channels: 4 } });
+          dataenc = await im
+            .recomb([
+              [0, 0, 1],
+              [0, 1, 0],
+              [1, 0, 0],
+            ])
+            .avif({ quality, lossless: false, effort: 2, chromaSubsampling: '4:2:0' })
+            .toBuffer();
         }
         mainWindow.webContents.send('paint', {
           id: args.id,
           buf: dataenc.toString('base64'),
           dirty: { ...dirty, width: neww, height: newh },
         });
+      }
+      const throttleUpdate = slowit.throttle(200, sendFrame);
+      viewContent.beginFrameSubscription(false, async (image, dirty) => {
+        throttleUpdate(image, dirty);
       });
     });
 
@@ -860,15 +884,6 @@ function createWindow() {
     const parsedURL = new URL(currentURL);
     // updater.checkForUpdates(parsedURL.origin, true);
   });
-
-  // Request from the renderer process
-  // ipcMain.on('streamview', (event, arg) => {
-  //   console.log('streamview>', arg.url, arg.id);
-  //   // const allweb = electron.webContents.getAllWebContents();
-  //   // allweb.forEach((web) => {
-  //   //   console.log('web>', web.id, web);
-  //   // });
-  // });
 }
 
 /**
