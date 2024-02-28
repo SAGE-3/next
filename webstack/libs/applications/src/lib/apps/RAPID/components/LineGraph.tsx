@@ -5,6 +5,7 @@ import Chart from '../echarts_plots/Chart';
 
 function LineGraph({ s }: RAPIDState) {
   const [option, setOption] = useState({});
+  console.log('s.metricData', s.metricData);
 
   useEffect(() => {
     if (s.metricData) {
@@ -12,6 +13,7 @@ function LineGraph({ s }: RAPIDState) {
         title: {
           text: 'Sage Node vs. Mesonet',
         },
+        animation: false,
         tooltip: {
           trigger: 'axis',
         },
@@ -28,7 +30,7 @@ function LineGraph({ s }: RAPIDState) {
           data: ['Sage Node', 'Mesonet'],
         },
         xAxis: {
-          data: s.metricData ? [...s.metricData.data.map((d: { x: number; 'Sage Node': number; Mesonet: number }) => d.x)] : [],
+          data: s.metricData ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d.x.replace(", ", "\n"))] : [],
         },
         yAxis: {},
         series: [
@@ -36,14 +38,14 @@ function LineGraph({ s }: RAPIDState) {
             name: 'Sage Node',
             type: 'line',
             data: s.metricData
-              ? [...s.metricData.data.map((d: { x: number; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
+              ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
               : [],
           },
           {
             name: 'Mesonet',
             type: 'line',
             data: s.metricData.data
-              ? [...s.metricData.data.map((d: { x: number; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
+              ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
               : [],
           },
         ],

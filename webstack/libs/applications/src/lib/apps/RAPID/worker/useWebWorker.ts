@@ -28,6 +28,7 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
   // using useRef to keep track of ids and metric independently of state, might not be best practice
   const ids = useRef<string[]>([]);
   const metric = useRef<string>('');
+  const time = useRef<{ SAGE_NODE: string; MESONET: string }>();
 
   // initialize web worker
   const startProcessing = useCallback(
@@ -36,6 +37,7 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
       setRunning(true);
       ids.current = (data as any).apps;
       metric.current = (data as any).metric;
+      time.current = (data as any).time;
       // console.log('metric', metric.current);
       // console.log("idsRef.current", idsRef.current);
       worker.postMessage(data);
@@ -56,10 +58,10 @@ export const useWebWorker = <Result, TWorkerPayload>(worker: Worker) => {
           lastUpdated: new Date().toLocaleString(),
           metric: metric.current,
           metricData: result,
+          time: time.current,
         },
       });
     });
-    console.log("metric from updateRapid", metric.current);
     updateStateBatch(ps);
   };
 

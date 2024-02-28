@@ -30,6 +30,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     startProcessing({
       apps: arr,
       metric: metric,
+      time: time,
       sageNode: {
         start: time.SAGE_NODE,
         filter: {
@@ -61,6 +62,7 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     // clear interval on unmount
     return () => clearInterval(interval.current);
   }, [s.children.length]);
+
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

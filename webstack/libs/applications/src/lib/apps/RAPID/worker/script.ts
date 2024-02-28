@@ -26,16 +26,11 @@ export type RAPIDQueries = {
 export default () => {
   async function getSageNodeData(query: SageNodeQuery) {
     try {
-      console.log('sage node query', query);
-      console.log('sage node query stringified', JSON.stringify(query));
       const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
         method: 'POST',
         body: JSON.stringify(query),
       });
-
-      console.log("res", await res);
       const data = await res.text();
-      console.log("data", data);
       // console.log("text data", data);
       const parsedData = data.split('\n').map((line) => {
         // console.log("line", line);
@@ -133,8 +128,13 @@ export default () => {
     // console.log("mesonetmap", mesonetMap);
 
     const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
+    const sortedXValues = Array.from(allXValues as Set<string>).sort((a: string, b: string) => {
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateA.getTime() - dateB.getTime();
+    });
 
-    const mergedArray = Array.from(allXValues as Set<string>, (x: string) => ({
+    const mergedArray = sortedXValues.map((x: string) => ({
       x,
       'Sage Node': sageMap.get(x) || null,
       Mesonet: mesonetMap.get(x) || null,

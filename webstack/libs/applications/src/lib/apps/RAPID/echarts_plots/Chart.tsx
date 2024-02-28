@@ -1,9 +1,9 @@
-import React from "react";
-import * as echarts from "echarts";
-import { useEffect, useRef } from "react";
-import { EChartsType } from "echarts";
-import { EChartsCoreOption } from "echarts";
-import { Box } from "@chakra-ui/react";
+import React from 'react';
+import * as echarts from 'echarts';
+import { useEffect, useRef } from 'react';
+import { EChartsType } from 'echarts';
+import { EChartsCoreOption } from 'echarts';
+import { Box } from '@chakra-ui/react';
 
 type ChartProps = {
   option: EChartsCoreOption;
@@ -40,14 +40,15 @@ function Chart({ option }: ChartProps) {
       chartRef.current.setOption(option);
     };
     render();
-    console.log("rerendering");
+    console.log('rerendering');
 
     return () => {
+      console.log('destroying chart');
       destroyChart();
     };
   }, [option]);
 
-  return <Box ref={divRef} height="100%" width="100%" background="white"/>;
+  return <Box ref={divRef} height="100%" width="100%" background="white" />;
 }
 
 export default React.memo(Chart);
