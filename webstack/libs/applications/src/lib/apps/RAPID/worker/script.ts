@@ -25,58 +25,63 @@ export type RAPIDQueries = {
 
 export default () => {
   async function getSageNodeData(query: SageNodeQuery) {
-    console.log('sage node query', query);
-    console.log('sage node query stringified', JSON.stringify(query));
-    const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
-      method: 'POST',
-      body: JSON.stringify(query),
-    });
+    try {
+      console.log('sage node query', query);
+      console.log('sage node query stringified', JSON.stringify(query));
+      const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
+        method: 'POST',
+        body: JSON.stringify(query),
+      });
 
-    const data = await res.text();
-    // console.log("text data", data);
-    const parsedData = data.split('\n').map((line) => {
-      // console.log("line", line);
-      if (line !== '') {
-        return JSON.parse(line);
-      }
-    });
-    // console.log("parsed data", parsedData);
-    // const filteredParsedData = parsedData.filter((data) => data !== undefined);
-
-    // Filter data to keep only the first point in each 5-minute interval
-    let lastTimestamp = new Date(parsedData[0].timestamp).getTime() - 5 * 60 * 1000; // Initialize to 5 minutes before the first data point
-    const filteredParsedData = parsedData.filter((dataPoint) => {
-      if (dataPoint === undefined) return false;
-      const currentTimestamp = new Date(dataPoint.timestamp).getTime();
-      if (currentTimestamp - lastTimestamp >= 5 * 60 * 1000) {
-        // 5 minutes in milliseconds
-        const date = new Date(dataPoint.timestamp);
-        const minutes = date.getMinutes();
-        const seconds = date.getSeconds();
-        if (minutes % 5 === 0 && Math.abs(seconds - 0) < 60) {
-          // Closest to the 5-minute mark
-          lastTimestamp = currentTimestamp;
-          return true;
+      console.log("res", await res);
+      const data = await res.text();
+      console.log("data", data);
+      // console.log("text data", data);
+      const parsedData = data.split('\n').map((line) => {
+        // console.log("line", line);
+        if (line !== '') {
+          return JSON.parse(line);
         }
-      }
-      return false;
-    });
-    //console.log("filtered parsed data", filteredParsedData);
+      });
 
-    const formattedData = filteredParsedData.map((data) => {
-      //console.log("sage node date", data.timestamp);
-      return {
-        x: new Date(data.timestamp).toLocaleTimeString([], {
-          month: '2-digit',
-          day: '2-digit',
-          year: '2-digit',
-          minute: '2-digit',
-          hour: '2-digit',
-        }),
-        y: query.filter.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
-      };
-    });
-    return formattedData;
+      // Filter data to keep only the first point in each 5-minute interval
+      let lastTimestamp = new Date(parsedData[0].timestamp).getTime() - 5 * 60 * 1000; // Initialize to 5 minutes before the first data point
+      const filteredParsedData = parsedData.filter((dataPoint) => {
+        if (dataPoint === undefined) return false;
+        const currentTimestamp = new Date(dataPoint.timestamp).getTime();
+        if (currentTimestamp - lastTimestamp >= 5 * 60 * 1000) {
+          // 5 minutes in milliseconds
+          const date = new Date(dataPoint.timestamp);
+          const minutes = date.getMinutes();
+          const seconds = date.getSeconds();
+          if (minutes % 5 === 0 && Math.abs(seconds - 0) < 60) {
+            // Closest to the 5-minute mark
+            lastTimestamp = currentTimestamp;
+            return true;
+          }
+        }
+        return false;
+      });
+      //console.log("filtered parsed data", filteredParsedData);
+
+      const formattedData = filteredParsedData.map((data) => {
+        //console.log("sage node date", data.timestamp);
+        return {
+          x: new Date(data.timestamp).toLocaleTimeString([], {
+            month: '2-digit',
+            day: '2-digit',
+            year: '2-digit',
+            minute: '2-digit',
+            hour: '2-digit',
+          }),
+          y: query.filter.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
+        };
+      });
+      return formattedData;
+    } catch (error) {
+      console.log('error', error);
+      return [];
+    }
   }
 
   async function getMesonetData(query: MesonetQuery) {
@@ -154,6 +159,7 @@ export default () => {
       console.timeEnd('Worker run');
       return postMessage({ result });
     } catch (error) {
+      console.log('error', error);
       return postMessage({ error });
     }
   });

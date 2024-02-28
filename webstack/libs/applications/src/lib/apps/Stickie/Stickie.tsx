@@ -62,6 +62,48 @@ import './styling.css';
 function AppComponent(props: App): JSX.Element {
   // Get the data for this app from the props
   const s = props.data.state as AppState;
+  const update = useAppStore((state) => state.update);
+
+  useEffect(() => {
+    if (props._id === 'f7a4ab62-16c9-488d-9a60-e27990e71e5c') {
+      update(props._id, {
+        title: 'Giorgio Tran',
+        roomId: 'fb7d701a-2d72-4521-8ef7-eceecdacd27e',
+        boardId: '1577bfc1-9e4d-40f3-b769-25a7b03699e5',
+        position: {
+          x: 1510850,
+          y: 1498635,
+          z: 0,
+        },
+        size: {
+          width: 400,
+          height: 420,
+          depth: 0,
+        },
+        rotation: {
+          x: 0,
+          y: 0,
+          z: 0,
+        },
+        type: 'Stickie',
+        state: {
+          text: 'stickie note',
+          fontSize: 36,
+          color: 'yellow',
+          lock: false,
+          executeInfo: {
+            executeFunc: '',
+            params: {},
+          },
+        },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+    }
+  }, []);
+
+  console.log(props._id, props);
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
