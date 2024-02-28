@@ -52,6 +52,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
+    codellama: CodeLlamaConfiguration;
   };
 
   // Feature flags
@@ -144,4 +145,10 @@ export interface TwilioConfiguration {
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
+}
+
+export interface CodeLlamaConfiguration {
+  url: string;
+  apiKey: string;
+  max_tokens: number;
 }

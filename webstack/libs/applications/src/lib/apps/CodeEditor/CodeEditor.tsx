@@ -50,6 +50,7 @@ import { MonacoBinding } from 'y-monaco';
 // CodeEditor API
 import { AiAPI } from '@sage3/frontend';
 import { create } from 'zustand';
+import { ModelNames } from 'libs/frontend/src/lib/api/ai/code';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -254,8 +255,17 @@ function ToolbarComponent(props: App): JSX.Element {
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
 
-  // Ai Online
-  const [aiOnline, setAiOnline] = useState(true);
+  // Online Models
+  const [onlineModels, setOnlineModels] = useState<ModelNames[]>([]);
+
+  // Check if the AI is online
+  useEffect(() => {
+    async function fetchStatus() {
+      const models = await AiAPI.Code.status();
+      setOnlineModels(models);
+    }
+    fetchStatus();
+  }, []);
 
   // Download the code into a local file
   const downloadCode = (): void => {
@@ -336,7 +346,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.generate(s.language, selectionText, 'refactor');
+    const result = await AiAPI.Code.query(s.language, selectionText, 'refactor', 'code-llama');
     if (result.success && result.generated_text) {
       // Create new range with the same start and end line
       editor.executeEdits('handleHighlight', [{ range: selection, text: result.generated_text }]);
@@ -352,7 +362,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.generate(s.language, selectionText, 'explain');
+    const result = await AiAPI.Code.query(s.language, selectionText, 'explain', 'code-llama');
     if (result.success && result.generated_text) {
       const w = props.data.size.width;
       const h = props.data.size.height;
@@ -380,7 +390,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.generate(s.language, selectionText, 'comment');
+    const result = await AiAPI.Code.query(s.language, selectionText, 'comment', 'code-llama');
     if (result.success && result.generated_text) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.generated_text.replace(/```/g, '');
@@ -396,7 +406,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.generate(s.language, selectionText, 'generate');
+    const result = await AiAPI.Code.query(s.language, selectionText, 'generate', 'openai');
     if (result.success && result.generated_text) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.generated_text.replace(/```/g, '');
@@ -480,7 +490,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       {/* Smart Action */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={!aiOnline}>
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">

@@ -10,6 +10,8 @@ import { apiUrls } from '@sage3/frontend';
 
 type CodeEditorRequest = 'explain' | 'refactor' | 'comment' | 'generate';
 
+export type ModelNames = 'code-llama' | 'openai';
+
 // Prompts
 function generateRequest(language: string, content: string, type: CodeEditorRequest) {
   switch (type) {
@@ -31,13 +33,19 @@ type CodeEditorAPIResponse = {
 };
 
 // Explain the code
-async function generate(language: string, content: string, type: CodeEditorRequest): Promise<CodeEditorAPIResponse> {
+async function query(
+  language: string,
+  content: string,
+  type: CodeEditorRequest,
+  model: 'code-llama' | 'openai'
+): Promise<CodeEditorAPIResponse> {
   const modelHeaders: Record<string, string> = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
   };
   const modelBody = {
     ai_query: generateRequest(language, content, type),
+    model: model,
   };
   // Try/catch block to handle errors
   try {
@@ -53,7 +61,7 @@ async function generate(language: string, content: string, type: CodeEditorReque
     if (jsonResponse.success) {
       return {
         success: true,
-        generated_text: jsonResponse.data.generated_text,
+        generated_text: jsonResponse.generated_text,
       };
     } else {
       return {
@@ -71,27 +79,29 @@ async function generate(language: string, content: string, type: CodeEditorReque
 }
 
 // Status Request off API Service
-async function status(): Promise<boolean> {
+async function status(): Promise<ModelNames[]> {
   // Try/catch block to handle errors
   try {
     // Send the request
     const response = await fetch(apiUrls.ai.code.status, {
       method: 'GET',
     });
+    if (response.status !== 200) {
+      return [];
+    }
     // Parse the response
     const jsonResponse = await response.json();
     // Check if the response is valid
-    if (jsonResponse.online) {
-      return true;
+    if (jsonResponse.onlineModels) {
+      return jsonResponse.onlineModels;
     } else {
-      console.log('API AI ERROR> ', jsonResponse.error_message);
-      return false;
+      return [];
     }
   } catch (error) {
     // Return an error message if the request fails
     console.log('API AI ERROR> ', error);
-    return false;
+    return [];
   }
 }
 
-export { generate, status };
+export { query, status };

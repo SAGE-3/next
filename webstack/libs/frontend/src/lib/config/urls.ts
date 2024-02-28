@@ -47,7 +47,7 @@ export const apiUrls = {
   ai: {
     code: {
       status: '/api/ai/code/status',
-      generate: '/api/ai/code/generate',
+      generate: '/api/ai/code/query',
     },
   },
 };

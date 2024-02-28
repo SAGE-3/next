@@ -6,16 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as express from 'express';
+import { GenerateResponseType } from '../aicoderouter';
 
-import { AiCodeRouter } from './code';
-
-// Ai Router for all the node Ai backend
-export function AiRouter(): express.Router {
-  const router = express.Router();
-
-  // AI Code router
-  router.use('/code', AiCodeRouter());
-
-  return router;
+export abstract class CodeModel {
+  abstract health(): Promise<boolean>;
+  abstract query(input: string): Promise<GenerateResponseType>;
 }
