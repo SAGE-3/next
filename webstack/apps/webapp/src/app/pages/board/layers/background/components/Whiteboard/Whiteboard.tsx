@@ -17,6 +17,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { useAbility, useAnnotationStore, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 import { useParams } from 'react-router';
+import { use } from 'passport';
 
 type WhiteboardProps = {};
 
@@ -82,14 +83,14 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // Sync state with sage when a user connects and is the only one present
     provider.on('sync', () => {
-      if (provider) {
+      if (provider && boardId) {
         const users = provider.awareness.getStates();
         const count = users.size;
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
           const board = boards.find((el) => el._id === boardId);
           // moving to the new collection
-          if (boardId && board?.data.whiteboardLines) {
+          if (board?.data.whiteboardLines) {
             if (board.data.whiteboardLines.length > 0) {
               const oldLines = board.data.whiteboardLines;
               // Copy to the new collection
@@ -99,11 +100,12 @@ export function Whiteboard(props: WhiteboardProps) {
             }
           }
           // Does the board have lines?
-          if (board?.data.whiteboardLines && ydoc) {
+          const dbLines = useAnnotationStore.getState().annotations;
+          if (dbLines && ydoc) {
             // Clear any existing lines
             yLines.delete(0, yLines.length);
             // Add each line to the board from the database
-            board.data.whiteboardLines.forEach((line: any) => {
+            dbLines.data.whiteboardLines.forEach((line: any) => {
               const yPoints = new Y.Array<number>();
               yPoints.push(line.points);
               const yLine = new Y.Map<any>();

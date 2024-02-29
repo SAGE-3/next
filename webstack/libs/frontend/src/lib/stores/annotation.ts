@@ -59,7 +59,6 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
 
       // Unsubscribe old subscription
       if (annotationSub) {
-        console.log('Unsubscribing from Annotations');
         annotationSub();
         annotationSub = null;
       }
@@ -76,7 +75,6 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
             break;
           }
           case 'UPDATE': {
-            console.log('UPDATE Annotations', message);
             const docs = message.doc;
             set({ annotations: docs[0] });
             break;
