@@ -133,7 +133,7 @@ export function useFiles(): UseFiles {
                 });
                 const session = await response.json();
                 const apps = session.apps as App[];
-                const newassets = session.assets as { id: string, url: string, filename: string }[];
+                const newassets = session.assets as { id: string; url: string; filename: string }[];
                 let xmin = useUIStore.getState().boardWidth;
                 let ymin = useUIStore.getState().boardHeight;
                 for (const app of apps) {
@@ -171,9 +171,9 @@ export function useFiles(): UseFiles {
                     roomId: configDrop.roomId,
                     boardId: configDrop.boardId,
                     position: {
-                      x: (app.data.position.x - xmin) + configDrop.xDrop,
-                      y: (app.data.position.y - ymin) + configDrop.yDrop,
-                      z: 0
+                      x: app.data.position.x - xmin + configDrop.xDrop,
+                      y: app.data.position.y - ymin + configDrop.yDrop,
+                      z: 0,
                     },
                     size: app.data.size,
                     rotation: app.data.rotation,
@@ -351,14 +351,7 @@ export function useFiles(): UseFiles {
               const words = line.split('=');
               // the URL
               const goto = words[1].trim();
-              return setupApp(
-                goto,
-                'WebpageLink',
-                xDrop - 200, yDrop - 200,
-                roomId, boardId,
-                { w: w, h: w },
-                { url: goto }
-              );
+              return setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto });
             }
           }
           return null;
@@ -368,9 +361,20 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          });
+          // Get the content of the file
+          const text = await response.text();
+          // Get Lanauge
+          const lang = stringContainsCode(text);
           // Create a note from the text
-          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
-            { assetid: fileID, content: '', language: '' });
+          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
         }
       }
     } else if (isGIF(fileType)) {

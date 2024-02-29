@@ -194,7 +194,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               size: { width: 850, height: 400, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'CodeEditor',
-              state: { ...initialValues['CodeEditor'], content: pastedText, language: lang, assetid: '' },
+              state: { ...initialValues['CodeEditor'], content: pastedText, language: lang },
               raised: true,
               dragging: false,
               pinned: false,

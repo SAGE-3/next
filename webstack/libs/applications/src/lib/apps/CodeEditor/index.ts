@@ -14,7 +14,6 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  assetid: z.string(),
   content: z.string(),
   language: z.string(),
   fontSize: z.number(),
@@ -23,7 +22,6 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  assetid: '',
   content: '',
   language: 'javascript',
   fontSize: 18,

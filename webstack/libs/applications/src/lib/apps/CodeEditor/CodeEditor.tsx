@@ -34,9 +34,8 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
 // Sage3 Imports
-import { useAppStore, useAssetStore, downloadFile, ConfirmValueModal, isUUIDv4, apiUrls, setupApp, AiAPI } from '@sage3/frontend';
-import { AiQueryRequest, stringContainsCode } from '@sage3/shared';
-import { Asset } from '@sage3/shared/types';
+import { useAppStore, downloadFile, ConfirmValueModal, apiUrls, setupApp, AiAPI } from '@sage3/frontend';
+import { AiQueryRequest } from '@sage3/shared';
 
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
@@ -78,13 +77,7 @@ const useStore = create<CodeStore>()((set) => ({
 function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
-  const { update, updateState } = useAppStore((state) => state);
-
-  // Assets
-  const assets = useAssetStore((state) => state.assets);
-
-  // Asset data structure
-  const [file, setFile] = useState<Asset>();
+  const { updateState } = useAppStore((state) => state);
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -92,45 +85,6 @@ function AppComponent(props: App): JSX.Element {
   // Monaco Editor Ref
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { setEditor } = useStore();
-
-  // Convert the ID to an asset
-  useEffect(() => {
-    const isUUID = isUUIDv4(s.assetid);
-    if (isUUID) {
-      const myasset = assets.find((a) => a._id === s.assetid);
-      if (myasset) {
-        setFile(myasset);
-        // Update the app title
-        update(props._id, { title: myasset?.data.originalfilename });
-      }
-    } else {
-      update(props._id, { title: 'CodeEditor: ' + (s.language || '') });
-    }
-  }, [s.assetid, assets]);
-
-  // Once we have the asset, get the data
-  useEffect(() => {
-    async function fetchAsset() {
-      if (file && editorRef.current) {
-        // Look for the file in the asset store
-        const localurl = apiUrls.assets.getAssetById(file.data.file);
-        // Get the content of the file
-        const response = await fetch(localurl, {
-          headers: {
-            'Content-Type': 'text/plain',
-            Accept: 'text/plain',
-          },
-        });
-        // Get the content of the file
-        const text = await response.text();
-        const lang = stringContainsCode(text);
-        updateState(props._id, { language: lang });
-        // Need to set the content in the editor here with 'text'
-      }
-    }
-
-    fetchAsset();
-  }, [file, editorRef.current]);
 
   // Update local value with value from the server
   useEffect(() => {
