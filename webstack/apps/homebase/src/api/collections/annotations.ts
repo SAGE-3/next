@@ -22,29 +22,29 @@ class SAGE3AnnotationsCollection extends SAGE3Collection<AnnotationSchema> {
    * @param clear Clear the whole collection before initializing
    */
   public async initialize(clear?: boolean, ttl?: number): Promise<void> {
-    super.initialize(clear, ttl);
+    await super.initialize(clear, ttl);
 
     // Transition to new collection
     const boards = await BoardsCollection.getAll();
-    const annotations = await this.getAll();
+    const annotations = await AnnotationsCollection.getAll();
     if (boards && annotations) {
       for (const board of boards) {
         // if no annotation exists for the board
         if (!annotations.find((a) => a._id === board._id)) {
           // Add the missing entry
-          this.add({ whiteboardLines: [] }, board._createdBy, board._id);
+          await AnnotationsCollection.add({ whiteboardLines: [] }, board._createdBy, board._id);
         }
         // if the board has annotations
         if (board.data.whiteboardLines && board.data.whiteboardLines.length > 0) {
           // need to move the annotations to the new collection
-          this.update(board._id, board._createdBy, { whiteboardLines: board.data.whiteboardLines });
+          await AnnotationsCollection.update(board._id, board._createdBy, { whiteboardLines: board.data.whiteboardLines });
           // Clear the board of annotations
-          BoardsCollection.update(board._id, board._createdBy, { whiteboardLines: [] });
+          await BoardsCollection.update(board._id, board._createdBy, { whiteboardLines: [] });
         }
       }
     }
     // Subscribe to the board collection to keep in sync
-    this.subscribeToBoards();
+    await this.subscribeToBoards();
   }
 
   /**
