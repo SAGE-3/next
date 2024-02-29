@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, ButtonGroup } from '@chakra-ui/react';
 
-import { MdGridView, MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore } from 'react-icons/md';
+import { MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore, MdOutlineResetTv } from 'react-icons/md';
 
 import {
   ConfirmModal,
@@ -39,6 +39,7 @@ export function NavigationPanel(props: NavProps) {
   // Board Store
   const updateBoard = useBoardStore((state) => state.update);
   // UI Store
+  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const scale = useThrottleScale(250);
   const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
@@ -56,7 +57,7 @@ export function NavigationPanel(props: NavProps) {
   const userViewport = useUIStore((state) => state.viewport);
 
   // Clear board modal
-  const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
+  // const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
 
   const backgroundColor = useColorModeValue('gray.100', 'gray.600');
   const borderColor = useColorModeValue('teal.500', 'teal.500');
@@ -124,40 +125,40 @@ export function NavigationPanel(props: NavProps) {
   };
 
   // Organize board using python function
-  function organizeApps() {
-    // get presence of current user for its viewport
+  // function organizeApps() {
+  //   // get presence of current user for its viewport
 
-    // Trigger the smart function
-    updateBoard(props.boardId, {
-      executeInfo: {
-        executeFunc: 'reorganize_layout',
-        params: {
-          viewport_position: userViewport.position,
-          viewport_size: userViewport.size,
-          by: 'app_type',
-          mode: 'tiles',
-        },
-      },
-    });
-  }
+  //   // Trigger the smart function
+  //   updateBoard(props.boardId, {
+  //     executeInfo: {
+  //       executeFunc: 'reorganize_layout',
+  //       params: {
+  //         viewport_position: userViewport.position,
+  //         viewport_size: userViewport.size,
+  //         by: 'app_type',
+  //         mode: 'tiles',
+  //       },
+  //     },
+  //   });
+  // }
 
   // Result the confirmation modal
-  const onOrganizeConfirm = () => {
-    organizeApps();
-    organizeOnClose();
-  };
+  // const onOrganizeConfirm = () => {
+  //   organizeApps();
+  //   organizeOnClose();
+  // };
 
   return (
     <>
       {/* Organize board dialog */}
 
-      <ConfirmModal
+      {/* <ConfirmModal
         title="Organize the Board"
         message="Are you sure you want to automatically organize the applications?"
         onConfirm={onOrganizeConfirm}
         onClose={organizeOnClose}
         isOpen={organizeIsOpen}
-      />
+      /> */}
 
       <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
         <Box alignItems="center" display="flex">
@@ -249,10 +250,10 @@ export function NavigationPanel(props: NavProps) {
 
             {/* Organize Apps and Fit View */}
             <Box display="flex" mb="2">
-              <Tooltip label="Organize Apps" placement="top" hasArrow openDelay={500}>
+              <Tooltip label="Reset View" placement="top" hasArrow openDelay={500}>
                 <IconButton
-                  icon={<MdGridView />}
-                  onClick={organizeOnOpen}
+                  icon={<MdOutlineResetTv />}
+                  onClick={resetBoardPosition}
                   colorScheme="teal"
                   mr="2"
                   size="sm"

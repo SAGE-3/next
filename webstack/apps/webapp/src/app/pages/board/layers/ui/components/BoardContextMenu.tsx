@@ -62,7 +62,6 @@ export function BoardContextMenu(props: ContextProps) {
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
