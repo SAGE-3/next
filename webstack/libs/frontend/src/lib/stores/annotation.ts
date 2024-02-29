@@ -25,6 +25,7 @@ interface AnnotationState {
   clearError: () => void;
   update: (id: string, updates: Partial<AnnotationSchema>) => void;
   subscribeToBoard: (boardId: string) => Promise<void>;
+  unsubscribe: () => void;
 }
 
 /**
@@ -46,6 +47,13 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
         set({ error: res.message });
       }
     },
+    unsubscribe: () => {
+      // Unsubscribe old subscription
+      if (annotationSub) {
+        annotationSub();
+        annotationSub = null;
+      }
+    },
     subscribeToBoard: async (boardId: string) => {
       if (!SAGE3Ability.canCurrentUser('read', 'annotations')) return;
       set({ annotations: undefined, fetched: false });
@@ -55,12 +63,6 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
       } else {
         set({ error: notes.message });
         return;
-      }
-
-      // Unsubscribe old subscription
-      if (annotationSub) {
-        annotationSub();
-        annotationSub = null;
       }
 
       // Socket Subscribe Message

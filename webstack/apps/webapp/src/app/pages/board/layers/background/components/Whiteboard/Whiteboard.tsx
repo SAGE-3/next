@@ -17,7 +17,6 @@ import { WebsocketProvider } from 'y-websocket';
 import { useAbility, useAnnotationStore, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { Line } from './Line';
 import { useParams } from 'react-router';
-import { use } from 'passport';
 
 type WhiteboardProps = {};
 
@@ -31,6 +30,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // Can annotate
   const canAnnotate = useAbility('update', 'boards');
 
+  // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -45,17 +45,14 @@ export function Whiteboard(props: WhiteboardProps) {
   const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
-
-  const updateBoard = useBoardStore((state) => state.update);
+  // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
-  const boards = useBoardStore((state) => state.boards);
-
+  const dbLines = useAnnotationStore((state) => state.annotations);
+  // Yjs
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
-
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
-
   const rCurrentLine = useRef<Y.Map<any>>();
 
   // Save the whiteboard lines to SAGE database
@@ -88,19 +85,6 @@ export function Whiteboard(props: WhiteboardProps) {
         const count = users.size;
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
-          // const board = boards.find((el) => el._id === boardId);
-          // // moving to the new collection
-          // if (board?.data.whiteboardLines) {
-          //   if (board.data.whiteboardLines.length > 0) {
-          //     const oldLines = board.data.whiteboardLines;
-          //     // Copy to the new collection
-          //     updateAnnotation(boardId, { whiteboardLines: oldLines });
-          //     // Clear the old collection
-          //     updateBoard(boardId, { whiteboardLines: [] });
-          //   }
-          // }
-          // Does the board have lines?
-          const dbLines = useAnnotationStore.getState().annotations;
           if (dbLines && ydoc) {
             // Clear any existing lines
             yLines.delete(0, yLines.length);
@@ -128,9 +112,9 @@ export function Whiteboard(props: WhiteboardProps) {
     return () => {
       // Remove the bindings and disconnect the provider
       if (ydoc) ydoc.destroy();
-      if (provider) provider.disconnect();
+      if (provider && provider.ws?.readyState === WebSocket.OPEN) provider.disconnect();
     };
-  }, [boardId]);
+  }, [boardId, dbLines]);
 
   const getPoint = useCallback((x: number, y: number) => {
     x = (x / scale) - boardPosition.x;

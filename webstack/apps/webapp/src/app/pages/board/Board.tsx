@@ -67,6 +67,7 @@ export function BoardPage() {
 
   // Annotation Store
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
+  const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
 
   // Insights
   const insights = useInsightStore((state) => state.insights);
@@ -221,6 +222,7 @@ export function BoardPage() {
       setSelectedApp('');
       // Unsub from insights
       unsubToInsight();
+      unsubAnnotations();
       // Remove event listeners
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);
