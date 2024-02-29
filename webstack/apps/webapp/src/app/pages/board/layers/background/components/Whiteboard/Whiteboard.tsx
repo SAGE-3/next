@@ -198,7 +198,7 @@ export function Whiteboard(props: WhiteboardProps) {
     }
     // Simplify: points: Point[], tolerance: number, highQuality: boolean
     // High quality simplification but runs ~10-20 times slower
-    const simpler = Simplify.default(xyPoints, 2, true);
+    const simpler = Simplify.default(xyPoints, 0.5, true);
     // Delete the old points
     points.delete(0, points.length);
     // Add the new points
