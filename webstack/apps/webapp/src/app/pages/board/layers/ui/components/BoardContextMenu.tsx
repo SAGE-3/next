@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
@@ -62,7 +62,6 @@ export function BoardContextMenu(props: ContextProps) {
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const setGridSize = useUIStore((state) => state.setGridSize);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
@@ -158,7 +157,7 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   return (
-    <VStack
+    <Box
       whiteSpace={'nowrap'}
       boxShadow={`4px 4px 10px 0px ${shadowColor}`}
       p="2"
@@ -168,7 +167,7 @@ export function BoardContextMenu(props: ContextProps) {
       w={'100%'}
     >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'100%'}>
+        <VStack w={'125px'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Actions
           </Text>
@@ -241,9 +240,9 @@ export function BoardContextMenu(props: ContextProps) {
           </Button>
         </VStack>
 
-        <VStack w={'100%'}>
+        <VStack w={'125px'}>
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
-            Quick Apps
+            Apps
           </Text>
 
           <Button
@@ -321,6 +320,6 @@ export function BoardContextMenu(props: ContextProps) {
           </Button>
         </VStack>
       </HStack>
-    </VStack>
+    </Box>
   );
 }
