@@ -45,9 +45,7 @@ export const apiUrls = {
     nlp: '/api/nlp',
   },
   ai: {
-    code: {
-      status: '/api/ai/code/status',
-      generate: '/api/ai/code/query',
-    },
+    status: '/api/ai/status',
+    query: '/api/ai/query',
   },
 };

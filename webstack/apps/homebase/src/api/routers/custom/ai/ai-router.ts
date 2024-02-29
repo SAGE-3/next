@@ -7,9 +7,10 @@
  */
 
 import * as express from 'express';
-import { CodeLlama, CodeOpenAi } from './models';
+import { CodeLlamaModel, OpenAiModel } from './models';
 
-import { config } from 'apps/homebase/src/config';
+import { config } from '../../../../config';
+import { AiStatusResponse } from '@sage3/shared';
 
 // Request Return Type
 export type GenerateResponseType = {
@@ -17,55 +18,49 @@ export type GenerateResponseType = {
   generated_text?: string;
 };
 
-type ModelNames = 'code-llama' | 'openai';
-
-type StatusResponseType = {
-  onlineModels: ModelNames[];
-};
-
-export function AiCodeRouter(): express.Router {
+export function AiRouter(): express.Router {
   const router = express.Router();
 
   // Setup Models
-  const llama = new CodeLlama(config);
-  const openai = new CodeOpenAi(config);
+  const codeLlama = new CodeLlamaModel(config);
+  const openai = new OpenAiModel(config);
 
   // Check if the Ai Code System is online
   router.get('/status', async (req, res) => {
     // Array of online models
-    const onlineModels: ModelNames[] = [];
+    const onlineModels: string[] = [];
     // Check Llama
-    const llamaHealth = await llama.health();
-    if (llamaHealth) {
-      onlineModels.push('code-llama');
+    const codeLlamaHealth = await codeLlama.health();
+    if (codeLlamaHealth) {
+      onlineModels.push(codeLlama.name);
     }
     // Check OpenAI
     const openAIHealth = await openai.health();
     if (openAIHealth) {
-      onlineModels.push('openai');
+      onlineModels.push(openai.name);
     }
     // Return the response
     const responseMessage = {
       onlineModels,
-    } as StatusResponseType;
+    } as AiStatusResponse;
     res.status(200).json(responseMessage);
   });
 
   // Post a explain code request
   router.post('/query', async (req, res) => {
     // Get the request parameters
-    const { ai_query, model } = req.body;
+    const { input, model } = req.body;
 
     // Try/catch block to handle errors
     try {
-      if (model === 'code-llama') {
+      if (model === codeLlama.name) {
         // Query Llama with the input
-        const response = await llama.query(ai_query);
+        const response = await codeLlama.query(input);
         // Return the response
         res.status(200).json(response);
-      } else if (model === 'openai') {
+      } else if (model === openai.name) {
         // Query OpenAI with the input
-        const response = await openai.query(ai_query);
+        const response = await openai.query(input);
         // Return the response
         res.status(200).json(response);
       } else {

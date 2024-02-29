@@ -34,8 +34,8 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
 // Sage3 Imports
-import { useAppStore, useAssetStore, downloadFile, ConfirmValueModal, isUUIDv4, apiUrls, setupApp } from '@sage3/frontend';
-import { stringContainsCode } from '@sage3/shared';
+import { useAppStore, useAssetStore, downloadFile, ConfirmValueModal, isUUIDv4, apiUrls, setupApp, AiAPI } from '@sage3/frontend';
+import { AiQueryRequest, stringContainsCode } from '@sage3/shared';
 import { Asset } from '@sage3/shared/types';
 
 import { App, AppGroup } from '../../schema';
@@ -48,9 +48,8 @@ import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
-import { AiAPI } from '@sage3/frontend';
 import { create } from 'zustand';
-import { ModelNames } from 'libs/frontend/src/lib/api/ai/code';
+import { generateRequest } from './ai-request-generator';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -256,13 +255,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const fontSizeColor = useColorModeValue('white', 'black');
 
   // Online Models
-  const [onlineModels, setOnlineModels] = useState<ModelNames[]>([]);
+  const [onlineModels, setOnlineModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
 
   // Check if the AI is online
   useEffect(() => {
     async function fetchStatus() {
-      const models = await AiAPI.Code.status();
-      setOnlineModels(models);
+      const response = await AiAPI.status();
+      setOnlineModels(response.onlineModels);
+      if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
+      else setSelectedModel('');
     }
     fetchStatus();
   }, []);
@@ -339,6 +341,10 @@ function ToolbarComponent(props: App): JSX.Element {
     update(props._id, { title: `CodeEditor: ${lang}` });
   }
 
+  function handleModelChange(model: string) {
+    setSelectedModel(model);
+  }
+
   async function refactor() {
     if (!editor) return;
     const selection = editor.getSelection();
@@ -346,10 +352,22 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.query(s.language, selectionText, 'refactor', 'code-llama');
-    if (result.success && result.generated_text) {
+    const queryRequest = {
+      input: generateRequest(s.language, selectionText, 'refactor'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.query(queryRequest);
+    if (result.success && result.output) {
       // Create new range with the same start and end line
-      editor.executeEdits('handleHighlight', [{ range: selection, text: result.generated_text }]);
+      editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
+    } else {
+      toast({
+        title: 'Refactor Code',
+        description: 'Refactor failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
     }
   }
 
@@ -362,14 +380,18 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.query(s.language, selectionText, 'explain', 'code-llama');
-    if (result.success && result.generated_text) {
+    const queryRequest = {
+      input: generateRequest(s.language, selectionText, 'explain'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.query(queryRequest);
+    if (result.success && result.output) {
       const w = props.data.size.width;
       const h = props.data.size.height;
       const x = props.data.position.x + w + 20;
       const y = props.data.position.y;
       createApp(
-        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.generated_text, fontSize: 24, color: 'yellow' })
+        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.output, fontSize: 24, color: 'yellow' })
       );
     } else {
       toast({
@@ -390,10 +412,14 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.query(s.language, selectionText, 'comment', 'code-llama');
-    if (result.success && result.generated_text) {
+    const queryRequest = {
+      input: generateRequest(s.language, selectionText, 'comment'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.query(queryRequest);
+    if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
-      const cleanedText = result.generated_text.replace(/```/g, '');
+      const cleanedText = result.output.replace(/```/g, '');
       editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
     }
   }
@@ -406,10 +432,14 @@ function ToolbarComponent(props: App): JSX.Element {
     if (!selection) return;
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
-    const result = await AiAPI.Code.query(s.language, selectionText, 'generate', 'openai');
-    if (result.success && result.generated_text) {
+    const queryRequest = {
+      input: generateRequest(s.language, selectionText, 'comment'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.query(queryRequest);
+    if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
-      const cleanedText = result.generated_text.replace(/```/g, '');
+      const cleanedText = result.output.replace(/```/g, '');
       editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
     }
   }
@@ -489,8 +519,25 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
-      {/* Smart Action */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
+              {selectedModel}
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            {onlineModels.map((model) => (
+              <MenuItem key={model} onClick={() => handleModelChange(model)}>
+                {model}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
+      {/* Smart Action */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={selectedModel === ''}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">

@@ -6,9 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { GenerateResponseType } from '../aicoderouter';
+import { AiQueryResponse } from '@sage3/shared';
 
-export abstract class CodeModel {
+export abstract class AiModel {
+  // Name of model
+  abstract name: string;
+  // Check if this AiModel is healthy to use
   abstract health(): Promise<boolean>;
-  abstract query(input: string): Promise<GenerateResponseType>;
+  // The express router for this AiModel
+  abstract query(input: string): Promise<AiQueryResponse>;
 }

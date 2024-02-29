@@ -11,3 +11,4 @@
 export * from './lib/ui';
 export * from './lib/utils';
 export * from './lib/permissions';
+export * from './lib/ai';

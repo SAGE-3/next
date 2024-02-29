@@ -6,16 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { GenerateResponseType } from '../aicoderouter';
-
 import OpenAI from 'openai';
-import { CodeModel } from './AbstractCodeModel';
+import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
 
-export class CodeOpenAi extends CodeModel {
+// Response Types
+import { AiQueryResponse } from '@sage3/shared';
+
+export class OpenAiModel extends AiModel {
   private _apiKey: string;
   private _model: string;
   private _openai: OpenAI;
+  public name = 'openai';
 
   constructor(config: ServerConfiguration) {
     super();
@@ -34,7 +36,7 @@ export class CodeOpenAi extends CodeModel {
     }
   }
 
-  public async query(input: string): Promise<GenerateResponseType> {
+  public async query(input: string): Promise<AiQueryResponse> {
     // Query OpenAI with the input
     const response = await this._openai.chat.completions.create({
       messages: [{ role: 'user', content: input }],
@@ -43,11 +45,12 @@ export class CodeOpenAi extends CodeModel {
     if (response.choices[0].message.content === null) {
       return {
         success: false,
+        error_message: 'Failed to query OpenAI',
       };
     } else {
       return {
         success: true,
-        generated_text: response.choices[0].message.content,
+        output: response.choices[0].message.content,
       };
     }
   }

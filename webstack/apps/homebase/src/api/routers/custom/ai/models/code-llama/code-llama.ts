@@ -7,13 +7,16 @@
  */
 
 import axios from 'axios';
-import { GenerateResponseType } from '../aicoderouter';
-import { CodeModel } from './AbstractCodeModel';
+import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
 
-export class CodeLlama extends CodeModel {
+// Response Types
+import { AiQueryResponse } from '@sage3/shared';
+
+export class CodeLlamaModel extends AiModel {
   private _url: string;
   private _maxTokens: number;
+  public name = 'code-llama';
 
   constructor(config: ServerConfiguration) {
     super();
@@ -34,7 +37,7 @@ export class CodeLlama extends CodeModel {
     }
   }
 
-  public async query(input: string): Promise<GenerateResponseType> {
+  public async query(input: string): Promise<AiQueryResponse> {
     try {
       const modelBody = {
         inputs: input,
@@ -46,16 +49,18 @@ export class CodeLlama extends CodeModel {
       if (response.status == 200) {
         return {
           success: true,
-          generated_text: response.data.generated_text,
+          output: response.data.generated_text,
         };
       } else {
         return {
           success: false,
+          error_message: 'Failed to query code-llama',
         };
       }
     } catch (error) {
       return {
         success: false,
+        error_message: `Failed to query code-llama: ${error.message}`,
       };
     }
   }
