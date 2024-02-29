@@ -31,7 +31,7 @@ import {
   isTiff,
   isSessionFile,
   isCode,
-  stringContainsCode,
+  mimeToCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -371,8 +371,8 @@ export function useFiles(): UseFiles {
           });
           // Get the content of the file
           const text = await response.text();
-          // Get Lanauge
-          const lang = stringContainsCode(text);
+          // Get Language from mimetype
+          const lang = mimeToCode(a.data.mimetype);
           // Create a note from the text
           return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
         }

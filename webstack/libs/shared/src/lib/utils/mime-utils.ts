@@ -50,6 +50,57 @@ export function stringContainsCode(code: string) {
 }
 
 /**
+ * Test if a given mime type is code file (not python)
+ * C, C++, C#, Java, ...
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isCode(mimeType: string): boolean {
+  console.log('🚀 ~ isCode ~ mimeType:', mimeType);
+  const formats = [
+    'text/javascript',
+    'text/x-c',
+    'text/x-csharp',
+    'text/x-java-source',
+    'application/json',
+    'text/yaml',
+    'application/javascript',
+    'application/typescript',
+  ];
+  return formats.includes(mimeType);
+}
+
+/**
+ * Maps a mime type to a code language
+ * @param code string to check
+ * @returns string of the language
+ */
+export function mimeToCode(code: string) {
+  const result = 'js';
+  switch (code) {
+    case 'text/javascript':
+    case 'application/javascript':
+      return 'js';
+    case 'text/x-c':
+      return 'c';
+    case 'text/x-csharp':
+      return 'cs';
+    case 'text/x-java-source':
+      return 'java';
+    case 'application/json':
+      return 'json';
+    case 'text/yaml':
+      return 'yaml';
+    case 'application/typescript':
+      return 'typescript';
+    default:
+      return result;
+  }
+  return result;
+}
+
+/**
  * Get the mime type for a given filename.
  *
  * @export
@@ -286,26 +337,6 @@ export function isPython(mimeType: string): boolean {
  */
 export function isGLTF(mimeType: string): boolean {
   return mimeType === 'model/gltf-binary';
-}
-
-/**
- * Test if a given mime type is code file (not python)
- * C, C++, C#, Java, ...
- * @export
- * @param {string} mimeType
- * @returns {boolean}
- */
-export function isCode(mimeType: string): boolean {
-  const formats = [
-    'text/javascript',
-    'text/x-c',
-    'text/x-csharp',
-    'text/x-java-source',
-    'application/json',
-    'text/yaml',
-    'application/typescript',
-  ];
-  return formats.includes(mimeType);
 }
 
 /**

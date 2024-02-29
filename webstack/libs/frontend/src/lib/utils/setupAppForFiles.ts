@@ -23,7 +23,7 @@ import {
   isGIF,
   isCode,
   isFileURL,
-  stringContainsCode,
+  mimeToCode,
 } from '@sage3/shared';
 import { apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
@@ -111,8 +111,8 @@ export async function setupAppForFile(
     });
     // Get the content of the file
     const text = await response.text();
-    // Get Lanauge
-    const lang = stringContainsCode(text);
+    // Get Language from mimetype
+    const lang = mimeToCode(file.type);
     return {
       title: 'CodeEditor',
       roomId: roomId,
