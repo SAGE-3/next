@@ -16,22 +16,24 @@ import { Annotation, AnnotationSchema } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
-import { SocketAPI } from '../api';
+import { APIHttp, SocketAPI } from '../api';
 
 interface AnnotationState {
-  annotations: Annotation[];
+  annotations: Annotation | undefined;
   error: string | null;
   fetched: boolean;
   clearError: () => void;
   update: (id: string, updates: Partial<AnnotationSchema>) => void;
+  subscribeToBoard: (boardId: string) => Promise<void>;
 }
 
 /**
  * The BoardStore.
  */
 const AnnotationStore = create<AnnotationState>()((set, get) => {
+  let annotationSub: (() => void) | null = null;
   return {
-    annotations: [],
+    annotations: undefined,
     error: null,
     fetched: false,
     clearError: () => {
@@ -43,6 +45,47 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
       if (!res.success) {
         set({ error: res.message });
       }
+    },
+    subscribeToBoard: async (boardId: string) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'annotations')) return;
+      set({ annotations: undefined, fetched: false });
+      const notes = await APIHttp.GET<Annotation>('/annotations/' + boardId);
+      if (notes.success) {
+        if (notes.data) set({ annotations: notes.data[0], fetched: true });
+      } else {
+        set({ error: notes.message });
+        return;
+      }
+
+      // Unsubscribe old subscription
+      if (annotationSub) {
+        console.log('Unsubscribing from Annotations');
+        annotationSub();
+        annotationSub = null;
+      }
+
+      // Socket Subscribe Message
+      const route = `/annotations/${boardId}`;
+      // Socket Listenting to updates from server about the current board
+      annotationSub = await SocketAPI.subscribe<Annotation>(route, (message) => {
+        if (message.col !== 'ANNOTATIONS') return;
+        switch (message.type) {
+          case 'CREATE': {
+            const docs = message.doc;
+            set({ annotations: docs[0] });
+            break;
+          }
+          case 'UPDATE': {
+            console.log('UPDATE Annotations', message);
+            const docs = message.doc;
+            set({ annotations: docs[0] });
+            break;
+          }
+          case 'DELETE': {
+            set({ annotations: undefined, fetched: false });
+          }
+        }
+      });
     },
   };
 });

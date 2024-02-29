@@ -26,6 +26,7 @@ import {
   isElectron,
   getSAGE3BoardUrl,
   useInsightStore,
+  useAnnotationStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -64,6 +65,9 @@ export function BoardPage() {
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
+  // Annotation Store
+  const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
+
   // Insights
   const insights = useInsightStore((state) => state.insights);
   const subToInsight = useInsightStore((state) => state.subscribe);
@@ -77,8 +81,7 @@ export function BoardPage() {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLButtonElement>(null);
 
-  // Plugin Listener
-  // Listens to updates from plugin apps and sends them to the AppStore
+  // Plugin Listener: updates from plugin apps and sends them to the AppStore
   usePluginListener();
 
   // UI Message
@@ -147,6 +150,8 @@ export function BoardPage() {
     subToInsight(boardId);
     // plugins
     subPlugins();
+    // Sub to annotations for this board
+    subAnnotations(boardId);
     // Update the user's presence information
     if (user) updatePresence(user._id, { boardId, roomId, following: '' });
     // Add the board to the user's recent boards

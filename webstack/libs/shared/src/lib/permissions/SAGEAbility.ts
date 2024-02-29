@@ -44,6 +44,7 @@ export type ResourceArg =
   | 'users'
   | 'kernels'
   | 'insight'
+  | 'annotations'
   | 'roommembers';
 
 // Abliity
@@ -61,13 +62,13 @@ const config: AbilityConfig = {
     { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
     {
       role: ['guest'],
-      resource: ['assets', 'boards', 'message', 'plugins', 'rooms', 'insight', 'roommembers'],
+      resource: ['assets', 'boards', 'message', 'plugins', 'rooms', 'insight', 'roommembers', 'annotations'],
       action: ['read', 'sub', 'unsub'],
     },
     { role: ['guest'], resource: ['assets'], action: ['download'] },
     {
       role: ['spectator'],
-      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users', 'insight'],
+      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users', 'insight', 'annotations'],
       action: ['read', 'sub', 'unsub'],
     },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },

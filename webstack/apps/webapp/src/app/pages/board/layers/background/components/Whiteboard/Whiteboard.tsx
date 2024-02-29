@@ -45,7 +45,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
 
-  // const updateBoard = useBoardStore((state) => state.update);
+  const updateBoard = useBoardStore((state) => state.update);
   const updateAnnotation = useAnnotationStore((state) => state.update);
   const boards = useBoardStore((state) => state.boards);
 
@@ -62,7 +62,6 @@ export function Whiteboard(props: WhiteboardProps) {
     if (yLines && boardId) {
       const lines = yLines.toJSON();
       updateAnnotation(boardId, { whiteboardLines: lines });
-      // updateBoard(boardId, { whiteboardLines: lines });
     }
   }
 
@@ -89,6 +88,16 @@ export function Whiteboard(props: WhiteboardProps) {
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
           const board = boards.find((el) => el._id === boardId);
+          // moving to the new collection
+          if (boardId && board?.data.whiteboardLines) {
+            if (board.data.whiteboardLines.length > 0) {
+              const oldLines = board.data.whiteboardLines;
+              // Copy to the new collection
+              updateAnnotation(boardId, { whiteboardLines: oldLines });
+              // Clear the old collection
+              updateBoard(boardId, { whiteboardLines: [] });
+            }
+          }
           // Does the board have lines?
           if (board?.data.whiteboardLines && ydoc) {
             // Clear any existing lines
@@ -203,7 +212,7 @@ export function Whiteboard(props: WhiteboardProps) {
     }
     // Simplify: points: Point[], tolerance: number, highQuality: boolean
     // High quality simplification but runs ~10-20 times slower
-    const simpler = Simplify.default(xyPoints, 4, true);
+    const simpler = Simplify.default(xyPoints, 2, true);
     // Delete the old points
     points.delete(0, points.length);
     // Add the new points
