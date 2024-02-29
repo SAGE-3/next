@@ -88,17 +88,17 @@ export function Whiteboard(props: WhiteboardProps) {
         const count = users.size;
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
-          const board = boards.find((el) => el._id === boardId);
-          // moving to the new collection
-          if (board?.data.whiteboardLines) {
-            if (board.data.whiteboardLines.length > 0) {
-              const oldLines = board.data.whiteboardLines;
-              // Copy to the new collection
-              updateAnnotation(boardId, { whiteboardLines: oldLines });
-              // Clear the old collection
-              updateBoard(boardId, { whiteboardLines: [] });
-            }
-          }
+          // const board = boards.find((el) => el._id === boardId);
+          // // moving to the new collection
+          // if (board?.data.whiteboardLines) {
+          //   if (board.data.whiteboardLines.length > 0) {
+          //     const oldLines = board.data.whiteboardLines;
+          //     // Copy to the new collection
+          //     updateAnnotation(boardId, { whiteboardLines: oldLines });
+          //     // Clear the old collection
+          //     updateBoard(boardId, { whiteboardLines: [] });
+          //   }
+          // }
           // Does the board have lines?
           const dbLines = useAnnotationStore.getState().annotations;
           if (dbLines && ydoc) {
