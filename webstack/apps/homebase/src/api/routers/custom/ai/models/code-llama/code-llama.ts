@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import axios from 'axios';
 import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
 
@@ -26,7 +25,7 @@ export class CodeLlamaModel extends AiModel {
 
   public async health(): Promise<boolean> {
     try {
-      const response = await axios.get(`${this._url}/health`);
+      const response = await fetch(`${this._url}/health`, { method: 'GET' });
       if (response.status === 200) {
         return true;
       } else {
@@ -45,11 +44,16 @@ export class CodeLlamaModel extends AiModel {
           max_new_tokens: this._maxTokens,
         },
       };
-      const response = await axios.post(`${this._url}/generate`, modelBody);
+      const response = await fetch(`${this._url}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(modelBody),
+      });
       if (response.status == 200) {
+        const data = await response.json();
         return {
           success: true,
-          output: response.data.generated_text,
+          output: data.generated_text,
         };
       } else {
         return {
