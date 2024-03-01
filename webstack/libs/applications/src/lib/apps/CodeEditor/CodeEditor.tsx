@@ -387,7 +387,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
     const queryRequest = {
-      input: generateRequest(s.language, selectionText, 'comment'),
+      input: generateRequest(s.language, selectionText, 'generate'),
       model: selectedModel,
     } as AiQueryRequest;
     const result = await AiAPI.query(queryRequest);
