@@ -15,18 +15,16 @@
 
 // Express web server framework
 import * as express from 'express';
-// Mime type definitions
-import * as mime from 'mime';
 import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
-// Local storage
-import { uploadMiddleware } from '../../../connectors/upload-connector';
-
-// Asset model
-import { AssetsCollection, MessageCollection } from '../../collections';
 
 // Lib Imports
 import { SBAuthSchema } from '@sage3/sagebase';
+import { getFileType } from '@sage3/shared';
+// Local storage
+import { uploadMiddleware } from '../../../connectors/upload-connector';
+// Asset model
+import { AssetsCollection, MessageCollection } from '../../collections';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
@@ -67,7 +65,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
       elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Normalize mime types using the mime package
-      elt.mimetype = mime.getType(elt.originalname) || elt.mimetype;
+      elt.mimetype = getFileType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
       const now = new Date().toISOString();
       // Process the file for metadata

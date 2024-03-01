@@ -55,6 +55,11 @@
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
     }
+    "codellama": {
+      url: "https://astrolab.evl.uic.edu:4343",
+      apiKey: "",
+      max_tokens: 400,
+    }
   },
 
   // Enable/disable some features for safety
