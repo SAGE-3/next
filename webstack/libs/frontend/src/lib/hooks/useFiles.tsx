@@ -374,7 +374,8 @@ export function useFiles(): UseFiles {
           // Get Language from mimetype
           const lang = mimeToCode(a.data.mimetype);
           // Create a note from the text
-          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 }, { content: text, language: lang });
+          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
+            { content: text, language: lang, filename: a.data.originalfilename });
         }
       }
     } else if (isGIF(fileType)) {

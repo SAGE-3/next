@@ -221,6 +221,10 @@ function ToolbarComponent(props: App): JSX.Element {
       else setSelectedModel('');
     }
     fetchStatus();
+
+    // Set the title
+    if (s.filename) update(props._id, { title: `CodeEditor: ${s.filename}` });
+    else update(props._id, { title: `CodeEditor: ${s.language}` });
   }, []);
 
   // Download the code into a local file
@@ -292,7 +296,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   function handleLanguageChange(lang: string) {
     updateState(props._id, { language: lang });
-    update(props._id, { title: `CodeEditor: ${lang}` });
+    if (s.filename) update(props._id, { title: `CodeEditor: ${s.filename}` });
+    else update(props._id, { title: `CodeEditor: ${lang}` });
   }
 
   function handleModelChange(model: string) {

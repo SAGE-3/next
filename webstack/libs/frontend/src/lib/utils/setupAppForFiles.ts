@@ -121,7 +121,7 @@ export async function setupAppForFile(
       size: { width: 850, height: 400, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'CodeEditor',
-      state: { ...(initialValues['CodeEditor'] as AppState), content: text, language: lang },
+      state: { ...(initialValues['CodeEditor'] as AppState), content: text, language: lang, filename: file.originalfilename },
       raised: true,
       dragging: false,
       pinned: false,

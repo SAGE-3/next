@@ -18,6 +18,7 @@ export const schema = z.object({
   language: z.string(),
   fontSize: z.number(),
   readonly: z.boolean(),
+  filename: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
