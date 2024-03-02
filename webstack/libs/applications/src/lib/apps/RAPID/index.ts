@@ -7,8 +7,7 @@
  */
 
 import { z } from 'zod';
-import { CATEGORIES } from './components/ComponentSelector';
-import { QUERY_FIELDS } from './data/queryfields';
+import { QUERY_FIELDS, CATEGORIES } from './data/constants';
 
 /**
  * SAGE3 application: RAPID

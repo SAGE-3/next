@@ -9,7 +9,7 @@ function LineGraph({ s }: RAPIDState) {
 
   useEffect(() => {
     if (s.metricData) {
-      const option = {
+      const option: echarts.EChartsCoreOption = {
         title: {
           text: 'Sage Node vs. Mesonet',
         },
@@ -43,9 +43,9 @@ function LineGraph({ s }: RAPIDState) {
           position: 'left',
         },
         grid: {
-          bottom: "25%"
+          bottom: '25%',
         },
-        renderer: "svg",
+        renderer: 'svg',
         series: [
           {
             name: 'Sage Node',
@@ -66,12 +66,12 @@ function LineGraph({ s }: RAPIDState) {
         ],
         dataZoom: [
           {
-            type: "inside"
+            type: 'inside',
           },
           {
-            type: "slider"
-          }
-        ]
+            type: 'slider',
+          },
+        ],
       };
       setOption(option);
     }

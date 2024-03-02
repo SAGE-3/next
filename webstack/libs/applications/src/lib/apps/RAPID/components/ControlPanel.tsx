@@ -7,7 +7,7 @@ import { createWebWorker } from '../worker/webWorker';
 import worker from '../worker/script';
 import { useWebWorker } from '../worker/useWebWorker';
 
-import { QUERY_FIELDS } from '../data/queryfields';
+import { QUERY_FIELDS } from '../data/constants';
 
 export type ControlPanelProps = {
   s: AppState;
@@ -15,9 +15,6 @@ export type ControlPanelProps = {
 };
 
 function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
-  // used for multiapp state update
-  // const { updateStateBatch } = useAppStore((state) => state);
-
   const TEN_MINUTES = 600000;
   // web worker
   const workerInstance = useMemo(() => createWebWorker(worker), []);
@@ -62,7 +59,6 @@ function ControlPanel({ s, id }: ControlPanelProps): JSX.Element {
     // clear interval on unmount
     return () => clearInterval(interval.current);
   }, [s.children.length]);
-
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

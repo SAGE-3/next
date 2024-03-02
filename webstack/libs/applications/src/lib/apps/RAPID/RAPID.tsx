@@ -17,9 +17,8 @@ import { useUser } from '@sage3/frontend';
 
 // Styling
 import './styling.css';
-import { CATEGORIES } from './components/ComponentSelector';
+import { CATEGORIES } from './data/constants';
 import { Box, Button, Link, Tooltip } from '@chakra-ui/react';
-import { BiDownload } from 'react-icons/bi';
 import { FaDownload } from 'react-icons/fa';
 
 /* App component for RAPID */
@@ -36,19 +35,28 @@ function AppComponent(props: App): JSX.Element {
   async function createRAPIDCharts() {
     try {
       const promises = [];
+      const positionX = props.data.position.x;
+      const positionY = props.data.position.y;
+      const width = props.data.size.width;
+      const height = props.data.size.height;
+      const max = 4;
 
       for (const category in CATEGORIES) {
-        console.log('catergory', category);
+        console.log('category', category);
         // ignore creation of Control Panel
-        if (CATEGORIES[`${category}` as keyof typeof CATEGORIES].name === 'Control Panel') continue;
+        const name = CATEGORIES[`${category}` as keyof typeof CATEGORIES].name;
+        const order = CATEGORIES[`${category}` as keyof typeof CATEGORIES].order;
+
+        if (name === 'Control Panel') continue;
+
         promises.push(
           createApp({
             title: 'RAPID',
             roomId: props.data.roomId!,
             boardId: props.data.boardId!,
             position: {
-              x: props.data.position.x + props.data.size.width * Number(CATEGORIES[`${category as keyof typeof CATEGORIES}`].order),
-              y: props.data.position.y,
+              x: (order % max) * width + positionX,
+              y: Math.floor(order / max) * height + positionY,
               z: 0,
             },
             size: {
@@ -60,8 +68,7 @@ function AppComponent(props: App): JSX.Element {
             rotation: { x: 0, y: 0, z: 0 },
             state: {
               parent: props._id,
-              category: CATEGORIES[`${category}` as keyof typeof CATEGORIES].name,
-              counter: s.counter,
+              category: name,
             },
             raised: true,
             dragging: false,

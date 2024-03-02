@@ -1,30 +1,11 @@
-import React from 'react';
 import { App, AppState } from '@sage3/applications/schema';
-
 // Components
 import LineGraph from './LineGraph';
 import Overview from './Overview';
 import ControlPanel from './ControlPanel';
 import LocationMap from './Map';
-
-export const CATEGORIES = {
-  CONTROL_PANEL: {
-    name: 'Control Panel',
-    order: 0,
-  },
-  GRAPH: {
-    name: 'Graph',
-    order: 1,
-  },
-  OVERVIEW: {
-    name: 'Overview',
-    order: 2,
-  },
-  MAP: {
-    name: 'Map',
-    order: 3,
-  },
-};
+import SageStats from './SageStats';
+import { CATEGORIES } from '../data/constants';
 
 export type ComponentSelectorProps = {
   propsData: App;
@@ -54,6 +35,10 @@ function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
 
   if (s.category === CATEGORIES.MAP.name) {
     return <LocationMap {...propsData} />;
+  }
+
+  if (s.category === CATEGORIES.SAGE_STATS) {
+    return <SageStats />;
   }
 
   return <div>ERROR: Category Not Found</div>;
