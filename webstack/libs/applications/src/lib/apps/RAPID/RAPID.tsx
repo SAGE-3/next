@@ -34,12 +34,13 @@ function AppComponent(props: App): JSX.Element {
   // Create RAPID charts
   async function createRAPIDCharts() {
     try {
-      const promises = [];
       const positionX = props.data.position.x;
       const positionY = props.data.position.y;
       const width = props.data.size.width;
       const height = props.data.size.height;
       const max = 4;
+      
+      const promises = [];
 
       for (const category in CATEGORIES) {
         console.log('category', category);
@@ -76,8 +77,6 @@ function AppComponent(props: App): JSX.Element {
           })
         );
       }
-
-      // console.log('promises.length', promises.length);
 
       const resolution = await Promise.all(promises);
 
