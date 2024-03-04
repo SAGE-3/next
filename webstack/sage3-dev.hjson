@@ -52,9 +52,14 @@
     },
     "openai": {
       // API Key
-      "apiKey": "XXXX",
+      "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
+    },
+    "codellama": {
+      url: "https://astrolab.evl.uic.edu:4343",
+      apiKey: "",
+      max_tokens: 400,
     }
   },
 
@@ -62,13 +67,13 @@
   "features": {
     // Enable Plugins
     "plugins": true,
-    // Which Apps to enable.  Available Apps: 
-    //  ChartMaker, LeafLet, Notepad, SageCell, Stickie, Screenshare, Webview
+    // Which Apps to enable
     "apps": [
       "Chat",
       "ChartMaker",
       "MapGL",
       "Notepad",
+      "Poll",
       "SageCell",
       "Stickie",
       "Screenshare",

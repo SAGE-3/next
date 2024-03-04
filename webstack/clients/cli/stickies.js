@@ -33,7 +33,7 @@ const version = pkg.version;
 // Some utitlity functions
 import { randomNumber, clamp } from './src/utils.js';
 // WS protocol
-import { loginJWT, loadToken } from './src/jwt_routes.js';
+import { loginJWT, loadToken, getBoards, getRooms } from './src/jwt_routes.js';
 import { boardConnect, boardDisconnect, socketConnectionJWT } from './src/socket_routes.js';
 
 import { faker } from '@faker-js/faker';
@@ -104,8 +104,13 @@ async function start() {
   myID = me.user.id;
 
   // board name from command argument (or board0)
-  const boardId = params.board;
-  const roomId = params.room;
+  // const boardId = params.board;
+  // const roomId = params.room;
+
+  const boardData = await getBoards();
+  console.log('CLI> boards', boardData.length, boardData[0]);
+  const roomData = await getRooms();
+  console.log('CLI> rooms', roomData.length, roomData[0]);
 
   // Create a websocket with the auth cookies
   const socket = socketConnectionJWT('ws://' + params.server + '/api', token);
@@ -114,47 +119,47 @@ async function start() {
   socket.on('open', () => {
     console.log('socket> connected');
 
-    // Default size of the board
-    const totalWidth = 3000;
-    const totalHeight = 3000;
+    //   // Default size of the board
+    //   const totalWidth = 3000;
+    //   const totalHeight = 3000;
 
-    // Random position within a safe margin
-    var px = randomNumber(1500000, 1501000);
-    var py = randomNumber(1500000, 1501000);
-    var incx = randomNumber(1, 2) % 2 ? 1 : -1;
-    var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    var sensitivity = params.sensitivity;
+    //   // Random position within a safe margin
+    //   var px = randomNumber(1500000, 1501000);
+    //   var py = randomNumber(1500000, 1501000);
+    //   var incx = randomNumber(1, 2) % 2 ? 1 : -1;
+    //   var incy = randomNumber(1, 2) % 2 ? 1 : -1;
+    //   var sensitivity = params.sensitivity;
 
-    // Set a limit on runtime
-    setTimeout(() => {
-      console.log('CLI> done');
-      // Leave the board
-      boardDisconnect(socket, boardId);
-      // and quit
-      process.exit(1);
-    }, params.timeout * 1000);
+    //   // Set a limit on runtime
+    //   setTimeout(() => {
+    //     console.log('CLI> done');
+    //     // Leave the board
+    //     boardDisconnect(socket, boardId);
+    //     // and quit
+    //     process.exit(1);
+    //   }, params.timeout * 1000);
 
-    // Calculate cursor position
-    setInterval(() => {
-      // step between 0 and 10 pixels
-      const movementX = randomNumber(1, 20);
-      const movementY = randomNumber(1, 20);
-      // scaled up for wall size
-      const dx = Math.round(movementX * sensitivity);
-      const dy = Math.round(movementY * sensitivity);
-      // detect wall size limits and reverse course
-      if (px >= totalWidth + 1500000) incx *= -1;
-      if (px <= 1500000) incx *= -1;
-      if (py >= totalHeight + 1500000) incy *= -1;
-      if (py <= 1500000) incy *= -1;
-      // update global position
-      px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
-      py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
-    }, updateRate);
+    //   // Calculate cursor position
+    //   setInterval(() => {
+    //     // step between 0 and 10 pixels
+    //     const movementX = randomNumber(1, 20);
+    //     const movementY = randomNumber(1, 20);
+    //     // scaled up for wall size
+    //     const dx = Math.round(movementX * sensitivity);
+    //     const dy = Math.round(movementY * sensitivity);
+    //     // detect wall size limits and reverse course
+    //     if (px >= totalWidth + 1500000) incx *= -1;
+    //     if (px <= 1500000) incx *= -1;
+    //     if (py >= totalHeight + 1500000) incy *= -1;
+    //     if (py <= 1500000) incy *= -1;
+    //     // update global position
+    //     px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
+    //     py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
+    //   }, updateRate);
 
-    setInterval(() => {
-      createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
-    }, params.delay * 1000);
+    // setInterval(() => {
+    //   createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
+    // }, params.delay * 1000);
   });
 }
 

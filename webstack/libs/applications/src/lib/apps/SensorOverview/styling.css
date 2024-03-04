@@ -41,26 +41,16 @@
   text-shadow: 0.1px 0.1px 3px #000000;
 }
 
-.selectableList {
-  background-color: #2b2b2b;
-  /* background-image: linear-gradient(to top left, rgb(43, 41, 55), rgb(42, 53, 68)); */
-}
-
 /* 4d4d4d */
 .selectableListItem {
-  /* background-color: #6c757d; */
-  background-image: linear-gradient(to bottom right, rgb(75, 72, 97), rgb(62, 80, 103));
+  /* background-image: linear-gradient(to bottom right, rgb(75, 72, 97), rgb(62, 80, 103)); */
   padding: 5px;
   border-radius: 5px;
   margin: 5px;
   margin-top: 10px;
   font-size: 15px;
-  /* box-shadow: 0.1px 0.1px 2px white; */
-  text-shadow: 0.1px 0.1px 4px #000000;
 }
 
 .selectableListItem:hover {
-  background-image: linear-gradient(to bottom right, rgb(117, 112, 151), rgb(91, 116, 150));
-
   cursor: pointer;
 }

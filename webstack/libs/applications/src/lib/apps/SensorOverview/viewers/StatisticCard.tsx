@@ -257,9 +257,9 @@ const Content = (props: {
 
   useEffect(() => {
     if (props.size.width < props.size.height) {
-      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
+      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 15);
     } else {
-      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
+      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 15);
     }
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
 
@@ -288,8 +288,8 @@ const Content = (props: {
         border={`${scaleToFontSize / 100}px solid grey`}
         pl="1"
         pt="1"
-        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 5}
-        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 5}
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 15}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 15}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}

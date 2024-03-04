@@ -7,6 +7,7 @@
  */
 
 import { URLMetadata } from '@sage3/backend';
+import { generateReadableID } from '@sage3/shared';
 import {
   AppsCollection,
   BoardsCollection,
@@ -18,6 +19,7 @@ import {
   PluginsCollection,
   InsightCollection,
   RoomMembersCollection,
+  AnnotationsCollection,
 } from '../collections';
 
 export * from './apps';
@@ -30,6 +32,7 @@ export * from './message';
 export * from './plugins';
 export * from './insight';
 export * from './roommembers';
+export * from './annotations';
 
 /**
  * Load the various models at startup.
@@ -45,6 +48,7 @@ export async function loadCollections(): Promise<void> {
   await PluginsCollection.initialize();
   await InsightCollection.initialize();
   await RoomMembersCollection.initialize();
+  await AnnotationsCollection.initialize();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {
@@ -73,6 +77,7 @@ export async function loadCollections(): Promise<void> {
               color: 'green',
               roomId: res._id,
               ownerId: '-',
+              code: generateReadableID(),
               isPrivate: false,
               privatePin: '',
               executeInfo: { executeFunc: '', params: {} },
@@ -81,6 +86,8 @@ export async function loadCollections(): Promise<void> {
           );
           if (res2?._id) {
             console.log('Boards> default board addedd');
+            // Add an annotation document for the board
+            AnnotationsCollection.add({ whiteboardLines: [] }, '-', res2._id);
           }
         }
       }

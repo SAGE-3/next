@@ -27,7 +27,7 @@ import {
   UnorderedList,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -41,10 +41,16 @@ import {
   useUsersStore,
   useInsightStore,
   ConfirmModal,
+  usePresenceStore,
+  useUserSettings,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
+import { Position, Size } from '@sage3/shared/types';
 
-type AppToolbarProps = {};
+type AppToolbarProps = {
+  boardId: string;
+  roomId: string;
+};
 
 /**
  * AppToolbar Component
@@ -57,8 +63,8 @@ export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
-  const duplicate = useAppStore((state) => state.duplicateApps);
   const update = useAppStore((state) => state.update);
+  const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -72,8 +78,11 @@ export function AppToolbar(props: AppToolbarProps) {
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
 
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+
   // UI store
-  const showUI = useUIStore((state) => state.showUI);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setAppToolbarPosition = useUIStore((state) => state.setAppToolbarPosition);
   const scale = useUIStore((state) => state.scale);
@@ -82,11 +91,14 @@ export function AppToolbar(props: AppToolbarProps) {
   const setScale = useUIStore((state) => state.setScale);
   // Access the list of users
   const users = useUsersStore((state) => state.users);
+  // Presence Information
+  const presences = usePresenceStore((state) => state.presences);
 
   // Position state
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boxRef = useRef<HTMLDivElement>(null);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+  const [previousSize, setPreviousSize] = useState({ x: 0, y: 0, w: 0, h: 0, set: false, app: '' });
 
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
@@ -232,6 +244,102 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
+  /**
+   * Are two rectangles overlapping
+   * @param rec1
+   * @param rec2
+   * @returns
+   */
+  function isRectangleOverlap(rec1: number[], rec2: number[]) {
+    return Math.min(rec1[2], rec2[2]) - Math.max(rec1[0], rec2[0]) > 0 && Math.min(rec1[3], rec2[3]) - Math.max(rec1[1], rec2[1]) > 0;
+  }
+
+  /**
+   * Scale the app to fit inside the smallest overlapping viewport
+   */
+  function scaleApp() {
+    if (app) {
+      if (previousSize.set && previousSize.app === app._id) {
+        // Restore the previous size
+        update(app._id, {
+          size: { ...app.data.size, width: previousSize.w, height: previousSize.h },
+          position: { ...app.data.position, x: previousSize.x, y: previousSize.y },
+        });
+        // Clear the settings
+        setPreviousSize({ ...previousSize, set: false, app: '' });
+        return;
+      } else {
+        const potentialPresences: { position: Position; size: Size; sizeRatio: number }[] = [];
+        const res = presences
+          .filter((el) => el.data.boardId === props.boardId)
+          .map((presence) => {
+            const u = users.find((el) => el._id === presence.data.userId);
+            if (!u) return null;
+            const viewport = presence.data.viewport;
+            const isWall = u.data.userType === 'wall';
+            return isWall ? viewport : null;
+          });
+        const r1 = [
+          app.data.position.x,
+          app.data.position.y,
+          app.data.position.x + app.data.size.width,
+          app.data.position.y + app.data.size.height,
+        ];
+        const appSize = app.data.size.width * app.data.size.height;
+        const appRatio = app.data.size.width / app.data.size.height;
+        res.forEach((v) => {
+          // first true result will be used
+          if (v) {
+            const x = v.position.x;
+            const y = v.position.y;
+            const w = v.size.width;
+            const h = v.size.height;
+            const r2 = [x, y, x + w, y + h];
+            const overlapping = isRectangleOverlap(r1, r2);
+            if (overlapping) {
+              potentialPresences.push({ ...v, sizeRatio: (w * h) / appSize });
+            }
+          }
+        });
+        // Sort by area ratio to the app size
+        potentialPresences.sort((a, b) => a.sizeRatio - b.sizeRatio);
+        // Pick the smallest area ratio
+        if (potentialPresences[0]) {
+          const v = potentialPresences[0];
+          const x = v.position.x;
+          const y = v.position.y;
+          const w = v.size.width;
+          const h = v.size.height;
+          const viewportRatio = w / h;
+          let newsize = structuredClone(v.size);
+          let newpos = structuredClone(v.position);
+          if (viewportRatio > appRatio) {
+            newsize.width = h * 0.9 * appRatio;
+            newsize.height = h * 0.9;
+          } else {
+            newsize.width = w * 0.9;
+            newsize.height = (w * 0.9) / appRatio;
+          }
+          newpos.x = x + (w - newsize.width) / 2;
+          newpos.y = y + (h - newsize.height) / 2;
+
+          // Save the previous size
+          setPreviousSize({
+            x: app.data.position.x,
+            y: app.data.position.y,
+            w: app.data.size.width,
+            h: app.data.size.height,
+            set: true,
+            app: app._id,
+          });
+
+          // Update the app size and position
+          update(app._id, { size: newsize, position: newpos });
+        }
+      }
+    }
+  }
+
   const togglePin = () => {
     if (app) {
       update(app._id, { pinned: !app.data.pinned });
@@ -295,21 +403,37 @@ export function AppToolbar(props: AppToolbarProps) {
                     <PopoverArrow />
                     <PopoverCloseButton />
                     <PopoverHeader>Application Information</PopoverHeader>
-                    <PopoverBody userSelect={"text"}>
+                    <PopoverBody userSelect={'text'}>
                       <UnorderedList>
-                        <ListItem><b>ID</b>: {app._id}</ListItem>
-                        <ListItem><b>Type</b>: {app.data.type}</ListItem>
-                        <ListItem><b>Owner</b>: {ownerName}</ListItem>
-                        <ListItem><b>Created</b>: {when}</ListItem>
-                        <ListItem whiteSpace={"nowrap"}><b>Tags</b>: <Input
-                          width="300px" m={0} p={0} size="xs" variant='filled'
-                          value={inputLabel}
-                          placeholder="Enter tags here separated by spaces"
-                          _placeholder={{ opacity: 1, color: 'gray.400' }}
-                          focusBorderColor="gray.500"
-                          onChange={handleChange}
-                          onKeyDown={(e) => { onSubmit(e, onClose) }}
-                        />
+                        <ListItem>
+                          <b>ID</b>: {app._id}
+                        </ListItem>
+                        <ListItem>
+                          <b>Type</b>: {app.data.type}
+                        </ListItem>
+                        <ListItem>
+                          <b>Owner</b>: {ownerName}
+                        </ListItem>
+                        <ListItem>
+                          <b>Created</b>: {when}
+                        </ListItem>
+                        <ListItem whiteSpace={'nowrap'}>
+                          <b>Tags</b>:{' '}
+                          <Input
+                            width="300px"
+                            m={0}
+                            p={0}
+                            size="xs"
+                            variant="filled"
+                            value={inputLabel}
+                            placeholder="Enter tags here separated by spaces"
+                            _placeholder={{ opacity: 1, color: 'gray.400' }}
+                            focusBorderColor="gray.500"
+                            onChange={handleChange}
+                            onKeyDown={(e) => {
+                              onSubmit(e, onClose);
+                            }}
+                          />
                         </ListItem>
                       </UnorderedList>
                     </PopoverBody>
@@ -328,6 +452,18 @@ export function AppToolbar(props: AppToolbarProps) {
             >
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
+              openDelay={400}
+              ml="1"
+            >
+              <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <MdTv size="14px" color={buttonTextColor} />
               </Button>
             </Tooltip>
 

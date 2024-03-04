@@ -21,13 +21,16 @@ import {
   useToast,
   Button,
   Checkbox,
+  Text,
+  Tooltip,
+  HStack,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { BoardSchema } from '@sage3/shared/types';
-import { SAGEColors, randomSAGEColor } from '@sage3/shared';
+import { SAGEColors, randomSAGEColor, generateReadableID } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
@@ -52,11 +55,15 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
+  const [roomID, setRoomID] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (color: SAGEColors) => setColor(color);
+
+  // Pending create board sever reponse useState
+  const [pendingCreate, setPendingCreate] = useState(false);
 
   // Run on every open of the dialog
   useEffect(() => {
@@ -71,6 +78,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       return result;
     };
     setPassword(makeid(6));
+    setRoomID(generateReadableID());
     // Reset the form fields
     setName('');
     setDescription('');
@@ -116,6 +124,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       } else {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
+        // set the pending state to true so that the button is disabled
+        setPendingCreate(true);
         // Create the board
         const board = await createBoard({
           name: cleanedName,
@@ -124,6 +134,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           ownerId: user._id,
           color: color,
           isPrivate: isProtected,
+          code: roomID,
           privatePin: isProtected ? key : '',
           executeInfo: { executeFunc: '', params: {} },
         });
@@ -134,11 +145,19 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
             duration: 2 * 1000,
             isClosable: true,
           });
-          // Save the room to the user's profile
+          // Save the board to the user's starred boards
           if (saveBoard) {
             saveBoard(board._id);
           }
+        } else {
+          toast({
+            title: 'Board creation failed',
+            status: 'error',
+            duration: 2 * 1000,
+            isClosable: true,
+          });
         }
+        setPendingCreate(false);
         props.onClose();
       }
     }
@@ -150,6 +169,20 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+  };
+
+  // Copy the board id to the clipboard
+  const handleCopyId = async () => {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(roomID);
+      toast({
+        title: 'Success',
+        description: `BoardID Copied to Clipboard`,
+        duration: 3000,
+        isClosable: true,
+        status: 'success',
+      });
+    }
   };
 
   return (
@@ -188,13 +221,23 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
-          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+          <HStack>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} label={'Use this ID to enter a board, instead of a URL'}>
+              <Text my={2}>Board ID:</Text>
+            </Tooltip>
+            <Text my={2} onDoubleClick={handleCopyId}>
+              {roomID}
+            </Text>
+          </HStack>
+
+          <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
           </Checkbox>
-          <InputGroup mt={4}>
+          <InputGroup mt={2}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
-              type="text" autoCapitalize='off'
+              type="text"
+              autoCapitalize="off"
               placeholder={'Set Password'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={4}
@@ -206,7 +249,11 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description || (isProtected && !password)}>
+          <Button
+            colorScheme="green"
+            onClick={() => create()}
+            isDisabled={!name || !description || (isProtected && !password) || pendingCreate}
+          >
             Create
           </Button>
         </ModalFooter>

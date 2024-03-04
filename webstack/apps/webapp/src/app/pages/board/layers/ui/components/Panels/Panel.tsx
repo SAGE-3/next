@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -67,11 +67,11 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
 
   return (
     <Box>
-      <Tooltip label={props.description} maxWidth={"400px"} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+      <Tooltip label={props.description} maxWidth={'400px'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
           borderRadius="md"
           h="auto"
@@ -137,7 +137,8 @@ export function Panel(props: PanelProps) {
   const gripColor = useHexColor(grip);
 
   // UI store
-  const showUI = useUIStore((state) => state.showUI);
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
   const ref = createRef<HTMLDivElement>();
 
   // Panel Store

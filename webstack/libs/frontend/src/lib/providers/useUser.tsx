@@ -57,11 +57,15 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         const user = userResponse.data[0];
         // Check for savedBoards
         if (!user.data.savedBoards) {
-          update({ savedBoards: [] });
+          APIHttp.PUT<User>(`/users/${user._id}`, {
+            savedBoards: [],
+          });
         }
         // Check for recentBoards
         if (!user.data.recentBoards) {
-          update({ recentBoards: [] });
+          APIHttp.PUT<User>(`/users/${user._id}`, {
+            recentBoards: [],
+          });
         }
         setAbilityUser(user);
         setUser(user);

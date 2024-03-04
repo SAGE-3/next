@@ -93,13 +93,13 @@ async function start() {
   // const userData = await getUserInfo();
 
   // board name from command argument (or board0)
-  const boardId = params.board;
-  const roomId = params.room;
+  // const boardId = params.board;
+  // const roomId = params.room;
 
   const boardData = await getBoardsInfo();
-  // console.log('CLI> boards', boardData);
+  console.log('CLI> boards', boardData);
   const roomData = await getRoomsInfo();
-  // console.log('CLI> rooms', roomData);
+  console.log('CLI> rooms', roomData);
 
   // Create a websocket with the auth cookies
   const socket = socketConnection('ws://' + params.server + '/api', cookies);
@@ -109,52 +109,52 @@ async function start() {
     console.log('socket> connected');
 
     // Connect to a specific board
-    // console.log('socket> connecting to board', roomId, boardId);
+    console.log('socket> connecting to board', roomId, boardId);
     boardConnect(socket, myID, roomId, boardId);
 
-    // Default size of the board
-    const totalWidth = 3000;
-    const totalHeight = 3000;
+    // // Default size of the board
+    // const totalWidth = 3000;
+    // const totalHeight = 3000;
 
-    // Random position within a safe margin
-    var px = randomNumber(1500000, 1501000);
-    var py = randomNumber(1500000, 1501000);
-    var incx = randomNumber(1, 2) % 2 ? 1 : -1;
-    var incy = randomNumber(1, 2) % 2 ? 1 : -1;
-    var sensitivity = params.sensitivity;
+    // // Random position within a safe margin
+    // var px = randomNumber(1500000, 1501000);
+    // var py = randomNumber(1500000, 1501000);
+    // var incx = randomNumber(1, 2) % 2 ? 1 : -1;
+    // var incy = randomNumber(1, 2) % 2 ? 1 : -1;
+    // var sensitivity = params.sensitivity;
 
-    // intial position
-    sendCursor(socket, myID, px, py);
+    // // intial position
+    // sendCursor(socket, myID, px, py);
 
-    // Set a limit on runtime
-    setTimeout(() => {
-      console.log('CLI> done');
-      // Leave the board
-      boardDisconnect(socket, boardId);
-      // and quit
-      process.exit(1);
-    }, params.timeout * 1000);
+    // // Set a limit on runtime
+    // setTimeout(() => {
+    //   console.log('CLI> done');
+    //   // Leave the board
+    //   boardDisconnect(socket, boardId);
+    //   // and quit
+    //   process.exit(1);
+    // }, params.timeout * 1000);
 
-    // Send cursor position on repeat
-    setInterval(() => {
-      // step between 0 and 10 pixels
-      const movementX = randomNumber(1, 20);
-      const movementY = randomNumber(1, 20);
-      // scaled up for wall size
-      const dx = Math.round(movementX * sensitivity);
-      const dy = Math.round(movementY * sensitivity);
-      // detect wall size limits and reverse course
-      if (px >= totalWidth + 1500000) incx *= -1;
-      if (px <= 1500000) incx *= -1;
-      if (py >= totalHeight + 1500000) incy *= -1;
-      if (py <= 1500000) incy *= -1;
-      // update global position
-      px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
-      py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
+    // // Send cursor position on repeat
+    // setInterval(() => {
+    //   // step between 0 and 10 pixels
+    //   const movementX = randomNumber(1, 20);
+    //   const movementY = randomNumber(1, 20);
+    //   // scaled up for wall size
+    //   const dx = Math.round(movementX * sensitivity);
+    //   const dy = Math.round(movementY * sensitivity);
+    //   // detect wall size limits and reverse course
+    //   if (px >= totalWidth + 1500000) incx *= -1;
+    //   if (px <= 1500000) incx *= -1;
+    //   if (py >= totalHeight + 1500000) incy *= -1;
+    //   if (py <= 1500000) incy *= -1;
+    //   // update global position
+    //   px = clamp(px + incx * dx, 1500000, 1500000 + totalWidth);
+    //   py = clamp(py + incy * dy, 1500000, 1500000 + totalHeight);
 
-      // Send message to server
-      sendCursor(socket, myID, px, py);
-    }, updateRate);
+    //   // Send message to server
+    //   sendCursor(socket, myID, px, py);
+    // }, updateRate);
 
     // Print my position from the server updates
     // presenceUpdate(socket, (data) => {

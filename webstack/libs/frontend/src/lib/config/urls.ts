@@ -36,11 +36,16 @@ export const apiUrls = {
     upload: '/api/plugins/upload',
   },
   boards: {
+    getBoards: () => `/api/boards`,
     getBoard: (id: string) => `/api/boards/${id}`,
   },
   misc: {
     getTime: '/api/time',
     getInfo: '/api/info',
     nlp: '/api/nlp',
+  },
+  ai: {
+    status: '/api/ai/status',
+    query: '/api/ai/query',
   },
 };

@@ -7,6 +7,7 @@ import { name as ChartGeneratorName, init as defaultChartGenerator } from './app
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
+import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
@@ -20,6 +21,7 @@ import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
+import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RAPIDName, init as defaultRAPID } from './apps/RAPID';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
@@ -41,6 +43,7 @@ export const initialValues = {
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
+  [CodeEditorName]: defaultCodeEditor,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [EChartsViewerName]: defaultEChartsViewer,
@@ -54,6 +57,7 @@ export const initialValues = {
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
+  [PollName]: defaultPoll,
   [RAPIDName]: defaultRAPID,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,

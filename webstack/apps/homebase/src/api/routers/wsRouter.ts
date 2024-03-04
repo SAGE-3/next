@@ -23,6 +23,7 @@ import {
   PluginsCollection,
   InsightCollection,
   RoomMembersCollection,
+  AnnotationsCollection,
 } from '../collections';
 
 // Lib Imports
@@ -51,6 +52,8 @@ const wsRoutes = {
     PluginsCollection.wsRouter(socket, message, user, cache),
   '/insight': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     InsightCollection.wsRouter(socket, message, user, cache),
+  '/annotations': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
+    AnnotationsCollection.wsRouter(socket, message, user, cache),
   '/subscription': subscriptionWSRouter,
 } as {
   [key: string]: (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) => Promise<void>;
