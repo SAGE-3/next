@@ -4786,7 +4786,7 @@
     "@types/mapbox__point-geometry" "*"
     "@types/pbf" "*"
 
-"@types/mime@*", "@types/mime@^3.0.1":
+"@types/mime@*":
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-3.0.1.tgz#5f8f2bca0a5863cb69bc0b0acd88c96cb1d4ae10"
   integrity sha512-Y4XFY5VJAuw0FgAqPNd6NNoV44jbq9Bz2L7Rh/J6jLTiHBSBJa9fxqQIvkIld4GsoDOcCbvzOUAbLPsSKKg+uA==
@@ -4795,6 +4795,11 @@
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/@types/mime/-/mime-1.3.2.tgz#93e25bf9ee75fe0fd80b594bc4feb0e862111b5a"
   integrity sha512-YATxVxgRqNH6nHEIsvg6k2Boc1JHI9ZbH5iWFFv/MTkchz3b1ieGDa5T0a9RznNdI0KhVbdbWSN+KWWrQZRxTw==
+
+"@types/mime@^3.0.1":
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@types/mime/-/mime-3.0.4.tgz#2198ac274de6017b44d941e00261d5bc6a0e0a45"
+  integrity sha512-iJt33IQnVRkqeqC7PzBHPTC6fDlRNRW8vjrgqtScAhrmMwe8c4Eo7+fUGTa+XdWrpEgpyKWMYmi2dIwMAYRzPw==
 
 "@types/minimatch@*":
   version "5.1.2"
@@ -10320,6 +10325,11 @@ helmet@^7.0.0:
   resolved "https://registry.yarnpkg.com/helmet/-/helmet-7.0.0.tgz#ac3011ba82fa2467f58075afa58a49427ba6212d"
   integrity sha512-MsIgYmdBh460ZZ8cJC81q4XJknjG567wzEmv46WOBblDb6TUd3z8/GhgmsM9pn8g2B80tAJ4m5/d3Bi1KrSUBQ==
 
+highlight.js@^11.9.0:
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-11.9.0.tgz#04ab9ee43b52a41a047432c8103e2158a1b8b5b0"
+  integrity sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==
+
 hjson@^3.2.2:
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/hjson/-/hjson-3.2.2.tgz#a5a81138f4c0bb427e4b2ac917fafd4b454436cf"
@@ -15724,6 +15734,11 @@ simple-zustand-devtools@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/simple-zustand-devtools/-/simple-zustand-devtools-1.1.0.tgz#bb080b30c9930d2997f33881f63d47405226fd7f"
   integrity sha512-Axfcfr9L3YL3kto7aschCQLY2VUlXXMnIVtaTe9Y0qWbNmPsX/y7KsNprmxBZoB0pww5ZGs1u/ohcrvQ3tE6jA==
+
+simplify-js@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/simplify-js/-/simplify-js-1.2.4.tgz#7aab22d6df547ffd40ef0761ccd82b75287d45c7"
+  integrity sha512-vITfSlwt7h/oyrU42R83mtzFpwYk3+mkH9bOHqq/Qw6n8rtR7aE3NZQ5fbcyCUVVmuMJR6ynsAhOfK2qoah8Jg==
 
 sisteransi@^1.0.5:
   version "1.0.5"
