@@ -147,7 +147,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box p={0} border={'none'} overflow="hidden" height="100%">
+      <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
         <Editor
           // value={spec}
           onChange={handleTextChange}
@@ -160,17 +160,19 @@ function AppComponent(props: App): JSX.Element {
             fontSize: s.fontSize,
             contextmenu: false,
             minimap: { enabled: false },
-            lineNumbersMinChars: 4,
+            lineNumbers: 'on',
+            lineNumbersMinChars: 5,
             overviewRulerBorder: false,
             overviewRulerLanes: 0,
             quickSuggestions: false,
             glyphMargin: false,
             wordWrap: 'on',
-            lineNumbers: 'on',
             lineDecorationsWidth: 0,
             scrollBeyondLastLine: false,
             wordWrapColumn: 80,
-            wrappingStrategy: 'advanced',
+            wrappingStrategy: 'simple',
+            renderLineHighlight: 'line',
+            renderLineHighlightOnlyWhenFocus: true,
             fontFamily: "'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'monospace'",
             scrollbar: {
               useShadows: true,
