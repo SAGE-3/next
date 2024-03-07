@@ -55,7 +55,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
-      initialFocusRef={initialRef} size="sm">
+      returnFocusOnClose={false} initialFocusRef={initialRef} size="sm">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl" pb="0">
