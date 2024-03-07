@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import { RAPIDState } from './ComponentSelector';
 import Chart from '../echarts_plots/Chart';
+import { AppState } from '../../../types';
 
-function LineGraph({ s }: RAPIDState) {
+function LineGraph({ s }: AppState) {
   const [option, setOption] = useState({});
   console.log('s.metricData', s.metricData);
 

@@ -1,18 +1,22 @@
 import React from 'react';
-import { RAPIDState } from './ComponentSelector';
 import LoadingSpinner from './LoadingSpinner';
-import { ResultDataPoint } from '../worker/useWebWorker';
 import { Stat, StatLabel, StatNumber } from '@chakra-ui/stat';
 import { Box } from '@chakra-ui/react';
+import { AppState } from '../../../types';
 
-function Overview({ s }: RAPIDState): JSX.Element {
+type ResultDataPoint = {
+  'Sage Node': number | null;
+  Mesonet: number | null;
+};
+
+function Overview({ s }: AppState): JSX.Element {
   const getAverage = (arr: ResultDataPoint[], org: string) => {
     // console.log('arr', arr);
     if (org === 'Sage Node') {
-      return (arr.reduce((prev, curr) => prev + curr['Sage Node'], 0) / arr.length).toFixed(2);
+      return (arr.reduce((prev, curr) => (prev + (curr['Sage Node'] ?? 0)) as number, 0) / arr.length).toFixed(2);
     }
     if (org === 'Mesonet') {
-      return (arr.reduce((prev, curr) => (prev + curr['Mesonet']) as number, 0) / arr.length).toFixed(2);
+      return (arr.reduce((prev, curr) => (prev + (curr['Mesonet'] ?? 0)) as number, 0) / arr.length).toFixed(2);
     }
     return;
   };

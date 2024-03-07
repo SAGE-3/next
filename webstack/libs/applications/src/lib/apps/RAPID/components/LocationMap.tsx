@@ -109,58 +109,56 @@ function LocationMap(props: App) {
   }
 
   return (
-    <Box width="100%" height="100%">
-      <Map
-        initialViewState={{
-          longitude: -155.2384,
-          latitude: 19.4152,
-          zoom: 20,
+    <Map
+      initialViewState={{
+        longitude: -155.2384,
+        latitude: 19.4152,
+        zoom: 20,
+      }}
+      reuseMaps
+      mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`}
+    >
+      <Marker
+        latitude={sensorInfo.sage.lat}
+        longitude={sensorInfo.sage.lon}
+        onClick={() => {
+          setPinInfo(Object.keys(sensorInfo)[0]);
         }}
-        reuseMaps
-        mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`}
       >
-        <Marker
-          latitude={sensorInfo.sage.lat}
-          longitude={sensorInfo.sage.lon}
-          onClick={() => {
-            setPinInfo(Object.keys(sensorInfo)[0]);
-          }}
-        >
-          <Pin size={18} text="Sage Node" />
-        </Marker>
-        <Marker
-          latitude={sensorInfo.mesonet.lat}
-          longitude={sensorInfo.mesonet.lon}
-          onClick={() => {
-            setPinInfo(Object.keys(sensorInfo)[1]);
-          }}
-        >
-          <Pin size={18} text="Mesonet Sensor" />
-        </Marker>
+        <Pin size={18} text="Sage Node" />
+      </Marker>
+      <Marker
+        latitude={sensorInfo.mesonet.lat}
+        longitude={sensorInfo.mesonet.lon}
+        onClick={() => {
+          setPinInfo(Object.keys(sensorInfo)[1]);
+        }}
+      >
+        <Pin size={18} text="Mesonet Sensor" />
+      </Marker>
 
-        {pinInfo && (
-          <Popup
-            anchor="top"
-            longitude={sensorInfo[pinInfo].lon}
-            latitude={sensorInfo[pinInfo].lat}
-            onClose={() => {
-              setPinInfo(null);
-            }}
-          >
-            <Box textColor="black">
-              <Link
-                onClick={() => {
-                  createWebview(sensorInfo[pinInfo].url);
-                }}
-              >
-                {pinInfo}
-              </Link>
-            </Box>
-          </Popup>
-        )}
-        <NavigationControl position="top-left" />
-      </Map>
-    </Box>
+      {pinInfo && (
+        <Popup
+          anchor="top"
+          longitude={sensorInfo[pinInfo].lon}
+          latitude={sensorInfo[pinInfo].lat}
+          onClose={() => {
+            setPinInfo(null);
+          }}
+        >
+          <Box textColor="black">
+            <Link
+              onClick={() => {
+                createWebview(sensorInfo[pinInfo].url);
+              }}
+            >
+              {pinInfo}
+            </Link>
+          </Box>
+        </Popup>
+      )}
+      <NavigationControl position="top-left" />
+    </Map>
   );
 }
 
