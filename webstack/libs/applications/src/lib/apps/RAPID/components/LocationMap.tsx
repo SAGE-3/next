@@ -90,8 +90,8 @@ function LocationMap(props: App) {
           z: 0,
         },
         size: {
-          width: props.data.size.width,
-          height: props.data.size.height,
+          width: 650,
+          height: 400,
           depth: 0,
         },
         type: 'Webview',

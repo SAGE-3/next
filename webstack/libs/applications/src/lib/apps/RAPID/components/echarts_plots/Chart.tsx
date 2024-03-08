@@ -48,7 +48,7 @@ function Chart({ option }: ChartProps) {
     };
   }, [option]);
 
-  return <Box ref={divRef} height="100%" width="100%" background="white" />;
+  return <Box ref={divRef} height="100%" width="100%" />;
 }
 
 export default React.memo(Chart);

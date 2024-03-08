@@ -79,8 +79,8 @@ export function ApplicationsPanel(props: ApplicationProps) {
       h = 720;
       state.accessId = accessId;
     } else if (appName === 'RAPID') {
-      w = 1950;
-      h = 400;
+      w = 2600;
+      h = 800;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

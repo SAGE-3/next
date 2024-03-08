@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import Chart from '../echarts_plots/Chart';
+import Chart from './echarts_plots/Chart';
 import { AppState } from '../../../types';
+import { Box } from '@chakra-ui/react';
 
 function LineGraph({ s }: AppState) {
   const [option, setOption] = useState({});
@@ -77,7 +78,18 @@ function LineGraph({ s }: AppState) {
     }
   }, [s.metricData]);
 
-  return <>{s.metricData ? <Chart option={option} /> : <LoadingSpinner />}</>;
+  return (
+    <Box height="100%" width="100%">
+      {s.metricData ? (
+        <Box height="100%" width="100%" display="flex" flexDirection="column" bg="white" padding="5">
+          <Chart option={option} />
+          <Box color="black" textAlign="center">Last Updated: {s.lastUpdated}</Box>
+        </Box>
+      ) : (
+        <LoadingSpinner />
+      )}
+    </Box>
+  );
 }
 
 export default LineGraph;
