@@ -24,6 +24,16 @@ import { App } from '../../schema';
 import axios from 'axios';
 import { initialValues } from '@sage3/applications/initialValues';
 
+type YoloObject = {
+  class: number;
+  confidence: number;
+  name: string;
+  xmax: number;
+  xmin: number;
+  ymax: number;
+  ymin: number;
+};
+
 /**
  * ImageViewer app
  *
@@ -280,14 +290,17 @@ function ToolbarComponent(props: App): JSX.Element {
       })
       .then(async (response) => {
         if (response) {
+          console.log("🚀 ~ .then ~ response.data:", response.data)
           // Get the labels from the model
-          const data = response.data.detect_objects as { name: string, confidence: number }[];
+          const data = response.data.detect_objects as YoloObject[];
           const temps: string[] = [];
           for (let idx = 0; idx < data.length; idx++) {
             const label = data[idx];
             // Filter out labels with low confidence
             if (label.confidence > 0.5) {
               temps.push(label.name);
+              const box = [label.xmin, label.ymin, label.xmax, label.ymax]
+              console.log("🚀 ~ label.name", label.name, label.confidence, box);
             }
           }
           // If we have labels, update the insight
