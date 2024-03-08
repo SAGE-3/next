@@ -7,9 +7,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
+import { useParams } from 'react-router-dom';
+import { Image, Button, ButtonGroup, Tooltip, Box, Menu, MenuButton, MenuItem, MenuList, useToast } from '@chakra-ui/react';
 // Icons
-import { MdFileDownload } from 'react-icons/md';
+import { MdFileDownload, MdOutlineLightbulb } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
@@ -19,6 +20,9 @@ import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { App } from '../../schema';
+
+import axios from 'axios';
+import { initialValues } from '@sage3/applications/initialValues';
 
 /**
  * ImageViewer app
@@ -160,6 +164,11 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
+  // display some notifications
+  const toast = useToast();
+  // App Store
+  const createApp = useAppStore((state) => state.create);
+  const { roomId, boardId } = useParams();
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -169,6 +178,85 @@ function ToolbarComponent(props: App): JSX.Element {
       setFile(appasset);
     }
   }, [s.assetid, assets]);
+
+  // curl 127.0.0.1:8000/img_object_detection_to_img  -X POST -H 'accept: application/json' 
+  //  -H 'Content-Type: multipart/form-data' -F 'file=@image.jpg;type=image/jpeg' 
+  //  -o result.jpg
+
+  async function blobToBase64(blob: Blob) {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    return new Promise(resolve => {
+      reader.onloadend = () => {
+        resolve(reader.result);
+      };
+    });
+  }
+
+  // Generate code
+  async function generateLabels() {
+    if (!file) return;
+    // Get the content of the file
+    const imageURL = apiUrls.assets.getAssetById(file.data.file);
+    const response = await fetch(imageURL);
+    console.log("🚀 ~ generateLabels ~ imageURL:", imageURL)
+    const blob = await response.blob();
+    console.log("🚀 ~ generateLabels ~ blob:", blob)
+    // Create a form to upload the file
+    const fd = new FormData();
+    // const imageFile = new File([new Blob([blob])]);
+    console.log("🚀 ~ generateLabels ~ file.data.originalfilename:", file.data.originalfilename);
+    fd.append('file', blob, file.data.originalfilename);
+    // Upload with a POST request
+    axios({
+      url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_img',
+      // url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_json',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      responseType: "blob",
+      // responseType: "json",
+      data: fd
+    })
+      .catch((error: Error) => {
+        toast({
+          title: 'Processing',
+          description: 'Processing failed: ' + error.message,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+      })
+      .then(async (response) => {
+        if (response) {
+          // console.log("🚀 ~ generateLabels ~ response:", response);
+          // console.log("🚀 ~ generateLabels ~ response:", response.data);
+          createApp({
+            title: 'YoloV8',
+            roomId: roomId!,
+            boardId: boardId!,
+            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+            size: props.data.size,
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'ImageViewer',
+            state: { ...(initialValues['ImageViewer'] as AppState), assetid: await blobToBase64(response.data) },
+            raised: true,
+            pinned: false,
+            dragging: false,
+          });
+        }
+      })
+      .finally(() => {
+        toast({
+          title: 'Processing',
+          description: 'Processing complete',
+          status: 'info',
+          duration: 4000,
+          isClosable: true,
+        });
+      });
+  }
 
   return (
     <>
@@ -203,6 +291,21 @@ function ToolbarComponent(props: App): JSX.Element {
           </Tooltip>
         </div>
       </ButtonGroup>
+
+      {/* Smart Action */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdOutlineLightbulb />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            <MenuItem onClick={generateLabels}>Labels</MenuItem>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
     </>
   );
 }
