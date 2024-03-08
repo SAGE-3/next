@@ -50,6 +50,7 @@ import {
 } from './custom';
 
 import { config } from '../../config';
+import { RapidRouter } from './custom/rapid/rapid';
 
 /**
  * API Loader function
@@ -101,6 +102,9 @@ export function expressAPIRouter(): express.Router {
 
   // Ai Routes
   router.use('/ai', AiRouter());
+
+  // Rapid Route
+  router.use('/rapid', RapidRouter())
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

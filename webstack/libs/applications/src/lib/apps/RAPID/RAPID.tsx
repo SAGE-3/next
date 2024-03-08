@@ -58,6 +58,7 @@ function AppComponent(props: App): JSX.Element {
         time: s.time.MESONET,
       },
     };
+    console.log("query", query)
     workerInstance.postMessage(query);
   }, [workerInstance]);
 
