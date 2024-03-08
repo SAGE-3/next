@@ -8,15 +8,7 @@
 
 import * as express from 'express';
 import { mergeData } from './fetching-functions';
-
-type SageNodeQuery = {
-  filter: {
-    name: string;
-    device: string;
-  };
-  start: string;
-  end: string;
-};
+import { RAPIDQueries } from './fetching-functions';
 
 /**
  * Route for RAPID data querying
@@ -26,22 +18,26 @@ export function RapidRouter(): express.Router {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.json("rapid router")
+    res.json('rapid router');
   });
 
   // Fetch and process data from Sage and Mesonet Node
-  router.post("/weather_query", async (req, res) => {
-    const query = req.body;
-    const data = await mergeData(query);
-    res.json({data: data});
+  router.post('/weather_query', async (req, res) => {
+    try {
+      const query = req.body as RAPIDQueries;
+      const data = await mergeData(query);
+      res.status(200).json({ data: data });
+    } catch (error) {
+      res.status(500).json({ error: 'Error fetching data' });
+    }
   });
 
   // Fetch and process data from Sage Stats
-  router.post("/sage_stats_query", (req, res) => {
-    console.log("query", req.body);
+  router.post('/sage_stats_query', (req, res) => {
+    console.log('query', req.body);
     const body = req.body;
     res.json({ message: body.hey });
-  })
+  });
 
   return router;
 }

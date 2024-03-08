@@ -41,62 +41,67 @@ function AppComponent(props: App): JSX.Element {
   // Interval for fetching data
   const interval = useRef<NodeJS.Timeout | undefined>();
 
-  // Web worker functions
-  const workerInstance = useMemo(() => createWebWorker(worker), []);
-  const fetchDataViaWorker = useCallback(() => {
-    const query = {
-      sageNode: {
-        start: s.time.SAGE_NODE,
-        filter: {
-          name: s.metric.SAGE_NODE,
-          sensor: 'bme680',
-          vsn: 'W097',
+  // Fetch data
+  const fetchData = useCallback(async () => {
+    try {
+      const query = {
+        sageNode: {
+          start: s.time.SAGE_NODE,
+          filter: {
+            name: s.metric.SAGE_NODE,
+            sensor: 'bme680',
+            vsn: 'W097',
+          },
         },
-      },
-      mesonet: {
-        metric: s.metric.MESONET,
-        time: s.time.MESONET,
-      },
-    };
-    console.log("query", query)
-    workerInstance.postMessage(query);
-  }, [workerInstance]);
+        mesonet: {
+          metric: s.metric.MESONET,
+          time: s.time.MESONET,
+        },
+      };
+      // Fetch data
+      const res = await fetch(apiUrls.misc.rapidWeather, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(query),
+      });
+
+      // Check status
+      if (res.status !== 200) {
+        throw new Error('Error fetching data');
+      } else {
+        const data = await res.json();
+        // update data
+        updateState(props._id, {
+          metricData: data,
+          lastUpdated: new Date(),
+        });
+      }
+    } catch (error) {
+      console.log('Error fetching data>', error);
+    }
+  }, []);
 
   useEffect(() => {
-    console.log("updating")
-  }, [s.metric])
+    console.log('updating');
+  }, [s.metric]);
 
   // Post message to web worker
   useEffect(() => {
-    if (workerInstance) {
-      fetchDataViaWorker();
-      // check if live data is enabled
-      if (s.liveData) {
-        interval.current = setInterval(() => {
-          console.log('interval triggered');
-          fetchDataViaWorker();
-        }, TEN_MINUTES);
-      }
+    fetchData();
+    // check if live data is enabled
+    if (s.liveData) {
+      interval.current = setInterval(() => {
+        console.log('interval triggered');
+        fetchData();
+      }, TEN_MINUTES);
     }
     // cleanup on unmount
     return () => {
       clearInterval(interval.current);
     };
-  }, [workerInstance]);
-
-  // Listen to result from web worker
-  useEffect(() => {
-    workerInstance.addEventListener('message', (event) => {
-      if (event.data.error) {
-        console.error('Error fetching data', event.data.error);
-      } else {
-        updateState(props._id, {
-          lastUpdated: new Date().toLocaleString(),
-          metricData: event.data.result,
-        });
-      }
-    });
-  }, [workerInstance]);
+  }, []);
 
   return (
     <AppWindow app={props}>
@@ -134,37 +139,98 @@ function ToolbarComponent(props: App): JSX.Element {
     return url;
   }, [s.metricData]);
 
-  const handleDateSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value) {
-      console.log(e.target.value);
+  // Update when new date gets selected
+  const handleDateSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    try {
+      if (e.target.value) {
+        const date = JSON.parse(e.target.value);
+        console.log('date', date);
+        const res = await fetch(apiUrls.misc.rapidWeather, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sageNode: {
+              start: date.SAGE_NODE,
+              filter: {
+                name: s.metric.SAGE_NODE,
+                sensor: 'bme680',
+                vsn: 'W097',
+              },
+            },
+            mesonet: {
+              metric: s.metric.MESONET,
+              time: date.MESONET,
+            },
+          }),
+        });
+
+        if (res.status !== 200) {
+          throw new Error('Error fetching data');
+        } else {
+          const data = await res.json();
+          updateState(props._id, {
+            metricData: data,
+            lastUpdated: new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching data>', error);
     }
   };
 
+  // Update when new metric gets selected
   const handleMetricSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (e.target.value) {
-      console.log("e.target.value", e.target.value)
-      await updateState(props._id, { metric: JSON.parse(e.target.value)})
+    try {
+      if (e.target.value) {
+        const metric = JSON.parse(e.target.value);
+        const res = await fetch(apiUrls.misc.rapidWeather, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sageNode: {
+              start: s.time.SAGE_NODE,
+              filter: {
+                name: metric.SAGE_NODE,
+                sensor: 'bme680',
+                vsn: 'W097',
+              },
+            },
+            mesonet: {
+              metric: metric.MESONET,
+              time: s.time.MESONET,
+            },
+          }),
+        });
+
+        if (res.status !== 200) {
+          throw new Error('Error fetching data');
+        } else {
+          const data = await res.json();
+          updateState(props._id, {
+            metric: metric,
+            metricData: data,
+            lastUpdated: new Date(),
+          });
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching data>', error);
     }
-  }
+  };
 
   return (
     <Box display="flex" gap="2" alignItems="center" width="fit-content">
-      <Select
-        placeholder="Select Date"
-        name="date_selection"
-        size="xs"
-        onChange={handleDateSelect}
-      >
+      <Select placeholder="Select Date" name="date_selection" size="xs" onChange={handleDateSelect}>
         <option value={JSON.stringify(QUERY_FIELDS.TIME['24HR'])}>Last 24 Hours</option>
         <option value={JSON.stringify(QUERY_FIELDS.TIME['7D'])}>Last 7 days</option>
         <option value={JSON.stringify(QUERY_FIELDS.TIME['30D'])}>Last 30 Days</option>
       </Select>
-      <Select
-        name="metric"
-        placeholder="Select Metric"
-        size="xs"
-        onChange={handleMetricSelect}
-      >
+      <Select name="metric" placeholder="Select Metric" size="xs" onChange={handleMetricSelect}>
         <option value={JSON.stringify(QUERY_FIELDS.TEMPERATURE)}>{QUERY_FIELDS.TEMPERATURE.NAME}</option>
         <option value={JSON.stringify(QUERY_FIELDS.RELATIVE_HUMIDITY)}>{QUERY_FIELDS.RELATIVE_HUMIDITY.NAME}</option>
         <option value={JSON.stringify(QUERY_FIELDS.PRESSURE)}>{QUERY_FIELDS.PRESSURE.NAME}</option>

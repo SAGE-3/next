@@ -43,6 +43,7 @@ export const apiUrls = {
     getTime: '/api/time',
     getInfo: '/api/info',
     nlp: '/api/nlp',
+    rapidWeather: '/api/rapid/weather_query',
   },
   ai: {
     status: '/api/ai/status',
