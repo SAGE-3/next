@@ -14,7 +14,7 @@ import { MdFileDownload, MdOutlineLightbulb } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
 import { AppWindow } from '../../components';
@@ -169,6 +169,9 @@ function ToolbarComponent(props: App): JSX.Element {
   // App Store
   const createApp = useAppStore((state) => state.create);
   const { roomId, boardId } = useParams();
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const updateInsights = useInsightStore((state) => state.update);
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -178,10 +181,6 @@ function ToolbarComponent(props: App): JSX.Element {
       setFile(appasset);
     }
   }, [s.assetid, assets]);
-
-  // curl 127.0.0.1:8000/img_object_detection_to_img  -X POST -H 'accept: application/json' 
-  //  -H 'Content-Type: multipart/form-data' -F 'file=@image.jpg;type=image/jpeg' 
-  //  -o result.jpg
 
   async function blobToBase64(blob: Blob) {
     const reader = new FileReader();
@@ -194,29 +193,23 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   // Generate code
-  async function generateLabels() {
+  async function generateImage() {
     if (!file) return;
     // Get the content of the file
     const imageURL = apiUrls.assets.getAssetById(file.data.file);
     const response = await fetch(imageURL);
-    console.log("🚀 ~ generateLabels ~ imageURL:", imageURL)
     const blob = await response.blob();
-    console.log("🚀 ~ generateLabels ~ blob:", blob)
     // Create a form to upload the file
     const fd = new FormData();
-    // const imageFile = new File([new Blob([blob])]);
-    console.log("🚀 ~ generateLabels ~ file.data.originalfilename:", file.data.originalfilename);
     fd.append('file', blob, file.data.originalfilename);
     // Upload with a POST request
     axios({
       url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_img',
-      // url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_json',
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data'
       },
       responseType: "blob",
-      // responseType: "json",
       data: fd
     })
       .catch((error: Error) => {
@@ -230,8 +223,6 @@ function ToolbarComponent(props: App): JSX.Element {
       })
       .then(async (response) => {
         if (response) {
-          // console.log("🚀 ~ generateLabels ~ response:", response);
-          // console.log("🚀 ~ generateLabels ~ response:", response.data);
           createApp({
             title: 'YoloV8',
             roomId: roomId!,
@@ -257,6 +248,72 @@ function ToolbarComponent(props: App): JSX.Element {
         });
       });
   }
+
+  // Generate code
+  async function generateLabels() {
+    if (!file) return;
+    // Get the content of the file
+    const imageURL = apiUrls.assets.getAssetById(file.data.file);
+    const response = await fetch(imageURL);
+    const blob = await response.blob();
+    // Create a form to upload the file
+    const fd = new FormData();
+    fd.append('file', blob, file.data.originalfilename);
+    // Upload with a POST request
+    axios({
+      url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_json',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      responseType: "json",
+      data: fd
+    })
+      .catch((error: Error) => {
+        toast({
+          title: 'Processing',
+          description: 'Processing failed: ' + error.message,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+      })
+      .then(async (response) => {
+        if (response) {
+          // Get the labels from the model
+          const data = response.data.detect_objects as { name: string, confidence: number }[];
+          const temps: string[] = [];
+          for (let idx = 0; idx < data.length; idx++) {
+            const label = data[idx];
+            // Filter out labels with low confidence
+            if (label.confidence > 0.5) {
+              temps.push(label.name);
+            }
+          }
+          // If we have labels, update the insight
+          if (temps.length > 0) {
+            // Get the existing labels
+            const myinsight = insights.find((a) => a.data.app_id === props._id);
+            if (myinsight) {
+              const mylabels = myinsight.data.labels;
+              temps.push(...mylabels);
+            }
+            // Update the insight collection
+            updateInsights(props._id, { labels: temps });
+          }
+        }
+      })
+      .finally(() => {
+        toast({
+          title: 'Processing',
+          description: 'Processing complete',
+          status: 'info',
+          duration: 4000,
+          isClosable: true,
+        });
+      });
+  }
+
 
   return (
     <>
@@ -301,7 +358,12 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px" fontSize={'sm'}>
-            <MenuItem onClick={generateLabels}>Labels</MenuItem>
+            <Tooltip hasArrow={true} label={'Generate labels and store them as tags'} openDelay={300}>
+              <MenuItem onClick={generateLabels}>Generate labels</MenuItem>
+            </Tooltip>
+            <Tooltip hasArrow={true} label={'Create a new image with labels'} openDelay={300}>
+              <MenuItem onClick={generateImage}>Show image with labels</MenuItem>
+            </Tooltip>
           </MenuList>
         </Menu>
       </ButtonGroup>
