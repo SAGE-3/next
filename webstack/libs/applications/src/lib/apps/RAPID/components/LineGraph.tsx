@@ -83,7 +83,7 @@ function LineGraph({ s }: AppState) {
       {s.metricData ? (
         <Box height="100%" width="100%" display="flex" flexDirection="column" bg="white" padding="5">
           <Chart option={option} />
-          <Box color="black" textAlign="center">Last Updated: {s.lastUpdated}</Box>
+          <Box color="#323232" fontWeight="bold" textAlign="center">Last Updated: {new Date(s.lastUpdated).toLocaleString()}</Box>
         </Box>
       ) : (
         <LoadingSpinner />

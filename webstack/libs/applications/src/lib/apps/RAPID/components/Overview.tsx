@@ -52,44 +52,53 @@ function Overview({ s }: AppState): JSX.Element {
   return (
     <>
       {s.metricData ? (
-        <Box padding="5" display="flex" flexDir="column" height="100%">
-          <Box mb="10">
-            <h1>Average Measurements Over 7 days</h1>
+        <Box padding="3" display="flex" flexDir="column" height="100%" bg="#f8f8f8" color="#323232" gap={5}>
+          <Box fontWeight="bold">
+            <h1>Average Measurements</h1>
           </Box>
-
-          <Box>
-            <Box textAlign="center">
-              <h1>Sage Node</h1>
+          <Box border="1px" borderRadius="10" borderColor="lightgray" padding="3" bg="white" boxShadow="2px 2px 15px lightgray">
+            <Box textAlign="center" paddingBottom="3" fontSize="2xl" fontWeight="bold">
+              Sage Node
             </Box>
-            <Box display="flex">
+            <Box display="flex" textAlign="center">
               <Stat>
-                <StatLabel>Average {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Average {s.metric.NAME}</StatLabel>
                 <StatNumber>{getAverage(s.metricData.data, 'Sage Node')}</StatNumber>
               </Stat>
               <Stat>
-                <StatLabel>Min {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Min {s.metric.NAME}</StatLabel>
                 <StatNumber>{getMin(s.metricData.data, 'Sage Node')}</StatNumber>
               </Stat>
               <Stat>
-                <StatLabel>Max {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Max {s.metric.NAME}</StatLabel>
                 <StatNumber>{getMax(s.metricData.data, 'Sage Node')}</StatNumber>
               </Stat>
             </Box>
+          </Box>
 
-            <Box textAlign="center">
-              <h1>Mesonet</h1>
+          <Box
+            textAlign="center"
+            border="1px"
+            borderRadius="10"
+            borderColor="lightgray"
+            padding="3"
+            bg="white"
+            boxShadow="2px 2px 15px lightgray"
+          >
+            <Box textAlign="center" paddingBottom="3" fontSize="2xl" fontWeight="bold">
+              Mesonet
             </Box>
             <Box display="flex" justifyContent="center">
               <Stat>
-                <StatLabel>Average {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Average {s.metric.NAME}</StatLabel>
                 <StatNumber>{getAverage(s.metricData.data, 'Mesonet')}</StatNumber>
               </Stat>
               <Stat>
-                <StatLabel>Min {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Min {s.metric.NAME}</StatLabel>
                 <StatNumber>{getMin(s.metricData.data, 'Mesonet')}</StatNumber>
               </Stat>
               <Stat>
-                <StatLabel>Max {s.metric.NAME}</StatLabel>
+                <StatLabel fontWeight="bold">Max {s.metric.NAME}</StatLabel>
                 <StatNumber>{getMax(s.metricData.data, 'Mesonet')}</StatNumber>
               </Stat>
             </Box>

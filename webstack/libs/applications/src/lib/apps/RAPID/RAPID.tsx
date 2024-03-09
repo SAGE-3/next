@@ -28,11 +28,12 @@ import LocationMap from './components/LocationMap';
 import Overview from './components/Overview';
 import Panel from './components/Panel';
 import SageStats from './components/SageStats';
-/* App component for RAPID */
+import { MdRefresh } from 'react-icons/md';
 
+/* App component for RAPID */
 function AppComponent(props: App): JSX.Element {
   // Constant
-  const TEN_MINUTES = 600000;
+  // const TEN_MINUTES = 600000;
 
   // App state
   const s = props.data.state as AppState;
@@ -83,24 +84,24 @@ function AppComponent(props: App): JSX.Element {
     }
   }, []);
 
-  useEffect(() => {
-    console.log('updating');
-  }, [s.metric]);
+  // TODO: figure out what to do with live data
+  // useEffect(() => {
+  //   fetchData();
+  //   // check if live data is enabled
+  //   if (s.liveData) {
+  //     interval.current = setInterval(() => {
+  //       console.log('interval triggered');
+  //       fetchData();
+  //     }, 10000);
+  //   }
+  //   // cleanup on unmount
+  //   return () => {
+  //     clearInterval(interval.current);
+  //   };
+  // }, []);
 
-  // Post message to web worker
   useEffect(() => {
     fetchData();
-    // check if live data is enabled
-    if (s.liveData) {
-      interval.current = setInterval(() => {
-        console.log('interval triggered');
-        fetchData();
-      }, TEN_MINUTES);
-    }
-    // cleanup on unmount
-    return () => {
-      clearInterval(interval.current);
-    };
   }, []);
 
   return (
@@ -139,6 +140,47 @@ function ToolbarComponent(props: App): JSX.Element {
     return url;
   }, [s.metricData]);
 
+  const fetchData = useCallback(async () => {
+    try {
+      const query = {
+        sageNode: {
+          start: s.time.SAGE_NODE,
+          filter: {
+            name: s.metric.SAGE_NODE,
+            sensor: 'bme680',
+            vsn: 'W097',
+          },
+        },
+        mesonet: {
+          metric: s.metric.MESONET,
+          time: s.time.MESONET,
+        },
+      };
+      // Fetch data
+      const res = await fetch(apiUrls.misc.rapidWeather, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(query),
+      });
+
+      // Check status
+      if (res.status !== 200) {
+        throw new Error('Error fetching data');
+      } else {
+        const data = await res.json();
+        // update data
+        updateState(props._id, {
+          metricData: data,
+          lastUpdated: new Date(),
+        });
+      }
+    } catch (error) {
+      console.log('Error fetching data>', error);
+    }
+  }, []);
+
   // Update when new date gets selected
   const handleDateSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     try {
@@ -173,6 +215,7 @@ function ToolbarComponent(props: App): JSX.Element {
           updateState(props._id, {
             metricData: data,
             lastUpdated: new Date(),
+            time: date,
           });
         }
       }
@@ -235,6 +278,16 @@ function ToolbarComponent(props: App): JSX.Element {
         <option value={JSON.stringify(QUERY_FIELDS.RELATIVE_HUMIDITY)}>{QUERY_FIELDS.RELATIVE_HUMIDITY.NAME}</option>
         <option value={JSON.stringify(QUERY_FIELDS.PRESSURE)}>{QUERY_FIELDS.PRESSURE.NAME}</option>
       </Select>
+      <Tooltip placement="top-start" hasArrow={true} label={'Refresh Data'} openDelay={400}>
+        <Button
+          size="xs"
+          onClick={() => {
+            fetchData();
+          }}
+        >
+          <MdRefresh size={40} />
+        </Button>
+      </Tooltip>
       <Link href={jsonBlob()} download={`SageNode_Mesonet_${Date.now()}.json`}>
         <Tooltip label="Download Data" aria-label="Download Current Data">
           <div>
