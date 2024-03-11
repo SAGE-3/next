@@ -27,7 +27,8 @@ import LineGraph from './components/LineGraph';
 import LocationMap from './components/LocationMap';
 import Overview from './components/Overview';
 import Panel from './components/Panel';
-import SageStats from './components/SageStats';
+import SageCpuStats from './components/SageCpuStats';
+import SageGpuStats from './components/SageGpuStats';
 import { MdRefresh } from 'react-icons/md';
 
 /* App component for RAPID */
@@ -60,7 +61,7 @@ function AppComponent(props: App): JSX.Element {
         },
       };
       // Fetch data
-      const res = await fetch(apiUrls.misc.rapidWeather, {
+      const res = await fetch(apiUrls.rapid.weather, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,10 +119,10 @@ function AppComponent(props: App): JSX.Element {
             <LocationMap {...props} />
           </Panel>
           <Panel>
-            <SageStats />
+            <SageCpuStats />
           </Panel>
           <Panel>
-            <div>hey</div>
+            <SageGpuStats />
           </Panel>
         </Grid>
       </Box>
@@ -157,7 +158,7 @@ function ToolbarComponent(props: App): JSX.Element {
         },
       };
       // Fetch data
-      const res = await fetch(apiUrls.misc.rapidWeather, {
+      const res = await fetch(apiUrls.rapid.weather, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +188,7 @@ function ToolbarComponent(props: App): JSX.Element {
       if (e.target.value) {
         const date = JSON.parse(e.target.value);
         console.log('date', date);
-        const res = await fetch(apiUrls.misc.rapidWeather, {
+        const res = await fetch(apiUrls.rapid.weather, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -229,7 +230,7 @@ function ToolbarComponent(props: App): JSX.Element {
     try {
       if (e.target.value) {
         const metric = JSON.parse(e.target.value);
-        const res = await fetch(apiUrls.misc.rapidWeather, {
+        const res = await fetch(apiUrls.rapid.weather, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

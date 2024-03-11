@@ -43,10 +43,14 @@ export const apiUrls = {
     getTime: '/api/time',
     getInfo: '/api/info',
     nlp: '/api/nlp',
-    rapidWeather: '/api/rapid/weather_query',
   },
   ai: {
     status: '/api/ai/status',
     query: '/api/ai/query',
   },
+  rapid: {
+    weather: '/api/rapid/weather_query',
+    sageCpuStats: '/api/rapid/sage_cpu_stats',
+    sageGpuStats: '/api/rapid/sage_gpu_stats',
+  }
 };

@@ -55,6 +55,7 @@ function LineGraph({ s }: AppState) {
               ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
               : [],
             large: true,
+            showSymbol: false,
           },
           {
             name: 'Mesonet',
@@ -63,6 +64,7 @@ function LineGraph({ s }: AppState) {
               ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
               : [],
             large: true,
+            showSymbol: false,
           },
         ],
         dataZoom: [
