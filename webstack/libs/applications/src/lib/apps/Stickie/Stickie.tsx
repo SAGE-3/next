@@ -52,8 +52,6 @@ import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
 import './styling.css';
-import e from 'express';
-import { text } from 'd3';
 
 /**
  * NoteApp SAGE3 application
