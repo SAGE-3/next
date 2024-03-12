@@ -7,7 +7,7 @@
  */
 
 // Import the React library
-import { useState, useRef, useEffect, useCallback, FocusEventHandler } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
 import {
   Box,
@@ -27,6 +27,7 @@ import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMe
 
 // Debounce updates to the textarea
 import { debounce } from 'throttle-debounce';
+
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -88,7 +89,7 @@ function AppComponent(props: App): JSX.Element {
   const [note, setNote] = useState(s.text);
 
   // Update local note state when server changes
-  const updateNote = useCallback(
+  const updateLocalNote = useCallback(
     (value: string) => {
       if (!editing) {
         setNote(value);
@@ -99,24 +100,34 @@ function AppComponent(props: App): JSX.Element {
 
   // Update local value with value from the server
   useEffect(() => {
-    updateNote(s.text);
-  }, [s.text, updateNote]);
+    updateLocalNote(s.text);
+  }, [s.text, updateLocalNote]);
 
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  // When the users deselects the textarea, save the text
   const saveText = (value: string) => {
     updateState(props._id, { text: value });
   };
+
+  // // Saving the text after 1sec of inactivity
+  // const debounceSave = debounce(250, (val) => {
+  //   updateState(props._id, { text: val });
+  // });
+  // // Keep a copy of the function
+  // const debounceFunc = useRef(debounceSave);
+
+  // When the users deselects the textarea, save the text
 
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
     // Update the local value
     setNote(inputValue);
+    // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
+    // debounceFunc.current(inputValue);
   }
 
   // Key down handler: Tab creates another stickie
@@ -129,6 +140,7 @@ function AppComponent(props: App): JSX.Element {
     if (e.code === 'Escape') {
       // Deselect the app
       setSelectedApp('');
+      // Deselect the text area
       textbox.current?.blur();
       return;
     }
