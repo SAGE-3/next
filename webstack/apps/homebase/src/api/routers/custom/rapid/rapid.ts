@@ -62,11 +62,24 @@ export function RapidRouter(): express.Router {
         return true;
       });
 
-      const formattedData = filteredCpuParsedData.map((d) => {
-        return { x: d.timestamp, y: d.value };
-      });
+      const cores: { [key: string]: boolean[] } = {};
 
-      res.status(200).json({ data: formattedData });
+      for (let i = 0; i < 6; i++) {
+        cores[`core_${i}`] = filteredCpuParsedData.filter((d) => Number(d.meta.cpu) === i);
+      }
+
+      console.log('cores', cores);
+
+      // const formattedData = filteredCpuParsedData.map((d) => {
+      //   return { x: d.timestamp, y: d.value };
+      // });
+
+      // const formattedData;
+      // for (let i = 0; i < cores.length; i++) {
+      //   cores[i];
+      // }
+
+      res.status(200).json({ data: cores });
     } catch (error) {
       res.status(500).json({ error: error });
     }

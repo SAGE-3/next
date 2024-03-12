@@ -1,18 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import Chart from './echarts_plots/Chart';
 import { apiUrls } from '@sage3/frontend';
 import { AppState } from '../../../types';
 import { Box } from '@chakra-ui/react';
+import LoadingSpinner from './LoadingSpinner';
 
 function SageCpuStats({ s }: AppState) {
   const [option, setOption] = useState({});
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<any>(null);
   useEffect(() => {
     async function fetchData() {
       try {
         const res = await fetch(apiUrls.rapid.sageCpuStats);
         const resData = await res.json();
         setData(resData.data);
+        console.log('sage cpu stats', resData.data);
       } catch (error) {
         console.log('error', error);
       }
@@ -21,46 +24,74 @@ function SageCpuStats({ s }: AppState) {
   }, []);
 
   useEffect(() => {
-    const option: echarts.EChartsCoreOption = {
-      title: {
-        text: 'Sage CPU % Over Past Hour',
-      },
-      animation: false,
-      tooltip: {
-        trigger: 'axis',
-      },
-      toolbox: {
-        show: true,
-        feature: {
-          saveAsImage: {
-            show: true,
-            title: 'Save as Image',
+    if (data) {
+      const option: echarts.EChartsCoreOption = {
+        title: {
+          text: 'Sage CPU % Over Past Hour',
+        },
+        animation: false,
+        tooltip: {
+          trigger: 'axis',
+        },
+        toolbox: {
+          show: true,
+          feature: {
+            saveAsImage: {
+              show: true,
+              title: 'Save as Image',
+            },
           },
         },
-      },
-      legend: {
-        data: ['CPU %'],
-      },
-      xAxis: {
-        data: data ? [...data.map((d: { x: string; y: number }) => new Date(d.x).toLocaleTimeString())] : [],
-        name: 'Time',
-      },
-      yAxis: {
-        name: 'CPU %',
-        position: 'left',
-      },
-      renderer: 'svg',
-      series: [
-        {
-          name: 'CPU %',
-          type: 'line',
-          data: data ? [...data.map((d: { x: string; y: number }) => d.y)] : [],
-          large: true,
-          showSymbol: false,
+        xAxis: {
+          data: data.core_1 ? [...data.core_1.map((d: any) => new Date(d.timestamp).toLocaleTimeString())] : [],
+          name: 'Time',
         },
-      ]
-    };
-    setOption(option);
+        yAxis: {
+          name: 'CPU %',
+          position: 'left',
+        },
+        renderer: 'svg',
+        // legend: ['Core 1', 'Core 2', 'Core 3', 'Core 4', 'Core 5'],
+        series: [
+          {
+            name: 'Core 1',
+            type: 'line',
+            data: data.core_1 ? [...data.core_1.map((d: any) => d.value)] : [],
+            large: true,
+            showSymbol: false,
+          },
+          {
+            name: 'Core 2',
+            type: 'line',
+            data: data.core_2 ? [...data.core_2.map((d: any) => d.value)] : [],
+            large: true,
+            showSymbol: false,
+          },
+          {
+            name: 'Core 3',
+            type: 'line',
+            data: data.core_3 ? [...data.core_3.map((d: any) => d.value)] : [],
+            large: true,
+            showSymbol: false,
+          },
+          {
+            name: 'Core 4',
+            type: 'line',
+            data: data.core_4 ? [...data.core_4.map((d: any) => d.value)] : [],
+            large: true,
+            showSymbol: false,
+          },
+          {
+            name: 'Core 5',
+            type: 'line',
+            data: data.core_5 ? [...data.core_5.map((d: any) => d.value)] : [],
+            large: true,
+            showSymbol: false,
+          },
+        ],
+      };
+      setOption(option);
+    }
   }, [data]);
 
   return data ? (
@@ -68,7 +99,7 @@ function SageCpuStats({ s }: AppState) {
       <Chart option={option} />
     </Box>
   ) : (
-    <div>Loading...</div>
+    <LoadingSpinner />
   );
 }
 

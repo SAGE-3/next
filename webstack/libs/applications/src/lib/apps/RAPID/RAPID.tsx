@@ -20,7 +20,7 @@ import { QUERY_FIELDS } from './data/constants';
 
 // Styling
 import './styling.css';
-import { Box, Button, Flex, Link, Tooltip, GridItem, Grid, Select } from '@chakra-ui/react';
+import { Box, Button, Flex, Link, Tooltip, GridItem, Grid, Select, Image } from '@chakra-ui/react';
 import { FaDownload } from 'react-icons/fa';
 import LineGraph from './components/LineGraph';
 
@@ -123,6 +123,14 @@ function AppComponent(props: App): JSX.Element {
           </Panel>
           <Panel>
             <SageGpuStats />
+          </Panel>
+          <Panel>
+            <Box bg="white" padding="5" objectFit="contain" height="100%" width="100%" display="flex" justifyContent="center" alignItems="center">
+              <Image
+                src="https://i0.wp.com/sage3.sagecommons.org/wp-content/uploads/2021/11/S3ONLY.png?w=606&ssl=1"
+                height="200px"
+              />
+            </Box>
           </Panel>
         </Grid>
       </Box>

@@ -15,49 +15,49 @@ import { QUERY_FIELDS, CATEGORIES } from './data/constants';
  */
 
 export const schema = z.object({
-  unique: z.string().nullable(),
-  initialized: z.boolean(),
-  liveData: z.boolean(),
-  lastUpdated: z.string().nullable(),
-  parent: z.string(),
-  children: z.array(z.string()),
   category: z.string(),
+  children: z.array(z.string()),
   counter: z.number(),
+  initialized: z.boolean(),
+  lastUpdated: z.string().nullable(),
+  liveData: z.boolean(),
   metric: z.object({
+    MESONET: z.string(),
     NAME: z.string(),
     SAGE_NODE: z.string(),
-    MESONET: z.string(),
   }),
   metricData: z
     .object({
       data: z.array(
         z.object({
-          x: z.string(),
           'Sage Node': z.number(),
           Mesonet: z.number(),
+          x: z.string(),
         })
       ),
     })
     .nullable(),
+  parent: z.string(),
   time: z.object({
-    SAGE_NODE: z.string(),
     MESONET: z.string(),
+    SAGE_NODE: z.string(),
   }),
+  unique: z.string().nullable(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  unique: null,
-  initialized: false,
-  liveData: true,
-  lastUpdated: null,
-  parent: '',
-  metric: QUERY_FIELDS.TEMPERATURE,
-  children: [],
   category: CATEGORIES.CONTROL_PANEL.name,
+  children: [],
   counter: 10,
+  initialized: false,
+  lastUpdated: null,
+  liveData: true,
+  metric: QUERY_FIELDS.TEMPERATURE,
   metricData: null,
+  parent: '',
   time: QUERY_FIELDS.TIME['24HR'],
+  unique: null,
 };
 
 export const name = 'RAPID';
