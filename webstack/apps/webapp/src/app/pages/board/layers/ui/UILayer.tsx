@@ -50,6 +50,7 @@ import {
   BoardTitle,
   KernelsPanel,
 } from './components';
+import AIChatBox from './components/AIChatBox';
 
 type UILayerProps = {
   boardId: string;
@@ -276,6 +277,7 @@ export function UILayer(props: UILayerProps) {
               onClick={goToSavedSelectedApps}
             ></IconButton>
           </Tooltip>
+          <AIChatBox boardId={props.boardId} />
         </Box>
       </Box>
 
