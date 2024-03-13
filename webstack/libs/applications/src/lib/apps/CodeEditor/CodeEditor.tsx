@@ -34,7 +34,7 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
 // Sage3 Imports
-import { useAppStore, downloadFile, ConfirmValueModal, apiUrls, setupApp, AiAPI } from '@sage3/frontend';
+import { useAppStore, downloadFile, ConfirmValueModal, apiUrls, setupApp, AiAPI, useYjs, YjsRooms } from '@sage3/frontend';
 import { AiQueryRequest } from '@sage3/shared';
 
 import { App, AppGroup } from '../../schema';
@@ -42,8 +42,6 @@ import { AppWindow } from '../../components';
 import { state as AppState } from '.';
 
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
@@ -86,6 +84,9 @@ function AppComponent(props: App): JSX.Element {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { setEditor } = useStore();
 
+  // Use Yjs
+  const { connections } = useYjs();
+
   // Update local value with value from the server
   useEffect(() => {
     // setSpec(s.content);
@@ -118,31 +119,32 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const yjsConnection = connections[YjsRooms.APPS];
+    if (!yjsConnection) {
+      console.log('CodeEditor> Failed to connect to Yjs');
+      return;
+    }
+    const yText = yjsConnection.doc.getText(props._id);
+    const provider = yjsConnection.provider;
 
-    const doc = new Y.Doc();
-    const yText = doc.getText('monaco');
-
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
-    provider.on('sync', () => {
-      const users = provider.awareness.getStates();
-      const count = users.size;
-      // I'm the only one here, so need to sync current ydoc with that is saved in the database
-      if (count == 1) {
-        // Does the app have code?
-        if (s.content) {
-          // Clear any existing lines
-          yText.delete(0, yText.length);
-          // Set the lines from the database
-          yText.insert(0, s.content);
-        }
+    const users = provider.awareness.getStates();
+    const count = users.size;
+
+    // I'm the only one here, so need to sync current ydoc with that is saved in the database
+    if (count == 1) {
+      // Does the app have code?
+      if (s.content) {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, s.content);
       }
-    });
+    }
   };
 
   return (
@@ -415,9 +417,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-          '.' +
-          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+            '.' +
+            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
