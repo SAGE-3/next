@@ -54,6 +54,12 @@ import { AppWindow } from '../../components';
 // Styling for the placeholder text
 import './styling.css';
 
+// Yjs Imports
+import * as Y from 'yjs';
+import { WebsocketProvider } from 'y-websocket';
+import { TextAreaBinding } from 'y-textarea';
+import { debounce } from 'throttle-debounce';
+
 /**
  * NoteApp SAGE3 application
  *
@@ -76,58 +82,63 @@ function AppComponent(props: App): JSX.Element {
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
 
-  // Track if I am editing
-  const [editing, setEditing] = useState(false);
-
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
 
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
-  // The text of the sticky for React
-  const [note, setNote] = useState(s.text);
-
-  // Update local note state when server changes
-  const updateLocalNote = useCallback(
-    (value: string) => {
-      if (!editing) {
-        setNote(value);
-      }
-    },
-    [editing]
-  );
-
-  // Update local value with value from the server
-  useEffect(() => {
-    updateLocalNote(s.text);
-  }, [s.text, updateLocalNote]);
-
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  const saveText = (value: string) => {
-    updateState(props._id, { text: value });
+  const connectToYjs = (textArea: HTMLTextAreaElement) => {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+
+    const doc = new Y.Doc();
+    const yText = doc.getText('textarea');
+
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+    // Ensure we are always operating on the same line endings
+    new TextAreaBinding(yText, textArea);
+
+    provider.on('sync', () => {
+      const users = provider.awareness.getStates();
+      const count = users.size;
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count == 1) {
+        // Does the app have code?
+        if (s.text.length > 0) {
+          // Clear any existing lines
+          yText.delete(0, yText.length);
+          // Set the lines from the database
+          yText.insert(0, s.text);
+        }
+      }
+    });
   };
 
-  // // Saving the text after 1sec of inactivity
-  // const debounceSave = debounce(250, (val) => {
-  //   updateState(props._id, { text: val });
-  // });
-  // // Keep a copy of the function
-  // const debounceFunc = useRef(debounceSave);
+  useEffect(() => {
+    if (textbox.current) {
+      connectToYjs(textbox.current);
+    }
+  }, [textbox]);
+
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(1000, (val) => {
+    updateState(props._id, { text: val });
+  });
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
 
   // When the users deselects the textarea, save the text
 
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
-    // Update the local value
-    setNote(inputValue);
     // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
-    // debounceFunc.current(inputValue);
+    debounceFunc.current(inputValue);
   }
 
   // Key down handler: Tab creates another stickie
@@ -185,16 +196,8 @@ function AppComponent(props: App): JSX.Element {
           focusBorderColor={backgroundColor}
           fontSize={fontSize + 'px'}
           lineHeight="1em"
-          value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => {
-            setEditing(true);
-          }}
-          onBlur={(e) => {
-            saveText(e.target.value);
-            setEditing(false);
-          }}
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}

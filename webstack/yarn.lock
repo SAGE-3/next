@@ -17944,6 +17944,11 @@ y-quill@^0.1.5:
     lib0 "^0.2.42"
     y-protocols "^1.0.5"
 
+y-textarea@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/y-textarea/-/y-textarea-1.0.0.tgz#54d167d6fc4b19eb69bbd42400e6489c71a27f29"
+  integrity sha512-okkx8DbMOjZv7+/7ii++vFrnbujpqL2GRvn5UVi6EOmQlukwQ/XrIybPf2OWyqST1f3oDiL3wbBkVnGUAD3lYw==
+
 y-websocket@^1.5.0:
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/y-websocket/-/y-websocket-1.5.0.tgz#3c13ed205f1553185e1d144eac94150b5b5d55d6"
