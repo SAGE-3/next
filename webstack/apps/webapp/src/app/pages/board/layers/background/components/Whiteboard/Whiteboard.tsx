@@ -114,7 +114,7 @@ export function Whiteboard(props: WhiteboardProps) {
       if (ydoc) ydoc.destroy();
       if (provider && provider.ws?.readyState === WebSocket.OPEN) provider.disconnect();
     };
-  }, [boardId, dbLines]);
+  }, [boardId]);
 
   const getPoint = useCallback((x: number, y: number) => {
     x = (x / scale) - boardPosition.x;
@@ -191,24 +191,27 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // Get the points from the current stroke
     const points: Y.Array<number> = currentLine.get('points');
-    const xyPoints: { x: number, y: number }[] = [];
-    for (let i = 0; i < points.length / 2; i++) {
-      // Convert the points to an array of objects
-      xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+    if (points && points.length > 0) {
+      const xyPoints: { x: number, y: number }[] = [];
+      for (let i = 0; i < points.length / 2; i++) {
+        // Convert the points to an array of objects
+        xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+      }
+      // Simplify: points: Point[], tolerance: number, highQuality: boolean
+      // High quality simplification but runs ~10-20 times slower
+      const simpler = Simplify.default(xyPoints, 0.5, true);
+      // Delete the old points
+      points.delete(0, points.length);
+      // Add the new points
+      for (let i = 0; i < simpler.length; i++) {
+        // convert to integers for storage efficiency
+        points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
+      }
+      currentLine.set('isComplete', true);
+      updateBoardLines();
     }
-    // Simplify: points: Point[], tolerance: number, highQuality: boolean
-    // High quality simplification but runs ~10-20 times slower
-    const simpler = Simplify.default(xyPoints, 0.5, true);
-    // Delete the old points
-    points.delete(0, points.length);
-    // Add the new points
-    for (let i = 0; i < simpler.length; i++) {
-      // convert to integers for storage efficiency
-      points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
-    }
-    currentLine.set('isComplete', true);
+    // Clear the current line anymway
     rCurrentLine.current = undefined;
-    updateBoardLines();
   }, [rCurrentLine.current]);
 
   useEffect(() => {
