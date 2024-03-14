@@ -89,14 +89,11 @@ function AppComponent(props: App): JSX.Element {
   const [note, setNote] = useState(s.text);
 
   // Update local note state when server changes
-  const updateLocalNote = useCallback(
-    (value: string) => {
-      if (!editing) {
-        setNote(value);
-      }
-    },
-    [editing]
-  );
+  const updateLocalNote = useCallback((value: string) => {
+    if (!editing && value !== s.text) {
+      setNote(value);
+    }
+  }, [editing]);
 
   // Update local value with value from the server
   useEffect(() => {
