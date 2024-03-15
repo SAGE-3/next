@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+export * from "./AI/AIPanel";
 export * from './Controller/Controller';
 export * from './Applications/ApplicationsPanel';
 export * from './Asset/AssetsPanel';
@@ -14,3 +15,4 @@ export * from './Users/UsersPanel';
 export * from './Annotations/AnnotationsPanel';
 export * from './Plugins/PluginsPanels';
 export * from './Kernels/KernelsPanel';
+export * from './AI/AIPanel';

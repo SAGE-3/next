@@ -42,6 +42,7 @@ import {
   Controller,
   AssetsPanel,
   ApplicationsPanel,
+  AIPanel,
   NavigationPanel,
   UsersPanel,
   AnnotationsPanel,
@@ -313,6 +314,8 @@ export function UILayer(props: UILayerProps) {
       <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <AnnotationsPanel />
+
+      <AIPanel boardId={props.boardId} roomId={props.roomId} />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
