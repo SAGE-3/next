@@ -22,8 +22,10 @@ import {
   useColorModeValue,
   useToast,
   useDisclosure,
+  ToastId,
 } from '@chakra-ui/react';
 import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
+import { LuBrainCircuit } from 'react-icons/lu';
 
 // Debounce updates to the textarea
 // import { debounce } from 'throttle-debounce';
@@ -43,13 +45,17 @@ import {
   useInsightStore,
   ConfirmValueModal,
   apiUrls,
+  AiAPI,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
+import { AiQueryRequest } from '@sage3/shared';
 
 import { state as AppState } from './';
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
+
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Styling for the placeholder text
 import './styling.css';
@@ -89,11 +95,14 @@ function AppComponent(props: App): JSX.Element {
   const [note, setNote] = useState(s.text);
 
   // Update local note state when server changes
-  const updateLocalNote = useCallback((value: string) => {
-    if (!editing && value !== s.text) {
-      setNote(value);
-    }
-  }, [editing]);
+  const updateLocalNote = useCallback(
+    (value: string) => {
+      if (!editing && value !== s.text) {
+        setNote(value);
+      }
+    },
+    [editing]
+  );
 
   // Update local value with value from the server
   useEffect(() => {
@@ -453,9 +462,15 @@ function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: AppGroup; boardId: string; roomId: string }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
   const updateInsightBatch = useInsightStore((state) => state.updateBatch);
+  const createApp = useAppStore((state) => state.create);
+
+  // UI store
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+  // User
   const { user } = useUser();
 
   const handleColorChange = (color: string) => {
@@ -472,7 +487,6 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     updateStateBatch(ba);
     updateInsightBatch(bi);
   };
-
   const handleIncreaseFont = () => {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
@@ -533,6 +547,78 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     updateStateBatch(ps);
   };
 
+  const toast = useToast();
+  const toastIdRef = useRef<ToastId>();
+
+  const handleSummary = async () => {
+    try {
+      const stickiesInBoard = props.apps.filter((app) => app.data.type === 'Stickie');
+
+      if (stickiesInBoard.length > 0) {
+        const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
+        const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
+
+        // Setup initial size
+        const w = 400;
+        const h = 420;
+
+        // Create a list of text from stickies
+        const textArrOfStickies = stickiesInBoard.map((app) => app.data.state.text);
+
+        toastIdRef.current = toast({
+          description: 'Summarizing stickies...',
+          status: 'info',
+          isClosable: false,
+        });
+        // Query AI to summarize the stickies
+        const res = await AiAPI.query({
+          model: 'openai',
+          input: `Summarize the main ideas in bullet points from the following list: ${JSON.stringify(textArrOfStickies)}`,
+        } as AiQueryRequest);
+
+        if (res.success) {
+          console.log("in res success")
+          toast.update(toastIdRef.current, {
+            description: 'Stickies summarized.',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+
+          const state = {
+            text: res.output,
+          } as AppState;
+
+          createApp({
+            title: 'Stickie',
+            roomId: props.roomId,
+            boardId: props.boardId,
+            position: { x, y, z: 0 },
+            size: { width: w, height: h, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Stickie',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            state: { ...(initialValues['Stickie'] as any), ...state },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          });
+        } else {
+          throw new Error('An error has occurred while summarizing stickies');
+        }
+      } else {
+        console.log("error");
+        throw new Error('An error has occurred while summarizing stickies');
+      }
+    } catch (error) {
+      toast.update(toastIdRef.current as ToastId, {
+        title: 'Error',
+        status: 'error',
+        description: String(error),
+      });
+    }
+  };
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
@@ -564,12 +650,18 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           </Button>
         </Tooltip>
       </ButtonGroup>
+
       <ColorPicker
         onChange={handleColorChange}
         selectedColor={props.apps[0].data.state.color as SAGEColors}
         size="xs"
         style={{ marginRight: 4 }}
       />
+      <Tooltip placement="top-start" hasArrow={true} label={'Summarize Selected Stickies'} openDelay={400}>
+        <Button colorScheme="teal" size="xs" marginRight="1" onClick={() => handleSummary()}>
+          <LuBrainCircuit />
+        </Button>
+      </Tooltip>
     </>
   );
 };
