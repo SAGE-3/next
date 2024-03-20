@@ -6,15 +6,27 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Request Return Type
+// Request Type
 export type AiQueryRequest = {
   input: string;
   model: string;
 };
+export type AiImageQueryRequest = {
+  assetid: string;
+  model: string;
+  filename?: string;
+  roomid?: string;
+};
 
+// Request Return Types
 export type AiQueryResponse = {
   success: boolean;
   output?: string;
+  error_message?: string;
+};
+export type AiJSONQueryResponse = {
+  success: boolean;
+  data?: any;
   error_message?: string;
 };
 

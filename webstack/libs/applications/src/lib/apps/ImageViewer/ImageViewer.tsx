@@ -14,8 +14,9 @@ import { MdFileDownload, MdOutlineLightbulb } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, AiAPI } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
+import { AiImageQueryRequest } from '@sage3/shared';
 
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -182,6 +183,25 @@ function ToolbarComponent(props: App): JSX.Element {
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const updateInsights = useInsightStore((state) => state.update);
+  // Online Models
+  const [onlineModels, setOnlineModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+
+  // Check if the AI is online
+  useEffect(() => {
+    async function fetchStatus() {
+      const response = await AiAPI.image.status();
+      setOnlineModels(response.onlineModels);
+      if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
+      else setSelectedModel('');
+    }
+    fetchStatus();
+
+  }, []);
+
+  function handleModelChange(model: string) {
+    setSelectedModel(model);
+  }
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -202,8 +222,40 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   }
 
-  // Generate code
   async function generateImage() {
+    if (!file) return;
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+      filename: file.data.originalfilename,
+      roomid: roomId,
+    } as AiImageQueryRequest;
+    const result = await AiAPI.image.image(queryRequest);
+    if (result.success && result.data) {
+      // Get the labels from the model
+      console.log('Image:', result);
+
+      if (result.success && result.data) {
+        createApp({
+          title: 'YoloV8',
+          roomId: roomId!,
+          boardId: boardId!,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: props.data.size,
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'ImageViewer',
+          state: { ...(initialValues['ImageViewer'] as AppState), assetid: result.data.id },
+          raised: true,
+          pinned: false,
+          dragging: false,
+        });
+      }
+
+    }
+  }
+
+  // Generate code
+  async function generateImage1() {
     if (!file) return;
     // Get the content of the file
     const imageURL = apiUrls.assets.getAssetById(file.data.file);
@@ -259,72 +311,51 @@ function ToolbarComponent(props: App): JSX.Element {
       });
   }
 
-  // Generate code
+  // Generate labels
   async function generateLabels() {
     if (!file) return;
-    // Get the content of the file
-    const imageURL = apiUrls.assets.getAssetById(file.data.file);
-    const response = await fetch(imageURL);
-    const blob = await response.blob();
-    // Create a form to upload the file
-    const fd = new FormData();
-    fd.append('file', blob, file.data.originalfilename);
-    // Upload with a POST request
-    axios({
-      url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_json',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
-      responseType: "json",
-      data: fd
-    })
-      .catch((error: Error) => {
-        toast({
-          title: 'Processing',
-          description: 'Processing failed: ' + error.message,
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-      })
-      .then(async (response) => {
-        if (response) {
-          console.log("🚀 ~ .then ~ response.data:", response.data)
-          // Get the labels from the model
-          const data = response.data.detect_objects as YoloObject[];
-          const temps: string[] = [];
-          for (let idx = 0; idx < data.length; idx++) {
-            const label = data[idx];
-            // Filter out labels with low confidence
-            if (label.confidence > 0.5) {
-              temps.push(label.name);
-              const box = [label.xmin, label.ymin, label.xmax, label.ymax]
-              console.log("🚀 ~ label.name", label.name, label.confidence, box);
-            }
-          }
-          // If we have labels, update the insight
-          if (temps.length > 0) {
-            // Get the existing labels
-            const myinsight = insights.find((a) => a.data.app_id === props._id);
-            if (myinsight) {
-              const mylabels = myinsight.data.labels;
-              temps.push(...mylabels);
-            }
-            // Update the insight collection
-            updateInsights(props._id, { labels: temps });
-          }
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+    } as AiImageQueryRequest;
+    const result = await AiAPI.image.labels(queryRequest);
+    if (result.success && result.data) {
+      // Get the labels from the model
+      const data = result.data.detect_objects as YoloObject[];
+      const temps: string[] = [];
+      for (let idx = 0; idx < data.length; idx++) {
+        const label = data[idx];
+        // Filter out labels with low confidence
+        if (label.confidence > 0.5) {
+          temps.push(label.name);
+          const box = [label.xmin, label.ymin, label.xmax, label.ymax]
+          console.log("Label>", label.name, label.confidence, box);
         }
-      })
-      .finally(() => {
+      }
+      // If we have labels, update the insight
+      if (temps.length > 0) {
+        // Get the existing labels
+        const myinsight = insights.find((a) => a.data.app_id === props._id);
+        if (myinsight) {
+          // Combine the new labels
+          const mylabels = myinsight.data.labels;
+          temps.push(...mylabels);
+        }
+        // Update the insight collection
+        updateInsights(props._id, { labels: temps });
+        // Show success
+        toast.closeAll();
         toast({
-          title: 'Processing',
-          description: 'Processing complete',
-          status: 'info',
-          duration: 4000,
+          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          duration: 10000,
           isClosable: true,
+          position: 'bottom-right',
+          icon: <MdOutlineLightbulb size="24px" />,
+          status: 'warning',
+          description: <Box fontSize='sm'>Labels generated: {data.map(l => l.name).join(', ')}</Box>,
         });
-      });
+      }
+    }
   }
 
 
@@ -361,6 +392,25 @@ function ToolbarComponent(props: App): JSX.Element {
           </Tooltip>
         </div>
       </ButtonGroup>
+
+      {/* AI Model selection */}
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
+              {selectedModel}
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            {onlineModels.map((model) => (
+              <MenuItem key={model} onClick={() => handleModelChange(model)}>
+                {model}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
 
       {/* Smart Action */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
