@@ -197,6 +197,7 @@ function AppComponent(props: App): JSX.Element {
       url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
         s.widget.timePeriod
       )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+
       // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
       //   s.widget.timePeriod
       // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
@@ -208,12 +209,13 @@ function AppComponent(props: App): JSX.Element {
 
     const response = await fetch(url);
     const sensor = await response.json();
-
+    console.log(sensor);
     if (sensor) {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
       console.log(sensorData);
     }
+
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
     availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
     availableVariableNames.push('Elevation & Current Temperature');
