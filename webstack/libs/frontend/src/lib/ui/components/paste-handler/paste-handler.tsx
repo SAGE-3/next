@@ -13,9 +13,10 @@
 import { useEffect, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
-import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/initialValues';
 import { isValidURL, setupApp, processContentURL, truncateWithEllipsis } from '@sage3/frontend';
+import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
+import { stringContainsCode } from '@sage3/shared';
 
 type PasteProps = {
   boardId: string;
@@ -168,40 +169,36 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
             pinned: false,
           });
         } else {
-          // if SVG, create an image viewer
-          if (pastedText.startsWith('<svg xmlns')) {
-            // weird conversion to base64, but needed to handle unicode characters
-            const processed = btoa(unescape(encodeURIComponent(pastedText)));
-            const src = 'data:image/svg+xml;base64,' + processed;
-            // Create an image with the svg
+          // Create a new stickie
+          const lang = stringContainsCode(pastedText);
+          if (lang === 'plaintext') {
             createApp({
-              title: 'SVG - pasted',
-              roomId: props.roomId,
-              boardId: props.boardId,
-              position: { x: xDrop, y: yDrop, z: 0 },
-              size: { width: 400, height: 400, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'ImageViewer',
-              state: { ...initialValues['ImageViewer'], assetid: src },
-              raised: true,
-              dragging: false,
-              pinned: false,
-            });
-          } else {
-            // else use the text to create a new stickie
-            createApp({
-              title: truncateWithEllipsis(pastedText, 20),
+              title: user.data.name,
               roomId: props.roomId,
               boardId: props.boardId,
               position: { x: xDrop, y: yDrop, z: 0 },
               size: { width: 400, height: 400, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: 'Stickie',
-              state: { ...initialValues['Stickie'], text: pastedText, fontSize: 42, color: user.data.color || 'yellow' },
+              state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
               raised: true,
               dragging: false,
               pinned: false,
-            })
+            });
+          } else {
+            createApp({
+              title: user.data.name,
+              roomId: props.roomId,
+              boardId: props.boardId,
+              position: { x: xDrop, y: yDrop, z: 0 },
+              size: { width: 850, height: 400, depth: 0 },
+              rotation: { x: 0, y: 0, z: 0 },
+              type: 'CodeEditor',
+              state: { ...initialValues['CodeEditor'], content: pastedText, language: lang, filename: 'pasted-code' },
+              raised: true,
+              dragging: false,
+              pinned: false,
+            });
           }
         }
       }

@@ -26,7 +26,8 @@ import {
 import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
 
 // Debounce updates to the textarea
-import { debounce } from 'throttle-debounce';
+// import { debounce } from 'throttle-debounce';
+
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -75,11 +76,8 @@ function AppComponent(props: App): JSX.Element {
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
 
-  // Track if I did the update
-  const [didIt, setDidIt] = useState(false);
-  const yours = user?._id === props._createdBy;
-  const updatedByYou = user?._id === props._updatedBy;
-  const locked = s.lock;
+  // Track if I am editing
+  const [editing, setEditing] = useState(false);
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
@@ -90,39 +88,43 @@ function AppComponent(props: App): JSX.Element {
   // The text of the sticky for React
   const [note, setNote] = useState(s.text);
 
-  // Update local value with value from the server
-  useEffect(() => {
-    // If the text was updated by someone else, update the local value
-    if (!updatedByYou || !didIt) {
-      setNote(s.text);
+  // Update local note state when server changes
+  const updateLocalNote = useCallback((value: string) => {
+    if (!editing && value !== s.text) {
+      setNote(value);
     }
-    if (didIt) {
-      // Flip the flag
-      setDidIt(false);
-    }
-  }, [s.text, updatedByYou]);
+  }, [editing]);
 
   // Update local value with value from the server
+  useEffect(() => {
+    updateLocalNote(s.text);
+  }, [s.text, updateLocalNote]);
+
+  // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(100, (val) => {
-    updateState(props._id, { text: val });
-    // I modified the text, so I did it
-    setDidIt(true);
-  });
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
+  const saveText = (value: string) => {
+    updateState(props._id, { text: value });
+  };
+
+  // // Saving the text after 1sec of inactivity
+  // const debounceSave = debounce(250, (val) => {
+  //   updateState(props._id, { text: val });
+  // });
+  // // Keep a copy of the function
+  // const debounceFunc = useRef(debounceSave);
+
+  // When the users deselects the textarea, save the text
 
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
     // Update the local value
     setNote(inputValue);
-    // Update the text when not typing
-    debounceFunc.current(inputValue);
+    // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
+    // debounceFunc.current(inputValue);
   }
 
   // Key down handler: Tab creates another stickie
@@ -135,6 +137,8 @@ function AppComponent(props: App): JSX.Element {
     if (e.code === 'Escape') {
       // Deselect the app
       setSelectedApp('');
+      // Deselect the text area
+      textbox.current?.blur();
       return;
     }
     if (e.code === 'Tab') {
@@ -159,10 +163,6 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const unlock = () => {
-    updateState(props._id, { lock: false });
-  };
-
   // React component
   return (
     <AppWindow app={props}>
@@ -185,7 +185,14 @@ function AppComponent(props: App): JSX.Element {
           value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          readOnly={locked} // Only the creator can edit
+          onFocus={() => {
+            setEditing(true);
+          }}
+          onBlur={(e) => {
+            saveText(e.target.value);
+            setEditing(false);
+          }}
+          readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
           css={{
@@ -206,17 +213,6 @@ function AppComponent(props: App): JSX.Element {
           overflowY="scroll"
           overflowX="hidden"
         />
-        {locked && (
-          <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
-            <Tooltip label={`Locked by ${yours ? 'you' : props.data.title}`} shouldWrapChildren placement="top" hasArrow>
-              {yours ? (
-                <MdLock color="red" fontSize="32px" onClick={unlock} style={{ cursor: 'pointer' }} />
-              ) : (
-                <MdLock color="red" fontSize="32px" />
-              )}
-            </Tooltip>
-          </Box>
-        )}
       </Box>
     </AppWindow>
   );
@@ -338,7 +334,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
             <MdRemove />

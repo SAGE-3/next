@@ -44,4 +44,8 @@ export const apiUrls = {
     getInfo: '/api/info',
     nlp: '/api/nlp',
   },
+  ai: {
+    status: '/api/ai/status',
+    query: '/api/ai/query',
+  },
 };

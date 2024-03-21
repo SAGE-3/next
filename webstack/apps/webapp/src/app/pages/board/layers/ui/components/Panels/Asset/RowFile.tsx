@@ -35,8 +35,12 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import {
+  MdJavascript, MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf,
+  MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2
+} from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
+import { LuFileCode, LuFileJson } from 'react-icons/lu';
 
 import {
   humanFileSize,
@@ -207,6 +211,18 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     switch (type) {
       case 'url':
         return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+      case 'json':
+        return <LuFileJson style={{ color: 'white' }} size={'20px'} />;
+      case 'yaml':
+      case 'ts':
+      case 'html':
+      case 'css':
+      case 'cpp':
+      case 'c':
+      case 'java':
+        return <LuFileCode style={{ color: 'white' }} size={'20px'} />;
+      case 'js':
+        return <MdJavascript style={{ color: 'yellow' }} size={'20px'} />;
       case 'py':
         return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
@@ -223,8 +239,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-      case 'json':
-        return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
       default:
         return <MdOutlineFilePresent size={'20px'} />;
     }

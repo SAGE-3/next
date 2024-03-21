@@ -21,10 +21,11 @@ import {
   isPython,
   isGLTF,
   isGIF,
-  isPythonNotebook,
+  isCode,
   isFileURL,
+  mimeToCode,
 } from '@sage3/shared';
-import { GetConfiguration, apiUrls } from '@sage3/frontend';
+import { apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -98,6 +99,33 @@ export async function setupAppForFile(
         };
       }
     }
+  } else if (isCode(file.type)) {
+    // Look for the file in the asset store
+    const localurl = apiUrls.assets.getAssetById(file.filename);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    // Get the content of the file
+    const text = await response.text();
+    // Get Language from mimetype
+    const lang = mimeToCode(file.type);
+    return {
+      title: 'CodeEditor',
+      roomId: roomId,
+      boardId: boardId,
+      position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
+      size: { width: 850, height: 400, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'CodeEditor',
+      state: { ...(initialValues['CodeEditor'] as AppState), content: text, language: lang, filename: file.originalfilename },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    };
   } else if (isGIF(file.type)) {
     return {
       title: file.originalfilename,

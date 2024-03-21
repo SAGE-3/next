@@ -7,6 +7,7 @@ import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps
 import { state as ChatState, name as ChatName } from './apps/Chat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
+import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as EChartsViewerState, name as EChartsViewerName } from './apps/EChartsViewer';
@@ -34,7 +35,6 @@ import { state as VideoViewerState, name as VideoViewerName } from './apps/Video
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
-
 export type AppState =
   | {}
   | AIPaneState
@@ -44,6 +44,7 @@ export type AppState =
   | ChatState
   | ClockState
   | CobrowseState
+  | CodeEditorState
   | CounterState
   | DeepZoomImageState
   | EChartsViewerState
@@ -71,5 +72,37 @@ export type AppState =
   | WebpageLinkState
   | WebviewState;
 
-
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NLChartGeneratorName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName =
+  | typeof AIPaneName
+  | typeof BoardLinkName
+  | typeof CSVViewerName
+  | typeof ChartGeneratorName
+  | typeof ChatName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CodeEditorName
+  | typeof CounterName
+  | typeof DeepZoomImageName
+  | typeof EChartsViewerName
+  | typeof GLTFViewerName
+  | typeof HCDPName
+  | typeof IFrameName
+  | typeof ImageViewerName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof MapGLName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof PluginAppName
+  | typeof PollName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof SeerName
+  | typeof SensorOverviewName
+  | typeof StickieName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebpageLinkName
+  | typeof WebviewName;

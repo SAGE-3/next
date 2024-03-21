@@ -20,3 +20,4 @@ export * from './plugin';
 export * from './config';
 export * from './kernel';
 export * from './insight';
+export * from './annotation';
