@@ -246,7 +246,7 @@ export function Alfred(props: props) {
           width: app.data.size.width,
           height: app.data.size.height,
           color: colors[app.data.state.color] || '#FF0000',
-          text: app.data.state.text,
+          text: `<p style="font-size: ${app.data.state.fontSize}px; font-family: Arial, Helvetica, sans-serif;">` + app.data.state.text + `</p>`,
           properties: { ...app.data.state },
         });
       }
