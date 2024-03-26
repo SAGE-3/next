@@ -440,6 +440,9 @@ export function useFiles(): UseFiles {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
+          const extras = a.data.derived as ExtraImageType;
+          const imw = w;
+          const imh = w / (extras.aspectRatio || 1);
           return setupApp(
             a.data.originalfilename,
             'ImageViewer',
@@ -447,8 +450,8 @@ export function useFiles(): UseFiles {
             yDrop,
             roomId,
             boardId,
-            { w: w, h: w },
-            { assetid: apiUrls.assets.getAssetById(a.data.file) }
+            { w: imw, h: imh },
+            { assetid: fileID }
           );
         }
       }
