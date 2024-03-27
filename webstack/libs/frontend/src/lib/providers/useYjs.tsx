@@ -6,14 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
+import { set } from 'date-fns';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
   APPS = 'apps',
+  ANNOTATIONS = 'annotations',
 }
 // Put all Values of YjsRooms into an array
 export const YjsRoomsArray = Object.values(YjsRooms);
@@ -27,10 +29,12 @@ type YjsConnections = {
 
 type YjsContextType = {
   connections: YjsConnections;
+  connected: boolean;
 };
 
 const YjsContext = createContext<YjsContextType>({
   connections: {},
+  connected: false,
 });
 
 /**
@@ -40,45 +44,42 @@ export function useYjs() {
   return useContext(YjsContext);
 }
 
-let global_connections = {} as YjsConnections;
-
 export function YjsProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const [connections, setConnections] = useState<YjsConnections>({}); // YjsConnections
+  const [connected, setConnected] = useState<boolean>(false); // Boolean
   const { boardId } = useParams();
 
-  const connectAll = () => {
-    // Connect to Yjs
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${protocol}://${window.location.host}/yjs`;
-
-    const newConnections = { ...connections };
-    YjsRoomsArray.forEach((yroom) => {
-      if (!newConnections[yroom]) {
-        const doc = new Y.Doc();
-        const provider = new WebsocketProvider(url, `${boardId}-${yroom}`, doc);
-        newConnections[yroom] = { doc, provider };
-      }
-    });
-    global_connections = newConnections;
-    setConnections(newConnections);
-  };
-
-  const disconnectAll = () => {
-    // Destroy all Yjs connections
-    Object.values(global_connections).forEach((connection) => {
+  const disconnect = useCallback(() => {
+    Object.values(connections).forEach((connection) => {
       connection.provider.disconnect();
       connection.provider.destroy();
     });
-    setConnections({});
-  };
+  }, [connections]);
 
-  // On Mount and Unmount
-  useEffect(() => {
-    connectAll();
-    return () => {
-      disconnectAll();
-    };
+  const connect = useCallback((boardId: string) => {
+    // Connect to Yjs
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const url = `${protocol}://${window.location.host}/yjs`;
+    const newConnections = {} as YjsConnections;
+    YjsRoomsArray.forEach((roomname) => {
+      const room = `${roomname}-${boardId}`;
+      if (!newConnections[room]) {
+        const doc = new Y.Doc();
+        const provider = new WebsocketProvider(url, `${room}`, doc);
+        newConnections[roomname] = { doc, provider };
+      }
+    });
+    return newConnections;
   }, []);
 
-  return <YjsContext.Provider value={{ connections }}>{props.children}</YjsContext.Provider>;
+  useEffect(() => {
+    if (boardId) {
+      setConnections(connect(boardId));
+    }
+    return () => {
+      disconnect();
+    };
+  }, [boardId, connect, disconnect]);
+
+  return <YjsContext.Provider value={{ connections, connected }}>{props.children}</YjsContext.Provider>;
 }
