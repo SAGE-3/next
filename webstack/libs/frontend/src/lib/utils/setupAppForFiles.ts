@@ -127,15 +127,18 @@ export async function setupAppForFile(
       pinned: false,
     };
   } else if (isGIF(file.type)) {
+    const extras = file.derived as ExtraImageType;
+    const imw = w;
+    const imh = w / (extras.aspectRatio || 1);
     return {
       title: file.originalfilename,
       roomId: roomId,
       boardId: boardId,
       position: { x: xDrop - w / 2, y: yDrop - w / 2, z: 0 },
-      size: { width: w, height: w, depth: 0 },
+      size: { width: imw, height: imh, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: 'ImageViewer',
-      state: { ...initialValues['ImageViewer'], assetid: apiUrls.assets.getAssetById(file.filename) },
+      state: { ...initialValues['ImageViewer'], assetid: file.id },
       raised: true,
       dragging: false,
       pinned: false,
