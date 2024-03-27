@@ -10,3 +10,4 @@ export * from './useAuth';
 export * from './useUser';
 export * from './useCursorBoardPosition';
 export * from './useUserSettings';
+export * from './useYjs';

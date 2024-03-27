@@ -27,6 +27,7 @@ import {
   CursorBoardPositionProvider,
   apiUrls,
   UserSettingsProvider,
+  YjsProvider,
 } from '@sage3/frontend';
 import { OpenConfiguration } from '@sage3/shared/types';
 // Pages
@@ -147,7 +148,9 @@ export function App() {
                     <ProtectedAuthRoute>
                       <ProtectedUserRoute>
                         <CursorBoardPositionProvider>
-                          <BoardPage />
+                          <YjsProvider>
+                            <BoardPage />
+                          </YjsProvider>
                         </CursorBoardPositionProvider>
                       </ProtectedUserRoute>
                     </ProtectedAuthRoute>

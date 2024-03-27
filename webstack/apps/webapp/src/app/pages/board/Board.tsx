@@ -27,6 +27,7 @@ import {
   getSAGE3BoardUrl,
   useInsightStore,
   useAnnotationStore,
+  useYjs,
 } from '@sage3/frontend';
 
 // Board Layers
