@@ -18,12 +18,10 @@ import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile,
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { AiImageQueryRequest } from '@sage3/shared';
 
+import { initialValues } from '../../initialValues'
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { App } from '../../schema';
-
-import axios from 'axios';
-import { initialValues } from '@sage3/applications/initialValues';
 
 type YoloObject = {
   class: number;
@@ -139,21 +137,21 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {s.boxes ? Object.keys(s.boxes).map((label, idx) => {
+          {s.boxes ? s.boxes.map((box, idx) => {
             // TODO Need to handle text overflow for labels
             return (
               <Box
-                key={label + idx}
+                key={"label" + idx}
                 position="absolute"
-                left={s.boxes[label].xmin * (displaySize.width / origSizes.width) + 'px'}
-                top={s.boxes[label].ymin * (displaySize.height / origSizes.height) + 'px'}
-                width={(s.boxes[label].xmax - s.boxes[label].xmin) * (displaySize.width / origSizes.width) + 'px'}
-                height={(s.boxes[label].ymax - s.boxes[label].ymin) * (displaySize.height / origSizes.height) + 'px'}
+                left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
                 border="2px solid red"
                 style={{ display: s.annotations === true ? 'block' : 'none' }}
               >
                 <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                  {label}
+                  {box.label}
                 </Box>
               </Box>
             );
@@ -212,16 +210,6 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.assetid, assets]);
 
-  async function blobToBase64(blob: Blob) {
-    const reader = new FileReader();
-    reader.readAsDataURL(blob);
-    return new Promise(resolve => {
-      reader.onloadend = () => {
-        resolve(reader.result);
-      };
-    });
-  }
-
   async function generateImage() {
     if (!file) return;
     const queryRequest = {
@@ -232,9 +220,7 @@ function ToolbarComponent(props: App): JSX.Element {
     } as AiImageQueryRequest;
     const result = await AiAPI.image.image(queryRequest);
     if (result.success && result.data) {
-      // Get the labels from the model
-      console.log('Image:', result);
-
+      // Open the generated image in a new app
       if (result.success && result.data) {
         createApp({
           title: 'YoloV8',
@@ -249,100 +235,6 @@ function ToolbarComponent(props: App): JSX.Element {
           pinned: false,
           dragging: false,
         });
-      }
-
-    }
-  }
-
-  // Generate code
-  async function generateImage1() {
-    if (!file) return;
-    // Get the content of the file
-    const imageURL = apiUrls.assets.getAssetById(file.data.file);
-    const response = await fetch(imageURL);
-    const blob = await response.blob();
-    // Create a form to upload the file
-    const fd = new FormData();
-    fd.append('file', blob, file.data.originalfilename);
-    // Upload with a POST request
-    axios({
-      url: 'https://arcade.evl.uic.edu/yolov8/img_object_detection_to_img',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      },
-      responseType: "blob",
-      data: fd
-    })
-      .catch((error: Error) => {
-        toast({
-          title: 'Processing',
-          description: 'Processing failed: ' + error.message,
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-      })
-      .then(async (response) => {
-        if (response) {
-          createApp({
-            title: 'YoloV8',
-            roomId: roomId!,
-            boardId: boardId!,
-            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-            size: props.data.size,
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'ImageViewer',
-            state: { ...(initialValues['ImageViewer'] as AppState), assetid: await blobToBase64(response.data) },
-            raised: true,
-            pinned: false,
-            dragging: false,
-          });
-        }
-      })
-      .finally(() => {
-        toast({
-          title: 'Processing',
-          description: 'Processing complete',
-          status: 'info',
-          duration: 4000,
-          isClosable: true,
-        });
-      });
-  }
-
-  // Generate labels
-  async function generateLabels() {
-    if (!file) return;
-    const queryRequest = {
-      assetid: s.assetid,
-      model: selectedModel,
-    } as AiImageQueryRequest;
-    const result = await AiAPI.image.labels(queryRequest);
-    if (result.success && result.data) {
-      // Get the labels from the model
-      const data = result.data.detect_objects as YoloObject[];
-      const temps: string[] = [];
-      for (let idx = 0; idx < data.length; idx++) {
-        const label = data[idx];
-        // Filter out labels with low confidence
-        if (label.confidence > 0.5) {
-          temps.push(label.name);
-          const box = [label.xmin, label.ymin, label.xmax, label.ymax]
-          console.log("Label>", label.name, label.confidence, box);
-        }
-      }
-      // If we have labels, update the insight
-      if (temps.length > 0) {
-        // Get the existing labels
-        const myinsight = insights.find((a) => a.data.app_id === props._id);
-        if (myinsight) {
-          // Combine the new labels
-          const mylabels = myinsight.data.labels;
-          temps.push(...mylabels);
-        }
-        // Update the insight collection
-        updateInsights(props._id, { labels: temps });
         // Show success
         toast.closeAll();
         toast({
@@ -352,7 +244,75 @@ function ToolbarComponent(props: App): JSX.Element {
           position: 'bottom-right',
           icon: <MdOutlineLightbulb size="24px" />,
           status: 'warning',
-          description: <Box fontSize='sm'>Labels generated: {data.map(l => l.name).join(', ')}</Box>,
+          description: <Box fontSize='sm'>Image Generated</Box>,
+        });
+      }
+
+    }
+  }
+
+  // Generate labels
+  async function generateLabels() {
+    if (!file) return;
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+    } as AiImageQueryRequest;
+
+    const result = await AiAPI.image.labels(queryRequest);
+    if (result.success && result.data) {
+      // Get the labels from the model
+      const data = result.data.detect_objects as YoloObject[];
+      const temps: string[] = [];
+      const boxes: { label: string, xmin: number, ymin: number, xmax: number, ymax: number }[] = [];
+
+      if (data.length === 0) {
+        // Show result
+        toast.closeAll();
+        toast({
+          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          duration: 10000,
+          isClosable: true,
+          position: 'bottom-right',
+          icon: <MdOutlineLightbulb size="24px" />,
+          status: 'warning',
+          description: <Box fontSize='sm'>No labels generated</Box>,
+        });
+        return;
+      }
+
+      for (let idx = 0; idx < data.length; idx++) {
+        const label = data[idx];
+        // array of labels
+        temps.push(label.name);
+        // array of boxes
+        boxes.push({ label: label.name, xmin: label.xmin, ymin: label.ymin, xmax: label.xmax, ymax: label.ymax });
+      }
+      // If we have labels, update the insight
+      if (temps.length > 0) {
+        // Saves the boxes in app state
+        updateState(props._id, { boxes });
+        // Get the existing labels
+        const myinsight = insights.find((a) => a.data.app_id === props._id);
+        if (myinsight) {
+          // Combine the new labels
+          const mylabels = myinsight.data.labels;
+          temps.push(...mylabels);
+        }
+        // Count the labels
+        const counted = wordCount(temps);
+        // Update the insight collection
+        updateInsights(props._id, { labels: counted });
+        // Show success
+        toast.closeAll();
+        toast({
+          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          duration: 10000,
+          isClosable: true,
+          position: 'bottom-right',
+          icon: <MdOutlineLightbulb size="24px" />,
+          status: 'warning',
+          description: <Box fontSize='sm'>Labels generated: {counted.join(', ')}</Box>,
         });
       }
     }
@@ -383,6 +343,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
           <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
+              ml={1}
               onClick={() => {
                 updateState(props._id, { annotations: !s.annotations });
               }}
@@ -457,6 +418,35 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
   // else, default url
   return src;
 }
+
+/**
+ * Count occurence of words in an array
+ * @param words array of words
+ * @returns array of strings with count values separated by a colon if count > 1
+ */
+function wordCount(words: string[]): string[] {
+  // Create an empty object to store word counts
+  const wordCounts: Record<string, number> = {};
+  // Loop through each word in the list
+  words.forEach(function (word: string) {
+    // If the word is already in the wordCounts object, increment its count
+    if (wordCounts[word]) {
+      wordCounts[word]++;
+    } else {
+      // Otherwise, add the word to the wordCounts object with a count of 1
+      wordCounts[word] = 1;
+    }
+  });
+
+  // Convert the wordCounts object to an array of strings with count values separated by a colon
+  const result = Object.keys(wordCounts).map(function (word: string) {
+    return (wordCounts[word] > 1 ? word + ':' + wordCounts[word] : word);
+  });
+
+  return result;
+}
+
+
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected

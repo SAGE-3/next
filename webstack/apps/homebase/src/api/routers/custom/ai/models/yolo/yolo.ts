@@ -97,7 +97,7 @@ export class YoloModel extends AiModel {
       const response = await axios({
         url: `${this._url}/img_object_detection_to_img`,
         method: 'POST',
-        responseType: 'arraybuffer',
+        responseType: 'arraybuffer', // Return the image as an array buffer
         data: form,
         headers: {
           ...form.getHeaders(),

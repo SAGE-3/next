@@ -169,7 +169,6 @@ export function AiRouter(): express.Router {
         // Query Yolo with the input
         const response = await yolo.imageToImage(fd);
         if (response.success && response.output) {
-          console.log('🚀 response:', response.success, typeof response.output);
           const now = new Date().toISOString();
           const originalname = decode8(filename);
           const ext = path.extname(originalname);
@@ -180,8 +179,8 @@ export function AiRouter(): express.Router {
           const osfilename = getUUID() + ext;
           const fullpath = path.join(folder, osfilename);
           const image = response.output;
+          // Save the image to the file system
           fs.writeFileSync(fullpath, image, 'binary');
-          console.log('🚀 ~ router.post ~ res:', image.length, fullpath);
           const elt = {
             originalname: derivedname,
             mimetype: getFileType(originalname) || 'image/jpeg',
@@ -191,14 +190,14 @@ export function AiRouter(): express.Router {
             size: filedata.length,
             id: '',
           };
-
+          // Pass the file to the metadata and process functions
           const mdata = await AssetsCollection.metadataFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-            console.log('🚀 ~ router.post ~ mdata', e);
+            console.log('AssetsCollection> Error metadataFile', e);
             return;
           });
           // Process image and pdf
           const pdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-            console.log('🚀 ~ router.post ~ pdata', e);
+            console.log('AssetsCollection> Error processFile', e);
             return;
           });
           if (mdata) {
