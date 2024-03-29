@@ -26,7 +26,6 @@ import {
   isElectron,
   getSAGE3BoardUrl,
   useInsightStore,
-  useAnnotationStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -64,10 +63,6 @@ export function BoardPage() {
   const updatePresence = usePresenceStore((state) => state.update);
   const subscribeToPresence = usePresenceStore((state) => state.subscribe);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-
-  // Annotation Store
-  const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
-  const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
 
   // Insights
   const insights = useInsightStore((state) => state.insights);
@@ -151,8 +146,6 @@ export function BoardPage() {
     subToInsight(boardId);
     // plugins
     subPlugins();
-    // Sub to annotations for this board
-    subAnnotations(boardId);
     // Update the user's presence information
     if (user) updatePresence(user._id, { boardId, roomId, following: '' });
     // Add the board to the user's recent boards
@@ -222,7 +215,6 @@ export function BoardPage() {
       setSelectedApp('');
       // Unsub from insights
       unsubToInsight();
-      unsubAnnotations();
       // Remove event listeners
       document.removeEventListener('dragover', handleDragOver);
       document.removeEventListener('drop', handleDrop);
