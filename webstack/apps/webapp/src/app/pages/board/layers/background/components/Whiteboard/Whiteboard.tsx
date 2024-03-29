@@ -18,13 +18,12 @@ import { useAbility, useAnnotationStore, useBoardStore, useHotkeys, useKeyPress,
 import { Line } from './Line';
 import { useParams } from 'react-router';
 
-type WhiteboardProps = {};
+type WhiteboardProps = {
+  boardId: string;
+};
 
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
-
-  // Params
-  const { boardId } = useParams();
 
   const scale = useThrottleScale(250);
   // Can annotate
@@ -47,7 +46,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const color = useUIStore((state) => state.markerColor);
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
-  const dbLines = useAnnotationStore((state) => state.annotations);
+  const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
+  const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
+
   // Yjs
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
@@ -57,19 +58,23 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
-    if (yLines && boardId) {
+    if (yLines && props.boardId) {
       const lines = yLines.toJSON();
-      updateAnnotation(boardId, { whiteboardLines: lines });
+      updateAnnotation(props.boardId, { whiteboardLines: lines });
     }
   }
 
   useEffect(() => {
+    // Sub to annotations for this board
+    setLines([]);
+    subAnnotations(props.boardId);
+
     // A Yjs document holds the shared data
     const ydoc = new Y.Doc();
 
     // WS Provider
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + boardId, ydoc);
+    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + props.boardId, ydoc);
 
     // Lines array
     const yLines = ydoc.getArray('lines') as Y.Array<Y.Map<any>>;
@@ -80,11 +85,12 @@ export function Whiteboard(props: WhiteboardProps) {
 
     // Sync state with sage when a user connects and is the only one present
     provider.on('sync', () => {
-      if (provider && boardId) {
+      if (provider && props.boardId) {
         const users = provider.awareness.getStates();
         const count = users.size;
         // I'm the only one here, so need to sync current ydoc with that is saved in the database
         if (count === 1) {
+          const dbLines = useAnnotationStore.getState().annotations;
           if (dbLines && ydoc) {
             // Clear any existing lines
             yLines.delete(0, yLines.length);
@@ -113,8 +119,9 @@ export function Whiteboard(props: WhiteboardProps) {
       // Remove the bindings and disconnect the provider
       if (ydoc) ydoc.destroy();
       if (provider && provider.ws?.readyState === WebSocket.OPEN) provider.disconnect();
+      unsubAnnotations();
     };
-  }, [boardId]);
+  }, [props.boardId]);
 
   const getPoint = useCallback((x: number, y: number) => {
     x = (x / scale) - boardPosition.x;

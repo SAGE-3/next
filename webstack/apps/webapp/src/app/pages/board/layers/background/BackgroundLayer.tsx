@@ -95,7 +95,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* The board's apps */}
         <Apps />
         {/*Whiteboard */}
-        <Whiteboard />
+        <Whiteboard boardId={props.boardId} />
         {/*Lasso */}
         {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
         {/* Presence of the users */}
