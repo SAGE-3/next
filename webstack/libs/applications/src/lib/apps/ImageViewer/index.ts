@@ -13,8 +13,9 @@
 
 import { z } from 'zod';
 
-const bboxType = z.record(
+const bboxType = z.array(
   z.object({
+    label: z.string(),
     xmin: z.number(),
     ymin: z.number(),
     xmax: z.number(),
@@ -37,7 +38,7 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
   assetid: '',
   annotations: false,
-  boxes: {},
+  boxes: [],
 };
 
 export const name = 'ImageViewer';
