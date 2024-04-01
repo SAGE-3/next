@@ -355,8 +355,8 @@ export function AppWindow(props: WindowProps) {
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
     >
-      {/* Title Above app */}
-      <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />
+      {/* Title Above app, not when dragging the board */}
+      {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
       {/* <WindowBorder
@@ -382,7 +382,7 @@ export function AppWindow(props: WindowProps) {
         background={background ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
         outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : selected || isGrouped ? `${borderWidth}px solid ${selectColor}` : 'unset'}
-        boxShadow={isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={boardDragging || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
       >
         {props.children}
       </Box>
