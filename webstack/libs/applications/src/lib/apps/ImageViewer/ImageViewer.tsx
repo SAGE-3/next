@@ -137,7 +137,7 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {s.boxes ? s.boxes.map((box, idx) => {
+          {s.boxes && Array.isArray(s.boxes) ? s.boxes.map((box, idx) => {
             // TODO Need to handle text overflow for labels
             return (
               <Box
@@ -151,7 +151,7 @@ function AppComponent(props: App): JSX.Element {
                 style={{ display: s.annotations === true ? 'block' : 'none' }}
               >
                 <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                  {box.label}
+                  {box.label || 'Unknown'}
                 </Box>
               </Box>
             );
