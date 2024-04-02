@@ -135,16 +135,16 @@ export function Whiteboard(props: WhiteboardProps) {
   useEffect(() => {
     async function connectYjs() {
       // If the connection is not established, return
-      if (!connection) return;
-      // If the connection is established, but the annotations connection is not, return
-      if (!connection[YjsRooms.ANNOTATIONS]) return;
+      if (!connection) {
+        console.log('Whiteboard> Yjs Connection is not established');
+        return;
+      }
 
+      // If the connection is established, but the annotations connection is not, return
       const yjsConnection = connection[YjsRooms.ANNOTATIONS];
       if (!yjsConnection) {
-        console.log('Whiteboard> Failed to connect to Yjs');
+        console.log('Whiteboard> Failed to connect to the Yjs room for annotations');
         return;
-      } else {
-        console.log('Whiteboard> Connected to Yjs');
       }
       const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
       const ydoc = yjsConnection.doc;

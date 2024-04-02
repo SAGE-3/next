@@ -677,14 +677,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    if (!connection) {
-      console.log('SAGECell > Failed to connect to Yjs');
-      return;
-    }
+    if (!connection) return;
     const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) {
-      console.log('SAGECell > Failed to connect to Yjs');
-    }
+    if (!yjsConnection) return;
+
     const yText = yjsConnection.doc.getText(props._id);
     const provider = yjsConnection.provider;
     // Ensure we are always operating on the same line endings

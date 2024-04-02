@@ -119,15 +119,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    if (!connection) {
-      console.log('CodeEditor> Failed to connect to Yjs');
-      return;
-    }
+    if (!connection) return;
     const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) {
-      console.log('CodeEditor> Failed to connect to Yjs');
-      return;
-    }
+    if (!yjsConnection) return;
+
     const yText = yjsConnection.doc.getText(props._id);
     const provider = yjsConnection.provider;
 
