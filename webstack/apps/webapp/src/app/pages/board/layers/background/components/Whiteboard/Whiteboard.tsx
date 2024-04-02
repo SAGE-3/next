@@ -58,6 +58,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const updateAnnotation = useAnnotationStore((state) => state.update);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
   const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
+  const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
 
   // Yjs
   const { connection } = useYjs();
@@ -132,69 +133,72 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yLines]);
 
   useEffect(() => {
-    // Sub to annotations for this board
-    setLines([]);
-    subAnnotations(props.boardId);
-    return () => {
-      // Remove the bindings and disconnect the provider
-      unsubAnnotations();
-    };
-  }, [props.boardId]);
+    async function connectYjs() {
+      // If the connection is not established, return
+      if (!connection) return;
+      // If the connection is established, but the annotations connection is not, return
+      if (!connection[YjsRooms.ANNOTATIONS]) return;
 
-  useEffect(() => {
-    // If the connection is not established, return
-    if (!connection) return;
-    // If the connection is established, but the annotations connection is not, return
-    if (!connection[YjsRooms.ANNOTATIONS]) return;
+      const yjsConnection = connection[YjsRooms.ANNOTATIONS];
+      if (!yjsConnection) {
+        console.log('Whiteboard> Failed to connect to Yjs');
+        return;
+      } else {
+        console.log('Whiteboard> Connected to Yjs');
+      }
+      const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
+      const ydoc = yjsConnection.doc;
 
-    const yjsConnection = connection[YjsRooms.ANNOTATIONS];
-    if (!yjsConnection) {
-      console.log('Whiteboard> Failed to connect to Yjs');
-      return;
-    } else {
-      console.log('Whiteboard> Connected to Yjs');
-    }
-    const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
-    const ydoc = yjsConnection.doc;
+      setYdoc(ydoc);
+      setYlines(yLines);
+      const lines = yLines.toArray();
+      setLines(lines);
 
-    setYdoc(ydoc);
-    setYlines(yLines);
-    const lines = yLines.toArray();
-    setLines(lines);
-
-    // Sync state with sage when a user connects and is the only one present
-
-    const users = yjsConnection.provider.awareness.getStates();
-    const count = users.size;
-    // I'm the only one here, so need to sync current ydoc with that is saved in the database
-    if (count === 1) {
-      const dbLines = useAnnotationStore.getState().annotations;
-      if (dbLines && ydoc) {
-        // Clear any existing lines
-        yLines.delete(0, yLines.length);
-        // Add each line to the board from the database
-        dbLines.data.whiteboardLines.forEach((line: any) => {
-          const yPoints = new Y.Array<number>();
-          yPoints.push(line.points);
-          const yLine = new Y.Map<any>();
-          ydoc.transact(() => {
-            yLine.set('id', line.id);
-            yLine.set('points', yPoints);
-            yLine.set('userColor', line.userColor);
-            yLine.set('alpha', line.alpha);
-            yLine.set('size', line.size);
-            yLine.set('isComplete', true);
-            yLine.set('userId', line.userId);
+      // Sync state with sage when a user connects and is the only one present
+      const users = yjsConnection.provider.awareness.getStates();
+      const count = users.size;
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count === 1) {
+        const dbLines = getAnnotations();
+        if (dbLines && ydoc) {
+          // Clear any existing lines
+          yLines.delete(0, yLines.length);
+          // Add each line to the board from the database
+          console.log(dbLines);
+          dbLines.data.whiteboardLines.forEach((line: any) => {
+            const yPoints = new Y.Array<number>();
+            yPoints.push(line.points);
+            const yLine = new Y.Map<any>();
+            ydoc.transact(() => {
+              yLine.set('id', line.id);
+              yLine.set('points', yPoints);
+              yLine.set('userColor', line.userColor);
+              yLine.set('alpha', line.alpha);
+              yLine.set('size', line.size);
+              yLine.set('isComplete', true);
+              yLine.set('userId', line.userId);
+            });
+            yLines.push([yLine]);
           });
-          yLines.push([yLine]);
-        });
+          // Set Local Lines
+          const lines = yLines.toArray();
+          setLines(lines);
+        }
       }
     }
+    async function connect() {
+      // Sub to annotations for this board
+      setLines([]);
+      await subAnnotations(props.boardId);
+      connectYjs();
+    }
+    connect();
+
     return () => {
       // Remove the bindings and disconnect the provider
       unsubAnnotations();
     };
-  }, [connection]);
+  }, [connection, props.boardId]);
 
   // On pointer move, update awareness and (if down) update the current line
   const handlePointerMove = useCallback(
