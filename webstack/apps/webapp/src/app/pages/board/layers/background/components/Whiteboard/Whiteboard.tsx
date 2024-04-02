@@ -164,7 +164,6 @@ export function Whiteboard(props: WhiteboardProps) {
           // Clear any existing lines
           yLines.delete(0, yLines.length);
           // Add each line to the board from the database
-          console.log(dbLines);
           dbLines.data.whiteboardLines.forEach((line: any) => {
             const yPoints = new Y.Array<number>();
             yPoints.push(line.points);
