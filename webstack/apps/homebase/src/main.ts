@@ -185,6 +185,8 @@ async function startServer() {
 
   // Websocket API for YJS
   yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
+    // Show number of connections on the server
+    // console.log('YJS> connections', yjsWebSocketServer.clients.size);
     YUtils.setupWSConnection(socket, _request, args);
   });
 
