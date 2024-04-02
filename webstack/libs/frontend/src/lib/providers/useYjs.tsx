@@ -10,7 +10,6 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
-import { set } from 'date-fns';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -20,21 +19,23 @@ export enum YjsRooms {
 // Put all Values of YjsRooms into an array
 export const YjsRoomsArray = Object.values(YjsRooms);
 
-type YjsConnections = {
-  [key: string]: {
+type YjsConnection = {
+  [roomname: string]: {
     doc: Y.Doc;
     provider: WebsocketProvider;
   };
 };
 
+type YjsConnections = {
+  [boardId: string]: YjsConnection;
+};
+
 type YjsContextType = {
-  connections: YjsConnections;
-  connected: boolean;
+  connection: YjsConnection | null;
 };
 
 const YjsContext = createContext<YjsContextType>({
-  connections: {},
-  connected: false,
+  connection: {},
 });
 
 /**
@@ -44,42 +45,50 @@ export function useYjs() {
   return useContext(YjsContext);
 }
 
+let yConnections = {} as YjsConnections;
+
 export function YjsProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [connections, setConnections] = useState<YjsConnections>({}); // YjsConnections
-  const [connected, setConnected] = useState<boolean>(false); // Boolean
+  const [connection, setConnection] = useState<YjsConnection | null>(null); // YjsConnections
   const { boardId } = useParams();
 
-  const disconnect = useCallback(() => {
-    Object.values(connections).forEach((connection) => {
-      connection.provider.disconnect();
-      connection.provider.destroy();
+  const disconnectAll = useCallback(() => {
+    setConnection(null);
+    Object.keys(yConnections).forEach((boardId) => {
+      Object.keys(yConnections[boardId]).forEach((room) => {
+        yConnections[boardId][room].provider.disconnect();
+        yConnections[boardId][room].doc.destroy();
+      });
     });
-  }, [connections]);
+    // Delete all elements in yConnections
+    yConnections = {};
+  }, []);
 
   const connect = useCallback((boardId: string) => {
     // Connect to Yjs
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const url = `${protocol}://${window.location.host}/yjs`;
-    const newConnections = {} as YjsConnections;
+    const newConnection = {} as YjsConnection;
     YjsRoomsArray.forEach((roomname) => {
       const room = `${roomname}-${boardId}`;
-      if (!newConnections[room]) {
+      if (!newConnection[room]) {
         const doc = new Y.Doc();
         const provider = new WebsocketProvider(url, `${room}`, doc);
-        newConnections[roomname] = { doc, provider };
+        newConnection[roomname] = { doc, provider };
       }
     });
-    return newConnections;
+    return newConnection;
   }, []);
 
   useEffect(() => {
     if (boardId) {
-      setConnections(connect(boardId));
+      const connection = connect(boardId);
+      yConnections[boardId] = connection;
+      setConnection(connection);
     }
     return () => {
-      disconnect();
+      disconnectAll();
     };
-  }, [boardId, connect, disconnect]);
+  }, [boardId, connect, disconnectAll]);
 
-  return <YjsContext.Provider value={{ connections, connected }}>{props.children}</YjsContext.Provider>;
+  return <YjsContext.Provider value={{ connection }}>{props.children}</YjsContext.Provider>;
 }

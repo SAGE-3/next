@@ -18,7 +18,6 @@ import {
   YjsRooms,
   useAbility,
   useAnnotationStore,
-  useBoardStore,
   useHotkeys,
   useKeyPress,
   useThrottleScale,
@@ -29,13 +28,12 @@ import {
 import { Line } from './Line';
 import { useParams } from 'react-router';
 
-type WhiteboardProps = {};
+type WhiteboardProps = {
+  boardId: string;
+};
 
 export function Whiteboard(props: WhiteboardProps) {
   const { user } = useUser();
-
-  // Params
-  const { boardId } = useParams();
 
   const scale = useThrottleScale(250);
   // Can annotate
@@ -58,9 +56,11 @@ export function Whiteboard(props: WhiteboardProps) {
   const color = useUIStore((state) => state.markerColor);
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
-  const dbLines = useAnnotationStore((state) => state.annotations);
+  const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
+  const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
+
   // Yjs
-  const { connections, connected: yConnected } = useYjs();
+  const { connection } = useYjs();
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
@@ -68,76 +68,11 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
-    if (yLines && boardId) {
+    if (yLines && props.boardId) {
       const lines = yLines.toJSON();
-      updateAnnotation(boardId, { whiteboardLines: lines });
+      updateAnnotation(props.boardId, { whiteboardLines: lines });
     }
   }
-
-  useEffect(() => {
-    function handleChange() {
-      if (yLines) {
-        const lines = yLines.toArray();
-        setLines(lines);
-      }
-    }
-
-    if (yLines) {
-      yLines.observe(handleChange);
-    }
-    return () => {
-      if (yLines) {
-        yLines.unobserve(handleChange);
-      }
-    };
-  }, [yLines]);
-
-  useEffect(() => {
-    console.log('Whiteboard> Yjs Connected:', yConnected);
-    if (!yConnected) return;
-    const yjsConnection = connections[YjsRooms.ANNOTATIONS];
-    if (!yjsConnection) {
-      console.log('Whiteboard> Failed to connect to Yjs');
-      return;
-    } else {
-      console.log('Whiteboard> Connected to Yjs');
-    }
-    const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
-    const ydoc = yjsConnection.doc;
-
-    setYdoc(ydoc);
-    setYlines(yLines);
-    const lines = yLines.toArray();
-    setLines(lines);
-
-    // Sync state with sage when a user connects and is the only one present
-
-    const users = yjsConnection.provider.awareness.getStates();
-    const count = users.size;
-    // I'm the only one here, so need to sync current ydoc with that is saved in the database
-    if (count === 1) {
-      if (dbLines && ydoc) {
-        // Clear any existing lines
-        yLines.delete(0, yLines.length);
-        // Add each line to the board from the database
-        dbLines.data.whiteboardLines.forEach((line: any) => {
-          const yPoints = new Y.Array<number>();
-          yPoints.push(line.points);
-          const yLine = new Y.Map<any>();
-          ydoc.transact(() => {
-            yLine.set('id', line.id);
-            yLine.set('points', yPoints);
-            yLine.set('userColor', line.userColor);
-            yLine.set('alpha', line.alpha);
-            yLine.set('size', line.size);
-            yLine.set('isComplete', true);
-            yLine.set('userId', line.userId);
-          });
-          yLines.push([yLine]);
-        });
-      }
-    }
-  }, [yConnected, boardId]);
 
   const getPoint = useCallback(
     (x: number, y: number) => {
@@ -177,6 +112,89 @@ export function Whiteboard(props: WhiteboardProps) {
     },
     [yDoc, yLines, user, color, markerOpacity, markerSize]
   );
+
+  useEffect(() => {
+    function handleChange() {
+      if (yLines) {
+        const lines = yLines.toArray();
+        setLines(lines);
+      }
+    }
+
+    if (yLines) {
+      yLines.observe(handleChange);
+    }
+    return () => {
+      if (yLines) {
+        yLines.unobserve(handleChange);
+      }
+    };
+  }, [yLines]);
+
+  useEffect(() => {
+    // Sub to annotations for this board
+    setLines([]);
+    subAnnotations(props.boardId);
+    return () => {
+      // Remove the bindings and disconnect the provider
+      unsubAnnotations();
+    };
+  }, [props.boardId]);
+
+  useEffect(() => {
+    // If the connection is not established, return
+    if (!connection) return;
+    // If the connection is established, but the annotations connection is not, return
+    if (!connection[YjsRooms.ANNOTATIONS]) return;
+
+    const yjsConnection = connection[YjsRooms.ANNOTATIONS];
+    if (!yjsConnection) {
+      console.log('Whiteboard> Failed to connect to Yjs');
+      return;
+    } else {
+      console.log('Whiteboard> Connected to Yjs');
+    }
+    const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
+    const ydoc = yjsConnection.doc;
+
+    setYdoc(ydoc);
+    setYlines(yLines);
+    const lines = yLines.toArray();
+    setLines(lines);
+
+    // Sync state with sage when a user connects and is the only one present
+
+    const users = yjsConnection.provider.awareness.getStates();
+    const count = users.size;
+    // I'm the only one here, so need to sync current ydoc with that is saved in the database
+    if (count === 1) {
+      const dbLines = useAnnotationStore.getState().annotations;
+      if (dbLines && ydoc) {
+        // Clear any existing lines
+        yLines.delete(0, yLines.length);
+        // Add each line to the board from the database
+        dbLines.data.whiteboardLines.forEach((line: any) => {
+          const yPoints = new Y.Array<number>();
+          yPoints.push(line.points);
+          const yLine = new Y.Map<any>();
+          ydoc.transact(() => {
+            yLine.set('id', line.id);
+            yLine.set('points', yPoints);
+            yLine.set('userColor', line.userColor);
+            yLine.set('alpha', line.alpha);
+            yLine.set('size', line.size);
+            yLine.set('isComplete', true);
+            yLine.set('userId', line.userId);
+          });
+          yLines.push([yLine]);
+        });
+      }
+    }
+    return () => {
+      // Remove the bindings and disconnect the provider
+      unsubAnnotations();
+    };
+  }, [connection]);
 
   // On pointer move, update awareness and (if down) update the current line
   const handlePointerMove = useCallback(

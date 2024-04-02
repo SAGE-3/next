@@ -85,7 +85,7 @@ function AppComponent(props: App): JSX.Element {
   const { setEditor } = useStore();
 
   // Use Yjs
-  const { connections } = useYjs();
+  const { connection } = useYjs();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -119,7 +119,11 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    const yjsConnection = connections[YjsRooms.APPS];
+    if (!connection) {
+      console.log('CodeEditor> Failed to connect to Yjs');
+      return;
+    }
+    const yjsConnection = connection[YjsRooms.APPS];
     if (!yjsConnection) {
       console.log('CodeEditor> Failed to connect to Yjs');
       return;
@@ -219,7 +223,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Check if the AI is online
   useEffect(() => {
     async function fetchStatus() {
-      const response = await AiAPI.status();
+      const response = await AiAPI.code.status();
       setOnlineModels(response.onlineModels);
       if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
       else setSelectedModel('');
@@ -319,7 +323,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'refactor'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Create new range with the same start and end line
       editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
@@ -347,7 +351,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'explain'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       const w = props.data.size.width;
       const h = props.data.size.height;
@@ -379,7 +383,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'comment'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.output.replace(/```/g, '');
@@ -399,7 +403,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'generate'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.output.replace(/```/g, '');
@@ -482,6 +486,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
+      {/* AI Model selection */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>

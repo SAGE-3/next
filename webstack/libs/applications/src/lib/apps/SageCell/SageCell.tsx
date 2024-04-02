@@ -149,7 +149,7 @@ function AppComponent(props: App): JSX.Element {
   const toastRef = useRef(false);
 
   // YJS and Monaco
-  const { connections } = useYjs();
+  const { connection } = useYjs();
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -677,7 +677,11 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    const yjsConnection = connections[YjsRooms.APPS];
+    if (!connection) {
+      console.log('SAGECell > Failed to connect to Yjs');
+      return;
+    }
+    const yjsConnection = connection[YjsRooms.APPS];
     if (!yjsConnection) {
       console.log('SAGECell > Failed to connect to Yjs');
     }

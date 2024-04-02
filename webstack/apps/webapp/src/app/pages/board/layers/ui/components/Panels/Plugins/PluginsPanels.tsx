@@ -130,7 +130,7 @@ export function PluginsPanel(props: PluginProps) {
                   title={name}
                   style={{ width: '175px', overflow: 'hidden' }}
                   // disable dragging for now since it doesnt work for plugins
-                  candrag={'false'}
+                  draggable={false}
                   onClick={() => newApplication(plugin.data.name)}
                 />
               </Tooltip>
