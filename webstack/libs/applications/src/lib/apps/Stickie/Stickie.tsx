@@ -45,6 +45,7 @@ import {
   apiUrls,
   YjsRooms,
   useYjs,
+  serverTime,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
@@ -96,7 +97,7 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  const connectToYjs = (textArea: HTMLTextAreaElement) => {
+  const connectToYjs = async (textArea: HTMLTextAreaElement) => {
     if (!connection) return;
     const yjsConnection = connection[YjsRooms.APPS];
     if (!yjsConnection) return;
@@ -108,14 +109,26 @@ function AppComponent(props: App): JSX.Element {
     const users = provider.awareness.getStates();
     const count = users.size;
 
-    // I'm the only one here, so need to sync current ydoc with that is saved in the database
+    // Sync current ydoc with that is saved in the database
+    const syncStateWithDatabase = () => {
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, s.text);
+    };
+
+    // If I am the only one here according to Yjs, then sync with database
     if (count == 1) {
-      // Does the app have code?
-      if (s.text.length > 0) {
-        // Clear any existing lines
-        yText.delete(0, yText.length);
-        // Set the lines from the database
-        yText.insert(0, s.text);
+      syncStateWithDatabase();
+    } else if (count > 1 && props._createdBy === user?._id) {
+      // There are other users here and I created this app.
+      // Is this app less than 5 seconds old...this feels hacky
+      const now = await serverTime();
+      const created = props._createdAt;
+      // Then we need to sync with database due to Yjs not being able to catch the initial state
+      if (now.epoch - created < 5000) {
+        // I created this
+        syncStateWithDatabase();
       }
     }
   };
