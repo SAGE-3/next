@@ -10,6 +10,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
+import { useUser } from './useUser';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -50,6 +51,7 @@ let yConnections = {} as YjsConnections;
 export function YjsProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const [connection, setConnection] = useState<YjsConnection | null>(null); // YjsConnections
   const { boardId } = useParams();
+  const { user } = useUser();
 
   const disconnectAll = useCallback(() => {
     setConnection(null);
@@ -73,6 +75,10 @@ export function YjsProvider(props: React.PropsWithChildren<Record<string, unknow
       if (!newConnection[room]) {
         const doc = new Y.Doc();
         const provider = new WebsocketProvider(url, `${room}`, doc);
+        provider.awareness.setLocalStateField('user', {
+          name: user?.data.name || 'Anonymous',
+          color: user?.data.color || '#000000',
+        });
         newConnection[roomname] = { doc, provider };
       }
     });
