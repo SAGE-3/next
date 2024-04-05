@@ -1,149 +1,187 @@
-import { SageNodeQueryParams, MesonetQueryParams, RAPIDQueries } from "../utils/apis";
-
+import { SageNodeQueryParams, MesonetQueryParams, RAPIDQueries } from '../utils/apis';
 
 export default () => {
+  const SAGE_NODE_URL = 'https://data.sagecontinuum.org/api/v1/query';
+  /**
+   * Get Sage Node data
+   * @param query
+   * @returns JSON output of Sage Node data
+   */
   async function getSageNodeData(query: SageNodeQueryParams) {
     try {
-      const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
+      const res = await fetch(SAGE_NODE_URL, {
         method: 'POST',
         body: JSON.stringify(query),
       });
-      const data = await res.text();
-      // console.log("text data", data);
-      const parsedData = data.split('\n').map((line) => {
-        // console.log("line", line);
-        if (line !== '') {
-          return JSON.parse(line);
-        }
-      });
 
-      // Filter data to keep only the first point in each 5-minute interval
-      let lastTimestamp = new Date(parsedData[0].timestamp).getTime() - 5 * 60 * 1000; // Initialize to 5 minutes before the first data point
-      const filteredParsedData = parsedData.filter((dataPoint) => {
+      const text = await res.text();
+
+      if (!text) return [];
+
+      const metrics = text
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line));
+
+      return metrics;
+    } catch (error) {
+      console.log('Error fetching Sage Node data: ', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get formatted Sage Node data
+   * @param query
+   * @returns
+   */
+  async function getFormattedSageNodeData(query: SageNodeQueryParams) {
+    try {
+      const FIVE_MINUTES = 5 * 60 * 1000;
+
+      const metrics = await getSageNodeData(query);
+      if (!metrics) return [];
+
+      // Filter data in 5-minute intervals
+      let prevTimeStamp = new Date(metrics[0].timestamp).getTime() - FIVE_MINUTES;
+      const filteredMetrics = metrics.filter((dataPoint) => {
         if (dataPoint === undefined) return false;
+
         const currentTimestamp = new Date(dataPoint.timestamp).getTime();
-        if (currentTimestamp - lastTimestamp >= 5 * 60 * 1000) {
-          // 5 minutes in milliseconds
+        if (currentTimestamp - prevTimeStamp >= FIVE_MINUTES) {
           const date = new Date(dataPoint.timestamp);
           const minutes = date.getMinutes();
           const seconds = date.getSeconds();
+
           if (minutes % 5 === 0 && Math.abs(seconds - 0) < 60) {
-            // Closest to the 5-minute mark
-            lastTimestamp = currentTimestamp;
+            prevTimeStamp = currentTimestamp;
             return true;
           }
         }
         return false;
       });
-      //console.log("filtered parsed data", filteredParsedData);
 
-      const formattedData = filteredParsedData.map((data) => {
-        //console.log("sage node date", data.timestamp);
+      return filteredMetrics.map((data) => {
         return {
-          x: new Date(data.timestamp).toLocaleTimeString([], {
-            month: '2-digit',
-            day: '2-digit',
-            year: '2-digit',
-            minute: '2-digit',
-            hour: '2-digit',
-          }),
-          y: query.filter?.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
+          time: data.timestamp,
+          value: data.value,
         };
       });
-      return formattedData;
     } catch (error) {
       console.log('error', error);
       return [];
     }
   }
 
+  // TODO: Change API to one that contains start and end
+  /**
+   * Get Mesonet data
+   * @param query
+   * @returns
+   */
   async function getMesonetData(query: MesonetQueryParams) {
     try {
       const res = await fetch(
         `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
       );
 
+      if (!res.ok) throw new Error(`Failed to fetch Mesonet data`);
+
       const data = await res.json();
-      // console.log("mesonet data", data);
-      // console.log("date_time", data?.STATION[0].OBSERVATIONS["date_time"])
 
-      const date_time = data?.STATION[0].OBSERVATIONS?.date_time?.map((date: string) => {
-        return new Date(date).toLocaleTimeString([], {
-          month: '2-digit',
-          day: '2-digit',
-          year: '2-digit',
-          minute: '2-digit',
-          hour: '2-digit',
-        });
-      });
+      return data;
+    } catch (error) {
+      console.log('Error fetching Mesonet data: ', error);
+      return [];
+    }
+  }
 
-      const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`]?.map((temp: number) => {
-        return temp;
-      });
+  /**
+   * Get formatted Mesonet data
+   * @param query
+   * @returns
+   */
+  async function getFormattedMesonetData(query: MesonetQueryParams) {
+    try {
+      const data = await getMesonetData(query);
 
-      // Mesonet data has date_time and other fields in separate arrays
-      if (date_time?.length !== metric?.length) {
-        console.log(`date_time and ${metric} are not the same length`);
-        return;
-      }
+      if (!data) return [];
 
-      const formattedData = date_time?.map((date: string, index: number) => {
+      const date_time = data?.STATION[0].OBSERVATIONS?.date_time;
+      const metric = data?.STATION[0].OBSERVATIONS?.[`${query.metric}`];
+
+      if (!date_time || !metric || date_time?.length !== metric?.length) return [];
+
+      const formattedData = date_time.map((date: string, index: number) => {
         return {
-          x: date,
-          y: metric[index],
+          time: date,
+          value: metric[index],
         };
       });
 
       return formattedData;
     } catch (error) {
-      console.log('error', error);
+      console.log('Error fetching Mesonet data: ', error);
       return [];
     }
   }
 
-  async function mergeData(data: RAPIDQueries) {
+  function beautifyDate(date: string) {
+    return new Date(date).toLocaleTimeString([], {
+      month: '2-digit',
+      day: '2-digit',
+      year: '2-digit',
+      minute: '2-digit',
+      hour: '2-digit',
+    });
+  }
+  /**
+   * Get combined Sage Node and Mesonet data
+   * @param queries
+   * @returns
+   */
+  async function getCombinedSageMesonetData(queries: RAPIDQueries) {
     try {
-      const sageData = await getSageNodeData(data.sageNode);
-      console.log("sageData", sageData);
-      const mesonetData = await getMesonetData(data.mesonet);
+      // Fetch data from Sage Node and Mesonet
+      const sageData = await getFormattedSageNodeData(queries.sageNode);
+      const mesonetData = await getFormattedMesonetData(queries.mesonet);
 
-      const sageMap = new Map(sageData.map((obj) => [obj.x, obj.y]));
-      // console.log("sagemap", sageMap);
-      const mesonetMap = new Map(mesonetData.map((obj: { x: string; y: number }) => [obj.x, obj.y]));
-      // console.log("mesonetmap", mesonetMap);
-
-      const allXValues = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
-      const sortedXValues = Array.from(allXValues as Set<string>).sort((a: string, b: string) => {
+      // Create a hashmap of the data with time as the key if present
+      const sageMap = new Map(
+        sageData.map((obj: { time: string; value: number }) => [obj.time ? beautifyDate(obj.time) : null, obj.value])
+      );
+      const mesonetMap = new Map(
+        mesonetData.map((obj: { time: string; value: number }) => [obj.time ? beautifyDate(obj.time) : null, obj.value])
+      );
+      // Combine the times from both datasets into a set
+      const combinedTimes = new Set([...mesonetMap.keys(), ...sageMap.keys()]);
+      // Sort the times
+      const sortedTimes = Array.from(combinedTimes as Set<string>).sort((a: string, b: string) => {
         const dateA = new Date(a);
         const dateB = new Date(b);
         return dateA.getTime() - dateB.getTime();
       });
-
-      const mergedArray = sortedXValues.map((x: string) => ({
-        x,
-        'Sage Node': sageMap.get(x) || null,
-        Mesonet: mesonetMap.get(x) || null,
+      // Use time as the key to combine the data
+      const combinedData = sortedTimes.map((time: string) => ({
+        time,
+        'Sage Node': sageMap.get(time) || null,
+        Mesonet: mesonetMap.get(time) || null,
       }));
 
-      return mergedArray;
+      return combinedData;
     } catch (error) {
-      console.log('error', error);
+      console.log('Error fetching combined Sage Node and Mesonet data: ', error);
       return [];
     }
   }
-
-  self.addEventListener('message', async (e: MessageEvent) => {
+  // Run worker and post message
+  self.addEventListener('message', async (messageEvent: MessageEvent) => {
     try {
-      // const { num } = e.data;
-      // TODO: Use event to pass query to API
-      console.log('e', e);
-      // console.log(e.data)
-
       console.time('Worker run');
-
       const result = {
-        data: await mergeData(e.data),
+        data: await getCombinedSageMesonetData(messageEvent.data),
       };
+      console.log('result', result);
       // console.log(e);
       console.timeEnd('Worker run');
       return postMessage({ result });

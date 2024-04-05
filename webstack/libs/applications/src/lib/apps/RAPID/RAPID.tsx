@@ -103,40 +103,6 @@ function AppComponent(props: App): JSX.Element {
     if (!s.unique) {
       isUniqueClient();
     }
-    async function fetchData() {
-      // const data = await rapidApis.getFormattedSageNodeData({
-      //   start: '-60d',
-      //   // end: '2024-01-02T00:00:00Z',
-      //   filter: {
-      //     name: 'env.pressure',
-      //     vsn: "W097",
-      //     sensor: "bme680"
-      //   },
-      // });
-      // const data = await rapidApis.getFormattedMesonetData({
-      //   time: '1440',
-      //   metric: 'air_temp_set_1'
-      // })
-      const data = await rapidApis.getCombinedSageMesonetData({
-        sageNode: {
-          start: '-60d',
-          filter: {
-            name: 'env.pressure',
-            vsn: 'W097',
-            sensor: 'bme680',
-          },
-        },
-        mesonet: {
-          time: '1440',
-          metric: 'pressure_set_1',
-        },
-      });
-      console.log("data", data);
-
-      // setTest(data);
-    }
-
-    fetchData();
   }, []);
 
   console.log('test', test);

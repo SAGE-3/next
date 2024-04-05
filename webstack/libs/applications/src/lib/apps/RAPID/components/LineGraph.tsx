@@ -34,7 +34,7 @@ function LineGraph({ s }: RAPIDState) {
         },
         xAxis: {
           data: s.metricData
-            ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d.x.replace(', ', '\n'))]
+            ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))]
             : [],
           name: 'Time',
         },
@@ -51,7 +51,7 @@ function LineGraph({ s }: RAPIDState) {
             name: 'Sage Node',
             type: 'line',
             data: s.metricData
-              ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
+              ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
               : [],
             large: true,
           },
@@ -59,7 +59,7 @@ function LineGraph({ s }: RAPIDState) {
             name: 'Mesonet',
             type: 'line',
             data: s.metricData.data
-              ? [...s.metricData.data.map((d: { x: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
+              ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
               : [],
             large: true,
           },

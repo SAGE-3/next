@@ -4,7 +4,7 @@ import { useAppStore } from '@sage3/frontend';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type ResultDataPoint = {
-  x: string;
+  time: string;
   'Sage Node': number;
   Mesonet: number;
 };
