@@ -11,9 +11,11 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import { useUser } from '@sage3/frontend';
+
+import * as rapidApis from './utils/apis';
 
 // Styling
 import './styling.css';
@@ -22,7 +24,6 @@ import { Box, Button, Link, Tooltip } from '@chakra-ui/react';
 import { FaDownload } from 'react-icons/fa';
 
 /* App component for RAPID */
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -39,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
       const width = props.data.size.width;
       const height = props.data.size.height;
       const max = 4;
-      
+
       const promises = [];
 
       for (const category in CATEGORIES) {
@@ -88,6 +89,7 @@ function AppComponent(props: App): JSX.Element {
     }
   }
 
+  const [test, setTest] = useState<any[]>([]);
   /**
    * Add userid to unique field. This is used to prevent useEffect to be triggered
    * by multiple clients upon generation of the apps
@@ -101,7 +103,43 @@ function AppComponent(props: App): JSX.Element {
     if (!s.unique) {
       isUniqueClient();
     }
+    async function fetchData() {
+      // const data = await rapidApis.getFormattedSageNodeData({
+      //   start: '-60d',
+      //   // end: '2024-01-02T00:00:00Z',
+      //   filter: {
+      //     name: 'env.pressure',
+      //     vsn: "W097",
+      //     sensor: "bme680"
+      //   },
+      // });
+      // const data = await rapidApis.getFormattedMesonetData({
+      //   time: '1440',
+      //   metric: 'air_temp_set_1'
+      // })
+      const data = await rapidApis.getCombinedSageMesonetData({
+        sageNode: {
+          start: '-60d',
+          filter: {
+            name: 'env.pressure',
+            vsn: 'W097',
+            sensor: 'bme680',
+          },
+        },
+        mesonet: {
+          time: '1440',
+          metric: 'pressure_set_1',
+        },
+      });
+      console.log("data", data);
+
+      // setTest(data);
+    }
+
+    fetchData();
   }, []);
+
+  console.log('test', test);
 
   // create charts
   useEffect(() => {

@@ -1,30 +1,8 @@
-/**
- * Uses web worker to send API call to prevent main thread from lagging.
- */
-export type SageNodeQuery = {
-  start: string;
-  end?: string;
-  filter: {
-    name: string;
-    sensor: string;
-    vsn: string;
-  };
-};
+import { SageNodeQueryParams, MesonetQueryParams, RAPIDQueries } from "../utils/apis";
 
-export type MesonetQuery = {
-  start?: string;
-  end?: string;
-  time: string;
-  metric: string;
-};
-
-export type RAPIDQueries = {
-  sageNode: SageNodeQuery;
-  mesonet: MesonetQuery;
-};
 
 export default () => {
-  async function getSageNodeData(query: SageNodeQuery) {
+  async function getSageNodeData(query: SageNodeQueryParams) {
     try {
       const res = await fetch('https://data.sagecontinuum.org/api/v1/query', {
         method: 'POST',
@@ -69,7 +47,7 @@ export default () => {
             minute: '2-digit',
             hour: '2-digit',
           }),
-          y: query.filter.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
+          y: query.filter?.name === 'env.pressure' ? data.value / 100 : data.value, // Convert pressure from Pa to millibars
         };
       });
       return formattedData;
@@ -79,7 +57,7 @@ export default () => {
     }
   }
 
-  async function getMesonetData(query: MesonetQuery) {
+  async function getMesonetData(query: MesonetQueryParams) {
     try {
       const res = await fetch(
         `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
@@ -126,6 +104,7 @@ export default () => {
   async function mergeData(data: RAPIDQueries) {
     try {
       const sageData = await getSageNodeData(data.sageNode);
+      console.log("sageData", sageData);
       const mesonetData = await getMesonetData(data.mesonet);
 
       const sageMap = new Map(sageData.map((obj) => [obj.x, obj.y]));
