@@ -79,13 +79,14 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-
+  const isDragging = useUIStore((state) => state.boardDragging);
+  const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
-
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
-
+  // Monitor application size
+  const [isSmall, setIsSmall] = useState(false);
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
@@ -96,6 +97,16 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
+
+  useEffect(() => {
+    // Apparent font size
+    const fontSize = scale * props.data.state.fontSize;
+    if (fontSize < 7) {
+      setIsSmall(true);
+    } else if (isSmall) {
+      setIsSmall(false);
+    }
+  }, [scale, props.data.state.fontSize]);
 
   const connectToYjs = async (textArea: HTMLTextAreaElement) => {
     if (!connection) return;
@@ -213,6 +224,7 @@ function AppComponent(props: App): JSX.Element {
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
+          display={isSmall || isDragging ? 'none' : 'block'}
           css={{
             // Balance the text, improve text layouts
             textWrap: 'pretty', // 'balance',
