@@ -11,6 +11,7 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
 import { useUser } from './useUser';
+import { User } from '@sage3/shared/types';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -20,11 +21,13 @@ export enum YjsRooms {
 // Put all Values of YjsRooms into an array
 export const YjsRoomsArray = Object.values(YjsRooms);
 
+type YjsRoomConnection = {
+  doc: Y.Doc;
+  provider: WebsocketProvider;
+};
+
 type YjsConnection = {
-  [roomname: string]: {
-    doc: Y.Doc;
-    provider: WebsocketProvider;
-  };
+  [roomname: string]: YjsRoomConnection;
 };
 
 type YjsConnections = {
@@ -46,6 +49,29 @@ export function useYjs() {
   return useContext(YjsContext);
 }
 
+async function connectToRoom(room: string, user: User): Promise<YjsRoomConnection> {
+  // Wrap this in a promise to wait for the connection to be established
+  return new Promise((resolve) => {
+    console.log('connecting to room:', room);
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const url = `${protocol}://${window.location.host}/yjs`;
+
+    const doc = new Y.Doc();
+    const provider = new WebsocketProvider(url, `${room}`, doc);
+    provider.awareness.setLocalStateField('user', {
+      name: user?.data.name || 'Anonymous',
+      color: user?.data.color || '#000000',
+    });
+    provider.on('status', (event: any) => {
+      console.log('status:', event.status, room);
+      if (event.status === 'connected') {
+        console.log('connected to room:', room);
+        resolve({ doc, provider });
+      }
+    });
+  });
+}
+
 let yConnections = {} as YjsConnections;
 
 export function YjsProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
@@ -65,36 +91,38 @@ export function YjsProvider(props: React.PropsWithChildren<Record<string, unknow
     yConnections = {};
   }, []);
 
-  const connect = useCallback((boardId: string) => {
+  async function connect(boardId: string): Promise<YjsConnection> {
     // Connect to Yjs
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${protocol}://${window.location.host}/yjs`;
-    const newConnection = {} as YjsConnection;
-    YjsRoomsArray.forEach((roomname) => {
+    const connections = YjsRoomsArray.map(async (roomname) => {
       const room = `${roomname}-${boardId}`;
-      if (!newConnection[room]) {
-        const doc = new Y.Doc();
-        const provider = new WebsocketProvider(url, `${room}`, doc);
-        provider.awareness.setLocalStateField('user', {
-          name: user?.data.name || 'Anonymous',
-          color: user?.data.color || '#000000',
-        });
-        newConnection[roomname] = { doc, provider };
-      }
+      return connectToRoom(room, user!); // Add null assertion operator (!) to indicate that user will not be null or undefined
+    });
+    // Wait for all connections to be established
+    console.log('waiting for connections');
+    const connectionsResolved = await Promise.all(connections);
+    const newConnection = {} as YjsConnection;
+    YjsRoomsArray.forEach((roomname, index) => {
+      newConnection[roomname] = connectionsResolved[index];
     });
     return newConnection;
-  }, []);
+  }
 
   useEffect(() => {
-    if (boardId) {
-      const connection = connect(boardId);
+    async function init(boardId: string) {
+      console.log('init');
+      const connection = await connect(boardId);
       yConnections[boardId] = connection;
       setConnection(connection);
+      console.log('finished init');
+    }
+
+    if (boardId) {
+      init(boardId);
     }
     return () => {
       disconnectAll();
     };
-  }, [boardId, connect, disconnectAll]);
+  }, [boardId, disconnectAll]);
 
   return <YjsContext.Provider value={{ connection }}>{props.children}</YjsContext.Provider>;
 }
