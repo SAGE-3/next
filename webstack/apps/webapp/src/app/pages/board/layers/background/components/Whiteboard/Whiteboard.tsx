@@ -14,7 +14,17 @@ import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
-import { useAbility, useAnnotationStore, useBoardStore, useHotkeys, useKeyPress, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
+import {
+  YjsRooms,
+  useAbility,
+  useAnnotationStore,
+  useHotkeys,
+  useKeyPress,
+  useThrottleScale,
+  useUIStore,
+  useUser,
+  useYjs,
+} from '@sage3/frontend';
 import { Line } from './Line';
 import { useParams } from 'react-router';
 
@@ -48,9 +58,10 @@ export function Whiteboard(props: WhiteboardProps) {
   const updateAnnotation = useAnnotationStore((state) => state.update);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
   const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
+  const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
 
   // Yjs
-  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const { connection } = useYjs();
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
@@ -64,97 +75,44 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }
 
-  useEffect(() => {
-    // Sub to annotations for this board
-    setLines([]);
-    subAnnotations(props.boardId);
-
-    // A Yjs document holds the shared data
-    const ydoc = new Y.Doc();
-
-    // WS Provider
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, 'whiteboard-' + props.boardId, ydoc);
-
-    // Lines array
-    const yLines = ydoc.getArray('lines') as Y.Array<Y.Map<any>>;
-
-    setProvider(provider);
-    setYdoc(ydoc);
-    setYlines(yLines);
-
-    // Sync state with sage when a user connects and is the only one present
-    provider.on('sync', () => {
-      if (provider && props.boardId) {
-        const users = provider.awareness.getStates();
-        const count = users.size;
-        // I'm the only one here, so need to sync current ydoc with that is saved in the database
-        if (count === 1) {
-          const dbLines = useAnnotationStore.getState().annotations;
-          if (dbLines && ydoc) {
-            // Clear any existing lines
-            yLines.delete(0, yLines.length);
-            // Add each line to the board from the database
-            dbLines.data.whiteboardLines.forEach((line: any) => {
-              const yPoints = new Y.Array<number>();
-              yPoints.push(line.points);
-              const yLine = new Y.Map<any>();
-              ydoc.transact(() => {
-                yLine.set('id', line.id);
-                yLine.set('points', yPoints);
-                yLine.set('userColor', line.userColor);
-                yLine.set('alpha', line.alpha);
-                yLine.set('size', line.size);
-                yLine.set('isComplete', true);
-                yLine.set('userId', line.userId);
-              });
-              yLines.push([yLine]);
-            });
-          }
-        }
-      }
-    });
-
-    return () => {
-      // Remove the bindings and disconnect the provider
-      if (ydoc) ydoc.destroy();
-      if (provider && provider.ws?.readyState === WebSocket.OPEN) provider.disconnect();
-      unsubAnnotations();
-    };
-  }, [props.boardId]);
-
-  const getPoint = useCallback((x: number, y: number) => {
-    x = (x / scale) - boardPosition.x;
-    y = (y / scale) - boardPosition.y;
-    return [x, y];
-  }, [boardPosition.x, boardPosition.y, scale]);
+  const getPoint = useCallback(
+    (x: number, y: number) => {
+      x = x / scale - boardPosition.x;
+      y = y / scale - boardPosition.y;
+      return [x, y];
+    },
+    [boardPosition.x, boardPosition.y, scale]
+  );
 
   // On pointer down, start a new current line
-  const handlePointerDown = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (yLines && yDoc && canAnnotate) {
-      // if primary pointing device and left button
-      if (e.isPrimary && e.button === 0) {
-        e.currentTarget.setPointerCapture(e.pointerId);
-        const id = Date.now().toString();
-        const yPoints = new Y.Array<number>();
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (yLines && yDoc && canAnnotate) {
+        // if primary pointing device and left button
+        if (e.isPrimary && e.button === 0) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const id = Date.now().toString();
+          const yPoints = new Y.Array<number>();
 
-        const yLine = new Y.Map();
+          const yLine = new Y.Map();
 
-        yDoc.transact(() => {
-          yLine.set('id', id);
-          yLine.set('points', yPoints);
-          yLine.set('userColor', color);
-          yLine.set('alpha', markerOpacity);
-          yLine.set('size', markerSize);
-          yLine.set('isComplete', false);
-          yLine.set('userId', user?._id);
-        });
+          yDoc.transact(() => {
+            yLine.set('id', id);
+            yLine.set('points', yPoints);
+            yLine.set('userColor', color);
+            yLine.set('alpha', markerOpacity);
+            yLine.set('size', markerSize);
+            yLine.set('isComplete', false);
+            yLine.set('userId', user?._id);
+          });
 
-        rCurrentLine.current = yLine;
-        yLines.push([yLine]);
+          rCurrentLine.current = yLine;
+          yLines.push([yLine]);
+        }
       }
-    }
-  }, [yDoc, yLines, user, color, markerOpacity, markerSize]);
+    },
+    [yDoc, yLines, user, color, markerOpacity, markerSize]
+  );
 
   useEffect(() => {
     function handleChange() {
@@ -174,52 +132,125 @@ export function Whiteboard(props: WhiteboardProps) {
     };
   }, [yLines]);
 
-  // On pointer move, update awareness and (if down) update the current line
-  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    if (whiteboardMode === 'pen') {
-      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-        const currentLine = rCurrentLine.current;
-        if (!currentLine) return;
-        const points = currentLine.get('points');
-        // Don't add the new point to the line
-        if (!points) return;
-        const point = getPoint(e.clientX, e.clientY);
-        points.push([...point]);
+  useEffect(() => {
+    async function connectYjs() {
+      // If the connection is not established, return
+      if (!connection) {
+        console.log('Whiteboard> Yjs Connection is not established');
+        return;
+      }
+
+      // If the connection is established, but the annotations connection is not, return
+      const yjsConnection = connection[YjsRooms.ANNOTATIONS];
+      if (!yjsConnection) {
+        console.log('Whiteboard> Failed to connect to the Yjs room for annotations');
+        return;
+      }
+      const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
+      const ydoc = yjsConnection.doc;
+
+      setYdoc(ydoc);
+      setYlines(yLines);
+      const lines = yLines.toArray();
+      setLines(lines);
+
+      // Sync state with sage when a user connects and is the only one present
+      const users = yjsConnection.provider.awareness.getStates();
+      const count = users.size;
+      // I'm the only one here, so need to sync current ydoc with that is saved in the database
+      if (count === 1) {
+        const dbLines = getAnnotations();
+        if (dbLines && ydoc) {
+          // Clear any existing lines
+          yLines.delete(0, yLines.length);
+          // Add each line to the board from the database
+          dbLines.data.whiteboardLines.forEach((line: any) => {
+            const yPoints = new Y.Array<number>();
+            yPoints.push(line.points);
+            const yLine = new Y.Map<any>();
+            ydoc.transact(() => {
+              yLine.set('id', line.id);
+              yLine.set('points', yPoints);
+              yLine.set('userColor', line.userColor);
+              yLine.set('alpha', line.alpha);
+              yLine.set('size', line.size);
+              yLine.set('isComplete', true);
+              yLine.set('userId', line.userId);
+            });
+            yLines.push([yLine]);
+          });
+          // Set Local Lines
+          const lines = yLines.toArray();
+          setLines(lines);
+        }
       }
     }
-  }, [rCurrentLine.current, whiteboardMode]);
+    async function connect() {
+      // Sub to annotations for this board
+      setLines([]);
+      await subAnnotations(props.boardId);
+      connectYjs();
+    }
+    connect();
+
+    return () => {
+      // Remove the bindings and disconnect the provider
+      unsubAnnotations();
+    };
+  }, [connection, props.boardId]);
+
+  // On pointer move, update awareness and (if down) update the current line
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (whiteboardMode === 'pen') {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          const currentLine = rCurrentLine.current;
+          if (!currentLine) return;
+          const points = currentLine.get('points');
+          // Don't add the new point to the line
+          if (!points) return;
+          const point = getPoint(e.clientX, e.clientY);
+          points.push([...point]);
+        }
+      }
+    },
+    [rCurrentLine.current, whiteboardMode]
+  );
 
   // On pointer up, complete the current line
-  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
-    e.currentTarget.releasePointerCapture(e.pointerId);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      e.currentTarget.releasePointerCapture(e.pointerId);
 
-    const currentLine = rCurrentLine.current;
-    if (!currentLine) return;
+      const currentLine = rCurrentLine.current;
+      if (!currentLine) return;
 
-    // Get the points from the current stroke
-    const points: Y.Array<number> = currentLine.get('points');
-    if (points && points.length > 0) {
-      const xyPoints: { x: number, y: number }[] = [];
-      for (let i = 0; i < points.length / 2; i++) {
-        // Convert the points to an array of objects
-        xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+      // Get the points from the current stroke
+      const points: Y.Array<number> = currentLine.get('points');
+      if (points && points.length > 0) {
+        const xyPoints: { x: number; y: number }[] = [];
+        for (let i = 0; i < points.length / 2; i++) {
+          // Convert the points to an array of objects
+          xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+        }
+        // Simplify: points: Point[], tolerance: number, highQuality: boolean
+        // High quality simplification but runs ~10-20 times slower
+        const simpler = Simplify.default(xyPoints, 0.5, true);
+        // Delete the old points
+        points.delete(0, points.length);
+        // Add the new points
+        for (let i = 0; i < simpler.length; i++) {
+          // convert to integers for storage efficiency
+          points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
+        }
+        currentLine.set('isComplete', true);
+        updateBoardLines();
       }
-      // Simplify: points: Point[], tolerance: number, highQuality: boolean
-      // High quality simplification but runs ~10-20 times slower
-      const simpler = Simplify.default(xyPoints, 0.5, true);
-      // Delete the old points
-      points.delete(0, points.length);
-      // Add the new points
-      for (let i = 0; i < simpler.length; i++) {
-        // convert to integers for storage efficiency
-        points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
-      }
-      currentLine.set('isComplete', true);
-      updateBoardLines();
-    }
-    // Clear the current line anymway
-    rCurrentLine.current = undefined;
-  }, [rCurrentLine.current]);
+      // Clear the current line anymway
+      rCurrentLine.current = undefined;
+    },
+    [rCurrentLine.current]
+  );
 
   useEffect(() => {
     if (yLines && clearAllMarkers) {
@@ -263,11 +294,15 @@ export function Whiteboard(props: WhiteboardProps) {
   const spacebarPressed = useKeyPress(' ');
 
   // Switch between pen and interactive mode
-  useHotkeys('shift+w', () => {
-    if (canAnnotate) {
-      setWhiteboardMode(whiteboardMode === 'none' ? 'pen' : 'none');
-    }
-  }, { dependencies: [whiteboardMode] });
+  useHotkeys(
+    'shift+w',
+    () => {
+      if (canAnnotate) {
+        setWhiteboardMode(whiteboardMode === 'none' ? 'pen' : 'none');
+      }
+    },
+    { dependencies: [whiteboardMode] }
+  );
 
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
