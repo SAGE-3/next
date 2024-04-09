@@ -45,6 +45,7 @@ import {
   YjsRooms,
   serverTime,
   useUser,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { AiQueryRequest } from '@sage3/shared';
 
@@ -99,7 +100,7 @@ function AppComponent(props: App): JSX.Element {
   const { setEditor } = useStore();
 
   // Use Yjs
-  const { connection } = useYjs();
+  const { yApps } = useYjs();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -129,16 +130,12 @@ function AppComponent(props: App): JSX.Element {
     // Save the editor in the store
     setEditor(props._id, editor);
     // Connect to Yjs
-    connectToYjs(editor);
+    connectToYjs(editor, yApps!);
   };
 
-  const connectToYjs = async (editor: editor.IStandaloneCodeEditor) => {
-    if (!connection) return;
-    const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) return;
-
-    const yText = yjsConnection.doc.getText(props._id);
-    const provider = yjsConnection.provider;
+  const connectToYjs = async (editor: editor.IStandaloneCodeEditor, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
 
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();

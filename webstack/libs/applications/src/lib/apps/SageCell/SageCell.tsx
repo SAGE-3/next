@@ -76,6 +76,7 @@ import {
   useYjs,
   YjsRooms,
   serverTime,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -150,7 +151,7 @@ function AppComponent(props: App): JSX.Element {
   const toastRef = useRef(false);
 
   // YJS and Monaco
-  const { connection } = useYjs();
+  const { yApps } = useYjs();
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -677,13 +678,9 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const connectToYjs = async (editor: editor.IStandaloneCodeEditor) => {
-    if (!connection) return;
-    const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) return;
-
-    const yText = yjsConnection.doc.getText(props._id);
-    const provider = yjsConnection.provider;
+  const connectToYjs = async (editor: editor.IStandaloneCodeEditor, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
@@ -750,7 +747,7 @@ function AppComponent(props: App): JSX.Element {
     editorRef.current = editor;
 
     // Connect to Yjs
-    connectToYjs(editor);
+    connectToYjs(editor, yApps!);
 
     // set the editor options
     editor.updateOptions({

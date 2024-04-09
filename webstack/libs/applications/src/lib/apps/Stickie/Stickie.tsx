@@ -46,6 +46,7 @@ import {
   YjsRooms,
   useYjs,
   serverTime,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
@@ -90,19 +91,16 @@ function AppComponent(props: App): JSX.Element {
   const [fontSize, setFontSize] = useState(s.fontSize);
 
   // Use Yjs
-  const { connection } = useYjs();
+  const { yApps } = useYjs();
 
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  const connectToYjs = async (textArea: HTMLTextAreaElement) => {
-    if (!connection) return;
-    const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) return;
-    const yText = yjsConnection.doc.getText(props._id);
-    const provider = yjsConnection.provider;
+  const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
 
     // Ensure we are always operating on the same line endings
     new TextAreaBinding(yText, textArea);
@@ -134,10 +132,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-    if (textbox.current) {
-      connectToYjs(textbox.current);
+    if (textbox.current && yApps) {
+      connectToYjs(textbox.current, yApps);
     }
-  }, [textbox]);
+  }, [textbox, yApps]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
