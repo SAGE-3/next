@@ -58,6 +58,7 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const savedSelectedApps = useUIStore((state) => state.savedSelectedAppsIds);
   const isSavedSelected = savedSelectedApps.includes(props.app._id);
+  const viewport = useUIStore((state) => state.viewport);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -311,6 +312,19 @@ export function AppWindow(props: WindowProps) {
     };
   }, [selectedApp]);
 
+  // Caclulate if the app is within the user's Viewport
+  const outsideView = useMemo(() => {
+    const x = pos.x;
+    const y = pos.y;
+    const w = size.width;
+    const h = size.height;
+    const vx = viewport.position.x;
+    const vy = viewport.position.y;
+    const vw = viewport.size.width;
+    const vh = viewport.size.height;
+    return x + w < vx || x > vx + vw || y + h < vy || y > vy + vh;
+  }, [pos.x, pos.y, size.width, size.height, viewport.position.x, viewport.position.y, viewport.size.width, viewport.size.height]);
+
   return (
     <Rnd
       bounds="parent"
@@ -379,10 +393,17 @@ export function AppWindow(props: WindowProps) {
         height="100%"
         overflow="hidden"
         zIndex={2}
-        background={background ? backgroundColor : 'unset'}
+        background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : selected || isGrouped ? `${borderWidth}px solid ${selectColor}` : 'unset'}
+        outline={
+          isSavedSelected
+            ? `${borderWidth}px solid ${savedSelectedColor}`
+            : selected || isGrouped
+            ? `${borderWidth}px solid ${selectColor}`
+            : 'unset'
+        }
         boxShadow={isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        style={{ contentVisibility: outsideView ? 'hidden' : 'visible' }}
       >
         {props.children}
       </Box>
