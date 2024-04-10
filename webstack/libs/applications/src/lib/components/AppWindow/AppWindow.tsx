@@ -14,7 +14,7 @@ import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'reac
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
+import { ProcessingBox, BlockInteraction, WindowTitle } from './components';
 import { App, AppSchema } from '../../schema';
 
 // Consraints on the app window size
@@ -369,8 +369,8 @@ export function AppWindow(props: WindowProps) {
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
     >
-      {/* Title Above app */}
-      <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />
+      {/* Title Above app, not when dragging the board */}
+      {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
       {/* <WindowBorder
@@ -399,10 +399,10 @@ export function AppWindow(props: WindowProps) {
           isSavedSelected
             ? `${borderWidth}px solid ${savedSelectedColor}`
             : selected || isGrouped
-            ? `${borderWidth}px solid ${selectColor}`
-            : 'unset'
+              ? `${borderWidth}px solid ${selectColor}`
+              : 'unset'
         }
-        boxShadow={isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={boardDragging || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
         style={{ contentVisibility: outsideView ? 'hidden' : 'visible' }}
       >
         {props.children}
