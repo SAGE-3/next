@@ -84,6 +84,7 @@ function AppComponent(props: App): JSX.Element {
   const divRef = useRef<HTMLDivElement>(null);
   // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // Get Asset from store
   useEffect(() => {
@@ -217,12 +218,14 @@ function AppComponent(props: App): JSX.Element {
           height: props.data.size.width / aspectRatio,
           maxHeight: '100%',
           borderRadius: '0 0 6px 6px',
+          background: '#004225',
         }}
         // setting for keyboard handler
         ref={divRef}
         tabIndex={1}
       >
-        <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true}></video>
+        <video ref={videoRef} id={`${props._id}-video`} src={url} muted={true}
+          height="100%" width="100%" style={{ display: boardDragging ? 'none' : 'block' }}></video>
       </div>
     </AppWindow>
   );
