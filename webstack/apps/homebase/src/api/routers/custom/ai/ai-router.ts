@@ -17,7 +17,7 @@ import { config } from '../../../../config';
 import { AiStatusResponse, getFileType } from '@sage3/shared';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { AssetsCollection } from '../../../collections';
-import { CodeLlamaModel, OpenAiModel, YoloModel } from './models';
+import { CodeLlamaModel, OpenAiModel, YoloModel, OpenAiVision } from './models';
 
 // Request Return Type
 export type GenerateResponseType = {
@@ -36,6 +36,7 @@ export function AiRouter(): express.Router {
   const codeLlama = new CodeLlamaModel(config);
   const openai = new OpenAiModel(config);
   const yolo = new YoloModel(config);
+  const openaiVision = new OpenAiVision(config);
 
   // Check if the code models are online
   router.get('/code_status', async (req, res) => {
@@ -65,6 +66,11 @@ export function AiRouter(): express.Router {
     if (yoloHealth) {
       onlineModels.push(yolo.name);
     }
+    // Check OpenAI-Vision
+    const openAIVHealth = await openaiVision.health();
+    if (openAIVHealth) {
+      onlineModels.push(openaiVision.name);
+    }
     // Return the response
     const responseMessage = { onlineModels } as AiStatusResponse;
     res.status(200).json(responseMessage);
@@ -87,6 +93,46 @@ export function AiRouter(): express.Router {
         const response = await openai.query(input);
         // Return the response
         res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false } as GenerateResponseType;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false } as GenerateResponseType;
+      res.status(500).json(responseMessage);
+    }
+  });
+
+  // Post a describe image request
+  router.post('/image_describe', async (req, res) => {
+    // Get the request parameters
+    const { assetid, model, prompt } = req.body;
+
+    // Try/catch block to handle errors
+    try {
+      if (model === openaiVision.name) {
+        // Get the file from the assetid
+        const file = await AssetsCollection.get(assetid);
+        if (!file) {
+          // Return an error message if the request fails
+          const responseMessage = { success: false } as GenerateResponseType;
+          res.status(500).json(responseMessage);
+          return;
+        }
+        const contents = await fs.promises.readFile(file.data.path, { encoding: 'base64' });
+        // Query OpenAI-Vision with the input
+        const response = await openaiVision.describe(contents, prompt);
+        if (response.success) {
+          // Return the response
+          const responseMessage = { success: true, data: response.output } as JSONResponseType;
+          res.status(200).json(responseMessage);
+        } else {
+          // Return the response
+          const responseMessage = { success: false } as JSONResponseType;
+          res.status(500).json(responseMessage);
+        }
       } else {
         // Return an error message if the request fails
         const responseMessage = { success: false } as GenerateResponseType;
