@@ -35,6 +35,7 @@ export function ButtonPanel(props: ButtonPanelProps) {
   return (
     <Box w="100%">
       <Button
+        {...props}
         title={props.title}
         textColor={props.textColor}
         draggable={props.draggable}
