@@ -15,6 +15,7 @@ import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
 import {
+  YjsRoomConnection,
   YjsRooms,
   useAbility,
   useAnnotationStore,
@@ -61,7 +62,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
 
   // Yjs
-  const { connection } = useYjs();
+  const { yAnnotations } = useYjs();
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
@@ -133,21 +134,9 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yLines]);
 
   useEffect(() => {
-    async function connectYjs() {
-      // If the connection is not established, return
-      if (!connection) {
-        console.log('Whiteboard> Yjs Connection is not established');
-        return;
-      }
-
-      // If the connection is established, but the annotations connection is not, return
-      const yjsConnection = connection[YjsRooms.ANNOTATIONS];
-      if (!yjsConnection) {
-        console.log('Whiteboard> Failed to connect to the Yjs room for annotations');
-        return;
-      }
-      const yLines = yjsConnection.doc.getArray('lines') as Y.Array<Y.Map<any>>;
-      const ydoc = yjsConnection.doc;
+    async function connectYjs(yRoom: YjsRoomConnection) {
+      const yLines = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
+      const ydoc = yRoom.doc;
 
       setYdoc(ydoc);
       setYlines(yLines);
@@ -155,7 +144,7 @@ export function Whiteboard(props: WhiteboardProps) {
       setLines(lines);
 
       // Sync state with sage when a user connects and is the only one present
-      const users = yjsConnection.provider.awareness.getStates();
+      const users = yRoom.provider.awareness.getStates();
       const count = users.size;
       // I'm the only one here, so need to sync current ydoc with that is saved in the database
       if (count === 1) {
@@ -185,19 +174,22 @@ export function Whiteboard(props: WhiteboardProps) {
         }
       }
     }
-    async function connect() {
+    async function connect(yRoom: YjsRoomConnection) {
       // Sub to annotations for this board
       setLines([]);
       await subAnnotations(props.boardId);
-      connectYjs();
+      connectYjs(yRoom);
     }
-    connect();
+
+    if (yAnnotations) {
+      connect(yAnnotations);
+    }
 
     return () => {
       // Remove the bindings and disconnect the provider
       unsubAnnotations();
     };
-  }, [connection, props.boardId]);
+  }, [yAnnotations, props.boardId]);
 
   // On pointer move, update awareness and (if down) update the current line
   const handlePointerMove = useCallback(
