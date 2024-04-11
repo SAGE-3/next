@@ -122,7 +122,7 @@
     "y-monaco": "^0.1.4",
     "y-quill": "^0.1.5",
     "y-textarea": "^1.0.0",
-    "y-websocket": "^1.5.0",
+    "y-websocket": "^2.0.2",
     "yjs": "^13.6.14",
     "zod": "^3.22.4",
     "zustand": "^4.4.3"

@@ -14,7 +14,7 @@ import { MdFileDownload, MdOutlineLightbulb } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, AiAPI, useUser } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, AiAPI, useUser, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { AiImageQueryRequest } from '@sage3/shared';
 
@@ -58,6 +58,7 @@ function AppComponent(props: App): JSX.Element {
   const [ref, displaySize] = useMeasure<HTMLDivElement>();
   // Original image sizes
   const [origSizes, setOrigSizes] = useState({ width: 0, height: 0 });
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -110,10 +111,16 @@ function AppComponent(props: App): JSX.Element {
     const isUUID = isUUIDv4(s.assetid);
     if (isUUID) {
       // Match the window size, dpi, and scale of the board to a URL
-      const res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
+      let res;
+      if (boardDragging) {
+        // Use the smallest image for dragging
+        res = getImageUrl(url, sizes, 1);
+      } else {
+        res = getImageUrl(url, sizes, displaySize.width * window.devicePixelRatio * scale);
+      }
       if (res) setUrl(res);
     }
-  }, [url, sizes, displaySize, scale]);
+  }, [url, sizes, displaySize, scale, boardDragging]);
 
   return (
     // background false to handle alpha channel

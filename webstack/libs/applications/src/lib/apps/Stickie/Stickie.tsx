@@ -43,9 +43,9 @@ import {
   useInsightStore,
   ConfirmValueModal,
   apiUrls,
-  YjsRooms,
   useYjs,
   serverTime,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
@@ -79,30 +79,38 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-
+  const isDragging = useUIStore((state) => state.boardDragging);
+  const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
-
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
-
+  // Monitor application size
+  const [isSmall, setIsSmall] = useState(false);
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
   // Use Yjs
-  const { connection } = useYjs();
+  const { yApps } = useYjs();
 
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  const connectToYjs = async (textArea: HTMLTextAreaElement) => {
-    if (!connection) return;
-    const yjsConnection = connection[YjsRooms.APPS];
-    if (!yjsConnection) return;
-    const yText = yjsConnection.doc.getText(props._id);
-    const provider = yjsConnection.provider;
+  useEffect(() => {
+    // Apparent font size
+    const fontSize = scale * props.data.state.fontSize;
+    if (fontSize < 7) {
+      setIsSmall(true);
+    } else if (isSmall) {
+      setIsSmall(false);
+    }
+  }, [scale, props.data.state.fontSize]);
+
+  const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
 
     // Ensure we are always operating on the same line endings
     new TextAreaBinding(yText, textArea);
@@ -134,10 +142,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-    if (textbox.current) {
-      connectToYjs(textbox.current);
+    if (textbox.current && yApps) {
+      connectToYjs(textbox.current, yApps);
     }
-  }, [textbox]);
+  }, [textbox, yApps]);
 
   // Saving the text after 1sec of inactivity
   const debounceSave = debounce(1000, (val) => {
@@ -213,6 +221,7 @@ function AppComponent(props: App): JSX.Element {
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
+          display={isSmall || isDragging ? 'none' : 'block'}
           css={{
             // Balance the text, improve text layouts
             textWrap: 'pretty', // 'balance',
