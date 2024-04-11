@@ -26,6 +26,8 @@ import {
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
 import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb } from 'react-icons/md';
+import { GoFileCode } from 'react-icons/go';
+
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 
@@ -170,7 +172,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={GoFileCode}>
       <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
         <Editor
           // value={spec}

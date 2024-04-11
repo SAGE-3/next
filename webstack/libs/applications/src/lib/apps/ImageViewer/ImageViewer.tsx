@@ -10,15 +10,26 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Image, Button, ButtonGroup, Tooltip, Box, Menu, MenuButton, MenuItem, MenuList, useToast } from '@chakra-ui/react';
 // Icons
-import { MdFileDownload, MdOutlineLightbulb } from 'react-icons/md';
+import { MdFileDownload, MdImage, MdOutlineLightbulb } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useInsightStore, AiAPI, useUIStore } from '@sage3/frontend';
+import {
+  useThrottleScale,
+  useAssetStore,
+  useAppStore,
+  useMeasure,
+  downloadFile,
+  isUUIDv4,
+  apiUrls,
+  useInsightStore,
+  AiAPI,
+  useUIStore,
+} from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { AiImageQueryRequest } from '@sage3/shared';
 
-import { initialValues } from '../../initialValues'
+import { initialValues } from '../../initialValues';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { App } from '../../schema';
@@ -124,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     // background false to handle alpha channel
-    <AppWindow app={props} lockAspectRatio={aspectRatio} background={false}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio} background={false} hideBackgroundIcon={MdImage}>
       <div
         ref={ref}
         style={{
@@ -144,28 +155,30 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="0 0 6px 6px"
           />
 
-          {s.boxes && Array.isArray(s.boxes) ? s.boxes.map((box, idx) => {
-            // TODO Need to handle text overflow for labels
-            return (
-              <Box
-                key={"label" + idx}
-                position="absolute"
-                left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
-                top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
-                width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
-                height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
-                border="2px solid red"
-                style={{ display: s.annotations === true ? 'block' : 'none' }}
-              >
-                <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                  {box.label || 'Unknown'}
-                </Box>
-              </Box>
-            );
-          }) : null}
+          {s.boxes && Array.isArray(s.boxes)
+            ? s.boxes.map((box, idx) => {
+                // TODO Need to handle text overflow for labels
+                return (
+                  <Box
+                    key={'label' + idx}
+                    position="absolute"
+                    left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                    top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                    width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                    height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
+                    border="2px solid red"
+                    style={{ display: s.annotations === true ? 'block' : 'none' }}
+                  >
+                    <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                      {box.label || 'Unknown'}
+                    </Box>
+                  </Box>
+                );
+              })
+            : null}
         </>
-      </div >
-    </AppWindow >
+      </div>
+    </AppWindow>
   );
 }
 
@@ -201,7 +214,6 @@ function ToolbarComponent(props: App): JSX.Element {
       else setSelectedModel('');
     }
     fetchStatus();
-
   }, []);
 
   function handleModelChange(model: string) {
@@ -245,16 +257,19 @@ function ToolbarComponent(props: App): JSX.Element {
         // Show success
         toast.closeAll();
         toast({
-          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          title: (
+            <Box fontSize="sm" fontWeight="bold">
+              AI Model: {selectedModel}
+            </Box>
+          ),
           duration: 10000,
           isClosable: true,
           position: 'bottom-right',
           icon: <MdOutlineLightbulb size="24px" />,
           status: 'warning',
-          description: <Box fontSize='sm'>Image Generated</Box>,
+          description: <Box fontSize="sm">Image Generated</Box>,
         });
       }
-
     }
   }
 
@@ -271,19 +286,23 @@ function ToolbarComponent(props: App): JSX.Element {
       // Get the labels from the model
       const data = result.data.detect_objects as YoloObject[];
       const temps: string[] = [];
-      const boxes: { label: string, xmin: number, ymin: number, xmax: number, ymax: number }[] = [];
+      const boxes: { label: string; xmin: number; ymin: number; xmax: number; ymax: number }[] = [];
 
       if (data.length === 0) {
         // Show result
         toast.closeAll();
         toast({
-          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          title: (
+            <Box fontSize="sm" fontWeight="bold">
+              AI Model: {selectedModel}
+            </Box>
+          ),
           duration: 10000,
           isClosable: true,
           position: 'bottom-right',
           icon: <MdOutlineLightbulb size="24px" />,
           status: 'warning',
-          description: <Box fontSize='sm'>No labels generated</Box>,
+          description: <Box fontSize="sm">No labels generated</Box>,
         });
         return;
       }
@@ -313,18 +332,21 @@ function ToolbarComponent(props: App): JSX.Element {
         // Show success
         toast.closeAll();
         toast({
-          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          title: (
+            <Box fontSize="sm" fontWeight="bold">
+              AI Model: {selectedModel}
+            </Box>
+          ),
           duration: 10000,
           isClosable: true,
           position: 'bottom-right',
           icon: <MdOutlineLightbulb size="24px" />,
           status: 'warning',
-          description: <Box fontSize='sm'>Labels generated: {counted.join(', ')}</Box>,
+          description: <Box fontSize="sm">Labels generated: {counted.join(', ')}</Box>,
         });
       }
     }
   }
-
 
   return (
     <>
@@ -379,7 +401,6 @@ function ToolbarComponent(props: App): JSX.Element {
         </Menu>
       </ButtonGroup>
 
-
       {/* Smart Action */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
         <Menu placement="top-start">
@@ -398,7 +419,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
-
     </>
   );
 }
@@ -447,18 +467,18 @@ function wordCount(words: string[]): string[] {
 
   // Convert the wordCounts object to an array of strings with count values separated by a colon
   const result = Object.keys(wordCounts).map(function (word: string) {
-    return (wordCounts[word] > 1 ? word + ':' + wordCounts[word] : word);
+    return wordCounts[word] > 1 ? word + ':' + wordCounts[word] : word;
   });
 
   return result;
 }
 
-
-
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

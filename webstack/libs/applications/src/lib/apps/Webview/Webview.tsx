@@ -22,6 +22,7 @@ import {
   MdOpenInNew,
   MdCopyAll,
   MdFileUpload,
+  MdWeb,
 } from 'react-icons/md';
 import { FaEyeSlash } from 'react-icons/fa';
 
@@ -318,7 +319,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdWeb}>
       {isElectron() ? (
         <div>
           {/* button */}

@@ -34,7 +34,7 @@ import {
   Switch,
 } from '@chakra-ui/react';
 
-import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
+import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-icons/md';
 import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
@@ -294,7 +294,7 @@ function AppComponent(props: App): JSX.Element {
   const duplicateHoverMenuItem = useColorModeValue('rgb(178, 216, 243)', 'cyan.600');
 
   return (
-    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
+    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()} hideBackgroundIcon={MdSensors}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         <Box position="absolute" top="50%" right="1rem" zIndex={999}>
           <Button
