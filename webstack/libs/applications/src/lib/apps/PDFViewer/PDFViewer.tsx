@@ -23,8 +23,8 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
-  MdPictureAsPdf,
 } from 'react-icons/md';
+import { BsFiletypePdf } from 'react-icons/bs';
 
 // Utility functions from SAGE3
 import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore } from '@sage3/frontend';
@@ -260,7 +260,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={MdPictureAsPdf}>
+    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={BsFiletypePdf}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"

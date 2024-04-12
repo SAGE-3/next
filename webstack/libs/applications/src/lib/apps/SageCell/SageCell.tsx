@@ -38,8 +38,10 @@ import {
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
+
+// Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
-import { AiOutlineCode } from 'react-icons/ai';
+import { FaPython } from 'react-icons/fa';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -1069,7 +1071,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   return (
-    <AppWindow app={props} hideBackgroundIcon={AiOutlineCode}>
+    <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
         <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
