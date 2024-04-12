@@ -163,7 +163,6 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-
     if (!user) return;
 
     if (!canDrop) {
@@ -355,17 +354,23 @@ export function Background(props: BackgroundProps) {
     { dependencies: [selectedAppId] }
   );
 
+  // Throttle stickie hotkey event
+  const throttleStickieCreation = throttle(1000, (x: number, y: number) => {
+    if (!user) return;
+    createApp(
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
+    );
+  });
+  const throttleStickieCreationRef = useCallback(throttleStickieCreation, [user]);
+
   // Stickies Shortcut
   useHotkeys(
     'shift+s',
     (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
+      event.stopPropagation();
       const x = boardCursor.x;
       const y = boardCursor.y;
-      createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
-      );
-
+      throttleStickieCreationRef(x, y);
       // Returning false stops the event and prevents default browser events
       return false;
     },
@@ -411,16 +416,7 @@ export function Background(props: BackgroundProps) {
       h = 720;
     }
     createApp(
-      setupApp(
-        'Webview',
-        'Webview',
-        dropPosition.x,
-        dropPosition.y,
-        props.roomId,
-        props.boardId,
-        { w: w, h: h },
-        { webviewurl: final_url }
-      )
+      setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
     );
     popOnClose();
   };
@@ -502,8 +498,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
@@ -616,12 +613,12 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
  * @param {string} file
  * @returns {Promise<{w: number, h: number}>}
  */
-function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number; h: number }> {
   return new Promise(function (resolved, rejected) {
-    var i = new Image()
+    var i = new Image();
     i.onload = function () {
-      resolved({ w: i.width, h: i.height })
+      resolved({ w: i.width, h: i.height });
     };
-    i.src = file
-  })
+    i.src = file;
+  });
 }

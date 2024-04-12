@@ -7,15 +7,17 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowBorder, WindowTitle } from './components';
+import { ProcessingBox, BlockInteraction, WindowTitle } from './components';
 import { App, AppSchema } from '../../schema';
+import { MdWindow } from 'react-icons/md';
+import { IconType } from 'react-icons/lib';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -32,6 +34,10 @@ type WindowProps = {
   processing?: boolean;
   disableResize?: boolean;
   background?: boolean;
+  // Hide App when outside of the viewport or when dragging the board
+  hideBackgroundColor?: string;
+  hideBordercolor?: string;
+  hideBackgroundIcon?: IconType;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -58,6 +64,7 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const savedSelectedApps = useUIStore((state) => state.savedSelectedAppsIds);
   const isSavedSelected = savedSelectedApps.includes(props.app._id);
+  const viewport = useUIStore((state) => state.viewport);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -311,6 +318,22 @@ export function AppWindow(props: WindowProps) {
     };
   }, [selectedApp]);
 
+  // Caclulate if the app is within the user's Viewport
+  const outsideView = useMemo(() => {
+    const x = pos.x;
+    const y = pos.y;
+    const w = size.width;
+    const h = size.height;
+    const vx = viewport.position.x;
+    const vy = viewport.position.y;
+    const vw = viewport.size.width;
+    const vh = viewport.size.height;
+    return x + w < vx || x > vx + vw || y + h < vy || y > vy + vh;
+  }, [pos.x, pos.y, size.width, size.height, viewport.position.x, viewport.position.y, viewport.size.width, viewport.size.height]);
+
+  const hideApp = outsideView || boardDragging;
+  const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
+
   return (
     <Rnd
       bounds="parent"
@@ -355,8 +378,8 @@ export function AppWindow(props: WindowProps) {
       resizeGrid={[gridSize, gridSize]}
       dragGrid={[gridSize, gridSize]}
     >
-      {/* Title Above app */}
-      <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />
+      {/* Title Above app, not when dragging the board */}
+      {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
       {/* <WindowBorder
@@ -379,10 +402,17 @@ export function AppWindow(props: WindowProps) {
         height="100%"
         overflow="hidden"
         zIndex={2}
-        background={background ? backgroundColor : 'unset'}
+        background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : selected || isGrouped ? `${borderWidth}px solid ${selectColor}` : 'unset'}
-        boxShadow={isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        outline={
+          isSavedSelected
+            ? `${borderWidth}px solid ${savedSelectedColor}`
+            : selected || isGrouped
+            ? `${borderWidth}px solid ${selectColor}`
+            : 'unset'
+        }
+        boxShadow={boardDragging || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {props.children}
       </Box>
@@ -409,6 +439,29 @@ export function AppWindow(props: WindowProps) {
       {/* Processing Box */}
       {props.processing && (
         <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
+      )}
+
+      {/* Icon when app is dragging */}
+      {hideApp && (
+        <Box
+          position="absolute"
+          left="0px"
+          top="0px"
+          width={size.width}
+          height={size.height}
+          pointerEvents={'none'}
+          userSelect={'none'}
+          zIndex={999999999}
+          justifyContent={'center'}
+          alignItems={'center'}
+          display={'flex'}
+          backgroundColor={hideBackgroundColorHex}
+          fontSize={Math.min(size.width, size.height) / 2}
+          borderRadius={innerBorderRadius}
+          outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
+        >
+          {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
+        </Box>
       )}
     </Rnd>
   );
