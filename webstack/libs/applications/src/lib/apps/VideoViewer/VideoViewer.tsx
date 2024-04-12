@@ -42,6 +42,7 @@ import {
   MdVolumeUp,
   MdScreenshotMonitor,
   MdInfoOutline,
+  MdMovie,
 } from 'react-icons/md';
 // Time functions
 import { format as formatTime } from 'date-fns';
@@ -210,7 +211,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props} lockAspectRatio={aspectRatio}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
       <div
         style={{
           position: 'relative',
@@ -224,8 +225,15 @@ function AppComponent(props: App): JSX.Element {
         ref={divRef}
         tabIndex={1}
       >
-        <video ref={videoRef} id={`${props._id}-video`} src={url} muted={true}
-          height="100%" width="100%" style={{ display: boardDragging ? 'none' : 'block' }}></video>
+        <video
+          ref={videoRef}
+          id={`${props._id}-video`}
+          src={url}
+          muted={true}
+          height="100%"
+          width="100%"
+          style={{ display: boardDragging ? 'none' : 'block' }}
+        ></video>
       </div>
     </AppWindow>
   );
