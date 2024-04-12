@@ -303,8 +303,14 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (videoRef) {
-      const paused = !s.paused;
-      const time = videoRef.currentTime;
+      const v = videoRef;
+      let paused = !s.paused;
+      let time = v.currentTime;
+      // Check if time of video is at the end
+      if (time === videoRef.duration) {
+        time = 0.0;
+        paused = false;
+      }
       updateState(props._id, { currentTime: time, paused: paused });
     }
   };
@@ -571,6 +577,10 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     props.apps.forEach((app) => {
       const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
       if (v) {
+        // Check if time of video is at the end
+        if (v.currentTime === v.duration) {
+          v.currentTime = 0.0;
+        }
         v.play();
         ps.push({ id: app._id, updates: { paused: false, currentTime: v.currentTime } });
       }
