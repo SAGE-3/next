@@ -19,6 +19,8 @@ import { state as AppState } from './index';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 
+import { BsFiletypeCsv } from 'react-icons/bs';
+
 // Styling
 import './styling.css';
 
@@ -89,41 +91,49 @@ function AppComponent(props: App): JSX.Element {
   // }, [visibleRange, table]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={BsFiletypeCsv}>
       <TableVirtuoso
         className={theme}
         style={{
           height: '100%',
           width: '100%',
           borderCollapse: 'collapse',
-          background: bg
+          background: bg,
         }}
         ref={table}
         data={data}
         totalCount={data.length}
         // Headers of the table
         fixedHeaderContent={() => {
-          return (<>
-            <tr style={{ background: bg, fontSize: "1.2em" }}>
-              <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}> {file?.data.originalfilename}</th>
-            </tr >
-            <tr style={{ background: bg }}>
-              <th style={{ textAlign: 'center' }}>#</th>
-              {headers.map((h) => (
-                <th key={h} style={{ width: tableWidth + '%', textAlign: 'center' }}>
-                  {h}
+          return (
+            <>
+              <tr style={{ background: bg, fontSize: '1.2em' }}>
+                <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}>
+                  {' '}
+                  {file?.data.originalfilename}
                 </th>
-              ))}
-            </tr>
-          </>
+              </tr>
+              <tr style={{ background: bg }}>
+                <th style={{ textAlign: 'center' }}>#</th>
+                {headers.map((h) => (
+                  <th key={h} style={{ width: tableWidth + '%', textAlign: 'center' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </>
           );
         }}
         fixedFooterContent={() => {
-          return (<>
-            <tr style={{ background: bg, fontSize: "0.8em" }}>
-              <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}> {data.length} rows  - {file?.data.size} bytes</th>
-            </tr >
-          </>
+          return (
+            <>
+              <tr style={{ background: bg, fontSize: '0.8em' }}>
+                <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}>
+                  {' '}
+                  {data.length} rows - {file?.data.size} bytes
+                </th>
+              </tr>
+            </>
           );
         }}
         // rangeChanged={setVisibleRange}
@@ -139,7 +149,7 @@ function AppComponent(props: App): JSX.Element {
           </>
         )}
       />
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -158,14 +168,15 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
       <Tooltip placement="top-start" hasArrow={true} label={'Download CSV'} openDelay={400}>
-        <Button onClick={() => {
-          if (file) {
-            const url = file?.data.file;
-            const filename = file?.data.originalfilename;
-            const dl = apiUrls.assets.getAssetById(url);
-            downloadFile(dl, filename);
-          }
-        }}
+        <Button
+          onClick={() => {
+            if (file) {
+              const url = file?.data.file;
+              const filename = file?.data.originalfilename;
+              const dl = apiUrls.assets.getAssetById(url);
+              downloadFile(dl, filename);
+            }
+          }}
         >
           <MdFileDownload />
         </Button>
@@ -178,7 +189,9 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 // Convert the csv to an array using the csv-parse library

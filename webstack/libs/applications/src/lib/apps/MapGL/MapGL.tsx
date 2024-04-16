@@ -435,7 +435,7 @@ function AppComponent(props: App): JSX.Element {
   }, [props.data.size.width, props.data.size.height, map]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdMap}>
       {/* One box for map, one box for container */}
       <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}>
         <Box id={'map' + props._id} w="100%" h="100%" />
