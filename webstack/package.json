@@ -65,7 +65,7 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.2",
-    "maplibre-gl": "^3.5.0",
+    "maplibre-gl": "^4.1.2",
     "markdown-to-jsx": "^7.4.7",
     "mime": "^3.0.0",
     "monaco-editor": "^0.43.0",
