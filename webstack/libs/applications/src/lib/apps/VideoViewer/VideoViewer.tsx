@@ -54,6 +54,7 @@ import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { initialValues } from '../../initialValues';
+import { throttle } from 'throttle-debounce';
 
 /**
  * Return a string for a duration
@@ -304,7 +305,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const handlePlay = () => {
     if (videoRef) {
       const v = videoRef;
-      let paused = !s.paused;
+      let paused = !videoRef.paused;
       let time = v.currentTime;
       // Check if time of video is at the end
       if (time === videoRef.duration) {
@@ -390,18 +391,20 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
-  // Handle user moving slider
-  const seekStartHandle = (value: number) => {
-    if (videoRef) {
-      videoRef.currentTime = value;
-      setSliderTime(value);
-    }
-  };
+  // When the user is seeking, throttle the updates
+  const throttleSeek = throttle(1000, (value) => {
+    updateState(props._id, { currentTime: value });
+  });
+
+  // Keep a copy of the function
+  const throttleSeekFunc = useRef(throttleSeek);
+
   // Handle user moving slider
   const seekChangeHandle = (value: number) => {
     if (videoRef) {
       videoRef.currentTime = value;
       setSliderTime(value);
+      throttleSeekFunc.current(value);
     }
   };
 
@@ -464,7 +467,6 @@ function ToolbarComponent(props: App): JSX.Element {
         width="150px"
         mx={4}
         onChange={seekChangeHandle}
-        onChangeStart={seekStartHandle}
         onChangeEnd={seekEndHandle}
         focusThumbOnChange={false}
       >
