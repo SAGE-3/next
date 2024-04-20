@@ -14,7 +14,7 @@ import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'reac
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowTitle } from './components';
+import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 import { App, AppSchema } from '../../schema';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
@@ -382,7 +382,7 @@ export function AppWindow(props: WindowProps) {
       {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
-      {/* <WindowBorder
+      <WindowBorder
         size={size}
         selected={selected}
         isGrouped={isGrouped}
@@ -393,7 +393,7 @@ export function AppWindow(props: WindowProps) {
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
-      /> */}
+      />
 
       {/* The Application */}
       <Box
@@ -404,14 +404,7 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        outline={
-          isSavedSelected
-            ? `${borderWidth}px solid ${savedSelectedColor}`
-            : selected || isGrouped
-            ? `${borderWidth}px solid ${selectColor}`
-            : 'unset'
-        }
-        boxShadow={boardDragging || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {props.children}

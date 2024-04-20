@@ -29,7 +29,6 @@ export function WindowBorder(props: WindowBorderProps) {
   const size = props.size;
   const selected = props.selected;
   const isGrouped = props.isGrouped;
-  const isSavedSelected = props.isSavedSelected;
   const pinned = props.pinned;
   const borderWidth = pinned ? 0 : props.borderWidth;
   const borderColor = props.borderColor;
@@ -37,7 +36,6 @@ export function WindowBorder(props: WindowBorderProps) {
   const borderRadius = props.borderRadius;
   const dragging = props.dragging;
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
-  const savedSelectedColor = useHexColor('red');
 
   return (
     <Box
@@ -50,7 +48,6 @@ export function WindowBorder(props: WindowBorderProps) {
       opacity={isGrouped || dragging ? 0.6 : 1}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
       background={selected || isGrouped ? selectColor : borderColor}
-      outline={isSavedSelected ? `${borderWidth}px solid ${savedSelectedColor}` : 'none'}
       boxShadow={pinned ? '' : `4px 4px 12px 0px ${shadowColor}`}
       pointerEvents={'none'}
     ></Box>
