@@ -83,11 +83,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               uploadFiles(Array.from(event.clipboardData.files), xDrop, yDrop, props.roomId, props.boardId);
             } else {
               toast({
-                title: "Upload in progress - Please wait",
-                status: "warning",
+                title: 'Upload in progress - Please wait',
+                status: 'warning',
                 duration: 4000,
                 isClosable: true,
-              })
+              });
             }
           } catch (error) {
             console.log('Error> uploading files', error);
