@@ -23,7 +23,7 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const { setBoardPosition, setScale } = useUIStore((state) => state);
+  const { setBoardPosition, setScale, boardPosition } = useUIStore((state) => state);
 
   // Presences
   const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
@@ -64,6 +64,26 @@ export function PresenceFollow() {
     // Check for my presence
     const myPresence = presences.find((el) => el._id === user?._id);
     if (!myPresence) return;
+
+    console.log('myPresence', myPresence.data.viewport.position.x,
+      myPresence.data.viewport.position.y);
+    if (true) {
+      const vx = -myPresence.data.viewport.position.x;
+      const vy = -myPresence.data.viewport.position.y;
+      const vw = -myPresence.data.viewport.size.width;
+      const vh = -myPresence.data.viewport.size.height;
+      const vcx = vx + vw / 2;
+      const vcy = vy + vh / 2;
+      const ww = window.innerWidth;
+      const wh = window.innerHeight;
+      const s = Math.min(ww / -vw, wh / -vh);
+      const cx = vcx + ww / s / 2;
+      const cy = vcy + wh / s / 2;
+      if (cx !== boardPosition.x || cy !== boardPosition.y) {
+        console.log('I moved')
+        setBoardPosition({ x: cx, y: cy });
+      }
+    }
 
     // Check if I am following someone
     const target = myPresence.data.following;
