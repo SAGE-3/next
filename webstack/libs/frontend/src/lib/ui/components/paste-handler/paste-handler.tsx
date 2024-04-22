@@ -73,6 +73,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       const yDrop = cursorPosition.y;
       setDropCursor({ x: mousePosition.x, y: mousePosition.y });
 
+      // Get the pasted text
+      // Get content of clipboard
+      const pastedText = event.clipboardData?.getData('Text');
+
       // Upload files from clipboard
       if (event.clipboardData?.files) {
         if (event.clipboardData.files.length > 0) {
@@ -92,66 +96,60 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           } catch (error) {
             console.log('Error> uploading files', error);
           }
-        }
-      }
-
-      // Get content of clipboard
-      const pastedText = event.clipboardData?.getData('Text');
-
-      // if there's content
-      if (pastedText) {
-        // check and validate the URL
-        const isValid = isValidURL(pastedText.trim());
-        // If the start of pasted text is http, can assume is a url
-        if (isValid) {
-          setValidURL(isValid);
-          popOnOpen();
-        } else if (pastedText.startsWith('sage3://')) {
-          // Create a board link app
-          createApp({
-            title: 'BoardLink',
-            roomId: props.roomId,
-            boardId: props.boardId,
-            position: { x: xDrop, y: yDrop, z: 0 },
-            size: { width: 400, height: 375, depth: 0 },
-            rotation: { x: 0, y: 0, z: 0 },
-            type: 'BoardLink',
-            state: { ...initialValues['BoardLink'], url: pastedText.trim() },
-            raised: true,
-            dragging: false,
-            pinned: false,
-          });
-        } else {
-          // Create a new stickie
-          const lang = stringContainsCode(pastedText);
-          if (lang === 'plaintext') {
+        } else if (pastedText) {
+          // check and validate the URL
+          const isValid = isValidURL(pastedText.trim());
+          // If the start of pasted text is http, can assume is a url
+          if (isValid) {
+            setValidURL(isValid);
+            popOnOpen();
+          } else if (pastedText.startsWith('sage3://')) {
+            // Create a board link app
             createApp({
-              title: user.data.name,
+              title: 'BoardLink',
               roomId: props.roomId,
               boardId: props.boardId,
               position: { x: xDrop, y: yDrop, z: 0 },
-              size: { width: 400, height: 400, depth: 0 },
+              size: { width: 400, height: 375, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'Stickie',
-              state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+              type: 'BoardLink',
+              state: { ...initialValues['BoardLink'], url: pastedText.trim() },
               raised: true,
               dragging: false,
               pinned: false,
             });
           } else {
-            createApp({
-              title: user.data.name,
-              roomId: props.roomId,
-              boardId: props.boardId,
-              position: { x: xDrop, y: yDrop, z: 0 },
-              size: { width: 850, height: 400, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: 'CodeEditor',
-              state: { ...initialValues['CodeEditor'], content: pastedText, language: lang, filename: 'pasted-code' },
-              raised: true,
-              dragging: false,
-              pinned: false,
-            });
+            // Create a new stickie
+            const lang = stringContainsCode(pastedText);
+            if (lang === 'plaintext') {
+              createApp({
+                title: user.data.name,
+                roomId: props.roomId,
+                boardId: props.boardId,
+                position: { x: xDrop, y: yDrop, z: 0 },
+                size: { width: 400, height: 400, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'Stickie',
+                state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+                raised: true,
+                dragging: false,
+                pinned: false,
+              });
+            } else {
+              createApp({
+                title: user.data.name,
+                roomId: props.roomId,
+                boardId: props.boardId,
+                position: { x: xDrop, y: yDrop, z: 0 },
+                size: { width: 850, height: 400, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: 'CodeEditor',
+                state: { ...initialValues['CodeEditor'], content: pastedText, language: lang, filename: 'pasted-code' },
+                raised: true,
+                dragging: false,
+                pinned: false,
+              });
+            }
           }
         }
       }
