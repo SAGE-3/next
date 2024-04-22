@@ -93,7 +93,6 @@ export function AppWindow(props: WindowProps) {
   const borderColor = useHexColor(bc);
   const selectColor = useHexColor('teal');
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
-  const savedSelectedColor = useHexColor('red');
 
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
