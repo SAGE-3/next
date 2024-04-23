@@ -27,9 +27,8 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
+import vegaEmbed from 'vega-embed';
 
-// Server Sent Event library
-import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Date management
 import { formatDistance } from 'date-fns';
 import { format } from 'date-fns/format';
@@ -44,7 +43,23 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
-import { VegaLite } from 'react-vega';
+
+import Dictation from './Dictation';
+
+function convertObjectToArray(dataObject: any) {
+  const keys = Object.keys(dataObject);
+  const length = dataObject[keys[0]].length;
+  const dataArray = [];
+
+  for (let i = 0; i < length; i++) {
+    const record: any = {};
+    keys.forEach((key) => {
+      record[key] = dataObject[key][i];
+    });
+    dataArray.push(record);
+  }
+  return dataArray;
+}
 
 function getCode(jsonInput: string) {
   // Remove the ```json and ``` characters
@@ -116,7 +131,6 @@ function AppComponent(props: App): JSX.Element {
   const [data, setData] = useState({});
 
   const [openai, setOpenai] = useState<OpenAI>();
-  console.log(config.openai.apiKey);
   // Input text for query
   const [input, setInput] = useState<string>('');
   const [streamText, setStreamText] = useState<string>('');
@@ -133,6 +147,207 @@ function AppComponent(props: App): JSX.Element {
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
 
+  const [vegaLiteSpecs, setVegaLiteSpecs] = useState<any>([
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 4 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 11 },
+          { a: 'E', b: 23 },
+          { a: 'F', b: 12 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 23 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 28 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 91 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 53 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 52 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 65 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 44 },
+          { a: 'D', b: 65 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 32 },
+          { a: 'G', b: 44 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 77 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 4 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 11 },
+          { a: 'E', b: 23 },
+          { a: 'F', b: 12 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 23 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 28 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 91 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 53 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 52 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 65 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 44 },
+          { a: 'D', b: 65 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 32 },
+          { a: 'G', b: 44 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 77 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 4 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 11 },
+          { a: 'E', b: 23 },
+          { a: 'F', b: 12 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 23 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 28 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 43 },
+          { a: 'D', b: 91 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 53 },
+          { a: 'G', b: 19 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 52 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+    {
+      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+      description: 'A simple bar chart with embedded data.',
+      data: {
+        values: [
+          { a: 'A', b: 65 },
+          { a: 'B', b: 55 },
+          { a: 'C', b: 44 },
+          { a: 'D', b: 65 },
+          { a: 'E', b: 81 },
+          { a: 'F', b: 32 },
+          { a: 'G', b: 44 },
+          { a: 'H', b: 87 },
+          { a: 'I', b: 77 },
+        ],
+      },
+      mark: 'bar',
+      encoding: {
+        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
+        y: { field: 'b', type: 'quantitative' },
+      },
+    },
+  ]);
+
   const [spec, setSpec] = useState<any>(null);
 
   const createApp = useAppStore((state) => state.create);
@@ -142,6 +357,29 @@ function AppComponent(props: App): JSX.Element {
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      let tmpStationMetadata: any = [];
+      let url = '';
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=017HI&showemptystations=1&start=202401181356&end=202401191356&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      try {
+        const response = await fetch(url);
+        const sensor = await response.json();
+
+        if (sensor) {
+          const sensorData = sensor['STATION'];
+          tmpStationMetadata = sensorData;
+        }
+        const tmpData = convertObjectToArray(tmpStationMetadata[0].OBSERVATIONS);
+        setData(tmpData);
+      } catch (error) {
+        console.log('Error in 1');
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Input text for query
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,11 +391,12 @@ function AppComponent(props: App): JSX.Element {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
       e.preventDefault();
-      send();
+      send(input);
     }
   };
-  const send = async () => {
-    await newMessage(input.trim());
+  const send = async (text: string) => {
+    console.log('I am sending');
+    await newMessage(text.trim());
     setInput('');
   };
 
@@ -236,10 +475,12 @@ function AppComponent(props: App): JSX.Element {
       try {
         const codeFromText = getCode(tempText);
 
-        // const code = JSON.parse(codeFromText);
-        // code.data.values = data;
+        const code = JSON.parse(codeFromText);
+        code.data.values = data;
         tempText = 'I have generated the chart for you.';
         // setSpec(code);
+        console.log(code);
+        setVegaLiteSpecs((prev: any) => [...prev, code]);
 
         await createApp({
           title: 'VegaLiteViewer',
@@ -400,279 +641,348 @@ function AppComponent(props: App): JSX.Element {
     }
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
+
+  useEffect(() => {
+    for (let i = 0; i < vegaLiteSpecs.length; i++) {
+      console.log(vegaLiteSpecs[i]);
+      // Render Vega-Lite
+      // Put actions to false to hide the menu, but would be nice to add the controlbar
+      vegaEmbed(`#vis${props._id + i}`, vegaLiteSpecs[i] as any, { actions: false });
+    }
+  }, [vegaLiteSpecs]);
+
+  const generateChart = async (vegaLiteSpec: any) => {
+    await createApp({
+      title: 'VegaLiteViewer',
+      roomId: props.data.roomId!,
+      boardId: props.data.boardId!,
+      //TODO get middle of the screen space
+      position: {
+        x: props.data.position.x + props.data.size.width,
+        y: props.data.position.y,
+        z: 0,
+      },
+      size: {
+        width: props.data.size.width,
+        height: props.data.size.height,
+        depth: 0,
+      },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'VegaLiteViewer',
+      state: {
+        spec: JSON.stringify(vegaLiteSpec),
+        error: false,
+        isHCDPChart: false,
+      },
+
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
   return (
     <AppWindow app={props}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
-        {/* Display Messages */}
-        <Box
-          flex={1}
-          bg={bgColor}
-          borderRadius={'md'}
-          overflowY="scroll"
-          ref={chatBox}
-          css={{
-            '&::-webkit-scrollbar': {
-              width: '12px',
-            },
-            '&::-webkit-scrollbar-track': {
-              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: `${scrollColor}`,
-              borderRadius: '6px',
-              outline: `3px solid ${bgColor}`,
-            },
-          }}
-        >
-          {sortedMessages.map((message, index) => {
-            const isMe = user?._id == message.userId;
-            const time = getDateString(message.creationDate);
-            const previousTime = message.creationDate;
-            const now = Date.now();
-            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-            const last = index === sortedMessages.length - 1;
+      <>
+        <Box>
+          <Dictation send={send} />
+          <HStack overflowX="auto">
+            {vegaLiteSpecs.map((vegaLiteSpec: any, index: number) => {
+              return (
+                <Box
+                  onClick={() => generateChart(vegaLiteSpec)}
+                  cursor={'pointer'}
+                  zIndex={0}
+                  backgroundColor="#ffffff"
+                  p="1rem"
+                  border="2px solid black"
+                  rounded="lg"
+                  m="1rem"
+                >
+                  <div style={{ zIndex: -1, width: vegaLiteSpec.width, height: vegaLiteSpec.height }} id={`vis${props._id + index}`}></div>
+                </Box>
+              );
+            })}
+          </HStack>
+        </Box>
+        <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="65%" w="100%">
+          {/* Display Messages */}
+          <Box
+            flex={1}
+            bg={bgColor}
+            borderRadius={'md'}
+            overflowY="scroll"
+            ref={chatBox}
+            css={{
+              '&::-webkit-scrollbar': {
+                width: '12px',
+              },
+              '&::-webkit-scrollbar-track': {
+                '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: `${scrollColor}`,
+                borderRadius: '6px',
+                outline: `3px solid ${bgColor}`,
+              },
+            }}
+          >
+            {sortedMessages.map((message, index) => {
+              const isMe = user?._id == message.userId;
+              const time = getDateString(message.creationDate);
+              const previousTime = message.creationDate;
+              const now = Date.now();
+              const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
+              const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
+              const last = index === sortedMessages.length - 1;
 
-            return (
-              <Fragment key={index}>
-                {/* Start of User Messages */}
-                {message.query.length ? (
-                  <Box position="relative" my={1}>
-                    {isMe ? (
-                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName}
-                        </Text>
-                      </Box>
-                    )}
-
-                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={time}
-                        openDelay={400}
-                      >
-                        <Box
-                          color="white"
-                          rounded={'md'}
-                          boxShadow="md"
-                          fontFamily="arial"
-                          textAlign={isMe ? 'right' : 'left'}
-                          bg={isMe ? myColor : otherUserColor}
-                          p={1}
-                          m={3}
-                          maxWidth="70%"
-                          userSelect={'none'}
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.query);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                          draggable={true}
-                          // Store the query into the drag/drop events to create stickies
-                          onDragStart={(e) => {
-                            e.dataTransfer.clearData();
-                            // Will create a new sticky
-                            e.dataTransfer.setData('app', 'Stickie');
-                            // Get the color of the user
-                            const colorMessage = isMe
-                              ? user?.data.color
-                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                            // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData(
-                              'app_state',
-                              JSON.stringify({
-                                color: colorMessage,
-                                text: message.query,
-                                fontSize: 24,
-                              })
-                            );
-                          }}
-                        >
-                          {message.query}
+              return (
+                <Fragment key={index}>
+                  {/* Start of User Messages */}
+                  {message.query.length ? (
+                    <Box position="relative" my={1}>
+                      {isMe ? (
+                        <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
+                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                            Me
+                          </Text>
                         </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
+                      ) : (
+                        <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
+                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                            {message.userName}
+                          </Text>
+                        </Box>
+                      )}
 
-                {/* Start of Geppetto Messages */}
-                {message.response.length ? (
-                  <Box position="relative" my={1} maxWidth={'70%'}>
-                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName}
-                      </Text>
-                    </Box>
-
-                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={time}
-                        openDelay={400}
-                      >
-                        <Box
-                          boxShadow="md"
-                          color="white"
-                          rounded={'md'}
-                          textAlign={'left'}
-                          bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
-                          p={1}
-                          m={3}
-                          fontFamily="arial"
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.response);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
+                      <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
+                        <Tooltip
+                          whiteSpace={'nowrap'}
+                          textOverflow="ellipsis"
+                          fontSize={'xs'}
+                          placement="top"
+                          hasArrow={true}
+                          label={time}
+                          openDelay={400}
                         >
                           <Box
-                            pl={3}
+                            color="white"
+                            rounded={'md'}
+                            boxShadow="md"
+                            fontFamily="arial"
+                            textAlign={isMe ? 'right' : 'left'}
+                            bg={isMe ? myColor : otherUserColor}
+                            p={1}
+                            m={3}
+                            maxWidth="70%"
+                            userSelect={'none'}
+                            onDoubleClick={() => {
+                              if (navigator.clipboard) {
+                                // Copy into clipboard
+                                navigator.clipboard.writeText(message.query);
+                                // Notify the user
+                                toast({
+                                  title: 'Success',
+                                  description: `Content Copied to Clipboard`,
+                                  duration: 3000,
+                                  isClosable: true,
+                                  status: 'success',
+                                });
+                              }
+                            }}
                             draggable={true}
+                            // Store the query into the drag/drop events to create stickies
                             onDragStart={(e) => {
-                              // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
+                              // Will create a new sticky
                               e.dataTransfer.setData('app', 'Stickie');
+                              // Get the color of the user
+                              const colorMessage = isMe
+                                ? user?.data.color
+                                : users.find((u) => u._id === message.userId)?.data.color || 'blue';
+                              // Put the state of the app into the drag/drop events
                               e.dataTransfer.setData(
                                 'app_state',
                                 JSON.stringify({
-                                  color: message.userName === 'OpenAI' ? 'green' : 'purple',
-                                  text: message.response,
+                                  color: colorMessage,
+                                  text: message.query,
                                   fontSize: 24,
                                 })
                               );
                             }}
                           >
-                            <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            {message.query}
                           </Box>
-                        </Box>
-                      </Tooltip>
+                        </Tooltip>
+                      </Box>
                     </Box>
+                  ) : null}
+
+                  {/* Start of Geppetto Messages */}
+                  {message.response.length ? (
+                    <Box position="relative" my={1} maxWidth={'70%'}>
+                      <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                          {message.userName}
+                        </Text>
+                      </Box>
+
+                      <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                        <Tooltip
+                          whiteSpace={'nowrap'}
+                          textOverflow="ellipsis"
+                          fontSize={'xs'}
+                          placement="top"
+                          hasArrow={true}
+                          label={time}
+                          openDelay={400}
+                        >
+                          <Box
+                            boxShadow="md"
+                            color="white"
+                            rounded={'md'}
+                            textAlign={'left'}
+                            bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
+                            p={1}
+                            m={3}
+                            fontFamily="arial"
+                            onDoubleClick={() => {
+                              if (navigator.clipboard) {
+                                // Copy into clipboard
+                                navigator.clipboard.writeText(message.response);
+                                // Notify the user
+                                toast({
+                                  title: 'Success',
+                                  description: `Content Copied to Clipboard`,
+                                  duration: 3000,
+                                  isClosable: true,
+                                  status: 'success',
+                                });
+                              }
+                            }}
+                          >
+                            <Box
+                              pl={3}
+                              draggable={true}
+                              onDragStart={(e) => {
+                                // Store the response into the drag/drop events to create stickies
+                                e.dataTransfer.clearData();
+                                e.dataTransfer.setData('app', 'Stickie');
+                                e.dataTransfer.setData(
+                                  'app_state',
+                                  JSON.stringify({
+                                    color: message.userName === 'OpenAI' ? 'green' : 'purple',
+                                    text: message.response,
+                                    fontSize: 24,
+                                  })
+                                );
+                              }}
+                            >
+                              <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            </Box>
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  ) : null}
+
+                  {when && !last ? (
+                    <Box position="relative" padding="4">
+                      <Center>
+                        <Divider width={'80%'} borderColor={'ActiveBorder'} />
+                        <AbsoluteCenter bg={bgColor} px="4">
+                          {when}
+                        </AbsoluteCenter>
+                      </Center>
+                    </Box>
+                  ) : null}
+                </Fragment>
+              );
+            })}
+
+            {/* In progress Geppetto Messages */}
+            {streamText && (
+              <Box position="relative" my={1} maxWidth={'70%'}>
+                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                    AI is typing...
+                  </Text>
+                </Box>
+
+                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                    {streamText}
                   </Box>
-                ) : null}
-
-                {when && !last ? (
-                  <Box position="relative" padding="4">
-                    <Center>
-                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                      <AbsoluteCenter bg={bgColor} px="4">
-                        {when}
-                      </AbsoluteCenter>
-                    </Center>
-                  </Box>
-                ) : null}
-              </Fragment>
-            );
-          })}
-
-          {/* In progress Geppetto Messages */}
-          {streamText && (
-            <Box position="relative" my={1} maxWidth={'70%'}>
-              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  AI is typing...
-                </Text>
-              </Box>
-
-              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                  {streamText}
                 </Box>
               </Box>
-            </Box>
-          )}
-        </Box>
-        <HStack>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
-            <IconButton
-              aria-label="Messages"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={newMessages ? 'green' : 'blue'}
-              variant="ghost"
-              icon={<MdExpandCircleDown size="24px" />}
-              isDisabled={!newMessages}
-              isLoading={processing}
-              onClick={() => goToBottom('instant')}
-              width="33%"
+            )}
+          </Box>
+          <HStack>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={newMessages ? 'New Messages' : 'No New Messages'}
+              openDelay={400}
+            >
+              <IconButton
+                aria-label="Messages"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={newMessages ? 'green' : 'blue'}
+                variant="ghost"
+                icon={<MdExpandCircleDown size="24px" />}
+                isDisabled={!newMessages}
+                isLoading={processing}
+                onClick={() => goToBottom('instant')}
+                width="33%"
+              />
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
+              <IconButton
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                icon={<MdStopCircle size="24px" />}
+                onClick={stopGeppetto}
+                width="34%"
+              />
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
+              <IconButton
+                aria-label="reset"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                icon={<MdChangeCircle size="24px" />}
+                onClick={resetGepetto}
+                width="33%"
+              />
+            </Tooltip>
+          </HStack>
+          <InputGroup bg={'blackAlpha.100'}>
+            <Input
+              placeholder="Ask the agent to generate a chart..."
+              size="md"
+              variant="outline"
+              _placeholder={{ color: 'inherit' }}
+              onChange={handleChange}
+              onKeyDown={onSubmit}
+              value={input}
+              ref={inputRef}
             />
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
-            <IconButton
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdStopCircle size="24px" />}
-              onClick={stopGeppetto}
-              width="34%"
-            />
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
-            <IconButton
-              aria-label="reset"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdChangeCircle size="24px" />}
-              onClick={resetGepetto}
-              width="33%"
-            />
-          </Tooltip>
-        </HStack>
-        <InputGroup bg={'blackAlpha.100'}>
-          <Input
-            placeholder="Ask the agent to generate a chart..."
-            size="md"
-            variant="outline"
-            _placeholder={{ color: 'inherit' }}
-            onChange={handleChange}
-            onKeyDown={onSubmit}
-            value={input}
-            ref={inputRef}
-          />
-          <InputRightElement onClick={send}>
-            <MdSend color="green.500" />
-          </InputRightElement>
-        </InputGroup>
-      </Flex>
+            <InputRightElement onClick={() => send(input)}>
+              <MdSend color="green.500" />
+            </InputRightElement>
+          </InputGroup>
+        </Flex>
+      </>
     </AppWindow>
   );
 }

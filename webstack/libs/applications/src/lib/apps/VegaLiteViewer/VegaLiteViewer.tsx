@@ -16,7 +16,7 @@ import { state as AppState } from './index';
 
 // Vega-Lite Imports
 import vegaEmbed from 'vega-embed';
-import { Button } from '@chakra-ui/react';
+import { Button, Input } from '@chakra-ui/react';
 
 import { create } from 'zustand';
 
@@ -125,7 +125,7 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const view = useStore((state) => state.view[props._id]);
-
+  const [prompt, setPrompt] = useState<string>('');
   const downloadAction = () => {
     // generate a PNG snapshot and then download the image
     // Scale up the image 2x
@@ -137,11 +137,20 @@ function ToolbarComponent(props: App): JSX.Element {
       link.dispatchEvent(new MouseEvent('click'));
     });
   };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(event.target.value);
+  };
+  const handleSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      console.log(prompt);
+    }
+  };
   return (
     <>
       <Button onClick={downloadAction} colorScheme="green" size="xs">
         Save as PNG
       </Button>
+      <Input onKeyDown={handleSubmit} onChange={handleChange} />
     </>
   );
 }
