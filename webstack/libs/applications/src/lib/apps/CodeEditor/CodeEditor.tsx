@@ -64,6 +64,7 @@ const languageExtensions = [
   { name: 'json', extension: 'json' },
   { name: 'yaml', extension: 'yaml' },
   { name: 'javascript', extension: 'js' },
+  { name: 'markdown', extension: 'md' },
   { name: 'typescript', extension: 'ts' },
   { name: 'python', extension: 'py' },
   { name: 'html', extension: 'html' },
@@ -73,6 +74,9 @@ const languageExtensions = [
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
 ];
+// Sort the array by name
+languageExtensions.sort((a, b) => a.name.localeCompare(b.name));
+
 interface CodeStore {
   editor: { [key: string]: editor.IStandaloneCodeEditor };
   setEditor: (id: string, r: editor.IStandaloneCodeEditor) => void;
@@ -439,9 +443,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-            '.' +
-            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+          '.' +
+          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
