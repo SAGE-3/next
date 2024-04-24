@@ -55,10 +55,11 @@ import {
   apiUrls,
   setupAppForFile,
   useConfigStore,
+  useKernelStore,
 } from '@sage3/frontend';
 import { getExtension, isPythonNotebook } from '@sage3/shared';
 
-import { FileEntry } from '@sage3/shared/types';
+import { FileEntry, KernelInfo } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppSchema } from '@sage3/applications/schema';
 
@@ -101,8 +102,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
-
   const scale = useUIStore((state) => state.scale);
+  const { apiStatus, kernels } = useKernelStore((state) => state);
+
+
 
   // Abilities
   const canCreateApp = useAbility('create', 'apps');
@@ -137,13 +140,13 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         return response.json();
       }).then(function (spec) {
         const cells = spec.cells;
-        let allCode = '';
-        let allDoc = '';
+        let allCode = `# From ${file.originalfilename}\n`;
+        let allDoc = `# From ${file.originalfilename}\n`;
         cells.forEach((cell: any, idx: number) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join('');
             if (sourceCode) {
-              allCode += '# cell ' + idx + '\n' + sourceCode + '\n';
+              allCode += '\n# cell ' + idx + '\n' + sourceCode + '\n';
             }
           } else if (cell.cell_type === 'markdown') {
             const doc = (cell.source as []).join('');
@@ -153,6 +156,14 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           }
         });
         if (allCode) {
+          let goodKernel: KernelInfo | undefined;
+          if (apiStatus && kernels.length > 0) {
+            kernels.forEach((kernel) => {
+              if (kernel.name === 'python3' && kernel.board === boardId && !kernel.is_private) {
+                goodKernel = kernel;
+              }
+            });
+          }
           const setup: AppSchema = {
             title: file.originalfilename,
             roomId: roomId,
@@ -161,7 +172,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             size: { width: 600, height: 600, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'SageCell',
-            state: { ...initialValues['SageCell'], code: allCode, fontSize: 16 },
+            state: {
+              ...initialValues['SageCell'], code: allCode, fontSize: 16,
+              kernel: goodKernel ? goodKernel.kernel_id : ''
+            },
             raised: true,
             dragging: false,
             pinned: false,
