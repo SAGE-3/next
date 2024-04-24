@@ -18,6 +18,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
+import { name as MarkdownEditorName, init as defaultMarkdownEditor } from './apps/MarkdownEditor';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
@@ -53,6 +54,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,
+  [MarkdownEditorName]: defaultMarkdownEditor,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
