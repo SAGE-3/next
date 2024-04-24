@@ -46,7 +46,6 @@ import {
   humanFileSize,
   downloadFile,
   useUser,
-  useAuth,
   useAppStore,
   useUIStore,
   useCursorBoardPosition,
@@ -139,20 +138,59 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       }).then(function (response) {
         return response.json();
       }).then(function (spec) {
+        if (spec.metadata && spec.metadata.language_info && spec.metadata.language_info.name !== 'python') {
+          toast({
+            title: 'This is not a Python notebook. Cannot open in SageCell.',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+          return;
+        }
         const cells = spec.cells;
         let allCode = `# From ${file.originalfilename}\n`;
-        let allDoc = `# From ${file.originalfilename}\n`;
+        let allDoc = `From ${file.originalfilename}\n===============\n\n`;
+        let haveImages = false;
+        let imageY = yDrop - 300;
         cells.forEach((cell: any, idx: number) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join('');
             if (sourceCode) {
               allCode += '\n# cell ' + idx + '\n' + sourceCode + '\n';
             }
+            cell.outputs.forEach((o: any, idx: number) => {
+              if (o.output_type === 'display_data') {
+                const str = o.data ? o.data['text/plain'][0] : '';
+                if (str) allCode += `\n# ${str}\n`;
+                const img = o.data ? o.data['image/png'] : '';
+                if (img) {
+                  haveImages = true;
+                  const imageData = `data:image/png;base64,${img}`;
+                  const setup: AppSchema = {
+                    title: file.originalfilename,
+                    roomId: roomId,
+                    boardId: boardId,
+                    position: { x: xDrop + 300 + 20, y: imageY, z: 0 },
+                    size: { width: 600, height: 600, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'ImageViewer',
+                    state: { ...initialValues['ImageViewer'], assetid: imageData },
+                    raised: true,
+                    dragging: false,
+                    pinned: false,
+                  };
+                  createApp(setup);
+                  imageY += 600;
+                }
+              }
+            });
           } else if (cell.cell_type === 'markdown') {
             const doc = (cell.source as []).join('');
             if (doc) {
               allDoc += doc + '\n';
             }
+          } else {
+            console.log('Cell> UNKNOWN', cell.cell_type);
           }
         });
         if (allCode) {
@@ -173,7 +211,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             rotation: { x: 0, y: 0, z: 0 },
             type: 'SageCell',
             state: {
-              ...initialValues['SageCell'], code: allCode, fontSize: 16,
+              ...initialValues['SageCell'], code: allCode, fontSize: 18,
               kernel: goodKernel ? goodKernel.kernel_id : ''
             },
             raised: true,
@@ -183,15 +221,16 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           createApp(setup);
         }
         if (allDoc) {
+          const notesX = haveImages ? xDrop + 300 + 600 + 20 + 20 : xDrop + 300 + 20;
           const setup: AppSchema = {
             title: file.originalfilename,
             roomId: roomId,
             boardId: boardId,
-            position: { x: xDrop + 300 + 20, y: yDrop - 300, z: 0 },
+            position: { x: notesX, y: yDrop - 300, z: 0 },
             size: { width: 600, height: 600, depth: 0 },
             rotation: { x: 0, y: 0, z: 0 },
             type: 'CodeEditor',
-            state: { ...initialValues['CodeEditor'], content: allDoc, fontSize: 16, language: 'markdown' },
+            state: { ...initialValues['CodeEditor'], content: allDoc, fontSize: 18, language: 'markdown' },
             raised: true,
             dragging: false,
             pinned: false,
