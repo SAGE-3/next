@@ -324,6 +324,8 @@ export function useFiles(): UseFiles {
   ): Promise<AppSchema | null> {
     if (!user) return null;
     const w = 400;
+    console.log("🚀 ~ openAppForFile:")
+
     if (isGeoTiff(fileType)) {
       for (const a of assets) {
         if (a._id === fileID) {

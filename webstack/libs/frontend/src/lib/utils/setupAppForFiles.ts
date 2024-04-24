@@ -50,6 +50,8 @@ export async function setupAppForFile(
   boardId: string,
   user: User
 ): Promise<AppSchema | null> {
+  console.log('🚀 ~ OnDoubleClick');
+
   const w = 400;
   if (isGeoTiff(file.type)) {
     return {
