@@ -136,33 +136,54 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
       }).then(function (response) {
         return response.json();
       }).then(function (spec) {
-        console.log('Open in file', file);
-        console.log('Cells', spec);
         const cells = spec.cells;
         let allCode = '';
+        let allDoc = '';
         cells.forEach((cell: any, idx: number) => {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join('');
             if (sourceCode) {
               allCode += '# cell ' + idx + '\n' + sourceCode + '\n';
             }
+          } else if (cell.cell_type === 'markdown') {
+            const doc = (cell.source as []).join('');
+            if (doc) {
+              allDoc += doc + '\n';
+            }
           }
         });
-        console.log('All code', allCode);
-        const setup: AppSchema = {
-          title: file.originalfilename,
-          roomId: roomId,
-          boardId: boardId,
-          position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
-          size: { width: 600, height: 600, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'SageCell',
-          state: { ...initialValues['SageCell'], code: allCode },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        };
-        createApp(setup);
+        if (allCode) {
+          const setup: AppSchema = {
+            title: file.originalfilename,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: xDrop - 300, y: yDrop - 300, z: 0 },
+            size: { width: 600, height: 600, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'SageCell',
+            state: { ...initialValues['SageCell'], code: allCode, fontSize: 16 },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          };
+          createApp(setup);
+        }
+        if (allDoc) {
+          const setup: AppSchema = {
+            title: file.originalfilename,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: xDrop + 300 + 20, y: yDrop - 300, z: 0 },
+            size: { width: 600, height: 600, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'CodeEditor',
+            state: { ...initialValues['CodeEditor'], content: allDoc, fontSize: 16, language: 'markdown' },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          };
+          createApp(setup);
+        }
       });
     }
   };
