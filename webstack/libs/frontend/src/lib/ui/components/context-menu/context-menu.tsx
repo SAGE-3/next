@@ -50,14 +50,24 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
 
-  const handleClick = useCallback(() => {
-    // timeout to allow button click to fire before hiding menu
-    if (showContextMenu) {
-      // setShowContextMenu(false);
-      setTimeout(() => setShowContextMenu(false));
+  const handleClick = useCallback((event: any) => {
+    // Check to see if any elements and their parents ids are 'context-menu-container'
+    let node = event.target;
+    let found = false;
+    while (node) {
+      if (node.id === 'context-menu-container') {
+        found = true;
+        break;
+      }
+      node = node.parentElement;
     }
-  }, [showContextMenu]);
-
+    console.log('handleClick', 'found', found);
+    if (found) {
+      return;
+    } else {
+      setShowContextMenu(false);
+    }
+  }, []);
 
   const handleContextMenu = useCallback(
     (event: any) => {
@@ -83,7 +93,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
-      // console.log('ContextMenuHandler> type', type, event.type, showContextMenu);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
@@ -97,7 +106,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         }
       }
     });
-    document.addEventListener('click', handleClick);
+    window.addEventListener('mousedown', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
@@ -107,7 +116,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     // document.addEventListener('touchmove', ctx.onTouchMove);
 
     return () => {
-      document.removeEventListener('click', handleClick);
+      window.removeEventListener('mousedown', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
       // document.removeEventListener('touchstart', ctx.onTouchStart);

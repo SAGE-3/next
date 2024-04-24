@@ -296,7 +296,7 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      <ContextMenu divId="board">
+      <ContextMenu divId="lasso-canvas">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 

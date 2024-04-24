@@ -49,6 +49,7 @@ import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 
 import { HelpModal } from '@sage3/frontend';
+import { Lasso } from './Lasso';
 
 type BackgroundProps = {
   roomId: string;
@@ -90,6 +91,7 @@ export function Background(props: BackgroundProps) {
 
   // Abilities
   const canDrop = useAbility('upload', 'assets');
+  const canLasso = useAbility('lasso', 'apps');
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -101,6 +103,8 @@ export function Background(props: BackgroundProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
+  const appDragging = useUIStore((state) => state.appDragging);
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
@@ -501,7 +505,8 @@ export function Background(props: BackgroundProps) {
       bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
         1 / scale
       }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
-      id="board"
+      id="board-background"
+      cursor={boardDragging ? 'grabbing' : 'auto'}
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
@@ -516,9 +521,16 @@ export function Background(props: BackgroundProps) {
       onPointerCancel={onPointerUp}
       onPointerOut={onPointerUp}
       onPointerLeave={onPointerUp}
+      onMouseDown={(evt) => {
+        if (evt.button !== 1) {
+          evt.preventDefault();
+          evt.stopPropagation();
+        }
+      }}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-
+      {/*Lasso */}
+      {canLasso && <Lasso boardId={props.boardId} disablePointerEvents={appDragging} />}
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
         <Portal>
           <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
