@@ -180,7 +180,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
                     pinned: false,
                   };
                   createApp(setup);
-                  imageY += 600;
+                  imageY += 620;
                 }
               }
             });
