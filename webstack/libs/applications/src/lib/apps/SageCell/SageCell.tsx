@@ -11,14 +11,37 @@ import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 
 // Chakra Imports
 import {
-  Accordion, AccordionItem, AccordionIcon, AccordionButton, AccordionPanel,
-  Alert, Box, ButtonGroup, Code, Flex, Icon, IconButton, Image,
-  Spacer, Spinner, Tooltip, Text, useColorModeValue, useToast,
-  Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
+  Accordion,
+  AccordionItem,
+  AccordionIcon,
+  AccordionButton,
+  AccordionPanel,
+  Alert,
+  Box,
+  ButtonGroup,
+  Code,
+  Flex,
+  Icon,
+  IconButton,
+  Image,
+  Spacer,
+  Spinner,
+  Tooltip,
+  Text,
+  useColorModeValue,
+  useToast,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
+
+// Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -36,16 +59,25 @@ import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+
 import { MonacoBinding } from 'y-monaco';
 // Throttle
 import { throttle } from 'throttle-debounce';
 
 // SAGE3 Component imports
 import {
-  useAbility, apiUrls, useAppStore, useHexColor, useKernelStore, useUser,
-  useUsersStore, useUIStore, useCursorBoardPosition
+  useAbility,
+  apiUrls,
+  useAppStore,
+  useHexColor,
+  useKernelStore,
+  useUser,
+  useUsersStore,
+  useUIStore,
+  useCursorBoardPosition,
+  useYjs,
+  serverTime,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -120,6 +152,7 @@ function AppComponent(props: App): JSX.Element {
   const toastRef = useRef(false);
 
   // YJS and Monaco
+  const { yApps } = useYjs();
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -141,7 +174,7 @@ function AppComponent(props: App): JSX.Element {
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
   // Drawer size: user's preference from local storage or default
-  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || "50vw");
+  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -342,11 +375,13 @@ function AppComponent(props: App): JSX.Element {
     const model = editorRef.current.getModel();
     if (model) {
       // Clear the cell editor
-      editorRef.current.executeEdits('update-value', [{
-        range: model.getFullModelRange(),
-        text: '',
-        forceMoveMarkers: false
-      }]);
+      editorRef.current.executeEdits('update-value', [
+        {
+          range: model.getFullModelRange(),
+          text: '',
+          forceMoveMarkers: false,
+        },
+      ]);
       // Ensure we are always operating on the same line endings
       model.setEOL(0);
     }
@@ -354,15 +389,16 @@ function AppComponent(props: App): JSX.Element {
     const model2 = editorRef2.current.getModel();
     if (model2) {
       // Clear the drawer editor
-      editorRef2.current.executeEdits('update-value', [{
-        range: model2.getFullModelRange(),
-        text: '',
-        forceMoveMarkers: false
-      }]);
+      editorRef2.current.executeEdits('update-value', [
+        {
+          range: model2.getFullModelRange(),
+          text: '',
+          forceMoveMarkers: false,
+        },
+      ]);
       // Ensure we are always operating on the same line endings
       model2.setEOL(0);
     }
-
   };
 
   // Handle interrupt
@@ -499,23 +535,35 @@ function AppComponent(props: App): JSX.Element {
             if (item['text/html']) return null;
             return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
-            return <Image key={key} src={`data:image/png;base64,${value}`} onDragStart={(e) => {
-              // set the title in the drag transfer data
-              if (item['text/plain']) {
-                const title = item['text/plain'];
-                // remove the quotes from the title
-                e.dataTransfer.setData('title', title.slice(1, -1));
-              }
-            }} />;
+            return (
+              <Image
+                key={key}
+                src={`data:image/png;base64,${value}`}
+                onDragStart={(e) => {
+                  // set the title in the drag transfer data
+                  if (item['text/plain']) {
+                    const title = item['text/plain'];
+                    // remove the quotes from the title
+                    e.dataTransfer.setData('title', title.slice(1, -1));
+                  }
+                }}
+              />
+            );
           case 'image/jpeg':
-            return <Image key={key} src={`data:image/jpeg;base64,${value}`} onDragStart={(e) => {
-              // set the title in the drag transfer data
-              if (item['text/plain']) {
-                const title = item['text/plain'];
-                // remove the quotes from the title
-                e.dataTransfer.setData('title', title.slice(1, -1));
-              }
-            }} />;
+            return (
+              <Image
+                key={key}
+                src={`data:image/jpeg;base64,${value}`}
+                onDragStart={(e) => {
+                  // set the title in the drag transfer data
+                  if (item['text/plain']) {
+                    const title = item['text/plain'];
+                    // remove the quotes from the title
+                    e.dataTransfer.setData('title', title.slice(1, -1));
+                  }
+                }}
+              />
+            );
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
@@ -631,31 +679,38 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-
-    const doc = new Y.Doc();
-    const yText = doc.getText('monaco');
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
+  const connectToYjs = async (editor: editor.IStandaloneCodeEditor, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
-    provider.on('sync', () => {
-      const users = provider.awareness.getStates();
-      const count = users.size;
-      // I'm the only one here, so need to sync current ydoc with that is saved in the database
-      if (count == 1) {
-        // Does the app have code?
-        if (s.code) {
-          // Clear any existing lines
-          yText.delete(0, yText.length);
-          // Set the lines from the database
-          yText.insert(0, s.code);
-        }
+    const users = provider.awareness.getStates();
+    const count = users.size;
+    // Sync current ydoc with that is saved in the database
+    const syncStateWithDatabase = () => {
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, s.code);
+    };
+
+    // If I am the only one here according to Yjs, then sync with database
+    if (count == 1) {
+      syncStateWithDatabase();
+    } else if (count > 1 && props._createdBy === user?._id) {
+      // There are other users here and I created this app.
+      // Is this app less than 5 seconds old...this feels hacky
+      const now = await serverTime();
+      const created = props._createdAt;
+      // Then we need to sync with database due to Yjs not being able to catch the initial state
+      if (now.epoch - created < 5000) {
+        // I created this
+        syncStateWithDatabase();
       }
-    });
+    }
   };
 
   useEffect(() => {
@@ -693,7 +748,7 @@ function AppComponent(props: App): JSX.Element {
     editorRef.current = editor;
 
     // Connect to Yjs
-    connectToYjs(editor);
+    connectToYjs(editor, yApps!);
 
     // set the editor options
     editor.updateOptions({
@@ -926,7 +981,6 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [s.fontSize]);
 
-
   useEffect(() => {
     if (drawer) {
       onOpen();
@@ -934,7 +988,7 @@ function AppComponent(props: App): JSX.Element {
       const xw = props.data.position.x + props.data.size.width;
       let position = 1;
       if (drawerWidth === '25vw') {
-        position = 3 * innerWidth / 4;
+        position = (3 * innerWidth) / 4;
       } else if (drawerWidth === '50vw') {
         position = innerWidth / 2;
       } else if (drawerWidth === '75vw') {
@@ -943,7 +997,7 @@ function AppComponent(props: App): JSX.Element {
       const center = uiToBoard(position, innerHeight);
       if (xw > center.x) {
         const offset = xw - center.x + 10 / scale;
-        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y })
+        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y });
       }
     }
   }, [drawer]);
@@ -957,23 +1011,25 @@ function AppComponent(props: App): JSX.Element {
     onClose();
   };
 
-  const drawerEditor = <Editor
-    defaultValue={editorRef.current?.getValue()}
-    loading={<Spinner />}
-    options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
-    onMount={handleMountDrawer}
-    height={"100%"}
-    width={"100%"}
-    theme={defaultTheme}
-    language={s.language}
-  />;
+  const drawerEditor = (
+    <Editor
+      defaultValue={editorRef.current?.getValue()}
+      loading={<Spinner />}
+      options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
+      onMount={handleMountDrawer}
+      height={'100%'}
+      width={'100%'}
+      theme={defaultTheme}
+      language={s.language}
+    />
+  );
 
   const make25W = () => {
     setDrawerWidth('25vw');
     // save the value in local storage, user's preference
     localStorage.setItem('sage_preferred_drawer_width', '25vw');
     const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + 0.25 * innerWidth / 100, 3 * base));
+    const newFontsize = Math.round(Math.min(1.2 * base + (0.25 * innerWidth) / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make50W = () => {
@@ -981,7 +1037,7 @@ function AppComponent(props: App): JSX.Element {
     // save the value in local storage, user's preference
     localStorage.setItem('sage_preferred_drawer_width', '50vw');
     const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + 0.50 * innerWidth / 100, 3 * base));
+    const newFontsize = Math.round(Math.min(1.2 * base + (0.5 * innerWidth) / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
   const make75W = () => {
@@ -989,7 +1045,7 @@ function AppComponent(props: App): JSX.Element {
     // save the value in local storage, user's preference
     localStorage.setItem('sage_preferred_drawer_width', '75vw');
     const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + 0.75 * innerWidth / 100, 3 * base));
+    const newFontsize = Math.round(Math.min(1.2 * base + (0.75 * innerWidth) / 100, 3 * base));
     if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
   };
 
@@ -1015,25 +1071,39 @@ function AppComponent(props: App): JSX.Element {
   }
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
-        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer}
-          closeOnOverlayClick={true}>
+        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}><Flex p={0} m={0}>
-              <Text flex={1} mr={"10px"}>SageCell</Text>
-              <Box flex={2} width={"100px"} overflow={"clip"}>
-                <Text fontSize={"md"} pt={1} whiteSpace={"nowrap"} textOverflow={"ellipsis"}>
-                  Use right-click for cell functions
+            <DrawerHeader p={1} m={1}>
+              <Flex p={0} m={0}>
+                <Text flex={1} mr={'10px'}>
+                  SageCell
                 </Text>
-              </Box>
-              <Tooltip hasArrow label="Small Editor"><Button size={"sm"} p={2} m={"0 10px 0 10px"} onClick={make25W}>25%</Button></Tooltip>
-              <Tooltip hasArrow label="Medium Editor"><Button size={"sm"} p={2} m={"0 10px 0 1px"} onClick={make50W}>50%</Button></Tooltip>
-              <Tooltip hasArrow label="Large Editor"><Button size={"sm"} p={2} m={"0 40px 0 1px"} onClick={make75W}>75%</Button></Tooltip>
-            </Flex>
+                <Box flex={2} width={'100px'} overflow={'clip'}>
+                  <Text fontSize={'md'} pt={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>
+                    Use right-click for cell functions
+                  </Text>
+                </Box>
+                <Tooltip hasArrow label="Small Editor">
+                  <Button size={'sm'} p={2} m={'0 10px 0 10px'} onClick={make25W}>
+                    25%
+                  </Button>
+                </Tooltip>
+                <Tooltip hasArrow label="Medium Editor">
+                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={make50W}>
+                    50%
+                  </Button>
+                </Tooltip>
+                <Tooltip hasArrow label="Large Editor">
+                  <Button size={'sm'} p={2} m={'0 40px 0 1px'} onClick={make75W}>
+                    75%
+                  </Button>
+                </Tooltip>
+              </Flex>
             </DrawerHeader>
-            <DrawerBody p={0} m={0} boxSizing='border-box'>
+            <DrawerBody p={0} m={0} boxSizing="border-box">
               <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
                 {drawerEditor}
               </Box>
@@ -1115,7 +1185,7 @@ function AppComponent(props: App): JSX.Element {
             <Box
               // height={window.innerHeight - editorHeight - 20 + 'px'}
               overflow={'scroll'}
-              mr={"8px"}
+              mr={'8px'}
               css={{
                 '&::-webkit-scrollbar': {
                   background: `${bgColor}`,
@@ -1170,7 +1240,7 @@ function AppComponent(props: App): JSX.Element {
           </Box>
         </Box>
       </>
-    </AppWindow >
+    </AppWindow>
   );
 }
 

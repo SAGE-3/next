@@ -324,7 +324,7 @@ export function isMD(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isPython(mimeType: string): boolean {
-  return mimeType === 'application/python';
+  return mimeType === 'application/python' || mimeType === 'text/x-python-script';
 }
 
 /**

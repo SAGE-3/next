@@ -262,7 +262,7 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Tooltip
+          {/* <Tooltip
             label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
           >
             <IconButton
@@ -275,7 +275,7 @@ export function UILayer(props: UILayerProps) {
               aria-label={'selected-apps'}
               onClick={goToSavedSelectedApps}
             ></IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </Box>
       </Box>
 
