@@ -8,4 +8,5 @@
 
 export * from './code-llama/code-llama';
 export * from './open-ai/open-ai';
+export * from './open-ai/open-vision';
 export * from './yolo/yolo';

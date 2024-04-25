@@ -54,6 +54,7 @@ export const apiUrls = {
       query: '/api/ai/code_query',
     },
     image: {
+      describe: '/api/ai/image_describe',
       status: '/api/ai/image_status',
       labels: '/api/ai/image_to_labels',
       image: '/api/ai/image_to_image',

@@ -25,6 +25,7 @@ import {
   useInsightStore,
   AiAPI,
   useUIStore,
+  useUser,
 } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 import { AiImageQueryRequest } from '@sage3/shared';
@@ -157,24 +158,24 @@ function AppComponent(props: App): JSX.Element {
 
           {s.boxes && Array.isArray(s.boxes)
             ? s.boxes.map((box, idx) => {
-                // TODO Need to handle text overflow for labels
-                return (
-                  <Box
-                    key={'label' + idx}
-                    position="absolute"
-                    left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
-                    top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
-                    width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
-                    height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
-                    border="2px solid red"
-                    style={{ display: s.annotations === true ? 'block' : 'none' }}
-                  >
-                    <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                      {box.label || 'Unknown'}
-                    </Box>
+              // TODO Need to handle text overflow for labels
+              return (
+                <Box
+                  key={'label' + idx}
+                  position="absolute"
+                  left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                  top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                  width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                  height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
+                  border="2px solid red"
+                  style={{ display: s.annotations === true ? 'block' : 'none' }}
+                >
+                  <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                    {box.label || 'Unknown'}
                   </Box>
-                );
-              })
+                </Box>
+              );
+            })
             : null}
         </>
       </div>
@@ -204,6 +205,8 @@ function ToolbarComponent(props: App): JSX.Element {
   // Online Models
   const [onlineModels, setOnlineModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
+  // User information
+  const { user } = useUser();
 
   // Check if the AI is online
   useEffect(() => {
@@ -229,6 +232,123 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.assetid, assets]);
 
+
+  const prompts: string[] = [
+    `Give the best 5 keywords for this image. Return only a JSON array of strings.`,
+    `Count the number of persons, animals and objects.`,
+    `Provide a short textual description of this image`,
+  ];
+
+  async function generateKeywords() {
+    if (!file) return;
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+      filename: file.data.originalfilename,
+      roomid: roomId,
+      prompt: prompts[0],
+    } as AiImageQueryRequest;
+    const result = await AiAPI.image.describe(queryRequest);
+    if (result.success && result.data) {
+      try {
+        const words = JSON.parse(result.data.split('\n').slice(1, -1));
+        const keywords = words.map((w: string) => w.replaceAll(' ', '_'));
+        updateInsights(props._id, { labels: keywords });
+
+        // Show success
+        toast.closeAll();
+        toast({
+          title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+          duration: 10000,
+          isClosable: true,
+          position: 'bottom-right',
+          icon: <MdOutlineLightbulb size="24px" />,
+          status: 'warning',
+          description: <Box fontSize='sm'>{keywords}</Box>,
+        });
+      } catch (error) {
+        console.log('Error: ', error);
+      }
+    }
+  }
+
+  async function generateCounts() {
+    if (!file) return;
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+      filename: file.data.originalfilename,
+      roomid: roomId,
+      prompt: prompts[1],
+    } as AiImageQueryRequest;
+    const result = await AiAPI.image.describe(queryRequest);
+    if (result.success && result.data) {
+      createApp({
+        title: 'OpenAI Vision',
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: props.data.size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { ...(initialValues['Stickie']), fontSize: 32, text: result.data, color: user?.data.color || 'yellow' },
+        raised: true,
+        pinned: false,
+        dragging: false,
+      });
+      // Show success
+      toast.closeAll();
+      toast({
+        title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+        duration: 10000,
+        isClosable: true,
+        position: 'bottom-right',
+        icon: <MdOutlineLightbulb size="24px" />,
+        status: 'warning',
+        description: <Box fontSize='sm'>{result.data}</Box>,
+      });
+    }
+  }
+
+
+  async function generateDescription() {
+    if (!file) return;
+    const queryRequest = {
+      assetid: s.assetid,
+      model: selectedModel,
+      filename: file.data.originalfilename,
+      roomid: roomId,
+      prompt: prompts[2],
+    } as AiImageQueryRequest;
+    const result = await AiAPI.image.describe(queryRequest);
+    if (result.success && result.data) {
+      createApp({
+        title: 'OpenAI Vision',
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: props.data.size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { ...(initialValues['Stickie']), fontSize: 32, text: result.data, color: user?.data.color || 'yellow' },
+        raised: true,
+        pinned: false,
+        dragging: false,
+      });
+      // Show success
+      toast.closeAll();
+      toast({
+        title: <Box fontSize='sm' fontWeight='bold'>AI Model: {selectedModel}</Box>,
+        duration: 10000,
+        isClosable: true,
+        position: 'bottom-right',
+        icon: <MdOutlineLightbulb size="24px" />,
+        status: 'warning',
+        description: <Box fontSize='sm'>{result.data}</Box>,
+      });
+    }
+  }
+
   async function generateImage() {
     if (!file) return;
     const queryRequest = {
@@ -249,7 +369,7 @@ function ToolbarComponent(props: App): JSX.Element {
           size: props.data.size,
           rotation: { x: 0, y: 0, z: 0 },
           type: 'ImageViewer',
-          state: { ...(initialValues['ImageViewer'] as AppState), assetid: result.data.id },
+          state: { ...initialValues['ImageViewer'], assetid: result.data.id },
           raised: true,
           pinned: false,
           dragging: false,
@@ -310,7 +430,7 @@ function ToolbarComponent(props: App): JSX.Element {
       for (let idx = 0; idx < data.length; idx++) {
         const label = data[idx];
         // array of labels
-        temps.push(label.name);
+        temps.push(label.name.replaceAll(' ', '_'));
         // array of boxes
         boxes.push({ label: label.name, xmin: label.xmin, ymin: label.ymin, xmax: label.xmax, ymax: label.ymax });
       }
@@ -405,16 +525,25 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+            <MenuButton as={Button} colorScheme="orange" aria-label="image-ai" isDisabled={!selectedModel}>
               <MdOutlineLightbulb />
             </MenuButton>
           </Tooltip>
           <MenuList minWidth="150px" fontSize={'sm'}>
             <Tooltip hasArrow={true} label={'Generate labels and store them as tags'} openDelay={300}>
-              <MenuItem onClick={generateLabels}>Generate labels</MenuItem>
+              <MenuItem onClick={generateLabels} isDisabled={selectedModel != "yolov8"}>Generate labels</MenuItem>
             </Tooltip>
             <Tooltip hasArrow={true} label={'Create a new image with labels'} openDelay={300}>
-              <MenuItem onClick={generateImage}>Show image with labels</MenuItem>
+              <MenuItem onClick={generateImage} isDisabled={selectedModel != "yolov8"}>Show image with labels</MenuItem>
+            </Tooltip>
+            <Tooltip hasArrow={true} label={'Generate a list of keywords'} openDelay={300}>
+              <MenuItem onClick={generateKeywords} isDisabled={selectedModel != "openai-vision"}>Best 5 keywords</MenuItem>
+            </Tooltip>
+            <Tooltip hasArrow={true} label={'Generate a description'} openDelay={300}>
+              <MenuItem onClick={generateDescription} isDisabled={selectedModel != "openai-vision"}>Describe the image</MenuItem>
+            </Tooltip>
+            <Tooltip hasArrow={true} label={'List people, animals and objects'} openDelay={300}>
+              <MenuItem onClick={generateCounts} isDisabled={selectedModel != "openai-vision"}>Count people and things</MenuItem>
             </Tooltip>
           </MenuList>
         </Menu>

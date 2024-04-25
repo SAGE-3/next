@@ -54,6 +54,7 @@ export interface ServerConfiguration {
     openai: OpenAIConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
+    openaivision: OpenAIVisionConfiguration;
   };
 
   // Feature flags
@@ -144,6 +145,11 @@ export interface TwilioConfiguration {
 
 // The OpenAI Configuration
 export interface OpenAIConfiguration {
+  apiKey: string; // API Key
+  model: string; // LLM model
+}
+
+export interface OpenAIVisionConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
 }

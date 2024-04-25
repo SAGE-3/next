@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as fs from 'fs';
 import * as FormData from 'form-data';
 import axios from 'axios';
 
@@ -17,15 +16,22 @@ import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
 
 export class YoloModel extends AiModel {
-  private _url: string;
+  private _url: string = '';
+  private _enabled: boolean = false;
   public name = 'yolov8';
 
   constructor(config: ServerConfiguration) {
     super();
-    this._url = config.services.yolo.url;
+    if (config.services.yolo && config.services.yolo.url) {
+      this._url = config.services.yolo.url;
+      this._enabled = true;
+    }
   }
 
   public async health(): Promise<boolean> {
+    if (!this._enabled) {
+      return false;
+    }
     try {
       const response = await axios({
         url: `${this._url}/healthcheck`,

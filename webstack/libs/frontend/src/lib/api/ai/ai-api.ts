@@ -115,6 +115,34 @@ async function imageLabels(request: AiImageQueryRequest): Promise<AiJSONQueryRes
   }
 }
 
+async function imageDescription(request: AiImageQueryRequest): Promise<AiJSONQueryResponse> {
+  const modelHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.image.describe, {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(request),
+    });
+    // Parse the response
+    const jsonResponse = await response.json();
+    // Check if the response is valid
+    if (jsonResponse.success) {
+      return jsonResponse;
+    } else {
+      return { success: false, error_message: `API AI QUERY ERROR>  Failed to query AI (Status Error${response.status})` };
+    }
+  } catch (error) {
+    // Return an error message if the request fails
+    console.log('API AI QUERY ERROR> ', error);
+    return { success: false };
+  }
+}
+
 async function imageToImage(request: AiImageQueryRequest): Promise<AiJSONQueryResponse> {
   const modelHeaders: Record<string, string> = {
     Accept: 'application/json',
@@ -153,6 +181,7 @@ export const AiAPI = {
     query: codeQuery,
   },
   image: {
+    describe: imageDescription,
     status: imageStatus,
     labels: imageLabels,
     image: imageToImage,
