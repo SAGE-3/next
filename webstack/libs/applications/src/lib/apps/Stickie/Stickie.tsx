@@ -23,7 +23,7 @@ import {
   useToast,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu, MdStickyNote2 } from 'react-icons/md';
 
 // Debounce updates to the textarea
 // import { debounce } from 'throttle-debounce';
@@ -79,7 +79,7 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const isDragging = useUIStore((state) => state.boardDragging);
+  // const isDragging = useUIStore((state) => state.boardDragging);
   const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
@@ -199,7 +199,7 @@ function AppComponent(props: App): JSX.Element {
 
   // React component
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundColor={backgroundColor} hideBordercolor={scrollbarColor} hideBackgroundIcon={MdStickyNote2}>
       <Box bgColor={backgroundColor} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
@@ -221,7 +221,7 @@ function AppComponent(props: App): JSX.Element {
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
-          display={isSmall || isDragging ? 'none' : 'block'}
+          // display={isSmall || isDragging ? 'none' : 'block'}
           css={{
             // Balance the text, improve text layouts
             textWrap: 'pretty', // 'balance',
@@ -361,7 +361,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
             <MdRemove />

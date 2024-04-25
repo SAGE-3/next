@@ -25,7 +25,8 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb, MdCode } from 'react-icons/md';
+
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 
@@ -42,7 +43,6 @@ import {
   setupApp,
   AiAPI,
   useYjs,
-  YjsRooms,
   serverTime,
   useUser,
   YjsRoomConnection,
@@ -170,7 +170,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdCode}>
       <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
         <Editor
           // value={spec}

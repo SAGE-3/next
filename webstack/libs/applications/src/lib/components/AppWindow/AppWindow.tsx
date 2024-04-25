@@ -7,15 +7,17 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowTitle } from './components';
+import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 import { App, AppSchema } from '../../schema';
+import { MdWindow } from 'react-icons/md';
+import { IconType } from 'react-icons/lib';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -32,6 +34,10 @@ type WindowProps = {
   processing?: boolean;
   disableResize?: boolean;
   background?: boolean;
+  // Hide App when outside of the viewport or when dragging the board
+  hideBackgroundColor?: string;
+  hideBordercolor?: string;
+  hideBackgroundIcon?: IconType;
 };
 
 export function AppWindow(props: WindowProps) {
@@ -87,7 +93,6 @@ export function AppWindow(props: WindowProps) {
   const borderColor = useHexColor(bc);
   const selectColor = useHexColor('teal');
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
-  const savedSelectedColor = useHexColor('red');
 
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
   const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
@@ -325,6 +330,9 @@ export function AppWindow(props: WindowProps) {
     return x + w < vx || x > vx + vw || y + h < vy || y > vy + vh;
   }, [pos.x, pos.y, size.width, size.height, viewport.position.x, viewport.position.y, viewport.size.width, viewport.size.height]);
 
+  const hideApp = outsideView || boardDragging;
+  const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
+
   return (
     <Rnd
       bounds="parent"
@@ -373,7 +381,7 @@ export function AppWindow(props: WindowProps) {
       {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
-      {/* <WindowBorder
+      <WindowBorder
         size={size}
         selected={selected}
         isGrouped={isGrouped}
@@ -384,7 +392,7 @@ export function AppWindow(props: WindowProps) {
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
-      /> */}
+      />
 
       {/* The Application */}
       <Box
@@ -395,15 +403,8 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        outline={
-          isSavedSelected
-            ? `${borderWidth}px solid ${savedSelectedColor}`
-            : selected || isGrouped
-              ? `${borderWidth}px solid ${selectColor}`
-              : 'unset'
-        }
-        boxShadow={boardDragging || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
-        style={{ contentVisibility: outsideView ? 'hidden' : 'visible' }}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {props.children}
       </Box>
@@ -430,6 +431,29 @@ export function AppWindow(props: WindowProps) {
       {/* Processing Box */}
       {props.processing && (
         <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
+      )}
+
+      {/* Icon when app is dragging */}
+      {hideApp && (
+        <Box
+          position="absolute"
+          left="0px"
+          top="0px"
+          width={size.width}
+          height={size.height}
+          pointerEvents={'none'}
+          userSelect={'none'}
+          zIndex={999999999}
+          justifyContent={'center'}
+          alignItems={'center'}
+          display={'flex'}
+          backgroundColor={hideBackgroundColorHex}
+          fontSize={Math.min(size.width, size.height) / 2}
+          borderRadius={innerBorderRadius}
+          outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
+        >
+          {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
+        </Box>
       )}
     </Rnd>
   );

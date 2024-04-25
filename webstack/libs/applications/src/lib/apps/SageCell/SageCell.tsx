@@ -38,7 +38,10 @@ import {
   useDisclosure,
   Button,
 } from '@chakra-ui/react';
+
+// Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
 
 // Event Source import
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -56,8 +59,7 @@ import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+
 import { MonacoBinding } from 'y-monaco';
 // Throttle
 import { throttle } from 'throttle-debounce';
@@ -74,7 +76,6 @@ import {
   useUIStore,
   useCursorBoardPosition,
   useYjs,
-  YjsRooms,
   serverTime,
   YjsRoomConnection,
 } from '@sage3/frontend';
@@ -1070,7 +1071,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
         <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
