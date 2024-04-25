@@ -106,7 +106,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         }
       }
     });
-    window.addEventListener('mousedown', handleClick);
+    document.addEventListener('mousedown', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
@@ -116,7 +116,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     // document.addEventListener('touchmove', ctx.onTouchMove);
 
     return () => {
-      window.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('mousedown', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
       // document.removeEventListener('touchstart', ctx.onTouchStart);

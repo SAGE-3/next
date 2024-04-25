@@ -7,7 +7,7 @@
  */
 
 import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdApps } from 'react-icons/md';
+import { MdApps, MdMouse, MdTouchApp } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -31,6 +31,7 @@ import {
   Alfred,
   HotkeysEvent,
   useUserSettings,
+  useUser,
 } from '@sage3/frontend';
 
 import {
@@ -57,6 +58,8 @@ type UILayerProps = {
 };
 
 export function UILayer(props: UILayerProps) {
+  // User
+  const { user } = useUser();
   // Abilities
   const canLasso = useAbility('lasso', 'apps');
 
@@ -65,6 +68,8 @@ export function UILayer(props: UILayerProps) {
   const showUI = settings.showUI;
 
   // UI Store
+  const inputType = useUIStore((state) => state.inputType);
+  const toggleInputType = useUIStore((state) => state.toggleInputType);
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -262,6 +267,16 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
+          <Tooltip label={inputType == 'mouse' ? 'Mouse Input' : 'Touchpad Input'}>
+            <IconButton
+              size="sm"
+              colorScheme={user?.data.color || 'gray'}
+              icon={inputType == 'mouse' ? <MdMouse /> : <MdTouchApp />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={toggleInputType}
+            ></IconButton>
+          </Tooltip>
           {/* <Tooltip
             label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
           >

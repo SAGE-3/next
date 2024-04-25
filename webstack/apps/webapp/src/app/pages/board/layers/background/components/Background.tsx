@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 import {
   Box,
@@ -50,6 +50,7 @@ import { initialValues } from '@sage3/applications/initialValues';
 
 import { HelpModal } from '@sage3/frontend';
 import { Lasso } from './Lasso';
+import { is } from 'date-fns/locale';
 
 type BackgroundProps = {
   roomId: string;
@@ -58,7 +59,28 @@ type BackgroundProps = {
 
 // Global vars to cache event state
 const evCache = new Array();
-let prevDiff = -1;
+let prevDiff = 0;
+
+function pushEvent(ev: any) {
+  // Save this event in the target's cache
+  evCache.push(ev);
+}
+
+function removeEvent(ev: any) {
+  // Remove this event from the target's cache
+  const index = evCache.findIndex((cachedEv) => cachedEv.pointerId === ev.pointerId);
+  evCache.splice(index, 1);
+}
+
+function updateEvent(ev: any) {
+  // Find this event in the cache and update its record with this event
+  for (var i = 0; i < evCache.length; i++) {
+    if (ev.pointerId == evCache[i].pointerId) {
+      evCache[i] = ev;
+      break;
+    }
+  }
+}
 
 export function Background(props: BackgroundProps) {
   // display some notifications
@@ -105,6 +127,8 @@ export function Background(props: BackgroundProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const appDragging = useUIStore((state) => state.appDragging);
   const boardDragging = useUIStore((state) => state.boardDragging);
+  const inputType = useUIStore((state) => state.inputType);
+  const isTouchpad = inputType === 'touch';
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
@@ -115,6 +139,7 @@ export function Background(props: BackgroundProps) {
 
   // For Lasso
   const isShiftPressed = useKeyPress('Shift');
+  const isCtrlPressed = useKeyPress('Control');
 
   // Subscribe to messages
   useEffect(() => {
@@ -428,16 +453,17 @@ export function Background(props: BackgroundProps) {
   // Functions for zooming with touch events
   function remove_event(ev: any) {
     // Remove this event from the target's cache
-    for (var i = 0; i < evCache.length; i++) {
-      if (evCache[i].pointerId == ev.pointerId) {
-        evCache.splice(i, 1);
-        break;
-      }
-    }
   }
 
   const onPointerDown = (ev: any) => {
-    evCache.push(ev);
+    // console.log('pointer down');
+    pushEvent(ev);
+  };
+
+  const onPointerUp = (ev: any) => {
+    // console.log('pointer up');
+    // Remove this pointer from the cache
+    removeEvent(ev);
   };
 
   /**
@@ -448,14 +474,10 @@ export function Background(props: BackgroundProps) {
    * @param ev
    */
   const onPointerMove = (ev: any) => {
+    // console.log('pointer move');
     // Find this event in the cache and update its record with this event
-    for (var i = 0; i < evCache.length; i++) {
-      if (ev.pointerId == evCache[i].pointerId) {
-        evCache[i] = ev;
-        break;
-      }
-    }
-
+    updateEvent(ev);
+    console.log('onpointermove', ev.pointerId);
     // If two pointers are down, check for pinch gestures
     if (evCache.length == 2) {
       // Calculate the distance between the two pointers
@@ -474,26 +496,57 @@ export function Background(props: BackgroundProps) {
       prevDiff = curDiff;
     }
   };
-  const onPointerUp = (ev: any) => {
-    // Remove this pointer from the cache
-    remove_event(ev);
-    // If the number of pointers down is less than two then reset diff tracker
-    if (evCache.length < 2) prevDiff = -1;
+
+  const touchpadPan = (evt: any) => {
+    // DeltaX and DeltaY
+    const deltaX = evt.deltaX / scale;
+    const deltaY = evt.deltaY / scale;
+    // Now pan the board
+    setBoardPosition({ x: boardPosition.x - deltaX, y: boardPosition.y - deltaY });
   };
 
-  // Throttle The wheel event
-  const throttleWheel = throttle(50, (evt: any) => {
-    evt.stopPropagation();
+  const touchpadZoom = (evt: any) => {
     const cursor = { x: evt.clientX, y: evt.clientY };
     if (evt.deltaY < 0) {
       zoomInDelta(evt.deltaY, cursor);
     } else if (evt.deltaY > 0) {
       zoomOutDelta(evt.deltaY, cursor);
     }
+  };
+
+  const mouseZoom = (evt: any) => {
+    const cursor = { x: evt.clientX, y: evt.clientY };
+    if (evt.deltaY < 0) {
+      zoomInDelta(evt.deltaY, cursor);
+    } else if (evt.deltaY > 0) {
+      zoomOutDelta(evt.deltaY, cursor);
+    }
+  };
+
+  // Throttle The wheel event
+  const throttleZoom = throttle(0, (evt: any) => {
+    if (isTouchpad) {
+      touchpadZoom(evt);
+    } else {
+      mouseZoom(evt);
+    }
   });
-  const throttleWheelRef = useCallback(throttleWheel, []);
+  const throttleZoomRef = useCallback(throttleZoom, [inputType]);
   const onWheelEvent = (ev: any) => {
-    throttleWheelRef(ev);
+    ev.stopPropagation();
+    if (isTouchpad) {
+      if (ev.ctrlKey) {
+        throttleZoomRef(ev);
+      } else {
+        touchpadPan(ev);
+      }
+    } else {
+      throttleZoomRef(ev);
+    }
+  };
+
+  const onTouchDown = (ev: any) => {
+    console.log('Touch Down');
   };
 
   return (
@@ -511,6 +564,7 @@ export function Background(props: BackgroundProps) {
       onDrop={OnDrop}
       onDragOver={OnDragOver}
       onScroll={(evt) => {
+        evt.preventDefault();
         evt.stopPropagation();
       }}
       onWheel={onWheelEvent}
@@ -521,6 +575,7 @@ export function Background(props: BackgroundProps) {
       onPointerCancel={onPointerUp}
       onPointerOut={onPointerUp}
       onPointerLeave={onPointerUp}
+      // Only allow middle mouse button to pan the board
       onMouseDown={(evt) => {
         if (evt.button !== 1) {
           evt.preventDefault();
@@ -530,7 +585,7 @@ export function Background(props: BackgroundProps) {
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {/*Lasso */}
-      {canLasso && <Lasso boardId={props.boardId} disablePointerEvents={appDragging} />}
+      {/* {canLasso && <Lasso boardId={props.boardId} disablePointerEvents={appDragging} />} */}
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
         <Portal>
           <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
