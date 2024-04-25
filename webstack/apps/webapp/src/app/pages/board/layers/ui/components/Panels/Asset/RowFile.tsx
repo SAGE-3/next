@@ -137,7 +137,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         },
       }).then(function (response) {
         return response.json();
-      }).then(function (spec) {
+      }).then(async function (spec) {
         if (spec.metadata && spec.metadata.language_info && spec.metadata.language_info.name !== 'python') {
           toast({
             title: 'This is not a Python notebook. Cannot open in SageCell.',
@@ -152,13 +152,14 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         let allDoc = `From ${file.originalfilename}\n===============\n\n`;
         let haveImages = false;
         let imageY = yDrop - 300;
-        cells.forEach((cell: any, idx: number) => {
+        let idx = 0;
+        for (const cell of cells) {
           if (cell.cell_type === 'code') {
             const sourceCode = (cell.source as []).join('');
             if (sourceCode) {
               allCode += '\n# cell ' + idx + '\n' + sourceCode + '\n';
             }
-            cell.outputs.forEach((o: any, idx: number) => {
+            for (const o of cell.outputs) {
               if (o.output_type === 'display_data') {
                 const str = o.data ? o.data['text/plain'][0] : '';
                 if (str) allCode += `\n# ${str}\n`;
@@ -179,11 +180,14 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
                     dragging: false,
                     pinned: false,
                   };
-                  createApp(setup);
-                  imageY += 620;
+                  const res = await createApp(setup);
+                  if (res.success) {
+                    console.log('App> image created', res.data._id);
+                    imageY += 620;
+                  }
                 }
               }
-            });
+            }
           } else if (cell.cell_type === 'markdown') {
             const doc = (cell.source as []).join('');
             if (doc) {
@@ -192,7 +196,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           } else {
             console.log('Cell> UNKNOWN', cell.cell_type);
           }
-        });
+          idx++;
+        }
         if (allCode) {
           let goodKernel: KernelInfo | undefined;
           if (apiStatus && kernels.length > 0) {
@@ -218,7 +223,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             dragging: false,
             pinned: false,
           };
-          createApp(setup);
+          const res = await createApp(setup);
+          if (res.success) {
+            console.log('App> SageCell created', res.data._id);
+          }
         }
         if (allDoc) {
           const notesX = haveImages ? xDrop + 300 + 600 + 20 + 20 : xDrop + 300 + 20;
@@ -235,7 +243,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             dragging: false,
             pinned: false,
           };
-          createApp(setup);
+          const res = await createApp(setup);
+          if (res.success) {
+            console.log('App> CodeEditor created', res.data._id);
+          }
         }
       });
     }
