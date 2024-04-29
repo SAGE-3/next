@@ -55,9 +55,9 @@ import {
   setupAppForFile,
   useConfigStore,
   useKernelStore,
+  useGroupsStore,
 } from '@sage3/frontend';
-import { getExtension, isPythonNotebook } from '@sage3/shared';
-
+import { getExtension, isPythonNotebook, randomSAGEColor, genId } from '@sage3/shared';
 import { FileEntry, KernelInfo } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppSchema } from '@sage3/applications/schema';
@@ -103,7 +103,8 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
   const scale = useUIStore((state) => state.scale);
   const { apiStatus, kernels } = useKernelStore((state) => state);
-
+  // App groups
+  const addGroup = useGroupsStore((state) => state.add);
 
 
   // Abilities
@@ -148,6 +149,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           return;
         }
         const cells = spec.cells;
+        const newApps = [];
         let allCode = `# From ${file.originalfilename}\n`;
         let allDoc = `From ${file.originalfilename}\n===============\n\n`;
         let haveImages = false;
@@ -183,6 +185,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
                   const res = await createApp(setup);
                   if (res.success) {
                     console.log('App> image created', res.data._id);
+                    newApps.push(res.data._id);
                     imageY += 620;
                   }
                 }
@@ -226,6 +229,7 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           const res = await createApp(setup);
           if (res.success) {
             console.log('App> SageCell created', res.data._id);
+            newApps.push(res.data._id);
           }
         }
         if (allDoc) {
@@ -246,8 +250,12 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           const res = await createApp(setup);
           if (res.success) {
             console.log('App> CodeEditor created', res.data._id);
+            newApps.push(res.data._id);
           }
         }
+
+        console.log('App> newApps', newApps);
+        addGroup("group-" + genId(), randomSAGEColor(), newApps);
       });
     }
   };

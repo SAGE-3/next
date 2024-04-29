@@ -12,9 +12,9 @@ import { Box } from '@chakra-ui/react';
 import { DraggableEvent } from 'react-draggable';
 import { DraggableData, Rnd } from 'react-rnd';
 
-import { useUIStore, useAbility } from '@sage3/frontend';
+import { useUIStore, useAbility, useGroupsStore, useAppStore } from '@sage3/frontend';
 
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, Group } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -37,6 +37,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const boardLocked = useUIStore((state) => state.boardLocked);
   const lassoMode = useUIStore((state) => state.lassoMode);
+  // Groups
+  const apps = useAppStore((state) => state.apps);
+  const groups = useGroupsStore((state) => state.groups);
 
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
@@ -105,6 +108,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
+
+        {/* Groups */}
+        {groups.map((group, index) => {
+          const gapps = apps.filter((a) => group.apps.includes(a._id));
+          return gapps ? <Group key={index} apps={gapps} name={group.name} color={group.color} /> : null;
+        })}
+
       </Rnd>
     </Box>
   );
