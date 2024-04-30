@@ -37,12 +37,19 @@ import Markdown from 'markdown-to-jsx';
 // OpenAI API v4
 import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore, AiAPI } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
+
+// AI model information from the backend
+interface modelInfo {
+  name: string;
+  model: string;
+  maxTokens: number;
+}
 
 // LLAMA2 API
 //  - API: https://huggingface.github.io/text-generation-inference/
@@ -79,6 +86,9 @@ function AppComponent(props: App): JSX.Element {
   const users = useUsersStore((state) => state.users);
   // Configuration information
   const config = useConfigStore((state) => state.config);
+  // Online Models
+  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState<modelInfo>();
 
   const [openai, setOpenai] = useState<OpenAI>();
 
@@ -252,56 +262,88 @@ function AppComponent(props: App): JSX.Element {
         const modelHeaders: Record<string, string> = {
           'Content-Type': 'application/json',
         };
+
+        // Send to backend
+        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat' });
+        console.log("🚀 ~ newMessage ~ backend:", backend)
+        if (backend.success) {
+          const new_text = backend.output || '';
+          setProcessing(false);
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(new_text);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: request,
+            previousA: new_text,
+            messages: [
+              ...s.messages,
+              initialAnswer,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'Geppetto',
+                query: '',
+                response: new_text,
+              },
+            ],
+          });
+        }
+
         // Post the request and handle server-sent events
-        fetchEventSource(modelURL, {
-          method: 'POST',
-          headers: modelHeaders,
-          body: JSON.stringify(modelBody),
-          signal: ctrl.signal,
-          onmessage(msg) {
-            // if the server emits an error message, throw an exception
-            // so it gets handled by the onerror callback below:
-            if (msg.event === 'FatalError') {
-              console.log('LLM> Error', msg.data);
-              setStreamText('');
-              ctrlRef.current = null;
-            } else {
-              const message = JSON.parse(msg.data);
-              if (message.generated_text) {
-                setProcessing(false);
-                // Clear the stream text
-                setStreamText('');
-                ctrlRef.current = null;
-                setPreviousAnswer(message.generated_text);
-                // Add messages
-                updateState(props._id, {
-                  ...s,
-                  previousQ: request,
-                  previousA: message.generated_text,
-                  messages: [
-                    ...s.messages,
-                    initialAnswer,
-                    {
-                      id: genId(),
-                      userId: user._id,
-                      creationId: '',
-                      creationDate: now.epoch + 1,
-                      userName: 'Geppetto',
-                      query: '',
-                      response: message.generated_text,
-                    },
-                  ],
-                });
-              } else {
-                if (message.token.text) {
-                  tempText += message.token.text;
-                  setStreamText(tempText);
-                  goToBottom('auto');
-                }
-              }
-            }
-          },
-        });
+        // fetchEventSource(modelURL, {
+        //   method: 'POST',
+        //   headers: modelHeaders,
+        //   body: JSON.stringify(modelBody),
+        //   signal: ctrl.signal,
+        //   onmessage(msg) {
+        //     // if the server emits an error message, throw an exception
+        //     // so it gets handled by the onerror callback below:
+        //     if (msg.event === 'FatalError') {
+        //       console.log('LLM> Error', msg.data);
+        //       setStreamText('');
+        //       ctrlRef.current = null;
+        //     } else {
+        //       const message = JSON.parse(msg.data);
+        //       if (message.generated_text) {
+        //         setProcessing(false);
+        //         // Clear the stream text
+        //         setStreamText('');
+        //         ctrlRef.current = null;
+        //         setPreviousAnswer(message.generated_text);
+        //         // Add messages
+        //         updateState(props._id, {
+        //           ...s,
+        //           previousQ: request,
+        //           previousA: message.generated_text,
+        //           messages: [
+        //             ...s.messages,
+        //             initialAnswer,
+        //             {
+        //               id: genId(),
+        //               userId: user._id,
+        //               creationId: '',
+        //               creationDate: now.epoch + 1,
+        //               userName: 'Geppetto',
+        //               query: '',
+        //               response: message.generated_text,
+        //             },
+        //           ],
+        //         });
+        //       } else {
+        //         if (message.token.text) {
+        //           tempText += message.token.text;
+        //           setStreamText(tempText);
+        //           goToBottom('auto');
+        //         }
+        //       }
+        //     }
+        //   },
+        // });
       }
     }
 
@@ -356,6 +398,17 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
+
+    async function fetchStatus() {
+      const response = await AiAPI.chat.status();
+      const models = response.onlineModels as modelInfo[];
+      console.log('CHAT> Status', models[0]);
+      setOnlineModels(models);
+      if (response.onlineModels.length > 0) setSelectedModel(models[0]);
+    }
+    fetchStatus();
+
+
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight,

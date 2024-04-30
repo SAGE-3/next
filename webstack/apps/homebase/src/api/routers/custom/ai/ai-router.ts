@@ -17,7 +17,7 @@ import { config } from '../../../../config';
 import { AiStatusResponse, getFileType } from '@sage3/shared';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { AssetsCollection } from '../../../collections';
-import { CodeLlamaModel, OpenAiModel, YoloModel } from './models';
+import { CodeLlamaModel, OpenAiModel, YoloModel, ChatModel } from './models';
 
 // Request Return Type
 export type GenerateResponseType = {
@@ -36,6 +36,47 @@ export function AiRouter(): express.Router {
   const codeLlama = new CodeLlamaModel(config);
   const openai = new OpenAiModel(config);
   const yolo = new YoloModel(config);
+  const chat = new ChatModel(config);
+
+  // Check if the chat models are online
+  router.get('/chat_status', async (req, res) => {
+    // Array of online models
+    const onlineModels = [];
+    // Check Chat
+    const chatHealth = await chat.health();
+    if (chatHealth) {
+      onlineModels.push(chat.info());
+    }
+    // Return the response
+    const responseMessage = { onlineModels } as AiStatusResponse;
+    res.status(200).json(responseMessage);
+  });
+
+  // Post a chat request
+  router.post('/chat_query', async (req, res) => {
+    // Get the request parameters
+    const { input, model } = req.body;
+
+    // Try/catch block to handle errors
+    try {
+      if (model === chat.name) {
+        console.log('🚀 ~ router.post ~ model:', model, input);
+
+        // Query Llama with the input
+        const response = await chat.query(input);
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false } as GenerateResponseType;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false } as GenerateResponseType;
+      res.status(500).json(responseMessage);
+    }
+  });
 
   // Check if the code models are online
   router.get('/code_status', async (req, res) => {

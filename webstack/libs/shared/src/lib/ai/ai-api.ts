@@ -31,5 +31,5 @@ export type AiJSONQueryResponse = {
 };
 
 export type AiStatusResponse = {
-  onlineModels: string[];
+  onlineModels: any[];
 };
