@@ -57,7 +57,6 @@ export class ChatModel extends AiModel {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modelBody),
       });
-      console.log('🚀 ~ ChatModel ~ query ~ response:', response);
       if (response.status == 200) {
         const data = await response.json();
         return {
