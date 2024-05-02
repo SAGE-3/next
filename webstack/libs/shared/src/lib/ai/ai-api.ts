@@ -10,6 +10,7 @@
 export type AiQueryRequest = {
   input: string;
   model: string;
+  max_new_tokens?: number;
 };
 export type AiImageQueryRequest = {
   assetid: string;

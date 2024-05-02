@@ -37,7 +37,7 @@ import Markdown from 'markdown-to-jsx';
 // OpenAI API v4
 import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore, AiAPI } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore, AiAPI, SocketAPI } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -57,7 +57,7 @@ const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
 const LLAMA2_ENDPOINT = '/generate_stream';
 const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
 const LLAMA2_TOKENS = 300;
-const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
 
 // OpenAI API
 let OPENAI_API_KEY = '';
@@ -252,20 +252,11 @@ function AppComponent(props: App): JSX.Element {
           complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
         }
 
-        // URL for the request
-        const modelURL = LLAMA2_URL;
-        // Build the body of the request
-        const modelBody = {
-          inputs: complete_request || request,
-          parameters: { max_new_tokens: LLAMA2_TOKENS },
-        };
-        const modelHeaders: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
+        // Send request to backend
+        const res = await SocketAPI.sendRESTMessage(`/ai/chatting`, 'PUT', { some: 'info' });
+        console.log("🚀 ~ newMessage ~ res:", res);
 
-        // Send to backend
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat' });
-        console.log("🚀 ~ newMessage ~ backend:", backend)
+        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400 });
         if (backend.success) {
           const new_text = backend.output || '';
           setProcessing(false);
@@ -293,6 +284,17 @@ function AppComponent(props: App): JSX.Element {
             ],
           });
         }
+
+        // // URL for the request
+        // const modelURL = LLAMA2_URL;
+        // // Build the body of the request
+        // const modelBody = {
+        //   inputs: complete_request || request,
+        //   parameters: { max_new_tokens: LLAMA2_TOKENS },
+        // };
+        // const modelHeaders: Record<string, string> = {
+        //   'Content-Type': 'application/json',
+        // };
 
         // Post the request and handle server-sent events
         // fetchEventSource(modelURL, {
@@ -408,6 +410,9 @@ function AppComponent(props: App): JSX.Element {
     }
     fetchStatus();
 
+    // const aiSub = SocketAPI.subscribe<App>('/ai', (message) => {
+    //   console.log('AI> Got message', message);
+    // });
 
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({

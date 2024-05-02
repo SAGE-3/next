@@ -6,9 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { EventSource } from 'extended-eventsource';
+
 import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
-
 // Response Types
 import { AiQueryResponse } from '@sage3/shared';
 
@@ -45,11 +46,19 @@ export class ChatModel extends AiModel {
   }
 
   public async query(input: string): Promise<AiQueryResponse> {
+    return {
+      success: false,
+      error_message: `Not implemented: ${input} for ${this.name}`,
+    };
+  }
+
+  public async ask(input: string, max_new_tokens: number): Promise<AiQueryResponse> {
     try {
+      const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
       const modelBody = {
         inputs: input,
         parameters: {
-          max_new_tokens: this._maxTokens,
+          max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
         },
       };
       const response = await fetch(`${this._url}/generate`, {
@@ -76,4 +85,73 @@ export class ChatModel extends AiModel {
       };
     }
   }
+
+  public async asking(input: string, max_new_tokens: number): Promise<AiQueryResponse> {
+    return new Promise((resolve, reject) => {
+      try {
+        const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
+        const modelBody = {
+          inputs: input,
+          parameters: {
+            max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+          },
+        };
+
+        const eventSource = new EventSource(`${this._url}/generate_stream`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(modelBody),
+        });
+
+        eventSource.onopen = () => {
+          console.log('EventSource> Connection opened');
+        };
+
+        eventSource.onmessage = (event: MessageEvent) => {
+          // console.log('onmessage', event, typeof event.data);
+          const message = JSON.parse(event.data);
+          if (message.generated_text) {
+            // console.log('EventSource> Message received:', message.generated_text);
+            eventSource.close();
+            resolve({
+              success: true,
+              output: message.generated_text,
+            });
+          } else {
+            // console.log('EventSource> Token received:', message.token.text);
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('EventSource> Error occurred:', error);
+        };
+      } catch (error) {
+        reject({
+          success: false,
+          error_message: `Failed to query chat model: ${error.message}`,
+        });
+      }
+    });
+  }
+
+  // const response = await fetch(`${this._url}/generate`, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(modelBody),
+  // });
+  // if (response.status == 200) {
+  //   const data = await response.json();
+  //   return {
+  //     success: true,
+  //     output: data.generated_text,
+  //   };
+  // } else {
+  //   return {
+  //     success: false,
+  //     error_message: 'Failed to query chat model.',
+  //   };
+  // }
 }
