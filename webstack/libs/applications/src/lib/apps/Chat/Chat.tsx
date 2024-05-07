@@ -37,7 +37,7 @@ import Markdown from 'markdown-to-jsx';
 // OpenAI API v4
 import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore, AiAPI, SocketAPI } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore, AiAPI } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -148,6 +148,13 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.context]);
 
+  useEffect(() => {
+    if (s.token) {
+      setStreamText(s.token);
+      goToBottom('auto');
+    }
+  }, [s.token]);
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
     // Get server time
@@ -253,10 +260,7 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Send request to backend
-        const res = await SocketAPI.sendRESTMessage(`/ai/chatting`, 'PUT', { some: 'info' });
-        console.log("🚀 ~ newMessage ~ res:", res);
-
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400 });
+        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400, app_id: props._id });
         if (backend.success) {
           const new_text = backend.output || '';
           setProcessing(false);

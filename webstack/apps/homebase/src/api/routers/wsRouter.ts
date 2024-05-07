@@ -11,7 +11,6 @@ import { WebSocket } from 'ws';
 
 // Custom Routes
 import { subscriptionWSRouter } from './custom/subscription';
-import { AIWSRouter } from './custom/ai/ai-ws';
 // Collection Imports
 import {
   AssetsCollection,
@@ -56,7 +55,6 @@ const wsRoutes = {
   '/annotations': (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) =>
     AnnotationsCollection.wsRouter(socket, message, user, cache),
   '/subscription': subscriptionWSRouter,
-  '/ai': AIWSRouter,
 } as {
   [key: string]: (socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache) => Promise<void>;
 };

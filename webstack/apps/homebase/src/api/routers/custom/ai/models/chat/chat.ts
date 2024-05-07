@@ -12,6 +12,7 @@ import { AiModel } from '../AbstractAiModel';
 import { ServerConfiguration } from '@sage3/shared/types';
 // Response Types
 import { AiQueryResponse } from '@sage3/shared';
+import { AppsCollection } from '../../../../../collections';
 
 export class ChatModel extends AiModel {
   private _url: string;
@@ -86,10 +87,12 @@ export class ChatModel extends AiModel {
     }
   }
 
-  public async asking(input: string, max_new_tokens: number): Promise<AiQueryResponse> {
+  public async asking(input: string, max_new_tokens: number, app_id: string, userId: string): Promise<AiQueryResponse> {
     return new Promise((resolve, reject) => {
       try {
         const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
+        let progress = '';
+        let new_tokens = 0;
         const modelBody = {
           inputs: input,
           parameters: {
@@ -114,14 +117,23 @@ export class ChatModel extends AiModel {
           // console.log('onmessage', event, typeof event.data);
           const message = JSON.parse(event.data);
           if (message.generated_text) {
-            // console.log('EventSource> Message received:', message.generated_text);
+            // console.log('EventSource> Full message received:', message.generated_text, app_id);
             eventSource.close();
             resolve({
               success: true,
               output: message.generated_text,
             });
           } else {
-            // console.log('EventSource> Token received:', message.token.text);
+            progress += message.token.text;
+            new_tokens += message.token.text.length;
+            // console.log('EventSource> Token received:', message.token.text, app_id);
+            if (new_tokens > 30) {
+              if (app_id) {
+                console.log('EventSource> Tokens received:', progress, app_id);
+                AppsCollection.update(app_id, userId, { state: { token: progress } });
+                new_tokens = 0;
+              }
+            }
           }
         };
 
