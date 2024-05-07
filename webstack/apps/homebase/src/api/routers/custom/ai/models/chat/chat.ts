@@ -100,6 +100,7 @@ export class ChatModel extends AiModel {
           },
         };
 
+        // Create an EventSource to stream the response
         const eventSource = new EventSource(`${this._url}/generate_stream`, {
           method: 'POST',
           headers: {
@@ -109,15 +110,17 @@ export class ChatModel extends AiModel {
           body: JSON.stringify(modelBody),
         });
 
+        // EventSource event handlers
         eventSource.onopen = () => {
-          console.log('EventSource> Connection opened');
+          // console.log('EventSource> Connection opened');
         };
 
-        eventSource.onmessage = (event: MessageEvent) => {
-          // console.log('onmessage', event, typeof event.data);
+        // Message event handler
+        eventSource.onmessage = async (event: MessageEvent) => {
           const message = JSON.parse(event.data);
           if (message.generated_text) {
-            // console.log('EventSource> Full message received:', message.generated_text, app_id);
+            // @ts-ignore
+            AppsCollection.update(app_id, userId, { 'state.token': message.generated_text });
             eventSource.close();
             resolve({
               success: true,
@@ -126,17 +129,15 @@ export class ChatModel extends AiModel {
           } else {
             progress += message.token.text;
             new_tokens += message.token.text.length;
-            // console.log('EventSource> Token received:', message.token.text, app_id);
-            if (new_tokens > 30) {
-              if (app_id) {
-                console.log('EventSource> Tokens received:', progress, app_id);
-                AppsCollection.update(app_id, userId, { state: { token: progress } });
-                new_tokens = 0;
-              }
+            if (new_tokens > 30 && app_id) {
+              new_tokens = 0;
+              // @ts-ignore
+              AppsCollection.update(app_id, userId, { 'state.token': progress });
             }
           }
         };
 
+        // Error event handler
         eventSource.onerror = (error) => {
           console.error('EventSource> Error occurred:', error);
         };
@@ -148,22 +149,4 @@ export class ChatModel extends AiModel {
       }
     });
   }
-
-  // const response = await fetch(`${this._url}/generate`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(modelBody),
-  // });
-  // if (response.status == 200) {
-  //   const data = await response.json();
-  //   return {
-  //     success: true,
-  //     output: data.generated_text,
-  //   };
-  // } else {
-  //   return {
-  //     success: false,
-  //     error_message: 'Failed to query chat model.',
-  //   };
-  // }
 }
