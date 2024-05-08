@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback, useLayoutEffect, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 import './style.scss';
@@ -50,20 +50,38 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
 
-  const handleClick = useCallback(() => {
-    // timeout to allow button click to fire before hiding menu
-    if (showContextMenu) {
-      // setShowContextMenu(false);
-      setTimeout(() => setShowContextMenu(false));
+  const handleClick = useCallback((event: any) => {
+    if (event.button !== 2) {
+      setShowContextMenu(false);
+      return;
     }
-  }, [showContextMenu]);
-
+    // Check to see if any elements and their parents ids are 'context-menu-container'
+    let node = event.target;
+    let found = false;
+    while (node) {
+      if (node.id === 'context-menu-container') {
+        found = true;
+        break;
+      }
+      node = node.parentElement;
+    }
+    if (found) {
+      return;
+    } else {
+      setShowContextMenu(false);
+    }
+  }, []);
 
   const handleContextMenu = useCallback(
     (event: any) => {
-      event.preventDefault();
+      if (event.button !== 2) {
+        setShowContextMenu(false);
+        return;
+      }
       // Check if right div ID is clicked
       if (event.target.id === props.divId) {
+        event.preventDefault();
+        event.stopPropagation();
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
@@ -76,6 +94,8 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setContextMenuPos({ x, y });
         setContextMenuPosition({ x, y });
         setTimeout(() => setShowContextMenu(true));
+      } else {
+        setShowContextMenu(false);
       }
     },
     [setContextMenuPos, props.divId, setContextMenuPosition]
@@ -83,7 +103,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
-      // console.log('ContextMenuHandler> type', type, event.type, showContextMenu);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });

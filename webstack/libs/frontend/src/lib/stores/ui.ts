@@ -24,6 +24,7 @@ const MaxZoom = 3;
 const WheelStepZoom = 0.008;
 
 type DrawingMode = 'none' | 'pen' | 'eraser';
+type InputType = 'mouse' | 'touch';
 
 interface UIState {
   scale: number;
@@ -31,6 +32,8 @@ interface UIState {
   boardHeight: number;
   gridSize: number;
   zIndex: number;
+  inputType: InputType;
+  toggleInputType: () => void;
 
   boardPosition: { x: number; y: number };
   selectedAppId: string;
@@ -330,6 +333,10 @@ export const useUIStore = create<UIState>()((set, get) => ({
           return { ...state, scale: zoomOutVal };
         }
       });
+  },
+  inputType: 'mouse',
+  toggleInputType: () => {
+    set((state) => ({ ...state, inputType: state.inputType === 'mouse' ? 'touch' : 'mouse' }));
   },
 }));
 

@@ -165,6 +165,7 @@ export function BoardContextMenu(props: ContextProps) {
       bg={panelBackground}
       cursor="auto"
       w={'100%'}
+      id="context-menu-container"
     >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
         <VStack w={'125px'}>

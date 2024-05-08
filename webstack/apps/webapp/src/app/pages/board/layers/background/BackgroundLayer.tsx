@@ -22,9 +22,6 @@ type BackgroundLayerProps = {
 };
 
 export function BackgroundLayer(props: BackgroundLayerProps) {
-  // Abilities
-  const canLasso = useAbility('lasso', 'apps');
-
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -36,7 +33,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const boardLocked = useUIStore((state) => state.boardLocked);
-  const lassoMode = useUIStore((state) => state.lassoMode);
 
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
@@ -93,13 +89,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         enableResizing={false}
         dragHandleClassName={'board-handle'}
         disableDragging={boardLocked}
+        allowAnyClick={true}
       >
         {/* The board's apps */}
         <Apps />
         {/*Whiteboard */}
         <Whiteboard boardId={props.boardId} />
-        {/*Lasso */}
-        {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
+
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
 
