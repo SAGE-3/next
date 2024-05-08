@@ -50,37 +50,11 @@ import { initialValues } from '@sage3/applications/initialValues';
 
 import { HelpModal } from '@sage3/frontend';
 import { Lasso } from './Lasso';
-import { is } from 'date-fns/locale';
 
 type BackgroundProps = {
   roomId: string;
   boardId: string;
 };
-
-// Global vars to cache event state
-const evCache = new Array();
-let prevDiff = 0;
-
-function pushEvent(ev: any) {
-  // Save this event in the target's cache
-  evCache.push(ev);
-}
-
-function removeEvent(ev: any) {
-  // Remove this event from the target's cache
-  const index = evCache.findIndex((cachedEv) => cachedEv.pointerId === ev.pointerId);
-  evCache.splice(index, 1);
-}
-
-function updateEvent(ev: any) {
-  // Find this event in the cache and update its record with this event
-  for (var i = 0; i < evCache.length; i++) {
-    if (ev.pointerId == evCache[i].pointerId) {
-      evCache[i] = ev;
-      break;
-    }
-  }
-}
 
 export function Background(props: BackgroundProps) {
   // display some notifications
@@ -113,6 +87,7 @@ export function Background(props: BackgroundProps) {
 
   // Abilities
   const canDrop = useAbility('upload', 'assets');
+  // Abilities
   const canLasso = useAbility('lasso', 'apps');
 
   // UI Store
@@ -450,53 +425,6 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
 
-  // Functions for zooming with touch events
-  function remove_event(ev: any) {
-    // Remove this event from the target's cache
-  }
-
-  const onPointerDown = (ev: any) => {
-    // console.log('pointer down');
-    pushEvent(ev);
-  };
-
-  const onPointerUp = (ev: any) => {
-    // console.log('pointer up');
-    // Remove this pointer from the cache
-    removeEvent(ev);
-  };
-
-  /**
-   * This function implements a 2-pointer horizontal pinch/zoom gesture.
-   * If the distance between the two pointers has increased (zoom in),
-   * and if the distance is decreasing (zoom out)
-   *
-   * @param ev
-   */
-  const onPointerMove = (ev: any) => {
-    // console.log('pointer move');
-    // Find this event in the cache and update its record with this event
-    updateEvent(ev);
-    console.log('onpointermove', ev.pointerId);
-    // If two pointers are down, check for pinch gestures
-    if (evCache.length == 2) {
-      // Calculate the distance between the two pointers
-      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
-      if (prevDiff > 0) {
-        if (curDiff > prevDiff) {
-          // The distance between the two pointers has increased
-          zoomIn();
-        }
-        if (curDiff < prevDiff) {
-          // The distance between the two pointers has decreased
-          zoomOut();
-        }
-      }
-      // Cache the distance for the next move event
-      prevDiff = curDiff;
-    }
-  };
-
   const touchpadPan = (evt: any) => {
     // DeltaX and DeltaY
     const deltaX = evt.deltaX / scale;
@@ -545,13 +473,10 @@ export function Background(props: BackgroundProps) {
     }
   };
 
-  const onTouchDown = (ev: any) => {
-    console.log('Touch Down');
-  };
-
   return (
     <Box
       className="board-handle"
+      // background="red"
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
@@ -568,24 +493,16 @@ export function Background(props: BackgroundProps) {
         evt.stopPropagation();
       }}
       onWheel={onWheelEvent}
-      // Zoom touch events
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onPointerOut={onPointerUp}
-      onPointerLeave={onPointerUp}
-      // Only allow middle mouse button to pan the board
-      onMouseDown={(evt) => {
-        if (evt.button !== 1) {
-          evt.preventDefault();
-          evt.stopPropagation();
+      zIndex={100000}
+      onMouseDown={(ev) => {
+        if (ev.button !== 1) {
+          ev.preventDefault();
+          ev.stopPropagation();
         }
       }}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-      {/*Lasso */}
-      {/* {canLasso && <Lasso boardId={props.boardId} disablePointerEvents={appDragging} />} */}
+
       <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
         <Portal>
           <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
@@ -619,6 +536,8 @@ export function Background(props: BackgroundProps) {
           </ModalFooter>
         </ModalContent>
       </Modal>
+      {/* Lasso */}
+      {canLasso && <Lasso boardId={props.boardId} />}
     </Box>
   );
 }

@@ -14,7 +14,6 @@ import { Position, Size } from '@sage3/shared/types';
 
 type LassoProps = {
   boardId: string;
-  disablePointerEvents: boolean;
 };
 
 type BoxProps = {
@@ -52,6 +51,7 @@ export function Lasso(props: LassoProps) {
 
   // Get initial position
   const mouseDown = (ev: any) => {
+    console.log('mouse down lasso');
     if (ev.button == 0) {
       setMouseDown(true);
       setZIndex(1000);
@@ -65,6 +65,8 @@ export function Lasso(props: LassoProps) {
       set_mousey(position.y);
       ev.preventDefault();
       ev.stopPropagation();
+    } else {
+      return;
     }
   };
 
@@ -79,26 +81,29 @@ export function Lasso(props: LassoProps) {
       setIsDragging(false);
       ev.preventDefault();
       ev.stopPropagation();
+    } else {
+      return;
     }
   };
 
   // Get last position
   const mouseMove = (ev: any) => {
-    if (ev.button == 0) {
+    if (ev.button == 0 && mousedown) {
       setIsDragging(true);
       const position = uiToBoard(ev.clientX, ev.clientY);
       set_mousex(position.x);
       set_mousey(position.y);
       ev.preventDefault();
       ev.stopPropagation();
+    } else {
+      return;
     }
   };
 
   return (
     <>
-      <div className="canvas-container" style={{ pointerEvents: props.disablePointerEvents || spacebarPressed ? 'none' : 'auto' }}>
+      <div style={{ pointerEvents: spacebarPressed ? 'none' : 'auto' }}>
         <svg
-          className="canvas-layer"
           id="lasso-canvas"
           style={{
             position: 'absolute',
@@ -106,7 +111,7 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            zIndex,
+            // background: 'green',
           }}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}

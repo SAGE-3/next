@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback, useLayoutEffect, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 import './style.scss';
@@ -51,6 +51,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
 
   const handleClick = useCallback((event: any) => {
+    if (event.button !== 2) {
+      setShowContextMenu(false);
+      return;
+    }
     // Check to see if any elements and their parents ids are 'context-menu-container'
     let node = event.target;
     let found = false;
@@ -61,7 +65,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       }
       node = node.parentElement;
     }
-    console.log('handleClick', 'found', found);
     if (found) {
       return;
     } else {
@@ -71,9 +74,14 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
 
   const handleContextMenu = useCallback(
     (event: any) => {
-      event.preventDefault();
+      if (event.button !== 2) {
+        setShowContextMenu(false);
+        return;
+      }
       // Check if right div ID is clicked
       if (event.target.id === props.divId) {
+        event.preventDefault();
+        event.stopPropagation();
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
@@ -86,6 +94,8 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setContextMenuPos({ x, y });
         setContextMenuPosition({ x, y });
         setTimeout(() => setShowContextMenu(true));
+      } else {
+        setShowContextMenu(false);
       }
     },
     [setContextMenuPos, props.divId, setContextMenuPosition]
@@ -106,7 +116,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         }
       }
     });
-    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
@@ -116,7 +126,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     // document.addEventListener('touchmove', ctx.onTouchMove);
 
     return () => {
-      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
       // document.removeEventListener('touchstart', ctx.onTouchStart);
