@@ -97,6 +97,7 @@ export class ChatModel extends AiModel {
           inputs: input,
           parameters: {
             max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+            temperature: 0.3,
           },
         };
 

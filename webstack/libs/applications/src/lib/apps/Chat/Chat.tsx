@@ -49,6 +49,8 @@ interface modelInfo {
 
 // LLAMA2
 const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
+// LLAMA3
+const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 // OpenAI API
 const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
@@ -137,8 +139,10 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.token) {
       setStreamText(s.token);
-      goToBottom('auto');
-    } else setStreamText('');
+    } else {
+      setStreamText('');
+    }
+    goToBottom('auto');
   }, [s.token]);
 
   const newMessage = async (new_input: string) => {
@@ -174,16 +178,44 @@ function AppComponent(props: App): JSX.Element {
       } else {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
-          /*
-            schema for follow up questions:
-            https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            <s>[INST] {{ user_msg_2 }} [/INST]
-          */
-          complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+          if (selectedModel?.model === 'llama2') {
+            /*
+              schema for follow up questions:
+              https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+              {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
+              <s>[INST] {{ user_msg_2 }} [/INST]
+             */
+            complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+          } else {
+            // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+            // LLAMA3 schema for follow up questions:
+            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message_1 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+            // {{ model_answer_1 }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message_2 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                 <|start_header_id|>user<|end_header_id|>
+                 ${previousQuestion}<|eot_id|>
+                 <|start_header_id|>assistant<|end_header_id|>
+                 ${previousAnswer}<|eot_id|>
+                 <|start_header_id|>user<|end_header_id|>
+                 ${request} <|eot_id|>
+                 <|start_header_id|>assistant<|end_header_id|>`;
+          }
         } else {
-          // Test to tweak the system prompt
-          complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+          if (selectedModel?.model === 'llama2') {
+            complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+          } else {
+            // LLAMA3 question
+            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                   <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
+                   <|start_header_id|>assistant<|end_header_id|>`;
+          }
         }
 
         // Send request to backend
@@ -218,11 +250,6 @@ function AppComponent(props: App): JSX.Element {
 
       }
     }
-
-    // setTimeout(() => {
-    //   // Scroll to bottom of chat box smoothly
-    //   goToBottom();
-    // }, 100);
   };
 
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
