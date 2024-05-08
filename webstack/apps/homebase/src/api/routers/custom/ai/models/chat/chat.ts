@@ -92,7 +92,7 @@ export class ChatModel extends AiModel {
       try {
         const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
         let progress = '';
-        let new_tokens = 0;
+        let new_characters = 0;
         const modelBody = {
           inputs: input,
           parameters: {
@@ -120,18 +120,18 @@ export class ChatModel extends AiModel {
         eventSource.onmessage = async (event: MessageEvent) => {
           const message = JSON.parse(event.data);
           if (message.generated_text) {
-            // @ts-ignore
-            AppsCollection.update(app_id, userId, { 'state.token': message.generated_text });
+            // That's the end of the response
             eventSource.close();
             resolve({
               success: true,
               output: message.generated_text,
             });
           } else {
+            // otherwise we are getting tokens
             progress += message.token.text;
-            new_tokens += message.token.text.length;
-            if (new_tokens > 30 && app_id) {
-              new_tokens = 0;
+            new_characters += message.token.text.length;
+            if (new_characters > 30 && app_id) {
+              new_characters = 0;
               // @ts-ignore
               AppsCollection.update(app_id, userId, { 'state.token': progress });
             }

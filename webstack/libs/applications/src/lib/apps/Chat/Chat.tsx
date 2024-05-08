@@ -52,7 +52,7 @@ const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer
 // LLAMA3
 const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 // OpenAI API
-const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+// const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
 /* App component for Chat */
 
@@ -75,7 +75,7 @@ function AppComponent(props: App): JSX.Element {
   // Get presences of users
   const users = useUsersStore((state) => state.users);
   // Online Models
-  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
+  // const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<modelInfo>();
 
   // Input text for query
@@ -173,9 +173,7 @@ function AppComponent(props: App): JSX.Element {
       // let tempText = '';
       // setStreamText(tempText);
 
-      if (isOpenAIQuestion) {
-        console.log('CHAT> OpenAI', request);
-      } else {
+      if (isGeppettoQuestion) {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
           if (selectedModel?.model === 'llama2') {
@@ -211,7 +209,6 @@ function AppComponent(props: App): JSX.Element {
             // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
             // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
             // {{ user_message }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-
             complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
                    <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
                    <|start_header_id|>assistant<|end_header_id|>`;
@@ -301,7 +298,7 @@ function AppComponent(props: App): JSX.Element {
     async function fetchStatus() {
       const response = await AiAPI.chat.status();
       const models = response.onlineModels as modelInfo[];
-      setOnlineModels(models);
+      // setOnlineModels(models);
       if (response.onlineModels.length > 0) setSelectedModel(models[0]);
     }
     fetchStatus();
@@ -595,7 +592,8 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
+            placeholder={"Chat or @G ask Geppetto" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
+            // placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
