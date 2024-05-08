@@ -39,6 +39,10 @@ import {
   Link,
   useMediaQuery,
   HStack,
+  Input,
+  Divider,
+  InputGroup,
+  InputLeftElement,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -133,6 +137,7 @@ export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
+  const [boardSearch, setBoardSearch] = useState<string>('');
 
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
@@ -188,7 +193,6 @@ export function HomePage() {
   const roomsRef = useRef<HTMLDivElement>(null);
   const starredBoardsRef = useRef<HTMLDivElement>(null);
   const recentBoardsRef = useRef<HTMLDivElement>(null);
-
   const joyrideRef = useRef<Joyride>(null);
 
   // Joyride Callback Handler
@@ -423,6 +427,7 @@ export function HomePage() {
       const roomId = selectedRoom ? selectedRoom._id : '';
       updatePresence(userId, { roomId });
     }
+    setBoardSearch('');
   }, [selectedRoom]);
 
   // Function to handle states for when a user clicks on a room
@@ -1115,8 +1120,16 @@ export function HomePage() {
                         },
                       }}
                     >
+                      <InputGroup size="md" width="400px" my="1">
+                        <InputLeftElement pointerEvents="none">
+                          <MdSearch />
+                        </InputLeftElement>
+                        <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                      </InputGroup>
+                      <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
+                        .filter((board) => board.data.name.toLowerCase().includes(boardSearch.toLowerCase()))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <BoardRow
