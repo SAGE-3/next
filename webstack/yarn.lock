@@ -18761,6 +18761,13 @@ y-textarea@^1.0.0:
   resolved "https://registry.yarnpkg.com/y-textarea/-/y-textarea-1.0.0.tgz#54d167d6fc4b19eb69bbd42400e6489c71a27f29"
   integrity sha512-okkx8DbMOjZv7+/7ii++vFrnbujpqL2GRvn5UVi6EOmQlukwQ/XrIybPf2OWyqST1f3oDiL3wbBkVnGUAD3lYw==
 
+y-utility@^0.1.4:
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/y-utility/-/y-utility-0.1.4.tgz#d475644b28b25a4fb40b97b0412e2d115b8d0f6c"
+  integrity sha512-i8HSo2DGRB13PSm9B0hbljPBramKWK2Gi9R+ZCPrstyIx0VJAdcaurGdYTmcu2SBJI9HWcSCW0siSF2SyRa4lg==
+  dependencies:
+    lib0 "^0.2.43"
+
 y-websocket@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/y-websocket/-/y-websocket-2.0.2.tgz#2e7ebfbb213b1a597c2b6a0f986c13e61fa8808c"
