@@ -9354,6 +9354,11 @@ extend@^3.0.2, extend@~3.0.2:
   resolved "https://registry.yarnpkg.com/extend/-/extend-3.0.2.tgz#f8b1136b4071fbd8eb140aff858b1019ec2915fa"
   integrity sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==
 
+extended-eventsource@^1.4.9:
+  version "1.4.9"
+  resolved "https://registry.yarnpkg.com/extended-eventsource/-/extended-eventsource-1.4.9.tgz#d5b644051dd711cb049a82c8288b822b6bc40a7c"
+  integrity sha512-x0SMAw57jEaiBKLQWTatVBZkT/PRuL5hdiEP6s8GKqeQOapBRwnohI6e8zGM0XStolQrQe+L6Wvin8G0UthRbw==
+
 external-editor@^3.0.3:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/external-editor/-/external-editor-3.1.0.tgz#cb03f740befae03ea4d283caed2741a83f335495"
