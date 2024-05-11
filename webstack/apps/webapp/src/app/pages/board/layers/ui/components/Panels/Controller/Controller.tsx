@@ -27,7 +27,7 @@ import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
-import { LuBrainCircuit } from 'react-icons/lu';
+import { IoSparkles } from 'react-icons/io5';
 
 export interface ControllerProps {
   roomId: string;
@@ -175,7 +175,7 @@ export function Controller(props: ControllerProps) {
           onClick={() => handleShowPanel(annotations)}
         />
         <IconButtonPanel
-          icon={<LuBrainCircuit size="32px" />}
+          icon={<IoSparkles size="32px" />}
           description="AI"
           isActive={ai?.show}
           onClick={() => handleShowPanel(ai)}

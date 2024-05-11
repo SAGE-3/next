@@ -70,7 +70,7 @@ export function AIPanel(props: AIPanelProps) {
           isClosable: false,
         });
         // Query AI to summarize the stickies
-        const res = await AiAPI.query({
+        const res = await AiAPI.code.query({
           model: 'openai',
           input: `Summarize the main ideas from the following list of ideas: ${JSON.stringify(textArrOfStickies)}`,
         } as AiQueryRequest);
@@ -149,7 +149,6 @@ export function AIPanel(props: AIPanelProps) {
         <ButtonPanel
           key="Summarize Stickies"
           title="Summarize Stickies"
-          candrag={'false'}
           onClick={() => {
             createSummaryStickie();
           }}

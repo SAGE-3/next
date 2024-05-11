@@ -25,7 +25,7 @@ import {
   ToastId,
 } from '@chakra-ui/react';
 import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu, MdStickyNote2 } from 'react-icons/md';
-import { LuBrainCircuit } from 'react-icons/lu';
+import { IoSparkles } from 'react-icons/io5';
 
 // Debounce updates to the textarea
 // import { debounce } from 'throttle-debounce';
@@ -682,8 +682,8 @@ const GroupedToolbarComponent = (props: { apps: AppGroup; boardId: string; roomI
         style={{ marginRight: 4 }}
       />
       <Tooltip placement="top-start" hasArrow={true} label={'Summarize Selected Stickies'} openDelay={400}>
-        <Button colorScheme="teal" size="xs" marginRight="1" onClick={() => handleSummary()}>
-          <LuBrainCircuit />
+        <Button colorScheme="purple" size="xs" marginRight="1" onClick={() => handleSummary()}>
+          <IoSparkles />
         </Button>
       </Tooltip>
     </>
