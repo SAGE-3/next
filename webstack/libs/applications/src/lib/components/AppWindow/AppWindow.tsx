@@ -392,6 +392,7 @@ export function AppWindow(props: WindowProps) {
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
+        background={background}
       />
 
       {/* The Application */}
