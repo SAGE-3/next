@@ -1129,7 +1129,11 @@ export function HomePage() {
                       <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
-                        .filter((board) => board.data.name.toLowerCase().includes(boardSearch.toLowerCase()))
+                        .filter(
+                          (board) =>
+                            board.data.name.toLowerCase().includes(boardSearch.toLowerCase()) ||
+                            board.data.description.toLowerCase().includes(boardSearch.toLowerCase())
+                        )
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <BoardRow
