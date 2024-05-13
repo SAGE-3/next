@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { ButtonGroup, Button, Tooltip } from '@chakra-ui/react';
+import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
 // TLDraw
@@ -13,7 +13,7 @@ import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
 import { useYjsStore } from './useYjsStore'
 
 // SAGE3
-import { setupApp, useAppStore } from '@sage3/frontend';
+import { setupApp, useAppStore, useUIStore } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -40,7 +40,7 @@ function AppComponent(props: App): JSX.Element {
   const saveEditor = useStore((state) => state.saveEditor);
 
   const store = useYjsStore({ roomId: props._id })
-
+  const scale = useUIStore((state) => state.scale);
   // Save the editor instance to the store
   const onMount = (editor: Editor) => {
     saveEditor(props._id, editor);
@@ -70,10 +70,11 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <div style={{ position: 'fixed', inset: 0, borderRadius: 8, overflow: "hidden" }}>
+      <Box position="fixed" inset={0} borderRadius={8} transform={`scale(${1 / scale})`} transformOrigin={'top left'} overflow="hidden"
+        width={props.data.size.width * scale} height={props.data.size.height * scale}>
         <Tldraw components={components} store={store} onMount={onMount} />
-      </div>
-    </AppWindow>
+      </Box>
+    </AppWindow >
   );
 }
 
