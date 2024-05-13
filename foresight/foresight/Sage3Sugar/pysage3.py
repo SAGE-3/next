@@ -284,6 +284,7 @@ class PySage3:
             app.data.rotation.z = z
         app.send_updates()
 
+        
     def list_assets(self, room_id=None):
         assets = self.s3_comm.get_assets()
         if room_id is not None:
@@ -300,10 +301,28 @@ class PySage3:
             )
         return assets_info
 
+    def get_asset_id(self, file_name):
+        assets = self.list_assets()
+        if assets is not None:
+            for asset in assets:
+                if asset['filename'] == file_name:
+                    return asset['_id']
+        return None
+
+        
     def get_public_url(self, asset_id):
         """Returns the public url for the asset with the given id"""
         return self.s3_comm.format_public_url(asset_id)
 
+    def get_url_by_filename(self, filename):
+        asset_id = self.get_asset_id(filename)
+        if asset_id:
+            return self.get_public_url(asset_id)
+        else:
+            return None
+        
+
+    
     def update_state_attrs(self, app, **kwargs):
         """Updates the state attributes of the given app.
         The attributes to be updated are passed as kwargs"""
