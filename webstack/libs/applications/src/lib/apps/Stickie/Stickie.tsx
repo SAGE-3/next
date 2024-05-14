@@ -285,7 +285,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with username and date
-    const filename = 'stickie-' + dt + '.md';
+    const filename = 'stickie-' + dt + '.txt';
     // Go for download
     downloadFile(txturl, filename);
   };
@@ -421,7 +421,7 @@ function ToolbarComponent(props: App): JSX.Element {
         isOpen={saveIsOpen}
         onClose={saveOnClose}
         onConfirm={handleSave}
-        title="Save Code in Asset Manager"
+        title="Save Note in Asset Manager"
         message="Select a file name:"
         initiaValue={'stickie-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.md'}
         cancelText="Cancel"
