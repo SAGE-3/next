@@ -5,6 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+import { useEffect } from 'react';
 import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
@@ -19,7 +20,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
-import { MdUndo, MdRedo, MdSaveAlt } from 'react-icons/md';
+import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap } from 'react-icons/md';
 import 'tldraw/tldraw.css'
 
 // Zustand store to communicate with toolbar
@@ -36,14 +37,32 @@ const useStore = create<MapStore>()((set) => ({
 /* App component for TLDraw */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-
   const saveEditor = useStore((state) => state.saveEditor);
-
+  const updateState = useAppStore((state) => state.updateState);
   const store = useYjsStore({ roomId: props._id })
   const scale = useUIStore((state) => state.scale);
+  const ed: Editor = useStore((state) => state.ed[props._id]);
+
+  // Fit the editor to the window when the state is true
+  useEffect(() => {
+    if (s.fit) {
+      if (ed) ed.zoomToFit();
+      updateState(props._id, { fit: false });
+    }
+  }, [s.fit]);
+
+  // When zoom changes, fit the editor to the window
+  useEffect(() => {
+    if (ed) ed.zoomToFit();
+  }, [scale]);
+
   // Save the editor instance to the store
   const onMount = (editor: Editor) => {
-    saveEditor(props._id, editor);
+    if (editor) {
+      saveEditor(props._id, editor);
+      editor.zoomToFit();
+      editor.updateInstanceState({ isGridMode: true });
+    }
   };
 
   const components: TLUiComponents = {
@@ -62,7 +81,7 @@ function AppComponent(props: App): JSX.Element {
     // MenuPanel: null,
     // TopPanel: null,
 
-    // SharePanel: NameEditor,
+    SharePanel: null,
     PageMenu: null,
     DebugPanel: null,
     DebugMenu: null,
@@ -70,7 +89,8 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box position="fixed" inset={0} borderRadius={8} transform={`scale(${1 / scale})`} transformOrigin={'top left'} overflow="hidden"
+      <Box position="fixed" inset={0} borderRadius={8} overflow="hidden"
+        transform={`scale(${1 / scale})`} transformOrigin={'top left'}
         width={props.data.size.width * scale} height={props.data.size.height * scale}>
         <Tldraw components={components} store={store} onMount={onMount} />
       </Box>
@@ -83,6 +103,7 @@ function AppComponent(props: App): JSX.Element {
 const ToolbarComponent = (props: App) => {
   const ed: Editor = useStore((state) => state.ed[props._id]);
   const createApp = useAppStore((state) => state.create);
+  const updateState = useAppStore((state) => state.updateState);
 
   const handleUndo = () => {
     ed.undo();
@@ -102,6 +123,9 @@ const ToolbarComponent = (props: App) => {
         { w: size.w, h: size.h }, { assetid: b64Data }));
     });
   };
+  const handleFit = () => {
+    updateState(props._id, { fit: true });
+  };
 
   return (
     <>
@@ -114,6 +138,11 @@ const ToolbarComponent = (props: App) => {
         <Tooltip placement="top-start" hasArrow={true} label={'Redo'} openDelay={400}>
           <Button onClick={() => handleRedo()}>
             <MdRedo />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom to Fit'} openDelay={400}>
+          <Button onClick={() => handleFit()}>
+            <MdZoomInMap />
           </Button>
         </Tooltip>
       </ButtonGroup>

@@ -14,12 +14,12 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  room: z.string(),
+  fit: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  room: '',
+  fit: false,
 };
 
 export const name = 'TLDraw';
