@@ -58,7 +58,7 @@ jobs:
           cd SAGE3-darwin-x64
           zip -y -r auto-update-sage3-darwin-x64.zip SAGE3.app
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: webstack/clients/electron/SAGE3-darwin-x64/auto-update-sage3-darwin-x64.zip
