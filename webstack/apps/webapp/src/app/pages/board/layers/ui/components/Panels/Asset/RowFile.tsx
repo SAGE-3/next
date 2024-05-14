@@ -46,7 +46,6 @@ import {
   humanFileSize,
   downloadFile,
   useUser,
-  useAuth,
   useAppStore,
   useUIStore,
   useCursorBoardPosition,
@@ -55,11 +54,15 @@ import {
   apiUrls,
   setupAppForFile,
   useConfigStore,
+  useKernelStore,
+  useGroupsStore,
 } from '@sage3/frontend';
-import { getExtension } from '@sage3/shared';
+import { getExtension, isPythonNotebook, randomSAGEColor, genId } from '@sage3/shared';
+import { FileEntry, KernelInfo } from '@sage3/shared/types';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppSchema } from '@sage3/applications/schema';
 
 import './menu.scss';
-import { FileEntry } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;
@@ -77,7 +80,7 @@ export type RowFileProps = {
 export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
-  const { auth } = useAuth();
+  // const { auth } = useAuth();
 
   const toast = useToast();
   // Store if the file is selected or not
@@ -98,8 +101,11 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
-
   const scale = useUIStore((state) => state.scale);
+  const { apiStatus, kernels } = useKernelStore((state) => state);
+  // App groups
+  const addGroup = useGroupsStore((state) => state.add);
+
 
   // Abilities
   const canCreateApp = useAbility('create', 'apps');
@@ -113,6 +119,145 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     const modifier = ismac ? e.metaKey : e.ctrlKey;
     clickCB(file, e.shiftKey, modifier);
     if (showMenu) setShowMenu(false);
+  };
+
+  const openNotebookInCells = async (file: FileEntry) => {
+    // Get around  the center of the board
+    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
+    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+
+    // Create the apps
+    if (user) {
+      // Look for the file in the asset store
+      const localurl = '/api/assets/static/' + file.filename;
+      // Get the content of the file
+      fetch(localurl, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }).then(function (response) {
+        return response.json();
+      }).then(async function (spec) {
+        if (spec.metadata && spec.metadata.language_info && spec.metadata.language_info.name !== 'python') {
+          toast({
+            title: 'This is not a Python notebook. Cannot open in SageCell.',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+          return;
+        }
+        const cells = spec.cells;
+        const newApps = [];
+        let allCode = `# From ${file.originalfilename}\n`;
+        let allDoc = `From ${file.originalfilename}\n===============\n\n`;
+        let haveImages = false;
+        let imageY = yDrop - 300;
+        let idx = 0;
+        for (const cell of cells) {
+          if (cell.cell_type === 'code') {
+            const sourceCode = (cell.source as []).join('');
+            if (sourceCode) {
+              allCode += '\n# cell ' + idx + '\n' + sourceCode + '\n';
+            }
+            for (const o of cell.outputs) {
+              if (o.output_type === 'display_data') {
+                const str = o.data ? o.data['text/plain'][0] : '';
+                if (str) allCode += `\n# ${str}\n`;
+                const img = o.data ? o.data['image/png'] : '';
+                if (img) {
+                  haveImages = true;
+                  const imageData = `data:image/png;base64,${img}`;
+                  const setup: AppSchema = {
+                    title: file.originalfilename,
+                    roomId: roomId,
+                    boardId: boardId,
+                    position: { x: xDrop + 300 + 20, y: imageY, z: 0 },
+                    size: { width: 600, height: 600, depth: 0 },
+                    rotation: { x: 0, y: 0, z: 0 },
+                    type: 'ImageViewer',
+                    state: { ...initialValues['ImageViewer'], assetid: imageData },
+                    raised: true,
+                    dragging: false,
+                    pinned: false,
+                  };
+                  const res = await createApp(setup);
+                  if (res.success) {
+                    console.log('App> image created', res.data._id);
+                    newApps.push(res.data._id);
+                    imageY += 620;
+                  }
+                }
+              }
+            }
+          } else if (cell.cell_type === 'markdown') {
+            const doc = (cell.source as []).join('');
+            if (doc) {
+              allDoc += doc + '\n';
+            }
+          } else {
+            console.log('Cell> UNKNOWN', cell.cell_type);
+          }
+          idx++;
+        }
+        if (allCode) {
+          let goodKernel: KernelInfo | undefined;
+          if (apiStatus && kernels.length > 0) {
+            kernels.forEach((kernel) => {
+              if (kernel.name === 'python3' && kernel.board === boardId && !kernel.is_private) {
+                goodKernel = kernel;
+              }
+            });
+          }
+          const setup: AppSchema = {
+            title: file.originalfilename,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: xDrop - 300, y: yDrop - 300, z: 0 },
+            size: { width: 600, height: 600, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'SageCell',
+            state: {
+              ...initialValues['SageCell'], code: allCode, fontSize: 18,
+              kernel: goodKernel ? goodKernel.kernel_id : ''
+            },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          };
+          const res = await createApp(setup);
+          if (res.success) {
+            console.log('App> SageCell created', res.data._id);
+            newApps.push(res.data._id);
+          }
+        }
+        if (allDoc) {
+          const notesX = haveImages ? xDrop + 300 + 600 + 20 + 20 : xDrop + 300 + 20;
+          const setup: AppSchema = {
+            title: file.originalfilename,
+            roomId: roomId,
+            boardId: boardId,
+            position: { x: notesX, y: yDrop - 300, z: 0 },
+            size: { width: 600, height: 600, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'CodeEditor',
+            state: { ...initialValues['CodeEditor'], content: allDoc, fontSize: 18, language: 'markdown' },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          };
+          const res = await createApp(setup);
+          if (res.success) {
+            console.log('App> CodeEditor created', res.data._id);
+            newApps.push(res.data._id);
+          }
+        }
+
+        console.log('App> newApps', newApps);
+        addGroup("group-" + genId(), randomSAGEColor(), newApps);
+      });
+    }
   };
 
   useEffect(() => {
@@ -167,6 +312,10 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
           duration: 3000,
           isClosable: true,
         });
+      }
+    } else if (id === 'cells') {
+      if (isPythonNotebook(file.type) && canCreateApp) {
+        openNotebookInCells(file);
       }
     }
     // deselect file selection
@@ -333,6 +482,9 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
             </li>
             <li className="s3contextmenuitem" id={'del'} onClick={actionClick}>
               Delete File
+            </li>
+            <li className="s3contextmenuitem" id={'cells'} onClick={actionClick}>
+              Open in Cells
             </li>
           </ul>
         </Portal>

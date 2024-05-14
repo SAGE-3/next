@@ -163,6 +163,7 @@ export function Background(props: BackgroundProps) {
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+
     if (!user) return;
 
     if (!canDrop) {
@@ -251,6 +252,7 @@ export function Background(props: BackgroundProps) {
         if (appName) {
           // if a specific app was setup, create it
           const appstatestr = event.dataTransfer.getData('app_state');
+
           if (appstatestr) {
             const appstate = JSON.parse(appstatestr);
             const newState = {
@@ -284,6 +286,7 @@ export function Background(props: BackgroundProps) {
               const batch: AppSchema[] = [];
               let xpos = xdrop;
               for (let i = 0; i < num; i++) {
+                console.log('Opening file', fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId)
                 const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
                 if (res) {
                   batch.push(res);
@@ -498,9 +501,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       // Drag and drop event handlers
       onDrop={OnDrop}
