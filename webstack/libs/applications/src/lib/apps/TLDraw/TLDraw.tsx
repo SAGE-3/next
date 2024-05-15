@@ -11,10 +11,11 @@ import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 import { create } from 'zustand';
 // TLDraw
 import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
+
 import { useYjsStore } from './useYjsStore'
 
 // SAGE3
-import { setupApp, useAppStore, useUIStore } from '@sage3/frontend';
+import { setupApp, useAppStore, useUIStore, useUser } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -42,6 +43,7 @@ function AppComponent(props: App): JSX.Element {
   const store = useYjsStore({ roomId: props._id })
   const scale = useUIStore((state) => state.scale);
   const ed: Editor = useStore((state) => state.ed[props._id]);
+  const { user } = useUser();
 
   // Fit the editor to the window when the state is true
   useEffect(() => {
@@ -51,17 +53,48 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.fit]);
 
-  // When zoom changes, fit the editor to the window
   useEffect(() => {
-    if (ed) ed.zoomToFit();
-  }, [scale]);
+    if (ed) {
+      const myID = ed.user.getId();
+      if (s.follow && s.follow !== myID) {
+        // ed.updateInstanceState({ followingUserId: s.follow });
+        ed.startFollowingUser(s.follow);
+      }
+    }
+  }, [ed, s.follow]);
+
+  // When zoom changes, fit the editor to the window
+  // useEffect(() => {
+  //   if (ed) ed.zoomToFit();
+  // }, [scale]);
+
+  useEffect(() => {
+    if (user && ed) {
+      ed.user.updateUserPreferences({
+        color: user.data.color,
+        name: ""
+        // name: user.data.name,
+      })
+    }
+
+  }, [ed, user]);
 
   // Save the editor instance to the store
   const onMount = (editor: Editor) => {
     if (editor) {
       saveEditor(props._id, editor);
+      editor.setCurrentTool('hand');
       editor.zoomToFit();
       editor.updateInstanceState({ isGridMode: true });
+      // editor.updateInstanceState({ followingUserId: null });
+      editor.stopFollowingUser();
+      const myID = editor.user.getId();
+      if (props._createdBy === user?._id) {
+        updateState(props._id, { follow: myID });
+      }
+      // editor.on('stop-following', () => {
+      //   console.log('Follow> stop');
+      // });
     }
   };
 
@@ -98,9 +131,9 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-
 /* App toolbar component for the app TLDraw */
 const ToolbarComponent = (props: App) => {
+  const s = props.data.state as AppState;
   const ed: Editor = useStore((state) => state.ed[props._id]);
   const createApp = useAppStore((state) => state.create);
   const updateState = useAppStore((state) => state.updateState);
@@ -124,7 +157,14 @@ const ToolbarComponent = (props: App) => {
     });
   };
   const handleFit = () => {
+    if (ed) ed.zoomToFit();
     updateState(props._id, { fit: true });
+    const myID = ed.user.getId();
+    if (s.follow && s.follow !== myID) {
+      console.log('Following', s.follow);
+      // ed.updateInstanceState({ followingUserId: s.follow });
+      ed.startFollowingUser(s.follow);
+    }
   };
 
   return (

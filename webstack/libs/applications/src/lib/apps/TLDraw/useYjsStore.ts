@@ -209,7 +209,8 @@ export function useYjsStore({
         const newMigrations = store.schema.getMigrationsSince(theirSchema);
 
         if (!newMigrations.ok || newMigrations.value.length > 0) {
-          window.alert('The schema has been updated. Please refresh the page.');
+          console.error('TLDraw> Need to refresh');
+          // window.alert('The schema has been updated. Please refresh the page.');
           yDoc.destroy();
         }
       };
@@ -238,8 +239,8 @@ export function useYjsStore({
         });
         if (migrationResult.type === 'error') {
           // if the schema is newer than ours, the user must refresh
-          console.error(migrationResult.reason);
-          window.alert('The schema has been updated. Please refresh the page.');
+          console.error('TLDraw> Need to refresh', migrationResult.reason);
+          // window.alert('The schema has been updated. Please refresh the page.');
           return;
         }
 
