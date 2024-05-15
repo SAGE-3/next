@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 
 // Yjs Imports
@@ -14,7 +14,7 @@ import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
 
 // Utility functions from SAGE3
-import { downloadFile, useAppStore, useHexColor, useYjs, serverTime, YjsRoomConnection, useUser, useUIStore } from '@sage3/frontend';
+import { downloadFile, useAppStore, useHexColor, useYjs, serverTime, YjsRoomConnection, useUser, PasteHandler } from '@sage3/frontend';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -42,6 +42,31 @@ import { debounce } from 'throttle-debounce';
 
 // Store between the app and the toolbar
 import { create } from 'zustand';
+import { Delta } from 'quill/core';
+
+const formats = [
+  'background',
+  'bold',
+  'color',
+  'font',
+  'code',
+  'italic',
+  'link',
+  'size',
+  'strike',
+  'script',
+  'underline',
+  'blockquote',
+  'header',
+  'indent',
+  'list',
+  'align',
+  'direction',
+  'code-block',
+  'formula',
+  // 'image'
+  // 'video'
+];
 
 interface NotepadStore {
   editor: { [key: string]: Quill };
@@ -61,9 +86,6 @@ function AppComponent(props: App): JSX.Element {
   // user
   const { user } = useUser();
 
-  // Block pointer events
-  const blockPointerEvent = useUIStore((state) => state.selectedAppId) !== props._id;
-
   // State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -77,14 +99,11 @@ function AppComponent(props: App): JSX.Element {
 
   // Yjs and Quill State
   const { yApps } = useYjs();
-  const [quill, setQuill] = useState<Quill | null>(null);
 
   // Debounce Updates
-  const debounceUpdate = debounce(1000, () => {
-    if (quill) {
-      const content = quill.getContents();
-      updateState(props._id, { content });
-    }
+  const debounceUpdate = debounce(1000, (quillEditor: Quill) => {
+    const content = quillEditor.getContents();
+    updateState(props._id, { content });
   });
 
   useEffect(() => {
@@ -105,12 +124,12 @@ function AppComponent(props: App): JSX.Element {
           userOnly: true,
         },
       },
-      // scrollingContainer: '#scrolling-container',
       placeholder: 'Start collaborating...',
       theme: 'snow',
+      formats,
     });
+
     // Save the instance for the toolbar
-    setQuill(quill);
     setEditor(props._id, quill);
 
     // Bind with Qull
@@ -119,7 +138,7 @@ function AppComponent(props: App): JSX.Element {
     // Observe changes on the text, if user is source of the change, update sage
     quill.on('text-change', (delta, oldDelta, source) => {
       if (source == 'user' && quill) {
-        debounceUpdate();
+        debounceUpdate(quill);
       }
     });
 
@@ -129,10 +148,7 @@ function AppComponent(props: App): JSX.Element {
 
     // Sync current ydoc with that is saved in the database
     const syncStateWithDatabase = () => {
-      const content = quill.getContents();
-      if (content.ops.length !== s.content.ops.length) {
-        quill.setContents(s.content as any);
-      }
+      quill.setContents(s.content as any);
     };
 
     // If I am the only one here according to Yjs, then sync with database
@@ -143,8 +159,9 @@ function AppComponent(props: App): JSX.Element {
       // Is this app less than 5 seconds old...this feels hacky
       const now = await serverTime();
       const created = props._createdAt;
+      const createdWithin5Seconds = now.epoch - created < 5000;
       // Then we need to sync with database due to Yjs not being able to catch the initial state
-      if (now.epoch - created < 5000) {
+      if (createdWithin5Seconds) {
         // I created this
         syncStateWithDatabase();
       }
