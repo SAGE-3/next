@@ -5,12 +5,13 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
 // TLDraw
 import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
+import { throttle } from 'throttle-debounce';
 
 import { useYjsStore } from './useYjsStore'
 
@@ -22,7 +23,11 @@ import { AppWindow } from '../../components';
 
 // Styling
 import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap } from 'react-icons/md';
+import { RiUserFollowFill } from "react-icons/ri";
 import 'tldraw/tldraw.css'
+
+// Default tick rate is 3 times per second
+const defaultTickRate = 1000 / 3;
 
 // Zustand store to communicate with toolbar
 interface MapStore {
@@ -54,30 +59,48 @@ function AppComponent(props: App): JSX.Element {
   }, [s.fit]);
 
   useEffect(() => {
-    if (ed) {
-      const myID = ed.user.getId();
-      if (s.follow && s.follow !== myID) {
-        // ed.updateInstanceState({ followingUserId: s.follow });
-        ed.startFollowingUser(s.follow);
+    if (ed && user && s.camera) {
+      if (s.follow !== '' && s.follow !== user._id) {
+        ed.setCamera({ x: s.camera.x, y: s.camera.y, z: s.camera.z });
       }
     }
-  }, [ed, s.follow]);
+  }, [ed, s.follow, s.camera?.x, s.camera?.y, s.camera?.z]);
 
   // When zoom changes, fit the editor to the window
-  // useEffect(() => {
-  //   if (ed) ed.zoomToFit();
-  // }, [scale]);
+  useEffect(() => {
+    if (ed) ed.zoomToFit();
+  }, [scale]);
 
   useEffect(() => {
     if (user && ed) {
-      ed.user.updateUserPreferences({
-        color: user.data.color,
-        name: ""
-        // name: user.data.name,
-      })
+      ed.user.updateUserPreferences({ color: user.data.color, name: "" });
     }
 
   }, [ed, user]);
+
+  // Slow down the updates
+  const updateCamera = throttle(defaultTickRate, (x: number, y: number, z: number) => {
+    if (ed) {
+      updateState(props._id, { camera: { x: x, y, z } });
+    }
+  });
+  // Keep the reference
+  const updateCameraRef = useCallback(updateCamera, [ed]);
+
+
+  useEffect(() => {
+    if (!ed) return;
+
+    const cb = ed.sideEffects.registerAfterChangeHandler("camera", (prev, next, source) => {
+      if (s.follow === user?._id) {
+        updateCameraRef(next.x, next.y, next.z);
+        // updateState(props._id, { camera: { x: next.x, y: next.y, z: next.z } });
+      }
+    });
+    return () => {
+      cb();
+    };
+  }, [ed, s.follow, user?._id]);
 
   // Save the editor instance to the store
   const onMount = (editor: Editor) => {
@@ -86,15 +109,7 @@ function AppComponent(props: App): JSX.Element {
       editor.setCurrentTool('hand');
       editor.zoomToFit();
       editor.updateInstanceState({ isGridMode: true });
-      // editor.updateInstanceState({ followingUserId: null });
       editor.stopFollowingUser();
-      const myID = editor.user.getId();
-      if (props._createdBy === user?._id) {
-        updateState(props._id, { follow: myID });
-      }
-      // editor.on('stop-following', () => {
-      //   console.log('Follow> stop');
-      // });
     }
   };
 
@@ -137,6 +152,7 @@ const ToolbarComponent = (props: App) => {
   const ed: Editor = useStore((state) => state.ed[props._id]);
   const createApp = useAppStore((state) => state.create);
   const updateState = useAppStore((state) => state.updateState);
+  const { user } = useUser();
 
   const handleUndo = () => {
     ed.undo();
@@ -156,14 +172,22 @@ const ToolbarComponent = (props: App) => {
         { w: size.w, h: size.h }, { assetid: b64Data }));
     });
   };
+
+  // Fit the editor to the window
   const handleFit = () => {
     if (ed) ed.zoomToFit();
     updateState(props._id, { fit: true });
-    const myID = ed.user.getId();
-    if (s.follow && s.follow !== myID) {
-      console.log('Following', s.follow);
-      // ed.updateInstanceState({ followingUserId: s.follow });
-      ed.startFollowingUser(s.follow);
+  };
+
+  // Follow the user
+  const handleFollow = () => {
+    if (user) {
+      if (s.follow !== '') {
+        updateState(props._id, { follow: '' });
+      } else {
+        const cam = ed.getCamera();
+        updateState(props._id, { follow: user._id, camera: { x: cam.x, y: cam.y, z: cam.z } });
+      }
     }
   };
 
@@ -185,8 +209,12 @@ const ToolbarComponent = (props: App) => {
             <MdZoomInMap />
           </Button>
         </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Follow Me'} openDelay={400}>
+          <Button onClick={() => handleFollow()}>
+            <RiUserFollowFill />
+          </Button>
+        </Tooltip>
       </ButtonGroup>
-
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
         <Tooltip placement="top-start" hasArrow={true} label={'Export Image to Board'} openDelay={400}>
           <Button onClick={() => handleExport()}>

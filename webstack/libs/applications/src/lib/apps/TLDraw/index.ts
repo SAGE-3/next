@@ -16,6 +16,7 @@ import { z } from 'zod';
 export const schema = z.object({
   fit: z.boolean(),
   follow: z.string(),
+  camera: z.object({ x: z.number(), y: z.number(), z: z.number() }).optional(),
 });
 export type state = z.infer<typeof schema>;
 
