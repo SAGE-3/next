@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.0",
-    "electron": "^30.0.6",
+    "electron": "^31.0.0-beta.2",
     "electron-packager": "latest"
   },
   "optionalDependencies": {

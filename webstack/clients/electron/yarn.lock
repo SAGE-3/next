@@ -629,10 +629,10 @@ electron-winstaller@latest:
   optionalDependencies:
     "@electron/windows-sign" "^1.1.2"
 
-electron@^30.0.6:
-  version "30.0.6"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-30.0.6.tgz#9ddea5f68396ecca88ad7c2c466a30fc9c16144b"
-  integrity sha512-PkhEPFdpYcTzjAO3gMHZ+map7g2+xCrMDedo/L1i0ir2BRXvAB93IkTJX497U6Srb/09r2cFt+k20VPNVCdw3Q==
+electron@^31.0.0-beta.2:
+  version "31.0.0-beta.2"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-31.0.0-beta.2.tgz#9d63a558da1d55bd5a87271ac9d1786bf51f9a8c"
+  integrity sha512-lO3y688jtyrYzqb3KcF5YI/b2nsR6MBk+86I1NJTi9MkcyRvnDBMQzdLZePzyZjP9HttklIR+e59unzmZHtecA==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
