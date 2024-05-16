@@ -10,6 +10,8 @@
 export type AiQueryRequest = {
   input: string;
   model: string;
+  max_new_tokens?: number;
+  app_id?: string;
 };
 export type AiImageQueryRequest = {
   assetid: string;
@@ -31,5 +33,5 @@ export type AiJSONQueryResponse = {
 };
 
 export type AiStatusResponse = {
-  onlineModels: string[];
+  onlineModels: any[];
 };
