@@ -371,6 +371,12 @@ function buildSageMenu(window, commander) {
           },
         },
         {
+          label: 'SAGE3 Newsletter',
+          click: function () {
+            shell.openExternal('https://sage3.curated.co');
+          },
+        },
+        {
           label: 'Keyboard Shortcuts',
           click: function () {
             shell.openExternal('https://sage-3.github.io/docs/Shortcuts');
