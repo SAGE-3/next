@@ -15,12 +15,15 @@ import { SandboxedJob } from 'bullmq';
 
 // import { Canvas } from 'skia-canvas';
 import { createCanvas } from 'canvas';
+
 // Image processing tool
 import * as sharp from 'sharp';
 
 // load legacy pdf build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
+// const pdfjs = require('pdfjs-dist/build/pdf.min.js');
+import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
+
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
@@ -63,7 +66,7 @@ async function pdfProcessing(job: any) {
 
     // Pass the data to the PDF.js library
     try {
-      pdfTask = pdfjs.getDocument({
+      pdfTask = getDocument({
         data,
         canvasFactory,
         cMapUrl: CMAP_URL,
