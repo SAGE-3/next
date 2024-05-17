@@ -75,6 +75,28 @@ export function AiRouter(): express.Router {
     }
   });
 
+  router.post('/chat', async ({ body }, res) => {
+    // Get the request parameters
+    const { input, model, max_new_tokens } = body;
+    // Try/catch block to handle errors
+    try {
+      if (model === chat.name) {
+        // Query Llama with the input
+        const response = await chat.ask(input, max_new_tokens);
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false } as GenerateResponseType;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false } as GenerateResponseType;
+      res.status(500).json(responseMessage);
+    }
+  });
+
   // Check if the code models are online
   router.get('/code_status', async (req, res) => {
     // Array of online models
