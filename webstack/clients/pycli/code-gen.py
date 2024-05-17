@@ -5,8 +5,8 @@ import os
 headers = {"Authorization": f"Bearer {os.getenv('TOKEN')}"}
 httpx_client = httpx.Client(timeout=None)
 
-# server = "https://minim1.evl.uic.edu"
-server = "http://localhost:4200"
+server = "https://minim1.evl.uic.edu"
+# server = "http://localhost:4200"
 
 CODE_LLAMA_SYSTEM_PROMPT = "\nYou are an expert programmer that helps to write python code based on the user request. Don't be too verbose. Return only commented code.\n"
 

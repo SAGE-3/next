@@ -5,14 +5,14 @@ import os
 headers = {"Authorization": f"Bearer {os.getenv('TOKEN')}"}
 httpx_client = httpx.Client(timeout=None)
 
-# server = "https://minim1.evl.uic.edu"
-server = "http://localhost:4200"
-route = "/api/ai/chat_status"
-url = f"{server}{route}"
+server = "https://minim1.evl.uic.edu"
+# server = "http://localhost:4200"
 
 LLAMA3_SYSTEM_PROMPT = "You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question."
 
 #### GET SOME ONLINE MODELS
+route = "/api/ai/chat_status"
+url = f"{server}{route}"
 chat_model = None
 r = httpx_client.get(url, headers=headers)
 if r.status_code == 200:
