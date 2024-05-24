@@ -363,6 +363,29 @@ export function HomePage() {
     return isMember;
   };
 
+  const boardSearchFilter = (board: Board) => {
+    // This is not the official fuzzy search algorithm that uses levenshtein distance, just a cheap imitation to achieve fuzzy effects.
+    // "Hello World" -> regex("h.*e.*l.*l.*o.*w.*o.*r.*l.*d")
+    const imitationFuzzySearch = (text: string, query: string): boolean => {
+      const normalizedText = text.toLowerCase();
+      const normalizedQuery = query.toLowerCase();
+
+      return normalizedQuery.split(' ').every((word) => {
+        // For cleaned words: specifically we do not want the user to input .*,(abc),etc. that could affect the regex.
+        const cleanedWord = word.replace(/[^a-z0-9]/g, '');
+        // Consider to split by space and include space in cleaned words pertaining to time complexity
+        const pattern = cleanedWord.split('').join('.*');
+        const regex = new RegExp(pattern);
+  
+        return regex.test(normalizedText);
+      });
+    };
+
+    return (
+      imitationFuzzySearch(board.data.name + " " + board.data.description, boardSearch)
+    );
+  }
+
   // Check to see if the user is the owner but not a member in weird cases
   useEffect(() => {
     if (roomsFetched) {
@@ -1129,11 +1152,7 @@ export function HomePage() {
                       <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
-                        .filter(
-                          (board) =>
-                            board.data.name.toLowerCase().includes(boardSearch.toLowerCase()) ||
-                            board.data.description.toLowerCase().includes(boardSearch.toLowerCase())
-                        )
+                        .filter((board) => boardSearchFilter(board))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <BoardRow
