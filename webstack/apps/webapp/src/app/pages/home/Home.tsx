@@ -486,6 +486,12 @@ export function HomePage() {
     }
   }
 
+  // Clear the filters only when selecting from navigation sidebar
+  function handleBoardClickFromSubMenu(board: Board) {
+    setBoardSearch("");
+    handleBoardClick(board);
+  }
+
   // Copy a sharable link to the user's os clipboard
   const handleCopyLink = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -933,7 +939,7 @@ export function HomePage() {
                               height="28px"
                               backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
                               _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                              onClick={() => handleBoardClick(board)}
+                              onClick={() => handleBoardClickFromSubMenu(board)}
                               onDoubleClick={() => handleBoardDoubleClick(board)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
@@ -982,7 +988,7 @@ export function HomePage() {
                             pl="48px"
                             height="28px"
                             backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            onClick={() => handleBoardClick(board)}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
                             onDoubleClick={() => handleBoardDoubleClick(board)}
                             _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                           >
