@@ -139,6 +139,9 @@ export function HomePage() {
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
 
+  // Selected Board Ref
+  const scrollToBoardRef = useRef<null | HTMLDivElement>(null)
+
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
@@ -452,6 +455,19 @@ export function HomePage() {
     }
     setBoardSearch('');
   }, [selectedRoom]);
+
+  // Scroll selected board into view
+  useEffect(() => {
+    if (scrollToBoardRef?.current) {
+      const rect = scrollToBoardRef.current.getBoundingClientRect();
+      if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))) {
+        scrollToBoardRef.current.scrollIntoView({ 
+          behavior: 'smooth',
+          block: rect.top < 350 ? 'start' : 'end' 
+        })
+      }
+    }
+  }, [selectedBoard]);
 
   // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
@@ -1161,13 +1177,17 @@ export function HomePage() {
                         .filter((board) => boardSearchFilter(board))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
-                          <BoardRow
+                          <Box
                             key={board._id}
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
-                          />
+                            ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                            <BoardRow
+                              key={board._id}
+                              board={board}
+                              onClick={() => handleBoardClick(board)}
+                              selected={selectedBoard ? selectedBoard._id === board._id : false}
+                              usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                            />
+                          </Box>
                         ))}
                     </VStack>
                     <Box width="800px" minHeight="200px" px="2">
