@@ -1,3 +1,6 @@
+#TODO: Validatate the keys read form the json files in the prompts are actually
+# valid keys for FewShotPromptTemplate or FewShotPromptTemplate class
+
 import os
 import json
 import importlib
@@ -46,8 +49,6 @@ class PromptLoader:
             )
             kwargs['examples'] = examples
             kwargs['example_prompt'] = examples_prompt
-
-        print(kwargs['suffix'])
 
         return FewShotPromptTemplate(**kwargs)
 

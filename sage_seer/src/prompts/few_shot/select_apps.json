@@ -1,5 +1,5 @@
 {
-  "prompt": "Given the list of items below, identify the app_ids (UUID4) of the items that match the user's query defined below. If none of the items match the query, return an empty list.\n\n{format_instructions}\n\nExample:",
+  "prefix": "Given the list of items below, identify the app_ids (UUID4) of the items that match the user's query defined below. If none of the items match the query, return an empty list.\n\n{format_instructions}\n\nExample:",
   "input_variables": [
     "originalItems",
     "query"
