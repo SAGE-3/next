@@ -190,7 +190,12 @@ class PySage3:
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         """Delete not yet supported through API"""
-        pass
+        with open("/tmp/log.out", "w") as out_file:
+            out_file.write(f"Deleting {doc} \n")
+        room_id = doc['data']['roomId']
+        board_id = doc['data']['boardId']
+        smartbit_id = doc["_id"]
+        del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
 
     def __process_messages(self, ws, msg):
         message = json.loads(msg)
