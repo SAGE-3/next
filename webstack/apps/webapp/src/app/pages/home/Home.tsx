@@ -373,7 +373,6 @@ export function HomePage() {
       const normalizedText = text.toLowerCase();
       const normalizedQuery = query.toLowerCase();
 
-      console.log("------------")
       return normalizedQuery.split(' ').every((word) => {
         // For cleaned words: specifically we do not want the user to input .*,(abc),etc. that could affect the regex.
         const cleanedWord = word.replace(/[^a-z0-9]/g, '');
