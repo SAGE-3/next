@@ -368,18 +368,17 @@ export function HomePage() {
 
   const boardSearchFilter = (board: Board) => {
     // This is not the official fuzzy search algorithm that uses levenshtein distance, just a cheap imitation to achieve fuzzy effects.
-    // "Hello World" -> regex("h.*e.*l.*l.*o.*w.*o.*r.*l.*d")
+    // "Hello World" -> regex("h.*e.*l.*l.*o") && regex("w.*o.*r.*l.*d")
     const imitationFuzzySearch = (text: string, query: string): boolean => {
       const normalizedText = text.toLowerCase();
       const normalizedQuery = query.toLowerCase();
 
+      console.log("------------")
       return normalizedQuery.split(' ').every((word) => {
         // For cleaned words: specifically we do not want the user to input .*,(abc),etc. that could affect the regex.
         const cleanedWord = word.replace(/[^a-z0-9]/g, '');
-        // Consider to split by space and include space in cleaned words pertaining to time complexity
         const pattern = cleanedWord.split('').join('.*');
         const regex = new RegExp(pattern);
-  
         return regex.test(normalizedText);
       });
     };
