@@ -6,15 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip } from '@chakra-ui/react';
-import { MdLock, MdStar, MdExitToApp, MdStarOutline } from 'react-icons/md';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast } from '@chakra-ui/react';
+import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdSettings, MdLink } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser } from '@sage3/frontend';
+import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
 
 export function BoardRow(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: number }) {
   const { user, saveBoard, removeBoard } = useUser();
 
+  // Toast to inform user that they are not a member of a room
+  const toast = useToast();
+
+  const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
+  const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
   // const borderColorGray = useColorModeValue('gray.300', 'gray.700');
@@ -38,8 +43,31 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
     }
   };
 
+  const handleSettings = (event: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+    editBoardModalOnOpen();
+  };
+
+  // Copy a sharable link to the user's os clipboard
+  const handleCopyLink = (e: React.MouseEvent, board: Board) => {
+    e.stopPropagation();
+    const roomId = board.data.roomId;
+    const boardId = board._id;
+    // make it a sage3:// protocol link
+    copyBoardUrlToClipboard(roomId, boardId);
+    toast({
+      title: 'Success',
+      description: `Sharable Board link copied to clipboard.`,
+      duration: 3000,
+      isClosable: true,
+      status: 'success',
+    });
+  };
+
   // Disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
 
   // Enter Board
   const handleEnterBoard = (ev: any) => {
@@ -47,9 +75,15 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
     onOpen();
   };
 
+  // prevent propagation of double click (i.e., favorite, unfavorite in quick succession)
+  const handleBlockDoubleClick = (event: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
     <Box
-      background={linearBGColor}
+      background={props.selected ? backgroundColor : linearBGColor}
       p={props.selected ? '2' : '1'}
       px="2"
       display="flex"
@@ -86,13 +120,14 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           </Tooltip>
         )}
 
+{props.usersPresent > 0 &&
         <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
           <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
             {props.usersPresent}
           </Text>
-        </Tooltip>
+        </Tooltip>}
 
-        <Tooltip placement="top" hasArrow={true} label={'Favorite this board'} openDelay={400} ml="1">
+        <Tooltip placement="top" hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400} ml="1">
           <IconButton
             size="sm"
             variant={'ghost'}
@@ -100,9 +135,37 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
             aria-label="enter-board"
             fontSize="xl"
             onClick={handleFavorite}
+            onDoubleClick={handleBlockDoubleClick}
             icon={isFavorite ? <MdStar /> : <MdStarOutline />}
           ></IconButton>
         </Tooltip>
+
+        <Tooltip placement="top" hasArrow={true} label={'Copy this board\'s link'} openDelay={400} ml="1">
+          <IconButton
+            size="sm"
+            variant={'ghost'}
+            colorScheme={boardColor}
+            aria-label="enter-board"
+            fontSize="xl"
+            onClick={(e) => {handleCopyLink(e, props.board)}}
+            onDoubleClick={handleBlockDoubleClick}
+            icon={<MdLink />}
+          ></IconButton>
+        </Tooltip>
+
+        {props.board.data.ownerId === user?._id &&
+        <Tooltip placement="top" hasArrow={true} label={'Edit this board'} openDelay={400} ml="1">
+          <IconButton
+            size="sm"
+            variant={'ghost'}
+            colorScheme={boardColor}
+            aria-label="enter-board"
+            fontSize="xl"
+            onClick={handleSettings}
+            onDoubleClick={handleBlockDoubleClick}
+            icon={<MdSettings/>}
+          ></IconButton>
+        </Tooltip>}
 
         <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
           <IconButton
@@ -116,6 +179,13 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           ></IconButton>
         </Tooltip>
       </Box>
+
+      <EditBoardModal
+        isOpen={editBoardModalIsOpen}
+        onOpen={editBoardModalOnOpen}
+        onClose={editBoardModalOnClose}
+        board={props.board}
+      ></EditBoardModal>
     </Box>
   );
 }

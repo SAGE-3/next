@@ -451,7 +451,7 @@ export function HomePage() {
         });
       }
     }
-  }, [selectedBoard]);
+  }, [scrollToBoardRef?.current]);
 
   // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
@@ -1136,9 +1136,9 @@ export function HomePage() {
                   <Flex gap="4" flexDirection="column">
                     <Flex align="center" gap="2" justify="flex-start">
                       <IconButton
-                        aria-label="Add"
+                        aria-label={boardViewLayout}
                         icon={boardViewLayout === "list" ? <MdList/>:<MdGridView/>}
-                        colorScheme="blue"
+                        colorScheme="green"
                         onClick={() => {setBoardViewLayout(boardViewLayout === "list" ? "grid" : "list")}}
                       />
                       <InputGroup size="md" width="350px" my="1">
