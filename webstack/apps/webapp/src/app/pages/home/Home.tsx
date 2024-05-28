@@ -1301,7 +1301,7 @@ export function HomePage() {
                     </Box>
                   </Box>
                 </TabPanel>
-                <TabPanel>
+                <TabPanel px="0">
                   <Box display="flex" width="800px">
                     <VStack
                       gap="3"
