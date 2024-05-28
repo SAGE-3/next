@@ -1130,8 +1130,14 @@ export function HomePage() {
 
               <TabPanels>
                 <TabPanel>
-                  <Box display="flex" gap="4" overflow="hidden">
-
+                  <InputGroup size="md" width="400px" my="1">
+                    <InputLeftElement pointerEvents="none">
+                      <MdSearch />
+                    </InputLeftElement>
+                    <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                  </InputGroup>
+                  <Divider pt="4"/>
+                  <Box display="flex" gap="4" pt="4" overflow="hidden">
 
                   {boardViewLayout == "grid" && (
                   <Flex
@@ -1141,7 +1147,7 @@ export function HomePage() {
                     flexWrap="wrap"
                     justifyContent="left"
                     style={{ 
-                      maxHeight: 'calc(100vh - 316px)',
+                      maxHeight: 'calc(100vh - 360px)',
                       width:  '100%' 
                     }}
                     margin="0 auto"
@@ -1158,20 +1164,9 @@ export function HomePage() {
                       },
                     }}
                     >
-                      <InputGroup size="md" width="400px" my="1">
-                        <InputLeftElement pointerEvents="none">
-                          <MdSearch />
-                        </InputLeftElement>
-                        <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                      </InputGroup>
-                      <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
-                        .filter(
-                          (board) =>
-                            board.data.name.toLowerCase().includes(boardSearch.toLowerCase()) ||
-                            board.data.description.toLowerCase().includes(boardSearch.toLowerCase())
-                        )
+                        .filter((board) => boardSearchFilter(board))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
                           <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
@@ -1191,7 +1186,7 @@ export function HomePage() {
                     <VStack
                       gap="3"
                       pr="2"
-                      style={{ height: 'calc(100svh - 270px)' }}
+                      style={{ height: 'calc(100svh - 360px)' }}
                       overflowY="scroll"
                       minWidth="420px"
                       css={{
@@ -1205,13 +1200,6 @@ export function HomePage() {
                         },
                       }}
                     >
-                      <InputGroup size="md" width="400px" my="1">
-                        <InputLeftElement pointerEvents="none">
-                          <MdSearch />
-                        </InputLeftElement>
-                        <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                      </InputGroup>
-                      <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
                         .filter((board) => boardSearchFilter(board))
