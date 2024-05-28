@@ -443,10 +443,10 @@ export function HomePage() {
   useEffect(() => {
     if (scrollToBoardRef?.current) {
       const rect = scrollToBoardRef.current.getBoundingClientRect();
-      if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))) {
+      if (!(rect.top >= 250 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) - 100)) {
         scrollToBoardRef.current.scrollIntoView({
           behavior: 'smooth',
-          block: rect.top < 350 ? 'start' : 'end',
+          block: rect.top < 250 ? 'start' : 'end',
         });
       }
     }
@@ -1139,7 +1139,6 @@ export function HomePage() {
                     pr="2"
                     display="flex"
                     flexWrap="wrap"
-                    // alignItems="center"
                     justifyContent="left"
                     style={{ 
                       maxHeight: 'calc(100vh - 316px)',
@@ -1175,13 +1174,15 @@ export function HomePage() {
                         )
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
-                          <BoardCard
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
-                          />
+                          <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                            <BoardCard
+                              board={board}
+                              onClick={() => handleBoardClick(board)}
+                              // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                              selected={selectedBoard ? selectedBoard._id === board._id : false}
+                              usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                            />
+                          </Box>
                         ))}
                     </Flex>)}
 
