@@ -1130,7 +1130,7 @@ export function HomePage() {
               </TabList>
 
               <TabPanels>
-                <TabPanel>
+                <TabPanel px="0">
                   <Box display="flex" gap="4" overflow="hidden">
 
                   <Flex gap="4" flexDirection="column">
@@ -1138,7 +1138,8 @@ export function HomePage() {
                       <IconButton
                         aria-label={boardViewLayout}
                         icon={boardViewLayout === "list" ? <MdList/>:<MdGridView/>}
-                        colorScheme="green"
+                        colorScheme="teal"
+                        variant="outline"
                         onClick={() => {setBoardViewLayout(boardViewLayout === "list" ? "grid" : "list")}}
                       />
                       <InputGroup size="md" width="350px" my="1">
