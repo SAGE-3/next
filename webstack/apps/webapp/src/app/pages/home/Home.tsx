@@ -54,7 +54,7 @@ import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
-import { SAGE3Ability, generateReadableID } from '@sage3/shared';
+import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
 import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
@@ -140,7 +140,7 @@ export function HomePage() {
   const [boardSearch, setBoardSearch] = useState<string>('');
 
   // Selected Board Ref
-  const scrollToBoardRef = useRef<null | HTMLDivElement>(null)
+  const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
 
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
@@ -367,25 +367,8 @@ export function HomePage() {
   };
 
   const boardSearchFilter = (board: Board) => {
-    // This is not the official fuzzy search algorithm that uses levenshtein distance, just a cheap imitation to achieve fuzzy effects.
-    // "Hello World" -> regex("h.*e.*l.*l.*o") && regex("w.*o.*r.*l.*d")
-    const imitationFuzzySearch = (text: string, query: string): boolean => {
-      const normalizedText = text.toLowerCase();
-      const normalizedQuery = query.toLowerCase();
-
-      return normalizedQuery.split(' ').every((word) => {
-        // For cleaned words: specifically we do not want the user to input .*,(abc),etc. that could affect the regex.
-        const cleanedWord = word.replace(/[^a-z0-9]/g, '');
-        const pattern = cleanedWord.split('').join('.*');
-        const regex = new RegExp(pattern);
-        return regex.test(normalizedText);
-      });
-    };
-
-    return (
-      imitationFuzzySearch(board.data.name + " " + board.data.description, boardSearch)
-    );
-  }
+    return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
 
   // Check to see if the user is the owner but not a member in weird cases
   useEffect(() => {
@@ -459,10 +442,10 @@ export function HomePage() {
     if (scrollToBoardRef?.current) {
       const rect = scrollToBoardRef.current.getBoundingClientRect();
       if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))) {
-        scrollToBoardRef.current.scrollIntoView({ 
+        scrollToBoardRef.current.scrollIntoView({
           behavior: 'smooth',
-          block: rect.top < 350 ? 'start' : 'end' 
-        })
+          block: rect.top < 350 ? 'start' : 'end',
+        });
       }
     }
   }, [selectedBoard]);
@@ -502,7 +485,7 @@ export function HomePage() {
 
   // Clear the filters only when selecting from navigation sidebar
   function handleBoardClickFromSubMenu(board: Board) {
-    setBoardSearch("");
+    setBoardSearch('');
     handleBoardClick(board);
   }
 
@@ -1175,9 +1158,7 @@ export function HomePage() {
                         .filter((board) => boardSearchFilter(board))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
-                          <Box
-                            key={board._id}
-                            ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                          <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                             <BoardRow
                               key={board._id}
                               board={board}
