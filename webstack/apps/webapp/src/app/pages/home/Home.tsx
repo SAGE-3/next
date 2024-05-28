@@ -54,7 +54,7 @@ import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
-import { SAGE3Ability, generateReadableID } from '@sage3/shared';
+import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
 import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
@@ -138,6 +138,9 @@ export function HomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+
+  // Selected Board Ref
+  const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
 
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
@@ -363,6 +366,10 @@ export function HomePage() {
     return isMember;
   };
 
+  const boardSearchFilter = (board: Board) => {
+    return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
+
   // Check to see if the user is the owner but not a member in weird cases
   useEffect(() => {
     if (roomsFetched) {
@@ -430,6 +437,19 @@ export function HomePage() {
     setBoardSearch('');
   }, [selectedRoom]);
 
+  // Scroll selected board into view
+  useEffect(() => {
+    if (scrollToBoardRef?.current) {
+      const rect = scrollToBoardRef.current.getBoundingClientRect();
+      if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight))) {
+        scrollToBoardRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: rect.top < 350 ? 'start' : 'end',
+        });
+      }
+    }
+  }, [selectedBoard]);
+
   // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
     if (room) {
@@ -461,6 +481,12 @@ export function HomePage() {
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
     }
+  }
+
+  // Clear the filters only when selecting from navigation sidebar
+  function handleBoardClickFromSubMenu(board: Board) {
+    setBoardSearch('');
+    handleBoardClick(board);
   }
 
   // Copy a sharable link to the user's os clipboard
@@ -910,7 +936,7 @@ export function HomePage() {
                               height="28px"
                               backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
                               _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                              onClick={() => handleBoardClick(board)}
+                              onClick={() => handleBoardClickFromSubMenu(board)}
                               onDoubleClick={() => handleBoardDoubleClick(board)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
@@ -959,7 +985,7 @@ export function HomePage() {
                             pl="48px"
                             height="28px"
                             backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            onClick={() => handleBoardClick(board)}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
                             onDoubleClick={() => handleBoardDoubleClick(board)}
                             _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                           >
@@ -1129,20 +1155,18 @@ export function HomePage() {
                       <Divider />
                       {boards
                         .filter((board) => board.data.roomId === selectedRoom?._id)
-                        .filter(
-                          (board) =>
-                            board.data.name.toLowerCase().includes(boardSearch.toLowerCase()) ||
-                            board.data.description.toLowerCase().includes(boardSearch.toLowerCase())
-                        )
+                        .filter((board) => boardSearchFilter(board))
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((board) => (
-                          <BoardRow
-                            key={board._id}
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
-                          />
+                          <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                            <BoardRow
+                              key={board._id}
+                              board={board}
+                              onClick={() => handleBoardClick(board)}
+                              selected={selectedBoard ? selectedBoard._id === board._id : false}
+                              usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                            />
+                          </Box>
                         ))}
                     </VStack>
                     <Box width="800px" minHeight="200px" px="2">
