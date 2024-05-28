@@ -16,6 +16,7 @@
 # TODO prevent apps updates on fields that were touched?
 import uuid
 import json
+import copy
 from typing import List
 from foresight.board import Board
 from foresight.room import Room
@@ -65,7 +66,6 @@ class PySage3:
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
-            print(f"I am here and app_info is {app_info}")
 
             self.__handle_create("APPS", app_info)
 
@@ -129,18 +129,34 @@ class PySage3:
             info = res.json()
             if info["success"]:
                 alls = info["data"]
-                tags = []
+                tags = {}
                 for a in alls:
                     # print(a)
-                    tags.append(
-                        {"id": a["data"]["app_id"], "labels": a["data"]["labels"]}
-                    )
+                    tags[a["data"]["app_id"]] = a["data"]["labels"]
                 return tags
             else:
                 return []
         except Exception as e:
             print(f"Error during getting tags {e}")
             return []
+
+    def __remove_keys_from_dict__(self, app_dict, keys_to_remove):
+        def _remove_keys_from_dict(d, keys_to_remove):
+            if isinstance(d, dict):
+                for key in list(d.keys()):  # Use list() to avoid 'dictionary changed size during iteration' error
+                    if key in keys_to_remove:
+                        del d[key]
+                    else:
+                        _remove_keys_from_dict(d[key], keys_to_remove)
+            elif isinstance(d, list):
+                for item in d:
+                    _remove_keys_from_dict(item, keys_to_remove)
+
+        # Create a deep copy of the input dictionary
+        app_dict_copy = copy.deepcopy(app_dict)
+        # Remove keys from the copied dictionary
+        _remove_keys_from_dict(app_dict_copy, keys_to_remove)
+        return app_dict_copy
 
     def delete_app(self, app_id):
         try:
@@ -373,17 +389,19 @@ class PySage3:
     def get_app(self, app_id: str = None) -> dict:
         return self.s3_comm.get_app(app_id)
 
-    def get_apps(self, room_id: str = None, board_id: str = None, add_tags=False) -> List[dict]:
+    def get_apps(self, room_id: str = None, board_id: str = None, add_tags=False, filter_tags=None) -> List[dict]:
         all_apps = self.s3_comm.get_apps(room_id, board_id)
         if add_tags:
             all_tags = self.get_alltags()
             for app in all_apps:
-                if app['app_id'] in all_tags:
-                    app['tags'] = all_tags[app['app_id']]['labels']
+                if app['_id'] in all_tags:
+                    app['tags'] = all_tags[app['_id']]
                 else:
                     app['tags'] = []
 
-            all_apps = {x['app_id']: x for x in all_apps}
+            all_apps = {x['_id']: x for x in all_apps}
+        if filter_tags:
+            all_apps = self.__remove_keys_from_dict__(all_apps, filter_tags)
 
         return all_apps
 
@@ -414,18 +432,12 @@ class PySage3:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
+        # TODO: add option add_tags for the sake of consistency
+        #   The get_apps does take that param and adds tags
+        # TODO: fix the the return above (return sys error/)
+
 
         smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
-        if add_tags:
-            all_tags = get_alltags()
-        #     all_apps = [remove_keys_from_dict(x[1].dict(), keys_to_remove) for x in list(cb.smartbits)]
-        #     for app in all_apps:
-        #         if app['app_id'] in all_tags:
-        #             app['tags'] = all_tags[app['app_id']]['labels']
-        #         else:
-        #             app['tags'] = []
-        #
-        #     all_apps = {x['app_id']: x for x in all_apps}
 
         return smartbits
 
