@@ -24,6 +24,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
+
 # TODO import functions explicitely below
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
@@ -65,8 +66,7 @@ class PySage3:
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
-            print(f"I am here and app_info is {app_info}")
-
+            # print(f"I am here and app_info is {app_info}")
             self.__handle_create("APPS", app_info)
 
     def create_app(self, room_id, board_id, app_type, state, app=None):
@@ -196,8 +196,8 @@ class PySage3:
         """Delete not yet supported through API"""
         with open("/tmp/log.out", "w") as out_file:
             out_file.write(f"Deleting {doc} \n")
-        room_id = doc['data']['roomId']
-        board_id = doc['data']['boardId']
+        room_id = doc["data"]["roomId"]
+        board_id = doc["data"]["boardId"]
         smartbit_id = doc["_id"]
         del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
 
@@ -293,7 +293,6 @@ class PySage3:
             app.data.rotation.z = z
         app.send_updates()
 
-        
     def list_assets(self, room_id=None):
         assets = self.s3_comm.get_assets()
         if room_id is not None:
@@ -314,11 +313,10 @@ class PySage3:
         assets = self.list_assets()
         if assets is not None:
             for asset in assets:
-                if asset['filename'] == file_name:
-                    return asset['_id']
+                if asset["filename"] == file_name:
+                    return asset["_id"]
         return None
 
-        
     def get_public_url(self, asset_id):
         """Returns the public url for the asset with the given id"""
         return self.s3_comm.format_public_url(asset_id)
@@ -329,9 +327,7 @@ class PySage3:
             return self.get_public_url(asset_id)
         else:
             return None
-        
 
-    
     def update_state_attrs(self, app, **kwargs):
         """Updates the state attributes of the given app.
         The attributes to be updated are passed as kwargs"""
@@ -373,17 +369,19 @@ class PySage3:
     def get_app(self, app_id: str = None) -> dict:
         return self.s3_comm.get_app(app_id)
 
-    def get_apps(self, room_id: str = None, board_id: str = None, add_tags=False) -> List[dict]:
+    def get_apps(
+        self, room_id: str = None, board_id: str = None, add_tags=False
+    ) -> List[dict]:
         all_apps = self.s3_comm.get_apps(room_id, board_id)
         if add_tags:
             all_tags = self.get_alltags()
             for app in all_apps:
-                if app['app_id'] in all_tags:
-                    app['tags'] = all_tags[app['app_id']]['labels']
+                if app["app_id"] in all_tags:
+                    app["tags"] = all_tags[app["app_id"]]["labels"]
                 else:
-                    app['tags'] = []
+                    app["tags"] = []
 
-            all_apps = {x['app_id']: x for x in all_apps}
+            all_apps = {x["app_id"]: x for x in all_apps}
 
         return all_apps
 
@@ -409,8 +407,9 @@ class PySage3:
     #     all_apps = {x['app_id']: x for x in all_apps}
     #     return all_apps
 
-    def get_smartbits(self, room_id: str = None, board_id: str = None,
-                      add_tags = False) -> dict:
+    def get_smartbits(
+        self, room_id: str = None, board_id: str = None, add_tags=False
+    ) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
