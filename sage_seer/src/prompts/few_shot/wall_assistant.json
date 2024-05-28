@@ -1,4 +1,5 @@
 {
+  "description": "ADD DESCRIPTION",
   "prompt": "Translate the following English text to French: {text}",
   "examples": [
     {
