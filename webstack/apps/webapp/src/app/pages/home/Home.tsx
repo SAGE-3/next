@@ -43,6 +43,7 @@ import {
   Divider,
   InputGroup,
   InputLeftElement,
+  Flex,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -81,7 +82,7 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardPreview } from './components';
 
 /**
  * Home page for SAGE3
@@ -137,6 +138,7 @@ export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
+  const [boardViewLayout, setBoardViewLayout] = useState<"list" | "grid">("grid");
   const [boardSearch, setBoardSearch] = useState<string>('');
 
   // Selected Board Ref
@@ -1129,6 +1131,62 @@ export function HomePage() {
               <TabPanels>
                 <TabPanel>
                   <Box display="flex" gap="4" overflow="hidden">
+
+
+                  {boardViewLayout == "grid" && (
+                  <Flex
+                    gap="3"
+                    pr="2"
+                    display="flex"
+                    flexWrap="wrap"
+                    // alignItems="center"
+                    justifyContent="left"
+                    style={{ 
+                      maxHeight: 'calc(100vh - 316px)',
+                      width:  '100%' 
+                    }}
+                    margin="0 auto"
+                    overflowY="scroll"
+                    minWidth="420px"
+                    css={{
+                      '&::-webkit-scrollbar': {
+                        background: 'transparent',
+                        width: '5px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: scrollBarColor,
+                        borderRadius: '48px',
+                      },
+                    }}
+                    >
+                      <InputGroup size="md" width="400px" my="1">
+                        <InputLeftElement pointerEvents="none">
+                          <MdSearch />
+                        </InputLeftElement>
+                        <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                      </InputGroup>
+                      <Divider />
+                      {boards
+                        .filter((board) => board.data.roomId === selectedRoom?._id)
+                        .filter(
+                          (board) =>
+                            board.data.name.toLowerCase().includes(boardSearch.toLowerCase()) ||
+                            board.data.description.toLowerCase().includes(boardSearch.toLowerCase())
+                        )
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((board) => (
+                          <BoardCard
+                            board={board}
+                            onClick={() => handleBoardClick(board)}
+                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                            selected={selectedBoard ? selectedBoard._id === board._id : false}
+                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                          />
+                        ))}
+                    </Flex>)}
+
+
+                    {boardViewLayout == "list" && (
                     <VStack
                       gap="3"
                       pr="2"
@@ -1169,7 +1227,10 @@ export function HomePage() {
                           </Box>
                         ))}
                     </VStack>
-                    <Box width="800px" minHeight="200px" px="2">
+                    )}
+
+
+                    <Box width="auto" minHeight="200px" px="2">
                       {selectedBoard && (
                         <VStack gap="0" align="stretch">
                           <Text fontSize="3xl" fontWeight="bold">
