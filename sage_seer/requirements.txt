@@ -1,2 +1,5 @@
+networkx
 langchain_openai
 langchain
+rectpack
+graphviz

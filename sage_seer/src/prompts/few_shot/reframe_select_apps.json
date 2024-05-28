@@ -1,5 +1,5 @@
 {
-  "description": "Reframes a query to state what need to be selected. E.g., can you delete all the stickies -> select all stickies",
+  "description": "This prompt reframes a query to state what need to be selected. E.g., can you delete all the stickies -> select all stickies",
   "prefix": "You are a meta-agent that needs to instruct a specialized agent to select the items to which a\nquery applies in a new updated_query. The new_updated query serves to identify the items which are first loaded.\nA second agent then completes the desired action.\n\n{format_instructions}\n\nExamples:",
   "input_variables": [
     "query"

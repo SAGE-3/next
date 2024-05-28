@@ -16,6 +16,7 @@
 # TODO prevent apps updates on fields that were touched?
 import uuid
 import json
+from typing import List
 from foresight.board import Board
 from foresight.room import Room
 from foresight.smartbitfactory import SmartBitFactory
@@ -23,6 +24,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
+# TODO import functions explicitely below
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
 
@@ -63,6 +65,8 @@ class PySage3:
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
+            print(f"I am here and app_info is {app_info}")
+
             self.__handle_create("APPS", app_info)
 
     def create_app(self, room_id, board_id, app_type, state, app=None):
@@ -369,8 +373,19 @@ class PySage3:
     def get_app(self, app_id: str = None) -> dict:
         return self.s3_comm.get_app(app_id)
 
-    def get_apps(self, room_id: str = None, board_id: str = None) -> List[dict]:
-        return self.s3_comm.get_apps(room_id, board_id)
+    def get_apps(self, room_id: str = None, board_id: str = None, add_tags=False) -> List[dict]:
+        all_apps = self.s3_comm.get_apps(room_id, board_id)
+        if add_tags:
+            all_tags = self.get_alltags()
+            for app in all_apps:
+                if app['app_id'] in all_tags:
+                    app['tags'] = all_tags[app['app_id']]['labels']
+                else:
+                    app['tags'] = []
+
+            all_apps = {x['app_id']: x for x in all_apps}
+
+        return all_apps
 
     def get_apps_by_room(self, room_id: str = None) -> List[dict]:
         if room_id is None:
@@ -382,11 +397,36 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-    def get_smartbits(self, room_id: str = None, board_id: str = None) -> dict:
+    # def format_smartbits_with_tags():
+    #     all_tags = get_alltags()
+    #     all_apps = [remove_keys_from_dict(x[1].dict(), keys_to_remove) for x in list(cb.smartbits)]
+    #     for app in all_apps:
+    #         if app['app_id'] in all_tags:
+    #             app['tags'] = all_tags[app['app_id']]['labels']
+    #         else:
+    #             app['tags'] = []
+    #
+    #     all_apps = {x['app_id']: x for x in all_apps}
+    #     return all_apps
+
+    def get_smartbits(self, room_id: str = None, board_id: str = None,
+                      add_tags = False) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
+
         smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
+        if add_tags:
+            all_tags = get_alltags()
+        #     all_apps = [remove_keys_from_dict(x[1].dict(), keys_to_remove) for x in list(cb.smartbits)]
+        #     for app in all_apps:
+        #         if app['app_id'] in all_tags:
+        #             app['tags'] = all_tags[app['app_id']]['labels']
+        #         else:
+        #             app['tags'] = []
+        #
+        #     all_apps = {x['app_id']: x for x in all_apps}
+
         return smartbits
 
     # def get_smartbits_by_ids(self, app_ids: list, room_id: str = None, board_id: str = None) -> list:

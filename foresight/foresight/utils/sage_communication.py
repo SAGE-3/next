@@ -50,6 +50,7 @@ class SageCommunication(Borg):
             "send_batch_update": "/api/apps/",
             "create_app": "/api/apps/",
             "get_assets": "/api/assets/",
+            "get_static_content": "/api/assets/static/",
             "upload_file": "/api/assets/upload",
             "get_time": "/api/time",
             "get_configuration": "/api/configuration",
@@ -114,6 +115,17 @@ class SageCommunication(Borg):
             data=payload,
         )
         return r
+
+    def get_all_smartbits_with_tags(self):
+        all_tags = self.get_alltags()
+        all_apps = self.get_apps()
+        for app in all_apps:
+            if app['app_id'] in all_tags:
+                app['tags'] = all_tags[app['app_id']]['labels']
+            else:
+                app['tags'] = []
+        all_apps = {x['app_id']: x for x in all_apps}
+        return all_apps
 
     def get_alltags(self):
         """
@@ -259,3 +271,14 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["roomId"] == room_id]
 
         return data
+
+    def get_pdf_text(self, asset_url):
+        """return the text associated with a pdf file"""
+        file_name = asset_url.split("/")[-1].split(".")[0] + "-text.json"
+        r = self.httpx_client.get(
+            self.conf[self.prod_type]["web_server"] + self.routes["get_static_asset"] + file_name,
+            headers=self.__headers,
+        )
+        if r.is_success:
+            return r.json()
+        return None
