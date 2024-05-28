@@ -1230,7 +1230,7 @@ export function HomePage() {
                       )}
                     </Flex>
 
-                    <Box width="auto" minHeight="200px" px="2">
+                    {/* <Box width="auto" minHeight="200px" px="2">
                       {selectedBoard && (
                         <VStack gap="0" align="stretch">
                           <Text fontSize="3xl" fontWeight="bold">
@@ -1298,7 +1298,7 @@ export function HomePage() {
                           </Box>
                         </VStack>
                       )}
-                    </Box>
+                    </Box> */}
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
