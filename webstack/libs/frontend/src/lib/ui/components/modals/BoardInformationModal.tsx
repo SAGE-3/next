@@ -16,6 +16,7 @@ import {
   ModalBody,
   Text,
   Button,
+  Box,
 } from '@chakra-ui/react';
 
 import { Board } from '@sage3/shared/types';
@@ -51,23 +52,23 @@ export function BoardInformationModal(props: BoardInformationProps): JSX.Element
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Board Information</ModalHeader>
-        <ModalBody>
-          {/* fontWeight={'bold'} */}
-          <Text fontSize="lg" mb="2">
-            Name: {name}
-          </Text>
-          <Text fontSize="lg" mb="2">
-            Description: {description}
-          </Text>
-          <Text fontSize="lg" mb="2">
-            Board ID: {code}
-          </Text>
-          <Text fontSize="lg" mb="2">
-            Created by {owner}
-          </Text>
-          <Text fontSize="lg" mb="2">
-            Created on {creationDate}
-          </Text>
+        <ModalBody px={8} pb={8}>
+          <Box display="flex" flexDir="row" justifyContent="space-evenly">
+            <Box display="flex" flexDir="column" textAlign={'left'} width="55%">
+              <Box fontWeight={'bold'}>Name</Box>
+              <Box fontWeight={'bold'}>Description</Box>
+              <Box fontWeight={'bold'}>Board ID</Box>
+              <Box fontWeight={'bold'}>Created by</Box>
+              <Box fontWeight={'bold'}>Created on</Box>
+            </Box>
+            <Box display="flex" flexDir="column" textAlign={'left'} width="70%">
+              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">{name}</Box>
+              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" >{description}</Box>
+              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" >{code}</Box>
+              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" >{owner}</Box>
+              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" >{creationDate}</Box>
+            </Box>
+          </Box>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="green" size="sm" mr={3} onClick={props.onClose}>
