@@ -1186,7 +1186,7 @@ export function HomePage() {
                                 onClick={() => handleBoardClick(board)}
                                 // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                 selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                                usersPresent={presences.filter((p) => p.data.boardId === board._id)}
                               />
                             </Box>
                           ))}
