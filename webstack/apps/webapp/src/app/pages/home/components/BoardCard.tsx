@@ -137,6 +137,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
               <UserPresenceIcons 
                 usersPresent={props.usersPresent} 
                 maxUsersDisplayed={5}
+                anonymousNames={props.board.data.isPrivate}
                 overflow="hidden"
                 width={370}
                 height={35}
@@ -148,7 +149,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
 
         <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose}/>
 
-        <Box display="flex" flexDir="column" pl="1" width="190px">
+        <Box display="flex" flexDir="column" pl="1" width="220px">
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
             {props.board.data.name}
           </Box>
@@ -158,13 +159,6 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
         </Box>
 
         <Box display="flex" alignItems={'center'}>
-          {props.board.data.isPrivate && (
-            <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
-              <Box>
-                <Icon verticalAlign={'text-top'} color={borderColor} fontSize="xl" as={MdLock} mr="1"/>
-              </Box>
-            </Tooltip>
-          )}
 
           {/* {props.usersPresent > 0 &&
           <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
