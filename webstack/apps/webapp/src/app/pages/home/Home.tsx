@@ -937,14 +937,12 @@ export function HomePage() {
                       .filter(boardActiveFilter)
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .sort((a, b) => {
+                        // Sorted by alpha then user count
                         const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
                         const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
                         return userCountB - userCountA;
                       })
                       .map((board) => {
-                        // const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                        // const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                        // const userCountColor = userCount > 0 ? board.data.color : inactiveGray
                         return (
                           <BoardSidebarRow
                             key={'tooltip_active' + board._id}
@@ -1003,13 +1001,11 @@ export function HomePage() {
                 <AccordionPanel p={0}>
                   <VStack align="stretch" gap="0">
                     {boards.filter(recentBoardsFilter).sort((boardA, boardB) => {
+                      // Sort by most recent
                       const indexOfA = recentBoards.indexOf(boardA._id);
                       const indexOfB = recentBoards.indexOf(boardB._id);
                       return indexOfA - indexOfB;
                     }).map((board) => {
-                      // const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                      // const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                      // const userCountColor = userCount > 0 ? board.data.color : inactiveGray
                       return (
                         <BoardSidebarRow
                           key={'tooltip_recent' + board._id}
@@ -1019,40 +1015,6 @@ export function HomePage() {
                           onDoubleClick={() => handleBoardDoubleClick(board)}
                         />
                       );
-                    {/* {boards.filter(recentBoardsFilter).map((board) => {
-                      const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                      const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                      return (
-                        <Tooltip
-                          key={'tooltip_recent' + board._id}
-                          openDelay={400}
-                          hasArrow
-                          placement="top"
-                          label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
-                        >
-                          <Box
-                            key={board._id}
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            onClick={() => handleBoardClickFromSubMenu(board)}
-                            onDoubleClick={() => handleBoardDoubleClick(board)}
-                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                          >
-                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                              <Text fontSize="md">{board.data.name}</Text>
-                            </Box>
-                            <Box pr="5" display="flex" alignItems="center">
-                              <Text fontSize="sm">{userCount}</Text>
-                              <MdPerson></MdPerson>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      ); */}
                     })}
                     {boards.filter(recentBoardsFilter).length > 0 && (
                       <Box
