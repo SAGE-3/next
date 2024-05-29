@@ -9,7 +9,7 @@
 import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast, Avatar, AvatarBadge, AvatarGroup } from '@chakra-ui/react';
 import { MdLock, MdStar, MdExitToApp, MdLink, MdStarOutline, MdSettings, MdInfo } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser, useUsersStore, copyBoardUrlToClipboard, EditBoardModal } from '@sage3/frontend';
+import { EnterBoardModal, useHexColor, useUser, useUsersStore, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 import { Board, Presence } from '@sage3/shared/types';
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
@@ -57,6 +57,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const handleInformation = (event: any) => {
     event.preventDefault();
     event.stopPropagation();
+    boardInformationModalOnOpen();
   };
 
   // Copy a sharable link to the user's os clipboard
@@ -78,6 +79,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   // Disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
+  const { isOpen: boardInformationModalIsOpen, onOpen: boardInformationModalOnOpen, onClose: boardInformationModalOnClose } = useDisclosure();
 
   // Enter Board
   const handleEnterBoard = (ev: any) => {
@@ -100,149 +102,156 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   };
 
   return (
-    <Box
-      background={props.selected ? backgroundColor : linearBGColor}
-      p={props.selected ? '2' : '1'}
-      px="2"
-      display="grid"
-      gridTemplateAreas="'preview preview' 'name options'"
-      gridTemplateColumns="1fr auto"
-      justifyContent={'space-between'}
-      alignItems={'center'}
-      onClick={() => props.onClick(props.board)}
-      borderRadius="md"
-      boxSizing="border-box"
-      width="400px"
-      height="300px"
-      border={`solid  ${props.selected ? `2px ${borderColor}` : '1px gray'}`}
-      // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
-      _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
-      transition={'all 0.1s ease-in-out'}
-      onDoubleClick={handleEnterBoard}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <Box gridArea="preview">
-        <Box display="flex">
-          <Box
-            overflow="absolute"
-            height={0}
-            width="100%"
-            zIndex={1}
-            transform={'translate(5px, 180px)'}
-          >
-            <UserPresenceIcons 
-              usersPresent={props.usersPresent} 
-              maxUsersDisplayed={5}
-              overflow="hidden"
-              width={370}
-              height={35}
-            />
+    <>
+      <Box
+        background={props.selected ? backgroundColor : linearBGColor}
+        p={props.selected ? '2' : '1'}
+        px="2"
+        display="grid"
+        gridTemplateAreas="'preview preview' 'name options'"
+        gridTemplateColumns="1fr auto"
+        justifyContent={'space-between'}
+        alignItems={'center'}
+        onClick={() => props.onClick(props.board)}
+        borderRadius="md"
+        boxSizing="border-box"
+        width="400px"
+        height="300px"
+        border={`solid  ${props.selected ? `2px ${borderColor}` : '1px gray'}`}
+        // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
+        _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
+        transition={'all 0.1s ease-in-out'}
+        onDoubleClick={handleEnterBoard}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <Box gridArea="preview">
+          <Box display="flex">
+            <Box
+              overflow="absolute"
+              height={0}
+              width="100%"
+              zIndex={1}
+              transform={'translate(5px, 180px)'}
+            >
+              <UserPresenceIcons 
+                usersPresent={props.usersPresent} 
+                maxUsersDisplayed={5}
+                overflow="hidden"
+                width={370}
+                height={35}
+              />
+            </Box>
+          </Box>
+          <BoardPreview board={props.board} width={380} height={220}/>
+        </Box>
+
+        <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose}/>
+
+        <Box display="flex" flexDir="column" pl="1" width="190px">
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+            {props.board.data.name}
+          </Box>
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
+            {props.board.data.description}
           </Box>
         </Box>
-        <BoardPreview board={props.board} width={380} height={220}/>
-      </Box>
 
-      <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose}/>
+        <Box display="flex" alignItems={'center'}>
+          {props.board.data.isPrivate && (
+            <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
+              <Box>
+                <Icon verticalAlign={'text-top'} color={borderColor} fontSize="xl" as={MdLock} mr="1"/>
+              </Box>
+            </Tooltip>
+          )}
 
-      <Box display="flex" flexDir="column" pl="1" width="190px">
-        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
-          {props.board.data.name}
-        </Box>
-        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs">
-          {props.board.data.description}
-        </Box>
-      </Box>
+          {/* {props.usersPresent > 0 &&
+          <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
+            <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
+              {props.usersPresent}
+            </Text>
+          </Tooltip>} */}
 
-      <Box display="flex" alignItems={'center'}>
-        {props.board.data.isPrivate && (
-          <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
-            <Box>
-              <Icon verticalAlign={'text-top'} color={borderColor} fontSize="xl" as={MdLock} mr="1"/>
-            </Box>
+          <Tooltip placement="top" hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400} ml="1">
+            <IconButton
+              size="sm"
+              variant={'ghost'}
+              colorScheme={boardColor}
+              aria-label="enter-board"
+              fontSize="xl"
+              onClick={handleFavorite}
+              onDoubleClick={handleBlockDoubleClick}
+              icon={isFavorite ? <MdStar /> : <MdStarOutline />}
+            ></IconButton>
           </Tooltip>
-        )}
 
-        {/* {props.usersPresent > 0 &&
-        <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
-          <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
-            {props.usersPresent}
-          </Text>
-        </Tooltip>} */}
+          <Tooltip placement="top" hasArrow={true} label={'Copy this board\'s link'} openDelay={400} ml="1">
+            <IconButton
+              size="sm"
+              variant={'ghost'}
+              colorScheme={boardColor}
+              // opacity={isHovered ? 1 : 0}
+              aria-label="enter-board"
+              fontSize="xl"
+              onClick={(e) => {handleCopyLink(e, props.board)}}
+              onDoubleClick={handleBlockDoubleClick}
+              icon={<MdLink />}
+            ></IconButton>
+          </Tooltip>
 
-        <Tooltip placement="top" hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400} ml="1">
-          <IconButton
-            size="sm"
-            variant={'ghost'}
-            colorScheme={boardColor}
-            aria-label="enter-board"
-            fontSize="xl"
-            onClick={handleFavorite}
-            onDoubleClick={handleBlockDoubleClick}
-            icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-          ></IconButton>
-        </Tooltip>
+          {props.board.data.ownerId === user?._id &&
+          <Tooltip placement="top" hasArrow={true} label={'Edit this board'} openDelay={400} ml="1">
+            <IconButton
+              size="sm"
+              variant={'ghost'}
+              colorScheme={boardColor}
+              aria-label="enter-board"
+              fontSize="xl"
+              onClick={handleSettings}
+              onDoubleClick={handleBlockDoubleClick}
+              icon={<MdSettings/>}
+            ></IconButton>
+          </Tooltip>}
 
-        <Tooltip placement="top" hasArrow={true} label={'Copy this board\'s link'} openDelay={400} ml="1">
-          <IconButton
-            size="sm"
-            variant={'ghost'}
-            colorScheme={boardColor}
-            // opacity={isHovered ? 1 : 0}
-            aria-label="enter-board"
-            fontSize="xl"
-            onClick={(e) => {handleCopyLink(e, props.board)}}
-            onDoubleClick={handleBlockDoubleClick}
-            icon={<MdLink />}
-          ></IconButton>
-        </Tooltip>
+          <Tooltip placement="top" hasArrow={true} label={'More Information'} openDelay={400} ml="1">
+            <IconButton
+              size="sm"
+              variant={'ghost'}
+              colorScheme={boardColor}
+              aria-label="enter-board"
+              fontSize="xl"
+              onClick={handleInformation}
+              onDoubleClick={handleBlockDoubleClick}
+              icon={<MdInfo/>}
+            ></IconButton>
+          </Tooltip>
 
-        {props.board.data.ownerId === user?._id &&
-        <Tooltip placement="top" hasArrow={true} label={'Edit this board'} openDelay={400} ml="1">
-          <IconButton
-            size="sm"
-            variant={'ghost'}
-            colorScheme={boardColor}
-            aria-label="enter-board"
-            fontSize="xl"
-            onClick={handleSettings}
-            onDoubleClick={handleBlockDoubleClick}
-            icon={<MdSettings/>}
-          ></IconButton>
-        </Tooltip>}
-
-        <Tooltip placement="top" hasArrow={true} label={'More Information'} openDelay={400} ml="1">
-          <IconButton
-            size="sm"
-            variant={'ghost'}
-            colorScheme={boardColor}
-            aria-label="enter-board"
-            fontSize="xl"
-            onClick={handleInformation}
-            onDoubleClick={handleBlockDoubleClick}
-            icon={<MdInfo/>}
-          ></IconButton>
-        </Tooltip>
-
-        <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
-          <IconButton
-            size="sm"
-            variant={'ghost'}
-            colorScheme={boardColor}
-            aria-label="enter-board"
-            fontSize="xl"
-            onClick={handleEnterBoard}
-            icon={<MdExitToApp />}
-          ></IconButton>
-        </Tooltip>
+          <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
+            <IconButton
+              size="sm"
+              variant={'ghost'}
+              colorScheme={boardColor}
+              aria-label="enter-board"
+              fontSize="xl"
+              onClick={handleEnterBoard}
+              icon={<MdExitToApp />}
+            ></IconButton>
+          </Tooltip>
+        </Box>
       </Box>
-
       <EditBoardModal
         isOpen={editBoardModalIsOpen}
         onOpen={editBoardModalOnOpen}
         onClose={editBoardModalOnClose}
         board={props.board}
       ></EditBoardModal>
-    </Box>
+      <BoardInformationModal
+        isOpen={boardInformationModalIsOpen}
+        onOpen={boardInformationModalOnOpen}
+        onClose={boardInformationModalOnClose}
+        board={props.board}
+      ></BoardInformationModal>
+    </>
   );
 }
