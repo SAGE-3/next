@@ -124,14 +124,14 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           {props.board.data.isPrivate && (
             <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
               <Box>
-                <Icon verticalAlign={'text-top'} fontSize="xl" color={borderColor} as={MdLock} mr="1" />
+                <Icon verticalAlign={'text-top'} fontSize="xl" color={boardColor} as={MdLock} mr="1" />
               </Box>
             </Tooltip>
           )}
 
         {props.usersPresent > 0 &&
           <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
-            <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
+            <Text color={boardColor} fontSize="xl" fontWeight="bold" mx="1">
               {props.usersPresent}
             </Text>
           </Tooltip>}
