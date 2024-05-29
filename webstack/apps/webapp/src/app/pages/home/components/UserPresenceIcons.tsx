@@ -16,7 +16,7 @@ function UserIcons(props: { users: User[], currentUser: Presence, anonymousNames
   const user = props.users.find((user) => user._id === props.currentUser.data.userId)
   const backgroundColorValue = useColorModeValue(`${user?.data.color}.600`, `${user?.data.color}.400`);
   const backgroundColor = useHexColor(backgroundColorValue);
-  return <Avatar name={props.anonymousNames ? undefined : user?.data.name} backgroundColor={backgroundColor} borderColor={"grey.400"}/>
+  return <Avatar name={props.anonymousNames ? undefined : user?.data.name} color={"var(--chakra-colors-body-text)"} backgroundColor={backgroundColor} borderColor={"grey.400"}/>
 }
 
 export function UserPresenceIcons(props: { usersPresent: Presence[], maxUsersDisplayed: number, anonymousNames?: boolean } & Omit<BoxProps, 'usersPresent' | 'maxUsersDisplayed' | 'anonymousNames'>) {
