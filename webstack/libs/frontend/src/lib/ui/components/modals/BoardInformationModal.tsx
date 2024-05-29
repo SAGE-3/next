@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -15,22 +15,11 @@ import {
   ModalFooter,
   ModalBody,
   Text,
-  InputGroup,
-  InputLeftElement,
-  Input,
   Button,
-  Box,
-  Checkbox,
-  useDisclosure,
 } from '@chakra-ui/react';
 
-import { v5 as uuidv5 } from 'uuid';
-import { MdPerson, MdLock } from 'react-icons/md';
-
-import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore, useAppStore, useConfigStore, ConfirmModal, useUsersStore } from '@sage3/frontend';
-import { SAGEColors } from '@sage3/shared';
-import { ColorPicker } from '../general';
+import { Board } from '@sage3/shared/types';
+import { useUsersStore } from '@sage3/frontend';
 
 interface BoardInformationProps {
   isOpen: boolean;
