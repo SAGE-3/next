@@ -18,7 +18,8 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
-  const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
+  // const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
+  const backgroundColorValue = useColorModeValue(`${props.board.data.color}.500`, `${props.board.data.color}.500`);
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
@@ -32,7 +33,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
 
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
-  const boardColor = props.board.data.color;
+  const boardColor = props.selected ? undefined : props.board.data.color;
 
   const handleFavorite = (event: any) => {
     event.preventDefault();

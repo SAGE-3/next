@@ -22,17 +22,17 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
-  const savedBoards = user?.data.savedBoards || [];
-  const isFavorite = user && savedBoards.includes(props.board._id);
-  const boardColor = props.board.data.color;
-
   // const backgroundColorValue = useColorModeValue(`${boardColor}.200`, `${boardColor}.800`);
-  const backgroundColorValue = useColorModeValue(`${boardColor}`, `${boardColor}`);
+  const backgroundColorValue = useColorModeValue(`${props.board.data.color}`, `${props.board.data.color}`);
   const backgroundColor = useHexColor(backgroundColorValue);
-  const borderColorValue = useColorModeValue(`${boardColor}.600`, `${boardColor}.200`);
+  const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
   // const borderColorGray = useColorModeValue('gray.300', 'gray.700');
   // const borderColorG = useHexColor(borderColorGray);
+
+  const savedBoards = user?.data.savedBoards || [];
+  const isFavorite = user && savedBoards.includes(props.board._id);
+  const boardColor = props.selected ? undefined : props.board.data.color;
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -158,8 +158,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
         {props.board.data.isPrivate && (
           <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
             <Box>
-            {/* color={borderColor} */}
-              <Icon verticalAlign={'text-top'} fontSize="xl" as={MdLock} mr="1"/>
+              <Icon verticalAlign={'text-top'} color={borderColor} fontSize="xl" as={MdLock} mr="1"/>
             </Box>
           </Tooltip>
         )}
@@ -175,7 +174,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           <IconButton
             size="sm"
             variant={'ghost'}
-            // colorScheme={boardColor}
+            colorScheme={boardColor}
             aria-label="enter-board"
             fontSize="xl"
             onClick={handleFavorite}
@@ -188,7 +187,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           <IconButton
             size="sm"
             variant={'ghost'}
-            // colorScheme={boardColor}
+            colorScheme={boardColor}
             // opacity={isHovered ? 1 : 0}
             aria-label="enter-board"
             fontSize="xl"
@@ -203,7 +202,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           <IconButton
             size="sm"
             variant={'ghost'}
-            // colorScheme={boardColor}
+            colorScheme={boardColor}
             aria-label="enter-board"
             fontSize="xl"
             onClick={handleSettings}
@@ -216,7 +215,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           <IconButton
             size="sm"
             variant={'ghost'}
-            // colorScheme={boardColor}
+            colorScheme={boardColor}
             aria-label="enter-board"
             fontSize="xl"
             onClick={handleInformation}
@@ -229,7 +228,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           <IconButton
             size="sm"
             variant={'ghost'}
-            // colorScheme={boardColor}
+            colorScheme={boardColor}
             aria-label="enter-board"
             fontSize="xl"
             onClick={handleEnterBoard}
