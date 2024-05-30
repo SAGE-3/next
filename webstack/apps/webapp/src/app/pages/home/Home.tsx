@@ -926,7 +926,7 @@ export function HomePage() {
                 <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
                   <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
                     <Box display="flex" flex="1" alignItems="left">
-                      <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md" fontWeight={'bold'}>Active Boards</Text>
+                      <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
                     </Box>
                   </Tooltip>
                   <AccordionIcon />
