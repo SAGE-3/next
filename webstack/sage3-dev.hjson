@@ -39,6 +39,11 @@
     "url": "http://127.0.0.1:8000"
   },
 
+    // Articulate python server
+  "articulate": {
+    "url": "http://127.0.0.1:8002"
+  },
+
 
   // External Services
   "services": {

@@ -105,4 +105,5 @@ export type AppName =
   | typeof VegaLiteViewerName
   | typeof VideoViewerName
   | typeof WebpageLinkName
-  | typeof WebviewName;
+  | typeof WebviewName
+  | typeof NLChartGeneratorName;

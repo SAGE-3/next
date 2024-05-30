@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Button, Input, InputGroup, InputRightElement } from '@chakra-ui/react';
+import { Button, Center, Image } from '@chakra-ui/react';
+import attentive from './arti_images/attentive.gif';
+import idle from './arti_images/idle.gif';
 
-const Dictation = (props: { send: (text: string) => void }) => {
+const Dictation = (props: { send: (text: string) => void; setArtiState: (image: any) => void; artiState: any }) => {
   const [transcription, setTranscription] = useState('');
   const [isListening, setIsListening] = useState(false);
   const recognition = useRef<any>(null);
@@ -36,6 +38,7 @@ const Dictation = (props: { send: (text: string) => void }) => {
 
       // const prediction = data.prediction
       const final_query = parsedData.final_query;
+      console.log(final_query);
       props.send(final_query);
     });
 
@@ -54,6 +57,14 @@ const Dictation = (props: { send: (text: string) => void }) => {
       recognition.current.interimResults = true; // Interim results are needed to keep the recognition active
       recognition.current.lang = 'en-US';
 
+      recognition.current.onstart = () => {
+        if (props.artiState !== attentive) {
+          props.setArtiState(attentive);
+        }
+        // Speech recognition started
+        console.log('Speech recognition started');
+      };
+
       recognition.current.onresult = (event: { resultIndex: any; results: string | any[] }) => {
         let finalTranscript = '';
         // Loop through the results from the speech recognition object.
@@ -63,11 +74,14 @@ const Dictation = (props: { send: (text: string) => void }) => {
             finalTranscript += event.results[i][0].transcript;
           }
         }
-
+        sendAudioToAPI(input);
         setTranscription(finalTranscript); // Update the state with the final transcript
       };
 
       recognition.current.onend = () => {
+        if (props.artiState !== idle) {
+          props.setArtiState(idle);
+        }
         setIsListening(false);
         startListening();
       };
@@ -112,37 +126,24 @@ const Dictation = (props: { send: (text: string) => void }) => {
     }
   };
 
-  const testPrediction = () => {
-    if (socketInstance) {
-      socketInstance.emit('predict_query', {
-        query: 'I ate a breakfast sandwich for lunch today',
-      });
-    }
-  };
-
   const [input, setInput] = useState<string>('');
-
-  // Input text for query
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInput(value);
-  };
-
-  const onSubmit = (e: React.KeyboardEvent) => {
-    // Keyboard instead of pressing the button
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      sendAudioToAPI(input);
-    }
-  };
 
   return (
     <div>
-      <Button onClick={testPrediction}>Test</Button>
-      <Button onClick={startListening} disabled={isListening}>
-        Start Dictation
-      </Button>
-      <Button onClick={stopListening} disabled={!isListening}>
+      <Center>
+        {/* <Button onClick={testPrediction}>Test</Button> */}
+        {isListening ? (
+          <Button onClick={stopListening} disabled={isListening}>
+            Stop Listening
+          </Button>
+        ) : (
+          <Button onClick={startListening} disabled={isListening}>
+            Start Listening
+          </Button>
+        )}
+      </Center>
+
+      {/* <Button onClick={stopListening} disabled={!isListening}>
         Stop Dictation
       </Button>
       <InputGroup bg={'blackAlpha.100'}>
@@ -158,7 +159,7 @@ const Dictation = (props: { send: (text: string) => void }) => {
         <InputRightElement onClick={() => sendAudioToAPI(input)}>send</InputRightElement>
       </InputGroup>
       <h1>Dictation:</h1>
-      <p>{transcription}</p>
+      <p>{transcription}</p> */}
     </div>
   );
 };

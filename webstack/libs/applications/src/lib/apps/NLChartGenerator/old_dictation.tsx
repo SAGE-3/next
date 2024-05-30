@@ -77,6 +77,7 @@ const Dictation = () => {
       checkForSilence();
     }
   }, [stream]);
+
   const checkForSilence = () => {
     if (!analyserRef.current || !dataArrayRef.current) return;
 

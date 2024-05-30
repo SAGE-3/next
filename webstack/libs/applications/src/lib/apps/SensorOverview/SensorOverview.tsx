@@ -38,7 +38,7 @@ import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-
 import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
-import { useAppStore } from '@sage3/frontend';
+import { ArticulateAPI, useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -655,6 +655,10 @@ function ToolbarComponent(props: App): JSX.Element {
       updateState(props._id, { widget: { ...s.widget, liveData: checked, timePeriod: customDateRange } });
     }
   };
+
+  useEffect(() => {
+    ArticulateAPI.testPost();
+  }, []);
 
   return (
     <>

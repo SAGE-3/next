@@ -24,7 +24,7 @@ import {
   Divider,
   Center,
   AbsoluteCenter,
-  VStack,
+  Image,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 import vegaEmbed from 'vega-embed';
@@ -45,6 +45,10 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import Dictation from './Dictation';
+import mute from './arti_images/mute.gif';
+import talking from './arti_images/talking.gif';
+import thinking from './arti_images/thinking.gif';
+import idle from './arti_images/idle.gif';
 
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
@@ -147,206 +151,7 @@ function AppComponent(props: App): JSX.Element {
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
 
-  const [vegaLiteSpecs, setVegaLiteSpecs] = useState<any>([
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 4 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 11 },
-          { a: 'E', b: 23 },
-          { a: 'F', b: 12 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 23 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 28 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 91 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 53 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 52 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 65 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 44 },
-          { a: 'D', b: 65 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 32 },
-          { a: 'G', b: 44 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 77 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 4 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 11 },
-          { a: 'E', b: 23 },
-          { a: 'F', b: 12 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 23 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 28 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 91 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 53 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 52 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 65 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 44 },
-          { a: 'D', b: 65 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 32 },
-          { a: 'G', b: 44 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 77 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 4 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 11 },
-          { a: 'E', b: 23 },
-          { a: 'F', b: 12 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 23 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 28 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 43 },
-          { a: 'D', b: 91 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 53 },
-          { a: 'G', b: 19 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 52 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-    {
-      $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-      description: 'A simple bar chart with embedded data.',
-      data: {
-        values: [
-          { a: 'A', b: 65 },
-          { a: 'B', b: 55 },
-          { a: 'C', b: 44 },
-          { a: 'D', b: 65 },
-          { a: 'E', b: 81 },
-          { a: 'F', b: 32 },
-          { a: 'G', b: 44 },
-          { a: 'H', b: 87 },
-          { a: 'I', b: 77 },
-        ],
-      },
-      mark: 'bar',
-      encoding: {
-        x: { field: 'a', type: 'nominal', axis: { labelAngle: 0 } },
-        y: { field: 'b', type: 'quantitative' },
-      },
-    },
-  ]);
+  const [vegaLiteSpecs, setVegaLiteSpecs] = useState<any>([]);
 
   const [spec, setSpec] = useState<any>(null);
 
@@ -354,6 +159,8 @@ function AppComponent(props: App): JSX.Element {
 
   // Display some notifications
   const toast = useToast();
+
+  const [artiState, setArtiState] = useState(idle);
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
@@ -434,6 +241,7 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (openai) {
+      setArtiState(thinking);
       setProcessing(true);
       // Remove the @X
       const request = new_input.slice(2);
@@ -481,7 +289,7 @@ function AppComponent(props: App): JSX.Element {
         // setSpec(code);
         console.log(code);
         setVegaLiteSpecs((prev: any) => [...prev, code]);
-
+        setArtiState(idle);
         await createApp({
           title: 'VegaLiteViewer',
           roomId: props.data.roomId!,
@@ -685,7 +493,8 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props}>
       <>
         <Box>
-          <Dictation send={send} />
+          <Image boxSize={'xs'} src={artiState} />
+          <Dictation send={send} setArtiState={setArtiState} artiState={artiState} />
           <HStack overflowX="auto">
             {vegaLiteSpecs.map((vegaLiteSpec: any, index: number) => {
               return (
