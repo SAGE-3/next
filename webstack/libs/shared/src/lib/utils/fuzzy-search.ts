@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -18,6 +18,7 @@ import Fuse from 'fuse.js'
  */
 
 const options = {
+  ignoreCase: true,
   includeScore: false,
   ignoreLocation: true,
   threshold: 0.4,
@@ -26,15 +27,12 @@ const options = {
 
 const defaultFuse = new Fuse<{ text: string }>([], options);
 
-export const fuzzySearch = (text: string, query: string, fuse?: Fuse<{ text: string }>): boolean => {
-  if (!query) { return true }
-  // Lowercase the text and query to make the search case-insensitive
-  const normalizedText = text.toLowerCase();
-  const normalizedQuery = query.toLowerCase();
-
-  !fuse && (fuse = defaultFuse);
-
-  fuse.setCollection([{ text: normalizedText }]);
-  const result = fuse.search(normalizedQuery);
+export const fuzzySearch = (text: string, query: string, fuse: Fuse<{ text: string }> = defaultFuse): boolean => {
+  if (!query) {
+    return true
+  }
+  
+  fuse.setCollection([{ text: text }]);
+  const result = fuse.search(query);
   return result.length > 0;
 };
