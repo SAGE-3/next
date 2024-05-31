@@ -43,6 +43,25 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+  seer:
+    image: "ghcr.io/sage-3/seer:dev_arm64"
+    ports:
+      - "127.0.0.1:9999:9999"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - HF_TOKEN=${HF_TOKEN}
+      - TOKEN=${TOKEN}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/healthz"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   jupyter:
     image: "jupyter/datascience-notebook:latest"
     volumes:

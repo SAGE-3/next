@@ -8,8 +8,10 @@ Connecting AI workflows using LangChain, FastAPI and SAGE3.
 
 ## Test
 
-- http://localhost:9999/
-- http://localhost:9999/items/44?q=bluesky
+- http://localhost:9999/healthz
+- http://localhost:9999/ask/
+    {q: "hello!"}
+    --> {q: "hello!", a: "something"}
 
 
 
