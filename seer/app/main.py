@@ -1,7 +1,17 @@
 import os
-from typing import Union
 from fastapi import FastAPI
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+
+# SAGE3 API
+from foresight.config import config as conf, prod_type
+from foresight.Sage3Sugar.pysage3 import PySage3
+
+# SAGE3 handle
+ps3 = PySage3(conf, prod_type)
+
 
 # AI
 from langchain_huggingface import llms
@@ -11,8 +21,9 @@ from langchain_core.prompts import PromptTemplate
 # Llama3 server at EVL
 server = "https://arcade.evl.uic.edu/llama/"
 
-# LLM model using TGI interface
+# Get the token from the environment (shouln't be needed but a bug in the library)
 token = os.getenv("HF_TOKEN")
+# LLM model using TGI interface
 llm = HuggingFaceEndpoint(
     endpoint_url=server,
     max_new_tokens=2048,

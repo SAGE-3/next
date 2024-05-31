@@ -1,5 +1,7 @@
+
 # SAGE3
-#git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
+git+https://github.com/SAGE-3/next.git@dev-langchain-deploy#subdirectory=foresight
+dotenv
 
 # Web API
 fastapi==0.111.0
