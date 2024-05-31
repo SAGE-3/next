@@ -1,3 +1,4 @@
+import os
 from typing import Union
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -11,10 +12,11 @@ from langchain_core.prompts import PromptTemplate
 server = "https://arcade.evl.uic.edu/llama/"
 
 # LLM model using TGI interface
+token = os.getenv("HF_TOKEN")
 llm = HuggingFaceEndpoint(
     endpoint_url=server,
     max_new_tokens=2048,
-    huggingfacehub_api_token="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",
+    huggingfacehub_api_token=token,
 )
 
 # Prompt template for Llama3
