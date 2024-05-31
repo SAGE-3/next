@@ -1,0 +1,10 @@
+#/bin/sh
+
+cd ../../
+
+#docker build -t seer .
+
+#args="--push"
+docker buildx build --load -f seer/Dockerfile --platform linux/arm64 --tag ghcr.io/sage-3/seer:dev_arm64 ..
+
+

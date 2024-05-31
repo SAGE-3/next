@@ -1,0 +1,5 @@
+#git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
+fastapi==0.101.0
+fastapi-cli
+uvicorn
+pydantic
