@@ -55,7 +55,7 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9999/healthz"]
-      interval: 10s
+      interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
@@ -72,7 +72,7 @@ services:
       - "8888:8888"
     environment:
       - ENVIRONMENT=development
-      - SAGE3_SERVER=host.docker.internal
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"
