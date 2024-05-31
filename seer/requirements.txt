@@ -1,5 +1,16 @@
+# SAGE3
 #git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
-fastapi==0.101.0
+
+# Web API
+fastapi==0.111.0
 fastapi-cli
 uvicorn
-pydantic
+
+# data models
+pydantic>=2.0.0
+
+# AI with langchain
+langchain
+langchain-openai
+langchain_community
+langchain-huggingface
