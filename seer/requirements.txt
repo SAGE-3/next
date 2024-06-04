@@ -14,5 +14,4 @@ pydantic>=2.0.0
 # AI with langchain
 langchain
 langchain-openai
-langchain_community
 langchain-huggingface
