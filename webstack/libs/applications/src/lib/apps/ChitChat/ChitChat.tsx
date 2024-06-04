@@ -5,16 +5,16 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Flex, Box, Input, InputGroup, InputRightElement, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { MdSend } from 'react-icons/md';
 
 // Date management
-import { format } from 'date-fns/format';
+// import { format } from 'date-fns/format';
 
 import { useAppStore, useHexColor, AiAPI, useUser } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
+import { AgentQueryType, genId } from '@sage3/shared';
 
 import { state as AppState } from './index';
 import { App, AppGroup } from '../../schema';
@@ -29,6 +29,7 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
 
   // Colors for Dark theme and light theme
+  const myColor = useHexColor(user?.data.color || 'blue');
   const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
@@ -38,20 +39,35 @@ function AppComponent(props: App): JSX.Element {
   const [input, setInput] = useState<string>('');
   // Element to set the focus to when opening the dialog
   const inputRef = useRef<HTMLInputElement>(null);
-
   const chatBox = useRef<null | HTMLDivElement>(null);
 
   // Display some notifications
   const toast = useToast();
 
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
-    console.log('Message> sending', new_input);
+    const id = genId();
+    const question: AgentQueryType = { ctx: s.context || '', id: id, user: user._id, q: new_input };
+    const response = await AiAPI.langchain.ask(question);
+    if (response.success) {
+      updateState(props._id, { answer: { response: response.r } });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Error sending query to the agent. Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
   };
 
   const sendMessage = async () => {
-    await newMessage(input.trim());
+    const text = input.trim();
+    updateState(props._id, { question: { prompt: text }, answer: { response: '' } });
     setInput('');
+    await newMessage(text);
   };
 
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -67,6 +83,19 @@ function AppComponent(props: App): JSX.Element {
     const value = e.target.value;
     setInput(value);
   };
+
+  useEffect(() => {
+    async function fetchStatus() {
+      const response = await AiAPI.langchain.status();
+      console.log('Agent Status>', response);
+    }
+    fetchStatus();
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+
+  }, [inputRef]);
 
   return (
     <AppWindow app={props}>
@@ -91,7 +120,39 @@ function AppComponent(props: App): JSX.Element {
             },
           }}
         >
-          {/* Messages */}
+          <Box display={'flex'} justifyContent={'right'}>
+            <Box
+              color="white"
+              rounded={'md'}
+              boxShadow="md"
+              fontFamily="arial"
+              textAlign={'right'}
+              bg={myColor}
+              p={1}
+              m={3}
+              maxWidth="70%"
+              userSelect={'none'}
+            >
+              {s.question.prompt}
+            </Box>
+          </Box>
+
+          <Box display={'flex'} justifyContent={'left'}>
+            <Box
+              color="black"
+              rounded={'md'}
+              boxShadow="md"
+              fontFamily="arial"
+              textAlign={'left'}
+              bg={textColor}
+              p={1}
+              m={3}
+              maxWidth="70%"
+              userSelect={'none'}
+            >
+              {s.answer.response}
+            </Box>
+          </Box>
         </Box>
 
         <InputGroup bg={'blackAlpha.100'}>
@@ -109,6 +170,7 @@ function AppComponent(props: App): JSX.Element {
             <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>
+
       </Flex>
     </AppWindow>
   );

@@ -1,9 +1,11 @@
 import os
+import logging
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
 load_dotenv()  # take environment variables from .env.
+logger = logging.getLogger("uvicorn.error")
 
 # SAGE3 API
 from foresight.config import config as conf, prod_type
@@ -56,6 +58,7 @@ session = prompt | llm
 class Question(BaseModel):
     ctx: str  # context
     id: str  # question UUID v4
+    user: str  # user ID
     q: str  # question
 
 
@@ -65,18 +68,23 @@ class Answer(BaseModel):
 
 
 # Web server
-app = FastAPI()
+app = FastAPI(title="Seer", description="A LangChain proxy for SAGE3.", version="0.1.0")
 
 
 # API routes
-@app.get("/healthz")
+@app.get("/health")
 def read_root():
+    logger.info("health check")
     return {"msg": "OK"}
 
 
-@app.post("/ask/")
+@app.post("/ask")
 async def ask_question(qq: Question):
-    response = await session.ainvoke({"question": qq.q})
-    text = response.strip()
+    logger.info("Got question> from " + qq.user + " about:" + qq.q)
+    try:
+        response = await session.ainvoke({"question": qq.q})
+        text = response.strip()
+    except:
+        text = "I am sorry, I could not answer your question."
     val = Answer(id=qq.id, r=text)
     return val

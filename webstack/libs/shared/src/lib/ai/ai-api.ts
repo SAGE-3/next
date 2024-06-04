@@ -35,3 +35,16 @@ export type AiJSONQueryResponse = {
 export type AiStatusResponse = {
   onlineModels: any[];
 };
+
+export type AgentQueryType = {
+  ctx: string;
+  id: string;
+  user: string;
+  q: string;
+};
+
+export type AgentQueryResponse = {
+  id: string;
+  r: string;
+  success: boolean;
+};

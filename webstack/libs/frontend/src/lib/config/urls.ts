@@ -58,5 +58,9 @@ export const apiUrls = {
       labels: '/api/ai/image_to_labels',
       image: '/api/ai/image_to_image',
     },
+    langchain: {
+      status: '/api/agent/status',
+      ask: '/api/agent/ask',
+    },
   },
 };
