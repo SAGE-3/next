@@ -54,12 +54,14 @@ session = prompt | llm
 
 # Pydantic models: Question and Answer
 class Question(BaseModel):
+    ctx: str  # context
+    id: str  # question UUID v4
     q: str  # question
 
 
 class Answer(BaseModel):
-    q: str  # question
-    a: str  # answer
+    id: str  # question UUID v4
+    r: str  # answer
 
 
 # Web server
@@ -69,12 +71,12 @@ app = FastAPI()
 # API routes
 @app.get("/healthz")
 def read_root():
-    return {"Hello": "World"}
+    return {"msg": "OK"}
 
 
 @app.post("/ask/")
 async def ask_question(qq: Question):
     response = await session.ainvoke({"question": qq.q})
     text = response.strip()
-    val = Answer(q=qq.q, a=text)
+    val = Answer(id=qq.id, r=text)
     return val
