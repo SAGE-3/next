@@ -165,6 +165,13 @@ function AppComponent(props: App): JSX.Element {
     if (domReady === false || attached === false) return;
   }, [domReady, attached]);
 
+  useEffect(() => {
+    if (domReady === false || attached === false) return;
+    if (webviewNode.current && s.zoom) {
+      webviewNode.current.setZoomFactor(s.zoom);
+    }
+  }, [s.zoom, domReady, attached]);
+
   const nodeStyle: React.CSSProperties = {
     width: props.data.size.width + 'px',
     height: props.data.size.height + 'px',
