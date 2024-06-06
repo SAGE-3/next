@@ -1,8 +1,14 @@
+# python module
 import os
 import logging
-from fastapi import FastAPI
-from pydantic import BaseModel
 from dotenv import load_dotenv
+
+# Models
+from pydantic import BaseModel
+from typing import List, Dict, NamedTuple
+
+# Web API
+from fastapi import FastAPI
 
 load_dotenv()  # take environment variables from .env.
 logger = logging.getLogger("uvicorn.error")
@@ -53,10 +59,19 @@ prompt = PromptTemplate.from_template(
 # Session : prompt building and then LLM
 session = prompt | llm
 
+# Pydantic models: Question, Answer, Context
 
-# Pydantic models: Question and Answer
+
+# Previous prompt and position
+class Context(NamedTuple):
+    prompt: str  # previous prompt
+    pos: List[int]  # position in the board
+    roomId: str  # room ID
+    boardId: str  # board ID
+
+
 class Question(BaseModel):
-    ctx: str  # context
+    ctx: Context  # context
     id: str  # question UUID v4
     user: str  # user ID
     q: str  # question
@@ -87,4 +102,26 @@ async def ask_question(qq: Question):
     except:
         text = "I am sorry, I could not answer your question."
     val = Answer(id=qq.id, r=text)
+
+    # Create an app for giggles
+    ps3.create_app(
+        qq.ctx.roomId,
+        qq.ctx.boardId,
+        "Stickie",
+        {
+            "text": text,
+            "fontSize": 24,
+            "color": "purple",
+        },
+        {
+            "title": "Answer",
+            "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+            "size": {
+                "width": 400,
+                "height": 400,
+                "depth": 0,
+            },
+        },
+    )
+
     return val
