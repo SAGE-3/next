@@ -110,9 +110,18 @@ function AppComponent(props: App): JSX.Element {
                 console.log('Juypyter> session created', res);
                 //  Open the notebook in a separate workspace
                 const base = `http://${window.location.hostname}:8888`;
+
                 // const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
                 // const newUrl = `${base}/nbclassic/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
-                const newUrl = `${base}/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
+                // const newUrl = `${base}/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
+                // http://localhost:8888/lab/tree/RTC%3Anotebooks/plot1.ipynb
+                // const newUrl = `${base}/lab/tree/RTC:notebooks/${s.notebook}?token=${conf.token}&reset`;
+                // http://127.0.0.1:10000/notebooks/RTC:work/first.ipynb
+
+                // URL for collaboration
+                const newUrl = `${base}/notebooks/RTC:notebooks/${s.notebook}?token=${conf.token}&reset`;
+
+                // Update the URL
                 setUrl(newUrl);
               });
           })
@@ -246,7 +255,11 @@ function ToolbarComponent(props: App): JSX.Element {
           const base = `http://${window.location.hostname}:8888`;
           // const j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
           // const j_url = `${base}/nbclassic/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
-          const j_url = `${base}/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
+          // const j_url = `${base}/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
+
+          // URL for collaboration
+          const j_url = `${base}/notebooks/RTC:notebooks/${s.notebook}?token=${conf.token}&reset`;
+
           window.electron.send('open-external-url', { url: j_url });
         }
       });
