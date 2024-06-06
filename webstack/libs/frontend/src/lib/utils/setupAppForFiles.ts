@@ -23,9 +23,10 @@ import {
   isGIF,
   isCode,
   isFileURL,
+  isPythonNotebook,
   mimeToCode,
 } from '@sage3/shared';
-import { apiUrls } from '@sage3/frontend';
+import { apiUrls, useConfigStore } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppState, AppSchema } from '@sage3/applications/schema';
@@ -345,50 +346,50 @@ export async function setupAppForFile(
       dragging: false,
       pinned: false,
     };
-    // } else if (isPythonNotebook(file.type)) {
-    //   // Look for the file in the asset store
-    //   const localurl = apiUrls.assets.getAssetById(file.filename);
-    //   // Get the content of the file
-    //   const response = await fetch(localurl, {
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Accept: 'application/json',
-    //     },
-    //   });
-    //   const spec = await response.json();
-    //   // Create a notebook file in Jupyter with the content of the file
-    //   const conf = await GetConfiguration();
-    //   if (conf.token) {
-    //     // Create a new notebook
-    //     const base = `http://${window.location.hostname}:8888`;
-    //     // Talk to the jupyter server API
-    //     const j_url = base + apiUrls.assets.getNotebookByName(file.originalfilename);
-    //     const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
-    //     // Create a new notebook
-    //     const response = await fetch(j_url, {
-    //       method: 'PUT',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         Authorization: 'Token ' + conf.token,
-    //       },
-    //       body: JSON.stringify(payload),
-    //     });
-    //     const res = await response.json();
-    //     console.log('Jupyter> notebook created', res);
-    //     return {
-    //       title: file.originalfilename,
-    //       roomId: roomId,
-    //       boardId: boardId,
-    //       position: { x: xDrop - 350, y: yDrop - 350, z: 0 },
-    //       size: { width: 700, height: 700, depth: 0 },
-    //       rotation: { x: 0, y: 0, z: 0 },
-    //       type: 'JupyterLab',
-    //       state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
-    //       raised: true,
-    //       dragging: false,
-    //       pinned: false,
-    //     };
-    //   }
+  } else if (isPythonNotebook(file.type)) {
+    // Look for the file in the asset store
+    const localurl = apiUrls.assets.getAssetById(file.filename);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+    const spec = await response.json();
+    // Create a notebook file in Jupyter with the content of the file
+    const conf = useConfigStore.getState().config;
+    if (conf.token) {
+      // Create a new notebook
+      const base = `http://${window.location.hostname}:8888`;
+      // Talk to the jupyter server API
+      const j_url = base + apiUrls.assets.getNotebookByName(file.originalfilename);
+      const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: spec };
+      // Create a new notebook
+      const response = await fetch(j_url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Token ' + conf.token,
+        },
+        body: JSON.stringify(payload),
+      });
+      const res = await response.json();
+      console.log('Jupyter> notebook created', res);
+      return {
+        title: file.originalfilename,
+        roomId: roomId,
+        boardId: boardId,
+        position: { x: xDrop - 350, y: yDrop - 350, z: 0 },
+        size: { width: 700, height: 700, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'JupyterLab',
+        state: { ...(initialValues['JupyterLab'] as any), notebook: file.originalfilename },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      };
+    }
   } else if (isPDF(file.type)) {
     // Look for the file in the asset store
     const pages = file.derived as ExtraPDFType;
