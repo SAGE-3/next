@@ -37,7 +37,7 @@ export type AiStatusResponse = {
 };
 
 export type AgentQueryType = {
-  ctx: string;
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
   id: string;
   user: string;
   q: string;

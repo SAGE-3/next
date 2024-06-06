@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -14,7 +14,10 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  context: z.string(),
+  context: z.object({
+    prompt: z.string(),
+    pos: z.array(z.number()),
+  }),
   question: z.object({
     id: z.string(),
     prompt: z.string(),
@@ -27,7 +30,10 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  context: '',
+  context: {
+    prompt: '',
+    pos: [0, 0],
+  },
   question: {
     id: '',
     prompt: '',

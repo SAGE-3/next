@@ -7,11 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { Flex, Box, Input, InputGroup, InputRightElement, useColorModeValue, useToast } from '@chakra-ui/react';
-
 import { MdSend } from 'react-icons/md';
-
-// Date management
-// import { format } from 'date-fns/format';
 
 import { useAppStore, useHexColor, AiAPI, useUser } from '@sage3/frontend';
 import { AgentQueryType, genId } from '@sage3/shared';
@@ -19,6 +15,7 @@ import { AgentQueryType, genId } from '@sage3/shared';
 import { state as AppState } from './index';
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
+import { useParams } from 'react-router';
 
 
 /* App component for ChitChat */
@@ -44,11 +41,15 @@ function AppComponent(props: App): JSX.Element {
   // Display some notifications
   const toast = useToast();
 
+  const { roomId, boardId } = useParams();
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
+    if (!roomId) return;
+    if (!boardId) return;
     const id = genId();
-    const question: AgentQueryType = { ctx: s.context || '', id: id, user: user._id, q: new_input };
+    const pos = [props.data.position.x + props.data.size.width + 20, props.data.position.y];
+    const question: AgentQueryType = { ctx: { prompt: s.context.prompt || '', pos, roomId, boardId }, id: id, user: user._id, q: new_input };
     const response = await AiAPI.langchain.ask(question);
     if (response.success) {
       updateState(props._id, { answer: { response: response.r } });
