@@ -28,6 +28,7 @@ import {
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 import vegaEmbed from 'vega-embed';
+import { ArticulateAPI } from '@sage3/frontend';
 
 // Date management
 import { formatDistance } from 'date-fns';
@@ -239,126 +240,38 @@ function AppComponent(props: App): JSX.Element {
       response: 'Working on it...',
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (openai) {
-      setArtiState(thinking);
-      setProcessing(true);
-      // Remove the @X
-      const request = new_input.slice(2);
-      // Object to stop the request and the stream of events
-      const ctrl = new AbortController();
-      // Save the controller for later use
-      ctrlRef.current = ctrl;
-      // Build the request
-      let tempText = '';
-      setStreamText(tempText);
+    setArtiState(thinking);
+    setProcessing(true);
 
-      const complete_request = [
-        { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-        { role: 'user', content: request },
-      ];
+    const request = new_input;
 
-      const stream = await openai.chat.completions.create({
-        model: OPENAI_ENGINE,
-        // @ts-expect-error
-        messages: complete_request,
-        // max_tokens: OPENAI_TOKENS,
-        temperature: 0.2,
-        stream: true,
-      });
-      for await (const part of stream) {
-        const text = part.choices[0]?.delta?.content;
+    //make fetch call here with request]
+    const response = await ArticulateAPI.sendText(request);
+    console.log(response);
 
-        if (text) {
-          tempText += part.choices[0]?.delta?.content;
-          setStreamText(tempText);
-          goToBottom('auto');
-        }
-      }
-      setProcessing(false);
-      // Clear the stream text
-      setStreamText('');
-      ctrlRef.current = null;
-      setPreviousAnswer(tempText);
-      try {
-        const codeFromText = getCode(tempText);
+    // await the request
+    setProcessing(false);
+    // Add messages
+    updateState(props._id, {
+      ...s,
+      previousQ: request,
+      previousA: 'answer',
+      messages: [
+        ...s.messages,
+        initialAnswer,
+        {
+          id: genId(),
+          userId: user._id,
+          creationId: '',
+          creationDate: now.epoch + 1,
+          userName: 'OpenAI',
+          query: '',
+          response: 'answer',
+        },
+      ],
+    });
 
-        const code = JSON.parse(codeFromText);
-        code.data.values = data;
-        tempText = 'I have generated the chart for you.';
-        // setSpec(code);
-        console.log(code);
-        setVegaLiteSpecs((prev: any) => [...prev, code]);
-        setArtiState(idle);
-        await createApp({
-          title: 'VegaLiteViewer',
-          roomId: props.data.roomId!,
-          boardId: props.data.boardId!,
-          //TODO get middle of the screen space
-          position: {
-            x: props.data.position.x + props.data.size.width,
-            y: props.data.position.y,
-            z: 0,
-          },
-          size: {
-            width: props.data.size.width,
-            height: props.data.size.height,
-            depth: 0,
-          },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'VegaLiteViewer',
-          state: {
-            spec: codeFromText,
-            error: false,
-            isHCDPChart: true,
-          },
-
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
-        // Add messages
-        updateState(props._id, {
-          ...s,
-          previousQ: request,
-          previousA: tempText,
-          messages: [
-            ...s.messages,
-            initialAnswer,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch + 1,
-              userName: 'OpenAI',
-              query: '',
-              response: tempText,
-            },
-          ],
-        });
-      } catch (e) {
-        tempText = 'An error occured while generating the chart. Please try again.';
-        console.log(e);
-        updateState(props._id, {
-          ...s,
-          previousQ: request,
-          previousA: tempText,
-          messages: [
-            ...s.messages,
-            initialAnswer,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch + 1,
-              userName: 'OpenAI',
-              query: '',
-              response: tempText,
-            },
-          ],
-        });
-      }
-    }
-
+    // TODO create a try catch here and handle errors.
     setTimeout(() => {
       // Scroll to bottom of chat box smoothly
       goToBottom();

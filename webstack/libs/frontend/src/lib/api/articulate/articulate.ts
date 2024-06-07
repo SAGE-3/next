@@ -37,6 +37,29 @@ async function sendAudio(body: { blob: Blob | null }): Promise<any> {
   return data;
 }
 
+async function sendText(text: string): Promise<any> {
+  console.log('sending text', text);
+
+  const response = await fetch('/api/articulate/processText', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  if (!response.ok) {
+    console.log('Error in response:', response.statusText);
+    return;
+  }
+
+  const data = await response.json();
+  console.log('Response Data:', data);
+
+  return data;
+}
+
 export const ArticulateAPI = {
   sendAudio,
+  sendText,
 };

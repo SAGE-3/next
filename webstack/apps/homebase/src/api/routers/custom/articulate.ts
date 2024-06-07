@@ -1,22 +1,13 @@
-/**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- */
-
 import { ClientRequest } from 'http';
 import { Request } from 'express';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-
 import { config } from '../../../config';
 
 /**
- * Route forwarding the Articualte calls to the Articualte server
+ * Route forwarding the Articulate calls to the Articulate server
  */
 export function ArticulateRouter() {
-  console.log('Articualte> router for Articualte', config.articulate.url);
+  console.log('Articulate> router for Articulate', config.articulate.url);
 
   const router = createProxyMiddleware({
     target: config.articulate.url,
@@ -24,62 +15,27 @@ export function ArticulateRouter() {
     pathRewrite: { '^/api/articulate': '' },
     logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
-    selfHandleResponse: true, // Add this to handle the response manually
-    // request handler making sure the body is parsed before proxying
-    // onProxyReq: restream,
-    onProxyRes: (proxyRes, req, res) => {
-      let data = '';
-
-      // Only for SSE routes
-      if (req.path.includes('stream')) {
-        res.writeHead(200, {
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Content-Type': 'text/event-stream',
-        });
-        proxyRes.on('data', (chunk) => {
-          data += chunk;
-          res.write(chunk);
-          res.flush();
-        });
-
-        proxyRes.on('end', () => {
-          res.write(data);
-          res.end();
-        });
-      } else {
+    selfHandleResponse: false, // This is now false to allow default handling
+    onProxyReq: (proxyReq, req, res) => {
+      const contentType = req.headers['content-type'];
+      let bodyData;
+      if (contentType?.includes('application/json')) {
+        bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      } else if (contentType?.includes('multipart/form-data')) {
         // Handle other routes normally
-        proxyRes.on('data', (chunk) => {
+        proxyReq.on('data', (chunk) => {
           res.write(chunk);
         });
 
-        proxyRes.on('end', () => {
+        proxyReq.on('end', () => {
           res.end();
         });
       }
-    },
+    }, // Ensure restream is called on proxy requests
   });
 
   return router;
-}
-
-/*
- * Restream parsed body before proxying
- *
- * @param {ClientRequest} proxyReq
- * @param {Request} req
- * */
-function restream(proxyReq: ClientRequest, req: Request): void {
-  if (req.method === 'POST' && req.body) {
-    const bodyData = JSON.stringify(req.body);
-    proxyReq.setHeader('Content-Type', 'multipart/form-data');
-    proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
-    proxyReq.write(bodyData);
-  }
-
-  if (req.method === 'GET' && req.path.includes('stream')) {
-    proxyReq.setHeader('Connection', 'keep-alive');
-    proxyReq.setHeader('Cache-Control', 'no-cache');
-    proxyReq.setHeader('Content-Type', 'text/event-stream');
-  }
 }
