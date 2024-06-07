@@ -97,7 +97,7 @@ heat_index_set_1d, dew_point_temperature_set_1d, altimeter_set_1d, sea_level_pre
  You are an expert at creating data visualizations in vega-lite. you are strictly answering my questions only in vega-lite code.';
 
 // OpenAI API
-let OPENAI_API_KEY = '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';
+let OPENAI_API_KEY = '';
 let OPENAI_ENGINE = 'gpt-4-turbo-preview';
 const OPENAI_TOKENS = 300;
 const OPENAI_SYSTEM_PROMPT =
