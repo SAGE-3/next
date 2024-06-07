@@ -74,6 +74,8 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
 
       const checkForSilence = () => {
         // Get the audio data into the dataArray
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
         analyser.current.getFloatTimeDomainData(dataArray.current!);
 
         // Check if all audio samples are below the threshold (i.e., silence)

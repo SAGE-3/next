@@ -1,6 +1,6 @@
 // SAGE3 Generated from apps.json file
 
-import { App } from './schema';
+import { App, AppGroup } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
