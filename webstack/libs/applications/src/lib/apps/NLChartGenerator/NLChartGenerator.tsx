@@ -44,7 +44,6 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import Dictation from './Dictation';
 import mute from './arti_images/mute.gif';
 import talking from './arti_images/talking.gif';
 import thinking from './arti_images/thinking.gif';
@@ -494,7 +493,6 @@ function AppComponent(props: App): JSX.Element {
       <>
         <Box>
           <Image boxSize={'xs'} src={artiState} />
-          <Dictation send={send} setArtiState={setArtiState} artiState={artiState} />
           <HStack overflowX="auto">
             {vegaLiteSpecs.map((vegaLiteSpec: any, index: number) => {
               return (
