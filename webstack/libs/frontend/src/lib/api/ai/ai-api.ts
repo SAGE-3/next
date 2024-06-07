@@ -9,6 +9,59 @@
 import { apiUrls } from '@sage3/frontend';
 import { AiStatusResponse, AiQueryRequest, AiImageQueryRequest, AiQueryResponse, AiJSONQueryResponse } from '@sage3/shared';
 
+async function chatStatus(): Promise<AiStatusResponse> {
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.chat.status, {
+      method: 'GET',
+    });
+    if (response.status !== 200) {
+      return { onlineModels: [] };
+    }
+    // Parse the response
+    const jsonResponse = await response.json();
+    // Check if the response is valid
+    if (jsonResponse.onlineModels) {
+      return { onlineModels: jsonResponse.onlineModels };
+    } else {
+      return { onlineModels: [] };
+    }
+  } catch (error) {
+    // Return an error message if the request fails
+    console.log('API CHAT AI STATUS ERROR> ', error);
+    return { onlineModels: [] };
+  }
+}
+
+async function chatQuery(request: AiQueryRequest): Promise<AiQueryResponse> {
+  const modelHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.chat.query, {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(request),
+    });
+    // Parse the response
+    const jsonResponse = await response.json();
+    // Check if the response is valid
+    if (jsonResponse.success) {
+      return jsonResponse;
+    } else {
+      return { success: false, error_message: `API CHAT AI QUERY ERROR>  Failed to query AI (Status Error${response.status})` };
+    }
+  } catch (error) {
+    // Return an error message if the request fails
+    console.log('API CHAT AI QUERY ERROR> ', error);
+    return { success: false };
+  }
+}
+
 async function codeStatus(): Promise<AiStatusResponse> {
   // Try/catch block to handle errors
   try {
@@ -29,7 +82,7 @@ async function codeStatus(): Promise<AiStatusResponse> {
     }
   } catch (error) {
     // Return an error message if the request fails
-    console.log('API AI STATUS ERROR> ', error);
+    console.log('API CODE AI STATUS ERROR> ', error);
     return { onlineModels: [] };
   }
 }
@@ -54,7 +107,7 @@ async function imageStatus(): Promise<AiStatusResponse> {
     }
   } catch (error) {
     // Return an error message if the request fails
-    console.log('API AI STATUS ERROR> ', error);
+    console.log('API IMAGE AI STATUS ERROR> ', error);
     return { onlineModels: [] };
   }
 }
@@ -144,10 +197,10 @@ async function imageToImage(request: AiImageQueryRequest): Promise<AiJSONQueryRe
 }
 
 export const AiAPI = {
-  // chat: {
-  //   status,
-  //   query,
-  // },
+  chat: {
+    status: chatStatus,
+    query: chatQuery,
+  },
   code: {
     status: codeStatus,
     query: codeQuery,

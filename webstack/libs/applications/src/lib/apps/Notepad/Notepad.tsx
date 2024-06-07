@@ -6,17 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
 
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 import { QuillBinding } from 'y-quill';
 import Quill from 'quill';
 
 // Utility functions from SAGE3
-import { downloadFile, useAppStore, useHexColor } from '@sage3/frontend';
+import { downloadFile, useAppStore, useHexColor, useYjs, serverTime, YjsRoomConnection, useUser, PasteHandler } from '@sage3/frontend';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -44,6 +42,31 @@ import { debounce } from 'throttle-debounce';
 
 // Store between the app and the toolbar
 import { create } from 'zustand';
+import { Delta } from 'quill/core';
+
+const formats = [
+  'background',
+  'bold',
+  'color',
+  'font',
+  'code',
+  'italic',
+  'link',
+  'size',
+  'strike',
+  'script',
+  'underline',
+  'blockquote',
+  'header',
+  'indent',
+  'list',
+  'align',
+  'direction',
+  'code-block',
+  'formula',
+  // 'image'
+  // 'video'
+];
 
 interface NotepadStore {
   editor: { [key: string]: Quill };
@@ -60,6 +83,9 @@ const useStore = create<NotepadStore>()((set) => ({
 }));
 
 function AppComponent(props: App): JSX.Element {
+  // user
+  const { user } = useUser();
+
   // State
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -70,108 +96,83 @@ function AppComponent(props: App): JSX.Element {
 
   // Set the editor in the Notepad Store
   const setEditor = useStore((s) => s.setEditor);
-  // Reinitialize the editor when the state changes due to the user refreshing
-  const reinit = useStore((s) => s.reinit[props._id]);
 
   // Yjs and Quill State
-  const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
-  const [wsProvider, setWsProvider] = useState<WebsocketProvider | null>(null);
-  const [quillBinding, setQuillBinding] = useState<QuillBinding | null>(null);
-  const [quill, setQuill] = useState<Quill | null>(null);
+  const { yApps } = useYjs();
 
   // Debounce Updates
-  const debounceUpdate = debounce(1000, () => {
-    if (quill) {
-      const content = quill.getContents();
-      updateState(props._id, { content });
-    }
+  const debounceUpdate = debounce(1000, (quillEditor: Quill) => {
+    const content = quillEditor.getContents();
+    updateState(props._id, { content });
   });
 
-  // Set up the editor
-  const setupEditor = () => {
-    if (quillRef.current && toolbarRef.current) {
-      const quill = new Quill(quillRef.current, {
-        modules: {
-          toolbar: toolbarRef.current,
-          history: {
-            userOnly: true,
-          },
+  useEffect(() => {
+    if (quillRef.current && toolbarRef.current && yApps) {
+      connectToYjs(quillRef.current, toolbarRef.current, yApps);
+    }
+  }, [quillRef, toolbarRef, yApps]);
+
+  const connectToYjs = async (quillReference: any, toolbarReference: any, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
+
+    // Quill Refs
+    const quill = new Quill(quillReference, {
+      modules: {
+        toolbar: toolbarReference,
+        history: {
+          userOnly: true,
         },
-        scrollingContainer: '#scrolling-container',
-        placeholder: 'Start collaborating...',
-        theme: 'snow',
-      });
-      // Save the instance for the toolbar
-      setEditor(props._id, quill);
+      },
+      placeholder: 'Start collaborating...',
+      theme: 'snow',
+      formats,
+    });
 
-      // A Yjs document holds the shared data
-      const ydoc = new Y.Doc();
+    // Save the instance for the toolbar
+    setEditor(props._id, quill);
 
-      // WS Provider
+    // Bind with Qull
+    new QuillBinding(yText, quill);
 
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, ydoc);
+    // Observe changes on the text, if user is source of the change, update sage
+    quill.on('text-change', (delta, oldDelta, source) => {
+      if (source == 'user' && quill) {
+        debounceUpdate(quill);
+      }
+    });
 
-      // Define a shared text type on the document
-      const ytext = ydoc.getText('quill');
+    // Get the user count
+    const users = provider.awareness.getStates();
+    const count = users.size;
 
-      // Bind The ydoc and quidd
-      const binding = new QuillBinding(ytext, quill, provider.awareness);
-
-      // Observe changes on the text, if user is source of the change, update sage
-      quill.on('text-change', (delta, oldDelta, source) => {
-        if (source == 'user' && quill) {
-          debounceUpdate();
-        }
-      });
-
-      // Sync state with sage when a user connects and is the only one present
-      provider.on('sync', () => {
-        if (provider) {
-          const users = provider.awareness.getStates();
-          const count = users.size;
-          if (count === 1) {
-            const content = quill.getContents();
-            if (content.ops.length !== s.content.ops.length) {
-              quill.setContents(s.content as any);
-            }
-          }
-        }
-      });
-    }
-  };
-
-  // Remove Editor and disconnect
-  const removeEditor = () => {
-    if (yDoc) yDoc.destroy();
-    if (quillBinding) quillBinding.destroy();
-    if (wsProvider) wsProvider.disconnect();
-    setYdoc(null);
-    setQuillBinding(null);
-    setWsProvider(null);
-    setQuill(null);
-  };
-
-  // Initialize the editor at start and when the the user clicks the refresh button in the toolbar
-  useEffect(() => {
-    if (quillRef && toolbarRef) {
-      removeEditor();
-      setupEditor();
-    }
-  }, [reinit, quillRef, toolbarRef]);
-
-  // Remove the editor when the component unmounts
-  useEffect(() => {
-    return () => {
-      removeEditor();
+    // Sync current ydoc with that is saved in the database
+    const syncStateWithDatabase = () => {
+      quill.setContents(s.content as any);
     };
-  }, []);
+
+    // If I am the only one here according to Yjs, then sync with database
+    if (count == 1) {
+      syncStateWithDatabase();
+    } else if (count > 1 && props._createdBy === user?._id) {
+      // There are other users here and I created this app.
+      // Is this app less than 5 seconds old...this feels hacky
+      const now = await serverTime();
+      const created = props._createdAt;
+      const createdWithin5Seconds = now.epoch - created < 5000;
+      // Then we need to sync with database due to Yjs not being able to catch the initial state
+      if (createdWithin5Seconds) {
+        // I created this
+        syncStateWithDatabase();
+      }
+    }
+  };
 
   return (
     <AppWindow app={props}>
       <Box w="100%" h="100%">
         <div ref={toolbarRef} hidden style={{ display: 'none' }}></div>
-        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5', zIndex: 10000 }}></div>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
       </Box>
     </AppWindow>
   );

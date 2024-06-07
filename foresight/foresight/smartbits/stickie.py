@@ -18,6 +18,7 @@ class StickieState(TrackedBaseModel):
     executeInfo: ExecuteInfo
 
 
+
 class Stickie(SmartBit):
     # the key that is assigned to this in state is
     state: StickieState

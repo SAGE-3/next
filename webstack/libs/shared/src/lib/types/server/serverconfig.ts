@@ -55,6 +55,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
+    chat: AIChatConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
   };
@@ -149,6 +150,14 @@ export interface TwilioConfiguration {
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
+}
+
+// AI Chat Configuration
+export interface AIChatConfiguration {
+  url: string;
+  model: string; // LLM model
+  apiKey: string; // API Key
+  max_tokens: number;
 }
 
 export interface CodeLlamaConfiguration {

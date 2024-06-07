@@ -220,12 +220,6 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
-  // Zoom to the saved selected apps
-  const goToSavedSelectedApps = () => {
-    if (savedSelectedAppsIds.length < 1) return;
-    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
-  };
-
   // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
     setWhiteboardMode('none');
@@ -262,27 +256,8 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          {/* <Tooltip
-            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
-          >
-            <IconButton
-              size="sm"
-              disabled={savedSelectedAppsIds.length < 1}
-              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
-              icon={<MdApps />}
-              fontSize="xl"
-              variant={'outline'}
-              aria-label={'selected-apps'}
-              onClick={goToSavedSelectedApps}
-            ></IconButton>
-          </Tooltip> */}
         </Box>
       </Box>
-
-      {/* Buttons Middle Bottom */}
-      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
-        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
-      </Box> */}
 
       {/* ServerName Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>

@@ -14,10 +14,12 @@
   "HCDP",
   "IFrame",
   "ImageViewer",
+  "JupyterLab",
   "LeafLet",
   "Linker",
   "MapGL",
   "NLChartGenerator",
+  "Notepad",
   "PDFResult",
   "PDFViewer",
   "PluginApp",
@@ -27,11 +29,12 @@
   "Seer",
   "SensorOverview",
   "Stickie",
+  "TLDraw",
+  "Transcribe",
   "TwilioScreenshare",
   "VegaLite",
   "VegaLiteViewer",
   "VideoViewer",
   "WebpageLink",
-  "Webview",
-  "Transcribe"
+  "Webview"
 ]

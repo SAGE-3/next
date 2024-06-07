@@ -20,8 +20,9 @@ from foresight.config import config as conf, prod_type
 
 
 class TrackedBaseModel(BaseModel):
-    path: Optional[str]
+    path: Optional[str] = None
     touched: Optional[set] = set()
+
     # _s3_comm: SageCommunication = PrivateAttr()
     # The following params should be defined as required in
     # the constructor since Not all apps need them!a

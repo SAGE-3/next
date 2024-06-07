@@ -16,10 +16,12 @@ import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
 import { name as ImageViewerName } from './apps/ImageViewer';
+import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
 import { name as NLChartGeneratorName } from './apps/NLChartGenerator';
+import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
@@ -29,6 +31,7 @@ import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
+import { name as TLDrawName } from './apps/TLDraw';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
@@ -52,10 +55,12 @@ import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
+import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
 import NLChartGenerator from './apps/NLChartGenerator/NLChartGenerator';
+import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
@@ -65,6 +70,7 @@ import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
+import TLDraw from './apps/TLDraw/TLDraw';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
@@ -150,6 +156,11 @@ export const Applications = {
     ToolbarComponent: ImageViewer.ToolbarComponent,
     GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent,
   },
+  [JupyterLabName]: {
+    AppComponent: React.memo(JupyterLab.AppComponent),
+    ToolbarComponent: JupyterLab.ToolbarComponent,
+    GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent,
+  },
   [LeafLetName]: {
     AppComponent: React.memo(LeafLet.AppComponent),
     ToolbarComponent: LeafLet.ToolbarComponent,
@@ -169,6 +180,11 @@ export const Applications = {
     AppComponent: React.memo(NLChartGenerator.AppComponent),
     ToolbarComponent: NLChartGenerator.ToolbarComponent,
     GroupedToolbarComponent: NLChartGenerator.GroupedToolbarComponent,
+  },
+  [NotepadName]: {
+    AppComponent: React.memo(Notepad.AppComponent),
+    ToolbarComponent: Notepad.ToolbarComponent,
+    GroupedToolbarComponent: Notepad.GroupedToolbarComponent,
   },
   [PDFResultName]: {
     AppComponent: React.memo(PDFResult.AppComponent),
@@ -215,6 +231,16 @@ export const Applications = {
     ToolbarComponent: Stickie.ToolbarComponent,
     GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
   },
+  [TLDrawName]: {
+    AppComponent: React.memo(TLDraw.AppComponent),
+    ToolbarComponent: TLDraw.ToolbarComponent,
+    GroupedToolbarComponent: TLDraw.GroupedToolbarComponent,
+  },
+  [transcribeName]: {
+    AppComponent: React.memo(Transcribe.AppComponent),
+    ToolbarComponent: Transcribe.ToolbarComponent,
+    GroupedToolbarComponent: Transcribe.GroupedToolbarComponent,
+  },
   [TwilioScreenshareName]: {
     AppComponent: React.memo(TwilioScreenshare.AppComponent),
     ToolbarComponent: TwilioScreenshare.ToolbarComponent,
@@ -245,14 +271,13 @@ export const Applications = {
     ToolbarComponent: Webview.ToolbarComponent,
     GroupedToolbarComponent: Webview.GroupedToolbarComponent,
   },
-  [transcribeName]: {
-    AppComponent: React.memo(Transcribe.AppComponent),
-    ToolbarComponent: Transcribe.ToolbarComponent,
-    GroupedToolbarComponent: Transcribe.GroupedToolbarComponent,
-  },
 } as unknown as Record<
   string,
-  { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element; GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element }
+  {
+    AppComponent: () => JSX.Element;
+    ToolbarComponent: () => JSX.Element;
+    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;
+  }
 >;
 
 export * from './components';

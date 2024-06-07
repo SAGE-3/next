@@ -1,0 +1,36 @@
+{
+  "description": "This prompt reframes a query to state what need to be selected. E.g., can you delete all the stickies -> select all stickies",
+  "prefix": "You are a meta-agent that needs to instruct a specialized agent to select the items to which a\nquery applies in a new updated_query. The new_updated query serves to identify the items which are first loaded.\nA second agent then completes the desired action.\n\n{format_instructions}\n\nExamples:",
+  "input_variables": [
+    "query"
+  ],
+  "partial_variables": {
+    "format_instructions": "{FORMAT_INSTRUCTIONS_PLACEHOLDER}"
+  },
+  "examples_info": {
+    "examples_input_variables": [
+      "query",
+      "updated_query"
+    ],
+    "examples_template": "query: {example_query}\nupdated_query: {example_updated_query}\n",
+    "examples_data": [
+      {
+        "example_query": "Can you summarize all the red stickies",
+        "example_updated_query": "Select the red stickies"
+      },
+      {
+        "example_query": "Can you delete all the pdf files",
+        "example_updated_query": "Select the pdf files"
+      },
+      {
+        "example_query": "Can you change the color of purple stickies to red",
+        "example_updated_query": "select purple stickies"
+      }
+    ],
+    "example_separator": "\n"
+  },
+  "suffix": "query: {query}\n",
+  "parser": "reframe_select_apps_output_parser"
+}
+
+

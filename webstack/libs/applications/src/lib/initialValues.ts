@@ -15,10 +15,12 @@ import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFVi
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as IFrameName, init as defaultIFrame } from './apps/IFrame';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
+import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as NLChartGeneratorName, init as defaultNLChartGenerator } from './apps/NLChartGenerator';
+import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
@@ -28,6 +30,7 @@ import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
+import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
@@ -52,10 +55,12 @@ export const initialValues = {
   [HCDPName]: defaultHCDP,
   [IFrameName]: defaultIFrame,
   [ImageViewerName]: defaultImageViewer,
+  [JupyterLabName]: defaultJupyterLab,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,
   [NLChartGeneratorName]: defaultNLChartGenerator,
+  [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
@@ -65,6 +70,7 @@ export const initialValues = {
   [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
+  [TLDrawName]: defaultTLDraw,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,

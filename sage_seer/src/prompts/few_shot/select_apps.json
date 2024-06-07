@@ -1,0 +1,28 @@
+
+{
+  "description": "Returns the UUIDS of app the meet the requirement defined in a user query",
+  "prefix": "Given the list of items below, identify the app_ids (UUID4) of the items that match the user's query defined below. If none of the items match the query, return an empty list.\n\n{format_instructions}\n\nExample:",
+  "input_variables": [
+    "originalItems",
+    "query"
+  ],
+  "partial_variables": {
+    "format_instructions": "{FORMAT_INSTRUCTIONS_PLACEHOLDER}"
+  },
+  "examples_info": {
+    "examples_input_variables": ["originalItems", "query", "matchedItems"],
+      "examples_template": "originalItems: {originalItems}\nquery: {query}\n```\njson\n{{{{\n  \"uuids\": {matchedItems}\n}}}}\n```",
+    "examples_data": [
+      {
+        "originalItems": "[{{'app_id': 'ba88e0df-d885-4ce3-ad74-006fbba69b43',\n  'data': {{'position': {{'x': 1502426, 'y': 1500697, 'z': 0}},\n   'size': {{'width': 400, 'height': 517, 'depth': 0}},\n   'rotation': {{'x': 0, 'y': 0, 'z': 0}},\n   'type': 'PDFViewer'}},\n  'state': {{'assetid': '4d2acd83-8fa2-4c7d-8e91-8e2e8cf45179',\n   'currentPage': 0,\n   'numPages': 8,\n   'displayPages': 1,\n   'analyzed': '',\n   'client': ''}},\n {{'app_id': '0fbbc02b-6f62-4bbe-8bfb-b6698b7da401',\n  'data': {{'position': {{'x': 1502778, 'y': 1500423, 'z': 0}},\n   'size': {{'width': 400, 'height': 420, 'depth': 0}},\n   'rotation': {{'x': 0, 'y': 0, 'z': 0}},\n   'type': 'Stickie'}},\n  'state': {{'text': 'Philosophy', 'fontSize': 36, 'color': 'yellow'}},\n {{'app_id': '9ae9a2eb-d901-44c8-83e3-5b447043fd67',\n  'data': {{'position': {{'x': 1503749, 'y': 1500342, 'z': 0}},\n   'size': {{'width': 400, 'height': 420, 'depth': 0}},\n   'rotation': {{'x': 0, 'y': 0, 'z': 0}},\n   'type': 'Stickie'}},\n  'state': {{'text': 'Tech and AI', 'fontSize': 36, 'color': 'red'}}\n]\n",
+        "query": "Which stickies are red",
+        "matchedItems": "[\"9ae9a2eb-d901-44c8-83e3-5b447043fd67\"]"
+      }
+    ],
+    "example_separator": "\n"
+  },
+  "suffix": "originalItems: {originalItems}\nquery: {query}\n",
+  "parser": "select_apps_output_parser"
+}
+
+
