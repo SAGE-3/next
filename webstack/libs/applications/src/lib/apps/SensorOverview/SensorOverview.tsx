@@ -209,11 +209,9 @@ function AppComponent(props: App): JSX.Element {
 
     const response = await fetch(url);
     const sensor = await response.json();
-    console.log(sensor);
     if (sensor) {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
-      console.log(sensorData);
     }
 
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);

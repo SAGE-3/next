@@ -129,10 +129,7 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
           // Transcription has a bias to say Thank you. I just decided to ignore these commen
           if (transcribedAudio.transcription !== '') {
             setTranscription((prev) => [...prev, transcribedAudio.transcription]);
-            console.log(transcribedAudio.transcription, transcribedAudio.transcription !== ' Thank you.');
           }
-        } else {
-          console.log('Empty Audio');
         }
         chunks.length = 0; // Clear the chunks array
       };
