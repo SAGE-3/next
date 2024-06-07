@@ -26,7 +26,7 @@ export function ArticulateRouter() {
     logProvider: () => console,
     selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying
-    onProxyReq: restream,
+    // onProxyReq: restream,
     onProxyRes: (proxyRes, req, res) => {
       let data = '';
 
@@ -72,7 +72,7 @@ export function ArticulateRouter() {
 function restream(proxyReq: ClientRequest, req: Request): void {
   if (req.method === 'POST' && req.body) {
     const bodyData = JSON.stringify(req.body);
-    proxyReq.setHeader('Content-Type', 'application/json');
+    proxyReq.setHeader('Content-Type', 'multipart/form-data');
     proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
     proxyReq.write(bodyData);
   }

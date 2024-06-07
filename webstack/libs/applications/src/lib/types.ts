@@ -34,6 +34,7 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
+import { state as transcribeState, name as transcribeName } from './apps/Transcribe';
 
 export type AppState =
   | {}
@@ -70,7 +71,8 @@ export type AppState =
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState;
+  | WebviewState
+  | transcribeState;
 
 export type AppName =
   | typeof AIPaneName
@@ -91,6 +93,7 @@ export type AppName =
   | typeof LeafLetName
   | typeof LinkerName
   | typeof MapGLName
+  | typeof NLChartGeneratorName
   | typeof PDFResultName
   | typeof PDFViewerName
   | typeof PluginAppName
@@ -106,4 +109,4 @@ export type AppName =
   | typeof VideoViewerName
   | typeof WebpageLinkName
   | typeof WebviewName
-  | typeof NLChartGeneratorName;
+  | typeof transcribeName;

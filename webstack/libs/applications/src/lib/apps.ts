@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
@@ -34,6 +35,7 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
+import { name as transcribeName } from './apps/Transcribe';
 
 import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
@@ -69,8 +71,8 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
+import Transcribe from './apps/Transcribe/Transcribe';
 import React from 'react';
-import { App, AppGroup } from './schema';
 
 export const Applications = {
   [AIPaneName]: {
@@ -243,13 +245,14 @@ export const Applications = {
     ToolbarComponent: Webview.ToolbarComponent,
     GroupedToolbarComponent: Webview.GroupedToolbarComponent,
   },
+  [transcribeName]: {
+    AppComponent: React.memo(Transcribe.AppComponent),
+    ToolbarComponent: Transcribe.ToolbarComponent,
+    GroupedToolbarComponent: Transcribe.GroupedToolbarComponent,
+  },
 } as unknown as Record<
   string,
-  {
-    AppComponent: () => JSX.Element;
-    ToolbarComponent: () => JSX.Element;
-    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;
-  }
+  { AppComponent: () => JSX.Element; ToolbarComponent: () => JSX.Element; GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element }
 >;
 
 export * from './components';
