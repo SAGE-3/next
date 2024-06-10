@@ -12,6 +12,6 @@ uvicorn
 pydantic>=2.0.0
 
 # AI with langchain
-langchain
-langchain-openai
-langchain-huggingface
+langchain>=0.2.3
+langchain-openai>=0.1.8
+langchain-huggingface>=0.0.3

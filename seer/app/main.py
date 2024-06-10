@@ -30,12 +30,12 @@ from langchain_core.prompts import PromptTemplate
 server = "https://arcade.evl.uic.edu/llama/"
 
 # Get the token from the environment (shouln't be needed but a bug in the library)
-token = os.getenv("HF_TOKEN")
+# token = os.getenv("HF_TOKEN")
 # LLM model using TGI interface
 llm = HuggingFaceEndpoint(
     endpoint_url=server,
     max_new_tokens=2048,
-    huggingfacehub_api_token=token,
+    # huggingfacehub_api_token=token,
 )
 
 # Prompt template for Llama3
