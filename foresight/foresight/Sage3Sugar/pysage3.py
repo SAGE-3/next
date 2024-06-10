@@ -310,18 +310,24 @@ class PySage3:
         app.send_updates()
 
         
-    def list_assets(self, room_id=None):
+    def list_assets(self, room_id=None, board_id=None, asset_id=None):
+        # TODO: clean this. Poorly written. Also handle baord_id
         assets = self.s3_comm.get_assets()
         if room_id is not None:
             assets = [x for x in assets if x["data"]["room"] == room_id]
         assets_info = []
         for asset in assets:
+            if asset_id is not None:
+                if asset["_id"] != asset_id:
+                    continue
+
             assets_info.append(
                 {
                     "_id": asset["_id"],
                     "filename": asset["data"]["originalfilename"],
                     "mimetype": asset["data"]["mimetype"],
                     "size": asset["data"]["size"],
+                    "path": asset["data"]["path"]
                 }
             )
         return assets_info
@@ -399,7 +405,7 @@ class PySage3:
                 else:
                     app['tags'] = []
 
-            all_apps = {x['_id']: x for x in all_apps}
+        all_apps = {x['_id']: x for x in all_apps}
         if filter_tags:
             all_apps = self.__remove_keys_from_dict__(all_apps, filter_tags)
 
@@ -414,6 +420,31 @@ class PySage3:
         if board_id is None:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
+
+
+    def get_apps_text(self, apps: list = None) -> list:
+        #TODO: fix names below to class.__name__
+        if apps is None:
+            apps = self.get_apps()
+
+        text = ""
+        for app_id, app in apps.items():
+            app_type = app.get('data', {}).get('type', None)
+
+            if app_type is None:
+                return "AppType Not Valid"
+            elif app_type == 'Stickie':
+                text += app.get('data', {}).get('state', {}).get('text', "")+"\n"
+            elif app_type == 'PDFViewer':
+                asset_id = app.get('data', {}).get('state', {}).get('assetid')
+                asset_info = self.list_assets(asset_id=asset_id)
+                asset_path = asset_info[asset_id]['data']["path"]
+                text += self.s3_comm.get_pdf_text(asset_path)
+            else:
+                return "Cannot yet summarize {app_type}"
+        return text
+
+
 
     # def format_smartbits_with_tags():
     #     all_tags = get_alltags()

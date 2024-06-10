@@ -1,0 +1,12 @@
+
+{
+  "description": "Create apps the meet the requirement defined in a user query",
+  "prefix": "Create SAGE3 apps (widgets) that match the user's query. Make sure not to include tags unless specifically mentioned in the query.",
+  "input_variables": [
+    "originalItems",
+    "query"
+  ],
+  "suffix": "originalItems: {originalItems}\nquery: {query}\n"
+}
+
+

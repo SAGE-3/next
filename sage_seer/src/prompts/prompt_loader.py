@@ -54,10 +54,10 @@ class PromptLoader:
 
     def _generate_zero_shot_prompt(self, prompt_data):
         # Assuming zero-shot prompts require fewer parameters, adjust accordingly
-        return FewShotPromptTemplate(
+        return PromptTemplate(
             input_variables=prompt_data['input_variables'],
-            prefix=prompt_data.get('prefix', ""),
-            suffix=prompt_data.get('suffix', "")
+            # suffix is not working in PromptTemplate so manually adding it
+            template= prompt_data.get('prefix', "") + "\n" + prompt_data.get('suffix', ""),
         )
 
     @staticmethod
