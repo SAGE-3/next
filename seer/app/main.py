@@ -25,6 +25,7 @@ ps3 = PySage3(conf, prod_type)
 from langchain_huggingface import llms
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 # Llama3 server at EVL
 server = "https://arcade.evl.uic.edu/llama/"
@@ -56,8 +57,13 @@ prompt = PromptTemplate.from_template(
     template.format(system_prompt=sys_template_str, user_prompt=human_template_str)
 )
 
+# OutputParser that parses LLMResult into the top likely string.
+# Create a new model by parsing and validating input data from keyword arguments.
+# Raises ValidationError if the input data cannot be parsed to form a valid model.
+output_parser = StrOutputParser()
+
 # Session : prompt building and then LLM
-session = prompt | llm
+session = prompt | llm | output_parser
 
 # Pydantic models: Question, Answer, Context
 
@@ -98,7 +104,7 @@ async def ask_question(qq: Question):
     logger.info("Got question> from " + qq.user + " about:" + qq.q)
     try:
         response = await session.ainvoke({"question": qq.q})
-        text = response.strip()
+        text = response
     except:
         text = "I am sorry, I could not answer your question."
     val = Answer(id=qq.id, r=text)
