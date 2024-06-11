@@ -50,7 +50,6 @@ services:
   #   environment:
   #     - ENVIRONMENT=development
   #     - SAGE3_SERVER=${SAGE3_SERVER}
-  #     - HF_TOKEN=${HF_TOKEN}
   #     - TOKEN=${TOKEN}
   #   restart: always
   #   healthcheck:
@@ -83,3 +82,13 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./configurations/nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./configurations/nginx/keys:/etc/ssl/
