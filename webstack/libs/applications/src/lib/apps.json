@@ -15,6 +15,7 @@
     "HCDP",
     "IFrame",
     "ImageViewer",
+    "JupyterLab",
     "LeafLet",
     "Linker",
     "MapGL",

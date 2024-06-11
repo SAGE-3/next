@@ -866,10 +866,10 @@ export function HomePage() {
 
             <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
 
-            <Accordion defaultIndex={[0, 1, 2]} allowMultiple>
+            <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
               <AccordionItem border="none" ref={roomsRef}>
                 <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'The rooms you are a part of'}>
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
                     </Box>
