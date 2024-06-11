@@ -45,7 +45,7 @@ async function sendText(text: string): Promise<any> {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ prompt: text, context: '' }),
   });
 
   if (!response.ok) {

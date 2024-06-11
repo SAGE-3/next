@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect } from 'react';
+import { useRef, useState, Fragment, useEffect, Key } from 'react';
 import {
   ButtonGroup,
   Button,
@@ -51,6 +51,8 @@ import talking from './arti_images/talking.gif';
 import thinking from './arti_images/thinking.gif';
 import idle from './arti_images/idle.gif';
 import EChartsViewer from './EChartsViewer/EChartsViewer';
+import { processStations } from './utils';
+import { EChartsCoreOption } from 'echarts';
 
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
@@ -164,6 +166,8 @@ function AppComponent(props: App): JSX.Element {
 
   const [artiState, setArtiState] = useState(idle);
 
+  const [chartOptions, setChartOptions] = useState<EChartsCoreOption[][]>([]);
+
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
@@ -247,10 +251,10 @@ function AppComponent(props: App): JSX.Element {
 
     const request = new_input;
 
-    //make fetch call here with request]
+    //make fetch call here with request
     const response = await ArticulateAPI.sendText(request);
-    console.log(response);
-
+    const tmpChartOptions: EChartsCoreOption[] = await processStations(response['station_chart_info']);
+    setChartOptions((prev) => [...prev, tmpChartOptions]);
     // await the request
     setProcessing(false);
     // Add messages
@@ -373,9 +377,9 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [vegaLiteSpecs]);
 
-  const generateChart = async (vegaLiteSpec: any) => {
+  const generateChart = async (EChartOption: EChartsCoreOption) => {
     await createApp({
-      title: 'VegaLiteViewer',
+      title: 'EChartsViewer',
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
       //TODO get middle of the screen space
@@ -390,11 +394,9 @@ function AppComponent(props: App): JSX.Element {
         depth: 0,
       },
       rotation: { x: 0, y: 0, z: 0 },
-      type: 'VegaLiteViewer',
+      type: 'EChartsViewer',
       state: {
-        spec: JSON.stringify(vegaLiteSpec),
-        error: false,
-        isHCDPChart: false,
+        options: EChartOption,
       },
 
       raised: true,
@@ -409,23 +411,27 @@ function AppComponent(props: App): JSX.Element {
         <Box>
           <Image boxSize={'xs'} src={artiState} />
           <HStack overflowX="auto">
-            <EChartsViewer />
-            {vegaLiteSpecs.map((vegaLiteSpec: any, index: number) => {
-              return (
-                <Box
-                  onClick={() => generateChart(vegaLiteSpec)}
-                  cursor={'pointer'}
-                  zIndex={0}
-                  backgroundColor="#ffffff"
-                  p="1rem"
-                  border="2px solid black"
-                  rounded="lg"
-                  m="1rem"
-                >
-                  <div style={{ zIndex: -1, width: vegaLiteSpec.width, height: vegaLiteSpec.height }} id={`vis${props._id + index}`}></div>
-                </Box>
-              );
-            })}
+            {chartOptions.length > 0 ? (
+              chartOptions.map((optionGroup: EChartsCoreOption[], groupIndex: Key | null | undefined) =>
+                optionGroup.map((option: EChartsCoreOption, optionIndex: Key | null | undefined) => (
+                  <Box
+                    onClick={() => generateChart(option)}
+                    cursor={'pointer'}
+                    zIndex={0}
+                    backgroundColor="#ffffff"
+                    p="1rem"
+                    border="2px solid black"
+                    rounded="lg"
+                    m="1rem"
+                    key={optionIndex}
+                  >
+                    <EChartsViewer option={option} />
+                  </Box>
+                ))
+              )
+            ) : (
+              <div>No chart generated</div>
+            )}
           </HStack>
         </Box>
         <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="65%" w="100%">

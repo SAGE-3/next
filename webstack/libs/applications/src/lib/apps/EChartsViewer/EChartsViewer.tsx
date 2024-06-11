@@ -25,6 +25,7 @@ function AppComponent(props: App): JSX.Element {
   const chartRef = useRef<any>(null);
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
+  const s = props.data.state as AppState;
 
   useEffect(() => {
     if (chartStateInstance) {
@@ -43,6 +44,7 @@ function AppComponent(props: App): JSX.Element {
       height: props.data.size.height,
       width: props.data.size.width,
     });
+    if (chartInstance) chartInstance.setOption(s.options);
 
     setChartStateInstance(chartInstance);
   }, [chartRef, colorMode]);
