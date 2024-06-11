@@ -30,6 +30,7 @@ webstack/package-lock.json
 
 # logs
 *.log
+
 webstack/keys/token.json
 webstack/keys/package-lock.json
 webstack/keys/yarn.lock
@@ -37,3 +38,6 @@ foresight/_env.sh
 sage_seer/_env.sh
 seer/app/.env
 
+# SSL
+*.crt
+*.key
