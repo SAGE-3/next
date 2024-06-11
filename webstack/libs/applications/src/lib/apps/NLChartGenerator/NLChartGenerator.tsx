@@ -25,6 +25,7 @@ import {
   Center,
   AbsoluteCenter,
   Image,
+  useColorMode,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 import vegaEmbed from 'vega-embed';
@@ -49,6 +50,7 @@ import mute from './arti_images/mute.gif';
 import talking from './arti_images/talking.gif';
 import thinking from './arti_images/thinking.gif';
 import idle from './arti_images/idle.gif';
+import EChartsViewer from './EChartsViewer/EChartsViewer';
 
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
@@ -407,6 +409,7 @@ function AppComponent(props: App): JSX.Element {
         <Box>
           <Image boxSize={'xs'} src={artiState} />
           <HStack overflowX="auto">
+            <EChartsViewer />
             {vegaLiteSpecs.map((vegaLiteSpec: any, index: number) => {
               return (
                 <Box

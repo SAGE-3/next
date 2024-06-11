@@ -1,11 +1,3 @@
-/**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- */
-
 import { useEffect, useRef, useState } from 'react';
 import { ArticulateAPI } from '../api';
 
@@ -25,7 +17,7 @@ interface UseAudioProps {
  * @returns audioBlob which contains the audio blob
  * @returns transcription which is the audio that is transcribed
  */
-export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: UseAudioProps) => {
+export const useAudio = ({ silenceThreshold = 0.1, silenceDuration = 300 }: UseAudioProps) => {
   // Audio Variables
   const stream = useRef<MediaStream | null>(null);
   const audioContext = useRef<AudioContext | null>(null);
@@ -37,6 +29,7 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
   // State
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [transcription, setTranscription] = useState<string[]>([]);
+  const [endOfCommand, setEndOfCommand] = useState(true);
 
   useEffect(() => {
     // Function to get the user's microphone audio
@@ -74,9 +67,7 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
 
       const checkForSilence = () => {
         // Get the audio data into the dataArray
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        //@ts-ignore
-        analyser.current.getFloatTimeDomainData(dataArray.current!);
+        analyser.current!.getFloatTimeDomainData(dataArray.current!);
 
         // Check if all audio samples are below the threshold (i.e., silence)
         const silence = dataArray.current!.every((sample) => Math.abs(sample) < threshold);
@@ -91,11 +82,17 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
               hasSound = false;
             }
           }
+
+          // If silence duration exceeds 1000ms, set endOfCommand to true
+          if (audioContext.current!.currentTime - silenceStart > 1) {
+            setEndOfCommand(true);
+          }
         } else {
           // Reset silenceStart if sound is detected and trigger onSound
           hasSound = true;
           silenceStart = null;
           onSound();
+          setEndOfCommand(false); // Set endOfCommand to false when speech is detected
         }
 
         // Continuously check for silence
@@ -127,6 +124,7 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
           // Send the audio blob to the API for transcription
           const transcribedAudio = await ArticulateAPI.sendAudio({ blob });
           // Transcription has a bias to say Thank you. I just decided to ignore these commen
+          console.log(transcribedAudio);
           if (transcribedAudio.transcription !== '') {
             setTranscription((prev) => [...prev, transcribedAudio.transcription]);
           }
@@ -153,10 +151,14 @@ export const useAudio = ({ silenceThreshold = 0.01, silenceDuration = 1000 }: Us
       );
     }
   };
+  useEffect(() => {
+    console.log(endOfCommand);
+  }, [endOfCommand]);
 
   return {
     startRecording,
     audioBlob,
     transcription,
+    endOfCommand, // Return endOfCommand state
   };
 };
