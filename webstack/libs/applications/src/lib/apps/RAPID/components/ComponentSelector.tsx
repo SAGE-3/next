@@ -37,8 +37,8 @@ function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
     return <LocationMap {...propsData} />;
   }
 
-  if (s.category === CATEGORIES.SAGE_STATS) {
-    return <SageStats />;
+  if (s.category === CATEGORIES.SAGE_STATS.name) {
+    return <SageStats {...propsData} />;
   }
 
   return <div>ERROR: Category Not Found</div>;

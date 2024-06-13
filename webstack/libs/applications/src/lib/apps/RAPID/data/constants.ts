@@ -19,34 +19,6 @@ export const CATEGORIES = {
     name: 'SAGE Stats',
     order: 4,
   },
-  DUMMY: {
-    name: 'Dummy',
-    order: 5,
-  },
-  DUMMY2: {
-    name: 'Dummy2',
-    order: 6,
-  },
-  DUMMY3: {
-    name: 'Dummy3',
-    order: 7,
-  },
-  DUMMY4: {
-    name: 'Dummy4',
-    order: 8,
-  },
-  DUMMY5: {
-    name: 'Dummy5',
-    order: 9,
-  },
-  DUMMY6: {
-    name: 'Dummy6',
-    order: 10,
-  },
-  DUMMY7: {
-    name: 'Dummy7',
-    order: 11,
-  },
 };
 
 export const QUERY_FIELDS = {
