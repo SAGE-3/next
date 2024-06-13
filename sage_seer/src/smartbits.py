@@ -1,6 +1,8 @@
 from langchain.pydantic_v1 import BaseModel, Field, UUID4
 from typing import Union, Literal, List, Optional
 
+from pydantic import validator
+
 
 class Size(BaseModel):
     """
@@ -36,15 +38,21 @@ class StickieState(BaseModel):
 class CounterState(BaseModel):
     count: int = Field(description="The count to display on the counter")
 
+class ExecuteInfo(BaseModel):
+    """ {"executeFunc": "", "params":[]}"""
+    executeFunc: str = Field(description="The function to execute", default="")
+    params: List[str] = Field(description="The parameters to pass to the function", default=[])
 
 class PDFViewerState(BaseModel):
-    assedid: Optional[UUID4] = Field(description="The UUID4 of the asset")
-    file_name: Optional[str] = Field(description="The name of the file to use")
-    currentPage: int = Field(description="The page number currently showing")
-    numPages: int = Field(description="The total number of pages in the pdf document")
-    displayPages: int = Field(description="The number of pages to display at a time")
-    analyzed: str = Field(description="Whether the pdf was converted to text")
-    client: str = Field(description="The client used. This is currently set to empty")
+    assetid: UUID4 = Field(description="The UUID4 string representation of the asset")
+    file_name: str = Field(description="The name of the file to use")
+    currentPage: int = Field(description="The page number currently showing", default=0)
+    numPages: Optional[int] = Field(description="The total number of pages in the pdf document")
+    displayPages: int = Field(description="The number of pages to display at a time", default=1)
+    analyzed: Optional[str] = Field(description="Whether the pdf was converted to text", defualt=False)
+    client: str = Field(description="The client used.", default="")
+    executeInfo: ExecuteInfo = Field(description="The execute info dictionary", default={"executeFunc": "", "params": []})
+
 
 
 class SmartBit(BaseModel):
@@ -53,6 +61,7 @@ class SmartBit(BaseModel):
     state: Union[StickieState, CounterState, PDFViewerState] = Field(
         description="Data specific to the app type like color of a stickie or page currently being viewed for a PDF viewer")
     tags: List[str] = Field(description="List of tag assigned to this app", default=[])
+
 
 
 # Update forward references to resolve ForwardRef issues

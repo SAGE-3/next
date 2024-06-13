@@ -51,6 +51,9 @@ class DeleteAppTool(BaseTool):
         return "Done with DeleteAppTool"
 
 
+
+
+
 class SummarizeAppsTool(BaseTool):
     args_schema: Type[BaseModel] = SummarizeAppsToolInput
 
@@ -65,14 +68,55 @@ class SummarizeAppsTool(BaseTool):
             self._ps3 = ps3_instance  # Initialize the private attribute
 
     def _run(self, app_id: UUID4, run_manager: Optional[CallbackManagerForToolRun] = None) -> str:
-        self._ps3.delete_app(app_id)
         print("Running summarize apps")
         return "Done with SummarizeAppsTool"
 
 
-class CompleteOrEscalate(BaseModel):
-    """A tool to mark the current task as completed and/or to escalate control of the dialog to the main assistant,
-    who can re-route the dialog based on the user's needs."""
+class OpenAssetTool(BaseTool):
+    args_schema: Type[BaseModel] = CreateAppToolInput
+
+    name: str = "OpenAssetTool"
+    description: str = "Opens an asset file (e.g., pdf, csv or image) with the provided app_id as an app (widget) on the wall"
+
+    _ps3: Any = PrivateAttr()
+
+    def __init__(self, ps3_instance=None):
+        super().__init__()
+        if ps3_instance is not None:
+            self._ps3 = ps3_instance  # Initialize the private attribute
+    def _run(self, smartbit: SmartBit, run_manager: Optional[CallbackManagerForToolRun] = None) -> str:
+        room_id = room_board_info.room_id
+        board_id = room_board_info.board_id
+        smartbit.state.assetid = str(smartbit.state.assetid)
+
+        self._ps3.create_app(room_id, board_id, smartbit.data.type, smartbit.state.dict(), smartbit.data.dict())
+        print("Opening asset {app_id}")
+        return "Done with with Open Asset"
+
+
+class Complete(BaseModel):
+    """A tool to mark the current task as completed"""
+
+    cancel: bool = True
+    reason: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "cancel": False,
+                "reason": "The task from the sub agent was completed",
+            },
+            "example 2": {
+                "cancel": True,
+                "reason": "The user changed their mind about the current task.",
+            },
+        }
+
+class Escalate(BaseModel):
+    """
+    A tool to mark the current task as needing to be escalated to the parent higher level agent
+    that can re-route the dialog to another agent for further processing.
+    """
 
     cancel: bool = True
     reason: str
@@ -88,7 +132,7 @@ class CompleteOrEscalate(BaseModel):
                 "reason": "I have fully completed the task.",
             },
             "example 3": {
-                "cancel": False,
-                "reason": "I need to search for more information to complete the task.",
+                "cancel": True,
+                "reason": "The user is asking about something that I can complete using existing tools.",
             },
         }
