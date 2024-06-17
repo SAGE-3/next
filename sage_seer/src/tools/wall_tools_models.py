@@ -7,7 +7,8 @@ from src.data_exmaples import smartbit_dict_example
 
 class CreateAppToolInput(BaseModel):
     smartbit: SmartBit = Field(
-        description="The smartbit data used to instantiate the app, and which include including the smartbit type")
+        description="The smartbit data used to instantiate the app, and which include including the smartbit type"
+    )
 
     class Config:
         json_schema_extra = {
@@ -33,5 +34,15 @@ class SummarizeAppsToolInput(BaseModel):
         json_schema_extra = {
             "example": {
                 "app_id": ['9e9c5a5f-bb75-4edf-88b3-7110da5ed964']
+            }
+        }
+
+
+class SummarizeAppsToolInput(BaseModel):
+    asset_id: UUID4 = Field(description="The asset_id of the asset that will be opened as an app on the wall")
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "asset_id": '206fca41-a109-4d94-8d17-7e4c621826f2'
             }
         }
