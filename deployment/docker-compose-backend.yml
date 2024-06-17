@@ -20,8 +20,8 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-  fastapi:
-    image: "ghcr.io/mahdi-b/sagekernelserver:latest"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:arm64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -30,7 +30,7 @@ services:
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
-    command: python src/main.py --url http://jupyter:8888
+    command: python src/main.py --url http://jupyter:8888/jupyter
     depends_on:
       jupyter:
         condition: service_healthy
@@ -77,18 +77,18 @@ services:
       - "redis-server"
     command: /conf/start.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      test: ["CMD", "curl", "-f", "http://localhost:8888/jupyter"]
       interval: 30s
       timeout: 30s
       retries: 3
       start_period: 30s
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: nginx
-  #   restart: unless-stopped
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./configurations/nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./configurations/nginx/keys:/etc/ssl/
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./configurations/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./configurations/nginx/keys:/etc/ssl/
