@@ -65,6 +65,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const description = req.body.description as string;
       console.log('🚀 ~ SAGE3PluginsCollection ~ router.post ~ description:', description);
       const username = req.user.displayName as string;
+      console.log('🚀 ~ SAGE3PluginsCollection ~ router.post ~ user:', req.user);
       console.log('🚀 ~ SAGE3PluginsCollection ~ router.post ~ username:', username);
 
       // Check if the request is valid
