@@ -111,7 +111,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
       // Set uploading to true, shows spinner
       setUploading(true);
       // Upload with a POST request
-      const response = await upload(input[0], name, description);
+      const response = await upload(input[0], name, description, user.data.name);
       // Upload Successful
       if (response.success) {
         toast({
