@@ -1,14 +1,47 @@
 import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
-import { RAPIDState } from './ComponentSelector';
 import Chart from '../echarts_plots/Chart';
+import * as API from '../utils/apis';
+import { QUERY_FIELDS } from '../data/constants';
+import { App } from '@sage3/applications/schema';
 
-function LineGraph({ s }: RAPIDState) {
-  const [option, setOption] = useState({});
-  console.log('s.metricData', s.metricData);
+type LineGraphProps = {
+  children: React.ReactNode;
+};
+
+function LineGraph({ children }: LineGraphProps) {
+  return <>{children}</>;
+}
+
+function AppComponent(props: App) {
+  const [data, setData] = useState<any>(null);
+  const [option, setOption] = useState<any>({});
+  const s = props.data.state;
+
+  async function fetchData() {
+    const res = await API.getCombinedSageMesonetData({
+      sageNode: {
+        start: QUERY_FIELDS.TIME['24HR'].SAGE_NODE,
+        filter: {
+          name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
+          sensor: 'bme680',
+          vsn: 'W097',
+        },
+      },
+      mesonet: {
+        metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+        time: QUERY_FIELDS.TIME['24HR'].MESONET,
+      },
+    });
+    setData(res);
+  }
 
   useEffect(() => {
-    if (s.metricData) {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (data) {
       const option: echarts.EChartsCoreOption = {
         title: {
           text: 'Sage Node vs. Mesonet',
@@ -33,9 +66,7 @@ function LineGraph({ s }: RAPIDState) {
           data: ['Sage Node', 'Mesonet'],
         },
         xAxis: {
-          data: s.metricData
-            ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))]
-            : [],
+          data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))] : [],
           name: 'Time',
         },
         yAxis: {
@@ -50,17 +81,13 @@ function LineGraph({ s }: RAPIDState) {
           {
             name: 'Sage Node',
             type: 'line',
-            data: s.metricData
-              ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])]
-              : [],
+            data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])] : [],
             large: true,
           },
           {
             name: 'Mesonet',
             type: 'line',
-            data: s.metricData.data
-              ? [...s.metricData.data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])]
-              : [],
+            data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])] : [],
             large: true,
           },
         ],
@@ -75,9 +102,20 @@ function LineGraph({ s }: RAPIDState) {
       };
       setOption(option);
     }
-  }, [s.metricData]);
+  }, [data]);
 
-  return <>{s.metricData ? <Chart option={option} /> : <LoadingSpinner />}</>;
+  return <>{data ? <Chart option={option} /> : <LoadingSpinner />}</>;
 }
+
+function ToolbarComponent(props: App) {
+  return (
+    <div>
+      <button onClick={() => console.log('clicked')}>Click me</button>
+    </div>
+  );
+}
+
+LineGraph.AppComponent = AppComponent;
+LineGraph.ToolbarComponent = ToolbarComponent;
 
 export default LineGraph;

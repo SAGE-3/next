@@ -15,8 +15,6 @@ import { QUERY_FIELDS, CATEGORIES } from './data/constants';
  */
 
 export const schema = z.object({
-  unique: z.string().nullable(),
-  initialized: z.boolean(),
   liveData: z.boolean(),
   lastUpdated: z.string().nullable(),
   parent: z.string(),
@@ -47,14 +45,12 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  unique: null,
-  initialized: false,
   liveData: true,
   lastUpdated: null,
   parent: '',
   metric: QUERY_FIELDS.TEMPERATURE,
   children: [],
-  category: CATEGORIES.CONTROL_PANEL.name,
+  category: CATEGORIES.GRAPH,
   counter: 10,
   metricData: null,
   time: QUERY_FIELDS.TIME['24HR'],

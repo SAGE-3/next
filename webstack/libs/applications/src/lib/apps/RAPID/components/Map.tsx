@@ -13,7 +13,15 @@ export interface SensorInfoType {
   [key: string]: { lat: number; lon: number; url: string };
 }
 
-function LocationMap(props: App) {
+type LocationMapProps = {
+  children: React.ReactNode;
+};
+
+function LocationMap({ children }: LocationMapProps) {
+  return <>{children}</>;
+}
+
+function AppComponent(props: App) {
   const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
   const SAGE_URL = 'https://portal.sagecontinuum.org/node/W097';
   const MESONET_URL = 'https://explore.synopticdata.com/004HI/current';
@@ -163,5 +171,11 @@ function LocationMap(props: App) {
     </Box>
   );
 }
+
+function ToolbarComponent() {
+  return <></>;
+}
+LocationMap.AppComponent = AppComponent;
+LocationMap.ToolbarComponent = ToolbarComponent;
 
 export default LocationMap;

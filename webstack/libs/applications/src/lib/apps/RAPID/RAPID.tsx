@@ -30,105 +30,70 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // used to get userId
-  const { user } = useUser();
+  // const { user } = useUser();
 
   // Create RAPID charts
-  async function createRAPIDCharts() {
-    try {
-      const positionX = props.data.position.x;
-      const positionY = props.data.position.y;
-      const width = props.data.size.width;
-      const height = props.data.size.height;
-      const max = 4;
+  // async function createRAPIDCharts() {
+  //   try {
+  //     const positionX = props.data.position.x;
+  //     const positionY = props.data.position.y;
+  //     const width = props.data.size.width;
+  //     const height = props.data.size.height;
+  //     const max = 4;
 
-      const promises = [];
+  //     const promises = [];
 
-      for (const category in CATEGORIES) {
-        console.log('category', category);
-        // ignore creation of Control Panel
-        const name = CATEGORIES[`${category}` as keyof typeof CATEGORIES].name;
-        const order = CATEGORIES[`${category}` as keyof typeof CATEGORIES].order;
+  //     for (const category in CATEGORIES) {
+  //       console.log('category', category);
+  //       // ignore creation of Control Panel
+  //       const name = CATEGORIES[`${category}` as keyof typeof CATEGORIES].name;
+  //       const order = CATEGORIES[`${category}` as keyof typeof CATEGORIES].order;
 
-        if (name === 'Control Panel') continue;
+  //       if (name === 'Control Panel') continue;
 
-        promises.push(
-          createApp({
-            title: 'RAPID',
-            roomId: props.data.roomId!,
-            boardId: props.data.boardId!,
-            position: {
-              x: (order % max) * width + positionX,
-              y: Math.floor(order / max) * height + positionY,
-              z: 0,
-            },
-            size: {
-              width: props.data.size.width,
-              height: props.data.size.height,
-              depth: 0,
-            },
-            type: 'RAPID',
-            rotation: { x: 0, y: 0, z: 0 },
-            state: {
-              parent: props._id,
-              category: name,
-            },
-            raised: true,
-            dragging: false,
-            pinned: false,
-          })
-        );
-      }
+  //       promises.push(
+  //         createApp({
+  //           title: 'RAPID',
+  //           roomId: props.data.roomId!,
+  //           boardId: props.data.boardId!,
+  //           position: {
+  //             x: (order % max) * width + positionX,
+  //             y: Math.floor(order / max) * height + positionY,
+  //             z: 0,
+  //           },
+  //           size: {
+  //             width: props.data.size.width,
+  //             height: props.data.size.height,
+  //             depth: 0,
+  //           },
+  //           type: 'RAPID',
+  //           rotation: { x: 0, y: 0, z: 0 },
+  //           state: {
+  //             parent: props._id,
+  //             category: name,
+  //           },
+  //           raised: true,
+  //           dragging: false,
+  //           pinned: false,
+  //         })
+  //       );
+  //     }
 
-      const resolution = await Promise.all(promises);
+  //     const resolution = await Promise.all(promises);
 
-      updateState(props._id, {
-        children: [...s.children, ...resolution.map((res) => res.data._id)],
-      });
-    } catch (e) {
-      console.log('ERROR in RAPID:', e);
-    }
-  }
+  //     updateState(props._id, {
+  //       children: [...s.children, ...resolution.map((res) => res.data._id)],
+  //     });
+  //   } catch (e) {
+  //     console.log('ERROR in RAPID:', e);
+  //   }
+  // }
 
-  const [test, setTest] = useState<any[]>([]);
-  /**
-   * Add userid to unique field. This is used to prevent useEffect to be triggered
-   * by multiple clients upon generation of the apps
-   */
-  useEffect(() => {
-    async function isUniqueClient() {
-      await updateState(props._id, {
-        unique: user?._id,
-      });
-    }
-    if (!s.unique) {
-      isUniqueClient();
-    }
-  }, []);
-
-  console.log('test', test);
-
-  // create charts
-  useEffect(() => {
-    if (s.unique === user?._id) {
-      console.log('unique');
-      // prevents charts from infinitely generating
-      if (s.initialized === false) {
-        updateState(props._id, {
-          initialized: true,
-        });
-        console.log('creating charts');
-        // creates charts
-        createRAPIDCharts();
-      }
-    } else {
-      console.log('not unique');
-    }
-  }, [s.unique]);
 
   return (
     <AppWindow app={props}>
       <>
-        <ComponentSelector propsData={props as App} />
+        <ComponentSelector props={props as App} />
       </>
     </AppWindow>
   );

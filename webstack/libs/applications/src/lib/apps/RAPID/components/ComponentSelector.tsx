@@ -8,37 +8,27 @@ import SageStats from './SageStats';
 import { CATEGORIES } from '../data/constants';
 
 export type ComponentSelectorProps = {
-  propsData: App;
+  props: App;
 };
 
 export type RAPIDState = {
   s: AppState;
 };
 
+const components = {
+  [CATEGORIES.GRAPH]: (props: App) => <LineGraph.AppComponent {...props} />,
+  [CATEGORIES.OVERVIEW]: (props: App) => <Overview.AppComponent {...props} />,
+  [CATEGORIES.MAP]: (props: App) => <LocationMap.AppComponent {...props} />,
+};
+
 /**
  * Selects the correct component to render based on the category
  */
-function ComponentSelector({ propsData }: ComponentSelectorProps): JSX.Element {
-  const s = propsData.data.state as AppState;
+function ComponentSelector({ props }: ComponentSelectorProps): JSX.Element {
+  const s = props.data.state as AppState;
 
-  if (s.category === CATEGORIES.CONTROL_PANEL.name) {
-    return <ControlPanel id={propsData._id} s={s} />;
-  }
-
-  if (s.category === CATEGORIES.GRAPH.name) {
-    return <LineGraph s={s} />;
-  }
-
-  if (s.category === CATEGORIES.OVERVIEW.name) {
-    return <Overview s={s} />;
-  }
-
-  if (s.category === CATEGORIES.MAP.name) {
-    return <LocationMap {...propsData} />;
-  }
-
-  if (s.category === CATEGORIES.SAGE_STATS.name) {
-    return <SageStats {...propsData} />;
+  if (components[s.category]) {
+    return components[s.category](props);
   }
 
   return <div>ERROR: Category Not Found</div>;

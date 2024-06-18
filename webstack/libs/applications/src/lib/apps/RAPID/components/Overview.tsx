@@ -4,8 +4,18 @@ import LoadingSpinner from './LoadingSpinner';
 import { ResultDataPoint } from '../worker/useWebWorker';
 import { Stat, StatLabel, StatNumber } from '@chakra-ui/stat';
 import { Box } from '@chakra-ui/react';
+import { App } from '@sage3/applications/schema';
 
-function Overview({ s }: RAPIDState): JSX.Element {
+type OverviewProps = {
+  children: React.ReactNode;
+};
+
+function Overview({ children }: OverviewProps) {
+  return <>{children}</>;
+}
+
+function AppComponent(props: App) {
+  const s = props.data.state;
   const getAverage = (arr: ResultDataPoint[], org: string) => {
     // console.log('arr', arr);
     if (org === 'Sage Node') {
@@ -97,5 +107,12 @@ function Overview({ s }: RAPIDState): JSX.Element {
     </>
   );
 }
+
+function ToolbarComponent(props: RAPIDState): JSX.Element {
+  return <div> Toolbar </div>;
+}
+
+Overview.AppComponent = AppComponent;
+Overview.ToolbarComponent = ToolbarComponent;
 
 export default Overview;
