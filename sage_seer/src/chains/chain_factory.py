@@ -1,7 +1,7 @@
 # config.py
 
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+# from langchain_core.prompts import ChatPromptTemplate
 
 from src.prompts.prompt_loader import PromptLoader
 
@@ -9,7 +9,7 @@ PROMPTS_DIR = "src/prompts/"
 
 
 # Define the prompt template
-prompt = ChatPromptTemplate.from_template("tell me a short joke about {topic}")
+# prompt = ChatPromptTemplate.from_template("tell me a short joke about {topic}")
 
 # Define the output parser
 output_parser = StrOutputParser()
