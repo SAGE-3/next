@@ -61,7 +61,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (user && user._id === props._createdBy && conf.token && !s.kernel) {
       // Create a new notebook
-      const base = `http://${window.location.hostname}:8888`;
+      const base = `http://${window.location.hostname}:8888/jupyter`;
       // Talk to the jupyter server API
       if (s.notebook) {
         // Create a new kernel
@@ -109,7 +109,7 @@ function AppComponent(props: App): JSX.Element {
               .then((res) => {
                 console.log('Juypyter> session created', res);
                 //  Open the notebook in a separate workspace
-                const base = `http://${window.location.hostname}:8888`;
+                const base = `http://${window.location.hostname}:8888/jupyter`;
 
                 // const newUrl = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
                 // const newUrl = `${base}/nbclassic/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
@@ -226,7 +226,7 @@ function ToolbarComponent(props: App): JSX.Element {
     GetConfiguration().then((conf) => {
       if (conf.token && s.notebook) {
         // Create a new notebook
-        const base = `http://${window.location.hostname}:8888`;
+        const base = `http://${window.location.hostname}:8888/jupyter`;
         const j_url = base + apiUrls.assets.getNotebookByName(s.notebook) + `?token=${conf.token}`;
         fetch(j_url)
           .then((response) => response.json())
@@ -252,7 +252,7 @@ function ToolbarComponent(props: App): JSX.Element {
     if (isElectron()) {
       GetConfiguration().then((conf) => {
         if (conf.token && s.notebook) {
-          const base = `http://${window.location.hostname}:8888`;
+          const base = `http://${window.location.hostname}:8888/jupyter`;
           // const j_url = `${base}/doc/workspaces/${roomId}/tree/notebooks/${s.notebook}?token=${conf.token}&reset`;
           // const j_url = `${base}/nbclassic/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
           // const j_url = `${base}/notebooks/notebooks/${s.notebook}?token=${conf.token}&reset`;
