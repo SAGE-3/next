@@ -7,6 +7,8 @@
 # -----------------------------------------------------------------------------
 
 import uuid
+from typing import List
+
 import httpx
 import os
 
@@ -188,6 +190,21 @@ class SageCommunication(Borg):
         public_url = f"{web_server}/api/files/{asset_id}/{token}"
         return public_url
 
+    def get_pdf_text(self, asset_url, pages: List =None):
+
+        """Get one page for now"""
+        file_name = asset_url.split("/")[-1].split(".")[0] + "-text.json"
+        url = self.conf[self.prod_type]["web_server"] + self.routes['get_static_content']
+        file_url = url + file_name
+        res = self.httpx_client.get(file_url, headers=self.__headers)
+        if res.is_success:
+            if pages is None:
+                return res.json()['pages']
+            else:
+                return [res.json()['pages'][p] for p in pages]
+        return None
+
+
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]["web_server"] + self.routes["get_assets"]
         if asset_id:
@@ -272,13 +289,3 @@ class SageCommunication(Borg):
 
         return data
 
-    def get_pdf_text(self, asset_url):
-        """return the text associated with a pdf file"""
-        file_name = asset_url.split("/")[-1].split(".")[0] + "-text.json"
-        r = self.httpx_client.get(
-            self.conf[self.prod_type]["web_server"] + self.routes["get_static_asset"] + file_name,
-            headers=self.__headers,
-        )
-        if r.is_success:
-            return r.json()
-        return None

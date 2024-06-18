@@ -1,4 +1,4 @@
-#TODO: Validatate the keys read form the json files in the prompts are actually
+# TODO: Validatate the keys read form the json files in the prompts are actually
 # valid keys for FewShotPromptTemplate or FewShotPromptTemplate class
 
 import os
@@ -6,6 +6,7 @@ import json
 import importlib
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 
 
 class PromptLoader:
@@ -54,11 +55,16 @@ class PromptLoader:
 
     def _generate_zero_shot_prompt(self, prompt_data):
         # Assuming zero-shot prompts require fewer parameters, adjust accordingly
-        return FewShotPromptTemplate(
-            input_variables=prompt_data['input_variables'],
-            prefix=prompt_data.get('prefix', ""),
-            suffix=prompt_data.get('suffix', "")
-        )
+        if prompt_data.get('type') == "ChatPromptTemplate":
+            return ChatPromptTemplate.from_messages(
+                messages=[tuple(x) for x in prompt_data['messages']]
+            )
+        else:
+            return PromptTemplate(
+                input_variables=prompt_data['input_variables'],
+                template=prompt_data.get('prefix', "") + "\n" + prompt_data.get('suffix', ""),
+            )
+
 
     @staticmethod
     def create_prompt(base_dir, prompt_type, prompt_name):
@@ -70,6 +76,7 @@ class PromptLoader:
             return loader._generate_zero_shot_prompt(data)
         else:
             raise ValueError(f"Invalid prompt type: {prompt_type}")
+
 
 # Usage example
 if __name__ == "__main__":
