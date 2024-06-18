@@ -13,6 +13,7 @@ function LineGraph({ children }: LineGraphProps) {
   return <>{children}</>;
 }
 
+
 function AppComponent(props: App) {
   const [data, setData] = useState<any>(null);
   const [option, setOption] = useState<any>({});

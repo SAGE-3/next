@@ -14,13 +14,14 @@ import { AppWindow } from '../../components';
 import { useCallback, useEffect, useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import { useUser } from '@sage3/frontend';
+import StationEditor from './components/StationEditor';
 
 import * as rapidApis from './utils/apis';
 
 // Styling
 import './styling.css';
 import { CATEGORIES } from './data/constants';
-import { Box, Button, Link, Tooltip } from '@chakra-ui/react';
+import { Box, Button, Link, Select, Tooltip } from '@chakra-ui/react';
 import { FaDownload } from 'react-icons/fa';
 
 /* App component for RAPID */
@@ -89,7 +90,6 @@ function AppComponent(props: App): JSX.Element {
   //   }
   // }
 
-
   return (
     <AppWindow app={props}>
       <>
@@ -103,10 +103,30 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onClose = () => setIsOpen(false);
+  const onOpen = () => setIsOpen(true);
 
   return (
-    <Box display="flex" gap="2" alignItems="center">
-    </Box>
+    <>
+      <Box display="flex" gap="2" alignItems="center">
+        <Button size="xs" onClick={onOpen}>+</Button>
+        <Button size="xs" padding="1em">
+          Edit
+        </Button>
+        <Select size="xs">
+          <option>Metric</option>
+          <option>Option 1</option>
+          <option>Option 2</option>
+          <option>Option 3</option>
+        </Select>
+        <Select size="xs">
+          <option>Time</option>
+        </Select>
+      </Box>
+      <StationEditor isOpen={isOpen} onClose={onClose} />
+    </>
   );
 }
 
