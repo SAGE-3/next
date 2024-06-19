@@ -5,6 +5,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
 import { Marker } from 'react-map-gl';
+import { set } from 'date-fns';
 
 interface StationEditorProps {
   isOpen: boolean;
@@ -12,8 +13,8 @@ interface StationEditorProps {
 }
 
 type SensorInfoType = {
-  sage: { lat: number; lon: number; name: string; id: string }[];
-  mesonet: { lat: number; lon: number; name: string; id: string }[];
+  sage: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
+  mesonet: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
 };
 
 const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
@@ -22,6 +23,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
   // const MESONET_URL = 'https://explore.synopticdata.com/004HI/current';
 
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
+  const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
   const { colorMode } = useColorMode();
 
@@ -43,7 +45,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       }));
 
       setSensorInfo({
-        sage: [{ lat: 19.4152, lon: -155.2384, name: 'string', id: 'string' }],
+        sage: [{ lat: 19.4152, lon: -155.2384, name: 'string', id: 'string', selected: false }],
         mesonet: mesonetStations,
       });
     } catch (error) {
@@ -54,6 +56,22 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
   useEffect(() => {
     fetchStations();
   }, []);
+
+  useEffect(() => {
+    setSensorInfo((prevSensorInfo) => {
+      if (prevSensorInfo) {
+        const updatedMesonetStations = prevSensorInfo.mesonet.map((station) => {
+          if (selectedSensors.includes(station.id)) {
+            return { ...station, selected: true };
+          } else {
+            return { ...station, selected: false };
+          }
+        });
+        return { ...prevSensorInfo, mesonet: updatedMesonetStations };
+      }
+      return prevSensorInfo;
+    });
+  }, [selectedSensors]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -77,10 +95,15 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
                   latitude={station.lat}
                   longitude={station.lon}
                   onClick={() => {
-                    console.log('Station:', station);
+                    if (selectedSensors.includes(station.id)) {
+                      setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                    } else {
+                      setSelectedSensors([...selectedSensors, station.id]);
+                    }
                   }}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <IoTriangle color="#777" />
+                  <IoTriangle color={station.selected ? 'blue' : '#777'} />
                 </Marker>
               ))}
           </Map>
@@ -114,7 +137,20 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
               <Input placeholder="Search" />
               <hr />
               <h3>Selected Sensors</h3>
-              <p>No sensors selected. Please select sensors by clicking on them on the map, or search for a station.</p>
+              <Box overflow="auto" height="200px">
+              {selectedSensors ? (
+                selectedSensors.map((sensor) => (
+                  <Box display="flex" justifyContent="space-between" marginY="2" marginRight="2" key={sensor}>
+                    <p>{sensor}</p>
+                    <Button size="xs" onClick={() => setSelectedSensors(selectedSensors.filter((s) => s !== sensor))}>
+                      Remove
+                    </Button>
+                  </Box>
+                ))
+              ) : (
+                <p>No sensors selected. Please select sensors by clicking on them on the map, or search for a station.</p>
+              )}
+              </Box>
               <hr />
             </Box>
             <Box display="flex" flexDir="column" gap="3">
