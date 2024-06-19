@@ -5,7 +5,7 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
 import { Marker } from 'react-map-gl';
-import { set } from 'date-fns';
+import { SAGE_SENSORS } from '../data/constants';
 
 interface StationEditorProps {
   isOpen: boolean;
@@ -32,11 +32,13 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
 
   async function fetchStations() {
     try {
-      const res = await fetch(`https://api.synopticdata.com/v2/stations/metadata?&network=275&sensorvars=1&complete=1&token=${token}`);
+      const mesonetSensorsRes = await fetch(
+        `https://api.synopticdata.com/v2/stations/metadata?&network=275&sensorvars=1&complete=1&token=${token}`
+      );
 
-      const data = await res.json();
+      const mesonetSensors = await mesonetSensorsRes.json();
 
-      const mesonetStations = data.STATION.map((station: any) => ({
+      const mesonetStations = mesonetSensors.STATION.map((station: any) => ({
         name: station.NAME,
         lat: station.LATITUDE,
         lon: station.LONGITUDE,
@@ -44,8 +46,16 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
         selected: false,
       }));
 
+      const sageSensors = SAGE_SENSORS.map((sensor) => ({
+        name: sensor.name,
+        lat: sensor.lat,
+        lon: sensor.lon,
+        id: sensor.id,
+        selected: false,
+      }));
+
       setSensorInfo({
-        sage: [{ lat: 19.4152, lon: -155.2384, name: 'string', id: 'string', selected: false }],
+        sage: sageSensors,
         mesonet: mesonetStations,
       });
     } catch (error) {
@@ -67,7 +77,15 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
             return { ...station, selected: false };
           }
         });
-        return { ...prevSensorInfo, mesonet: updatedMesonetStations };
+
+        const updatedSageSensors = prevSensorInfo.sage.map((station) => {
+          if (selectedSensors.includes(station.id)) {
+            return { ...station, selected: true };
+          } else {
+            return { ...station, selected: false };
+          }
+        });
+        return { ...prevSensorInfo, mesonet: updatedMesonetStations, sage: updatedSageSensors };
       }
       return prevSensorInfo;
     });
@@ -103,10 +121,30 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
                   }}
                   style={{ cursor: 'pointer' }}
                 >
-                  <IoTriangle color={station.selected ? 'blue' : '#777'} />
+                  <IoTriangle color={station.selected ? 'red' : '#777'} />
+                </Marker>
+              ))}
+
+            {sensorInfo &&
+              sensorInfo.sage.map((station) => (
+                <Marker
+                  key={station.id}
+                  latitude={station.lat}
+                  longitude={station.lon}
+                  onClick={() => {
+                    if (selectedSensors.includes(station.id)) {
+                      setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                    } else {
+                      setSelectedSensors([...selectedSensors, station.id]);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <TbCircleFilled color={station.selected ? 'red' : '#777'} />
                 </Marker>
               ))}
           </Map>
+
           <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
             <List fontSize="small" fontWeight="bold">
               <ListItem display="flex" alignItems="center" gap="3">
@@ -117,6 +155,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
               </ListItem>
             </List>
           </Box>
+
           <Box
             position="absolute"
             top="0"
@@ -138,21 +177,22 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
               <hr />
               <h3>Selected Sensors</h3>
               <Box overflow="auto" height="200px">
-              {selectedSensors ? (
-                selectedSensors.map((sensor) => (
-                  <Box display="flex" justifyContent="space-between" marginY="2" marginRight="2" key={sensor}>
-                    <p>{sensor}</p>
-                    <Button size="xs" onClick={() => setSelectedSensors(selectedSensors.filter((s) => s !== sensor))}>
-                      Remove
-                    </Button>
-                  </Box>
-                ))
-              ) : (
-                <p>No sensors selected. Please select sensors by clicking on them on the map, or search for a station.</p>
-              )}
+                {selectedSensors.length > 0 ? (
+                  selectedSensors.map((sensor) => (
+                    <Box display="flex" justifyContent="space-between" marginY="2" marginRight="2" key={sensor}>
+                      <p>{sensor}</p>
+                      <Button size="xs" onClick={() => setSelectedSensors(selectedSensors.filter((s) => s !== sensor))}>
+                        Remove
+                      </Button>
+                    </Box>
+                  ))
+                ) : (
+                  <p>No sensors selected. Please select sensors by clicking on them on the map, or search for a station.</p>
+                )}
               </Box>
               <hr />
             </Box>
+
             <Box display="flex" flexDir="column" gap="3">
               <Box>
                 <label htmlFor="metric">Metric</label>
@@ -167,9 +207,10 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
                 <Select placeholder="Visualization Type" />
               </Box>
             </Box>
+
             <Box display="flex" justifyContent="end" gap="3">
               <Button onClick={onClose}>Cancel</Button>
-              <Button>Save</Button>
+              <Button>Create</Button>
             </Box>
           </Box>
         </Box>

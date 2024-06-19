@@ -37,3 +37,13 @@ export const QUERY_FIELDS = {
     },
   },
 };
+
+// Currently hardcoded. Argonne does not have a public API that we can use to fetch all sensors.
+export const SAGE_SENSORS = [
+  {
+    id: 'W097',
+    name: 'Volcano National Park',
+    lat: 19.415121313,
+    lon: -155.238433559
+  },
+];
