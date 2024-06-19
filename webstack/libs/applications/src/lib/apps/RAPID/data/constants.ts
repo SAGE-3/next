@@ -47,3 +47,13 @@ export const SAGE_SENSORS = [
     lon: -155.238433559
   },
 ];
+
+// Metrics of interest from Waggle Node
+export const SAGE_METRICS = {
+  "Temperature (°C)": "env.temperature",
+  "Relative Humidity (%)": "env.relative_humidity",
+  "Pressure (Millibars)": "env.pressure",
+  "Rainfall (mm)": "env.raingauge.event_acc",
+  "CPU Load (%)": "sys.freq.cpu_perc",
+  "GPU Load (%)": "sys.freq.gpu"
+}
