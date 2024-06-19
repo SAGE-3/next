@@ -13,7 +13,7 @@ interface StationEditorProps {
 }
 
 type SensorInfoType = {
-  sage: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
+  waggle: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
   mesonet: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
 };
 
@@ -39,6 +39,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       const mesonetSensors = await mesonetSensorsRes.json();
 
       const mesonetStations = mesonetSensors.STATION.map((station: any) => ({
+        type: "mesonet",
         name: station.NAME,
         lat: station.LATITUDE,
         lon: station.LONGITUDE,
@@ -46,7 +47,8 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
         selected: false,
       }));
 
-      const sageSensors = SAGE_SENSORS.map((sensor) => ({
+      const waggleSensors = SAGE_SENSORS.map((sensor) => ({
+        type: "waggle",
         name: sensor.name,
         lat: sensor.lat,
         lon: sensor.lon,
@@ -55,7 +57,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       }));
 
       setSensorInfo({
-        sage: sageSensors,
+        waggle: waggleSensors,
         mesonet: mesonetStations,
       });
     } catch (error) {
@@ -78,14 +80,14 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
           }
         });
 
-        const updatedSageSensors = prevSensorInfo.sage.map((station) => {
+        const updatedSageSensors = prevSensorInfo.waggle.map((station) => {
           if (selectedSensors.includes(station.id)) {
             return { ...station, selected: true };
           } else {
             return { ...station, selected: false };
           }
         });
-        return { ...prevSensorInfo, mesonet: updatedMesonetStations, sage: updatedSageSensors };
+        return { ...prevSensorInfo, mesonet: updatedMesonetStations, waggle: updatedSageSensors };
       }
       return prevSensorInfo;
     });
@@ -126,7 +128,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
               ))}
 
             {sensorInfo &&
-              sensorInfo.sage.map((station) => (
+              sensorInfo.waggle.map((station) => (
                 <Marker
                   key={station.id}
                   latitude={station.lat}
@@ -148,7 +150,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
           <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
             <List fontSize="small" fontWeight="bold">
               <ListItem display="flex" alignItems="center" gap="3">
-                <TbCircleFilled color="#777" /> Sage Sensor
+                <TbCircleFilled color="#777" /> waggle Sensor
               </ListItem>
               <ListItem display="flex" alignItems="center" gap="3">
                 <IoTriangle color="#777" /> Mesonet Sensor
