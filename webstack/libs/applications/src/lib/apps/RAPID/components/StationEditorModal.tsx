@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Input, Select, List, ListItem } from '@chakra-ui/react';
+import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Input, Select, List, ListItem, Text } from '@chakra-ui/react';
 
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
@@ -105,7 +105,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
       return;
     }
 
-    const metrics = []; // Move the declaration outside of the switch statement
+    const metrics = [];
 
     switch (true) {
       case containsWaggleSensors() && containsMesonetSensors():
@@ -224,7 +224,20 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               <h3>Select Sensors</h3>
               <Input placeholder="Search" />
               <hr />
-              <h3>Selected Sensors</h3>
+              <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                <h3>Selected Sensors</h3>
+                <Text
+                  fontSize="xs"
+                  backgroundColor="transparent"
+                  _hover={{ textDecoration: 'underline' }}
+                  cursor="pointer"
+                  onClick={() => {
+                    setSelectedSensors([]);
+                  }}
+                >
+                  Clear
+                </Text>
+              </Box>
               <Box overflow="auto" height="200px">
                 {selectedSensors.length > 0 ? (
                   selectedSensors.map((sensor) => (
