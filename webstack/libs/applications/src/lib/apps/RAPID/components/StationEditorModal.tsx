@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Input, Select, List, ListItem, Text } from '@chakra-ui/react';
 
-import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
+
+import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { Marker } from 'react-map-gl';
+
 import { MESONET_METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
 import { WaggleMetrics } from '../data/constants';
-
 import * as API from '../utils/apis';
+
+import DateRangePicker from './calendar/DateRangePicker';
 
 interface StationEditorModalProps {
   isOpen: boolean;
@@ -264,7 +267,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               </Box>
               <Box>
                 <label htmlFor="time range">Time Range</label>
-                <Select name="time range" placeholder="Time Range" />
+                <DateRangePicker />
               </Box>
               <Box>
                 <label htmlFor="visualization type">Visualization Type</label>
