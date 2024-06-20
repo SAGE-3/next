@@ -1,5 +1,6 @@
 const SAGE_NODE_URL = 'https://data.sagecontinuum.org/api/v1/query';
 // const SAGE_NODE_STREAM_URL = ''; // to be added later
+const MESONET_TOKEN = '07dfee7f747641d7bfd355951f329aba';
 
 export type SageNodeQueryParams = {
   start?: string | Date;
@@ -47,6 +48,23 @@ export async function getSageNodeData(query: SageNodeQueryParams) {
     return metrics;
   } catch (error) {
     console.log('Error fetching Sage Node data: ', error);
+    return [];
+  }
+}
+
+/**
+ * Get mesonet stations
+ * @returns JSON output with mesonet stations info
+ */
+export async function getMesonetStations() {
+  try {
+    const mesonetSensorsRes = await fetch(
+      `https://api.synopticdata.com/v2/stations/metadata?&network=275&sensorvars=1&complete=1&token=${MESONET_TOKEN}`
+    );
+    const mesonetSensors = await mesonetSensorsRes.json();
+    return mesonetSensors;
+  } catch (error) {
+    console.log('Error fetching Mesonet stations:', error);
     return [];
   }
 }
@@ -103,7 +121,7 @@ export async function getFormattedSageNodeData(query: SageNodeQueryParams) {
 export async function getMesonetData(query: MesonetQueryParams) {
   try {
     const res = await fetch(
-      `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=07dfee7f747641d7bfd355951f329aba`
+      `https://api.synopticdata.com/v2/stations/timeseries?&stid=004HI&units=metric,speed|kph,pres|mb&recent=${query.time}&24hsummary=1&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=${MESONET_TOKEN}`
     );
 
     if (!res.ok) throw new Error(`Failed to fetch Mesonet data`);

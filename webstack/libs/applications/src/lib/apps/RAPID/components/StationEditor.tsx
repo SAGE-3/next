@@ -5,7 +5,10 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
 import { Marker } from 'react-map-gl';
-import { SAGE_SENSORS } from '../data/constants';
+import { SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
+import { WaggleMetrics } from '../data/constants';
+
+import * as API from '../utils/apis';
 
 interface StationEditorProps {
   isOpen: boolean;
@@ -24,22 +27,15 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
 
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
+  const [options, setOptions] = useState<React.ReactNode[] | null>(null);
 
   const { colorMode } = useColorMode();
 
-  // TODO: Extract as constant
-  const token = '07dfee7f747641d7bfd355951f329aba';
-
   async function fetchStations() {
     try {
-      const mesonetSensorsRes = await fetch(
-        `https://api.synopticdata.com/v2/stations/metadata?&network=275&sensorvars=1&complete=1&token=${token}`
-      );
-
-      const mesonetSensors = await mesonetSensorsRes.json();
-
+      const mesonetSensors = await API.getMesonetStations();
       const mesonetStations = mesonetSensors.STATION.map((station: any) => ({
-        type: "mesonet",
+        type: 'mesonet',
         name: station.NAME,
         lat: station.LATITUDE,
         lon: station.LONGITUDE,
@@ -48,7 +44,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       }));
 
       const waggleSensors = SAGE_SENSORS.map((sensor) => ({
-        type: "waggle",
+        type: 'waggle',
         name: sensor.name,
         lat: sensor.lat,
         lon: sensor.lon,
@@ -65,10 +61,12 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
     }
   }
 
+  // Get the stations and add them to state
   useEffect(() => {
     fetchStations();
   }, []);
 
+  // Update sensor colors and dropdown options when sensors are selected
   useEffect(() => {
     setSensorInfo((prevSensorInfo) => {
       if (prevSensorInfo) {
@@ -79,7 +77,6 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
             return { ...station, selected: false };
           }
         });
-
         const updatedSageSensors = prevSensorInfo.waggle.map((station) => {
           if (selectedSensors.includes(station.id)) {
             return { ...station, selected: true };
@@ -92,6 +89,46 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       return prevSensorInfo;
     });
   }, [selectedSensors]);
+
+  function containsWaggleSensors() {
+    return sensorInfo?.waggle.some((station) => selectedSensors.includes(station.id));
+  }
+  function containsMesonetSensors() {
+    return sensorInfo?.mesonet.some((station) => selectedSensors.includes(station.id));
+  }
+
+  async function showConditionalOptions() {
+    const metrics = []; // Move the declaration outside of the switch statement
+
+    switch (true) {
+      case containsWaggleSensors() && containsMesonetSensors():
+        setOptions(
+          SHARED_METRICS.map((metric) => (
+            <option key={metric.name} value={JSON.stringify(metric)}>
+              {metric.name}
+            </option>
+          ))
+        );
+        break;
+      case containsWaggleSensors():
+        for (const key in WAGGLE_METRICS) {
+          metrics.push(
+            <option key={key} value={JSON.stringify(WAGGLE_METRICS[key as keyof WaggleMetrics])}>
+              {key}
+            </option>
+          );
+        }
+        break;
+      // case containsMesonetSensors():
+      //   for (const key in MESONET_METRICS) {
+      //     metrics.push(
+      //       <option key={key} value={MESONET_METRICS[key as keyof MesonetMetrics]}>
+      //         {key}
+      //       </option>
+      //     )
+      //   }
+    }
+  }
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -150,7 +187,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
           <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
             <List fontSize="small" fontWeight="bold">
               <ListItem display="flex" alignItems="center" gap="3">
-                <TbCircleFilled color="#777" /> waggle Sensor
+                <TbCircleFilled color="#777" /> Waggle Sensor
               </ListItem>
               <ListItem display="flex" alignItems="center" gap="3">
                 <IoTriangle color="#777" /> Mesonet Sensor
@@ -198,7 +235,15 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
             <Box display="flex" flexDir="column" gap="3">
               <Box>
                 <label htmlFor="metric">Metric</label>
-                <Select name="metric" placeholder="Metric" />
+                <Select name="metric" placeholder="Metric">
+                  {sensorInfo && containsWaggleSensors() && containsMesonetSensors()
+                    ? SHARED_METRICS.map((metric) => (
+                        <option key={metric.name} value={JSON.stringify(metric)}>
+                          {metric.name}
+                        </option>
+                      ))
+                    : ''}
+                </Select>
               </Box>
               <Box>
                 <label htmlFor="time range">Time Range</label>

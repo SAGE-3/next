@@ -44,35 +44,57 @@ export const SAGE_SENSORS = [
     id: 'W097',
     name: 'Volcano National Park',
     lat: 19.415121313,
-    lon: -155.238433559
+    lon: -155.238433559,
   },
 ];
 
+export interface WaggleMetrics {
+  'Temperature (°C)': string;
+  'Relative Humidity (%)': string;
+  'Pressure (Millibars)': string;
+  'Rainfall (mm)': string;
+  'CPU Load (%)': string;
+  'GPU Load (%)': string;
+}
+
 // Metrics of interest from Waggle Node
-export const SAGE_METRICS = {
-  "Temperature (°C)": "env.temperature",
-  "Relative Humidity (%)": "env.relative_humidity",
-  "Pressure (Millibars)": "env.pressure",
-  "Rainfall (mm)": "env.raingauge.event_acc",
-  "CPU Load (%)": "sys.freq.cpu_perc",
-  "GPU Load (%)": "sys.freq.gpu"
+export const WAGGLE_METRICS: WaggleMetrics = {
+  'Temperature (°C)': 'env.temperature',
+  'Relative Humidity (%)': 'env.relative_humidity',
+  'Pressure (Millibars)': 'env.pressure',
+  'Rainfall (mm)': 'env.raingauge.event_acc',
+  'CPU Load (%)': 'sys.freq.cpu_perc',
+  'GPU Load (%)': 'sys.freq.gpu',
+};
+
+// ! Temporarily here. Will be used for something el
+export interface MesonetMetrics {
+  'Temperature (°C)': string;
+  'Relative Humidity (%)': string;
+  'Pressure (Millibars)': string;
+}
+
+export const MESONET_METRICS: MesonetMetrics = {
+  "Temperature (°C)": "air_temp_set_1",
+  "Relative Humidity (%)": "relative_humidity_set_1",
+  "Pressure (Millibars)": "pressure_set_1",
 }
 
 // Metrics shared between Waggle Node and Mesonet
-export const SHARED_METRICS = {
-  TEMPERATURE: {
-    NAME: 'Temperature (°C)',
-    SAGE_NODE: 'env.temperature',
-    MESONET: 'air_temp_set_1',
+export const SHARED_METRICS = [
+  {
+    name: 'Temperature (°C)',
+    waggle: 'env.temperature',
+    mesonet: 'air_temp_set_1',
   },
-  RELATIVE_HUMIDITY: {
-    NAME: 'Relative Humidity (%)',
-    SAGE_NODE: 'env.relative_humidity',
-    MESONET: 'relative_humidity_set_1',
+  {
+    name: 'Relative Humidity (%)',
+    waggle: 'env.relative_humidity',
+    mesonet: 'relative_humidity_set_1',
   },
-  PRESSURE: {
-    NAME: 'Pressure (Millibars)',
-    SAGE_NODE: 'env.pressure',
-    MESONET: 'pressure_set_1',
+  {
+    name: 'Pressure (Millibars)',
+    waggle: 'env.pressure',
+    mesonet: 'pressure_set_1',
   },
-}
+];
