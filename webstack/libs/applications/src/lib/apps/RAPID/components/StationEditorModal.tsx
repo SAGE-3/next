@@ -5,12 +5,12 @@ import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
 import { Marker } from 'react-map-gl';
-import { SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
+import { MESONET_METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
 import { WaggleMetrics } from '../data/constants';
 
 import * as API from '../utils/apis';
 
-interface StationEditorProps {
+interface StationEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,7 +20,7 @@ type SensorInfoType = {
   mesonet: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
 };
 
-const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
+const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose }) => {
   const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
   // const SAGE_URL = 'https://portal.sagecontinuum.org/node/W097';
   // const MESONET_URL = 'https://explore.synopticdata.com/004HI/current';
@@ -88,6 +88,8 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
       }
       return prevSensorInfo;
     });
+
+    showConditionalOptions();
   }, [selectedSensors]);
 
   function containsWaggleSensors() {
@@ -98,6 +100,11 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
   }
 
   async function showConditionalOptions() {
+    if (selectedSensors.length === 0) {
+      setOptions(null);
+      return;
+    }
+
     const metrics = []; // Move the declaration outside of the switch statement
 
     switch (true) {
@@ -118,15 +125,18 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
             </option>
           );
         }
+        setOptions(metrics);
         break;
-      // case containsMesonetSensors():
-      //   for (const key in MESONET_METRICS) {
-      //     metrics.push(
-      //       <option key={key} value={MESONET_METRICS[key as keyof MesonetMetrics]}>
-      //         {key}
-      //       </option>
-      //     )
-      //   }
+      case containsMesonetSensors():
+        for (const key in MESONET_METRICS) {
+          metrics.push(
+            <option key={key} value={JSON.stringify(MESONET_METRICS[key as keyof MesonetMetrics])}>
+              {key}
+            </option>
+          );
+        }
+        setOptions(metrics);
+        break;
     }
   }
 
@@ -236,13 +246,7 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
               <Box>
                 <label htmlFor="metric">Metric</label>
                 <Select name="metric" placeholder="Metric">
-                  {sensorInfo && containsWaggleSensors() && containsMesonetSensors()
-                    ? SHARED_METRICS.map((metric) => (
-                        <option key={metric.name} value={JSON.stringify(metric)}>
-                          {metric.name}
-                        </option>
-                      ))
-                    : ''}
+                  {options}
                 </Select>
               </Box>
               <Box>
@@ -266,4 +270,4 @@ const StationEditor: React.FC<StationEditorProps> = ({ isOpen, onClose }) => {
   );
 };
 
-export default StationEditor;
+export default StationEditorModal;

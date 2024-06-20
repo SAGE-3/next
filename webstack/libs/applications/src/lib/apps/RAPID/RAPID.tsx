@@ -14,7 +14,7 @@ import { AppWindow } from '../../components';
 import { useCallback, useEffect, useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import { useUser } from '@sage3/frontend';
-import StationEditor from './components/StationEditor';
+import StationEditorModal from './components/StationEditorModal';
 
 import * as rapidApis from './utils/apis';
 
@@ -111,7 +111,9 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <Box display="flex" gap="2" alignItems="center">
-        <Button size="xs" onClick={onOpen}>+</Button>
+        <Button size="xs" onClick={onOpen}>
+          +
+        </Button>
         <Button size="xs" padding="1em">
           Edit
         </Button>
@@ -125,7 +127,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <option>Time</option>
         </Select>
       </Box>
-      <StationEditor isOpen={isOpen} onClose={onClose} />
+      <StationEditorModal isOpen={isOpen} onClose={onClose} />
     </>
   );
 }

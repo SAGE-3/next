@@ -67,7 +67,7 @@ export const WAGGLE_METRICS: WaggleMetrics = {
   'GPU Load (%)': 'sys.freq.gpu',
 };
 
-// ! Temporarily here. Will be used for something el
+// ! Temporarily here. Will use an endpoint in the future.
 export interface MesonetMetrics {
   'Temperature (°C)': string;
   'Relative Humidity (%)': string;
