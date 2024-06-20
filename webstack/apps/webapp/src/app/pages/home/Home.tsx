@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -81,7 +81,7 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
+import { UserRow, BoardRow, RoomSearchModal, BoardPreview, BoardSidebarRow } from './components';
 
 /**
  * Home page for SAGE3
@@ -158,6 +158,8 @@ export function HomePage() {
   const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
+  const subTextValue = useColorModeValue('gray.700', 'gray.300');
+  const subTextColor = useHexColor(subTextValue);
   // const { toggleColorMode, colorMode } = useColorMode();
 
   // Modals Disclosures
@@ -194,6 +196,7 @@ export function HomePage() {
   const searchRoomsRef = useRef<HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
+  const activeBoardsRef = useRef<HTMLDivElement>(null);
   const starredBoardsRef = useRef<HTMLDivElement>(null);
   const recentBoardsRef = useRef<HTMLDivElement>(null);
   const joyrideRef = useRef<Joyride>(null);
@@ -280,6 +283,12 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
+        target: activeBoardsRef.current!,
+        title: 'Active Boards',
+        content: 'Boards with active users on them will appear here.',
+        disableBeacon: true,
+      },
+      {
         target: starredBoardsRef.current!,
         title: 'Starred Boards',
         content:
@@ -345,6 +354,15 @@ export function HomePage() {
     const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
     return isMember || isOwner;
   };
+
+  const boardActiveFilter = (board: Board): boolean => {
+    const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
+    const userCount = presences.filter((p) => p.data.boardId === board._id).length;
+
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    return isMember && userCount > 0;
+  };
+
   const boardStarredFilter = (board: Board): boolean => {
     const isSaved = savedBoards.includes(board._id);
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
@@ -848,10 +866,10 @@ export function HomePage() {
 
             <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
 
-            <Accordion defaultIndex={[0, 1, 2]} allowMultiple>
+            <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
               <AccordionItem border="none" ref={roomsRef}>
                 <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'The rooms you are a part of'}>
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
                     </Box>
@@ -886,14 +904,54 @@ export function HomePage() {
                               onClick={() => handleRoomClick(room)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                <Text fontSize="md">{room.data.name}</Text>
+                                <Text fontSize="md" pl="2">
+                                  {room.data.name}
+                                </Text>
                               </Box>
 
-                              <Text fontSize="xs" pr="4">
+                              <Text fontSize="xs" pr="4" color={subTextColor}>
                                 {room.data.ownerId === userId ? 'Owner' : 'Member'}
                               </Text>
                             </Box>
                           </Tooltip>
+                        );
+                      })}
+                  </VStack>
+                </AccordionPanel>
+              </AccordionItem>
+
+              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+              {/* <Divider/> */}
+
+              <AccordionItem border="none" ref={activeBoardsRef}>
+                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
+                    </Box>
+                  </Tooltip>
+                  <AccordionIcon />
+                </AccordionButton>
+                <AccordionPanel p="0">
+                  <VStack align="stretch" gap="0">
+                    {boards
+                      .filter(boardActiveFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .sort((a, b) => {
+                        // Sorted by alpha then user count
+                        const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
+                        const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                        return userCountB - userCountA;
+                      })
+                      .map((board) => {
+                        return (
+                          <BoardSidebarRow
+                            key={'tooltip_active' + board._id}
+                            board={board}
+                            isSelected={board._id === selectedBoard?._id}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
+                            onDoubleClick={() => handleBoardDoubleClick(board)}
+                          />
                         );
                       })}
                   </VStack>
@@ -919,35 +977,13 @@ export function HomePage() {
                         const userCount = presences.filter((p) => p.data.boardId === board._id).length;
                         const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
                         return (
-                          <Tooltip
+                          <BoardSidebarRow
                             key={'tooltip_starred' + board._id}
-                            openDelay={400}
-                            hasArrow
-                            placement="top"
-                            label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
-                          >
-                            <Box
-                              key={board._id}
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              transition="all 0.5s"
-                              pl="48px"
-                              height="28px"
-                              backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                              _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                              onClick={() => handleBoardClickFromSubMenu(board)}
-                              onDoubleClick={() => handleBoardDoubleClick(board)}
-                            >
-                              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                <Text fontSize="md">{board.data.name}</Text>
-                              </Box>
-                              <Box pr="5" display="flex" alignItems="center">
-                                <Text fontSize="sm">{userCount}</Text>
-                                <MdPerson></MdPerson>
-                              </Box>
-                            </Box>
-                          </Tooltip>
+                            board={board}
+                            isSelected={board._id === selectedBoard?._id}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
+                            onDoubleClick={() => handleBoardDoubleClick(board)}
+                          />
                         );
                       })}
                   </VStack>
@@ -965,41 +1001,25 @@ export function HomePage() {
 
                 <AccordionPanel p={0}>
                   <VStack align="stretch" gap="0">
-                    {boards.filter(recentBoardsFilter).map((board) => {
-                      const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                      const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                      return (
-                        <Tooltip
-                          key={'tooltip_recent' + board._id}
-                          openDelay={400}
-                          hasArrow
-                          placement="top"
-                          label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
-                        >
-                          <Box
-                            key={board._id}
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
+                    {boards
+                      .filter(recentBoardsFilter)
+                      .sort((boardA, boardB) => {
+                        // Sort by most recent
+                        const indexOfA = recentBoards.indexOf(boardA._id);
+                        const indexOfB = recentBoards.indexOf(boardB._id);
+                        return indexOfA - indexOfB;
+                      })
+                      .map((board) => {
+                        return (
+                          <BoardSidebarRow
+                            key={'tooltip_recent' + board._id}
+                            board={board}
+                            isSelected={board._id === selectedBoard?._id}
                             onClick={() => handleBoardClickFromSubMenu(board)}
                             onDoubleClick={() => handleBoardDoubleClick(board)}
-                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                          >
-                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                              <Text fontSize="md">{board.data.name}</Text>
-                            </Box>
-                            <Box pr="5" display="flex" alignItems="center">
-                              <Text fontSize="sm">{userCount}</Text>
-                              <MdPerson></MdPerson>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      );
-                    })}
+                          />
+                        );
+                      })}
                     {boards.filter(recentBoardsFilter).length > 0 && (
                       <Box
                         display="flex"
@@ -1013,7 +1033,9 @@ export function HomePage() {
                         onClick={clearRecentBoardsModalOnOpen}
                         _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                       >
-                        <Text fontSize="md">Clear Recents Boards</Text>
+                        <Text fontSize="md" pl="2">
+                          Clear Recents Boards
+                        </Text>
                       </Box>
                     )}
                   </VStack>
@@ -1051,9 +1073,9 @@ export function HomePage() {
                 {selectedRoom?.data.description}
               </Text>
 
-              <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+              <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
 
-              <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
+              <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
                 <Tooltip label={'Create a new board in this room'} openDelay={400} hasArrow placement="top">
                   <Button

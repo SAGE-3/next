@@ -310,7 +310,7 @@ function AppRender(props: { app: App }) {
             style={{ width: props.app.data.size.width + 'px', height: props.app.data.size.height + 'px' }}
           >
             <Icon fontSize={`${iconSize}px`} color={iconColorAppNotFound}>
-              <MdError size={'xl'}></MdError>
+              <MdError size="24px" />
             </Icon>
             <Text fontWeight={'bold'} fontSize={fontSize} align={'center'}>
               Application '{props.app.data.type}' was not found.

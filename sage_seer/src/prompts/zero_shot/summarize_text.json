@@ -1,0 +1,10 @@
+{
+  "description": "Summarize text provided as input",
+  "prefix": "Please Summarize the text provided in the query below. If no text is provided, respond with 'No text query to summarize'. Do no start by referring to document using expressions sucha s 'the text' or 'the document'. Summarize the concept or ideas directly.",
+  "input_variables": [
+    "query"
+  ],
+  "suffix": "query: {query}\n"
+}
+
+

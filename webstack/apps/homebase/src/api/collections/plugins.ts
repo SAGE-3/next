@@ -62,7 +62,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Get body information
       const pluginName = req.body.name as string;
       const description = req.body.description as string;
-      const username = req.user.displayName as string;
+      const username = req.body.username as string;
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {

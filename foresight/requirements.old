@@ -1,0 +1,23 @@
+httpx~=0.23.0
+pydantic
+pandas
+redis
+pytest
+funcx~=1.0.3
+ws4py
+#python_on_whales
+#dropbox # needed to upload files to public server when in devel mode
+websocket-client
+schedule
+pyarrow
+rectpack
+networkx
+graphviz
+pdfx==1.4.1
+arxiv==1.4.2
+PyExifTool==0.5.4
+treelib==1.6.1
+crossrefapi==1.5.0
+PyPDF2==2.11.2
+celery~=5.2.2
+requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
