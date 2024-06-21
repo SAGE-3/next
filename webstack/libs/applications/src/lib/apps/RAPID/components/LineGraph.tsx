@@ -13,7 +13,6 @@ function LineGraph({ children }: LineGraphProps) {
   return <>{children}</>;
 }
 
-
 function AppComponent(props: App) {
   const [data, setData] = useState<any>(null);
   const [option, setOption] = useState<any>({});
@@ -105,7 +104,7 @@ function AppComponent(props: App) {
     }
   }, [data]);
 
-  return <>{data ? <Chart option={option} /> : <LoadingSpinner />}</>;
+  return data ? <Chart option={option} /> : <LoadingSpinner />;
 }
 
 function ToolbarComponent(props: App) {

@@ -17,22 +17,22 @@ function Chart({ option }: ChartProps) {
     chartRef.current?.dispose();
   };
 
-  //Resize chart when window or parent div is resized
-  // useEffect(() => {
-  //   const resizeObserver = new ResizeObserver(() => {
-  //     if (chartRef.current) {
-  //       chartRef.current.resize();
-  //     }
-  //   });
+  // Resize chart when window or parent div is resized
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
 
-  //   if (divRef.current) {
-  //     resizeObserver.observe(divRef.current);
-  //   }
-  //   console.log("rerendering");
-  //   return () => {
-  //     resizeObserver.disconnect();
-  //   };
-  // }, []);
+    if (divRef.current) {
+      resizeObserver.observe(divRef.current);
+    }
+    console.log('rerendering');
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const render = () => {

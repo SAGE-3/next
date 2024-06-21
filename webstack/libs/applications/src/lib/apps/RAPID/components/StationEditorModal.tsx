@@ -13,6 +13,11 @@ import * as API from '../utils/apis';
 
 import DateRangePicker from './calendar/DateRangePicker';
 
+interface DateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+}
+
 interface StationEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -31,6 +36,12 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [options, setOptions] = useState<React.ReactNode[] | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>({ startDate: null, endDate: null });
+
+  const handleDateRangeChange = (newDateRange: DateRange) => {
+    setDateRange(newDateRange);
+    console.log('New date range:', newDateRange);
+  };
 
   const { colorMode } = useColorMode();
 
@@ -244,7 +255,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               <Box overflow="auto" height="200px">
                 {selectedSensors.length > 0 ? (
                   selectedSensors.map((sensor) => (
-                    <Box display="flex" justifyContent="space-between" marginY="2" marginRight="2" key={sensor}>
+                    <Box display="flex" justifyContent="space-between" marginY="2" key={sensor}>
                       <p>{sensor}</p>
                       <Button size="xs" onClick={() => setSelectedSensors(selectedSensors.filter((s) => s !== sensor))}>
                         Remove
@@ -267,7 +278,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               </Box>
               <Box>
                 <label htmlFor="time range">Time Range</label>
-                <DateRangePicker />
+                <DateRangePicker onChange={handleDateRangeChange} initialDateRange={dateRange} />
               </Box>
               <Box>
                 <label htmlFor="visualization type">Visualization Type</label>

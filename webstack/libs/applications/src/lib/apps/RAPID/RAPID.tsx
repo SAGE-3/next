@@ -92,9 +92,15 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <>
+      <Box
+        height="100%"
+        width="100%"
+        minHeight="400px"
+        minWidth="650px"
+        overflow="auto"
+      >
         <ComponentSelector props={props as App} />
-      </>
+      </Box>
     </AppWindow>
   );
 }

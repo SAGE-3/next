@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Box, Button, Grid, Heading, HStack, VStack, Text, Flex, Input } from '@chakra-ui/react';
 
 import { useColorMode } from '@chakra-ui/react';
+import { set } from 'date-fns';
 
 interface CalendarProps {
   onDateSelect: (startDate: Date | null, endDate: Date | null) => void;
@@ -13,6 +14,7 @@ interface CalendarProps {
 const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, selectedEndDate, onCancel }) => {
   const { colorMode } = useColorMode();
 
+  const today = useMemo(() => new Date(), []);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const formatDate = (date: Date): string => {
@@ -24,6 +26,8 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    if (!isDateValid(clickedDate)) return;
+
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
       // Start new selection
       onDateSelect(clickedDate, null);
@@ -67,6 +71,10 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
     return isNaN(date.getTime()) ? null : date;
   };
 
+  const isDateValid = (date: Date): boolean => {
+    return date <= today;
+  };
+
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
 
@@ -92,6 +100,11 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
     return date > selectedStartDate && date < selectedEndDate;
   };
 
+  const isFutureDate = (day: number): boolean => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return date > new Date();
+  };
+
   const isStartDay = (day: number): boolean => {
     if (!selectedStartDate) return false;
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
@@ -106,22 +119,34 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
 
   return (
     <Box>
-      <VStack spacing={4} height="23rem" justifyContent="space-between">
+      <VStack spacing={4} height="25rem" justifyContent="space-between">
         <Flex justify="space-between" width="100%">
-          <Input
-            placeholder="Start Date"
-            value={startDateInput}
-            onChange={(e) => handleInputChange(true, e.target.value)}
-            size="sm"
-            width="45%"
-          />
-          <Input
-            placeholder="End Date"
-            value={endDateInput}
-            onChange={(e) => handleInputChange(false, e.target.value)}
-            size="sm"
-            width="45%"
-          />
+          <Box width="45%">
+            <Text fontSize="xs">Start Date</Text>
+            <Input
+              placeholder="Start Date"
+              value={startDateInput}
+              onChange={(e) => handleInputChange(true, e.target.value)}
+              size="sm"
+              width="100%"
+              max={formatDate(today)}
+              cursor="default"
+              isReadOnly={true} // TODO: here temporarily, need to fix edge cases
+            />
+          </Box>
+          <Box width="45%">
+            <Text fontSize="xs">End Date</Text>
+            <Input
+              placeholder="End Date"
+              value={endDateInput}
+              onChange={(e) => handleInputChange(false, e.target.value)}
+              size="sm"
+              width="100%"
+              max={formatDate(today)}
+              cursor="default"
+              isReadOnly={true} // TODO: here temporarily, need to fix edge cases
+            />
+          </Box>
         </Flex>
         <HStack justifyContent="space-between" width="100%">
           <Button onClick={prevMonth} size="sm">
@@ -143,6 +168,7 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
           ))}
           {Array.from({ length: daysInMonth }).map((_, i) => {
             const day = i + 1;
+            const isFuture = isFutureDate(day);
             return (
               <Button
                 key={day}
@@ -154,13 +180,29 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
                 borderRadius="none"
                 borderLeftRadius={isStartDay(day) ? 'full' : 'none'}
                 borderRightRadius={isEndDay(day) ? 'full' : 'none'}
+                isDisabled={isFuture}
+                opacity={isFuture ? 0.5 : 1}
               >
                 {day}
               </Button>
             );
           })}
         </Grid>
-        <Box display="flex" justifyContent="end" width="100%" gap="2">
+        <Box display="flex" justifyContent="space-between" alignItems="start" width="100%" gap="2">
+          <Text
+            fontSize="xs"
+            display="flex"
+            alignItems="baseline"
+            _hover={{ textDecoration: 'underline' }}
+            cursor="pointer"
+            onClick={() => {
+              setStartDateInput('');
+              setEndDateInput('');
+              onDateSelect(null, null);
+            }}
+          >
+            Clear Selection
+          </Text>
           <Button onClick={onCancel} isDisabled={!selectedEndDate}>
             Done
           </Button>
