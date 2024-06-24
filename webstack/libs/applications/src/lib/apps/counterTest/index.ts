@@ -14,7 +14,7 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  count: z.number(),
+  input: z.string(),
   firstInput: z.number(),
   secondInput: z.number(),
   result: z.number(),
@@ -22,7 +22,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  count: 0,
+  input: "",
   firstInput: 0,
   secondInput: 0,
   result: 0,
