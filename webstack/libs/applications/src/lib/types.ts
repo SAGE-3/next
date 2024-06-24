@@ -19,6 +19,7 @@ import { state as JupyterLabState, name as JupyterLabName } from './apps/Jupyter
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as MapGLState, name as MapGLName } from './apps/MapGL';
+import { state as NLChartGeneratorState, name as NLChartGeneratorName } from './apps/NLChartGenerator';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
@@ -36,7 +37,7 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-
+import { state as transcribeState, name as transcribeName } from './apps/Transcribe';
 
 export type AppState =
   | {}
@@ -59,6 +60,7 @@ export type AppState =
   | LeafLetState
   | LinkerState
   | MapGLState
+  | NLChartGeneratorState
   | NotepadState
   | PDFResultState
   | PDFViewerState
@@ -75,7 +77,44 @@ export type AppState =
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState;
+  | WebviewState
+  | transcribeState;
 
-
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName =
+  | typeof AIPaneName
+  | typeof BoardLinkName
+  | typeof CSVViewerName
+  | typeof ChartGeneratorName
+  | typeof ChatName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CodeEditorName
+  | typeof CounterName
+  | typeof DeepZoomImageName
+  | typeof EChartsViewerName
+  | typeof GLTFViewerName
+  | typeof HCDPName
+  | typeof IFrameName
+  | typeof ImageViewerName
+  | typeof JupyterLabName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof MapGLName
+  | typeof NLChartGeneratorName
+  | typeof NotepadName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof PluginAppName
+  | typeof PollName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof SeerName
+  | typeof SensorOverviewName
+  | typeof StickieName
+  | typeof TLDrawName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebpageLinkName
+  | typeof WebviewName;

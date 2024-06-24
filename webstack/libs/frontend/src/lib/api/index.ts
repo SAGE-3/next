@@ -13,5 +13,6 @@ export * from './http/index';
 export * from './ws/api-socket';
 export * from './fastapi/fastapi';
 export * from './ai';
+export * from './articulate/articulate';
 
 export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User | Insight | RoomMembers | Annotation;

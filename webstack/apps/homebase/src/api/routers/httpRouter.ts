@@ -50,6 +50,7 @@ import {
 } from './custom';
 
 import { config } from '../../config';
+import { ArticulateRouter } from './custom/articulate';
 
 /**
  * API Loader function
@@ -72,6 +73,9 @@ export function expressAPIRouter(): express.Router {
 
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
+
+  // FastAPI Routes
+  router.use('/articulate', ArticulateRouter());
 
   // FastAPI Routes
   router.use('/fastapi', FastAPIRouter());

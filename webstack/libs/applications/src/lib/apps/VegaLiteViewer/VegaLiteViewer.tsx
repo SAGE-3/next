@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // SAGE imports
 import { useAppStore } from '@sage3/frontend';
@@ -16,13 +16,13 @@ import { state as AppState } from './index';
 
 // Vega-Lite Imports
 import vegaEmbed from 'vega-embed';
-import { Button } from '@chakra-ui/react';
+import { Button, Input } from '@chakra-ui/react';
 
 import { create } from 'zustand';
 
 interface VegaStore {
-  view: { [key: string]: any },
-  setView: (id: string, view: any) => void,
+  view: { [key: string]: any };
+  setView: (id: string, view: any) => void;
 }
 
 // Store to communicate with toolbar
@@ -38,6 +38,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const setView = useStore((state) => state.setView);
+  const [spec, setSpec] = useState<string>('{}');
 
   useEffect(() => {
     // Initilize error in specification to false
@@ -45,22 +46,24 @@ function AppComponent(props: App): JSX.Element {
 
     // Check if spec causes an error
     try {
-      const VegaLiteSpec = JSON.parse(s.spec);
+      const VegaLiteSpec = JSON.parse(spec);
 
       // Resize Vega-Lite chart to div
       VegaLiteSpec.width = 'container';
       VegaLiteSpec.height = 'container';
-
+      VegaLiteSpec.title = '';
       // Render Vega-Lite
       // Put actions to false to hide the menu, but would be nice to add the controlbar
       vegaEmbed(`#vis${props._id}`, VegaLiteSpec as any, { actions: false }).then((result) => {
         setView(props._id, result.view);
       });
     } catch (e) {
+      console.log('Error in 2');
+
       // If error, set error to true that handles displaying error message
       updateState(props._id, { error: true });
     }
-  }, [s.spec, props.data.size.width, props.data.size.height]);
+  }, [s.spec, spec, props.data.size.width, props.data.size.height]);
 
   return (
     <AppWindow app={props}>
@@ -79,7 +82,7 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const view = useStore((state) => state.view[props._id]);
-
+  const [prompt, setPrompt] = useState<string>('');
   const downloadAction = () => {
     // generate a PNG snapshot and then download the image
     // Scale up the image 2x
@@ -91,11 +94,20 @@ function ToolbarComponent(props: App): JSX.Element {
       link.dispatchEvent(new MouseEvent('click'));
     });
   };
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPrompt(event.target.value);
+  };
+  const handleSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      console.log(prompt);
+    }
+  };
   return (
     <>
       <Button onClick={downloadAction} colorScheme="green" size="xs">
         Save as PNG
       </Button>
+      <Input onKeyDown={handleSubmit} onChange={handleChange} />
     </>
   );
 }
@@ -104,6 +116,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
