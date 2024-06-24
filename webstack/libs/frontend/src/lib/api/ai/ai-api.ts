@@ -7,7 +7,15 @@
  */
 
 import { apiUrls } from '@sage3/frontend';
-import { AiStatusResponse, AiQueryRequest, AiImageQueryRequest, AiQueryResponse, AiJSONQueryResponse } from '@sage3/shared';
+import {
+  AiStatusResponse,
+  AiQueryRequest,
+  AiImageQueryRequest,
+  AiQueryResponse,
+  AiJSONQueryResponse,
+  AgentQueryType,
+  AgentQueryResponse,
+} from '@sage3/shared';
 
 async function chatStatus(): Promise<AiStatusResponse> {
   // Try/catch block to handle errors
@@ -196,6 +204,44 @@ async function imageToImage(request: AiImageQueryRequest): Promise<AiJSONQueryRe
   }
 }
 
+async function agentStatus(): Promise<boolean> {
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.langchain.status, {
+      method: 'GET',
+    });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function agentAsk(request: AgentQueryType): Promise<AgentQueryResponse> {
+  const modelHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.langchain.ask, {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(request),
+    });
+    if (response.status === 200) {
+      // Parse the response
+      const jsonResponse = await response.json();
+      return { success: true, r: jsonResponse.r, id: jsonResponse.id };
+    } else {
+      return { success: false, r: response.statusText, id: request.id };
+    }
+  } catch (error) {
+    return { success: false, r: 'Query failed', id: request.id };
+  }
+}
+
 export const AiAPI = {
   chat: {
     status: chatStatus,
@@ -209,5 +255,9 @@ export const AiAPI = {
     status: imageStatus,
     labels: imageLabels,
     image: imageToImage,
+  },
+  langchain: {
+    status: agentStatus,
+    ask: agentAsk,
   },
 };
