@@ -39,7 +39,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, initialDate
     <Popover onClose={onClose} isOpen={isOpen} onOpen={onOpen}>
       <PopoverTrigger>
         <Button rightIcon={<IoCalendarSharp />} variant="outline" width="100%">
-          <Flex justify="space-between" width="100%">
+          <Flex width="100%">
             <Text>{formatDate(dateRange.startDate) || 'Start Date'}</Text>
             <Text mx={2}>-</Text>
             <Text>{formatDate(dateRange.endDate) || 'End Date'}</Text>

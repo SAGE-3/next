@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Input, Select, List, ListItem, Text } from '@chakra-ui/react';
+import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Input, Select, List, ListItem, Text, Flex } from '@chakra-ui/react';
 
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
@@ -158,57 +158,57 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay />
       <ModalContent minHeight="60vh" minWidth="90vw" maxWidth="90vw" maxHeight="90vh" width="full" height="full" padding="2">
-        <Box position="relative" height="full" width="full" borderRadius="5" overflow="hidden">
-          <Map
-            initialViewState={{
-              longitude: -155.2384,
-              latitude: 19.4152,
-              zoom: 8,
-            }}
-            reuseMaps
-            mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`}
-          >
-            <NavigationControl position="bottom-left" />
-            {sensorInfo &&
-              sensorInfo.mesonet.map((station) => (
-                <Marker
-                  key={station.id}
-                  latitude={station.lat}
-                  longitude={station.lon}
-                  onClick={() => {
-                    if (selectedSensors.includes(station.id)) {
-                      setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
-                    } else {
-                      setSelectedSensors([...selectedSensors, station.id]);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <IoTriangle color={station.selected ? 'red' : '#777'} />
-                </Marker>
-              ))}
+        <Flex height="full" padding="3" borderRadius="5" background={colorMode === 'light' ? '#fff' : '#222'}>
+          <Box height="100%" width="75%" position="relative" borderRadius="5" overflow="hidden">
+            <Map
+              initialViewState={{
+                longitude: -155.2384,
+                latitude: 19.4152,
+                zoom: 8,
+              }}
+              reuseMaps
+              mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`}
+            >
+              <NavigationControl position="bottom-left" />
+              {sensorInfo &&
+                sensorInfo.mesonet.map((station) => (
+                  <Marker
+                    key={station.id}
+                    latitude={station.lat}
+                    longitude={station.lon}
+                    onClick={() => {
+                      if (selectedSensors.includes(station.id)) {
+                        setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                      } else {
+                        setSelectedSensors([...selectedSensors, station.id]);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <IoTriangle color={station.selected ? 'red' : '#777'} />
+                  </Marker>
+                ))}
 
-            {sensorInfo &&
-              sensorInfo.waggle.map((station) => (
-                <Marker
-                  key={station.id}
-                  latitude={station.lat}
-                  longitude={station.lon}
-                  onClick={() => {
-                    if (selectedSensors.includes(station.id)) {
-                      setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
-                    } else {
-                      setSelectedSensors([...selectedSensors, station.id]);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <TbCircleFilled color={station.selected ? 'red' : '#777'} />
-                </Marker>
-              ))}
-          </Map>
-
-          <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
+              {sensorInfo &&
+                sensorInfo.waggle.map((station) => (
+                  <Marker
+                    key={station.id}
+                    latitude={station.lat}
+                    longitude={station.lon}
+                    onClick={() => {
+                      if (selectedSensors.includes(station.id)) {
+                        setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                      } else {
+                        setSelectedSensors([...selectedSensors, station.id]);
+                      }
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <TbCircleFilled color={station.selected ? 'red' : '#777'} />
+                  </Marker>
+                ))}
+            </Map>
+            <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
             <List fontSize="small" fontWeight="bold">
               <ListItem display="flex" alignItems="center" gap="3">
                 <TbCircleFilled color="#777" /> Waggle Sensor
@@ -218,21 +218,22 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               </ListItem>
             </List>
           </Box>
+          </Box>
 
           <Box
-            position="absolute"
             top="0"
             right="0"
             height="100%"
             width="30%"
             bg={colorMode === 'light' ? '#fff' : '#222'}
             borderRadius="5"
-            padding="8"
+            padding="5"
             zIndex="10"
             display="flex"
             flexDir="column"
             justifyContent="space-between"
             gap="3"
+            overflow="auto"
           >
             <Box display="flex" flexDir="column" gap="3">
               <h3>Select Sensors</h3>
@@ -291,7 +292,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               <Button>Create</Button>
             </Box>
           </Box>
-        </Box>
+        </Flex>
       </ModalContent>
     </Modal>
   );
