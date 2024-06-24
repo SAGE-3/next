@@ -8,6 +8,7 @@
 
 export * from './UserRow';
 export * from './BoardRow';
+export * from './BoardCard';
 export * from './RoomSearch';
 export * from './BoardPreview';
 export * from './BoardSidebarRow';
