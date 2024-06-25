@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import Chart from '../echarts_plots/Chart';
-import * as API from '../utils/apis';
+import * as API from '../api/apis';
 import { QUERY_FIELDS } from '../data/constants';
 import { App } from '@sage3/applications/schema';
+import { SensorQuery } from '../api/apis';
+import { SageNodeQueryParams, MesonetQueryParams } from '../api/apis';
 
 type LineGraphProps = {
   children: React.ReactNode;
@@ -18,21 +20,45 @@ function AppComponent(props: App) {
   const [option, setOption] = useState<any>({});
   const s = props.data.state;
 
-  async function fetchData() {
-    const res = await API.getCombinedSageMesonetData({
-      sageNode: {
-        start: QUERY_FIELDS.TIME['24HR'].SAGE_NODE,
-        filter: {
-          name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
-          sensor: 'bme680',
-          vsn: 'W097',
+  const queries = {
+    sageNodes: [
+      {
+        id: 'W097',
+        query: {
+          start: new Date(1719268246465),
+          end: new Date(),
+          filter: {
+            name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
+            sensor: 'bme680',
+            vsn: 'W097',
+          },
         },
       },
-      mesonet: {
-        metric: QUERY_FIELDS.TEMPERATURE.MESONET,
-        time: QUERY_FIELDS.TIME['24HR'].MESONET,
+    ],
+    mesonetStations: [
+      {
+        id: '004HI',
+        query: {
+          stationId: '004HI',
+          start: new Date(1719268246465),
+          end: new Date(),
+          metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+        },
       },
-    });
+      {
+        id: '018HI',
+        query: {
+          stationId: '018HI',
+          start: new Date(1719268246465),
+          end: new Date(),
+          metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+        },
+      },
+    ],
+  } as { sageNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] };
+
+  async function fetchData() {
+    const res = await API.getCombinedSageMesonetData(queries);
     setData(res);
   }
 
@@ -40,6 +66,7 @@ function AppComponent(props: App) {
     fetchData();
   }, []);
 
+  console.log('res', data);
   useEffect(() => {
     if (data) {
       const option: echarts.EChartsCoreOption = {

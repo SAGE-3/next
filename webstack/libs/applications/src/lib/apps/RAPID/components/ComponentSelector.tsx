@@ -2,9 +2,9 @@ import { App, AppState } from '@sage3/applications/schema';
 // Components
 import LineGraph from './LineGraph';
 import Overview from './Overview';
-import ControlPanel from './ControlPanel';
+// import ControlPanel from './ControlPanel';
 import LocationMap from './Map';
-import SageStats from './SageStats';
+// import SageStats from './SageStats';
 import { CATEGORIES } from '../data/constants';
 
 export type ComponentSelectorProps = {

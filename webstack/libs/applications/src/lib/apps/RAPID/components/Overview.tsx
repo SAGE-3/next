@@ -1,7 +1,7 @@
 import React from 'react';
 import { RAPIDState } from './ComponentSelector';
 import LoadingSpinner from './LoadingSpinner';
-import { ResultDataPoint } from '../worker/useWebWorker';
+import { ResultDataPoint } from '../api/apis';
 import { Stat, StatLabel, StatNumber } from '@chakra-ui/stat';
 import { Box } from '@chakra-ui/react';
 import { App } from '@sage3/applications/schema';

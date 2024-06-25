@@ -16,7 +16,7 @@ import ComponentSelector from './components/ComponentSelector';
 import { useUser } from '@sage3/frontend';
 import StationEditorModal from './components/StationEditorModal';
 
-import * as rapidApis from './utils/apis';
+import * as rapidApis from './api/apis';
 
 // Styling
 import './styling.css';
@@ -92,13 +92,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box
-        height="100%"
-        width="100%"
-        minHeight="400px"
-        minWidth="650px"
-        overflow="auto"
-      >
+      <Box height="100%" width="100%" minHeight="400px" minWidth="650px" overflow="auto">
         <ComponentSelector props={props as App} />
       </Box>
     </AppWindow>

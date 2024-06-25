@@ -9,7 +9,7 @@ import { Marker } from 'react-map-gl';
 
 import { MESONET_METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
 import { WaggleMetrics } from '../data/constants';
-import * as API from '../utils/apis';
+import * as API from '../api/apis';
 
 import DateRangePicker from './calendar/DateRangePicker';
 
@@ -209,15 +209,15 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
                 ))}
             </Map>
             <Box position="absolute" top="0" left="0" padding="3" bg={colorMode === 'light' ? '#fff' : '#222'} borderRadius="5" margin="3">
-            <List fontSize="small" fontWeight="bold">
-              <ListItem display="flex" alignItems="center" gap="3">
-                <TbCircleFilled color="#777" /> Waggle Sensor
-              </ListItem>
-              <ListItem display="flex" alignItems="center" gap="3">
-                <IoTriangle color="#777" /> Mesonet Sensor
-              </ListItem>
-            </List>
-          </Box>
+              <List fontSize="small" fontWeight="bold">
+                <ListItem display="flex" alignItems="center" gap="3">
+                  <TbCircleFilled color="#777" /> Waggle Sensor
+                </ListItem>
+                <ListItem display="flex" alignItems="center" gap="3">
+                  <IoTriangle color="#777" /> Mesonet Sensor
+                </ListItem>
+              </List>
+            </Box>
           </Box>
 
           <Box
