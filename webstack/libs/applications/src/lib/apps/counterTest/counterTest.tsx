@@ -7,7 +7,8 @@
 //  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Container, Button, Input, Grid, GridItem } from '@chakra-ui/react';
+import { Container, Tooltip, Button, Input, Grid, GridItem, useToast } from '@chakra-ui/react';
+import { MdCopyAll } from 'react-icons/md';
 import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
@@ -20,6 +21,10 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
+  // Set size for the app
+  props.data.size.width = 275;
+  props.data.size.height = 370;
+
   const handleButtonClick = (value: string) => {
     let newInput = s.input + value;
     if (s.input == "Error") {
@@ -29,7 +34,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   const handleBackspace = () => {
-    updateState(props._id, { input: s.input.slice(0, -1) })
+    updateState(props._id, { input: s.input.toString().slice(0, -1) })
   }
 
   const handleClear = () => {
@@ -46,7 +51,7 @@ function AppComponent(props: App): JSX.Element {
   }
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} disableResize={true}>
       <>
         <Container maxW="xs" p="6">
           <Input
@@ -58,24 +63,24 @@ function AppComponent(props: App): JSX.Element {
             borderRadius="md"
           />
           <Grid templateColumns="repeat(4, 1fr)" gap={3}>
-            <GridItem colSpan={2}><Button width="110px" onClick={handleClear}>Clear</Button></GridItem>
-            <GridItem colSpan={2}><Button width="110px" onClick={handleBackspace}>⌫</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('1')}>1</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('2')}>2</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('3')}>3</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('+')}>+</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('4')}>4</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('5')}>5</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('6')}>6</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('-')}>-</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('7')}>7</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('8')}>8</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('9')}>9</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('*')}>*</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('.')}>.</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('0')}>0</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={handleEqual}>=</Button></GridItem>
-            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('/')}>/</Button></GridItem>
+            <GridItem colSpan={2}><Button onClick={handleClear} width="105px" colorScheme="teal">Clear</Button></GridItem>
+            <GridItem colSpan={2}><Button onClick={handleBackspace} width="105px" colorScheme="teal">⌫</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('1')} width="42px">1</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('2')} width="42px">2</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('3')} width="42px">3</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('+')} width="42px" colorScheme="teal">+</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('4')} width="42px">4</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('5')} width="42px">5</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('6')} width="42px">6</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('-')} width="42px" colorScheme="teal">-</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('7')} width="42px">7</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('8')} width="42px">8</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('9')} width="42px">9</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('*')} width="42px" colorScheme="teal">*</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('.')} width="42px">.</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('0')} width="42px">0</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={handleEqual} width="42px">=</Button></GridItem>
+            <GridItem colSpan={1}><Button onClick={() => handleButtonClick('/')} width="42px" colorScheme="teal">/</Button></GridItem>
           </Grid>
         </Container>
       </>
@@ -84,10 +89,29 @@ function AppComponent(props: App): JSX.Element {
 }
 
 function ToolbarComponent(props: App): JSX.Element {
-  //copy result to clipboard
+  const s = props.data.state as AppState;
+
+  const toast = useToast();
+
+  const handleCopy = () => {
+    if (!s.input) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(s.input);
+      toast({
+        title: 'Copied result to clipboard',
+        status: 'success',
+        duration: 3000,
+      });
+    }
+  };
 
   return (
     <>
+      <Tooltip placement="top-start" hasArrow={true} label={'Copy Result to Clipboard'} openDelay={400}>
+        <Button onClick={handleCopy} size="xs" colorScheme="teal" mx={1}>
+          <MdCopyAll />
+        </Button>
+      </Tooltip>
     </>
   );
 }
