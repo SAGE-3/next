@@ -217,7 +217,7 @@ export const getCombinedSageMesonetData = async (queries: {
     const sensorMaps = new Map<string, Map<string, number | string | null>>();
 
     successfulResults.forEach(({ id, type, data }) => {
-      const sensorKey = `${type}-${id}`;
+      const sensorKey = `${type} - ${id}`;
       const dataMap = new Map(data.map((obj) => [beautifyDate(obj.time), obj.value]));
       sensorMaps.set(sensorKey, dataMap);
     });

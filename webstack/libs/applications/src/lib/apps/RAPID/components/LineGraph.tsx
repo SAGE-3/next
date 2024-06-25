@@ -66,12 +66,12 @@ function AppComponent(props: App) {
     fetchData();
   }, []);
 
-  console.log('res', data);
   useEffect(() => {
     if (data) {
       const option: echarts.EChartsCoreOption = {
         title: {
           text: 'Sage Node vs. Mesonet',
+          left: 'center',
         },
         animation: false,
         tooltip: {
@@ -89,35 +89,36 @@ function AppComponent(props: App) {
             },
           },
         },
+        dataset: {
+          dimensions: Object.keys(data[0]),
+          source: data
+            ? data.map((d: any) => ({
+                ...d,
+                time: d.time.replace(',', '\n'),
+              }))
+            : [],
+        },
         legend: {
-          data: ['Sage Node', 'Mesonet'],
+          orient: 'vertical',
+          right: 10,
+          top: 50,
         },
         xAxis: {
-          data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))] : [],
-          name: 'Time',
+          type: 'category',
+          boundaryGap: false,
         },
-        yAxis: {
-          name: s.metric.NAME,
-          position: 'left',
-        },
+        yAxis: {},
         grid: {
           bottom: '25%',
+          right: '25%',
         },
         renderer: 'svg',
-        series: [
-          {
-            name: 'Sage Node',
-            type: 'line',
-            data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])] : [],
-            large: true,
-          },
-          {
-            name: 'Mesonet',
-            type: 'line',
-            data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])] : [],
-            large: true,
-          },
-        ],
+        series: data
+          ? Object.keys(data[0]).map((key) => ({
+              type: 'line',
+              symbol: 'none',
+            }))
+          : [],
         dataZoom: [
           {
             type: 'inside',
