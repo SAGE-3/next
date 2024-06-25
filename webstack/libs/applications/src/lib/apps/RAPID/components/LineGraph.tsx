@@ -117,7 +117,7 @@ function AppComponent(props: App) {
           ? Object.keys(data[0]).map((key) => ({
               type: 'line',
               symbol: 'none',
-            }))
+            })).slice(1)
           : [],
         dataZoom: [
           {
