@@ -9,23 +9,17 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: counterTest
- * created by: loelle
+ * SAGE3 application: Calculator
+ * created by: Loelle Lam
  */
 
 export const schema = z.object({
   input: z.string(),
-  firstInput: z.number(),
-  secondInput: z.number(),
-  result: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   input: "",
-  firstInput: 0,
-  secondInput: 0,
-  result: 0,
 };
 
-export const name = 'counterTest';
+export const name = 'Calculator';
