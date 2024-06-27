@@ -124,7 +124,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <option>Time</option>
         </Select>
       </Box>
-      <StationEditorModal mode="create" isOpen={isOpen} onClose={onClose} app={props} />
+      <StationEditorModal mode="edit" isOpen={isOpen} onClose={onClose} app={props} />
     </>
   );
 }

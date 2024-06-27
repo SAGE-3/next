@@ -49,8 +49,10 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
   }, []);
 
   useEffect(() => {
-    updateSensorSelection();
-  }, [selectedSensors]);
+    if (sensorInfo) {
+      updateSensorSelection();
+    }
+  }, [selectedSensors, sensorInfo]);
 
   function initializeFromProps() {
     if (mode === 'edit' && app.data.state) {
@@ -108,7 +110,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
           ...station,
           selected: selectedSensors.some((s) => s.id === station.id && s.type === 'Waggle'),
         }));
-        return { ...prevSensorInfo, mesonet: updatedMesonetStations, waggle: updatedSageSensors };
+        return { mesonet: updatedMesonetStations, waggle: updatedSageSensors };
       }
       return prevSensorInfo;
     });
