@@ -23,7 +23,7 @@ function getInstallerConfig() {
 
   return Promise.resolve({
     appDirectory: path.join(outPath, './SAGE3-win32-x64'),
-    authors: 'Luc Renambot',
+    authors: 'Ryan Theriot',
     noMsi: true,
     outputDirectory: path.join(outPath, 'windows-installer'),
     exe: 'SAGE3.exe',
