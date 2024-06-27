@@ -101,17 +101,25 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<'edit' | 'create'>('create');
 
   const onClose = () => setIsOpen(false);
-  const onOpen = () => setIsOpen(true);
+  const onOpenCreate = () => {
+    setMode('create');
+    setIsOpen(true);
+  }
+  const onOpenEdit = () => {
+    setMode('edit');
+    setIsOpen(true);
+  }
 
   return (
     <>
       <Box display="flex" gap="2" alignItems="center">
-        <Button size="xs" onClick={onOpen}>
+        <Button size="xs" onClick={onOpenCreate}>
           +
         </Button>
-        <Button size="xs" padding="1em">
+        <Button size="xs" padding="1em" onClick={onOpenEdit}>
           Edit
         </Button>
         <Select size="xs">
@@ -124,7 +132,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <option>Time</option>
         </Select>
       </Box>
-      <StationEditorModal mode="edit" isOpen={isOpen} onClose={onClose} app={props} />
+      <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>
   );
 }
