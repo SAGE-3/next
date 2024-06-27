@@ -42,7 +42,7 @@ export const init: Partial<state> = {
   metric: METRICS.find((m) => m.name === 'Temperature (°C)'),
   category: CATEGORIES.GRAPH,
   startTime: new Date(1719268246465),
-  endTime: new Date(),
+  endTime: new Date(Date.now()),
 };
 
 export const name = 'RAPID';

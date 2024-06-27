@@ -29,7 +29,7 @@ function AppComponent(props: App) {
       waggleNodes: [],
       mesonetStations: [],
     };
-
+    console.log('s.endtime', new Date(Date.now()));
     if (BME_680_METRICS.includes(s.metric.waggle)) {
       s.sensors.waggle.forEach((id: string) => {
         queries.waggleNodes.push({

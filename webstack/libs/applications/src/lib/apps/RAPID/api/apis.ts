@@ -145,6 +145,7 @@ export const getMesonetStations = async (): Promise<any> => {
 
 export const getMesonetData = async (query: MesonetQueryParams): Promise<any> => {
   try {
+    // converts date to UTC and formats it to Mesonet's required format
     const convertToMesonetDateFormat = (inputDate: Date) => {
       // Get year, month, day, hours, and minutes from the inputDate
       const year = inputDate.getUTCFullYear().toString();
@@ -152,11 +153,6 @@ export const getMesonetData = async (query: MesonetQueryParams): Promise<any> =>
       const day = inputDate.getUTCDate().toString().padStart(2, '0');
       const hours = inputDate.getUTCHours().toString().padStart(2, '0');
       const minutes = inputDate.getUTCMinutes().toString().padStart(2, '0');
-      console.log('year', year);
-      console.log('month', month);
-      console.log('day', day);
-      console.log('hours', hours);
-      console.log('minutes', minutes);
 
       // Form the YYYYmmddHHMM format string
       const formattedTime = year + month + day + hours + minutes;
