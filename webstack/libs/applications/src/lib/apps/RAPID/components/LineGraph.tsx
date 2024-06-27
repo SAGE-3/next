@@ -21,15 +21,12 @@ function AppComponent(props: App) {
   const [option, setOption] = useState<any>({});
   const s = props.data.state;
 
-  console.log('s', s);
-  console.log('type of date', typeof s.endTime);
-
   function createQueries(): { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } {
     const queries: { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } = {
       waggleNodes: [],
       mesonetStations: [],
     };
-    console.log('s.endtime', new Date(Date.now()));
+
     if (BME_680_METRICS.includes(s.metric.waggle)) {
       s.sensors.waggle.forEach((id: string) => {
         queries.waggleNodes.push({
@@ -126,8 +123,6 @@ function AppComponent(props: App) {
   useEffect(() => {
     fetchData();
   }, [s]);
-
-  console.log('data', data);
 
   useEffect(() => {
     if (data && data.length > 0) {
