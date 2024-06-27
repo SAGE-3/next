@@ -74,7 +74,7 @@ jobs:
 
       - name: Sign the windows installer
         run: |
-          signtool.exe sign /fd sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /fd sha1 "./SAGE3-Installer.exe" 
+          signtool.exe sign /fd SHA256 /f "D:\\Certificate_pkcs12.p12" "C:\Users\Administrator\Desktop\ForTesting\evcodesigning.pem" /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 "./SAGE3-Installer.exe" 
           signtool.exe verify /v /pa "./SAGE3-Installer.exe"
         working-directory: webstack/clients/electron/windows-installer
 
