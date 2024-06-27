@@ -122,9 +122,10 @@ function AppComponent(props: App) {
     setData(res);
   }
 
+  // When state changes, fetch the data
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [s]);
 
   console.log('data', data);
 

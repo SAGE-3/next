@@ -7,11 +7,12 @@ import { IoTriangle } from 'react-icons/io5';
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { Marker } from 'react-map-gl';
 
-import { MESONET_METRICS, METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
-import { WaggleMetrics } from '../data/constants';
+import { METRICS, SAGE_SENSORS } from '../data/constants';
 import * as API from '../api/apis';
+import { useAppStore } from '@sage3/frontend';
 
 import DateRangePicker from './calendar/DateRangePicker';
+import { App } from '@sage3/applications/schema';
 
 interface DateRange {
   startDate: Date | null;
@@ -21,6 +22,7 @@ interface DateRange {
 interface StationEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  props: App;
 }
 
 type SensorInfoType = {
@@ -33,7 +35,7 @@ interface SelectedSensor {
   type: 'Waggle' | 'Mesonet';
 }
 
-const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose }) => {
+const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose, props }) => {
   const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
 
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
@@ -50,6 +52,8 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
   };
 
   const { colorMode } = useColorMode();
+
+  const createApp = useAppStore((state) => state.create);
 
   async function fetchStations() {
     try {
@@ -148,6 +152,59 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
         break;
     }
   }
+
+  function hasAllRequiredFields(): boolean {
+    return Boolean(selectedMetric) && Boolean(dateRange?.startDate) && Boolean(dateRange?.endDate) && Boolean(selectedVisualizationType);
+  }
+
+  async function handleCreation() {
+    try {
+      if (!hasAllRequiredFields()) {
+        console.error('Missing required fields');
+        return;
+      }
+      const padding = 3;
+
+      createApp({
+        title: 'RAPID',
+        roomId: props.data.roomId!,
+        boardId: props.data.boardId!,
+        position: {
+          x: props.data.position.x + props.data.size.width + padding,
+          y: props.data.position.y,
+          z: 0,
+        },
+        size: {
+          width: props.data.size.width,
+          height: props.data.size.height,
+          depth: 0,
+        },
+        type: 'RAPID',
+        rotation: { x: 0, y: 0, z: 0 },
+        state: {
+          liveData: true,
+          lastUpdated: null,
+          sensors: {
+            waggle: selectedSensors.filter((s) => s.type === 'Waggle').map((s) => s.id),
+            mesonet: selectedSensors.filter((s) => s.type === 'Mesonet').map((s) => s.id),
+          },
+          category: 'Graph',
+          metric: JSON.parse(selectedMetric!),
+          startTime: dateRange.startDate,
+          endTime: dateRange.endDate,
+        },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+
+      onClose();
+    } catch (error) {
+      console.error('Error creating RAPID app:', error);
+    }
+  }
+
+  console.log("has all required fields", hasAllRequiredFields());
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
@@ -301,11 +358,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
             <Box display="flex" justifyContent="end" gap="3">
               <Button onClick={onClose}>Cancel</Button>
-              <Button
-                onClick={() => {
-                  console.log('Create RAPID app with:', selectedSensors, selectedMetric, dateRange, selectedVisualizationType);
-                }}
-              >
+              <Button isDisabled={!hasAllRequiredFields()} onClick={handleCreation}>
                 Create
               </Button>
             </Box>
