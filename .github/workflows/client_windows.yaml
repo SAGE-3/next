@@ -14,7 +14,6 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: webstack/clients/electron
 
 jobs:
   run:
@@ -52,32 +51,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
-      - name: Build1
+
+      - name: Build the electron application
         run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite
         working-directory: webstack/clients/electron
-      - name: Build2
-        run: 7z a -tzip SAGE3-win64.zip SAGE3-win32-x64
-        working-directory: webstack/clients/electron
-      - name: Build3
+
+      - name: Build the windows installer
         run: node build_win.js
         working-directory: webstack/clients/electron
 
-      - name: Signing using Signtool
+      - name: Sign the windows installer
         run: |
-          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "webstack/clients/electron/windows-installer/SAGE3-Installer.exe" 
-          signtool.exe verify /v /pa "webstack/clients/electron/windows-installer/SAGE3-Installer.exe"
+          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "./SAGE3-Installer.exe" 
+          signtool.exe verify /v /pa "./SAGE3-Installer.exe"
+        working-directory: webstack/clients/electron/windows-installer
 
       - uses: actions/upload-artifact@v4
         with:
           name: SAGE3-installer-win64.exe
           path: webstack/clients/electron/windows-installer/SAGE3-Installer.exe
-      - uses: actions/upload-artifact@v4
-        with:
-          name: SAGE3-win64.zip
-          path: webstack/clients/electron/SAGE3-win64.zip
+
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: SAGE3-win64.zip
+      #     path: webstack/clients/electron/SAGE3-win64.zip
