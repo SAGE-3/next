@@ -6,23 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { apiUrls, useAppStore } from '@sage3/frontend';
+import { useAppStore } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useCallback, useEffect, useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
-import { useUser } from '@sage3/frontend';
-import StationEditorModal from './components/StationEditorModal';
+import StationEditorModal from './components/station-editor/StationEditorModal';
 
 import * as rapidApis from './api/apis';
 
 // Styling
 import './styling.css';
-import { CATEGORIES } from './data/constants';
-import { Box, Button, Link, Select, Tooltip } from '@chakra-ui/react';
-import { FaDownload } from 'react-icons/fa';
+import { Box, Button, Select } from '@chakra-ui/react';
 
 /* App component for RAPID */
 function AppComponent(props: App): JSX.Element {
@@ -127,7 +124,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <option>Time</option>
         </Select>
       </Box>
-      <StationEditorModal isOpen={isOpen} onClose={onClose} props={props}/>
+      <StationEditorModal isOpen={isOpen} onClose={onClose} props={props} />
     </>
   );
 }

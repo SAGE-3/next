@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import Chart from '../echarts_plots/Chart';
 import * as API from '../api/apis';
-import { BME_680_METRICS, QUERY_FIELDS } from '../data/constants';
+import { BME_680_METRICS } from '../data/constants';
 import { App } from '@sage3/applications/schema';
 import { SensorQuery } from '../api/apis';
 import { SageNodeQueryParams, MesonetQueryParams } from '../api/apis';
-import { controllers } from 'chart.js';
 
 type LineGraphProps = {
   children: React.ReactNode;
