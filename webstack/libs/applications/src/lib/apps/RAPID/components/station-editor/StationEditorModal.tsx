@@ -3,7 +3,7 @@ import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Flex } fr
 import { App } from '@sage3/applications/schema';
 import { useAppStore } from '@sage3/frontend';
 import * as API from '../../api/apis';
-import { METRICS, SAGE_SENSORS } from '../../data/constants';
+import { SAGE_SENSORS } from '../../data/constants';
 import MapComponent from './components/MapComponent';
 import SensorList from './components/SensorList';
 import MetricSelector from './components/MetricSelector';
@@ -13,7 +13,8 @@ import VisualizationTypeSelector from './components/VisualizationTypeSelector';
 interface StationEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  props: App;
+  mode: 'create' | 'edit';
+  app: App;
 }
 
 interface DateRange {
@@ -31,7 +32,7 @@ export type SensorInfoType = {
   mesonet: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
 };
 
-const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose, props }) => {
+const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose, mode, app }) => {
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
   const [selectedSensors, setSelectedSensors] = useState<SelectedSensor[]>([]);
   const [dateRange, setDateRange] = useState<DateRange>({ startDate: null, endDate: null });
@@ -40,14 +41,31 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
   const { colorMode } = useColorMode();
   const createApp = useAppStore((state) => state.create);
+  const updateApp = useAppStore((state) => state.update);
 
   useEffect(() => {
     fetchStations();
+    initializeFromProps();
   }, []);
 
   useEffect(() => {
     updateSensorSelection();
   }, [selectedSensors]);
+
+  function initializeFromProps() {
+    if (mode === 'edit' && app.data.state) {
+      const { sensors, metric, startTime, endTime, category } = app.data.state;
+
+      setSelectedSensors([
+        ...sensors.waggle.map((id: any) => ({ id, type: 'Waggle' as const })),
+        ...sensors.mesonet.map((id: any) => ({ id, type: 'Mesonet' as const })),
+      ]);
+
+      setSelectedMetric(JSON.stringify(metric));
+      setDateRange({ startDate: new Date(startTime), endDate: new Date(endTime) });
+      setSelectedVisualizationType(category);
+    }
+  }
 
   async function fetchStations() {
     try {
@@ -100,30 +118,14 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
     return Boolean(selectedMetric) && Boolean(dateRange?.startDate) && Boolean(dateRange?.endDate) && Boolean(selectedVisualizationType);
   }
 
-  async function handleCreation() {
+  async function handleSubmit() {
     try {
       if (!hasAllRequiredFields()) {
         console.error('Missing required fields');
         return;
       }
-      const padding = 3;
 
-      createApp({
-        title: 'RAPID',
-        roomId: props.data.roomId!,
-        boardId: props.data.boardId!,
-        position: {
-          x: props.data.position.x + props.data.size.width + padding,
-          y: props.data.position.y,
-          z: 0,
-        },
-        size: {
-          width: props.data.size.width,
-          height: props.data.size.height,
-          depth: 0,
-        },
-        type: 'RAPID',
-        rotation: { x: 0, y: 0, z: 0 },
+      const appData = {
         state: {
           liveData: true,
           lastUpdated: null,
@@ -131,19 +133,44 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
             waggle: selectedSensors.filter((s) => s.type === 'Waggle').map((s) => s.id),
             mesonet: selectedSensors.filter((s) => s.type === 'Mesonet').map((s) => s.id),
           },
-          category: 'Graph',
+          category: selectedVisualizationType,
           metric: JSON.parse(selectedMetric!),
           startTime: dateRange.startDate,
           endTime: dateRange.endDate,
         },
-        raised: true,
-        dragging: false,
-        pinned: false,
-      });
+      };
+      console.log('app data', appData);
+
+      if (mode === 'edit') {
+        updateApp(app._id, appData);
+      } else {
+        const padding = 3;
+        createApp({
+          ...appData,
+          title: 'RAPID',
+          roomId: app.data.roomId!,
+          boardId: app.data.boardId!,
+          position: {
+            x: app.data.position.x + app.data.size.width + padding,
+            y: app.data.position.y,
+            z: 0,
+          },
+          size: {
+            width: app.data.size.width,
+            height: app.data.size.height,
+            depth: 0,
+          },
+          type: 'RAPID',
+          rotation: { x: 0, y: 0, z: 0 },
+          raised: true,
+          dragging: false,
+          pinned: false,
+        });
+      }
 
       onClose();
     } catch (error) {
-      console.error('Error creating RAPID app:', error);
+      console.error('Error submitting RAPID app:', error);
     }
   }
 
@@ -168,14 +195,17 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
           >
             <SensorList selectedSensors={selectedSensors} setSelectedSensors={setSelectedSensors} />
             <Box display="flex" flexDir="column" gap="3">
-              <MetricSelector selectedSensors={selectedSensors} setSelectedMetric={setSelectedMetric} />
+              <MetricSelector selectedSensors={selectedSensors} setSelectedMetric={setSelectedMetric} initialMetric={selectedMetric} />
               <DateRangeSelector dateRange={dateRange} setDateRange={setDateRange} />
-              <VisualizationTypeSelector setSelectedVisualizationType={setSelectedVisualizationType} />
+              <VisualizationTypeSelector
+                setSelectedVisualizationType={setSelectedVisualizationType}
+                initialType={selectedVisualizationType}
+              />
             </Box>
             <Box display="flex" justifyContent="end" gap="3">
               <Button onClick={onClose}>Cancel</Button>
-              <Button isDisabled={!hasAllRequiredFields()} onClick={handleCreation}>
-                Create
+              <Button isDisabled={!hasAllRequiredFields()} onClick={handleSubmit}>
+                {mode === 'edit' ? 'Update' : 'Create'}
               </Button>
             </Box>
           </Box>

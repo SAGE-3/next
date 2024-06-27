@@ -1,6 +1,6 @@
 export const CATEGORIES = {
   CONTROL_PANEL: 'Control Panel',
-  GRAPH: 'Graph',
+  GRAPH: 'Line Graph',
   OVERVIEW: 'Overview',
   MAP: 'Map',
   SAGE_STATS: 'Sage Stats',
@@ -75,10 +75,10 @@ export interface MesonetMetrics {
 }
 
 export const MESONET_METRICS: MesonetMetrics = {
-  "Temperature (°C)": "air_temp_set_1",
-  "Relative Humidity (%)": "relative_humidity_set_1",
-  "Pressure (Millibars)": "pressure_set_1",
-}
+  'Temperature (°C)': 'air_temp_set_1',
+  'Relative Humidity (%)': 'relative_humidity_set_1',
+  'Pressure (Millibars)': 'pressure_set_1',
+};
 
 // Metrics shared between Waggle Node and Mesonet
 export const SHARED_METRICS = [
@@ -107,40 +107,35 @@ export interface Metric {
 
 export const METRICS: Metric[] = [
   {
-    name: "Temperature (°C)",
-    waggle: "env.temperature",
-    mesonet: "air_temp_set_1"
+    name: 'Temperature (°C)',
+    waggle: 'env.temperature',
+    mesonet: 'air_temp_set_1',
   },
   {
-    name: "Relative Humidity (%)",
-    waggle: "env.relative_humidity",
-    mesonet: "relative_humidity_set_1"
+    name: 'Relative Humidity (%)',
+    waggle: 'env.relative_humidity',
+    mesonet: 'relative_humidity_set_1',
   },
   {
-    name: "Pressure (Millibars)",
-    waggle: "env.pressure",
-    mesonet: "pressure_set_1"
+    name: 'Pressure (Millibars)',
+    waggle: 'env.pressure',
+    mesonet: 'pressure_set_1',
   },
   {
-    name: "Rainfall (mm)",
-    waggle: "env.raingauge.event_acc",
-    mesonet: null
+    name: 'Rainfall (mm)',
+    waggle: 'env.raingauge.event_acc',
+    mesonet: null,
   },
   {
-    name: "CPU Load (%)",
-    waggle: "sys.freq.cpu_perc",
-    mesonet: null
+    name: 'CPU Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    mesonet: null,
   },
   {
-    name: "GPU Load (%)",
-    waggle: "sys.freq.gpu",
-    mesonet: null
-  }
-]
+    name: 'GPU Load (%)',
+    waggle: 'sys.freq.gpu',
+    mesonet: null,
+  },
+];
 
-export const BME_680_METRICS = [
-  "env.temperature",
-  "env.relative_humidity",
-  "env.pressure",
-  "env.raingauge.event_acc",
-]
+export const BME_680_METRICS = ['env.temperature', 'env.relative_humidity', 'env.pressure', 'env.raingauge.event_acc'];

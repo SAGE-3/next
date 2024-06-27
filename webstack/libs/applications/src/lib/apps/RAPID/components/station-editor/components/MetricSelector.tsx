@@ -6,9 +6,10 @@ import { SelectedSensor } from '../StationEditorModal';
 interface MetricSelectorProps {
   selectedSensors: SelectedSensor[];
   setSelectedMetric: React.Dispatch<React.SetStateAction<string | null>>;
+  initialMetric: string | null;
 }
 
-const MetricSelector: React.FC<MetricSelectorProps> = ({ selectedSensors, setSelectedMetric }) => {
+const MetricSelector: React.FC<MetricSelectorProps> = ({ selectedSensors, setSelectedMetric, initialMetric }) => {
   const [metrics, setMetrics] = useState<React.ReactNode[] | null>(null);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({ selectedSensors, setSel
       <Select
         name="metric"
         placeholder="Metric"
+        value={initialMetric || undefined}
         onChange={(e) => {
           setSelectedMetric(e.target.value);
         }}
