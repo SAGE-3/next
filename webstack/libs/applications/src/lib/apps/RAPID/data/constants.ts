@@ -98,3 +98,49 @@ export const SHARED_METRICS = [
     mesonet: 'pressure_set_1',
   },
 ];
+
+export interface Metric {
+  name: string;
+  waggle: string;
+  mesonet: string | null;
+}
+
+export const METRICS: Metric[] = [
+  {
+    name: "Temperature (°C)",
+    waggle: "env.temperature",
+    mesonet: "air_temp_set_1"
+  },
+  {
+    name: "Relative Humidity (%)",
+    waggle: "env.relative_humidity",
+    mesonet: "relative_humidity_set_1"
+  },
+  {
+    name: "Pressure (Millibars)",
+    waggle: "env.pressure",
+    mesonet: "pressure_set_1"
+  },
+  {
+    name: "Rainfall (mm)",
+    waggle: "env.raingauge.event_acc",
+    mesonet: null
+  },
+  {
+    name: "CPU Load (%)",
+    waggle: "sys.freq.cpu_perc",
+    mesonet: null
+  },
+  {
+    name: "GPU Load (%)",
+    waggle: "sys.freq.gpu",
+    mesonet: null
+  }
+]
+
+export const BME_680_METRICS = [
+  "env.temperature",
+  "env.relative_humidity",
+  "env.pressure",
+  "env.raingauge.event_acc",
+]

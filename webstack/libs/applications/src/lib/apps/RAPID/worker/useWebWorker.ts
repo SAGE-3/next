@@ -5,7 +5,7 @@
 
 // export type ResultDataPoint = {
 //   time: string;
-//   'Sage Node': number;
+//   'Waggle Node': number;
 //   Mesonet: number;
 // };
 

@@ -7,7 +7,7 @@ import { IoTriangle } from 'react-icons/io5';
 import Map, { NavigationControl } from 'react-map-gl/maplibre';
 import { Marker } from 'react-map-gl';
 
-import { MESONET_METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
+import { MESONET_METRICS, METRICS, MesonetMetrics, SAGE_SENSORS, SHARED_METRICS, WAGGLE_METRICS } from '../data/constants';
 import { WaggleMetrics } from '../data/constants';
 import * as API from '../api/apis';
 
@@ -28,15 +28,21 @@ type SensorInfoType = {
   mesonet: { lat: number; lon: number; name: string; id: string; selected: boolean }[];
 };
 
+interface SelectedSensor {
+  id: string;
+  type: 'Waggle' | 'Mesonet';
+}
+
 const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose }) => {
   const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
-  // const SAGE_URL = 'https://portal.sagecontinuum.org/node/W097';
-  // const MESONET_URL = 'https://explore.synopticdata.com/004HI/current';
 
   const [sensorInfo, setSensorInfo] = useState<SensorInfoType | null>(null);
-  const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
-  const [options, setOptions] = useState<React.ReactNode[] | null>(null);
+  // Used to create RAPID app
+  const [selectedSensors, setSelectedSensors] = useState<SelectedSensor[]>([]);
+  const [metrics, setMetrics] = useState<React.ReactNode[] | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({ startDate: null, endDate: null });
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+  const [selectedVisualizationType, setSelectedVisualizationType] = useState<string | null>(null);
 
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
@@ -49,7 +55,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
     try {
       const mesonetSensors = await API.getMesonetStations();
       const mesonetStations = mesonetSensors.STATION.map((station: any) => ({
-        type: 'mesonet',
+        type: 'Mesonet',
         name: station.NAME,
         lat: station.LATITUDE,
         lon: station.LONGITUDE,
@@ -58,7 +64,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
       }));
 
       const waggleSensors = SAGE_SENSORS.map((sensor) => ({
-        type: 'waggle',
+        type: 'Waggle',
         name: sensor.name,
         lat: sensor.lat,
         lon: sensor.lon,
@@ -80,51 +86,42 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
     fetchStations();
   }, []);
 
-  // Update sensor colors and dropdown options when sensors are selected
+  // Update sensor colors and dropdown metrics when sensors are selected
   useEffect(() => {
     setSensorInfo((prevSensorInfo) => {
       if (prevSensorInfo) {
-        const updatedMesonetStations = prevSensorInfo.mesonet.map((station) => {
-          if (selectedSensors.includes(station.id)) {
-            return { ...station, selected: true };
-          } else {
-            return { ...station, selected: false };
-          }
-        });
-        const updatedSageSensors = prevSensorInfo.waggle.map((station) => {
-          if (selectedSensors.includes(station.id)) {
-            return { ...station, selected: true };
-          } else {
-            return { ...station, selected: false };
-          }
-        });
+        const updatedMesonetStations = prevSensorInfo.mesonet.map((station) => ({
+          ...station,
+          selected: selectedSensors.some((s) => s.id === station.id && s.type === 'Mesonet'),
+        }));
+        const updatedSageSensors = prevSensorInfo.waggle.map((station) => ({
+          ...station,
+          selected: selectedSensors.some((s) => s.id === station.id && s.type === 'Waggle'),
+        }));
         return { ...prevSensorInfo, mesonet: updatedMesonetStations, waggle: updatedSageSensors };
       }
       return prevSensorInfo;
     });
 
-    showConditionalOptions();
+    showConditionalMetrics();
   }, [selectedSensors]);
 
   function containsWaggleSensors() {
-    return sensorInfo?.waggle.some((station) => selectedSensors.includes(station.id));
+    return selectedSensors.some((sensor) => sensor.type === 'Waggle');
   }
   function containsMesonetSensors() {
-    return sensorInfo?.mesonet.some((station) => selectedSensors.includes(station.id));
+    return selectedSensors.some((sensor) => sensor.type === 'Mesonet');
   }
 
-  async function showConditionalOptions() {
+  function showConditionalMetrics() {
     if (selectedSensors.length === 0) {
-      setOptions(null);
+      setMetrics(null);
       return;
     }
-
-    const metrics = [];
-
     switch (true) {
       case containsWaggleSensors() && containsMesonetSensors():
-        setOptions(
-          SHARED_METRICS.map((metric) => (
+        setMetrics(
+          METRICS.filter((metric) => metric.waggle !== null && metric.mesonet !== null).map((metric) => (
             <option key={metric.name} value={JSON.stringify(metric)}>
               {metric.name}
             </option>
@@ -132,24 +129,22 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
         );
         break;
       case containsWaggleSensors():
-        for (const key in WAGGLE_METRICS) {
-          metrics.push(
-            <option key={key} value={JSON.stringify(WAGGLE_METRICS[key as keyof WaggleMetrics])}>
-              {key}
+        setMetrics(
+          METRICS.filter((metric) => metric.waggle !== null).map((metric) => (
+            <option key={metric.name} value={JSON.stringify(metric)}>
+              {metric.name}
             </option>
-          );
-        }
-        setOptions(metrics);
+          ))
+        );
         break;
       case containsMesonetSensors():
-        for (const key in MESONET_METRICS) {
-          metrics.push(
-            <option key={key} value={JSON.stringify(MESONET_METRICS[key as keyof MesonetMetrics])}>
-              {key}
+        setMetrics(
+          METRICS.filter((metric) => metric.mesonet !== null).map((metric) => (
+            <option key={metric.name} value={JSON.stringify(metric)}>
+              {metric.name}
             </option>
-          );
-        }
-        setOptions(metrics);
+          ))
+        );
         break;
     }
   }
@@ -177,10 +172,10 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
                     latitude={station.lat}
                     longitude={station.lon}
                     onClick={() => {
-                      if (selectedSensors.includes(station.id)) {
-                        setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                      if (selectedSensors.some((s) => s.id === station.id && s.type === 'Mesonet')) {
+                        setSelectedSensors(selectedSensors.filter((s) => !(s.id === station.id && s.type === 'Mesonet')));
                       } else {
-                        setSelectedSensors([...selectedSensors, station.id]);
+                        setSelectedSensors([...selectedSensors, { id: station.id, type: 'Mesonet' }]);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -196,10 +191,10 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
                     latitude={station.lat}
                     longitude={station.lon}
                     onClick={() => {
-                      if (selectedSensors.includes(station.id)) {
-                        setSelectedSensors(selectedSensors.filter((s) => s !== station.id));
+                      if (selectedSensors.some((s) => s.id === station.id && s.type === 'Waggle')) {
+                        setSelectedSensors(selectedSensors.filter((s) => !(s.id === station.id && s.type === 'Waggle')));
                       } else {
-                        setSelectedSensors([...selectedSensors, station.id]);
+                        setSelectedSensors([...selectedSensors, { id: station.id, type: 'Waggle' }]);
                       }
                     }}
                     style={{ cursor: 'pointer' }}
@@ -256,9 +251,12 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               <Box overflow="auto" height="200px">
                 {selectedSensors.length > 0 ? (
                   selectedSensors.map((sensor) => (
-                    <Box display="flex" justifyContent="space-between" marginY="2" key={sensor}>
-                      <p>{sensor}</p>
-                      <Button size="xs" onClick={() => setSelectedSensors(selectedSensors.filter((s) => s !== sensor))}>
+                    <Box display="flex" justifyContent="space-between" marginY="2" key={`${sensor.type}-${sensor.id}`}>
+                      <p>{`${sensor.type}: ${sensor.id}`}</p>
+                      <Button
+                        size="xs"
+                        onClick={() => setSelectedSensors(selectedSensors.filter((s) => !(s.id === sensor.id && s.type === sensor.type)))}
+                      >
                         Remove
                       </Button>
                     </Box>
@@ -273,8 +271,14 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
             <Box display="flex" flexDir="column" gap="3">
               <Box>
                 <label htmlFor="metric">Metric</label>
-                <Select name="metric" placeholder="Metric">
-                  {options}
+                <Select
+                  name="metric"
+                  placeholder="Metric"
+                  onChange={(e) => {
+                    setSelectedMetric(e.target.value);
+                  }}
+                >
+                  {metrics}
                 </Select>
               </Box>
               <Box>
@@ -283,13 +287,27 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
               </Box>
               <Box>
                 <label htmlFor="visualization type">Visualization Type</label>
-                <Select placeholder="Visualization Type" />
+                <Select
+                  placeholder="Visualization Type"
+                  onChange={(e) => {
+                    setSelectedVisualizationType(e.target.value);
+                  }}
+                >
+                  <option value="Line Graph">Line Graph</option>
+                  <option value="Overview">Overview</option>
+                </Select>
               </Box>
             </Box>
 
             <Box display="flex" justifyContent="end" gap="3">
               <Button onClick={onClose}>Cancel</Button>
-              <Button>Create</Button>
+              <Button
+                onClick={() => {
+                  console.log('Create RAPID app with:', selectedSensors, selectedMetric, dateRange, selectedVisualizationType);
+                }}
+              >
+                Create
+              </Button>
             </Box>
           </Box>
         </Flex>

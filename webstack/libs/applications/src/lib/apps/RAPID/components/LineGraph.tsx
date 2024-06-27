@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import Chart from '../echarts_plots/Chart';
 import * as API from '../api/apis';
-import { QUERY_FIELDS } from '../data/constants';
+import { BME_680_METRICS, QUERY_FIELDS } from '../data/constants';
 import { App } from '@sage3/applications/schema';
 import { SensorQuery } from '../api/apis';
 import { SageNodeQueryParams, MesonetQueryParams } from '../api/apis';
+import { controllers } from 'chart.js';
 
 type LineGraphProps = {
   children: React.ReactNode;
@@ -20,44 +21,103 @@ function AppComponent(props: App) {
   const [option, setOption] = useState<any>({});
   const s = props.data.state;
 
-  const queries = {
-    sageNodes: [
-      {
-        id: 'W097',
-        query: {
-          start: new Date(1719268246465),
-          end: new Date(),
-          filter: {
-            name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
-            sensor: 'bme680',
-            vsn: 'W097',
+  console.log('s', s);
+  console.log('type of date', typeof s.endTime);
+
+  function createQueries(): { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } {
+    const queries: { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } = {
+      waggleNodes: [],
+      mesonetStations: [],
+    };
+
+    if (BME_680_METRICS.includes(s.metric.waggle)) {
+      s.sensors.waggle.forEach((id: string) => {
+        queries.waggleNodes.push({
+          id,
+          query: {
+            start: new Date(s.startTime),
+            end: new Date(s.endTime),
+            filter: {
+              name: s.metric.waggle,
+              sensor: 'bme680',
+              vsn: id,
+            },
           },
-        },
-      },
-    ],
-    mesonetStations: [
-      {
-        id: '004HI',
-        query: {
-          stationId: '004HI',
-          start: new Date(1719268246465),
-          end: new Date(),
-          metric: QUERY_FIELDS.TEMPERATURE.MESONET,
-        },
-      },
-      {
-        id: '018HI',
-        query: {
-          stationId: '018HI',
-          start: new Date(1719268246465),
-          end: new Date(),
-          metric: QUERY_FIELDS.TEMPERATURE.MESONET,
-        },
-      },
-    ],
-  } as { sageNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] };
+        });
+      });
+    } else {
+      s.sensors.waggle.forEach((id: string) => {
+        queries.waggleNodes.push({
+          id,
+          query: {
+            start: new Date(s.startTime),
+            end: new Date(s.endTime),
+            filter: {
+              name: s.metric.waggle,
+              vsn: id,
+            },
+          },
+        });
+      });
+    }
+
+    if (s.metric.mesonet !== null) {
+      s.sensors.mesonet.forEach((id: string) => {
+        queries.mesonetStations.push({
+          id,
+          query: {
+            stationId: id,
+            start: new Date(s.startTime),
+            end: new Date(s.endTime),
+            metric: s.metric.mesonet,
+          },
+        });
+      });
+    }
+
+    return queries;
+  }
+
+  // const queries = {
+  //   waggleNodes: [
+  //     {
+  //       id: 'W097',
+  //       query: {
+  //         start: new Date(1719268246465),
+  //         end: new Date(),
+  //         filter: {
+  //           name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
+  //           sensor: 'bme680',
+  //           vsn: 'W097',
+  //         },
+  //       },
+  //     },
+  //   ],
+  //   mesonetStations: [
+  //     {
+  //       id: '004HI',
+  //       query: {
+  //         stationId: '004HI',
+  //         start: new Date(1719268246465),
+  //         end: new Date(),
+  //         metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+  //       },
+  //     },
+  //     {
+  //       id: '018HI',
+  //       query: {
+  //         stationId: '018HI',
+  //         start: new Date(1719268246465),
+  //         end: new Date(),
+  //         metric: QUERY_FIELDS.TEMPERATURE.MESONET,
+  //       },
+  //     },
+  //   ],
+  // } as { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] };
 
   async function fetchData() {
+    const queries = createQueries();
+    console.log('queries', queries);
     const res = await API.getCombinedSageMesonetData(queries);
     setData(res);
   }
@@ -66,11 +126,13 @@ function AppComponent(props: App) {
     fetchData();
   }, []);
 
+  console.log('data', data);
+
   useEffect(() => {
-    if (data) {
+    if (data && data.length > 0) {
       const option: echarts.EChartsCoreOption = {
         title: {
-          text: 'Sage Node vs. Mesonet',
+          text: 'Waggle Node vs. Mesonet',
           left: 'center',
         },
         animation: false,
@@ -114,10 +176,12 @@ function AppComponent(props: App) {
         },
         renderer: 'svg',
         series: data
-          ? Object.keys(data[0]).map((key) => ({
-              type: 'line',
-              symbol: 'none',
-            })).slice(1)
+          ? Object.keys(data[0])
+              .map((key) => ({
+                type: 'line',
+                symbol: 'none',
+              }))
+              .slice(1)
           : [],
         dataZoom: [
           {

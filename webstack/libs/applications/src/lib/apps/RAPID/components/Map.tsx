@@ -134,7 +134,7 @@ function AppComponent(props: App) {
             setPinInfo(Object.keys(sensorInfo)[0]);
           }}
         >
-          <Pin size={18} text="Sage Node" />
+          <Pin size={18} text="Waggle Node" />
         </Marker>
         <Marker
           latitude={sensorInfo.mesonet.lat}

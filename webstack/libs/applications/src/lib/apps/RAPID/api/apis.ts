@@ -22,7 +22,7 @@ export interface MesonetQueryParams {
 }
 
 export interface RAPIDQueries {
-  sageNodes: SageNodeQueryParams[];
+  waggleNodes: SageNodeQueryParams[];
   mesonetStations: MesonetQueryParams[];
 }
 
@@ -38,7 +38,7 @@ export interface SensorQuery<T> {
 
 export type ResultDataPoint = {
   time: string;
-  'Sage Node': number;
+  'Waggle Node': number;
   Mesonet: number;
 };
 
@@ -58,10 +58,9 @@ const beautifyDate = (date: string): string => {
   });
 };
 
-// Sage Node functions
+// Waggle Node functions
 export const getSageNodeData = async (query: SageNodeQueryParams): Promise<any[]> => {
   try {
-    console.log('query', query);
     const { start, end, filter } = query;
     const res = await fetch(SAGE_NODE_URL, {
       method: 'POST',
@@ -72,9 +71,22 @@ export const getSageNodeData = async (query: SageNodeQueryParams): Promise<any[]
       }),
     });
     const text = await res.text();
-    return text ? text.trim().split('\n').map(JSON.parse(text)) : [];
+
+    const parsedData = text
+      .trim()
+      .split('\n')
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch (error) {
+          console.error('Error parsing JSON:', error);
+          return null;
+        }
+      })
+      .filter((data) => data !== null);
+    return text ? parsedData : [];
   } catch (error) {
-    return handleFetchError('fetching Sage Node data')(error as Error);
+    return handleFetchError('fetching Waggle Node data')(error as Error);
   }
 };
 
@@ -82,7 +94,7 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
   try {
     // Define constant for 5 minutes in milliseconds
     const FIVE_MINUTES = 5 * 60 * 1000;
-    // Fetch raw Sage Node data
+    // Fetch raw Waggle Node data
     const metrics = await getSageNodeData(query);
     // Return empty array if no metrics are found
     if (!metrics.length) return [];
@@ -115,7 +127,7 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
     }));
   } catch (error) {
     // Handle any errors that occur during the process
-    return handleFetchError('formatting Sage Node data')(error as Error);
+    return handleFetchError('formatting Waggle Node data')(error as Error);
   }
 };
 
@@ -151,8 +163,6 @@ export const getMesonetData = async (query: MesonetQueryParams): Promise<any> =>
 
       return formattedTime;
     };
-
-    console.log('convert mesonet date format', convertToMesonetDateFormat(query.start));
 
     const res = await fetch(
       `https://api.synopticdata.com/v2/stations/timeseries?&start=${convertToMesonetDateFormat(
@@ -192,12 +202,12 @@ export const getFormattedMesonetData = async (query: MesonetQueryParams): Promis
 
 // Combined data function
 export const getCombinedSageMesonetData = async (queries: {
-  sageNodes: SensorQuery<SageNodeQueryParams>[];
+  waggleNodes: SensorQuery<SageNodeQueryParams>[];
   mesonetStations: SensorQuery<MesonetQueryParams>[];
 }): Promise<Record<string, number | string | null>[]> => {
   try {
-    const sagePromises = queries.sageNodes.map(({ id, query }) =>
-      getFormattedSageNodeData(query).then((data) => ({ id, type: 'Sage Node', data }))
+    const sagePromises = queries.waggleNodes.map(({ id, query }) =>
+      getFormattedSageNodeData(query).then((data) => ({ id, type: 'Waggle Node', data }))
     );
     const mesonetPromises = queries.mesonetStations.map(({ id, query }) =>
       getFormattedMesonetData(query).then((data) => ({ id, type: 'Mesonet', data }))

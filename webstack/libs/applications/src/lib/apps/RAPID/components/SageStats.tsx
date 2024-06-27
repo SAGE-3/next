@@ -36,7 +36,7 @@
 //   useEffect(() => {
 //     setOption({
 //       title: {
-//         text: 'Sage Node vs. Mesonet',
+//         text: 'Waggle Node vs. Mesonet',
 //       },
 //       animation: false,
 //       tooltip: {
@@ -55,10 +55,10 @@
 //         },
 //       },
 //       legend: {
-//         data: ['Sage Node', 'Mesonet'],
+//         data: ['Waggle Node', 'Mesonet'],
 //       },
 //       xAxis: {
-//         data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))] : [],
+//         data: data ? [...data.map((d: { time: string; 'Waggle Node': number; Mesonet: number }) => d.time.replace(', ', '\n'))] : [],
 //         name: 'Time',
 //       },
 //       yAxis: {
@@ -71,15 +71,15 @@
 //       renderer: 'svg',
 //       series: [
 //         {
-//           name: 'Sage Node',
+//           name: 'Waggle Node',
 //           type: 'line',
-//           data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Sage Node'])] : [],
+//           data: data ? [...data.map((d: { time: string; 'Waggle Node': number; Mesonet: number }) => d['Waggle Node'])] : [],
 //           large: true,
 //         },
 //         {
 //           name: 'Mesonet',
 //           type: 'line',
-//           data: data ? [...data.map((d: { time: string; 'Sage Node': number; Mesonet: number }) => d['Mesonet'])] : [],
+//           data: data ? [...data.map((d: { time: string; 'Waggle Node': number; Mesonet: number }) => d['Mesonet'])] : [],
 //           large: true,
 //         },
 //       ],

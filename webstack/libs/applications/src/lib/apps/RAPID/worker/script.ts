@@ -3,9 +3,9 @@
 // export default () => {
 //   const SAGE_NODE_URL = 'https://data.sagecontinuum.org/api/v1/query';
 //   /**
-//    * Get Sage Node data
+//    * Get Waggle Node data
 //    * @param query
-//    * @returns JSON output of Sage Node data
+//    * @returns JSON output of Waggle Node data
 //    */
 //   async function getSageNodeData(query: SageNodeQueryParams) {
 //     try {
@@ -25,13 +25,13 @@
 
 //       return metrics;
 //     } catch (error) {
-//       console.log('Error fetching Sage Node data: ', error);
+//       console.log('Error fetching Waggle Node data: ', error);
 //       return [];
 //     }
 //   }
 
 //   /**
-//    * Get formatted Sage Node data
+//    * Get formatted Waggle Node data
 //    * @param query
 //    * @returns
 //    */
@@ -136,13 +136,13 @@
 //     });
 //   }
 //   /**
-//    * Get combined Sage Node and Mesonet data
+//    * Get combined Waggle Node and Mesonet data
 //    * @param queries
 //    * @returns
 //    */
 //   async function getCombinedSageMesonetData(queries: RAPIDQueries) {
 //     try {
-//       // Fetch data from Sage Node and Mesonet
+//       // Fetch data from Waggle Node and Mesonet
 //       const sageData = await getFormattedSageNodeData(queries.sageNode);
 //       const mesonetData = await getFormattedMesonetData(queries.mesonet);
 
@@ -164,13 +164,13 @@
 //       // Use time as the key to combine the data
 //       const combinedData = sortedTimes.map((time: string) => ({
 //         time,
-//         'Sage Node': sageMap.get(time) || null,
+//         'Waggle Node': sageMap.get(time) || null,
 //         Mesonet: mesonetMap.get(time) || null,
 //       }));
 
 //       return combinedData;
 //     } catch (error) {
-//       console.log('Error fetching combined Sage Node and Mesonet data: ', error);
+//       console.log('Error fetching combined Waggle Node and Mesonet data: ', error);
 //       return [];
 //     }
 //   }

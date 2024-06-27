@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { QUERY_FIELDS, CATEGORIES } from './data/constants';
+import { METRICS, CATEGORIES } from './data/constants';
 
 /**
  * SAGE3 application: RAPID
@@ -17,43 +17,32 @@ import { QUERY_FIELDS, CATEGORIES } from './data/constants';
 export const schema = z.object({
   liveData: z.boolean(),
   lastUpdated: z.string().nullable(),
-  parent: z.string(),
-  children: z.array(z.string()),
+  sensors: z.object({
+    waggle: z.array(z.string()),
+    mesonet: z.array(z.string()),
+  }),
   category: z.string(),
-  counter: z.number(),
   metric: z.object({
-    NAME: z.string(),
-    SAGE_NODE: z.string(),
-    MESONET: z.string(),
+    name: z.string(),
+    waggle: z.string(),
+    mesonet: z.string().nullable(),
   }),
-  metricData: z
-    .object({
-      data: z.array(
-        z.object({
-          x: z.string(),
-          'Sage Node': z.number(),
-          Mesonet: z.number(),
-        })
-      ),
-    })
-    .nullable(),
-  time: z.object({
-    SAGE_NODE: z.string(),
-    MESONET: z.string(),
-  }),
+  startTime: z.date().nullable(),
+  endTime: z.date().nullable(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   liveData: true,
   lastUpdated: null,
-  parent: '',
-  metric: QUERY_FIELDS.TEMPERATURE,
-  children: [],
+  sensors: {
+    waggle: ['W085'],
+    mesonet: ['004HI'],
+  },
+  metric: METRICS.find((m) => m.name === 'CPU Load (%)'),
   category: CATEGORIES.GRAPH,
-  counter: 10,
-  metricData: null,
-  time: QUERY_FIELDS.TIME['24HR'],
+  startTime: new Date(1719268246465),
+  endTime: new Date(),
 };
 
 export const name = 'RAPID';
