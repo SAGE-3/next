@@ -3,8 +3,8 @@ name: Client Windows
 on:
   push:
     paths:
-      - 'webstack/clients/electron/**'
-      - '.github/workflows/**'
+      - "webstack/clients/electron/**"
+      - ".github/workflows/**"
     branches:
       - dev
 
@@ -21,12 +21,40 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Code signing with Software Trust Manager
+        uses: digicert/ssm-code-signing@v0.0.2
+
+      - name: Set up certificate
+        run: |
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12
+        shell: bash
+
+      - name: Set variables
+        id: variables
+        run: |
+          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
+          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
+          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV"
+        shell: bash
+
+      - name: Setup SSM KSP on windows latest
+        run: |
+          curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi 
+          msiexec /i smtools-windows-x64.msi /quiet /qn 
+          smksp_registrar.exe list 
+          smctl.exe keypair ls 
+          C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user 
+          smksp_cert_sync.exe
+        shell: cmd
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
@@ -39,6 +67,12 @@ jobs:
       - name: Build3
         run: node build_win.js
         working-directory: webstack/clients/electron
+
+      - name: Signing using Signtool
+        run: |
+          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 "webstack/clients/electron/windows-installer/SAGE3-Installer.exe" 
+          signtool.exe verify /v /pa "webstack/clients/electron/windows-installer/SAGE3-Installer.exe"
+
       - uses: actions/upload-artifact@v4
         with:
           name: SAGE3-installer-win64.exe
@@ -47,4 +81,3 @@ jobs:
         with:
           name: SAGE3-win64.zip
           path: webstack/clients/electron/SAGE3-win64.zip
-
