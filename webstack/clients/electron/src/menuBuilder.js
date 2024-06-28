@@ -18,7 +18,7 @@ const bookmarkStore = require('./bookmarkstore');
 
 // Utils
 const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
-const updater = require('./updater');
+// const updater = require('./updater');
 
 /**
  * Build a menu template for a window
@@ -127,7 +127,8 @@ function buildSageMenu(window, commander) {
             if (window) {
               const currentURL = window.webContents.getURL();
               const parsedURL = new URL(currentURL);
-              updater.checkForUpdates(parsedURL.origin, true);
+              // updater.checkForUpdates(parsedURL.origin, true);
+              electron.autoUpdater.checkForUpdates();
             }
           },
         },
