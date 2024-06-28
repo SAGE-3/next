@@ -5,7 +5,7 @@ on:
     branches:
       - dev
     tags:
-      - '*'
+      - "*"
 
 env:
   SERVER: production
@@ -25,18 +25,18 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Packager
-        run: npx electron-packager ./ --platform=darwin --arch=arm64 --icon=s3.icns --overwrite
+        run: npx electron-packager ./ --platform=darwin --arch=arm64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team"
       - name: Cleanup
         run: |
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/electron-installer*
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/electron-winstaller*
           rm -fr SAGE3-darwin-arm64/SAGE3.app/Contents/Resources/app/node_modules/appdmg
       - name: Sign
-        env: 
+        env:
           MACOS_CERTIFICATE: ${{ secrets.LUC_DEV_CERTIFICATE }}
           MACOS_CERTIFICATE_PWD: ${{ secrets.LUC_DEV_CERTIFICATE_PASS }}
           APPLE_ID: ${{ secrets.LUC_APPLE_ID }}

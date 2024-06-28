@@ -29,7 +29,7 @@ jobs:
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Build1
-        run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite
+        run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite --appCopyright="SAGE3 Team"
       - name: Build3
         run: node build_win.js
       - name: Rename

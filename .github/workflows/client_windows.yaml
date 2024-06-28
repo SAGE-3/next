@@ -61,7 +61,7 @@ jobs:
         working-directory: webstack/clients/electron
 
       - name: Build the electron application
-        run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite
+        run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite --appCopyright="SAGE3 Team"
         shell: bash
         working-directory: webstack/clients/electron
 
