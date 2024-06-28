@@ -17,7 +17,7 @@ defaults:
 
 jobs:
   run:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - name: Code signing with Software Trust Manager
