@@ -2,8 +2,6 @@ name: Tag release windows
 
 on:
   push:
-    branches:
-      - dev
     tags:
       - "*"
 
