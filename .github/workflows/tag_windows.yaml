@@ -93,8 +93,8 @@ jobs:
       - name: Building Auto Updater by Copying Installer
         run: |
           ls
-          mv SAGE3.exe auto-update-sage3-win32-x64.exe
-          mv SAGE3.nupkg auto-update-sage3-win32-x64.nupkg
+          mv SAGE3-Installer.exe auto-update-sage3-win32-x64.exe
+          mv SAGE3-${{github.ref_name}}-full.nupkg auto-update-sage3-win32-x64.nupkg
         shell: bash
         working-directory: webstack/clients/electron/windows-installer
 
