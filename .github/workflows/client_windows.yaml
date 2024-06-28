@@ -73,8 +73,8 @@ jobs:
 
       - name: Signing using Signtool
         run: |
-          signtool sign /v /a "SAGE3-Installer.exe" 
-          signtool verify /v /pa "SAGE3-Installer.exe"
+          signtool sign ./SAGE3-Installer.exe"
+          signtool verify ./SAGE3-Installer.exe
         working-directory: webstack/clients/electron/windows-installer
 
       - uses: actions/upload-artifact@v4
