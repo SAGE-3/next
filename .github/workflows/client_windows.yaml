@@ -44,6 +44,12 @@ jobs:
         shell: bash
         working-directory: webstack/clients/electron
 
+      # TEST CHECK WHAT THE OUTPUT IS
+      - name: Building Auto Updater by Copying Installer
+        run: ls
+        shell: bash
+        working-directory: webstack/clients/electron/windows-installer
+
       # Upload the installer artifact
       - uses: actions/upload-artifact@v4
         with:
