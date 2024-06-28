@@ -76,7 +76,6 @@ const desktopCapturer = electron.desktopCapturer;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
-const autoUpdater = electron.autoUpdater;
 
 // Restore the network order
 dns.setDefaultResultOrder('ipv4first');
@@ -85,6 +84,7 @@ dns.setDefaultResultOrder('ipv4first');
 // Auto updater
 /////////////////////////////////////////////////////////////////
 console.log('APP Updater> current version', app.getVersion());
+const autoUpdater = electron.autoUpdater;
 
 // autoUpdater.on('error', (error) => {
 //   console.log('APP Updater> error', error);
@@ -121,7 +121,17 @@ console.log('APP Updater> current version', app.getVersion());
 // autoUpdater.checkForUpdates();
 
 // Auto update
-require('update-electron-app')({ repo: 'SAGE-3/next' });
+// require('update-electron-app')({ repo: 'SAGE-3/next' });
+const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
+updateElectronApp({
+  updateSource: {
+    host: 'https://update.electronjs.org',
+    type: UpdateSourceType.ElectronPublicUpdateService,
+    repo: 'SAGE-3/next',
+  },
+  updateInterval: '5 minutes',
+  logger: require('electron-log'),
+});
 
 /////////////////////////////////////////////////////////////////
 
@@ -859,6 +869,7 @@ function createWindow() {
     const currentURL = mainWindow.webContents.getURL();
     const parsedURL = new URL(currentURL);
     // updater.checkForUpdates(parsedURL.origin, true);
+    autoUpdater.checkForUpdates();
   });
 
   // Request from the renderer process
