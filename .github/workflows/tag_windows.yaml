@@ -10,32 +10,96 @@ on:
 env:
   SERVER: production
 
-defaults:
-  run:
-    shell: bash
-    working-directory: webstack/clients/electron
-
 jobs:
   run:
     runs-on: windows-latest
 
     steps:
+      # Required Digicert libraries
+      - name: Code signing with Software Trust Manager
+        uses: digicert/ssm-code-signing@v0.0.2
+
+      # Get cert info from github secrets and decode into a file
+      - name: Setting Up Certificate
+        run: |
+          echo "${{ secrets.SM_CLIENT_CERT_FILE_B64 }}" | base64 --decode > /d/Certificate_pkcs12.p12
+        shell: bash
+
+      # Set up certificate environment variables
+      - name: Initializing Environment Variables
+        id: variables
+        run: |
+          echo "::set-output name=version::${GITHUB_REF#refs/tags/v}" 
+          echo "SM_HOST=${{ secrets.SM_HOST }}" >> "$GITHUB_ENV" 
+          echo "SM_API_KEY=${{ secrets.SM_API_KEY }}" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_FILE=D:\\Certificate_pkcs12.p12" >> "$GITHUB_ENV" 
+          echo "SM_CLIENT_CERT_PASSWORD=${{ secrets.SM_CLIENT_CERT_PASSWORD }}" >> "$GITHUB_ENV" 
+          echo "C:\Program Files (x86)\Windows Kits\10\App Certification Kit" >> $GITHUB_PATH 
+          echo "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools" >> $GITHUB_PATH 
+          echo "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools" >> $GITHUB_PATH
+        shell: bash
+
+      # Setup the SSM KSP on windows (Signtool)
+      - name: Installing SSM KSP on Windows
+        run: |
+          curl -X GET  https://one.digicert.com/signingmanager/api-ui/v1/releases/smtools-windows-x64.msi/download -H "x-api-key:%SM_API_KEY%" -o smtools-windows-x64.msi 
+          msiexec /i smtools-windows-x64.msi /quiet /qn 
+          smksp_registrar.exe list 
+          smctl.exe keypair ls 
+          C:\Windows\System32\certutil.exe -csp "DigiCert Signing Manager KSP" -key -user 
+          smksp_cert_sync.exe
+        shell: cmd
+
+      # Checkout the repository
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Setup node
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Install
+
+      # Install SAGE3 node dependencies
+      - name: Installing SAGE3 Dependencies
         run: yarn install --frozen-lockfile --silent
-      - name: Build1
+        shell: bash
+        working-directory: webstack/clients/electron
+
+      # Build the electron application
+      - name: Build SAGE3 Electron Application
         run: npx electron-packager . --platform=win32 --arch=x64 --icon=s3.ico --overwrite --appCopyright="SAGE3 Team"
-      - name: Build3
+        shell: bash
+        working-directory: webstack/clients/electron
+
+      # Build the windows installer
+      - name: Building Windows Installer
         run: node build_win.js
-      - name: Rename
-        run: mv windows-installer/SAGE3-Installer.exe auto-update-sage3-win32-x64.exe
-      - name: Release
+        shell: bash
+        working-directory: webstack/clients/electron
+
+      # Sign the installer
+      - name: Signing Installer
+        run: |
+          signtool.exe sign /sha1 ${{ secrets.SM_CODE_SIGNING_CERT_SHA1_HASH }} /tr http://timestamp.digicert.com /td SHA256 /fd SHA256 SAGE3-Installer.exe
+          signtool.exe verify /v /pa SAGE3-Installer.exe
+        working-directory: webstack/clients/electron/windows-installer
+
+      # Make a copy of thee installer and rename to upload to the auto-updater
+      - name: Building Auto Updater by Copying Installer
+        run: cp SAGE3-Installer.exe auto-update-sage3-win32-x64.exe
+        shell: bash
+        working-directory: webstack/clients/electron/windows-installer
+
+      # Upload the installer artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SAGE3-installer-win64.exe
+          path: webstack/clients/electron/windows-installer/SAGE3-Installer.exe
+
+      # Release auto-updater
+      - name: Releasing Auto Updater
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: webstack/clients/electron/auto-update-sage3-win32-x64.exe
+          files: webstack/clients/electron/windows-installer/auto-update-sage3-win32-x64.exe
