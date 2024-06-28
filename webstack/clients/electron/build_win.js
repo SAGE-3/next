@@ -28,6 +28,7 @@ function getInstallerConfig() {
     outputDirectory: path.join(outPath, 'windows-installer'),
     exe: 'SAGE3.exe',
     setupExe: 'SAGE3-Installer.exe',
+    title: 'SAGE3',
     setupIcon: path.join(rootPath, 's3.ico'),
   });
 }
