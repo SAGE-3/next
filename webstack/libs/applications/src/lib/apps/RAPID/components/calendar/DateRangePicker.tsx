@@ -11,9 +11,10 @@ interface DateRange {
 interface DateRangePickerProps {
   onChange?: (range: DateRange) => void;
   initialDateRange?: DateRange;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, initialDateRange }) => {
+const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, initialDateRange, size = 'md' }) => {
   const [dateRange, setDateRange] = useState<DateRange>(initialDateRange || { startDate: null, endDate: null });
   const { onClose, onOpen, isOpen } = useDisclosure();
 
@@ -38,7 +39,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, initialDate
   return (
     <Popover onClose={onClose} isOpen={isOpen} onOpen={onOpen}>
       <PopoverTrigger>
-        <Button rightIcon={<IoCalendarSharp />} variant="outline" width="100%">
+        <Button size={size} rightIcon={<IoCalendarSharp />} variant="outline" width="100%">
           <Flex width="100%">
             <Text>{formatDate(dateRange.startDate) || 'Start Date'}</Text>
             <Text mx={2}>-</Text>

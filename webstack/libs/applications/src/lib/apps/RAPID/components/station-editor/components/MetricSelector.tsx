@@ -7,9 +7,17 @@ interface MetricSelectorProps {
   selectedSensors: SelectedSensor[];
   setSelectedMetric: React.Dispatch<React.SetStateAction<string | null>>;
   initialMetric: string | null;
+  showLabel?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const MetricSelector: React.FC<MetricSelectorProps> = ({ selectedSensors, setSelectedMetric, initialMetric }) => {
+const MetricSelector: React.FC<MetricSelectorProps> = ({
+  selectedSensors,
+  setSelectedMetric,
+  initialMetric,
+  showLabel = true,
+  size = 'md',
+}) => {
   const [metrics, setMetrics] = useState<React.ReactNode[] | null>(null);
 
   useEffect(() => {
@@ -62,8 +70,10 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({ selectedSensors, setSel
 
   return (
     <Box>
-      <label htmlFor="metric">Metric</label>
+      {showLabel && <label htmlFor="metric">Metric</label>}
       <Select
+        size={size}
+        width="100%"
         name="metric"
         placeholder="Metric"
         value={initialMetric || undefined}

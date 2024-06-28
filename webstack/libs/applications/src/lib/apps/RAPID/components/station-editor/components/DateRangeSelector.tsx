@@ -11,9 +11,11 @@ interface DateRange {
 interface DateRangeSelectorProps {
   dateRange: DateRange;
   setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
+  showLabel?: boolean;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({ dateRange, setDateRange }) => {
+const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({ dateRange, setDateRange, showLabel = true, size = "md" }) => {
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
     console.log('New date range:', newDateRange);
@@ -21,8 +23,8 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({ dateRange, setDat
 
   return (
     <Box>
-      <label htmlFor="time range">Time Range</label>
-      <DateRangePicker onChange={handleDateRangeChange} initialDateRange={dateRange} />
+      {showLabel && <label htmlFor="time range">Time Range</label>}
+      <DateRangePicker size={size} onChange={handleDateRangeChange} initialDateRange={dateRange} />
     </Box>
   );
 };

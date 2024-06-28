@@ -11,15 +11,18 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import StationEditorModal from './components/station-editor/StationEditorModal';
 
-import * as rapidApis from './api/apis';
+import { SelectedSensor } from './components/station-editor/StationEditorModal';
+import { DateRange } from './components/station-editor/StationEditorModal';
 
 // Styling
 import './styling.css';
 import { Box, Button, Select } from '@chakra-ui/react';
+import MetricSelector from './components/station-editor/components/MetricSelector';
+import DateRangeSelector from './components/station-editor/components/DateRangeSelector';
 
 /* App component for RAPID */
 function AppComponent(props: App): JSX.Element {
@@ -100,6 +103,10 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(JSON.stringify(s.metric));
+  const [dateRange, setDateRange] = useState<DateRange>({ startDate: new Date(s.startTime as Date), endDate: new Date(s.endTime as Date) });
+
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'edit' | 'create'>('create');
 
@@ -107,11 +114,16 @@ function ToolbarComponent(props: App): JSX.Element {
   const onOpenCreate = () => {
     setMode('create');
     setIsOpen(true);
-  }
+  };
   const onOpenEdit = () => {
     setMode('edit');
     setIsOpen(true);
-  }
+  };
+
+  const selectedSensors: SelectedSensor[] = [
+    ...s.sensors.waggle.map((s) => ({ id: s, type: 'Waggle' as const })),
+    ...s.sensors.mesonet.map((s) => ({ id: s, type: 'Mesonet' as const })),
+  ];
 
   return (
     <>
@@ -122,15 +134,14 @@ function ToolbarComponent(props: App): JSX.Element {
         <Button size="xs" padding="1em" onClick={onOpenEdit}>
           Edit
         </Button>
-        <Select size="xs">
-          <option>Metric</option>
-          <option>Option 1</option>
-          <option>Option 2</option>
-          <option>Option 3</option>
-        </Select>
-        <Select size="xs">
-          <option>Time</option>
-        </Select>
+        <MetricSelector
+          selectedSensors={selectedSensors}
+          setSelectedMetric={setSelectedMetric}
+          initialMetric={selectedMetric}
+          showLabel={false}
+          size="xs"
+        />
+        <DateRangeSelector size="xs" showLabel={false} dateRange={dateRange} setDateRange={setDateRange} />
       </Box>
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>

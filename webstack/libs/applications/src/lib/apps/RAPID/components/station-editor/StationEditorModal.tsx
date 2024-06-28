@@ -17,7 +17,7 @@ interface StationEditorModalProps {
   app: App;
 }
 
-interface DateRange {
+export interface DateRange {
   startDate: Date | null;
   endDate: Date | null;
 }
@@ -49,7 +49,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
   useEffect(() => {
     initializeFromProps();
-  }, [mode, app, isOpen]);
+  }, [mode]);
 
   useEffect(() => {
     updateSensorSelection();
