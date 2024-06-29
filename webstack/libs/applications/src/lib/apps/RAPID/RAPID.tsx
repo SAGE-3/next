@@ -11,7 +11,7 @@ import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ComponentSelector from './components/ComponentSelector';
 import StationEditorModal from './components/station-editor/StationEditorModal';
 
@@ -110,6 +110,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'edit' | 'create'>('create');
 
+  useEffect(() => {
+    setDateRange({ 
+      startDate: new Date(s.startTime as Date), 
+      endDate: new Date(s.endTime as Date) 
+    });
+    setSelectedMetric(JSON.stringify(s.metric));
+    console.log("rerendering toolbar");
+  }, [s.startTime, s.endTime, s.metric]);
+
   const onClose = () => setIsOpen(false);
   const onOpenCreate = () => {
     setMode('create');
@@ -124,6 +133,10 @@ function ToolbarComponent(props: App): JSX.Element {
     ...s.sensors.waggle.map((s) => ({ id: s, type: 'Waggle' as const })),
     ...s.sensors.mesonet.map((s) => ({ id: s, type: 'Mesonet' as const })),
   ];
+
+  const handleDateRangeChange = (newDateRange: DateRange) => {
+    setDateRange(newDateRange);
+  };
 
   return (
     <>
@@ -141,7 +154,7 @@ function ToolbarComponent(props: App): JSX.Element {
           showLabel={false}
           size="xs"
         />
-        <DateRangeSelector size="xs" showLabel={false} dateRange={dateRange} setDateRange={setDateRange} />
+        <DateRangeSelector size="xs" showLabel={false} dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
       </Box>
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>

@@ -45,29 +45,24 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
   useEffect(() => {
     fetchStations();
-  }, []);
-
-  useEffect(() => {
     initializeFromProps();
-  }, [mode]);
+  }, []);
 
   useEffect(() => {
     updateSensorSelection();
   }, [selectedSensors]);
 
   function initializeFromProps() {
-    if (mode === 'edit' && app.data.state) {
-      const { sensors, metric, startTime, endTime, category } = app.data.state;
+    const { sensors, metric, startTime, endTime, category } = app.data.state;
 
-      setSelectedSensors([
-        ...sensors.waggle.map((id: any) => ({ id, type: 'Waggle' as const })),
-        ...sensors.mesonet.map((id: any) => ({ id, type: 'Mesonet' as const })),
-      ]);
+    setSelectedSensors([
+      ...sensors.waggle.map((id: any) => ({ id, type: 'Waggle' as const })),
+      ...sensors.mesonet.map((id: any) => ({ id, type: 'Mesonet' as const })),
+    ]);
 
-      setSelectedMetric(JSON.stringify(metric));
-      setDateRange({ startDate: new Date(startTime), endDate: new Date(endTime) });
-      setSelectedVisualizationType(category);
-    }
+    setSelectedMetric(JSON.stringify(metric));
+    setDateRange({ startDate: new Date(startTime), endDate: new Date(endTime) });
+    setSelectedVisualizationType(category);
   }
 
   async function fetchStations() {
@@ -120,6 +115,10 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
   function hasAllRequiredFields(): boolean {
     return Boolean(selectedMetric) && Boolean(dateRange?.startDate) && Boolean(dateRange?.endDate) && Boolean(selectedVisualizationType);
   }
+
+  const handleDateRangeChange = (newDateRange: DateRange) => {
+    setDateRange(newDateRange);
+  };
 
   async function handleSubmit() {
     try {
@@ -199,7 +198,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
             <SensorList selectedSensors={selectedSensors} setSelectedSensors={setSelectedSensors} />
             <Box display="flex" flexDir="column" gap="3">
               <MetricSelector selectedSensors={selectedSensors} setSelectedMetric={setSelectedMetric} initialMetric={selectedMetric} />
-              <DateRangeSelector dateRange={dateRange} setDateRange={setDateRange} />
+              <DateRangeSelector dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
               <VisualizationTypeSelector
                 setSelectedVisualizationType={setSelectedVisualizationType}
                 initialType={selectedVisualizationType}

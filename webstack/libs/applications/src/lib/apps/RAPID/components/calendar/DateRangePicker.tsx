@@ -1,45 +1,41 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Button, Flex, Popover, PopoverTrigger, PopoverContent, PopoverBody, Text, useDisclosure } from '@chakra-ui/react';
 import { IoCalendarSharp } from 'react-icons/io5';
 import Calendar from './Calendar';
-
-interface DateRange {
-  startDate: Date | null;
-  endDate: Date | null;
-}
+import { DateRange } from '../station-editor/StationEditorModal';
 
 interface DateRangePickerProps {
-  onChange?: (range: DateRange) => void;
-  initialDateRange?: DateRange;
+  onChange: (range: DateRange) => void;
+  dateRange: DateRange;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
-const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, initialDateRange, size = 'md' }) => {
-  const [dateRange, setDateRange] = useState<DateRange>(initialDateRange || { startDate: null, endDate: null });
+const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, dateRange, size = 'md' }) => {
   const { onClose, onOpen, isOpen } = useDisclosure();
 
   const handleDateSelect = (startDate: Date | null, endDate: Date | null) => {
     const newDateRange = { startDate, endDate };
-    setDateRange(newDateRange);
-    if (onChange) {
-      onChange(newDateRange);
-    }
+    onChange(newDateRange);
   };
 
-  const formatDate = (date: Date | null): string => {
-    return date
-      ? date.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        })
-      : '';
-  };
+  const formatDate = useMemo(
+    () =>
+      (date: Date | null): string => {
+        return date
+          ? date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })
+          : '';
+      },
+    []
+  );
 
   return (
     <Popover onClose={onClose} isOpen={isOpen} onOpen={onOpen}>
       <PopoverTrigger>
-        <Button size={size} rightIcon={<IoCalendarSharp />} variant="outline" width="100%">
+        <Button size={size} rightIcon={<IoCalendarSharp />} variant="outline" width="100%" aria-label="Select date range">
           <Flex width="100%">
             <Text>{formatDate(dateRange.startDate) || 'Start Date'}</Text>
             <Text mx={2}>-</Text>

@@ -16,6 +16,18 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
 
   const { colorMode } = useColorMode();
 
+  const isSensorSelected = (id: string, type: 'Mesonet' | 'Waggle') => {
+    return selectedSensors.some((s) => s.id === id && s.type === type);
+  };
+
+  const toggleSensor = (id: string, type: 'Mesonet' | 'Waggle') => {
+    if (isSensorSelected(id, type)) {
+      setSelectedSensors(selectedSensors.filter((s) => !(s.id === id && s.type === type)));
+    } else {
+      setSelectedSensors([...selectedSensors, { id, type }]);
+    }
+  };
+
   return (
     <Box height="100%" width="75%" position="relative" borderRadius="5" overflow="hidden">
       <Map
@@ -34,16 +46,10 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
               key={station.id}
               latitude={station.lat}
               longitude={station.lon}
-              onClick={() => {
-                if (selectedSensors.some((s) => s.id === station.id && s.type === 'Mesonet')) {
-                  setSelectedSensors(selectedSensors.filter((s) => !(s.id === station.id && s.type === 'Mesonet')));
-                } else {
-                  setSelectedSensors([...selectedSensors, { id: station.id, type: 'Mesonet' }]);
-                }
-              }}
+              onClick={() => toggleSensor(station.id, 'Mesonet')}
               style={{ cursor: 'pointer' }}
             >
-              <IoTriangle color={station.selected ? 'red' : '#777'} />
+              <IoTriangle color={isSensorSelected(station.id, 'Mesonet') ? 'red' : '#777'} />
             </Marker>
           ))}
         {sensorInfo &&
@@ -52,16 +58,10 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
               key={station.id}
               latitude={station.lat}
               longitude={station.lon}
-              onClick={() => {
-                if (selectedSensors.some((s) => s.id === station.id && s.type === 'Waggle')) {
-                  setSelectedSensors(selectedSensors.filter((s) => !(s.id === station.id && s.type === 'Waggle')));
-                } else {
-                  setSelectedSensors([...selectedSensors, { id: station.id, type: 'Waggle' }]);
-                }
-              }}
+              onClick={() => toggleSensor(station.id, 'Waggle')}
               style={{ cursor: 'pointer' }}
             >
-              <TbCircleFilled color={station.selected ? 'red' : '#777'} />
+              <TbCircleFilled color={isSensorSelected(station.id, 'Waggle') ? 'red' : '#777'} />
             </Marker>
           ))}
       </Map>
