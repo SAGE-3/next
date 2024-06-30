@@ -111,12 +111,12 @@ function ToolbarComponent(props: App): JSX.Element {
   const [mode, setMode] = useState<'edit' | 'create'>('create');
 
   useEffect(() => {
-    setDateRange({ 
-      startDate: new Date(s.startTime as Date), 
-      endDate: new Date(s.endTime as Date) 
+    setDateRange({
+      startDate: new Date(s.startTime as Date),
+      endDate: new Date(s.endTime as Date),
     });
     setSelectedMetric(JSON.stringify(s.metric));
-    console.log("rerendering toolbar");
+    console.log('rerendering toolbar');
   }, [s.startTime, s.endTime, s.metric]);
 
   const onClose = () => setIsOpen(false);
@@ -148,6 +148,10 @@ function ToolbarComponent(props: App): JSX.Element {
           Edit
         </Button>
         <MetricSelector
+          setAction={(e: string) => {
+            if (!e) return;
+            updateState(props._id, { metric: JSON.parse(e) });
+          }}
           selectedSensors={selectedSensors}
           setSelectedMetric={setSelectedMetric}
           initialMetric={selectedMetric}

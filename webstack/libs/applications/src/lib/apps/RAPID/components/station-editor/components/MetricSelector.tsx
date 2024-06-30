@@ -8,6 +8,7 @@ interface MetricSelectorProps {
   setSelectedMetric: React.Dispatch<React.SetStateAction<string | null>>;
   initialMetric: string | null;
   showLabel?: boolean;
+  setAction?: (val: string) => void;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
@@ -17,6 +18,7 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
   initialMetric,
   showLabel = true,
   size = 'md',
+  setAction,
 }) => {
   const [metrics, setMetrics] = useState<React.ReactNode[] | null>(null);
 
@@ -79,6 +81,9 @@ const MetricSelector: React.FC<MetricSelectorProps> = ({
         value={initialMetric || undefined}
         onChange={(e) => {
           setSelectedMetric(e.target.value);
+          if (setAction) {
+            setAction(e.target.value);
+          }
         }}
       >
         {metrics}
