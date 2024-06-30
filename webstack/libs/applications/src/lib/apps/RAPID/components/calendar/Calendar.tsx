@@ -96,8 +96,31 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
 
   const isInRange = (day: number): boolean => {
     if (!selectedStartDate || !selectedEndDate) return false;
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return date > selectedStartDate && date < selectedEndDate;
+
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    const startYear = selectedStartDate.getFullYear();
+    const startMonth = selectedStartDate.getMonth();
+    const startDay = selectedStartDate.getDate();
+
+    const endYear = selectedEndDate.getFullYear();
+    const endMonth = selectedEndDate.getMonth();
+    const endDay = selectedEndDate.getDate();
+
+    // Check if current date is after start date
+    const isAfterStart =
+      currentYear > startYear ||
+      (currentYear === startYear && currentMonth > startMonth) ||
+      (currentYear === startYear && currentMonth === startMonth && day > startDay);
+
+    // Check if current date is before end date
+    const isBeforeEnd =
+      currentYear < endYear ||
+      (currentYear === endYear && currentMonth < endMonth) ||
+      (currentYear === endYear && currentMonth === endMonth && day < endDay);
+
+    return isAfterStart && isBeforeEnd;
   };
 
   const isFutureDate = (day: number): boolean => {
@@ -107,14 +130,20 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
 
   const isStartDay = (day: number): boolean => {
     if (!selectedStartDate) return false;
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return date.getTime() === selectedStartDate.getTime();
+    return (
+      currentDate.getFullYear() === selectedStartDate.getFullYear() &&
+      currentDate.getMonth() === selectedStartDate.getMonth() &&
+      day === selectedStartDate.getDate()
+    );
   };
 
   const isEndDay = (day: number): boolean => {
     if (!selectedEndDate) return false;
-    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return date.getTime() === selectedEndDate.getTime();
+    return (
+      currentDate.getFullYear() === selectedEndDate.getFullYear() &&
+      currentDate.getMonth() === selectedEndDate.getMonth() &&
+      day === selectedEndDate.getDate()
+    );
   };
 
   return (
@@ -174,8 +203,8 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
                 key={day}
                 onClick={() => handleDateClick(day)}
                 size="sm"
-                variant={isSelected(day) ? 'solid' : 'ghost'}
-                colorScheme={isSelected(day) ? 'blue' : isInRange(day) ? 'blue' : 'gray'}
+                variant={isSelected(day) || isStartDay(day) || isEndDay(day) ? 'solid' : 'ghost'}
+                colorScheme={isSelected(day) || isStartDay(day) || isEndDay(day) ? 'blue' : isInRange(day) ? 'blue' : 'gray'}
                 bg={isInRange(day) ? 'blue.100' : undefined}
                 borderRadius="none"
                 borderLeftRadius={isStartDay(day) ? 'full' : 'none'}
