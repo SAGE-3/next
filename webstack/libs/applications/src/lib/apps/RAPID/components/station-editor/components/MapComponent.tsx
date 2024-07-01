@@ -1,9 +1,10 @@
-import React from 'react';
-import { Box, List, ListItem, useColorMode } from '@chakra-ui/react';
-import Map, { NavigationControl, Marker } from 'react-map-gl/maplibre';
+import React, { useState } from 'react';
+import { Box, List, ListItem, useColorMode, Link, Text } from '@chakra-ui/react';
+import Map, { NavigationControl, Marker, Popup } from 'react-map-gl/maplibre';
 import { TbCircleFilled } from 'react-icons/tb';
 import { IoTriangle } from 'react-icons/io5';
 import { SensorInfoType, SelectedSensor } from '../StationEditorModal';
+// import { useAppStore } from '@sage3/frontend';
 
 interface MapComponentProps {
   sensorInfo: SensorInfoType | null;
@@ -11,10 +12,21 @@ interface MapComponentProps {
   setSelectedSensors: React.Dispatch<React.SetStateAction<SelectedSensor[]>>;
 }
 
+interface Station {
+  type: 'Mesonet' | 'Waggle';
+  lat: number;
+  lon: number;
+  name: string;
+  id: string;
+  selected: boolean;
+}
+
 const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors, setSelectedSensors }) => {
   const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
-
   const { colorMode } = useColorMode();
+  // const createApp = useAppStore((state) => state.create);
+
+  const [pinInfo, setPinInfo] = useState<Station | null>(null);
 
   const isSensorSelected = (id: string, type: 'Mesonet' | 'Waggle') => {
     return selectedSensors.some((s) => s.id === id && s.type === type);
@@ -27,6 +39,38 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
       setSelectedSensors([...selectedSensors, { id, type }]);
     }
   };
+
+  // TODO: Implement this
+  // Create Webview
+  // async function createWebview(url: string) {
+  //   try {
+  //     createApp({
+  //       title: 'RAPID',
+  //       roomId: props.data.roomId!,
+  //       boardId: props.data.boardId!,
+  //       position: {
+  //         x: props.data.position.x + props.data.size.width,
+  //         y: props.data.position.y,
+  //         z: 0,
+  //       },
+  //       size: {
+  //         width: props.data.size.width,
+  //         height: props.data.size.height,
+  //         depth: 0,
+  //       },
+  //       type: 'Webview',
+  //       rotation: { x: 0, y: 0, z: 0 },
+  //       state: {
+  //         webviewurl: url,
+  //       },
+  //       raised: true,
+  //       dragging: false,
+  //       pinned: false,
+  //     });
+  //   } catch (e) {
+  //     console.log('ERROR in RAPID:', e);
+  //   }
+  // }
 
   return (
     <Box height="100%" width="75%" position="relative" borderRadius="5" overflow="hidden">
@@ -49,7 +93,15 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
               onClick={() => toggleSensor(station.id, 'Mesonet')}
               style={{ cursor: 'pointer' }}
             >
-              <IoTriangle color={isSensorSelected(station.id, 'Mesonet') ? 'red' : '#777'} />
+              <IoTriangle
+                color={isSensorSelected(station.id, 'Mesonet') ? 'red' : '#777'}
+                onMouseEnter={() => {
+                  setPinInfo({ type: 'Mesonet', ...station });
+                }}
+                onMouseLeave={() => {
+                  setPinInfo(null);
+                }}
+              />
             </Marker>
           ))}
         {sensorInfo &&
@@ -61,9 +113,38 @@ const MapComponent: React.FC<MapComponentProps> = ({ sensorInfo, selectedSensors
               onClick={() => toggleSensor(station.id, 'Waggle')}
               style={{ cursor: 'pointer' }}
             >
-              <TbCircleFilled color={isSensorSelected(station.id, 'Waggle') ? 'red' : '#777'} />
+              <TbCircleFilled
+                color={isSensorSelected(station.id, 'Waggle') ? 'red' : '#777'}
+                onMouseEnter={() => {
+                  setPinInfo({ type: 'Mesonet', ...station });
+                }}
+                onMouseLeave={() => {
+                  setPinInfo(null);
+                }}
+              />
             </Marker>
           ))}
+
+        {pinInfo && (
+          <Popup
+            anchor="top"
+            longitude={pinInfo.lon}
+            latitude={pinInfo.lat}
+            onClose={() => {
+              setPinInfo(null);
+            }}
+          >
+            <Box textColor="black">
+              <Link
+                onClick={() => {
+                  // createWebview(sensorInfo[pinInfo].url);
+                }}
+              >
+                {pinInfo.type} - {pinInfo.id}
+              </Link>
+            </Box>
+          </Popup>
+        )}
       </Map>
       <Box
         position="absolute"
