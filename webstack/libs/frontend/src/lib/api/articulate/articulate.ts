@@ -40,12 +40,41 @@ async function sendAudio(body: { blob: Blob | null }): Promise<any> {
 async function sendText(text: string): Promise<any> {
   console.log('sending text', text);
 
-  const response = await fetch('/api/articulate/processText', {
+  const response = await fetch('/api/articulate/processIfCommand', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ prompt: text, context: '' }),
+    body: JSON.stringify({ prompt: text, context: '', chartContext: '' }),
+  });
+
+  if (!response.ok) {
+    console.log('Error in response:', response.statusText);
+    return;
+  }
+
+  const data = await response.json();
+  console.log('Response Data:', data);
+
+  return data;
+}
+
+async function sendCommand(
+  text: string,
+  interactionContext: {
+    lastChartsInteracted: string[];
+    lastChartsGenerated: string[];
+    lastChartsSelected: string[];
+  }
+): Promise<any> {
+  console.log('sending text', text);
+
+  const response = await fetch('/api/articulate/processCommand', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ prompt: text, context: '', chartContext: JSON.stringify(interactionContext) }),
   });
 
   if (!response.ok) {
@@ -62,4 +91,5 @@ async function sendText(text: string): Promise<any> {
 export const ArticulateAPI = {
   sendAudio,
   sendText,
+  sendCommand,
 };

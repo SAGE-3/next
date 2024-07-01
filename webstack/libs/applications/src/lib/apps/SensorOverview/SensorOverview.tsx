@@ -206,7 +206,7 @@ function AppComponent(props: App): JSX.Element {
         s.widget.startDate
       }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     }
-
+    console.log(String(s.stationNames));
     const response = await fetch(url);
     const sensor = await response.json();
     if (sensor) {
@@ -725,7 +725,7 @@ function ToolbarComponent(props: App): JSX.Element {
                       </th>
                     );
                   })}
-                  {!isLoaded
+                  {stationMetadata == null || stationMetadata == undefined
                     ? null
                     : stationMetadata.map((station: any, index: number) => {
                         const isSelected = s.stationNames.includes(station.STID);
@@ -813,13 +813,15 @@ function ToolbarComponent(props: App): JSX.Element {
       <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
         <Select size="xs" w="10rem" placeholder={'Select Variable'} value={s.widget.yAxisNames[0]} onChange={handleChangeVariable}>
-          {s.availableVariableNames.map((name: string, index: number) => {
-            return (
-              <option key={index} value={name}>
-                {name}
-              </option>
-            );
-          })}
+          {s.availableVariableNames
+            ? s.availableVariableNames.map((name: string, index: number) => {
+                return (
+                  <option key={index} value={name}>
+                    {name}
+                  </option>
+                );
+              })
+            : null}
         </Select>
       </Tooltip>
       <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />

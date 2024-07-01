@@ -1,10 +1,16 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
+import stationVariableNameTranslation from '../data/kaala.json';
+import { variableColors } from '../data/variableColors';
+
 interface GenerateOptionParams {
   chartName: string;
   data: string[][];
   transformations: string[];
+  stationName: string;
+  colorMode: string;
+  appSize: { width: number; height: number; depth: number };
   value?: string;
   indicator?: string; // for radar chart
   attributes?: string[];
@@ -80,7 +86,6 @@ function applyFilters(data: string | any[], extractedTransformations: Transforma
   });
 
   const filteredData = [headerRow, ...dataRows];
-  console.log(filteredData);
   return filteredData;
 }
 
@@ -88,6 +93,9 @@ export function generateOption({
   chartName,
   data,
   transformations,
+  stationName,
+  colorMode,
+  appSize,
   value,
   indicator,
   attributes,
@@ -96,9 +104,7 @@ export function generateOption({
   count,
 }: GenerateOptionParams) {
   const extractedTransformations = extractTransformations(transformations, data);
-  console.log('Before filters', data);
   data = applyFilters(data, extractedTransformations);
-  console.log('after filters', data);
 
   const chartTypes = {
     'Column Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
@@ -197,7 +203,6 @@ export function generateOption({
     },
 
     'Scatter Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      console.log(data, attributes);
       if (!data || !attributes) return;
 
       const multipleQuantitativeAttributes = getMultipleQuantitativeAttributes(data, attributes);
@@ -507,8 +512,8 @@ export function generateOption({
       const xAxis = getTemporalAttribute(data, attributes);
 
       const labels = getMultipleQuantitativeAttributes(data, attributes);
+
       let yAxisIndices: number[] = [];
-      console.log(xAxis, labels);
       if (xAxis === -1 || labels === -1) {
         console.log('Required columns not found in data');
         return {};
@@ -526,10 +531,25 @@ export function generateOption({
         const series = [];
         const legend = [];
         for (let i = 0; i < labels.length; i++) {
+          let color = '#eee';
+          for (let j = 0; j < stationVariableNameTranslation.length; j++) {
+            if (stationVariableNameTranslation[j].var_id == labels[i]) {
+              for (let k = 0; k < variableColors.length; k++) {
+                if (stationVariableNameTranslation[j].var_name == variableColors[k].variableName) {
+                  color = variableColors[k].variableColor;
+                  break;
+                }
+              }
+              break;
+            }
+          }
           series.push({
             name: labels[i],
             type: 'line',
             data: yAxisValsArray[i],
+            itemStyle: {
+              color: color,
+            },
           });
           legend.push(labels[i]);
         }
@@ -548,15 +568,10 @@ export function generateOption({
           },
           series: series,
         };
-        console.log(option);
         return option;
       }
     },
-    'Column Histogram': ({
-      //TODO fix this
-      data,
-      attributes,
-    }: Partial<GenerateOptionParams>) => {
+    'Column Histogram': ({ data, attributes }: Partial<GenerateOptionParams>) => {
       if (!data || !attributes) return;
 
       const bin = getQuantitativeAttribute(data, attributes);
@@ -570,20 +585,24 @@ export function generateOption({
       const values = data.slice(1).map((row) => row[xAxisIndex]) as number[];
       const min = Math.min(...values);
       const max = Math.max(...values);
-      const binSize = Math.ceil((max - min) / Math.sqrt(values.length));
+      const binCount = Math.ceil(Math.sqrt(values.length));
+      const binSize = (max - min) / binCount;
       const bins = [];
       const count = 'count';
 
-      for (let i = min; i <= max; i += binSize) {
-        const binStart = i;
-        const binEnd = i + binSize;
-        const binLabel = `${binStart} - ${binEnd - 1}`;
+      for (let i = 0; i < binCount; i++) {
+        const binStart = min + i * binSize;
+        const binEnd = binStart + binSize;
+        const binLabel = `${binStart.toFixed(2)} - ${binEnd.toFixed(2)}`;
         const numCounted = values.filter((value) => value >= binStart && value < binEnd).length;
         bins.push({
           [bin as string]: binLabel,
           [count as string]: numCounted,
         });
       }
+
+      // Ensure the last bin includes the maximum value
+      bins[bins.length - 1][count as string] += values.filter((value) => value === max).length;
 
       const option = {
         legend: {},
@@ -782,7 +801,7 @@ export function generateOption({
       return option;
     },
   };
-  return chartTypes[chartName as keyof typeof chartTypes]
+  let option = chartTypes[chartName as keyof typeof chartTypes]
     ? chartTypes[chartName as keyof typeof chartTypes]({
         data,
         value,
@@ -793,7 +812,99 @@ export function generateOption({
         count,
       })
     : {};
+  console.log(option);
+  if (JSON.stringify(option) == JSON.stringify({})) {
+    return {};
+  }
+
+  option = createTitle(option, chartName, stationName, data);
+  option = customizeChart(option, colorMode);
+  option = customizeLegend(option);
+  option = createTooltip(option, colorMode);
+  option = customizeXAxis(option, appSize, data);
+  option = customizeYAxis(option, appSize, data);
+  return option;
 }
+
+const customizeYAxis = (option, appSize, data) => {
+  option.yAxis = {
+    ...option.yAxis,
+    axisLabel: {
+      fontSize: 25,
+    },
+  };
+  return option;
+};
+
+const customizeXAxis = (option, appSize, data) => {
+  // const interval = Math.floor((250 / appSize.width) * data.length);
+  // TODO fix this later. Need to update according to app size of chart that was generated,
+
+  option.xAxis = {
+    ...option.xAxis,
+    nameLocation: 'middle',
+    nameTextStyle: {
+      fontSize: 20, // Increase the font size here
+      fontWeight: 'bold', // Customize the style of the title (optional)
+    },
+    axisLabel: {
+      fontSize: 15,
+      margin: 25,
+      // interval: 30,
+      rotate: 30,
+    },
+    nameGap: 300,
+  };
+  return option;
+};
+
+const customizeLegend = (option) => {
+  option.legend = {
+    bottom: '0%',
+  };
+  return option;
+};
+
+const createTooltip = (option: EChartsOption, colorMode: string) => {
+  option.tooltip = {
+    show: true,
+    trigger: 'axis',
+    textStyle: {
+      fontSize: 40,
+      color: colorMode === 'dark' ? '#fff' : '#000',
+    },
+    borderWidth: 3,
+    backgroundColor: colorMode === 'dark' ? '#555' : '#fff',
+  };
+  return option;
+};
+
+const createTitle = (option, chartName, stationName, data) => {
+  const headers = data[0];
+  const headersWithFullName = [];
+  let startDate = '';
+  let endDate = '';
+  for (let i = 0; i < headers.length; i++) {
+    if (headers[i] == 'Date') {
+      startDate = data[1][i];
+      endDate = data[data.length - 1][i];
+    }
+  }
+  for (let i = 0; i < headers.length; i++) {
+    for (let j = 0; j < stationVariableNameTranslation.length; j++) {
+      if (headers[i] == stationVariableNameTranslation[j]['var_id']) {
+        headersWithFullName.push(stationVariableNameTranslation[j]['var_name']);
+      }
+    }
+  }
+
+  const chartTitle = `${chartName} of ${headersWithFullName.join(', ')} for ${stationName} in ${startDate} to ${endDate}`;
+  option.title = {
+    text: chartTitle,
+    left: 'center',
+  };
+  return option;
+};
 
 const getNominalAttribute = (data: (string | number)[][], attributes: any[]) => {
   let nominalIndex = -1;
@@ -802,7 +913,6 @@ const getNominalAttribute = (data: (string | number)[][], attributes: any[]) => 
       if (data[0][i] === attributes[j]) {
         //@ts-ignore
         if (isNaN(data[1][i]) && !isDateValid(data[1][i])) {
-          console.log('extracting nominal attribute', data[0][i], i, '****');
           nominalIndex = i;
           break;
         }
@@ -856,7 +966,11 @@ function isDateValid(value: string | number | Date) {
 
   // Check if the parsed value is a valid date
   const parsedDate = new Date(value);
-  return !isNaN(parsedDate) && /^\d{4}-\d{2}-\d{2}/.test(value);
+  if (/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value)) {
+    return true;
+  }
+  console.log(/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value));
+  return !isNaN(parsedDate) && /^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value);
 }
 
 const getTemporalAttribute = (data: (string | number)[][], attributes: string[]) => {
@@ -881,14 +995,11 @@ const getTemporalAttribute = (data: (string | number)[][], attributes: string[])
 };
 
 const getMultipleQuantitativeAttributes = (data: (string | number)[][] | { [x: string]: any }[], attributes: any[]) => {
-  console.log(attributes);
   const quantitativeIndices: string | number | number[] = [];
   const quantitativeAttributes: string[] = [];
   for (let i = 0; i < data[0].length; i++) {
     for (let j = 0; j < attributes.length; j++) {
       if (data[0][i] === attributes[j]) {
-        console.log(data[1][i]);
-
         //@ts-ignore
         if (!isNaN(data[1][i]) && !isDateValid(data[1][i])) {
           quantitativeIndices.push(i);
@@ -930,6 +1041,33 @@ const extractTransformations = (transformations: string[], data: string[][]) => 
       }
     }
   }
-  console.log(extractedTransformations);
   return extractedTransformations;
 };
+
+function customizeChart(options: EChartsOption, colorMode: string) {
+  // Set the color mode
+  if (colorMode === 'dark') {
+    options.backgroundColor = '#222';
+    options.textStyle = { color: '#ffffff' };
+    options.axisLine = { lineStyle: { color: '#eee' } };
+    options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
+    options.grid = {
+      bottom: 100, // Increase this value to provide more space for x-axis labels
+      left: 150, // Increase this value to provide more space for x-axis labels
+    };
+  } else if (colorMode === 'light') {
+    options.backgroundColor = '#fff';
+    options.textStyle = { color: '#333' };
+    options.axisLine = { lineStyle: { color: '#999' } };
+    options.tooltip = { backgroundColor: '#fff', textStyle: { color: '#333' } };
+    options.grid = {
+      bottom: 100, // Increase this value to provide more space for x-axis labels
+      left: 150, // Increase this value to provide more space for x-axis labels
+    };
+  } else {
+    throw new Error('Invalid color mode');
+  }
+
+  // Return the modified options object
+  return options;
+}

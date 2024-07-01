@@ -1,0 +1,562 @@
+[
+  {
+    "chords_id": 80175,
+    "created_at": "2024-03-26 05:17:30.689758",
+    "last_updated": "2024-03-26 05:17:30.689770",
+    "unit": "VDC",
+    "var_id": "BattVolt",
+    "var_name": "Battery voltage"
+  },
+  {
+    "chords_id": 80176,
+    "created_at": "2024-03-26 05:17:30.898663",
+    "last_updated": "2024-03-26 05:17:30.898679",
+    "unit": "°C",
+    "var_id": "Tpanel",
+    "var_name": "Logger panel temperature"
+  },
+  {
+    "chords_id": 80177,
+    "created_at": "2024-03-26 05:17:31.396629",
+    "last_updated": "2024-03-26 05:17:31.396643",
+    "unit": "%",
+    "var_id": "RHenc",
+    "var_name": "Enclosure relative humidity"
+  },
+  {
+    "chords_id": 80178,
+    "created_at": "2024-03-26 05:17:43.833384",
+    "last_updated": "2024-03-26 05:17:43.833404",
+    "unit": "mm",
+    "var_id": "RFmin_1",
+    "var_name": "Minutely rainfall"
+  },
+  {
+    "chords_id": 80281,
+    "created_at": "2024-03-26 05:19:13.537247",
+    "last_updated": "2024-03-26 05:19:13.537259",
+    "unit": "W/m²",
+    "var_id": "SWin_1_Avg",
+    "var_name": "Incoming shortwave radiation"
+  },
+  {
+    "chords_id": 80282,
+    "created_at": "2024-03-26 05:19:13.796308",
+    "last_updated": "2024-03-26 05:19:13.796321",
+    "unit": "W/m²",
+    "var_id": "SWout_1_Avg",
+    "var_name": "Outgoing shortwave radiation"
+  },
+  {
+    "chords_id": 80283,
+    "created_at": "2024-03-26 05:19:14.308035",
+    "last_updated": "2024-03-26 05:19:14.308049",
+    "unit": "W/m²",
+    "var_id": "LWin_1_Avg",
+    "var_name": "Incoming longwave radiation"
+  },
+  {
+    "chords_id": 80284,
+    "created_at": "2024-03-26 05:19:14.755327",
+    "last_updated": "2024-03-26 05:19:14.755338",
+    "unit": "W/m²",
+    "var_id": "LWout_1_Avg",
+    "var_name": "Outgoing longwave radiation"
+  },
+  {
+    "chords_id": 80285,
+    "created_at": "2024-03-26 05:19:14.985122",
+    "last_updated": "2024-03-26 05:19:14.985136",
+    "unit": "W/m²",
+    "var_id": "SWnet_1_Avg",
+    "var_name": "Net shortwave radiation"
+  },
+  {
+    "chords_id": 80286,
+    "created_at": "2024-03-26 05:19:15.277754",
+    "last_updated": "2024-03-26 05:19:15.277766",
+    "unit": "W/m²",
+    "var_id": "LWnet_1_Avg",
+    "var_name": "Net longwave radiation"
+  },
+  {
+    "chords_id": 80287,
+    "created_at": "2024-03-26 05:19:15.512743",
+    "last_updated": "2024-03-26 05:19:15.512760",
+    "unit": "W/m²",
+    "var_id": "Rin_1_Avg",
+    "var_name": "Net incoming radiation"
+  },
+  {
+    "chords_id": 80288,
+    "created_at": "2024-03-26 05:19:15.812876",
+    "last_updated": "2024-03-26 05:19:15.812897",
+    "unit": "W/m²",
+    "var_id": "Rout_1_Avg",
+    "var_name": "Net outgoing radiation"
+  },
+  {
+    "chords_id": 80289,
+    "created_at": "2024-03-26 05:19:16.096201",
+    "last_updated": "2024-03-26 05:19:16.096215",
+    "unit": "W/m²",
+    "var_id": "Rnet_1_Avg",
+    "var_name": "Net radiation"
+  },
+  {
+    "chords_id": 80290,
+    "created_at": "2024-03-26 05:19:16.501370",
+    "last_updated": "2024-03-26 05:19:16.501381",
+    "unit": "",
+    "var_id": "Albedo_1_Avg",
+    "var_name": "Albedo"
+  },
+  {
+    "chords_id": 80291,
+    "created_at": "2024-03-26 05:19:16.799975",
+    "last_updated": "2024-03-26 05:19:16.799987",
+    "unit": "°C",
+    "var_id": "Tsrf_1_Avg",
+    "var_name": "Surface temperature"
+  },
+  {
+    "chords_id": 80292,
+    "created_at": "2024-03-26 05:19:17.141954",
+    "last_updated": "2024-03-26 05:19:17.141981",
+    "unit": "°C",
+    "var_id": "Tsky_1_Avg",
+    "var_name": "Sky temperature"
+  },
+  {
+    "chords_id": 80293,
+    "created_at": "2024-03-26 05:19:17.912492",
+    "last_updated": "2024-03-26 05:19:17.912508",
+    "unit": "°C",
+    "var_id": "Tair_1_Avg",
+    "var_name": "Air temperature, sensor 1"
+  },
+  {
+    "chords_id": 80294,
+    "created_at": "2024-03-26 05:19:19.098030",
+    "last_updated": "2024-03-26 05:19:19.098049",
+    "unit": "°C",
+    "var_id": "Tair_2_Avg",
+    "var_name": "Air temperature, sensor 2"
+  },
+  {
+    "chords_id": 80295,
+    "created_at": "2024-03-26 05:19:19.770993",
+    "last_updated": "2024-03-26 05:19:19.771010",
+    "unit": "%",
+    "var_id": "RH_1_Avg",
+    "var_name": "Relative humidity, sensor 1"
+  },
+  {
+    "chords_id": 80296,
+    "created_at": "2024-03-26 05:19:20.336916",
+    "last_updated": "2024-03-26 05:19:20.336931",
+    "unit": "%",
+    "var_id": "RH_2_Avg",
+    "var_name": "Relative humidity, sensor 2"
+  },
+  {
+    "chords_id": 80297,
+    "created_at": "2024-03-26 05:19:21.232199",
+    "last_updated": "2024-03-26 05:19:21.232210",
+    "unit": "kPa",
+    "var_id": "VP_1_Avg",
+    "var_name": "Vapor pressure, sensor 1"
+  },
+  {
+    "chords_id": 80298,
+    "created_at": "2024-03-26 05:19:21.506507",
+    "last_updated": "2024-03-26 05:19:21.506523",
+    "unit": "kPa",
+    "var_id": "VP_2_Avg",
+    "var_name": "Vapor pressure, sensor 2"
+  },
+  {
+    "chords_id": 80299,
+    "created_at": "2024-03-26 05:19:21.804077",
+    "last_updated": "2024-03-26 05:19:21.804088",
+    "unit": "kPa",
+    "var_id": "VPsat_1_Avg",
+    "var_name": "Saturation vapor pressure, sensor 1"
+  },
+  {
+    "chords_id": 80300,
+    "created_at": "2024-03-26 05:19:22.114579",
+    "last_updated": "2024-03-26 05:19:22.114590",
+    "unit": "kPa",
+    "var_id": "VPsat_2_Avg",
+    "var_name": "Saturation vapor pressure, sensor 2"
+  },
+  {
+    "chords_id": 80301,
+    "created_at": "2024-03-26 05:19:22.403417",
+    "last_updated": "2024-03-26 05:19:22.403438",
+    "unit": "kPa",
+    "var_id": "VPD_1_Avg",
+    "var_name": "Vapor pressure deficit, sensor 1"
+  },
+  {
+    "chords_id": 80302,
+    "created_at": "2024-03-26 05:19:22.664771",
+    "last_updated": "2024-03-26 05:19:22.664784",
+    "unit": "kPa",
+    "var_id": "VPD_2_Avg",
+    "var_name": "Vapor pressure deficit, sensor 2"
+  },
+  {
+    "chords_id": 80303,
+    "created_at": "2024-03-26 05:19:23.137085",
+    "last_updated": "2024-03-26 05:19:23.137102",
+    "unit": "m/s",
+    "var_id": "WS_1_Avg",
+    "var_name": "Mean wind speed"
+  },
+  {
+    "chords_id": 80304,
+    "created_at": "2024-03-26 05:19:23.630155",
+    "last_updated": "2024-03-26 05:19:23.630172",
+    "unit": "m/s",
+    "var_id": "WSrs_1_Avg",
+    "var_name": "Resultant vector wind speed"
+  },
+  {
+    "chords_id": 80305,
+    "created_at": "2024-03-26 05:19:24.239766",
+    "last_updated": "2024-03-26 05:19:24.239782",
+    "unit": "degrees",
+    "var_id": "WDuv_1_Avg",
+    "var_name": "Unit vector average wind direction"
+  },
+  {
+    "chords_id": 80306,
+    "created_at": "2024-03-26 05:19:24.730819",
+    "last_updated": "2024-03-26 05:19:24.730835",
+    "unit": "degrees",
+    "var_id": "WDrs_1_Avg",
+    "var_name": "Resultant vector wind direction"
+  },
+  {
+    "chords_id": 80307,
+    "created_at": "2024-03-26 05:19:25.198908",
+    "last_updated": "2024-03-26 05:19:25.198920",
+    "unit": "degrees",
+    "var_id": "WD_1_StdY",
+    "var_name": "Wind direction standard deviation, wind speed weighted"
+  },
+  {
+    "chords_id": 80308,
+    "created_at": "2024-03-26 05:19:25.468751",
+    "last_updated": "2024-03-26 05:19:25.468764",
+    "unit": "degrees",
+    "var_id": "WD_1_StdCS",
+    "var_name": "Wind direction standard deviation"
+  },
+  {
+    "chords_id": 80309,
+    "created_at": "2024-03-26 05:19:25.724364",
+    "last_updated": "2024-03-26 05:19:25.724379",
+    "unit": "kPa",
+    "var_id": "P_1",
+    "var_name": "Pressure"
+  },
+  {
+    "chords_id": 80310,
+    "created_at": "2024-03-26 05:19:26.000687",
+    "last_updated": "2024-03-26 05:19:26.000699",
+    "unit": "kPa",
+    "var_id": "Psl_1",
+    "var_name": "Sea level pressure"
+  },
+  {
+    "chords_id": 80311,
+    "created_at": "2024-03-26 05:19:26.281228",
+    "last_updated": "2024-03-26 05:19:26.281239",
+    "unit": "°C",
+    "var_id": "Tsoil_TCAV_Avg",
+    "var_name": "Tsoil_TCAV_Avg"
+  },
+  {
+    "chords_id": 80313,
+    "created_at": "2024-03-26 05:19:26.509548",
+    "last_updated": "2024-03-26 05:19:26.509560",
+    "unit": "W/m²",
+    "var_id": "SHF_16cm_Avg",
+    "var_name": "SHF_16cm_Avg"
+  },
+  {
+    "chords_id": 80314,
+    "created_at": "2024-03-26 05:19:26.790890",
+    "last_updated": "2024-03-26 05:19:26.790901",
+    "unit": "W/m²",
+    "var_id": "SHFsrf_1_Avg",
+    "var_name": "Surface soil heat flux"
+  },
+  {
+    "chords_id": 80315,
+    "created_at": "2024-03-26 05:19:27.056028",
+    "last_updated": "2024-03-26 05:19:27.056041",
+    "unit": "m³/m³",
+    "var_id": "SM_1_H8cm_Avg",
+    "var_name": "SM_1_H8cm_Avg"
+  },
+  {
+    "chords_id": 80316,
+    "created_at": "2024-03-26 05:19:27.359962",
+    "last_updated": "2024-03-26 05:19:27.359974",
+    "unit": "m³/m³",
+    "var_id": "SM_2_NANANcm_Avg",
+    "var_name": "SM_2_NANANcm_Avg"
+  },
+  {
+    "chords_id": 80317,
+    "created_at": "2024-03-26 05:19:27.644281",
+    "last_updated": "2024-03-26 05:19:27.644295",
+    "unit": "m³/m³",
+    "var_id": "SM_3_NANANcm_Avg",
+    "var_name": "SM_3_NANANcm_Avg"
+  },
+  {
+    "chords_id": 80318,
+    "created_at": "2024-03-26 05:19:27.981477",
+    "last_updated": "2024-03-26 05:19:27.981501",
+    "unit": "°C",
+    "var_id": "Tsoil_SM1_8cm",
+    "var_name": "Tsoil_SM1_8cm"
+  },
+  {
+    "chords_id": 80319,
+    "created_at": "2024-03-26 05:19:28.425471",
+    "last_updated": "2024-03-26 05:19:28.425485",
+    "unit": "°C",
+    "var_id": "Tsoil_SM2_NANcm",
+    "var_name": "Tsoil_SM2_NANcm"
+  },
+  {
+    "chords_id": 80320,
+    "created_at": "2024-03-26 05:19:28.969839",
+    "last_updated": "2024-03-26 05:19:28.969850",
+    "unit": "°C",
+    "var_id": "Tsoil_SM3_NANcm",
+    "var_name": "Tsoil_SM3_NANcm"
+  },
+  {
+    "chords_id": 80321,
+    "created_at": "2024-03-26 05:19:29.221003",
+    "last_updated": "2024-03-26 05:19:29.221014",
+    "unit": "mm",
+    "var_id": "RF_1_Tot",
+    "var_name": "Rainfall"
+  },
+  {
+    "chords_id": 80322,
+    "created_at": "2024-03-26 05:19:29.456394",
+    "last_updated": "2024-03-26 05:19:29.456405",
+    "unit": "counts",
+    "var_id": "RGtip_1_Tot",
+    "var_name": "Rain gauge tip"
+  },
+  {
+    "chords_id": 80323,
+    "created_at": "2024-03-26 05:19:29.688671",
+    "last_updated": "2024-03-26 05:19:29.688682",
+    "unit": "mm/hour",
+    "var_id": "RFint_1_Max",
+    "var_name": "Maximum rain intensity"
+  },
+  {
+    "chords_id": 80324,
+    "created_at": "2024-03-26 05:19:29.973306",
+    "last_updated": "2024-03-26 05:19:29.973318",
+    "unit": "ml",
+    "var_id": "FC_1_Tot",
+    "var_name": "Fog collection"
+  },
+  {
+    "chords_id": 80325,
+    "created_at": "2024-03-26 05:19:30.233545",
+    "last_updated": "2024-03-26 05:19:30.233556",
+    "unit": "m",
+    "var_id": "WTlvl_1_Avg",
+    "var_name": "Water table level"
+  },
+  {
+    "chords_id": 80327,
+    "created_at": "2024-03-26 05:19:33.991618",
+    "last_updated": "2024-03-26 05:19:33.991630",
+    "unit": "°C",
+    "var_id": "Tair_1_Min",
+    "var_name": "Minimum air temperature, sensor 1"
+  },
+  {
+    "chords_id": 80329,
+    "created_at": "2024-03-26 05:19:34.265877",
+    "last_updated": "2024-03-26 05:19:34.265889",
+    "unit": "°C",
+    "var_id": "Tair_1_Max",
+    "var_name": "Maximum air temperature, sensor 1"
+  },
+  {
+    "chords_id": 80330,
+    "created_at": "2024-03-26 05:19:34.613906",
+    "last_updated": "2024-03-26 05:19:34.613917",
+    "unit": "°C",
+    "var_id": "Tair_2_Min",
+    "var_name": "Minimum air temperature, sensor 2"
+  },
+  {
+    "chords_id": 80331,
+    "created_at": "2024-03-26 05:19:35.014746",
+    "last_updated": "2024-03-26 05:19:35.014759",
+    "unit": "°C",
+    "var_id": "Tair_2_Max",
+    "var_name": "Maximum air temperature, sensor 2"
+  },
+  {
+    "chords_id": 80332,
+    "created_at": "2024-03-26 05:19:35.255609",
+    "last_updated": "2024-03-26 05:19:35.255620",
+    "unit": "%",
+    "var_id": "RH_1_Min",
+    "var_name": "Minimum relative humidity, sensor 1"
+  },
+  {
+    "chords_id": 80333,
+    "created_at": "2024-03-26 05:19:35.492589",
+    "last_updated": "2024-03-26 05:19:35.492603",
+    "unit": "%",
+    "var_id": "RH_1_Max",
+    "var_name": "Maximum relative humidity, sensor 1"
+  },
+  {
+    "chords_id": 80334,
+    "created_at": "2024-03-26 05:19:35.758442",
+    "last_updated": "2024-03-26 05:19:35.758453",
+    "unit": "%",
+    "var_id": "RH_2_Min",
+    "var_name": "Minimum relative humidity, sensor 1"
+  },
+  {
+    "chords_id": 80335,
+    "created_at": "2024-03-26 05:19:35.984051",
+    "last_updated": "2024-03-26 05:19:35.984067",
+    "unit": "%",
+    "var_id": "RH_2_Max",
+    "var_name": "Maximum relative humidity, sensor 1"
+  },
+  {
+    "chords_id": 80336,
+    "created_at": "2024-03-26 05:19:36.213010",
+    "last_updated": "2024-03-26 05:19:36.213023",
+    "unit": "°C",
+    "var_id": "Tsoil_1_Min",
+    "var_name": "Minimum soil temperature"
+  },
+  {
+    "chords_id": 80337,
+    "created_at": "2024-03-26 05:19:36.619439",
+    "last_updated": "2024-03-26 05:19:36.619457",
+    "unit": "°C",
+    "var_id": "Tsoil_1_Max",
+    "var_name": "Maximum soil temperature"
+  },
+  {
+    "chords_id": 80338,
+    "created_at": "2024-03-26 05:19:37.134089",
+    "last_updated": "2024-03-26 05:19:37.134100",
+    "unit": "m/s",
+    "var_id": "WS_1_Max",
+    "var_name": "Maximum wind speed"
+  },
+  {
+    "chords_id": 80339,
+    "created_at": "2024-03-26 05:19:37.388514",
+    "last_updated": "2024-03-26 05:19:37.388525",
+    "unit": "m/s",
+    "var_id": "WG_1_Max",
+    "var_name": "Maximum wind gust"
+  },
+  {
+    "chords_id": 80628,
+    "created_at": "2024-03-27 01:19:00.196319",
+    "last_updated": "2024-03-27 01:19:00.196331",
+    "unit": "°C",
+    "var_id": "Tsoil_1_Avg",
+    "var_name": "Soil temperature, sensor 1"
+  },
+  {
+    "chords_id": 80629,
+    "created_at": "2024-03-27 01:19:00.444737",
+    "last_updated": "2024-03-27 01:19:00.444748",
+    "unit": "W/m²",
+    "var_id": "SHF_1_Avg",
+    "var_name": "Soil heat flux, sensor 1"
+  },
+  {
+    "chords_id": 80630,
+    "created_at": "2024-03-27 01:19:00.743389",
+    "last_updated": "2024-03-27 01:19:00.743401",
+    "unit": "m³/m³",
+    "var_id": "SM_1_Avg",
+    "var_name": "Soil moisture, sensor 1"
+  },
+  {
+    "chords_id": 80631,
+    "created_at": "2024-03-27 01:19:01.121504",
+    "last_updated": "2024-03-27 01:19:01.121517",
+    "unit": "°C",
+    "var_id": "Tsoil_2",
+    "var_name": "Soil temperature, sensor 2"
+  },
+  {
+    "chords_id": 80632,
+    "created_at": "2024-03-27 01:19:11.985030",
+    "last_updated": "2024-03-27 01:19:11.985051",
+    "unit": "count",
+    "var_id": "RGtipmin_1",
+    "var_name": "Minutely rain gauge tips"
+  },
+  {
+    "chords_id": 80633,
+    "created_at": "2024-03-27 01:19:16.539697",
+    "last_updated": "2024-03-27 01:19:16.539718",
+    "unit": "KB",
+    "var_id": "CellUsage5min",
+    "var_name": "5-minute cellular data usage"
+  },
+  {
+    "chords_id": 80634,
+    "created_at": "2024-03-27 01:19:16.820649",
+    "last_updated": "2024-03-27 01:19:16.820660",
+    "unit": "dBm",
+    "var_id": "CellStr",
+    "var_name": "Cellular signal strength"
+  },
+  {
+    "chords_id": 80635,
+    "created_at": "2024-03-27 01:19:17.073501",
+    "last_updated": "2024-03-27 01:19:17.073514",
+    "unit": "",
+    "var_id": "CellQlt",
+    "var_name": "Cellular signal quality"
+  },
+  {
+    "chords_id": 80636,
+    "created_at": "2024-03-27 01:19:17.329055",
+    "last_updated": "2024-03-27 01:19:17.329068",
+    "unit": "°C",
+    "var_id": "Trnet_Avg",
+    "var_name": "NR01 sensor body temperature"
+  },
+  {
+    "chords_id": 80637,
+    "created_at": "2024-03-27 01:19:17.585795",
+    "last_updated": "2024-03-27 01:19:17.585812",
+    "unit": "",
+    "var_id": "DutyCycle_Avg",
+    "var_name": "NR01 heater duty cycle"
+  }
+]

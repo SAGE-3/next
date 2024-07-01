@@ -6,53 +6,47 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect, Key } from 'react';
+import { useRef, useState, useEffect, Key } from 'react';
+import ReactDOM from 'react-dom';
 import {
   ButtonGroup,
   Button,
-  useToast,
-  IconButton,
   Box,
-  Text,
-  Flex,
-  useColorModeValue,
-  Input,
-  Tooltip,
-  InputGroup,
-  InputRightElement,
-  HStack,
-  Divider,
-  Center,
-  AbsoluteCenter,
   Image,
+  Input,
+  useDisclosure,
   useColorMode,
+  WrapItem,
+  Wrap,
+  IconButton,
+  Center,
+  VStack,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
 import vegaEmbed from 'vega-embed';
-import { ArticulateAPI } from '@sage3/frontend';
+import { ArticulateAPI, ConfirmModal, useThrottleApps, useUIStore } from '@sage3/frontend';
 
-// Date management
-import { formatDistance } from 'date-fns';
-import { format } from 'date-fns/format';
-// Markdown
-import Markdown from 'markdown-to-jsx';
 // OpenAI API v4
 import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore } from '@sage3/frontend';
+import { useAppStore, useUser, serverTime } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
-import { state as AppState, init as initialState } from './index';
+import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 import mute from './arti_images/mute.gif';
 import talking from './arti_images/talking.gif';
 import thinking from './arti_images/thinking.gif';
 import idle from './arti_images/idle.gif';
+import attentive from './arti_images/attentive.gif';
 import EChartsViewer from './EChartsViewer/EChartsViewer';
 import { processStations } from './utils';
 import { EChartsCoreOption } from 'echarts';
+import { useAudio } from '@sage3/frontend';
+
+import MapGL from './MapGL';
+import { MdClose } from 'react-icons/md';
 
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
@@ -80,40 +74,6 @@ function getCode(jsonInput: string) {
   return cleanJson;
 }
 
-// function replaceData(jsonInput: string) {
-//   const cleanJson = jsonInput.replace('data');
-//   return cleanJson;
-// }
-
-// LLAMA2 API
-//  - API: https://huggingface.github.io/text-generation-inference/
-const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
-const LLAMA2_ENDPOINT = '/generate_stream';
-const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
-const LLAMA2_TOKENS = 300;
-const LLAMA2_SYSTEM_PROMPT =
-  'I have a json file with the following headers: Station_ID, Date_Time, pressure_set_1, air_temp_set_1, relative_humidity_set_1, \
-wind_speed_set_1, wind_direction_set_1, wind_gust_set_1, solar_radiation_set_1, soil_temp_set_1, \
-soil_temp_set_2, soil_temp_set_3, soil_temp_set_4, precip_accum_five_minute_set_1, soil_moisture_set_1, \
-soil_moisture_set_2, soil_moisture_set_3, volt_set_1, net_radiation_set_1, net_radiation_sw_set_1, net_radiation_lw_set_1, \
-outgoing_radiation_lw_set_1, outgoing_radiation_sw_set_1, incoming_radiation_lw_set_1, outgoing_radiation_lw_set_1, wind_cardinal_direction_set_1d, \
-heat_index_set_1d, dew_point_temperature_set_1d, altimeter_set_1d, sea_level_pressure_set_1d\
- You are an expert at creating data visualizations in vega-lite. you are strictly answering my questions only in vega-lite code.';
-
-// OpenAI API
-let OPENAI_API_KEY = '';
-let OPENAI_ENGINE = 'gpt-4-turbo-preview';
-const OPENAI_TOKENS = 300;
-const OPENAI_SYSTEM_PROMPT =
-  'I have a data.json file with the following headers: date_time, pressure_set_1, air_temp_set_1, relative_humidity_set_1, \
-wind_speed_set_1, wind_direction_set_1, wind_gust_set_1, solar_radiation_set_1, soil_temp_set_1, \
-soil_temp_set_2, soil_temp_set_3, soil_temp_set_4, precip_accum_five_minute_set_1, soil_moisture_set_1, \
-soil_moisture_set_2, soil_moisture_set_3, volt_set_1, net_radiation_set_1, net_radiation_sw_set_1, net_radiation_lw_set_1, \
-outgoing_radiation_lw_set_1, outgoing_radiation_sw_set_1, incoming_radiation_lw_set_1, outgoing_radiation_lw_set_1, wind_cardinal_direction_set_1d, \
-heat_index_set_1d, dew_point_temperature_set_1d, altimeter_set_1d, sea_level_pressure_set_1d\
- You are an expert at creating data visualizations in vega-lite. you are strictly answering my questions only in vega-lite code.\
- Answer very concisely and in vega-lite code only. Remove the "$schema": "https://vega.github.io/schema/vega-lite/v5.json" from the vega-lite code';
-
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
@@ -121,55 +81,52 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
 
-  // Colors for Dark theme and light theme
-  const myColor = useHexColor(user?.data.color || 'blue');
-  const geppettoColor = useHexColor('purple');
-  const openaiColor = useHexColor('green');
-  const aiTypingColor = useHexColor('orange');
-  const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.200', 'gray.800');
-  const sc = useColorModeValue('gray.400', 'gray.200');
-  const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
-  // Get presences of users
-  const users = useUsersStore((state) => state.users);
-  // Configuration information
-  const config = useConfigStore((state) => state.config);
-
   const [data, setData] = useState({});
+  const { colorMode } = useColorMode();
 
-  const [openai, setOpenai] = useState<OpenAI>();
   // Input text for query
   const [input, setInput] = useState<string>('');
-  const [streamText, setStreamText] = useState<string>('');
-  // Element to set the focus to when opening the dialog
-  const inputRef = useRef<HTMLInputElement>(null);
+
   // Processing
   const [processing, setProcessing] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [newMessages, setNewMessages] = useState(false);
+  const apps = useThrottleApps(250);
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
 
   const chatBox = useRef<null | HTMLDivElement>(null);
-  const ctrlRef = useRef<null | AbortController>(null);
-
-  const [vegaLiteSpecs, setVegaLiteSpecs] = useState<any>([]);
-
-  const [spec, setSpec] = useState<any>(null);
 
   const createApp = useAppStore((state) => state.create);
 
-  // Display some notifications
-  const toast = useToast();
-
   const [artiState, setArtiState] = useState(idle);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
 
-  const [chartOptions, setChartOptions] = useState<EChartsCoreOption[][]>([]);
+  const [hoveredChart, setHoveredChart] = useState<EChartsCoreOption | null>(null);
+  const [chartOptions, setChartOptions] = useState(s.chartsCreated);
+  const { startRecording, stopRecording, finalText, isRecording, isNoise } = useAudio({ silenceDuration: 1500, silenceThreshold: 0.2 });
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [interactionContext, setInteractionContext] = useState<{
+    lastChartsInteracted: string[];
+    lastChartsGenerated: string[];
+    lastChartsSelected: string[];
+  }>({ lastChartsInteracted: [], lastChartsGenerated: [], lastChartsSelected: [] });
 
   // Sort messages by creation date to display in order
-  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  useEffect(() => {
+    return () => {
+      stopRecording();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (finalText.trim().length > 1) {
+      console.log(finalText.trim().length, 'length');
+      send(finalText);
+    } else {
+      console.log('empty');
+    }
+  }, [finalText]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -246,17 +203,33 @@ function AppComponent(props: App): JSX.Element {
       response: 'Working on it...',
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    setArtiState(thinking);
-    setProcessing(true);
 
     const request = new_input;
 
     //make fetch call here with request
     const response = await ArticulateAPI.sendText(request);
-    const tmpChartOptions: EChartsCoreOption[] = await processStations(response['station_chart_info']);
-    setChartOptions((prev) => [...prev, tmpChartOptions]);
+    if (response == 0 || response == 2) {
+      setProcessing(true);
+
+      const chartResponse = await ArticulateAPI.sendCommand(request, interactionContext);
+      if (!chartResponse) {
+        //do nothing
+      } else {
+        if (Object.keys(chartResponse).length == 0) {
+          return;
+        }
+        const tmpChartOptions: EChartsCoreOption[] = await processStations(chartResponse['station_chart_info'], colorMode, props.data.size);
+        const chartTitles = [];
+        for (let i = 0; i < tmpChartOptions.length; i++) {
+          chartTitles.push((tmpChartOptions[i] as any).title.text);
+        }
+        setInteractionContext({ ...interactionContext, lastChartsGenerated: [...chartTitles] });
+        // updateState(props._id, { chartsCreated: [...s.chartsCreated, ...tmpChartOptions] });
+        setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
+      }
+      setProcessing(false);
+    }
     // await the request
-    setProcessing(false);
     // Add messages
     updateState(props._id, {
       ...s,
@@ -292,90 +265,22 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const stopGeppetto = async () => {
-    setProcessing(false);
-    if (ctrlRef.current && user) {
-      ctrlRef.current.abort();
-      ctrlRef.current = null;
-      if (streamText) {
-        // Get server time
-        const now = await serverTime();
-        // Add the current text as a message
-        updateState(props._id, {
-          ...s,
-          messages: [
-            ...s.messages,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch,
-              userName: 'Geppetto/OpenAI',
-              query: '',
-              response: streamText + '...(interrupted)',
-            },
-          ],
-        });
-      }
-      setStreamText('');
-    }
-  };
-
-  // Reset the chat: clear previous question and answer, and all the messages
-  const resetGepetto = () => {
-    setPreviousQuestion('');
-    setPreviousAnswer('');
-    updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
-  };
-
-  useEffect(() => {
-    // Scroll to bottom of chat box immediately
-    chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight,
-      behavior: 'instant',
-    });
-    // Control the scrolling of the chat box
-    chatBox.current?.addEventListener('scrollend', () => {
-      if (chatBox.current && chatBox.current.scrollTop) {
-        const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
-        if (test === 0) {
-          setScrolled(false);
-          setNewMessages(false);
-        } else {
-          setScrolled(true);
-        }
-      }
-    });
-
-    // API configuration
-    // OPENAI_API_KEY = config.openai.apiKey || '';
-    // OPENAI_ENGINE = config.openai.model || 'gpt-3.5-turbo';
-    if (OPENAI_API_KEY) {
-      const openaiClient = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-      setOpenai(openaiClient);
-    }
-  }, []);
-
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
-    if (!processing && !scrolled) {
-      // Scroll to bottom of chat box smoothly
-      goToBottom();
+    if (!isRecording) {
+      setArtiState(mute);
+    } else {
+      if (!processing) {
+        if (isNoise.current) {
+          setArtiState(attentive);
+        } else {
+          setArtiState(idle);
+        }
+      } else if (processing) {
+        setArtiState(thinking);
+      }
     }
-    if (scrolled) setNewMessages(true);
-  }, [s.messages]);
-
-  useEffect(() => {
-    for (let i = 0; i < vegaLiteSpecs.length; i++) {
-      console.log(vegaLiteSpecs[i]);
-      // Render Vega-Lite
-      // Put actions to false to hide the menu, but would be nice to add the controlbar
-      vegaEmbed(`#vis${props._id + i}`, vegaLiteSpecs[i] as any, { actions: false });
-    }
-  }, [vegaLiteSpecs]);
+  }, [processing, isRecording, isNoise.current]);
 
   const generateChart = async (EChartOption: EChartsCoreOption) => {
     await createApp({
@@ -389,8 +294,8 @@ function AppComponent(props: App): JSX.Element {
         z: 0,
       },
       size: {
-        width: props.data.size.width,
-        height: props.data.size.height,
+        width: 1500,
+        height: 600,
         depth: 0,
       },
       rotation: { x: 0, y: 0, z: 0 },
@@ -403,314 +308,176 @@ function AppComponent(props: App): JSX.Element {
       dragging: false,
       pinned: false,
     });
+
+    setInteractionContext({ ...interactionContext, lastChartsSelected: [(EChartOption as any).title.text] });
+  };
+
+  useEffect(() => {
+    for (let i = 0; i < apps.length; i++) {
+      if (selectedAppId == apps[i]._id) {
+        if (apps[i].data.type == 'EChartsViewer') {
+          setInteractionContext({ ...interactionContext, lastChartsInteracted: [apps[i].data.state.options.title.text] });
+        }
+        break;
+      }
+    }
+  }, [selectedAppId]);
+
+  const handleMouseOver = (chart: EChartsCoreOption) => {
+    console.log(chart);
+    setHoveredChart(chart);
+  };
+
+  const handleMouseLove = () => {
+    console.log('leaving');
+    setHoveredChart(null);
+  };
+
+  const handleStopStudy = () => {
+    updateState(props._id, { isStudyStarted: false });
+    onDeleteClose();
   };
 
   return (
     <AppWindow app={props}>
       <>
-        <Box>
-          <Image boxSize={'xs'} src={artiState} />
-          <HStack overflowX="auto">
-            {chartOptions.length > 0 ? (
-              chartOptions.map((optionGroup: EChartsCoreOption[], groupIndex: Key | null | undefined) =>
-                optionGroup.map((option: EChartsCoreOption, optionIndex: Key | null | undefined) => (
-                  <Box
-                    onClick={() => generateChart(option)}
-                    cursor={'pointer'}
-                    zIndex={0}
-                    backgroundColor="#ffffff"
-                    p="1rem"
-                    border="2px solid black"
-                    rounded="lg"
-                    m="1rem"
-                    key={optionIndex}
-                  >
-                    <EChartsViewer option={option} />
-                  </Box>
-                ))
-              )
-            ) : (
-              <div>No chart generated</div>
+        {hoveredChart === null ? null : (
+          <>
+            {ReactDOM.createPortal(
+              <Box
+                position="fixed"
+                top="30%"
+                rounded="lg"
+                left="30%"
+                width="810px"
+                height="240px"
+                border="6px solid black"
+                transform={'scale(1.5)'}
+              >
+                <EChartsViewer option={hoveredChart} />
+              </Box>,
+              document.body
             )}
-          </HStack>
-        </Box>
-        <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="65%" w="100%">
-          {/* Display Messages */}
-          <Box
-            flex={1}
-            bg={bgColor}
-            borderRadius={'md'}
-            overflowY="scroll"
-            ref={chatBox}
-            css={{
-              '&::-webkit-scrollbar': {
-                width: '12px',
-              },
-              '&::-webkit-scrollbar-track': {
-                '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: `${scrollColor}`,
-                borderRadius: '6px',
-                outline: `3px solid ${bgColor}`,
-              },
-            }}
-          >
-            {sortedMessages.map((message, index) => {
-              const isMe = user?._id == message.userId;
-              const time = getDateString(message.creationDate);
-              const previousTime = message.creationDate;
-              const now = Date.now();
-              const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-              const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-              const last = index === sortedMessages.length - 1;
-
-              return (
-                <Fragment key={index}>
-                  {/* Start of User Messages */}
-                  {message.query.length ? (
-                    <Box position="relative" my={1}>
-                      {isMe ? (
-                        <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                            Me
-                          </Text>
+          </>
+        )}
+        {s.isStudyStarted
+          ? ReactDOM.createPortal(
+              <Box bg="gray.700" position="fixed" bottom="0" left="0" width="100vw" height="30vh">
+                <Box display="flex" height="100%">
+                  <ConfirmModal
+                    isOpen={isDeleteOpen}
+                    onClose={onDeleteClose}
+                    onConfirm={handleStopStudy}
+                    title="You are about to end the session."
+                    message="Are you sure you want to end the session?"
+                    cancelText="Cancel"
+                    confirmText="End Session"
+                    cancelColor="green"
+                    confirmColor="red"
+                    size="lg"
+                  />
+                  <IconButton
+                    icon={<MdClose size="20px" />}
+                    aria-label="close panel"
+                    size="md"
+                    mx="1"
+                    cursor="pointer"
+                    position="absolute"
+                    top="1rem"
+                    right="2rem"
+                    onClick={onDeleteOpen}
+                  />
+                  <Box width="15rem" borderRight="gray 4px solid">
+                    <Center>
+                      <VStack>
+                        <Box display="flex">
+                          <Input
+                            value={input}
+                            onChange={handleChange}
+                            height="2rem"
+                            width="10rem"
+                            border="3px solid black"
+                            onKeyDown={onSubmit}
+                          />
+                          <Button height="2rem" colorScheme="green" width="5rem">
+                            Go
+                          </Button>
                         </Box>
-                      ) : (
-                        <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                          <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                            {message.userName}
-                          </Text>
-                        </Box>
-                      )}
+                        <Button onClick={isRecording ? stopRecording : startRecording}>{isRecording ? 'Sleep' : 'Wake Up'}</Button>
 
-                      <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                        <Tooltip
-                          whiteSpace={'nowrap'}
-                          textOverflow="ellipsis"
-                          fontSize={'xs'}
-                          placement="top"
-                          hasArrow={true}
-                          label={time}
-                          openDelay={400}
+                        <Image boxSize="15rem" transform={'translate(32px,0)'} src={artiState} />
+                      </VStack>
+                    </Center>
+                  </Box>
+                  <Wrap display="flex" pt="1rem" overflowY="scroll" height="100%" width="100%">
+                    {chartOptions.map((chartOption: EChartsCoreOption, index: Key | null | undefined) => {
+                      const newChartOption: EChartsCoreOption = {
+                        ...chartOption,
+                        grid: { bottom: 100, left: 25 },
+                        xAxis: {
+                          ...(chartOption.xAxis as any),
+                          nameLocation: 'middle',
+                          nameTextStyle: {
+                            fontSize: 20, // Increase the font size here
+                            fontWeight: 'bold', // Customize the style of the title (optional)
+                          },
+                          axisLabel: {
+                            fontSize: 10,
+                            margin: 10,
+                            rotate: 30,
+                          },
+                          nameGap: 350,
+                        },
+                        yAxis: {
+                          ...(chartOption.yAxis as any),
+                          axisLabel: {
+                            fontSize: 10,
+                          },
+                        },
+                        title: {
+                          ...(chartOption.title as any),
+                          textStyle: {
+                            fontSize: 10,
+                          },
+                        },
+                        tooltip: {
+                          show: false,
+                        },
+                      };
+
+                      return (
+                        <WrapItem
+                          key={index}
+                          ml="1rem"
+                          // mb="1rem"
+                          // width="100%"
+                          // height="100%"
+                          width="200"
+                          height="114"
+                          onMouseLeave={handleMouseLove}
+                          onMouseOver={() => handleMouseOver(newChartOption)}
+                          zIndex="0"
+                          onClick={() => generateChart(chartOption)}
                         >
                           <Box
-                            color="white"
-                            rounded={'md'}
-                            boxShadow="md"
-                            fontFamily="arial"
-                            textAlign={isMe ? 'right' : 'left'}
-                            bg={isMe ? myColor : otherUserColor}
-                            p={1}
-                            m={3}
-                            maxWidth="70%"
-                            userSelect={'none'}
-                            onDoubleClick={() => {
-                              if (navigator.clipboard) {
-                                // Copy into clipboard
-                                navigator.clipboard.writeText(message.query);
-                                // Notify the user
-                                toast({
-                                  title: 'Success',
-                                  description: `Content Copied to Clipboard`,
-                                  duration: 3000,
-                                  isClosable: true,
-                                  status: 'success',
-                                });
-                              }
-                            }}
-                            draggable={true}
-                            // Store the query into the drag/drop events to create stickies
-                            onDragStart={(e) => {
-                              e.dataTransfer.clearData();
-                              // Will create a new sticky
-                              e.dataTransfer.setData('app', 'Stickie');
-                              // Get the color of the user
-                              const colorMessage = isMe
-                                ? user?.data.color
-                                : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                              // Put the state of the app into the drag/drop events
-                              e.dataTransfer.setData(
-                                'app_state',
-                                JSON.stringify({
-                                  color: colorMessage,
-                                  text: message.query,
-                                  fontSize: 24,
-                                })
-                              );
-                            }}
+                            cursor="pointer" // Add this line to change the cursor to pointer on hover
+                            zIndex="1000"
+                            rounded="lg"
+                            // m="1rem"
+                            border="3px solid black"
                           >
-                            {message.query}
+                            <EChartsViewer option={{ ...newChartOption, legend: { show: false } }} size={{ width: 200, height: 100 }} />
                           </Box>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  ) : null}
-
-                  {/* Start of Geppetto Messages */}
-                  {message.response.length ? (
-                    <Box position="relative" my={1} maxWidth={'70%'}>
-                      <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName}
-                        </Text>
-                      </Box>
-
-                      <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                        <Tooltip
-                          whiteSpace={'nowrap'}
-                          textOverflow="ellipsis"
-                          fontSize={'xs'}
-                          placement="top"
-                          hasArrow={true}
-                          label={time}
-                          openDelay={400}
-                        >
-                          <Box
-                            boxShadow="md"
-                            color="white"
-                            rounded={'md'}
-                            textAlign={'left'}
-                            bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
-                            p={1}
-                            m={3}
-                            fontFamily="arial"
-                            onDoubleClick={() => {
-                              if (navigator.clipboard) {
-                                // Copy into clipboard
-                                navigator.clipboard.writeText(message.response);
-                                // Notify the user
-                                toast({
-                                  title: 'Success',
-                                  description: `Content Copied to Clipboard`,
-                                  duration: 3000,
-                                  isClosable: true,
-                                  status: 'success',
-                                });
-                              }
-                            }}
-                          >
-                            <Box
-                              pl={3}
-                              draggable={true}
-                              onDragStart={(e) => {
-                                // Store the response into the drag/drop events to create stickies
-                                e.dataTransfer.clearData();
-                                e.dataTransfer.setData('app', 'Stickie');
-                                e.dataTransfer.setData(
-                                  'app_state',
-                                  JSON.stringify({
-                                    color: message.userName === 'OpenAI' ? 'green' : 'purple',
-                                    text: message.response,
-                                    fontSize: 24,
-                                  })
-                                );
-                              }}
-                            >
-                              <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      </Box>
-                    </Box>
-                  ) : null}
-
-                  {when && !last ? (
-                    <Box position="relative" padding="4">
-                      <Center>
-                        <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                        <AbsoluteCenter bg={bgColor} px="4">
-                          {when}
-                        </AbsoluteCenter>
-                      </Center>
-                    </Box>
-                  ) : null}
-                </Fragment>
-              );
-            })}
-
-            {/* In progress Geppetto Messages */}
-            {streamText && (
-              <Box position="relative" my={1} maxWidth={'70%'}>
-                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                    AI is typing...
-                  </Text>
+                        </WrapItem>
+                      );
+                    })}
+                  </Wrap>
                 </Box>
-
-                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                    {streamText}
-                  </Box>
-                </Box>
-              </Box>
-            )}
-          </Box>
-          <HStack>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={newMessages ? 'New Messages' : 'No New Messages'}
-              openDelay={400}
-            >
-              <IconButton
-                aria-label="Messages"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={newMessages ? 'green' : 'blue'}
-                variant="ghost"
-                icon={<MdExpandCircleDown size="24px" />}
-                isDisabled={!newMessages}
-                isLoading={processing}
-                onClick={() => goToBottom('instant')}
-                width="33%"
-              />
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
-              <IconButton
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                icon={<MdStopCircle size="24px" />}
-                onClick={stopGeppetto}
-                width="34%"
-              />
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Reset Chat'} openDelay={400}>
-              <IconButton
-                aria-label="reset"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                icon={<MdChangeCircle size="24px" />}
-                onClick={resetGepetto}
-                width="33%"
-              />
-            </Tooltip>
-          </HStack>
-          <InputGroup bg={'blackAlpha.100'}>
-            <Input
-              placeholder="Ask the agent to generate a chart..."
-              size="md"
-              variant="outline"
-              _placeholder={{ color: 'inherit' }}
-              onChange={handleChange}
-              onKeyDown={onSubmit}
-              value={input}
-              ref={inputRef}
-            />
-            <InputRightElement onClick={() => send(input)}>
-              <MdSend color="green.500" />
-            </InputRightElement>
-          </InputGroup>
-        </Flex>
+              </Box>,
+              document.body
+            )
+          : null}
+        <MapGL {...props} />
       </>
     </AppWindow>
   );
@@ -720,48 +487,37 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const { user } = useUser();
-  // Sort messages by creation date to display in order
-  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+  const updateState = useAppStore((state) => state.updateState);
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
 
-  // Download the stickie as a text file
-  const downloadTxt = () => {
-    // Rebuid the content as text
-    let content = '';
-    sortedMessages.map((message) => {
-      const isMe = user?._id == message.userId;
-      if (message.query.length) {
-        if (isMe) {
-          content += `Me> ${message.query}\n`;
-        } else {
-          content += `${message.userName}> ${message.query} \n`;
-        }
-      }
-      if (message.response.length) {
-        if (message.response !== 'Working on it...') {
-          content += `Geppetto> ${message.response} \n`;
-        }
-      }
-    });
+  const handleStartStudy = () => {
+    updateState(props._id, { isStudyStarted: true });
+  };
 
-    // Current date
-    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with date
-    const filename = 'geppetto-' + dt + '.txt';
-    // Go for download
-    downloadFile(txturl, filename);
+  const handleStopStudy = () => {
+    updateState(props._id, { isStudyStarted: false });
+    onDeleteClose();
   };
 
   return (
     <>
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={handleStopStudy}
+        title="You are about to end the session."
+        message="Are you sure you want to end the session?"
+        cancelText="Cancel"
+        confirmText="End Session"
+        cancelColor="green"
+        confirmColor="red"
+        size="lg"
+      />
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Transcript'} openDelay={400}>
-          <Button onClick={downloadTxt}>
-            <MdFileDownload />
-          </Button>
-        </Tooltip>
+        <Button onClick={handleStartStudy}>Start Study</Button>
+        <Button disabled={!s.isStudyStarted} onClick={onDeleteOpen}>
+          Stop Study
+        </Button>
       </ButtonGroup>
     </>
   );

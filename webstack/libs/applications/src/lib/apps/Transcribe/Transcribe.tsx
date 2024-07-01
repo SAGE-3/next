@@ -25,10 +25,6 @@ function AppComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  const onAudioAvailable = (blob: Blob) => {
-    console.log(blob);
-  };
-
   const { startRecording, transcription } = useAudio({});
 
   return (

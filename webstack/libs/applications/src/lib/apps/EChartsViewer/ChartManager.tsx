@@ -464,8 +464,9 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
       yAxisData = data[0].OBSERVATIONS['date_time'];
       for (let i = 0; i < yAxisData.length; i++) {
         const date = new Date(yAxisData[i]);
-        //yAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
         yAxisData[i] = date.toDateString();
+
+        //yAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
       }
     } else {
       for (let i = 0; i < yAxisAttributes.length; i++) {

@@ -14,6 +14,17 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
+  //MapGL State
+  location: z.array(z.number(), z.number()), // Lng, Lat
+  zoom: z.number(),
+  bearing: z.number(),
+  pitch: z.number(),
+  baseLayer: z.string(),
+  overlay: z.boolean(),
+  assetid: z.string().optional(),
+  colorScale: z.string(),
+
+  //ChatState
   previousQ: z.string(),
   previousA: z.string(),
   context: z.string(),
@@ -29,10 +40,24 @@ export const schema = z.object({
       userId: z.string(),
     })
     .array(),
+
+  isStudyStarted: z.boolean(),
+  chartsCreated: z.any(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
+  //MapGL State
+  location: [-157.9, 21.4], //lnglat
+  zoom: 8,
+  bearing: 0,
+  pitch: 0,
+  baseLayer: 'OpenStreetMap',
+  overlay: true,
+  assetid: '',
+  colorScale: 'greys',
+
+  //ChatState
   previousQ: '',
   previousA: '',
   context: '',
@@ -48,6 +73,9 @@ export const init: Partial<state> = {
       userId: '',
     },
   ],
+
+  isStudyStarted: false,
+  chartsCreated: [],
 };
 
 export const name = 'NLChartGenerator';

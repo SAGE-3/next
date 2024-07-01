@@ -5,7 +5,7 @@ import { App } from '../../../schema';
 import * as echarts from 'echarts';
 import { processStations } from '../utils';
 
-const EChartsViewer = (props: { option: any }): JSX.Element => {
+const EChartsViewer = (props: { option: any; size?: { width: number; height: number } }): JSX.Element => {
   const [chartStateInstance, setChartStateInstance] = useState<echarts.ECharts | null>(null);
   const { colorMode } = useColorMode();
 
@@ -24,10 +24,18 @@ const EChartsViewer = (props: { option: any }): JSX.Element => {
     } else {
       chartInstance = echarts.init(chartRef.current, colorMode);
     }
-    chartInstance.resize({
-      height: 300,
-      width: 300,
-    });
+    if (props.size) {
+      chartInstance.resize({
+        height: props.size.height,
+        width: props.size.width,
+      });
+    } else {
+      chartInstance.resize({
+        height: 230,
+        width: 800,
+      });
+    }
+
     const awaitProcessStations = async () => {
       if (chartInstance) chartInstance.setOption(props.option);
     };

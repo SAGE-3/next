@@ -76,11 +76,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
   };
-  return (
-    <>
-      <input onChange={handleChange}></input>
-    </>
-  );
+  return <></>;
 }
 
 /**
