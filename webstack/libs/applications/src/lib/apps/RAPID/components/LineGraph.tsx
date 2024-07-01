@@ -144,6 +144,14 @@ function AppComponent(props: App) {
           name: s.metric.name,
           nameLocation: 'middle',
           nameGap: 40,
+          axisLabel: {
+            formatter: (value: number) => {
+              if (Math.abs(value) >= 10000) {
+                return value.toExponential(2);
+              }
+              return value;
+            },
+          },
         },
         grid: {
           bottom: '25%',
