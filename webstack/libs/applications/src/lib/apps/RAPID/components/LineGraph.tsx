@@ -94,6 +94,8 @@ function AppComponent(props: App) {
     fetchData();
   }, [fetchData]);
 
+  console.log('data', data);
+
   useEffect(() => {
     if (data && data.length > 0) {
       const option: echarts.EChartsCoreOption = {

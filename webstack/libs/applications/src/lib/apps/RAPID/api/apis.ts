@@ -1,3 +1,5 @@
+import { METRICS } from '../data/constants';
+
 const SAGE_NODE_URL = 'https://data.sagecontinuum.org/api/v1/query';
 // const SAGE_NODE_STREAM_URL = ''; // to be added later
 const MESONET_TOKEN = '07dfee7f747641d7bfd355951f329aba';
@@ -121,9 +123,13 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
       return false;
     });
     // Format the filtered metrics into the required structure
+    console.log('sage query', query);
+
+    const PRESSURE = METRICS.find((metric) => metric.waggle === 'env.pressure');
+
     return filteredMetrics.map((data: any) => ({
       time: data.timestamp,
-      value: data.value,
+      value: query.filter?.name === PRESSURE?.waggle ? data.value / 100 : data.value,
     }));
   } catch (error) {
     // Handle any errors that occur during the process
