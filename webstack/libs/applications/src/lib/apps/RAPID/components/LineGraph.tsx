@@ -98,7 +98,7 @@ function AppComponent(props: App) {
     if (data && data.length > 0) {
       const option: echarts.EChartsCoreOption = {
         title: {
-          text: 'Waggle Node vs. Mesonet',
+          text: `${s.metric.name} vs Time`,
           left: 'center',
         },
         animation: false,

@@ -19,7 +19,13 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   const formatDate = (date: Date): string => {
-    return date.toISOString().split('T')[0]; // Returns date in YYYY-MM-DD format
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
   };
 
   const [startDateInput, setStartDateInput] = useState(selectedStartDate ? formatDate(selectedStartDate) : '');
@@ -29,6 +35,17 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     if (!isDateValid(clickedDate)) return;
 
+    const adjustEndDate = (date: Date): Date => {
+      const now = new Date();
+      if (date.toDateString() === now.toDateString()) {
+        // If it's today, use the current time
+        return now;
+      } else {
+        // Set to 11:59:59 PM
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      }
+    };
+
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
       // Start new selection
       onDateSelect(clickedDate, null);
@@ -37,12 +54,14 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
     } else {
       // Complete the selection
       if (clickedDate < selectedStartDate) {
-        onDateSelect(clickedDate, selectedStartDate);
+        const adjustedEndDate = adjustEndDate(selectedStartDate);
+        onDateSelect(clickedDate, adjustedEndDate);
         setStartDateInput(formatDate(clickedDate));
-        setEndDateInput(formatDate(selectedStartDate));
+        setEndDateInput(formatDate(adjustedEndDate));
       } else {
-        onDateSelect(selectedStartDate, clickedDate);
-        setEndDateInput(formatDate(clickedDate));
+        const adjustedEndDate = adjustEndDate(clickedDate);
+        onDateSelect(selectedStartDate, adjustedEndDate);
+        setEndDateInput(formatDate(adjustedEndDate));
       }
     }
   };
