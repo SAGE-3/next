@@ -8,9 +8,10 @@ interface DateRangePickerProps {
   onChange: (range: DateRange) => void;
   dateRange: DateRange;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  setAction?: (val: DateRange) => void;
 }
 
-const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, dateRange, size = 'md' }) => {
+const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, dateRange, size = 'md', setAction }) => {
   const { onClose, onOpen, isOpen } = useDisclosure();
 
   const handleDateSelect = (startDate: Date | null, endDate: Date | null) => {
@@ -50,6 +51,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({ onChange, dateRange, 
             selectedStartDate={dateRange.startDate}
             selectedEndDate={dateRange.endDate}
             onCancel={onClose}
+            setAction={setAction}
           />
         </PopoverBody>
       </PopoverContent>

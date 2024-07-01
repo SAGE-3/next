@@ -148,9 +148,9 @@ function ToolbarComponent(props: App): JSX.Element {
           Edit
         </Button>
         <MetricSelector
-          setAction={(e: string) => {
-            if (!e) return;
-            updateState(props._id, { metric: JSON.parse(e) });
+          setAction={(metric: string) => {
+            if (!metric) return;
+            updateState(props._id, { metric: JSON.parse(metric) });
           }}
           selectedSensors={selectedSensors}
           setSelectedMetric={setSelectedMetric}
@@ -158,7 +158,16 @@ function ToolbarComponent(props: App): JSX.Element {
           showLabel={false}
           size="xs"
         />
-        <DateRangeSelector size="xs" showLabel={false} dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
+        <DateRangeSelector
+          size="xs"
+          showLabel={false}
+          dateRange={dateRange}
+          onDateRangeChange={handleDateRangeChange}
+          setAction={(date: DateRange) => {
+            if (!date) return;
+            updateState(props._id, { startTime: date.startDate, endTime: date.endDate });
+          }}
+        />
       </Box>
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>

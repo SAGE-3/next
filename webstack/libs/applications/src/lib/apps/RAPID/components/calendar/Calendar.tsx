@@ -3,15 +3,16 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Box, Button, Grid, Heading, HStack, VStack, Text, Flex, Input } from '@chakra-ui/react';
 
 import { useColorMode } from '@chakra-ui/react';
-import { set } from 'date-fns';
+import { DateRange } from '../station-editor/StationEditorModal';
 
 interface CalendarProps {
   onDateSelect: (startDate: Date | null, endDate: Date | null) => void;
   selectedStartDate: Date | null;
   selectedEndDate: Date | null;
+  setAction?: (val: DateRange) => void;
   onCancel?: () => void;
 }
-const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, selectedEndDate, onCancel }) => {
+const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, selectedEndDate, onCancel, setAction }) => {
   const { colorMode } = useColorMode();
 
   const today = useMemo(() => new Date(), []);
@@ -65,6 +66,15 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
     },
     [onDateSelect, selectedStartDate, selectedEndDate]
   );
+
+  const handleDone = () => {
+    if (setAction && selectedStartDate && selectedEndDate) {
+      setAction({ startDate: selectedStartDate, endDate: selectedEndDate });
+    }
+    if (onCancel) {
+      onCancel();
+    }
+  };
 
   const parseDate = (dateString: string): Date | null => {
     const date = new Date(dateString);
@@ -232,7 +242,7 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, selectedStartDate, se
           >
             Clear Selection
           </Text>
-          <Button onClick={onCancel} isDisabled={!selectedEndDate}>
+          <Button onClick={handleDone} isDisabled={!selectedEndDate}>
             Done
           </Button>
         </Box>

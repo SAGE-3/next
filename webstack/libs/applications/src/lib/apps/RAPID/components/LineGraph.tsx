@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import Chart from '../echarts_plots/Chart';
 import * as API from '../api/apis';
@@ -18,9 +18,10 @@ function LineGraph({ children }: LineGraphProps) {
 function AppComponent(props: App) {
   const [data, setData] = useState<any>(null);
   const [option, setOption] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
   const s = props.data.state;
 
-  function createQueries(): { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } {
+  const createQueries = useMemo(() => {
     const queries: { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } = {
       waggleNodes: [],
       mesonetStations: [],
@@ -72,56 +73,26 @@ function AppComponent(props: App) {
     }
 
     return queries;
-  }
+  }, [s.metric, s.sensors, s.startTime, s.endTime]);
 
-  // const queries = {
-  //   waggleNodes: [
-  //     {
-  //       id: 'W097',
-  //       query: {
-  //         start: new Date(1719268246465),
-  //         end: new Date(),
-  //         filter: {
-  //           name: QUERY_FIELDS.TEMPERATURE.SAGE_NODE,
-  //           sensor: 'bme680',
-  //           vsn: 'W097',
-  //         },
-  //       },
-  //     },
-  //   ],
-  //   mesonetStations: [
-  //     {
-  //       id: '004HI',
-  //       query: {
-  //         stationId: '004HI',
-  //         start: new Date(1719268246465),
-  //         end: new Date(),
-  //         metric: QUERY_FIELDS.TEMPERATURE.MESONET,
-  //       },
-  //     },
-  //     {
-  //       id: '018HI',
-  //       query: {
-  //         stationId: '018HI',
-  //         start: new Date(1719268246465),
-  //         end: new Date(),
-  //         metric: QUERY_FIELDS.TEMPERATURE.MESONET,
-  //       },
-  //     },
-  //   ],
-  // } as { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] };
-
-  async function fetchData() {
-    const queries = createQueries();
-    console.log('queries', queries);
-    const res = await API.getCombinedSageMesonetData(queries);
-    setData(res);
-  }
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const queries = createQueries;
+      console.log('queries', queries);
+      const res = await API.getCombinedSageMesonetData(queries);
+      setData(res);
+    } catch (e) {
+      console.log('Error fetching data', e);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [createQueries]);
 
   // When state changes, fetch the data
   useEffect(() => {
     fetchData();
-  }, [s]);
+  }, [fetchData]);
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -163,8 +134,15 @@ function AppComponent(props: App) {
         xAxis: {
           type: 'category',
           boundaryGap: false,
+          name: 'Time',
+          nameLocation: 'middle',
+          nameGap: 40,
         },
-        yAxis: {},
+        yAxis: {
+          name: s.metric.name,
+          nameLocation: 'middle',
+          nameGap: 40,
+        },
         grid: {
           bottom: '25%',
           right: '25%',
@@ -191,7 +169,7 @@ function AppComponent(props: App) {
     }
   }, [data]);
 
-  return data ? <Chart option={option} /> : <LoadingSpinner />;
+  return data && !isLoading ? <Chart option={option} /> : <LoadingSpinner />;
 }
 
 function ToolbarComponent(props: App) {

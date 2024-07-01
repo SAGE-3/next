@@ -8,18 +8,24 @@ interface DateRangeSelectorProps {
   onDateRangeChange: (newDateRange: DateRange) => void;
   showLabel?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  setAction?: (val: DateRange) => void;
 }
 
-const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({ dateRange, onDateRangeChange, showLabel = true, size = 'md' }) => {
+const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
+  dateRange,
+  onDateRangeChange,
+  showLabel = true,
+  size = 'md',
+  setAction,
+}) => {
   const handleDateRangeChange = (newDateRange: DateRange) => {
     onDateRangeChange(newDateRange);
-    console.log('New date range:', newDateRange);
   };
 
   return (
     <Box>
       {showLabel && <label htmlFor="time-range">Time Range</label>}
-      <DateRangePicker size={size} onChange={handleDateRangeChange} dateRange={dateRange} />
+      <DateRangePicker size={size} onChange={handleDateRangeChange} dateRange={dateRange} setAction={setAction} />
     </Box>
   );
 };
