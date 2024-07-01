@@ -113,7 +113,6 @@ const autoUpdater = electron.autoUpdater;
 //     if (returnValue.response === 0) autoUpdater.quitAndInstall();
 //   });
 // });
-
 // autoUpdater.setFeedURL({
 //   url: 'https://update.electronjs.org/SAGE-3/next/darwin-arm64/client-1.0.0-beta.31',
 //   requestHeaders: { 'User-Agent': 'update-electron-app/2.0.1 (darwin: arm64)' },
@@ -129,10 +128,9 @@ updateElectronApp({
     type: UpdateSourceType.ElectronPublicUpdateService,
     repo: 'SAGE-3/next',
   },
-  updateInterval: '5 minutes',
+  updateInterval: '10 minutes',
   logger: require('electron-log'),
 });
-
 /////////////////////////////////////////////////////////////////
 
 // Registering a custom protocol sage3://
