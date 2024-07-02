@@ -172,7 +172,7 @@ function AppComponent(props: App) {
   );
 }
 
-function ToolbarComponent() {
+function ToolbarComponent(props: App) {
   return <></>;
 }
 LocationMap.AppComponent = AppComponent;

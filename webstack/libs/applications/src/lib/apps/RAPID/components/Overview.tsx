@@ -108,7 +108,7 @@ function AppComponent(props: App) {
   );
 }
 
-function ToolbarComponent(props: RAPIDState): JSX.Element {
+function ToolbarComponent(props: App): JSX.Element {
   return <div> Toolbar </div>;
 }
 

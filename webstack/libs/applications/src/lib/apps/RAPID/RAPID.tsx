@@ -13,6 +13,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useState, useEffect } from 'react';
 import ComponentSelector from './components/ComponentSelector';
+import ToolbarSelector from './components/ToolbarSelector';
 import StationEditorModal from './components/station-editor/StationEditorModal';
 
 import { SelectedSensor } from './components/station-editor/StationEditorModal';
@@ -169,6 +170,7 @@ function ToolbarComponent(props: App): JSX.Element {
           }}
         />
       </Box>
+      <ToolbarSelector props={props as App} />
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>
   );
