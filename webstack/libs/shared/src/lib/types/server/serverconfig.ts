@@ -53,6 +53,9 @@ export interface ServerConfiguration {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
     zoom: ZoomSDKConfiguration;
+    chat: AIChatConfiguration;
+    codellama: CodeLlamaConfiguration;
+    yolo: YoloConfiguration;
   };
 
   // Feature flags
@@ -151,4 +154,23 @@ export interface ZoomSDKConfiguration {
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
+}
+
+// AI Chat Configuration
+export interface AIChatConfiguration {
+  url: string;
+  model: string; // LLM model
+  apiKey: string; // API Key
+  max_tokens: number;
+}
+
+export interface CodeLlamaConfiguration {
+  url: string;
+  apiKey: string;
+  max_tokens: number;
+}
+
+export interface YoloConfiguration {
+  url: string;
+  apiKey: string;
 }

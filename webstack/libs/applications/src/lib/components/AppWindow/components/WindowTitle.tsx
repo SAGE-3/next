@@ -8,7 +8,7 @@
 
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 
-import { useUIStore } from '@sage3/frontend';
+import { useUserSettings } from '@sage3/frontend';
 
 type WindowTitleProps = {
   size: { width: number; height: number };
@@ -30,34 +30,37 @@ export function WindowTitle(props: WindowTitleProps) {
   const titleBrightness = useColorModeValue('85%', '65%');
   const titleColor = useColorModeValue('white', 'white');
 
-  const appTitles = useUIStore((state) => state.showAppTitle);
+  const { settings } = useUserSettings();
+  const appTitles = settings.showAppTitles;
 
   if (!appTitles && !selected) return null;
 
-  return <Box
-    position="absolute"
-    top="0px"
-    left="0px"
-    width={size.width}
-    transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
-    display="flex"
-    justifyContent="left"
-    alignItems="center"
-    pointerEvents="none"
-  >
-    <Text
-      color={titleColor}
-      fontSize={16 / scale}
-      whiteSpace="nowrap"
-      textOverflow="ellipsis"
-      overflow="hidden"
-      background={titleBackground}
-      backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
-      borderRadius={6}
-      px={2}
-      userSelect={"none"}
+  return (
+    <Box
+      position="absolute"
+      top="0px"
+      left="0px"
+      width={size.width}
+      transform={`translate(-${2 / scale}px, calc(-100% - ${4 / scale}px))`}
+      display="flex"
+      justifyContent="left"
+      alignItems="center"
+      pointerEvents="none"
     >
-      {title}
-    </Text>
-  </Box>;
+      <Text
+        color={titleColor}
+        fontSize={16 / scale}
+        whiteSpace="nowrap"
+        textOverflow="ellipsis"
+        overflow="hidden"
+        background={titleBackground}
+        backdropFilter={`blur(${Math.max(5, 5 / scale)}px) brightness(${titleBrightness})`}
+        borderRadius={6}
+        px={2}
+        userSelect={'none'}
+      >
+        {title}
+      </Text>
+    </Box>
+  );
 }

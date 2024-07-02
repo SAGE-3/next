@@ -18,7 +18,7 @@ const bookmarkStore = require('./bookmarkstore');
 
 // Utils
 const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
-const updater = require('./updater');
+// const updater = require('./updater');
 
 /**
  * Build a menu template for a window
@@ -43,6 +43,24 @@ function buildSageMenu(window, commander) {
         },
       },
       {
+        label: 'Check for Updates...',
+        click() {
+          const autoUpdater = electron.autoUpdater;
+          autoUpdater.once('update-not-available', (e) => {
+            const version = electron.app.getVersion();
+            const dialogOpts = {
+              type: 'info',
+              buttons: ['Ok'],
+              title: 'Application Update',
+              message: 'No SAGE3 update available.',
+              detail: `You are running the latest version (${version}) of the SAGE3 client.`,
+            };
+            dialog.showMessageBox(dialogOpts);
+          });
+          autoUpdater.checkForUpdates();
+        },
+      },
+      {
         label: 'Quit SAGE3',
         accelerator: 'CommandOrControl+Q',
         click: function () {
@@ -50,7 +68,7 @@ function buildSageMenu(window, commander) {
         },
       },
     ]);
-    tray.setToolTip('SAGE3 controls');
+    tray.setToolTip('SAGE3 Menubar');
     tray.setContextMenu(contextMenu);
   });
 
@@ -122,12 +140,21 @@ function buildSageMenu(window, commander) {
         },
         {
           label: 'Check for Updates...',
-          // accelerator: 'CommandOrControl+U',
           click() {
             if (window) {
-              const currentURL = window.webContents.getURL();
-              const parsedURL = new URL(currentURL);
-              updater.checkForUpdates(parsedURL.origin, true);
+              const autoUpdater = electron.autoUpdater;
+              autoUpdater.once('update-not-available', (e) => {
+                const version = electron.app.getVersion();
+                const dialogOpts = {
+                  type: 'info',
+                  buttons: ['Ok'],
+                  title: 'Application Update',
+                  message: 'No SAGE3 update available.',
+                  detail: `You are running the latest version (${version}) of the SAGE3 client.`,
+                };
+                dialog.showMessageBox(dialogOpts);
+              });
+              autoUpdater.checkForUpdates();
             }
           },
         },
@@ -359,6 +386,20 @@ function buildSageMenu(window, commander) {
       role: 'help',
       submenu: [
         {
+          label: 'About SAGE3',
+          click() {
+            const version = electron.app.getVersion();
+            const dialogOpts = {
+              type: 'info',
+              buttons: ['Ok'],
+              title: 'SAGE3 Client',
+              message: `Version ${version}`,
+              detail: `Copyright © 2024 Project SAGE3`,
+            };
+            dialog.showMessageBox(dialogOpts);
+          },
+        },
+        {
           label: 'Quick Start Guide',
           click: function () {
             shell.openExternal('https://sage-3.github.io/pdf/SAGE3-v1.0.16-2024a.pdf');
@@ -368,6 +409,12 @@ function buildSageMenu(window, commander) {
           label: 'Discord Server (Online Forum)',
           click: function () {
             shell.openExternal('https://discord.gg/hHsKu47buY');
+          },
+        },
+        {
+          label: 'SAGE3 Newsletter',
+          click: function () {
+            shell.openExternal('https://sage3.curated.co');
           },
         },
         {

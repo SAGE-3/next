@@ -25,44 +25,39 @@ import {
   Center,
   AbsoluteCenter,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
 
-// Server Sent Event library
-import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Date management
 import { formatDistance } from 'date-fns';
 import { format } from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
-// OpenAI API v4
-import OpenAI from 'openai';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, useConfigStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-// LLAMA2 API
-//  - API: https://huggingface.github.io/text-generation-inference/
-const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
-const LLAMA2_ENDPOINT = '/generate_stream';
-const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
-const LLAMA2_TOKENS = 300;
-const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+// AI model information from the backend
+interface modelInfo {
+  name: string;
+  model: string;
+  maxTokens: number;
+}
 
+// LLAMA2
+const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
+// LLAMA3
+const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 // OpenAI API
-let OPENAI_API_KEY = '';
-let OPENAI_ENGINE = '';
-const OPENAI_TOKENS = 300;
-const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+// const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
   const { user } = useUser();
 
   // Colors for Dark theme and light theme
@@ -75,12 +70,13 @@ function AppComponent(props: App): JSX.Element {
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
+  // App state management
+  const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
   const users = useUsersStore((state) => state.users);
-  // Configuration information
-  const config = useConfigStore((state) => state.config);
-
-  const [openai, setOpenai] = useState<OpenAI>();
+  // Online Models
+  // const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState<modelInfo>();
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -110,16 +106,17 @@ function AppComponent(props: App): JSX.Element {
     setInput(value);
   };
 
+  const sendMessage = async () => {
+    await newMessage(input.trim());
+    setInput('');
+  };
+
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
       e.preventDefault();
-      send();
+      sendMessage();
     }
-  };
-  const send = async () => {
-    await newMessage(input.trim());
-    setInput('');
   };
 
   // Update from server
@@ -132,11 +129,51 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (s.context) {
-      const ctx = `@G I want to ask questions about this topic: ${s.context}`;
+      // Quick summary
+      const ctx = `@G Please carefully read the following document text:
+
+      <document>
+      ${s.context}
+      </document>
+
+      After reading through the document, identify the main topics, themes, and key concepts that are covered.
+
+      Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+
+      Please list the keywords you came up in bold using the Markdown syntax.`;
+
+      // Longer version
+      // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
+
+      // <documents>
+      // ${s.context}
+      // </documents>
+
+      // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
+
+      // - Write a sentence or two describing the essence of the topic
+      // - Extract a few representative excerpts or quotes from the documents that relate to the topic
+      // - Estimate approximately what percentage of the overall content across the documents is about this topic
+
+      // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
+
+      // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
+
+      // Enclose your final topic analysis in <analysis> tags.`;
       newMessage(ctx);
       setInput('');
     }
   }, [s.context]);
+
+  // Tokens coming from the server as a stream
+  useEffect(() => {
+    if (s.token) {
+      setStreamText(s.token);
+    } else {
+      setStreamText('');
+    }
+    goToBottom('auto');
+  }, [s.token]);
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
@@ -162,153 +199,84 @@ function AppComponent(props: App): JSX.Element {
       setProcessing(true);
       // Remove the @X
       const request = new_input.slice(2);
-      // Object to stop the request and the stream of events
-      const ctrl = new AbortController();
-      // Save the controller for later use
-      ctrlRef.current = ctrl;
       // Build the request
-      let tempText = '';
-      setStreamText(tempText);
+      // let tempText = '';
+      // setStreamText(tempText);
 
-      if (isOpenAIQuestion && openai) {
-        const messages = [
-          { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-          { role: 'user', content: request },
-        ];
-        let complete_request;
-        if (previousQuestion && previousAnswer) {
-          complete_request = [
-            { role: 'system', content: OPENAI_SYSTEM_PROMPT },
-            { role: 'user', content: previousQuestion },
-            { role: 'assistant', content: previousAnswer },
-            { role: 'user', content: request },
-          ];
-        } else {
-          complete_request = messages;
-        }
-
-        const stream = await openai.chat.completions.create({
-          model: OPENAI_ENGINE,
-          // @ts-expect-error
-          messages: complete_request || messages,
-          max_tokens: OPENAI_TOKENS,
-          temperature: 0.2,
-          stream: true,
-        });
-        for await (const part of stream) {
-          const text = part.choices[0]?.delta?.content;
-          if (text) {
-            tempText += part.choices[0]?.delta?.content;
-            setStreamText(tempText);
-            goToBottom('auto');
-          }
-        }
-        setProcessing(false);
-        // Clear the stream text
-        setStreamText('');
-        ctrlRef.current = null;
-        setPreviousAnswer(tempText);
-        // Add messages
-        updateState(props._id, {
-          ...s,
-          previousQ: request,
-          previousA: tempText,
-          messages: [
-            ...s.messages,
-            initialAnswer,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch + 1,
-              userName: 'OpenAI',
-              query: '',
-              response: tempText,
-            },
-          ],
-        });
-      } else {
+      if (isGeppettoQuestion) {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
-          /*
-            schema for follow up questions:
-            https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            <s>[INST] {{ user_msg_2 }} [/INST]
-          */
-          complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+          if (selectedModel?.model === 'llama2') {
+            /*
+              schema for follow up questions:
+              https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+              {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
+              <s>[INST] {{ user_msg_2 }} [/INST]
+             */
+            complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
+          } else {
+            // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+            // LLAMA3 schema for follow up questions:
+            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message_1 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+            // {{ model_answer_1 }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message_2 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                 <|start_header_id|>user<|end_header_id|>
+                 ${previousQuestion}<|eot_id|>
+                 <|start_header_id|>assistant<|end_header_id|>
+                 ${previousAnswer}<|eot_id|>
+                 <|start_header_id|>user<|end_header_id|>
+                 ${request} <|eot_id|>
+                 <|start_header_id|>assistant<|end_header_id|>`;
+          }
         } else {
-          // Test to tweak the system prompt
-          complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+          if (selectedModel?.model === 'llama2') {
+            complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
+          } else {
+            // LLAMA3 question
+            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+            // {{ user_message }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                   <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
+                   <|start_header_id|>assistant<|end_header_id|>`;
+          }
         }
 
-        // URL for the request
-        const modelURL = LLAMA2_URL;
-        // Build the body of the request
-        const modelBody = {
-          inputs: complete_request || request,
-          parameters: { max_new_tokens: LLAMA2_TOKENS },
-        };
-        const modelHeaders: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        // Post the request and handle server-sent events
-        fetchEventSource(modelURL, {
-          method: 'POST',
-          headers: modelHeaders,
-          body: JSON.stringify(modelBody),
-          signal: ctrl.signal,
-          onmessage(msg) {
-            // if the server emits an error message, throw an exception
-            // so it gets handled by the onerror callback below:
-            if (msg.event === 'FatalError') {
-              console.log('LLM> Error', msg.data);
-              setStreamText('');
-              ctrlRef.current = null;
-            } else {
-              const message = JSON.parse(msg.data);
-              if (message.generated_text) {
-                setProcessing(false);
-                // Clear the stream text
-                setStreamText('');
-                ctrlRef.current = null;
-                setPreviousAnswer(message.generated_text);
-                // Add messages
-                updateState(props._id, {
-                  ...s,
-                  previousQ: request,
-                  previousA: message.generated_text,
-                  messages: [
-                    ...s.messages,
-                    initialAnswer,
-                    {
-                      id: genId(),
-                      userId: user._id,
-                      creationId: '',
-                      creationDate: now.epoch + 1,
-                      userName: 'Geppetto',
-                      query: '',
-                      response: message.generated_text,
-                    },
-                  ],
-                });
-              } else {
-                if (message.token.text) {
-                  tempText += message.token.text;
-                  setStreamText(tempText);
-                  goToBottom('auto');
-                }
-              }
-            }
-          },
-        });
+        // Send request to backend
+        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400, app_id: props._id });
+        if (backend.success) {
+          const new_text = backend.output || '';
+          setProcessing(false);
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(new_text);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: request,
+            previousA: new_text,
+            messages: [
+              ...s.messages,
+              initialAnswer,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'Geppetto',
+                query: '',
+                response: new_text,
+              },
+            ],
+          });
+        }
+
       }
     }
-
-    setTimeout(() => {
-      // Scroll to bottom of chat box smoothly
-      goToBottom();
-    }, 100);
   };
 
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
@@ -356,6 +324,15 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
+
+    async function fetchStatus() {
+      const response = await AiAPI.chat.status();
+      const models = response.onlineModels as modelInfo[];
+      // setOnlineModels(models);
+      if (response.onlineModels.length > 0) setSelectedModel(models[0]);
+    }
+    fetchStatus();
+
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight,
@@ -373,17 +350,6 @@ function AppComponent(props: App): JSX.Element {
         }
       }
     });
-
-    // API configuration
-    OPENAI_API_KEY = config.openai.apiKey || '';
-    OPENAI_ENGINE = config.openai.model || 'gpt-3.5-turbo';
-    if (!OPENAI_API_KEY) {
-      const openaiClient = new OpenAI({
-        apiKey: OPENAI_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-      setOpenai(openaiClient);
-    }
   }, []);
 
   // Wait for new messages to scroll to the bottom
@@ -396,7 +362,7 @@ function AppComponent(props: App): JSX.Element {
   }, [s.messages]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
         {/* Display Messages */}
         <Box
@@ -593,21 +559,23 @@ function AppComponent(props: App): JSX.Element {
           })}
 
           {/* In progress Geppetto Messages */}
-          {streamText && (
-            <Box position="relative" my={1} maxWidth={'70%'}>
-              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  AI is typing...
-                </Text>
-              </Box>
+          {
+            streamText && (
+              <Box position="relative" my={1} maxWidth={'70%'}>
+                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                    AI is typing...
+                  </Text>
+                </Box>
 
-              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                  {streamText}
+                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                    {streamText}
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          )}
+            )
+          }
         </Box>
         <HStack>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
@@ -654,7 +622,8 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
+            placeholder={"Chat or @G ask Geppetto" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
+            // placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -663,7 +632,7 @@ function AppComponent(props: App): JSX.Element {
             value={input}
             ref={inputRef}
           />
-          <InputRightElement onClick={send}>
+          <InputRightElement onClick={sendMessage}>
             <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>

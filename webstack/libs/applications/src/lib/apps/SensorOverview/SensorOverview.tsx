@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -33,7 +34,7 @@ import {
   Switch,
 } from '@chakra-ui/react';
 
-import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
+import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-icons/md';
 import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
@@ -94,13 +95,11 @@ const convertToStringFormat = (date: string) => {
 const resolveTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {
     case '24 hours':
-      return getFormattedDateTime24HoursBefore();
+      return 1440;
     case '1 week':
-      return getFormattedDateTime1WeekBefore();
+      return 10080;
     case '1 month':
-      return getFormattedDateTime1MonthBefore();
-    case '1 year':
-      return getFormattedDateTime1YearBefore();
+      return 43200;
     default:
       return 'Custom date range';
   }
@@ -173,30 +172,34 @@ function AppComponent(props: App): JSX.Element {
   }, [lastUpdate]);
 
   useEffect(() => {
-    console.log(s.stationNames);
     const interval = setInterval(
       () => {
-        fetchStationData();
-        setLastUpdate(Date.now());
+        if (s.widget.liveData) {
+          fetchStationData();
+          setLastUpdate(Date.now());
+        }
       },
 
       60 * 1000
       //10 minutes
     );
+
     fetchStationData();
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
   const fetchStationData = async () => {
     setIsLoaded(false);
-    console.log(s.widget.startDate, s.widget.endDate);
     let tmpStationMetadata: any = [];
     let url = '';
 
     if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
         s.widget.timePeriod
-      )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+      //   s.widget.timePeriod
+      // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
     } else if (!s.widget.liveData) {
       url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
         s.widget.startDate
@@ -209,8 +212,8 @@ function AppComponent(props: App): JSX.Element {
     if (sensor) {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
+      console.log(sensorData);
     }
-    console.log(tmpStationMetadata);
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
     availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
     availableVariableNames.push('Elevation & Current Temperature');
@@ -250,7 +253,7 @@ function AppComponent(props: App): JSX.Element {
 
   const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
     const widget = { ...props.data.state.widget, visualizationType: visualizationType };
-    const app = await createApp({
+    await createApp({
       title: 'Hawaii Mesonet',
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
@@ -291,7 +294,7 @@ function AppComponent(props: App): JSX.Element {
   const duplicateHoverMenuItem = useColorModeValue('rgb(178, 216, 243)', 'cyan.600');
 
   return (
-    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
+    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()} hideBackgroundIcon={MdSensors}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         <Box position="absolute" top="50%" right="1rem" zIndex={999}>
           <Button
@@ -473,7 +476,6 @@ const convertFormattedTimeToDateTime = (formattedTime: string) => {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const createApp = useAppStore((state) => state.create);
 
   const updateState = useAppStore((state) => state.updateState);
   const [selectedDates, setSelectedDates] = useState<Date[]>([
@@ -503,16 +505,17 @@ function ToolbarComponent(props: App): JSX.Element {
   }, [selectedDates]);
 
   useEffect(() => {
-    console.log(stationMetadata, 'stationMetadata');
     const fetchStationData = async () => {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
       const stationNames = stationData.map((station) => station.name);
       if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+          s.stationNames
+        )}&showemptystations=1&recent=${resolveTimePeriod(
           s.widget.timePeriod
-        )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
       } else if (!s.widget.liveData) {
         url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${
           s.widget.startDate
@@ -524,7 +527,6 @@ function ToolbarComponent(props: App): JSX.Element {
         const sensorData = sensor['STATION'];
         tmpStationMetadata = sensorData;
       }
-      console.log(tmpStationMetadata, 'tmp');
       setStationMetadata(tmpStationMetadata);
       setIsLoaded(true);
     };
@@ -534,80 +536,6 @@ function ToolbarComponent(props: App): JSX.Element {
       console.log(err);
     });
   }, []);
-
-  const handleVisualizeAllVariables = async () => {
-    let url = '';
-    if (props.data.state.widget.visualizationType === 'variableCard') {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        s.stationNames
-      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    } else {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-        props.data.state.widget.startDate
-      }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    }
-
-    const response = await fetch(url);
-    const sensor = await response.json();
-    if (sensor) {
-      const observations = sensor['STATION'][0]['OBSERVATIONS'];
-      let properties = Object.getOwnPropertyNames(observations);
-      let row = 0;
-      let visualizationSize = { height: 1800, width: 1800 };
-      const isLineBarScatterStationMetadataVis =
-        props.data.state.widget.visualizationType === 'line' ||
-        props.data.state.widget.visualizationType === 'bar' ||
-        props.data.state.widget.visualizationType === 'scatter' ||
-        props.data.state.widget.visualizationType === 'stationMetadata';
-
-      const isStatisticsCard = props.data.state.widget.visualizationType === 'statisticCard';
-      if (isLineBarScatterStationMetadataVis) {
-        visualizationSize = { height: 1200, width: 2000 };
-      } else if (isStatisticsCard) {
-        visualizationSize = { height: 1200, width: 1800 };
-      }
-      properties = properties.filter((property) => property !== 'date_time');
-      properties = properties.filter((property) => property !== 'wind_cardinal_direction_1d');
-      for (let i = 0; i < properties.length; i++) {
-        if (i % 3 === 0) row++;
-
-        const widget = props.data.state.widget;
-        widget.yAxisNames[0] = properties[i];
-        const app = await createApp({
-          title: 'Hawaii Mesonet',
-          roomId: props.data.roomId!,
-          boardId: props.data.boardId!,
-          position: {
-            x: props.data.position.x + visualizationSize.width * (i % 3),
-            y: props.data.position.y + visualizationSize.height * row,
-            z: 0,
-          },
-          size: {
-            width: visualizationSize.width,
-            height: visualizationSize.height,
-            depth: 0,
-          },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Hawaii Mesonet',
-          state: {
-            sensorData: {},
-            stationNames: props.data.state.stationNames,
-            listOfStationNames: s.stationNames[0],
-            location: [-157.816, 21.297],
-            zoom: 8,
-            baseLayer: 'OpenStreetMap',
-            overlay: true,
-            widget: widget,
-          },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
-      }
-    }
-  };
 
   const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const variable = event.target.value;
@@ -643,10 +571,6 @@ function ToolbarComponent(props: App): JSX.Element {
         updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: '1 month' } });
 
         break;
-      case '1 year':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: '1 year' } });
-
-        break;
       default:
         break;
     }
@@ -656,7 +580,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleFilterOn = (attributeName: string) => {
     const isFirstTime = isSortedOn.name !== attributeName || isSortedOn.direction === 'ascending';
     const isSecondTime = isSortedOn.name === attributeName && isSortedOn.direction === 'descending';
-    const isThirdTime = isSortedOn.name === attributeName && isSortedOn.direction === 'ascending';
     if (isFirstTime) {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
@@ -861,7 +784,6 @@ function ToolbarComponent(props: App): JSX.Element {
             <option value={'24 hours'}>24 hours</option>
             <option value={'1 week'}>1 week</option>
             <option value={'1 month'}>1 month</option>
-            <option value={'1 year'}>1 year</option>
           </Select>
         </Tooltip>
       ) : (

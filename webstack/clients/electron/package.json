@@ -1,25 +1,26 @@
 {
   "name": "SAGE3",
-  "version": "1.0.16",
+  "version": "1.0.28",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SAGE-3"
+    "url": "https://github.com/SAGE-3/next"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^6.0.2",
     "commander": "^7",
+    "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
     "node-fetch": "^2.6.8",
     "semver": "^7",
-    "update-electron-app": "^2.0.1",
+    "update-electron-app": "^3.0.0",
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "electron": "^28.2.0",
-    "electron-notarize": "^1",
+    "@electron/notarize": "^2.3.0",
+    "electron": "^31.1.0",
     "electron-packager": "latest"
   },
   "optionalDependencies": {

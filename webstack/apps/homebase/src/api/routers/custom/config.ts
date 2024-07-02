@@ -11,17 +11,31 @@ import * as express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
 
+const JUPYTER_TOKEN_KEY = 'config:jupyter:token';
+let JUPYTER_TOKEN: string | undefined = undefined;
+
+/**
+ * Fetch the jupyter token from redis
+ * @returns Get the jupyter token from redis
+ */
+export async function getJupyterToken(): Promise<string | undefined> {
+  if (JUPYTER_TOKEN !== undefined) return JUPYTER_TOKEN;
+  // Open the redis connection
+  const client = createClient({ url: config.redis.url });
+  await client.connect();
+  const token = await client.get(JUPYTER_TOKEN_KEY);
+  client.disconnect();
+  JUPYTER_TOKEN = token ? token : undefined;
+  return JUPYTER_TOKEN;
+}
+
 export function ConfigRouter(): express.Router {
   const router = express.Router();
 
   // Get server configuration data structure
   router.get('/', async (req, res) => {
-    // Open the redis connection
-    const client = createClient({ url: config.redis.url });
-    await client.connect();
-    const token = await client.get('config:jupyter:token');
-    client.disconnect();
-
+    // Get the jupyter token
+    const token = await getJupyterToken();
     // Configuration public values
     const configuration = {
       serverName: config.serverName,

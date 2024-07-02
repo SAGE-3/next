@@ -30,6 +30,7 @@ import {
   useHotkeys,
   Alfred,
   HotkeysEvent,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import {
@@ -60,10 +61,13 @@ export function UILayer(props: UILayerProps) {
   // Abilities
   const canLasso = useAbility('lasso', 'apps');
 
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
-  const showUI = useUIStore((state) => state.showUI);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
     (state) => state
@@ -120,7 +124,7 @@ export function UILayer(props: UILayerProps) {
   };
 
   // How to save a board opened files into a ZIP archive
-  const downloadBoard = async () => {
+  const downloadRoomAssets = async (ids: string[]) => {
     // Create a ZIP object
     const zip = new JSZip();
     // Generate a filename using date and board name
@@ -130,11 +134,52 @@ export function UILayer(props: UILayerProps) {
     // Create a folder in the archive
     const session = zip.folder(`SAGE3-${boardName}`);
     // Iterate over all the apps
-    await apps.reduce(async (promise, a) => {
+    await assets.reduce(async (promise, asset) => {
       // wait for the last async function to finish
       await promise;
+      // Assets from the room and in the list
+      if (asset.data.room === props.roomId && ids.includes(asset._id)) {
+        // Derive the public URL
+        const url = apiUrls.assets.getAssetById(asset.data.file);
+        // Get the filename for the asset
+        const filename = asset.data.originalfilename;
+        // if all set, add the file to the zip
+        if (url && filename && session) {
+          // Download the file contents
+          const buffer = await fetch(url).then((r) => r.arrayBuffer());
+          // add to zip
+          session.file(filename, buffer);
+        }
+      }
+    }, Promise.resolve());
+    // Display a message
+    toast({ title: 'Assets Packaged', status: 'info', duration: 4000, isClosable: true });
+    // Finish the zip and trigger the download
+    zip.generateAsync({ type: 'blob' }).then(function (content) {
+      // Create a URL from the blob
+      const url = URL.createObjectURL(content);
+      // Trigger the download
+      downloadFile(url, name);
+      toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
+    });
+  };
+
+  const downloadBoardAssets = async () => {
+    // Create a ZIP object
+    const zip = new JSZip();
+    // Generate a filename using date and board name
+    const boardName = boards.find((b) => b._id === props.boardId)?.data.name || 'session';
+    const prettyDate = formatDate(new Date(), 'yyyy-MM-dd-HH-mm-ss');
+    const name = `SAGE3-${boardName.replace(' ', '-')}-${prettyDate}.zip`;
+    // Create a folder in the archive
+    const session = zip.folder(`SAGE3-${boardName}`);
+    // Iterate over all the apps
+    await savedSelectedAppsIds.reduce(async (promise, id) => {
+      // wait for the last async function to finish
+      await promise;
+      const a = apps.find((a) => a._id === id);
       // process the next app with an asset
-      if ('assetid' in a.data.state) {
+      if (a && 'assetid' in a.data.state) {
         const assetid = a.data.state.assetid;
         if (assetid) {
           // Get the asset from the store
@@ -153,7 +198,7 @@ export function UILayer(props: UILayerProps) {
             }
           }
         }
-      } else if (a.data.type === 'Stickie') {
+      } else if (a && a.data.type === 'Stickie') {
         // Stickies are saved as text files
         if ('text' in a.data.state) {
           const filename = `stickie-${a._id}.txt`;
@@ -165,7 +210,7 @@ export function UILayer(props: UILayerProps) {
       }
     }, Promise.resolve());
     // Display a message
-    toast({ title: 'Assets Packaged', status: 'info', duration: 2000, isClosable: true });
+    toast({ title: 'Assets Packaged', status: 'info', duration: 4000, isClosable: true });
     // Finish the zip and trigger the download
     zip.generateAsync({ type: 'blob' }).then(function (content) {
       // Create a URL from the blob
@@ -174,12 +219,6 @@ export function UILayer(props: UILayerProps) {
       downloadFile(url, name);
       toast({ title: 'Download in Progress', status: 'success', duration: 2000, isClosable: true });
     });
-  };
-
-  // Zoom to the saved selected apps
-  const goToSavedSelectedApps = () => {
-    if (savedSelectedAppsIds.length < 1) return;
-    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
   };
 
   // Deselect all apps when the escape key is pressed
@@ -218,27 +257,8 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Tooltip
-            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
-          >
-            <IconButton
-              size="sm"
-              disabled={savedSelectedAppsIds.length < 1}
-              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
-              icon={<MdApps />}
-              fontSize="xl"
-              variant={'outline'}
-              aria-label={'selected-apps'}
-              onClick={goToSavedSelectedApps}
-            ></IconButton>
-          </Tooltip>
         </Box>
       </Box>
-
-      {/* Buttons Middle Bottom */}
-      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
-        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
-      </Box> */}
 
       {/* ServerName Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
@@ -246,20 +266,14 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" display={showUI ? 'initial' : 'none'}>
+      <Box position="absolute" right="1" top="1">
         <Clock isBoard={true} />
       </Box>
 
-      {selectedApp && <AppToolbar></AppToolbar>}
+      {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
       <ContextMenu divId="board">
-        <BoardContextMenu
-          boardId={props.boardId}
-          roomId={props.roomId}
-          clearBoard={clearOnOpen}
-          showAllApps={showAllApps}
-          downloadBoard={downloadBoard}
-        />
+        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
       <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
@@ -268,7 +282,7 @@ export function UILayer(props: UILayerProps) {
 
       <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
 
-      <AssetsPanel boardId={props.boardId} roomId={props.roomId} />
+      <AssetsPanel boardId={props.boardId} roomId={props.roomId} downloadRoomAssets={downloadRoomAssets} />
 
       <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
 
@@ -286,7 +300,7 @@ export function UILayer(props: UILayerProps) {
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
-      {canLasso && <LassoToolbar />}
+      {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}
 
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />

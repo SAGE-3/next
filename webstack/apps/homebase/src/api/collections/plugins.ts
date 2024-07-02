@@ -62,7 +62,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Get body information
       const pluginName = req.body.name as string;
       const description = req.body.description as string;
-      const username = req.user.displayName as string;
+      const username = req.body.username as string;
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {
@@ -83,7 +83,10 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       ensureDirectoryExistence(path.join(appsPath, pluginName));
 
       const p = req.file?.path;
-      if (p == undefined) return;
+      if (p == undefined) {
+        res.status(400).send({ success: false, message: 'Failed upload.' });
+        return;
+      }
 
       // Read the zip file
       try {
@@ -102,18 +105,30 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           // Extract keys
           const keys = Object.keys(result.files);
 
+          let foundIndex = false;
           // Create the files
-          keys.forEach(async (key) => {
+          for (const key of keys) {
             const item = result.files[key];
             // Replace the first directory with the plugin name
             const filePath = key.split('/');
-            filePath[0] = pluginName;
-            const truePAth = filePath.join('/');
-            ensureDirectoryExistence(path.join(appsPath, truePAth));
-            if (!item.dir) {
-              fs.writeFileSync(path.join(appsPath, truePAth), Buffer.from(await item.async('arraybuffer')));
+            if (filePath[0] !== '' && filePath[0] !== '__MACOSX' && filePath[0] !== '.DS_Store') {
+              if (filePath[1] !== '' && filePath[1] !== '.DS_Store') {
+                if (filePath[1] === 'index.html') foundIndex = true;
+                filePath[0] = pluginName;
+                const truePAth = filePath.join('/');
+                ensureDirectoryExistence(path.join(appsPath, truePAth));
+                if (!item.dir) {
+                  fs.writeFileSync(path.join(appsPath, truePAth), Buffer.from(await item.async('arraybuffer')));
+                }
+              }
             }
-          });
+          }
+          if (!foundIndex) {
+            removeUploadedFile();
+            fs.rmSync(path.join(appsPath, pluginName), { recursive: true, force: true });
+            res.status(400).send({ success: false, message: 'Index.html not found' });
+            return;
+          }
           // Update the database
           this.add(
             { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },

@@ -21,3 +21,4 @@ export * from './config';
 export * from './kernel';
 export * from './insight';
 export * from './zoom';
+export * from './annotation';

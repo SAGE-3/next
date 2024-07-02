@@ -1,4 +1,4 @@
-version: "3.8"
+
 services:
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -16,6 +16,10 @@ services:
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
   fastapi:
     image: "ghcr.io/mahdi-b/sagekernelserver:latest"
     ports:
@@ -40,7 +44,7 @@ services:
       restart_policy:
         condition: on-failure
   jupyter:
-    image: "jupyter/datascience-notebook:latest"
+    image: "quay.io/jupyter/datascience-notebook:2024-05-27"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks

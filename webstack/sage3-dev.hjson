@@ -52,9 +52,26 @@
     },
     "openai": {
       // API Key
-      "apiKey": "XXXX",
+      "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
+    },
+    "chat": {
+      "url": "https://arcade.evl.uic.edu/llama",
+      "model": "llama3",
+      // "url": "https://compaasgold03.evl.uic.edu",
+      // "model": "llama2",
+      "max_tokens": 2048,
+      "apiKey": ""
+    },
+    "codellama": {
+      "url": "https://arcade.evl.uic.edu/codellama",
+      "apiKey": "",
+      "max_tokens": 400
+    },
+    "yolo": {
+      "url": "https://arcade.evl.uic.edu/yolov8",
+      "apiKey": ""
     }
     "zoom": {
       // SDK Key

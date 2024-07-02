@@ -9,15 +9,95 @@
 // Mime type definitions
 import * as mime from 'mime';
 
-// Define extra MIME types
-mime.define({
-  'application/x-ipynb+json': ['ipynb'],
-  'application/dzi': ['dzi'],
-  'application/python': ['py'],
-  'application/url': ['url'],
-  'application/sage3': ['s3json'],
-  'application/x-geotiff': ['geotiff'],
+import hljs from 'highlight.js';
+
+hljs.configure({
+  languages: ['json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp'],
 });
+
+// Define extra MIME types
+mime.define(
+  {
+    'application/x-ipynb+json': ['ipynb'],
+    'application/dzi': ['dzi'],
+    'application/python': ['py'],
+    'application/url': ['url'],
+    'application/sage3': ['s3json'],
+    'application/x-geotiff': ['geotiff'],
+    'text/x-c': ['hpp', 'hxx', 'c++', 'h++'], // adding to ["c","cc","cxx","cpp","h","hh","dic"]
+    'text/x-csharp': ['cs', 'csharp'],
+    'application/typescript': ['ts'],
+  },
+  true // force
+);
+
+/**
+ * Determine the language of the code
+ * @param code string to check
+ * @returns string of the language
+ */
+export function stringContainsCode(code: string) {
+  try {
+    const lang = hljs.highlightAuto(code).language;
+    if (lang) {
+      return lang;
+    } else {
+      return 'plaintext';
+    }
+  } catch (error) {
+    return 'plaintext';
+  }
+}
+
+/**
+ * Test if a given mime type is code file (not python)
+ * C, C++, C#, Java, ...
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isCode(mimeType: string): boolean {
+  const formats = [
+    'text/javascript',
+    'text/x-c',
+    'text/x-csharp',
+    'text/x-java-source',
+    'application/json',
+    'text/yaml',
+    'application/javascript',
+    'application/typescript',
+  ];
+  return formats.includes(mimeType);
+}
+
+/**
+ * Maps a mime type to a code language
+ * @param code string to check
+ * @returns string of the language
+ */
+export function mimeToCode(code: string) {
+  const result = 'js';
+  switch (code) {
+    case 'text/javascript':
+    case 'application/javascript':
+      return 'js';
+    case 'text/x-c':
+      return 'c';
+    case 'text/x-csharp':
+      return 'cs';
+    case 'text/x-java-source':
+      return 'java';
+    case 'application/json':
+      return 'json';
+    case 'text/yaml':
+      return 'yaml';
+    case 'application/typescript':
+      return 'typescript';
+    default:
+      return result;
+  }
+  return result;
+}
 
 /**
  * Get the mime type for a given filename.
@@ -244,7 +324,7 @@ export function isMD(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isPython(mimeType: string): boolean {
-  return mimeType === 'application/python';
+  return mimeType === 'application/python' || mimeType === 'text/x-python-script';
 }
 
 /**
@@ -273,7 +353,7 @@ export function isValid(mimeType: string): boolean {
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
-    // isPythonNotebook(mimeType) ||
+    isPythonNotebook(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
     isJSON(mimeType) ||
@@ -281,6 +361,25 @@ export function isValid(mimeType: string): boolean {
     isCSV(mimeType) ||
     isDZI(mimeType) ||
     isPython(mimeType) ||
-    isGLTF(mimeType)
+    isGLTF(mimeType) ||
+    isCode(mimeType)
   );
+}
+
+/**
+ * Returns the file extension for a given mime type
+ * @param mimeType a given mime type
+ * @returns {string}
+ */
+export function getFileExtension(mimeType: string): string {
+  return mime.getExtension(mimeType) || 'txt';
+}
+
+/**
+ * Returns the mime type for a file name
+ * @param {string} filename
+ * @returns {(string | null)}
+ */
+export function getFileType(filename: string): string | null {
+  return mime.getType(filename);
 }

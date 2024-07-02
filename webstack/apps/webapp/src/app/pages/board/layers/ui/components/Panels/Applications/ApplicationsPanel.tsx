@@ -121,7 +121,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
         {appsList
           // create a button for each application
           .map((appName) => (
-            <ButtonPanel key={appName} title={appName} candrag={'true'} onClick={() => newApplication(appName as AppName)} />
+            <ButtonPanel key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
           ))}
       </VStack>
       {/* </Box> */}

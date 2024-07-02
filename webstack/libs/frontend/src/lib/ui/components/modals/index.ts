@@ -15,3 +15,4 @@ export * from './CreateKernelModal';
 export * from './HelpModal';
 export * from './Alfred';
 export * from './ConfirmValueModal';
+export * from './EditVisibilityModal';

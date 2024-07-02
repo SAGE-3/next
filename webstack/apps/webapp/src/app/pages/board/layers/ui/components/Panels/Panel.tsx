@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -20,7 +20,6 @@ const smallFont = 14;
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
-  candrag?: string;
   textColor?: string;
 }
 
@@ -37,6 +36,9 @@ export function ButtonPanel(props: ButtonPanelProps) {
     <Box w="100%">
       <Button
         {...props}
+        title={props.title}
+        textColor={props.textColor}
+        draggable={props.draggable}
         w="100%"
         borderRadius="md"
         h="auto"
@@ -47,7 +49,6 @@ export function ButtonPanel(props: ButtonPanelProps) {
         justifyContent="flex-start"
         // Drag and drop the button to create an app
         onDragStart={onDragStart}
-        draggable={props.candrag == 'true'}
       >
         {props.title}
       </Button>
@@ -71,7 +72,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
 
   return (
     <Box>
-      <Tooltip label={props.description} maxWidth={"400px"} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+      <Tooltip label={props.description} maxWidth={'400px'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
         <IconButton
           borderRadius="md"
           h="auto"
@@ -137,7 +138,8 @@ export function Panel(props: PanelProps) {
   const gripColor = useHexColor(grip);
 
   // UI store
-  const showUI = useUIStore((state) => state.showUI);
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
   const ref = createRef<HTMLDivElement>();
 
   // Panel Store

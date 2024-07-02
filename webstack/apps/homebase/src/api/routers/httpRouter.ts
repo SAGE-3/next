@@ -30,13 +30,24 @@ import {
   PluginsCollection,
   InsightCollection,
   RoomMembersCollection,
+  AnnotationsCollection,
 } from '../collections';
 
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { FilesRouter, ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, FastAPIRouter, PresenceThrottle } from './custom';
+import {
+  FilesRouter,
+  ConfigRouter,
+  InfoRouter,
+  TimeRouter,
+  NLPRouter,
+  LogsRouter,
+  FastAPIRouter,
+  PresenceThrottle,
+  AiRouter,
+} from './custom';
 
 import { config } from '../../config';
 
@@ -75,6 +86,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/message', MessageCollection.router());
   router.use('/insight', InsightCollection.router());
   router.use('/roommembers', RoomMembersCollection.router());
+  router.use('/annotations', AnnotationsCollection.router());
 
   // Check to see if plugins module is enabled.
   if (config.features.plugins) {
@@ -86,6 +98,9 @@ export function expressAPIRouter(): express.Router {
 
   // Experimental NLP route
   router.use('/nlp', NLPRouter());
+
+  // Ai Routes
+  router.use('/ai', AiRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

@@ -10,7 +10,7 @@ SERVER_VERSION_MAJOR=$(echo "$SERVER_VERSION"| cut -d'.' -f 1)
 
 echo "Docker Version:" $SERVER_VERSION
 
-if [ "${SERVER_VERSION_MAJOR}" -ge 20 ] && [ "$OSTYPE" = "darwin" ] ; then
+if [ "${SERVER_VERSION_MAJOR}" -ge 20 ] ; then
 	# Now compose part of docker
     CMD="docker compose"
 else

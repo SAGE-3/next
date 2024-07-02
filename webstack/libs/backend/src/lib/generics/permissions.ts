@@ -17,7 +17,7 @@ import { SAGE3Ability, RoleArg, ActionArg, ResourceArg } from '@sage3/shared';
 
 export type AuthAction = 'POST' | 'GET' | 'PUT' | 'DELETE' | 'SUB' | 'UNSUB';
 
-export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE' | 'PLUGINS';
+export type AuthSubject = 'USERS' | 'ASSETS' | 'APPS' | 'BOARDS' | 'ROOMS' | 'PRESENCE' | 'MESSAGE' | 'PLUGINS' | 'ANNOTATIONS';
 
 // Map provider to role
 // This is a temporary solution until we have a better way to handle roles

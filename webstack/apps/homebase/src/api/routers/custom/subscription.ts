@@ -22,7 +22,7 @@
 import { WebSocket } from 'ws';
 
 // Collection Imports
-import { AppsCollection, BoardsCollection, InsightCollection, RoomsCollection } from '../../collections';
+import { AppsCollection, BoardsCollection, RoomsCollection } from '../../collections';
 
 // Lib Imports
 import { SubscriptionCache } from '@sage3/backend';

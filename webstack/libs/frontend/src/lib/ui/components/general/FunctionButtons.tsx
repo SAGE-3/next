@@ -12,7 +12,7 @@ import { motion, useAnimation } from 'framer-motion';
 
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useUser, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUser, useUIStore, useUserSettings } from '@sage3/frontend';
 
 type FunctionButtonsProps = {
   boardId: string;
@@ -33,7 +33,8 @@ export function FunctionButtons(props: FunctionButtonsProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const createApp = useAppStore((state) => state.create);
   // When to show the UI or not
-  const showUI = useUIStore((state) => state.showUI);
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
 
   // Colors for the buttons in light and dark mode
   const bgColor = useColorModeValue('#DBDBD1', '#3B4B59');

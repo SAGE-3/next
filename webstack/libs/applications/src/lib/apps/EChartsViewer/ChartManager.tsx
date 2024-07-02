@@ -9,6 +9,7 @@
 import type { EChartsOption } from 'echarts';
 
 import variableUnits from '../SensorOverview/data/variableUnits';
+import { useColorModeValue } from '@chakra-ui/react';
 
 //Types
 type filterType = {
@@ -57,7 +58,7 @@ export const ChartManager = async (
   startDate: string,
   stationMetadata: any,
   timePeriod: string,
-  transform?: (filterType | aggregateType)[]
+  size: { width: number; height: number; depth: number }
 ): Promise<EChartsOption> => {
   let options: EChartsOption = {};
   let data = [];
@@ -95,8 +96,6 @@ export const ChartManager = async (
   // These attributes are not in the data, so add them
   // They are single values for each station, rather than multiple values
   for (let i = 0; i < data.length; i++) {
-    console.log(data[i].OBSERVATIONS['elevation']);
-
     if (Object.prototype.hasOwnProperty.call(data[i], 'ELEVATION')) {
       data[i].OBSERVATIONS['elevation'] = [data[i].ELEVATION];
     }
@@ -136,11 +135,25 @@ export const ChartManager = async (
   options.color = createColors(options, data);
 
   //Next two calls generates the X and Y axis for the charts
-  createXAxis(options, xAxisAttributes, xAxisData, chartType);
+  createXAxis(options, xAxisAttributes, xAxisData, chartType, size);
   createYAxis(options, yAxisAttributes);
   createGrid(options);
+  createTooltip(options, colorMode);
 
   return options;
+};
+
+const createTooltip = (options: EChartsOption, colorMode: string) => {
+  options.tooltip = {
+    show: true,
+    trigger: 'axis',
+    textStyle: {
+      fontSize: 40,
+      color: colorMode === 'dark' ? '#fff' : '#000',
+    },
+    borderWidth: 3,
+    backgroundColor: colorMode === 'dark' ? '#555' : '#fff',
+  };
 };
 
 const createGrid = (options: EChartsOption) => {
@@ -154,7 +167,14 @@ const createGrid = (options: EChartsOption) => {
   };
 };
 
-const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisData: any[], chartType: string) => {
+const createXAxis = (
+  options: EChartsOption,
+  xAxisAttributes: string[],
+  xAxisData: any[],
+  chartType: string,
+  size: { width: number; height: number; depth: number }
+) => {
+  const interval = Math.floor((250 / size.width) * xAxisData.length);
   if (chartType == 'scatter') {
     options.xAxis = {
       axisLabel: {
@@ -164,6 +184,7 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
       min: 'dataMin',
     };
   } else {
+    console.log('XAxisData: ', xAxisData);
     options.xAxis = {
       data: xAxisData,
       name: xAxisAttributes[0],
@@ -173,10 +194,12 @@ const createXAxis = (options: EChartsOption, xAxisAttributes: string[], xAxisDat
         fontWeight: 'bold', // Customize the style of the title (optional)
       },
       axisLabel: {
-        fontSize: 30,
+        fontSize: 35,
         margin: 25,
+        interval: interval,
+        rotate: 30,
       },
-      nameGap: 70,
+      nameGap: 300,
     };
   }
 };
@@ -193,12 +216,13 @@ const createYAxis = (options: EChartsOption, yAxisAttributes: string[]) => {
     nameTextStyle: {
       fontSize: 40, // Increase the font size here
       fontWeight: 'bold', // Customize the style of the title (optional)
+      padding: [0, 0, 0, 300],
     },
-    nameGap: 50,
 
+    nameGap: 75,
     type: 'value',
     axisLabel: {
-      fontSize: 30,
+      fontSize: 40,
     },
     min: 'dataMin',
   };
@@ -274,6 +298,7 @@ function createLineChart(
       type: 'line',
       data: yAxisData[i],
       name: yAxisAttributes[0],
+
       lineStyle: {
         width: 3,
       },
@@ -390,6 +415,37 @@ function createTitle(
   }
 }
 
+const formatDate = (date: Date) => {
+  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const dayOfWeek = daysOfWeek[date.getDay()];
+  const month = months[date.getMonth()];
+
+  let hours = date.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+
+  hours = hours % 12;
+  hours = hours ? hours : 12; // Convert 0 to 12 for the 12-hour clock
+
+  const formattedDate =
+    dayOfWeek +
+    ', ' +
+    month +
+    ' ' +
+    ('0' + date.getDate()).slice(-2) +
+    ', ' +
+    date.getFullYear() +
+    ' ' +
+    ('0' + hours).slice(-2) +
+    ':' +
+    ('0' + date.getMinutes()).slice(-2) +
+    ' ' +
+    ampm;
+
+  return formattedDate;
+};
+
 const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: string[]) => {
   let yAxisData: any[] = [];
   let xAxisData: any[] = [];
@@ -431,8 +487,8 @@ const createAxisData = (data: any, yAxisAttributes: string[], xAxisAttributes: s
       xAxisData = [...data[0].OBSERVATIONS['date_time']];
       for (let i = 0; i < xAxisData.length; i++) {
         const date = new Date(xAxisData[i]);
-        // xAxisData[i] = [date.getFullYear(), date.getMonth(), date.getDate()].join('/') + [date.getHours(), date.getMinutes()].join(':');
-        xAxisData[i] = date.toDateString();
+        xAxisData[i] = formatDate(date);
+        // xAxisData[i] = date.toDateString();
       }
     } else {
       for (let i = 0; i < xAxisAttributes.length; i++) {

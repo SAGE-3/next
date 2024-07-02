@@ -31,9 +31,7 @@ interface UIState {
   boardHeight: number;
   gridSize: number;
   zIndex: number;
-  showUI: boolean;
-  showAppTitle: boolean;
-  showPresence: boolean;
+
   boardPosition: { x: number; y: number };
   selectedAppId: string;
   boardLocked: boolean; // Lock the board that restricts dragging and zooming
@@ -99,11 +97,6 @@ interface UIState {
   setAppDragging: (dragging: boolean) => void;
   setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
-  flipUI: () => void;
-  toggleTitle: () => void;
-  togglePresence: () => void;
-  displayUI: () => void;
-  hideUI: () => void;
   incZ: () => void;
   resetZIndex: () => void;
   setScale: (z: number) => void;
@@ -129,9 +122,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   selectedBoardId: '',
   gridSize: 1,
   zIndex: 1,
-  showUI: true,
-  showAppTitle: false,
-  showPresence: true,
   boardDragging: false,
   appDragging: false,
   selectedAppsIds: [],
@@ -229,11 +219,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setAppDragging: (dragging: boolean) => set((state) => ({ ...state, appDragging: dragging })),
   setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
-  flipUI: () => set((state) => ({ ...state, showUI: !state.showUI })),
-  toggleTitle: () => set((state) => ({ ...state, showAppTitle: !state.showAppTitle })),
-  togglePresence: () => set((state) => ({ ...state, showPresence: !state.showPresence })),
-  displayUI: () => set((state) => ({ ...state, showUI: true })),
-  hideUI: () => set((state) => ({ ...state, showUI: false })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
   setLassoMode: (enable: boolean) => set((state) => ({ ...state, lassoMode: enable })),

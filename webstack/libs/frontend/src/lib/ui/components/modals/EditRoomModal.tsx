@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   ModalOverlay,
@@ -21,6 +21,7 @@ import {
   Box,
   Checkbox,
   useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
@@ -63,11 +64,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const [isListed, setIsListed] = useState(props.room.data.isListed);
   const [isProtected, setProtected] = useState(props.room.data.isPrivate);
   const [password, setPassword] = useState('');
+  const [passwordChanged, setPasswordChanged] = useState(false);
   const [valid, setValid] = useState(true);
-  const [isPasswordChanged, setPasswordChanged] = useState(false);
 
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
+
+  // Toast
+  const toast = useToast();
 
   useEffect(() => {
     setName(props.room.data.name);
@@ -81,15 +85,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   initialRef.current?.select();
-  // }, [initialRef.current]);
-
-  const setRef = useCallback((_node: HTMLInputElement) => {
-    if (initialRef.current) {
-      initialRef.current.select();
-    }
-  }, []);
 
   // Keyboard handler: press enter to activate command
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -100,30 +95,29 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   const handleSubmit = () => {
-    if (name !== props.room.data.name) {
-      updateRoom(props.room._id, { name });
-    }
-    if (description !== props.room.data.description) {
-      updateRoom(props.room._id, { description });
-    }
-    if (color !== props.room.data.color) {
-      updateRoom(props.room._id, { color });
-    }
-    if (isListed !== props.room.data.isListed) {
-      updateRoom(props.room._id, { isListed });
-    }
-    if (isProtected !== props.room.data.isPrivate) {
-      updateRoom(props.room._id, { isPrivate: isProtected });
-    }
-    if (isProtected && isPasswordChanged) {
-      if (password) {
-        // hash the PIN: the namespace comes from the server configuration
-        const key = uuidv5(password, config.namespace);
-        updateRoom(props.room._id, { privatePin: key });
+    updateRoom(props.room._id, { name, description, color, isListed });
+
+    if (passwordChanged) {
+      if (!isProtected) {
+        updateRoom(props.room._id, { privatePin: '', isPrivate: false });
       } else {
-        setValid(false);
+        if (password === '') {
+          updateRoom(props.room._id, { privatePin: '', isPrivate: false });
+        } else {
+          // hash the PIN: the namespace comes from the server configuration
+          const key = uuidv5(password, config.namespace);
+          updateRoom(props.room._id, { privatePin: key, isPrivate: true });
+        }
       }
+      toast({
+        title: 'Room Updated',
+        description: 'Room password has been updated',
+        status: 'success',
+        duration: 3000,
+      });
+      setPasswordChanged(false);
     }
+
     props.onClose();
   };
 
@@ -153,14 +147,25 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const checkListed = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsListed(e.target.checked);
   };
+
+  // Toggle of protect room with password
   const checkProtected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Set value of protected
     setProtected(e.target.checked);
-    setValid(!e.target.checked);
+    // Reset password
+    setPassword('');
+    setPasswordChanged(true);
+    if (e.target.checked) {
+      setValid(false);
+    } else {
+      setValid(true);
+    }
   };
   const handlePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPasswordChanged(true);
-    setValid(!!e.target.value);
     setPassword(e.target.value);
+    setPasswordChanged(true);
+    if (e.target.value === '') setValid(false);
+    else setValid(true);
   };
 
   return (

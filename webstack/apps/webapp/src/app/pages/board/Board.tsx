@@ -77,8 +77,7 @@ export function BoardPage() {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLButtonElement>(null);
 
-  // Plugin Listener
-  // Listens to updates from plugin apps and sends them to the AppStore
+  // Plugin Listener: updates from plugin apps and sends them to the AppStore
   usePluginListener();
 
   // UI Message
