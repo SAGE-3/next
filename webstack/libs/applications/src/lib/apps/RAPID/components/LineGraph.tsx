@@ -104,6 +104,7 @@ function AppComponent(props: App) {
   useEffect(() => {
     if (data && data.length > 0) {
       const option: echarts.EChartsCoreOption = {
+        backgroundColor: "#fff",
         title: {
           text: `${s.metric.name} vs Time`,
           left: 'center',

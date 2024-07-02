@@ -41,6 +41,7 @@ function Chart({ option }: ChartProps) {
         pixelRatio: 2,
         type: 'svg',
         backgroundColor: '#fff', // Ensure white background
+        excludeComponents: ['toolbox', 'dataZoom'],
       });
 
       const svgRect = divRef.current.getBoundingClientRect();
