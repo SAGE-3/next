@@ -24,6 +24,7 @@ import {
   MdNavigateNext,
   MdNavigateBefore,
 } from 'react-icons/md';
+import { BsFiletypePdf } from 'react-icons/bs';
 
 // Utility functions from SAGE3
 import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore } from '@sage3/frontend';
@@ -259,7 +260,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing}>
+    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={BsFiletypePdf}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
@@ -286,7 +287,7 @@ function AppComponent(props: App): JSX.Element {
  *
  * @param {App} props
  * @returns {JSX.Element}
-* */
+ * */
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -423,14 +424,15 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
-          <Button onClick={() => {
-            if (file) {
-              const url = file?.data.file;
-              const filename = file?.data.originalfilename;
-              const dl = apiUrls.assets.getAssetById(url);
-              downloadFile(dl, filename);
-            }
-          }}
+          <Button
+            onClick={() => {
+              if (file) {
+                const url = file?.data.file;
+                const filename = file?.data.originalfilename;
+                const dl = apiUrls.assets.getAssetById(url);
+                downloadFile(dl, filename);
+              }
+            }}
           >
             <MdFileDownload />
           </Button>

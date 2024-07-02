@@ -24,6 +24,7 @@ interface AnnotationState {
   fetched: boolean;
   clearError: () => void;
   update: (id: string, updates: Partial<AnnotationSchema>) => void;
+  getAnnotations: () => Annotation | undefined;
   subscribeToBoard: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
 }
@@ -53,6 +54,9 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
         annotationSub();
         annotationSub = null;
       }
+    },
+    getAnnotations: () => {
+      return get().annotations;
     },
     subscribeToBoard: async (boardId: string) => {
       if (!SAGE3Ability.canCurrentUser('read', 'annotations')) return;

@@ -18,6 +18,7 @@ import { AppWindow } from '../../components';
 
 import { OtherServerCard } from './components/OtherServerCard';
 import { BoardCard } from './components/BoardCard';
+import { MdDashboard } from 'react-icons/md';
 
 /* App component for BoardLink */
 
@@ -28,7 +29,7 @@ function AppComponent(props: App): JSX.Element {
   const otherServer = new URL(s.url.replace('sage3://', 'https://')).hostname !== window.location.hostname;
 
   return (
-    <AppWindow app={props} disableResize={true}>
+    <AppWindow app={props} disableResize={true} hideBackgroundIcon={MdDashboard}>
       {otherServer ? <OtherServerCard {...props} /> : <BoardCard {...props} />}
     </AppWindow>
   );
@@ -128,6 +129,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

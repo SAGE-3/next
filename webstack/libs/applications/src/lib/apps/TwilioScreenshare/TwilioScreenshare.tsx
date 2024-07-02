@@ -42,6 +42,7 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
+import { MdScreenShare } from 'react-icons/md';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -384,7 +385,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props} lockAspectRatio={s.aspectRatio}>
+    <AppWindow app={props} lockAspectRatio={s.aspectRatio} hideBackgroundIcon={MdScreenShare}>
       <>
         <Box backgroundColor="black" width="100%" height="100%">
           <video ref={videoRef} className="video-container" width="100%" height="100%"></video>

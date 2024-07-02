@@ -20,7 +20,6 @@ const smallFont = 14;
 // Add a title to the chakra button props
 export interface ButtonPanelProps extends ButtonProps {
   title: string;
-  candrag?: string;
   textColor?: string;
 }
 
@@ -37,6 +36,9 @@ export function ButtonPanel(props: ButtonPanelProps) {
     <Box w="100%">
       <Button
         {...props}
+        title={props.title}
+        textColor={props.textColor}
+        draggable={props.draggable}
         w="100%"
         borderRadius="md"
         h="auto"
@@ -47,7 +49,6 @@ export function ButtonPanel(props: ButtonPanelProps) {
         justifyContent="flex-start"
         // Drag and drop the button to create an app
         onDragStart={onDragStart}
-        draggable={props.candrag == 'true'}
       >
         {props.title}
       </Button>
@@ -67,7 +68,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
+  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>

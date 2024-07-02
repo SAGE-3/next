@@ -64,6 +64,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
       _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
       transition={'all 0.1s ease-in-out'}
+      onDoubleClick={handleEnterBoard}
     >
       <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
 
@@ -77,13 +78,13 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
       </Box>
 
       <Box display="flex" alignItems={'center'}>
-        {props.board.data.isPrivate &&
+        {props.board.data.isPrivate && (
           <Tooltip placement="top" hasArrow={true} label={'This room is password protected'} openDelay={400} ml="1">
             <Box>
               <Icon verticalAlign={'text-top'} fontSize="xl" color={borderColor} as={MdLock} mr="1" />
             </Box>
           </Tooltip>
-        }
+        )}
 
         <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
           <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
@@ -115,6 +116,6 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
           ></IconButton>
         </Tooltip>
       </Box>
-    </Box >
+    </Box>
   );
 }

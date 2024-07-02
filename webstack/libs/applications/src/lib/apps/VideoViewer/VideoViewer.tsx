@@ -42,6 +42,7 @@ import {
   MdVolumeUp,
   MdScreenshotMonitor,
   MdInfoOutline,
+  MdMovie,
 } from 'react-icons/md';
 // Time functions
 import { format as formatTime } from 'date-fns';
@@ -53,6 +54,7 @@ import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { initialValues } from '../../initialValues';
+import { throttle } from 'throttle-debounce';
 
 /**
  * Return a string for a duration
@@ -84,6 +86,7 @@ function AppComponent(props: App): JSX.Element {
   const divRef = useRef<HTMLDivElement>(null);
   // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // Get Asset from store
   useEffect(() => {
@@ -208,8 +211,13 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [divRef, handleUserKeyPress]);
 
+  // Event handler for video end
+  function onVideoEnd() {
+    updateState(props._id, { paused: true });
+  }
+
   return (
-    <AppWindow app={props} lockAspectRatio={aspectRatio}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
       <div
         style={{
           position: 'relative',
@@ -217,12 +225,22 @@ function AppComponent(props: App): JSX.Element {
           height: props.data.size.width / aspectRatio,
           maxHeight: '100%',
           borderRadius: '0 0 6px 6px',
+          background: '#004225',
         }}
         // setting for keyboard handler
         ref={divRef}
         tabIndex={1}
       >
-        <video ref={videoRef} id={`${props._id}-video`} src={url} height="100%" width="100%" muted={true}></video>
+        <video
+          ref={videoRef}
+          id={`${props._id}-video`}
+          src={url}
+          muted={true}
+          height="100%"
+          width="100%"
+          onEnded={onVideoEnd}
+          style={{ display: boardDragging ? 'none' : 'block' }}
+        ></video>
       </div>
     </AppWindow>
   );
@@ -292,9 +310,22 @@ function ToolbarComponent(props: App): JSX.Element {
   // Handle a play action
   const handlePlay = () => {
     if (videoRef) {
-      const paused = !s.paused;
-      const time = videoRef.currentTime;
-      updateState(props._id, { currentTime: time, paused: paused });
+      const v = videoRef;
+      let time = v.currentTime;
+      // Check if time of video is at the end
+      if (time === videoRef.duration) {
+        time = 0.0;
+        v.currentTime = 0.0;
+        v.play();
+      }
+      updateState(props._id, { currentTime: time, paused: false });
+    }
+  };
+
+  // Handle a pause action
+  const handlePause = () => {
+    if (videoRef) {
+      updateState(props._id, { currentTime: videoRef.currentTime, paused: true });
     }
   };
 
@@ -373,18 +404,20 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
-  // Handle user moving slider
-  const seekStartHandle = (value: number) => {
-    if (videoRef) {
-      videoRef.currentTime = value;
-      setSliderTime(value);
-    }
-  };
+  // When the user is seeking, throttle the updates
+  const throttleSeek = throttle(1000, (value) => {
+    updateState(props._id, { currentTime: value });
+  });
+
+  // Keep a copy of the function
+  const throttleSeekFunc = useRef(throttleSeek);
+
   // Handle user moving slider
   const seekChangeHandle = (value: number) => {
     if (videoRef) {
       videoRef.currentTime = value;
       setSliderTime(value);
+      throttleSeekFunc.current(value);
     }
   };
 
@@ -414,9 +447,15 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={videoRef?.paused ? 'Play Video' : 'Pause Video'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Play Video'} openDelay={400}>
           <Button onClick={handlePlay} isDisabled={!videoRef}>
-            {videoRef?.paused ? <MdPlayArrow /> : <MdPause />}
+            <MdPlayArrow />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Pause Video'} openDelay={400}>
+          <Button onClick={handlePause} isDisabled={!videoRef}>
+            <MdPause />
           </Button>
         </Tooltip>
 
@@ -444,10 +483,9 @@ function ToolbarComponent(props: App): JSX.Element {
         aria-label="slider-ex-4"
         value={sliderTime ? sliderTime : currentTime}
         max={videoRef?.duration}
-        width="150px"
+        width="200px"
         mx={4}
         onChange={seekChangeHandle}
-        onChangeStart={seekStartHandle}
         onChangeEnd={seekEndHandle}
         focusThumbOnChange={false}
       >
@@ -560,6 +598,10 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     props.apps.forEach((app) => {
       const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
       if (v) {
+        // Check if time of video is at the end
+        if (v.currentTime === v.duration) {
+          v.currentTime = 0.0;
+        }
         v.play();
         ps.push({ id: app._id, updates: { paused: false, currentTime: v.currentTime } });
       }

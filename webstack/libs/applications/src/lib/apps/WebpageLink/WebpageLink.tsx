@@ -25,7 +25,7 @@ import {
   DrawerHeader,
   DrawerBody,
 } from '@chakra-ui/react';
-import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, } from 'react-icons/md';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, MdLink } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
@@ -139,7 +139,7 @@ function AppComponent(props: App): JSX.Element {
   }, [streaming]);
 
   return (
-    <AppWindow app={props} disableResize={!streaming}>
+    <AppWindow app={props} disableResize={!streaming} hideBackgroundIcon={MdLink}>
       {!streaming ? (
         <Tooltip label={url} placement="top" openDelay={1000}>
           <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
@@ -403,43 +403,46 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const saveInAssetManager = useCallback((val: string) => {
-    // save cell code in asset manager
-    if (!val.endsWith('.url')) {
-      val += '.url';
-    }
-    // Generate the content of the file
-    const content = `[InternetShortcut]\nURL=${s.url}\n`;
-    // Save the code in the asset manager
-    if (roomId) {
-      // Create a form to upload the file
-      const fd = new FormData();
-      const codefile = new File([new Blob([content])], val);
-      fd.append('files', codefile);
-      // Add fields to the upload form
-      fd.append('room', roomId);
-      // Upload with a POST request
-      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
-        .catch((error: Error) => {
-          toast({
-            title: 'Upload',
-            description: 'Upload failed: ' + error.message,
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
+  const saveInAssetManager = useCallback(
+    (val: string) => {
+      // save cell code in asset manager
+      if (!val.endsWith('.url')) {
+        val += '.url';
+      }
+      // Generate the content of the file
+      const content = `[InternetShortcut]\nURL=${s.url}\n`;
+      // Save the code in the asset manager
+      if (roomId) {
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([content])], val);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
           });
-        })
-        .finally(() => {
-          toast({
-            title: 'Upload',
-            description: 'Upload complete',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  }, [s.url, roomId]);
+      }
+    },
+    [s.url, roomId]
+  );
 
   // Update the size of the app when the sidebar is resized
   useEffect(() => {
@@ -493,7 +496,6 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
-
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
@@ -509,13 +511,16 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ConfirmValueModal
-        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
-        title="Save URL in Asset Manager" message="Select a file name:"
+        isOpen={saveIsOpen}
+        onClose={saveOnClose}
+        onConfirm={saveInAssetManager}
+        title="Save URL in Asset Manager"
+        message="Select a file name:"
         initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
-        cancelText="Cancel" confirmText="Save"
+        cancelText="Cancel"
+        confirmText="Save"
         confirmColor="green"
       />
-
     </>
   );
 }
@@ -524,7 +529,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
-
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

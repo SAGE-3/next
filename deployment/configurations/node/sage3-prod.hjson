@@ -54,6 +54,15 @@
       "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
+    },
+    "codellama": {
+      "url": "https://arcade.evl.uic.edu/codellama",
+      "apiKey": "",
+      "max_tokens": 400
+    },
+    "yolo": {
+      "url": "https://arcade.evl.uic.edu/yolov8",
+      "apiKey": ""
     }
   },
 

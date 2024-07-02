@@ -15,6 +15,7 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
+import { HiPuzzle } from 'react-icons/hi';
 
 declare module 'react' {
   interface IframeHTMLAttributes<T> extends React.HTMLAttributes<T> {
@@ -60,24 +61,34 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [JSON.stringify(props)]);
 
-  const allow = "clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;";
+  const allow = 'clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;';
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={HiPuzzle}>
       <>
-        <iframe allow={allow} ref={iRef} loading="eager" src={`/plugins/apps/${pluginName}`} style={{ width: '100%', height: '100%' }}></iframe>
+        <iframe
+          allow={allow}
+          ref={iRef}
+          loading="eager"
+          src={`/plugins/apps/${pluginName}`}
+          style={{ width: '100%', height: '100%' }}
+        ></iframe>
       </>
     </AppWindow>
   );
 }
 
 /* App toolbar component for the app PluginApp */
-function ToolbarComponent() { return null; }
+function ToolbarComponent() {
+  return null;
+}
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -25,7 +25,7 @@ import {
   Center,
   AbsoluteCenter,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload } from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
 
 // Server Sent Event library
 import { fetchEventSource } from '@microsoft/fetch-event-source';
@@ -396,7 +396,7 @@ function AppComponent(props: App): JSX.Element {
   }, [s.messages]);
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
         {/* Display Messages */}
         <Box

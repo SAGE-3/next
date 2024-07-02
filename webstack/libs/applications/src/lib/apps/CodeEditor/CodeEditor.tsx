@@ -25,7 +25,8 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb, MdCode } from 'react-icons/md';
+
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 
@@ -34,7 +35,18 @@ import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 
 // Sage3 Imports
-import { useAppStore, downloadFile, ConfirmValueModal, apiUrls, setupApp, AiAPI } from '@sage3/frontend';
+import {
+  useAppStore,
+  downloadFile,
+  ConfirmValueModal,
+  apiUrls,
+  setupApp,
+  AiAPI,
+  useYjs,
+  serverTime,
+  useUser,
+  YjsRoomConnection,
+} from '@sage3/frontend';
 import { AiQueryRequest } from '@sage3/shared';
 
 import { App, AppGroup } from '../../schema';
@@ -42,8 +54,6 @@ import { AppWindow } from '../../components';
 import { state as AppState } from '.';
 
 // Yjs Imports
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
 import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
@@ -79,12 +89,18 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const { updateState } = useAppStore((state) => state);
 
+  // User
+  const { user } = useUser();
+
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
 
   // Monaco Editor Ref
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { setEditor } = useStore();
+
+  // Use Yjs
+  const { yApps } = useYjs();
 
   // Update local value with value from the server
   useEffect(() => {
@@ -114,40 +130,48 @@ function AppComponent(props: App): JSX.Element {
     // Save the editor in the store
     setEditor(props._id, editor);
     // Connect to Yjs
-    connectToYjs(editor);
+    connectToYjs(editor, yApps!);
   };
 
-  const connectToYjs = (editor: editor.IStandaloneCodeEditor) => {
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  const connectToYjs = async (editor: editor.IStandaloneCodeEditor, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
 
-    const doc = new Y.Doc();
-    const yText = doc.getText('monaco');
-
-    const provider = new WebsocketProvider(`${protocol}://${window.location.host}/yjs`, props._id, doc);
     // Ensure we are always operating on the same line endings
     const model = editor.getModel();
     if (model) model.setEOL(0);
     new MonacoBinding(yText, editor.getModel() as editor.ITextModel, new Set([editor]), provider.awareness);
 
-    provider.on('sync', () => {
-      const users = provider.awareness.getStates();
-      const count = users.size;
-      // I'm the only one here, so need to sync current ydoc with that is saved in the database
-      if (count == 1) {
-        // Does the app have code?
-        if (s.content) {
-          // Clear any existing lines
-          yText.delete(0, yText.length);
-          // Set the lines from the database
-          yText.insert(0, s.content);
-        }
+    const users = provider.awareness.getStates();
+    const count = users.size;
+
+    // Sync current ydoc with that is saved in the database
+    const syncStateWithDatabase = () => {
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, s.content);
+    };
+
+    // If I am the only one here according to Yjs, then sync with database
+    if (count == 1) {
+      syncStateWithDatabase();
+    } else if (count > 1 && props._createdBy === user?._id) {
+      // There are other users here and I created this app.
+      // Is this app less than 5 seconds old...this feels hacky
+      const now = await serverTime();
+      const created = props._createdAt;
+      // Then we need to sync with database due to Yjs not being able to catch the initial state
+      if (now.epoch - created < 5000) {
+        // I created this
+        syncStateWithDatabase();
       }
-    });
+    }
   };
 
   return (
-    <AppWindow app={props}>
-      <Box p={0} border={'none'} overflow="hidden" height="100%">
+    <AppWindow app={props} hideBackgroundIcon={MdCode}>
+      <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
         <Editor
           // value={spec}
           onChange={handleTextChange}
@@ -160,17 +184,19 @@ function AppComponent(props: App): JSX.Element {
             fontSize: s.fontSize,
             contextmenu: false,
             minimap: { enabled: false },
-            lineNumbersMinChars: 4,
+            lineNumbers: 'on',
+            lineNumbersMinChars: 5,
             overviewRulerBorder: false,
             overviewRulerLanes: 0,
             quickSuggestions: false,
             glyphMargin: false,
             wordWrap: 'on',
-            lineNumbers: 'on',
             lineDecorationsWidth: 0,
             scrollBeyondLastLine: false,
             wordWrapColumn: 80,
-            wrappingStrategy: 'advanced',
+            wrappingStrategy: 'simple',
+            renderLineHighlight: 'line',
+            renderLineHighlightOnlyWhenFocus: true,
             fontFamily: "'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'monospace'",
             scrollbar: {
               useShadows: true,
@@ -215,7 +241,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Check if the AI is online
   useEffect(() => {
     async function fetchStatus() {
-      const response = await AiAPI.status();
+      const response = await AiAPI.code.status();
       setOnlineModels(response.onlineModels);
       if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
       else setSelectedModel('');
@@ -315,7 +341,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'refactor'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Create new range with the same start and end line
       editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
@@ -343,7 +369,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'explain'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       const w = props.data.size.width;
       const h = props.data.size.height;
@@ -375,7 +401,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'comment'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.output.replace(/```/g, '');
@@ -395,7 +421,7 @@ function ToolbarComponent(props: App): JSX.Element {
       input: generateRequest(s.language, selectionText, 'generate'),
       model: selectedModel,
     } as AiQueryRequest;
-    const result = await AiAPI.query(queryRequest);
+    const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
       // Remove all instances of ``` from generated_text
       const cleanedText = result.output.replace(/```/g, '');
@@ -413,9 +439,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-          '.' +
-          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+            '.' +
+            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
@@ -478,6 +504,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
+      {/* AI Model selection */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>

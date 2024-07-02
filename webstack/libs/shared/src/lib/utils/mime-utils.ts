@@ -57,7 +57,6 @@ export function stringContainsCode(code: string) {
  * @returns {boolean}
  */
 export function isCode(mimeType: string): boolean {
-  console.log('🚀 ~ isCode ~ mimeType:', mimeType);
   const formats = [
     'text/javascript',
     'text/x-c',

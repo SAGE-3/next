@@ -23,10 +23,11 @@ import {
   useToast,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu } from 'react-icons/md';
+import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu, MdStickyNote2 } from 'react-icons/md';
 
 // Debounce updates to the textarea
-import { debounce } from 'throttle-debounce';
+// import { debounce } from 'throttle-debounce';
+
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -42,6 +43,9 @@ import {
   useInsightStore,
   ConfirmValueModal,
   apiUrls,
+  useYjs,
+  serverTime,
+  YjsRoomConnection,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
@@ -52,6 +56,10 @@ import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
 import './styling.css';
+
+// Yjs Imports
+import { TextAreaBinding } from 'y-textarea';
+import { debounce } from 'throttle-debounce';
 
 /**
  * NoteApp SAGE3 application
@@ -113,47 +121,77 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-
+  // const isDragging = useUIStore((state) => state.boardDragging);
+  const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
-
-  // Track if I did the update
-  const [didIt, setDidIt] = useState(false);
-  const yours = user?._id === props._createdBy;
-  const updatedByYou = user?._id === props._updatedBy;
-  const locked = s.lock;
-
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
-
+  // Monitor application size
+  const [isSmall, setIsSmall] = useState(false);
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
-  // The text of the sticky for React
-  const [note, setNote] = useState(s.text);
+  // Use Yjs
+  const { yApps } = useYjs();
 
-  // Update local value with value from the server
-  useEffect(() => {
-    // If the text was updated by someone else, update the local value
-    if (!updatedByYou || !didIt) {
-      setNote(s.text);
-    }
-    if (didIt) {
-      // Flip the flag
-      setDidIt(false);
-    }
-  }, [s.text, updatedByYou]);
-
-  // Update local value with value from the server
+  // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  useEffect(() => {
+    // Apparent font size
+    const fontSize = scale * props.data.state.fontSize;
+    if (fontSize < 7) {
+      setIsSmall(true);
+    } else if (isSmall) {
+      setIsSmall(false);
+    }
+  }, [scale, props.data.state.fontSize]);
+
+  const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
+    const yText = yRoom.doc.getText(props._id);
+    const provider = yRoom.provider;
+
+    // Ensure we are always operating on the same line endings
+    new TextAreaBinding(yText, textArea);
+    const users = provider.awareness.getStates();
+    const count = users.size;
+
+    // Sync current ydoc with that is saved in the database
+    const syncStateWithDatabase = () => {
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, s.text);
+    };
+
+    // If I am the only one here according to Yjs, then sync with database
+    if (count == 1) {
+      syncStateWithDatabase();
+    } else if (count > 1 && props._createdBy === user?._id) {
+      // There are other users here and I created this app.
+      // Is this app less than 5 seconds old...this feels hacky
+      const now = await serverTime();
+      const created = props._createdAt;
+      // Then we need to sync with database due to Yjs not being able to catch the initial state
+      if (now.epoch - created < 5000) {
+        // I created this
+        syncStateWithDatabase();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (textbox.current && yApps) {
+      connectToYjs(textbox.current, yApps);
+    }
+  }, [textbox, yApps]);
+
   // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(100, (val) => {
+  const debounceSave = debounce(1000, (val) => {
     updateState(props._id, { text: val });
-    // I modified the text, so I did it
-    setDidIt(true);
   });
   // Keep a copy of the function
   const debounceFunc = useRef(debounceSave);
@@ -161,9 +199,7 @@ function AppComponent(props: App): JSX.Element {
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
-    // Update the local value
-    setNote(inputValue);
-    // Update the text when not typing
+    // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
     debounceFunc.current(inputValue);
   }
 
@@ -177,6 +213,8 @@ function AppComponent(props: App): JSX.Element {
     if (e.code === 'Escape') {
       // Deselect the app
       setSelectedApp('');
+      // Deselect the text area
+      textbox.current?.blur();
       return;
     }
     if (e.code === 'Tab') {
@@ -201,13 +239,9 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const unlock = () => {
-    updateState(props._id, { lock: false });
-  };
-
   // React component
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundColor={backgroundColor} hideBordercolor={scrollbarColor} hideBackgroundIcon={MdStickyNote2}>
       <Box bgColor={backgroundColor} color="black" w={'100%'} h={'100%'} p={0}>
         <Textarea
           ref={textbox}
@@ -224,12 +258,12 @@ function AppComponent(props: App): JSX.Element {
           focusBorderColor={backgroundColor}
           fontSize={fontSize + 'px'}
           lineHeight="1em"
-          value={note}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          readOnly={locked} // Only the creator can edit
+          readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
+          // display={isSmall || isDragging ? 'none' : 'block'}
           css={{
             // Balance the text, improve text layouts
             textWrap: 'pretty', // 'balance',
@@ -248,17 +282,6 @@ function AppComponent(props: App): JSX.Element {
           overflowY="scroll"
           overflowX="hidden"
         />
-        {locked && (
-          <Box position="absolute" right="1" bottom="0" transformOrigin="bottom right" zIndex={2}>
-            <Tooltip label={`Locked by ${yours ? 'you' : props.data.title}`} shouldWrapChildren placement="top" hasArrow>
-              {yours ? (
-                <MdLock color="red" fontSize="32px" onClick={unlock} style={{ cursor: 'pointer' }} />
-              ) : (
-                <MdLock color="red" fontSize="32px" />
-              )}
-            </Tooltip>
-          </Box>
-        )}
       </Box>
     </AppWindow>
   );
@@ -380,7 +403,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
         <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
             <MdRemove />
