@@ -6,8 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdApps } from 'react-icons/md';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack } from '@chakra-ui/react';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -49,6 +48,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  IntelligencePane,
 } from './components';
 
 type UILayerProps = {
@@ -238,9 +238,10 @@ export function UILayer(props: UILayerProps) {
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
+      <HStack position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
+        <IntelligencePane isBoard={true} />
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-      </Box>
+      </HStack>
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>

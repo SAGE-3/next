@@ -14,3 +14,4 @@ export * from './Panels';
 export * from './Twilio';
 export * from './PresenceFollow';
 export * from './BoardTitle';
+export * from './IntelligencePane';
