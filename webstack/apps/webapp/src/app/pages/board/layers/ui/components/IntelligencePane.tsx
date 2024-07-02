@@ -62,7 +62,11 @@ export function IntelligencePane(props: SIProps) {
             <Tabs style={{ width: '100%', height: '100%' }}>
               <TabList>
                 <Tab>Chat</Tab>
-                <Tab>Notifications</Tab>
+                <Tab>Notifications
+                  <Badge colorScheme="green" variant="solid" pos="relative" right={-1} top={-2} >
+                    4
+                  </Badge>
+                </Tab>
                 <Tab>Settings</Tab>
               </TabList>
 
