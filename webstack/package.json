@@ -84,7 +84,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "passport-openidconnect": "^0.1.1",
-    "pdfjs-dist": "^3.11.174",
+    "pdfjs-dist": "^4.4.168",
     "peerjs": "^1.4.6",
     "perfect-freehand": "^1.2.2",
     "plotly.js": "^2.18.2",
