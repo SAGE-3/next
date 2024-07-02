@@ -38,6 +38,7 @@ function Chart({ option }: ChartProps) {
   useEffect(() => {
     if (chartRef.current && divRef.current) {
       const base64 = chartRef.current.getDataURL({
+        pixelRatio: 2,
         type: 'svg',
         backgroundColor: '#fff', // Ensure white background
       });
