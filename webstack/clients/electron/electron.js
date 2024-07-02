@@ -165,7 +165,8 @@ program
   .option('--disable-hardware', 'Disable hardware acceleration', false)
   .option('--show-fps', 'Display the Chrome FPS counter', false)
   .option('--profile <s>', 'Create a profile (string)')
-  .option('--width <n>', 'Window width (int)', myParseInt, windowState.width);
+  .option('--width <n>', 'Window width (int)', myParseInt, windowState.width)
+  .option('--ozone-platform-hint <s>', 'Set Ozone platform hint (e.g. auto, wayland, x11)', 'auto');
 // Parse the arguments
 program.parse(args);
 // Get the results
@@ -258,6 +259,21 @@ if (commander.debug) {
   port += commander.display;
   // Add the parameter to the list of options on the command line
   app.commandLine.appendSwitch('remote-debugging-port', port.toString());
+}
+
+// Add Wayland support (Linux only)
+if (process.platform === 'linux') {
+  if (commander.ozonePlatformHint) {
+    app.commandLine.appendSwitch('ozone-platform-hint', commander.ozonePlatformHint);
+    
+    // Additional Wayland-related switches
+    if (commander.ozonePlatformHint === 'wayland') {
+      app.commandLine.appendSwitch('enable-features', 'WaylandWindowDecorations');
+      app.commandLine.appendSwitch('disable-gpu-sandbox');
+    }
+  }
+} else if (commander.ozonePlatformHint !== 'auto') {
+  console.log('Warning: --ozone-platform-hint is only supported on Linux and will be ignored.');
 }
 
 // Information for the 'about' panel in the app
