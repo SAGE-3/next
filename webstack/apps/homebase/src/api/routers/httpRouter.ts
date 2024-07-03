@@ -50,7 +50,7 @@ import {
 } from './custom';
 
 import { config } from '../../config';
-import { ArticulateRouter } from './custom/articulate';
+import { ArticulateLogRouter, ArticulateRouter } from './custom/articulate';
 
 /**
  * API Loader function
@@ -76,6 +76,7 @@ export function expressAPIRouter(): express.Router {
 
   // FastAPI Routes
   router.use('/articulate', ArticulateRouter());
+  router.use('/articulatelog', ArticulateLogRouter());
 
   // FastAPI Routes
   router.use('/fastapi', FastAPIRouter());

@@ -88,8 +88,23 @@ async function sendCommand(
   return data;
 }
 
+async function sendLog(information: any, name: string) {
+  const response = await fetch('api/articulatelog', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ message: JSON.stringify(information), name }),
+  });
+
+  if (!response.ok) {
+    console.log('Error in response:', response.statusText);
+  }
+}
+
 export const ArticulateAPI = {
   sendAudio,
   sendText,
   sendCommand,
+  sendLog,
 };

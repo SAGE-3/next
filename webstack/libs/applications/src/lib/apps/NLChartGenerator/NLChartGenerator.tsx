@@ -63,6 +63,10 @@ function convertObjectToArray(dataObject: any) {
   return dataArray;
 }
 
+function getCurrentTime() {
+  return new Date().toTimeString();
+}
+
 function getCode(jsonInput: string) {
   // Remove the ```json and ``` characters
   const cleanJson = jsonInput
@@ -73,6 +77,13 @@ function getCode(jsonInput: string) {
     .trim();
   return cleanJson;
 }
+
+type InteractionLogChartsSelected = {
+  chart: EChartsCoreOption;
+  timeSelected: string[];
+  timeDeleted: string[];
+  numberOfTimesClicked: number;
+};
 
 /* App component for Chat */
 
@@ -111,6 +122,22 @@ function AppComponent(props: App): JSX.Element {
     lastChartsSelected: string[];
   }>({ lastChartsInteracted: [], lastChartsGenerated: [], lastChartsSelected: [] });
 
+  // UI store
+  const setZoom = useUIStore((state) => state.setScale);
+  const moveToBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+  const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
+  const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
+
+  const [selectedChartIds, setSelectedChartIds] = useState<any>(new Set());
+  const [appCounterID, setApCounterID] = useState<number>(0);
+
+  const [log, setLog] = useState<any>({
+    chartsThatWereGenerated: [],
+    chartsThatWereSelected: [],
+  });
+
   // Sort messages by creation date to display in order
 
   useEffect(() => {
@@ -121,12 +148,20 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (finalText.trim().length > 1) {
-      console.log(finalText.trim().length, 'length');
       send(finalText);
     } else {
       console.log('empty');
     }
   }, [finalText]);
+
+  useEffect(() => {
+    const writeLog = async () => {
+      await ArticulateAPI.sendLog(log, 'test-test');
+    };
+    if (log.chartsThatWereGenerated.length !== 0) {
+      writeLog();
+    }
+  }, [log]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -222,7 +257,16 @@ function AppComponent(props: App): JSX.Element {
         const chartTitles = [];
         for (let i = 0; i < tmpChartOptions.length; i++) {
           chartTitles.push((tmpChartOptions[i] as any).title.text);
+          tmpChartOptions[i].id = appCounterID + i;
         }
+        setLog({
+          ...log,
+          chartsThatWereGenerated: [
+            ...log.chartsThatWereGenerated,
+            { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
+          ],
+        });
+        setApCounterID((prev: number) => prev + tmpChartOptions.length);
         setInteractionContext({ ...interactionContext, lastChartsGenerated: [...chartTitles] });
         // updateState(props._id, { chartsCreated: [...s.chartsCreated, ...tmpChartOptions] });
         setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
@@ -282,15 +326,41 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [processing, isRecording, isNoise.current]);
 
+  useEffect(() => {}, []);
+
+  useEffect(() => {
+    // Remove IDs of deleted apps from the selectedChartIds set
+    setSelectedChartIds((prevApps: Set<unknown>) => {
+      const newIds = new Set(prevApps);
+      const appIds = new Set(
+        apps.map((app) => {
+          if (app.data.type == 'EChartsViewer') {
+            return app.data.state.options.id;
+          }
+        })
+      );
+      prevApps.forEach((app: any) => {
+        if (!appIds.has(app.chartId)) {
+          setLog({
+            ...log,
+            chartsThatWereSelected: [...log.chartsThatWereSelected, { action: 'delete', chartId: app.chartId, time: getCurrentTime() }],
+          });
+          newIds.delete(app);
+        }
+      });
+      return newIds;
+    });
+  }, [apps]);
+
   const generateChart = async (EChartOption: EChartsCoreOption) => {
-    await createApp({
+    const app = await createApp({
       title: 'EChartsViewer',
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
       //TODO get middle of the screen space
       position: {
-        x: props.data.position.x + props.data.size.width,
-        y: props.data.position.y,
+        x: x,
+        y: y,
         z: 0,
       },
       size: {
@@ -308,7 +378,19 @@ function AppComponent(props: App): JSX.Element {
       dragging: false,
       pinned: false,
     });
-
+    setSelectedChartIds((prevIds: Iterable<unknown> | null | undefined) => {
+      const newIds = new Set(prevIds);
+      newIds.add({ chartId: EChartOption.id, appId: app.data._id });
+      return newIds;
+    });
+    setHoveredChart(null);
+    setLog({
+      ...log,
+      chartsThatWereSelected: [
+        ...log.chartsThatWereSelected,
+        { action: 'add', chartId: EChartOption.id, appId: app.data._id, time: getCurrentTime() },
+      ],
+    });
     setInteractionContext({ ...interactionContext, lastChartsSelected: [(EChartOption as any).title.text] });
   };
 
@@ -324,12 +406,10 @@ function AppComponent(props: App): JSX.Element {
   }, [selectedAppId]);
 
   const handleMouseOver = (chart: EChartsCoreOption) => {
-    console.log(chart);
     setHoveredChart(chart);
   };
 
   const handleMouseLove = () => {
-    console.log('leaving');
     setHoveredChart(null);
   };
 
@@ -337,6 +417,40 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { isStudyStarted: false });
     onDeleteClose();
   };
+
+  // function moveToApp(app) {
+  //   let app = undefined
+  //   for(let i = 0; i < apps.length; i++) {
+
+  //   }
+  //   if (!app) return;
+  //   if (previousLocationapp !== app._id || !previousLocation.set) {
+  //     // Scale
+  //     const aW = app.data.size.width + 60; // Border Buffer
+  //     const aH = app.data.size.height + 100; // Border Buffer
+  //     const wW = window.innerWidth;
+  //     const wH = window.innerHeight;
+  //     const sX = wW / aW;
+  //     const sY = wH / aH;
+  //     const zoom = Math.min(sX, sY);
+
+  //     // Position
+  //     let aX = -app.data.position.x + 20;
+  //     let aY = -app.data.position.y + 20;
+  //     const w = app.data.size.width;
+  //     const h = app.data.size.height;
+  //     if (sX >= sY) {
+  //       aX = aX - w / 2 + wW / 2 / zoom;
+  //     } else {
+  //       aY = aY - h / 2 + wH / 2 / zoom;
+  //     }
+  //     const x = aX;
+  //     const y = aY;
+
+  //     moveToBoardPosition({ x, y });
+  //     setZoom(zoom);
+
+  // }
 
   return (
     <AppWindow app={props}>
@@ -346,13 +460,14 @@ function AppComponent(props: App): JSX.Element {
             {ReactDOM.createPortal(
               <Box
                 position="fixed"
-                top="30%"
+                top="50%"
                 rounded="lg"
-                left="30%"
+                left="50%"
                 width="810px"
+                pointerEvents={'none'}
                 height="240px"
                 border="6px solid black"
-                transform={'scale(1.5)'}
+                transform={'translate(-50%, -50%) scale(3)'}
               >
                 <EChartsViewer option={hoveredChart} />
               </Box>,
@@ -411,9 +526,18 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                   <Wrap display="flex" pt="1rem" overflowY="scroll" height="100%" width="100%">
                     {chartOptions.map((chartOption: EChartsCoreOption, index: Key | null | undefined) => {
+                      const chartId = chartOption.id;
+                      let isSelected = false;
+                      for (const selectedChart of selectedChartIds) {
+                        if (selectedChart.chartId == chartId) {
+                          isSelected = true;
+                          break;
+                        }
+                      }
+
                       const newChartOption: EChartsCoreOption = {
                         ...chartOption,
-                        grid: { bottom: 100, left: 25 },
+                        grid: { bottom: 50, left: 50 },
                         xAxis: {
                           ...(chartOption.xAxis as any),
                           nameLocation: 'middle',
@@ -454,19 +578,30 @@ function AppComponent(props: App): JSX.Element {
                           // height="100%"
                           width="200"
                           height="114"
-                          onMouseLeave={handleMouseLove}
-                          onMouseOver={() => handleMouseOver(newChartOption)}
+                          onMouseLeave={isSelected ? undefined : handleMouseLove}
+                          onMouseOver={isSelected ? undefined : () => handleMouseOver(newChartOption)}
                           zIndex="0"
-                          onClick={() => generateChart(chartOption)}
+                          onClick={isSelected ? undefined : () => generateChart(chartOption)}
                         >
                           <Box
-                            cursor="pointer" // Add this line to change the cursor to pointer on hover
+                            cursor="pointer"
                             zIndex="1000"
                             rounded="lg"
-                            // m="1rem"
+                            bg={isSelected ? 'gray' : 'white'} // Apply gray background if selected
                             border="3px solid black"
                           >
-                            <EChartsViewer option={{ ...newChartOption, legend: { show: false } }} size={{ width: 200, height: 100 }} />
+                            <Box zIndex={'2'}>
+                              <Box
+                                position="absolute"
+                                width="400px"
+                                height="200px"
+                                bg={isSelected ? 'gray.800' : undefined}
+                                opacity={isSelected ? 0.7 : 1}
+                                zIndex="5"
+                              ></Box>
+
+                              <EChartsViewer option={{ ...newChartOption, legend: { show: false } }} size={{ width: 400, height: 200 }} />
+                            </Box>
                           </Box>
                         </WrapItem>
                       );
