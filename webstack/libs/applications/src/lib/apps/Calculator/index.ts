@@ -15,11 +15,13 @@ import { z } from 'zod';
 
 export const schema = z.object({
   input: z.string(),
+  history: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   input: "",
+  history: "",
 };
 
 export const name = 'Calculator';
