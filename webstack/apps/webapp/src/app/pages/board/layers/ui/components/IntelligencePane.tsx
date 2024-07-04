@@ -15,7 +15,8 @@ import {
   Badge, Tab, TabList, TabPanel, TabPanels, Tabs,
   Flex, Input, InputGroup, InputRightElement,
 } from '@chakra-ui/react';
-import { LuSettings2 } from "react-icons/lu";
+import { HiLightBulb } from "react-icons/hi";
+
 import { MdSend } from 'react-icons/md';
 
 import { useHexColor, useUserSettings, useUser } from '@sage3/frontend';
@@ -100,7 +101,7 @@ export function IntelligencePane(props: SIProps) {
               mr="-2"
               justifyContent="center"
               aria-label={'Controls'}
-              icon={<LuSettings2 size="22px" />}
+              icon={<HiLightBulb size="28px" />}
               background={'transparent'}
               colorScheme="gray"
               transition={'all 0.2s'}
@@ -108,13 +109,13 @@ export function IntelligencePane(props: SIProps) {
               variant="ghost"
               onClick={onOpen}
               isDisabled={false}
-              _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
+              _hover={{ color: teal, opacity: 1, transform: 'scale(1.5)' }}
             />
             <Badge
               colorScheme="green"
               variant="solid"
               pos="relative"
-              right={2}
+              right={1}
               bottom={-2}
             >
               4
@@ -189,7 +190,7 @@ function AIChat() {
 
 
   return (
-    <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+    <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="400px" w="100%">
       <Box
         flex={1}
         bg={bgColor}
