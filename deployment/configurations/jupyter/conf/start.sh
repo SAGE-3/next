@@ -27,8 +27,11 @@ python3 /conf/redis-store.py $token
 
 # Extra modules
 pip3 install plotly imageio openai jupyter_collaboration
+# SAGE3 module
+pip3 install ws4py celery httpx rectpack networkx graphviz pysage3
+
 # foresight
-pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
+#pip install git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 # LSP
 #pip install jupyterlab-lsp==5.0.0
 #pip install 'python-lsp-server[all]'

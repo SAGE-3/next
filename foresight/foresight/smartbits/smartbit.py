@@ -61,11 +61,10 @@ class TrackedBaseModel(BaseModel):
         # TODO replace this temp solution, which updates everything with a
         #  solution that updates only necessary fields
 
-        update_data['state'] = update_data['data']['state']
-        del (update_data['data']['state'])
+        update_data["state"] = update_data["data"]["state"]
+        del update_data["data"]["state"]
         # we don't need to update the following keys:
-        do_not_modify = ["_id", "_createdAt",
-                         '_updatedAt', '_createdBy', '_updatedBy']
+        do_not_modify = ["_id", "_createdAt", "_updatedAt", "_createdBy", "_updatedBy"]
         _ = [update_data.pop(key) for key in do_not_modify]
 
         def attrsetter(name):
@@ -93,8 +92,8 @@ class TrackedBaseModel(BaseModel):
                     error = False
                 finally:
                     if error:
-                        raise Exception(
-                            f"Error Happened updating {obj[fields[-1]]} ")
+                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
+
             return setter
 
         def recursive_iter(u_data, path=[]):
@@ -109,8 +108,9 @@ class TrackedBaseModel(BaseModel):
 
         # what was updated?
         for updated_field_id, updated_field_val in updates.items():
-            if len(updated_field_id.split(".")) > 1 and \
-                    self.is_dotted_path_dict(updated_field_id):
+            if len(updated_field_id.split(".")) > 1 and self.is_dotted_path_dict(
+                updated_field_id
+            ):
                 attrsetter(updated_field_id)(self, updated_field_val)
             else:
                 for dotted_path, val in recursive_iter(update_data):
@@ -122,7 +122,9 @@ class TrackedBaseModel(BaseModel):
         fields = [("self", self)]
         while fields:
             field = fields.pop(0)
-            for child in [(i, field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+            for child in [
+                (i, field[1].__dict__[i]) for i in field[1].__fields__.keys()
+            ]:
 
                 if isinstance(child[1], BaseModel) and child[0] != "_":
                     child[1].touched = touched
@@ -134,7 +136,9 @@ class TrackedBaseModel(BaseModel):
         while fields:
             field = fields.pop(0)
             path = field[1].path
-            for child in [(i, field[1].__dict__[i]) for i in field[1].__fields__.keys()]:
+            for child in [
+                (i, field[1].__dict__[i]) for i in field[1].__fields__.keys()
+            ]:
                 if isinstance(child[1], BaseModel):
                     child[1].path = path + "." + child[0]
                     fields.append(child)
@@ -155,6 +159,7 @@ class TrackedBaseModel(BaseModel):
             # clearing the func and the and params
             self.state.executeInfo.executeFunc = ""
             self.state.executeInfo.params = {}
+
         return wrapper
 
     def cleanup(self):
@@ -162,21 +167,21 @@ class TrackedBaseModel(BaseModel):
 
 
 class Position(TrackedBaseModel):
-    x: int
-    y: int
-    z: int
+    x: float
+    y: float
+    z: float
 
 
 class Size(TrackedBaseModel):
-    width: int
-    height: int
-    depth: int
+    width: float
+    height: float
+    depth: float
 
 
 class Rotation(TrackedBaseModel):
-    x: int
-    y: int
-    z: int
+    x: float
+    y: float
+    z: float
 
 
 class AppTypes(Enum):
@@ -207,7 +212,7 @@ class Data(TrackedBaseModel):
 
 
 class SmartBit(TrackedBaseModel):
-    app_id: str = Field(alias='_id')
+    app_id: str = Field(alias="_id")
     _createdAt: int
     _updatedAt: int
     data: Data
@@ -227,7 +232,7 @@ class SmartBit(TrackedBaseModel):
     def get_updates_for_batch(self):
         new_data = self.get_all_touched_fields_dict()
         self.touched.clear()
-        obj = {'id': self.app_id, 'updates': new_data}
+        obj = {"id": self.app_id, "updates": new_data}
         return obj
 
     @abstractmethod
@@ -242,6 +247,7 @@ class ExecuteInfo(TrackedBaseModel):
     # execute_func: str = Field(alias='executeFunc')
     executeFunc: str
     params: dict
+
 
 # class Boxe(TrackedBaseModel):
 #

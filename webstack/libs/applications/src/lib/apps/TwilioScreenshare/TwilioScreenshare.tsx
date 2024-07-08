@@ -51,7 +51,7 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
+const screenShareTimeLimit = 3600 * 1000 * 6; // 6 hours
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
