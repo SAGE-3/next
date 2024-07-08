@@ -10,6 +10,7 @@
 import { create } from 'zustand';
 
 import ZoomVideo from '@zoom/videosdk';
+import { VideoClient } from '@zoom/videosdk';
 
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -28,10 +29,9 @@ async function fetchToken(userId: string, roomName: string) {
 
 // Typescript interface defining the store
 interface ZoomState {
-  client: any | undefined;
-  joinRoom: (userId: string, accessId: string, roomName: string) => Promise<boolean>;
+  zoomVideo: typeof VideoClient | undefined;
+  joinRoom: (userId: string, roomName: string) => Promise<boolean>;
   leaveRoom: () => void;
-  setStopStream: (streamId: string) => void;
 }
 
 /**
@@ -41,12 +41,9 @@ interface ZoomState {
  * The store will manage all the participants and tracks.
  */
 export const useZoomStore = create<ZoomState>()((set, get) => ({
-  client: undefined,
-  setStopStream: (streamId: string) => set((state) => ({ ...state, stopStreamId: streamId })),
-  joinRoom: async (userId: string, accessId: string, roomId: string) => {
-    // console.log('Twilio> Joining room');
-
-    if (get().client) {
+  zoomVideo: undefined,
+  joinRoom: async (userId: string, roomId: string) => {
+    if (get().zoomVideo) {
       console.log('Zoom> Already connected: ', roomId);
       return true;
     }
@@ -58,27 +55,27 @@ export const useZoomStore = create<ZoomState>()((set, get) => ({
 
     try {
       const zoomVideo = ZoomVideo.createClient();
-      set({ client: zoomVideo });
 
       await zoomVideo.init('en-US', 'Global', { patchJsMedia: true });
       await zoomVideo.join(roomId, token, userId);
 
-      const zoomSession = zoomVideo.getMediaStream();
-      console.log('Zoom> Zoom Session: ', zoomSession);
+      set({ zoomVideo: zoomVideo });
+      console.log('Zoom> Joined Zoom Session: ', zoomVideo);
     } catch (error) {
       console.error(error);
+      console.log('Zoom> Failed to join room: ', roomId);
       return false;
     }
     return true;
   },
   leaveRoom: () => {
     console.log('Zoom> Leaving room');
-    const client = get().client;
-    if (client) {
-      client.leave();
+    const zoomVid = get().zoomVideo;
+    if (zoomVid) {
+      zoomVid.leave();
       ZoomVideo.destroyClient();
     }
-    set({ client: undefined });
+    set({ zoomVideo: undefined });
   },
 }));
 

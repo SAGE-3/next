@@ -16,23 +16,23 @@ export function Zoom(props: { sessionId: string; connect: boolean }) {
   // Twilio Store to join and leave room when joining board
   const { joinRoom, leaveRoom } = useZoomStore((state) => state);
 
-  // Handle joining and leaving twilio room when entering board
+  // Handle joining and leaving Zoom room when entering board
   useEffect(() => {
     // Join Twilio room
     if (user && props.connect) {
-      joinRoom(user._id, accessId, props.sessionId);
+      joinRoom(user._id, props.sessionId);
     }
     // Uncmounting
     return () => {
-      // Leave twilio room
+      // Leave Zoom room
       leaveRoom();
     };
   }, []);
 
-  // Handle joining and leaving twilio room when props.connect changes
+  // Handle joining and leaving Zoom room when props.connect changes
   useEffect(() => {
     if (user && props.connect) {
-      joinRoom(user?._id, accessId, props.sessionId);
+      joinRoom(user?._id, props.sessionId);
     } else {
       leaveRoom();
     }

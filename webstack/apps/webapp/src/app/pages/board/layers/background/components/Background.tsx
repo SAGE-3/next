@@ -155,7 +155,7 @@ export function Background(props: BackgroundProps) {
   const newApp = (type: AppName, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }));
     } else {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId));
     }

@@ -26,4 +26,4 @@ export const init: Partial<state> = {
   accessId: '',
 };
 
-export const name = 'Screenshare';
+export const name = 'Screenshare-Old';

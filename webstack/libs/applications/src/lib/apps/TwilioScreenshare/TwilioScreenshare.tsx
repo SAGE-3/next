@@ -42,7 +42,6 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { MdScreenShare } from 'react-icons/md';
 
 type ElectronSource = {
   appIcon: null | string;
@@ -51,7 +50,7 @@ type ElectronSource = {
   name: string;
   thumbnail: string;
 };
-const screenShareTimeLimit = 3600 * 1000 * 6; // 6 hours
+const screenShareTimeLimit = 60 * 60 * 2000; // 2 hours
 
 /* App component for Twilio */
 function AppComponent(props: App): JSX.Element {
@@ -385,7 +384,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   return (
-    <AppWindow app={props} lockAspectRatio={s.aspectRatio} hideBackgroundIcon={MdScreenShare}>
+    <AppWindow app={props} lockAspectRatio={s.aspectRatio}>
       <>
         <Box backgroundColor="black" width="100%" height="100%">
           <video ref={videoRef} className="video-container" width="100%" height="100%"></video>

@@ -21,9 +21,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  videoId: '',
   aspectRatio: 1,
-  accessId: '',
 };
 
 export const name = 'Screenshare';

@@ -22,8 +22,8 @@ export class SAGEZoomJWTHelper {
    *
    * @param config Twilio config file
    * @param appCollection The apps collection
-   * @param clearAppsInterval How often to check the apps collection for twilio apps that have expired (ms)
-   * @param expiration How long can twilio apps live before they expire (ms)
+   * @param clearAppsInterval How often to check the apps collection for Zoom apps that have expired (ms)
+   * @param expiration How long can Zoom apps live before they expire (ms)
    */
   constructor(
     config: ZoomSDKConfiguration,
@@ -48,7 +48,7 @@ export class SAGEZoomJWTHelper {
     const oHeader = { alg: 'HS256', typ: 'JWT' };
 
     const oPayload = {
-      app_key: this.config.apiKey,
+      app_key: this.config.sdkKey,
       tpc: roomId,
       role_type: 0,
       version: 1,
@@ -58,12 +58,12 @@ export class SAGEZoomJWTHelper {
 
     const sHeader = JSON.stringify(oHeader);
     const sPayload = JSON.stringify(oPayload);
-    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, this.config.apiSecret);
+    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, this.config.sdkSecret);
     return sdkJWT;
   }
 
   /**
-   * Clear twilio apps that have expired or the user has left the board
+   * Clear Zoom apps that have expired or the user has left the board
    */
   private clearScreenshareApps(
     appCollection: SAGE3Collection<AppSchema>,

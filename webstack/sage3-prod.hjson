@@ -41,14 +41,6 @@
 
   // External Services
   "services": {
-    "twilio": {
-      // Your Account SID from www.twilio.com/console
-      "accountSid": "",
-      // API Key
-      "apiKey": "",
-      // API Secret
-      "apiSecret": ""
-    },
     "openai": {
       // API Key
       "apiKey": "",

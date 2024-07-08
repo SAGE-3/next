@@ -42,14 +42,6 @@
 
   // External Services
   "services": {
-    "twilio": {
-      // Your Account SID from www.twilio.com/console
-      "accountSid": "",
-      // API Key
-      "apiKey": "",
-      // API Secret
-      "apiSecret": ""
-    },
     "openai": {
       // API Key
       "apiKey": "",
@@ -75,9 +67,9 @@
     }
     "zoom": {
       // SDK Key
-      "apiKey":"",
+      "sdkKey":"GgoqBD9KQzOrjRNN6OeJSw",
       // SDK Secret
-      "apiSecret":""
+      "sdkSecret":"fahDThWFa1AhEZihVC7RVQhtUcXNDCQjk7Ca"
     }
   },
 

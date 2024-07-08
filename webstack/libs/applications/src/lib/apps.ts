@@ -30,13 +30,12 @@ import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TLDrawName } from './apps/TLDraw';
-import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
+import { name as ZoomScreenshareName } from './apps/ZoomScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
-
 
 import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
@@ -68,7 +67,7 @@ import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import TLDraw from './apps/TLDraw/TLDraw';
-import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
+import ZoomScreenshare from './apps/ZoomScreenshare/ZoomScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
@@ -77,44 +76,194 @@ import Webview from './apps/Webview/Webview';
 import React from 'react';
 import { App, AppGroup } from './schema';
 
-
 export const Applications = {
-  [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent, GroupedToolbarComponent: AIPane.GroupedToolbarComponent },
-  [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
-  [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
-  [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent, GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent },
-  [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent, GroupedToolbarComponent: Chat.GroupedToolbarComponent },
-  [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent, GroupedToolbarComponent: Clock.GroupedToolbarComponent },
-  [CobrowseName]: { AppComponent: React.memo(Cobrowse.AppComponent), ToolbarComponent: Cobrowse.ToolbarComponent, GroupedToolbarComponent: Cobrowse.GroupedToolbarComponent },
-  [CodeEditorName]: { AppComponent: React.memo(CodeEditor.AppComponent), ToolbarComponent: CodeEditor.ToolbarComponent, GroupedToolbarComponent: CodeEditor.GroupedToolbarComponent },
-  [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent, GroupedToolbarComponent: Counter.GroupedToolbarComponent },
-  [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent, GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent },
-  [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent, GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent },
-  [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent, GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent },
-  [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent, GroupedToolbarComponent: HCDP.GroupedToolbarComponent },
-  [IFrameName]: { AppComponent: React.memo(IFrame.AppComponent), ToolbarComponent: IFrame.ToolbarComponent, GroupedToolbarComponent: IFrame.GroupedToolbarComponent },
-  [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent, GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent },
-  [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent, GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent },
-  [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent, GroupedToolbarComponent: LeafLet.GroupedToolbarComponent },
-  [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent, GroupedToolbarComponent: Linker.GroupedToolbarComponent },
-  [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent, GroupedToolbarComponent: MapGL.GroupedToolbarComponent },
-  [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent, GroupedToolbarComponent: Notepad.GroupedToolbarComponent },
-  [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent, GroupedToolbarComponent: PDFResult.GroupedToolbarComponent },
-  [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent, GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent },
-  [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
-  [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
-  [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent, GroupedToolbarComponent: RTCChat.GroupedToolbarComponent },
-  [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent, GroupedToolbarComponent: SageCell.GroupedToolbarComponent },
-  [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
-  [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent, GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent },
-  [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent, GroupedToolbarComponent: Stickie.GroupedToolbarComponent },
-  [TLDrawName]: { AppComponent: React.memo(TLDraw.AppComponent), ToolbarComponent: TLDraw.ToolbarComponent, GroupedToolbarComponent: TLDraw.GroupedToolbarComponent },
-  [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent, GroupedToolbarComponent: TwilioScreenshare.GroupedToolbarComponent },
-  [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent, GroupedToolbarComponent: VegaLite.GroupedToolbarComponent },
-  [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent, GroupedToolbarComponent: VegaLiteViewer.GroupedToolbarComponent },
-  [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
-  [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
-  [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
+  [AIPaneName]: {
+    AppComponent: React.memo(AIPane.AppComponent),
+    ToolbarComponent: AIPane.ToolbarComponent,
+    GroupedToolbarComponent: AIPane.GroupedToolbarComponent,
+  },
+  [BoardLinkName]: {
+    AppComponent: React.memo(BoardLink.AppComponent),
+    ToolbarComponent: BoardLink.ToolbarComponent,
+    GroupedToolbarComponent: BoardLink.GroupedToolbarComponent,
+  },
+  [CSVViewerName]: {
+    AppComponent: React.memo(CSVViewer.AppComponent),
+    ToolbarComponent: CSVViewer.ToolbarComponent,
+    GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent,
+  },
+  [ChartGeneratorName]: {
+    AppComponent: React.memo(ChartGenerator.AppComponent),
+    ToolbarComponent: ChartGenerator.ToolbarComponent,
+    GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent,
+  },
+  [ChatName]: {
+    AppComponent: React.memo(Chat.AppComponent),
+    ToolbarComponent: Chat.ToolbarComponent,
+    GroupedToolbarComponent: Chat.GroupedToolbarComponent,
+  },
+  [ClockName]: {
+    AppComponent: React.memo(Clock.AppComponent),
+    ToolbarComponent: Clock.ToolbarComponent,
+    GroupedToolbarComponent: Clock.GroupedToolbarComponent,
+  },
+  [CobrowseName]: {
+    AppComponent: React.memo(Cobrowse.AppComponent),
+    ToolbarComponent: Cobrowse.ToolbarComponent,
+    GroupedToolbarComponent: Cobrowse.GroupedToolbarComponent,
+  },
+  [CodeEditorName]: {
+    AppComponent: React.memo(CodeEditor.AppComponent),
+    ToolbarComponent: CodeEditor.ToolbarComponent,
+    GroupedToolbarComponent: CodeEditor.GroupedToolbarComponent,
+  },
+  [CounterName]: {
+    AppComponent: React.memo(Counter.AppComponent),
+    ToolbarComponent: Counter.ToolbarComponent,
+    GroupedToolbarComponent: Counter.GroupedToolbarComponent,
+  },
+  [DeepZoomImageName]: {
+    AppComponent: React.memo(DeepZoomImage.AppComponent),
+    ToolbarComponent: DeepZoomImage.ToolbarComponent,
+    GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent,
+  },
+  [EChartsViewerName]: {
+    AppComponent: React.memo(EChartsViewer.AppComponent),
+    ToolbarComponent: EChartsViewer.ToolbarComponent,
+    GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent,
+  },
+  [GLTFViewerName]: {
+    AppComponent: React.memo(GLTFViewer.AppComponent),
+    ToolbarComponent: GLTFViewer.ToolbarComponent,
+    GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent,
+  },
+  [HCDPName]: {
+    AppComponent: React.memo(HCDP.AppComponent),
+    ToolbarComponent: HCDP.ToolbarComponent,
+    GroupedToolbarComponent: HCDP.GroupedToolbarComponent,
+  },
+  [IFrameName]: {
+    AppComponent: React.memo(IFrame.AppComponent),
+    ToolbarComponent: IFrame.ToolbarComponent,
+    GroupedToolbarComponent: IFrame.GroupedToolbarComponent,
+  },
+  [ImageViewerName]: {
+    AppComponent: React.memo(ImageViewer.AppComponent),
+    ToolbarComponent: ImageViewer.ToolbarComponent,
+    GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent,
+  },
+  [JupyterLabName]: {
+    AppComponent: React.memo(JupyterLab.AppComponent),
+    ToolbarComponent: JupyterLab.ToolbarComponent,
+    GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent,
+  },
+  [LeafLetName]: {
+    AppComponent: React.memo(LeafLet.AppComponent),
+    ToolbarComponent: LeafLet.ToolbarComponent,
+    GroupedToolbarComponent: LeafLet.GroupedToolbarComponent,
+  },
+  [LinkerName]: {
+    AppComponent: React.memo(Linker.AppComponent),
+    ToolbarComponent: Linker.ToolbarComponent,
+    GroupedToolbarComponent: Linker.GroupedToolbarComponent,
+  },
+  [MapGLName]: {
+    AppComponent: React.memo(MapGL.AppComponent),
+    ToolbarComponent: MapGL.ToolbarComponent,
+    GroupedToolbarComponent: MapGL.GroupedToolbarComponent,
+  },
+  [NotepadName]: {
+    AppComponent: React.memo(Notepad.AppComponent),
+    ToolbarComponent: Notepad.ToolbarComponent,
+    GroupedToolbarComponent: Notepad.GroupedToolbarComponent,
+  },
+  [PDFResultName]: {
+    AppComponent: React.memo(PDFResult.AppComponent),
+    ToolbarComponent: PDFResult.ToolbarComponent,
+    GroupedToolbarComponent: PDFResult.GroupedToolbarComponent,
+  },
+  [PDFViewerName]: {
+    AppComponent: React.memo(PDFViewer.AppComponent),
+    ToolbarComponent: PDFViewer.ToolbarComponent,
+    GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent,
+  },
+  [PluginAppName]: {
+    AppComponent: React.memo(PluginApp.AppComponent),
+    ToolbarComponent: PluginApp.ToolbarComponent,
+    GroupedToolbarComponent: PluginApp.GroupedToolbarComponent,
+  },
+  [PollName]: {
+    AppComponent: React.memo(Poll.AppComponent),
+    ToolbarComponent: Poll.ToolbarComponent,
+    GroupedToolbarComponent: Poll.GroupedToolbarComponent,
+  },
+  [RTCChatName]: {
+    AppComponent: React.memo(RTCChat.AppComponent),
+    ToolbarComponent: RTCChat.ToolbarComponent,
+    GroupedToolbarComponent: RTCChat.GroupedToolbarComponent,
+  },
+  [SageCellName]: {
+    AppComponent: React.memo(SageCell.AppComponent),
+    ToolbarComponent: SageCell.ToolbarComponent,
+    GroupedToolbarComponent: SageCell.GroupedToolbarComponent,
+  },
+  [SeerName]: {
+    AppComponent: React.memo(Seer.AppComponent),
+    ToolbarComponent: Seer.ToolbarComponent,
+    GroupedToolbarComponent: Seer.GroupedToolbarComponent,
+  },
+  [SensorOverviewName]: {
+    AppComponent: React.memo(SensorOverview.AppComponent),
+    ToolbarComponent: SensorOverview.ToolbarComponent,
+    GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent,
+  },
+  [StickieName]: {
+    AppComponent: React.memo(Stickie.AppComponent),
+    ToolbarComponent: Stickie.ToolbarComponent,
+    GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
+  },
+  [TLDrawName]: {
+    AppComponent: React.memo(TLDraw.AppComponent),
+    ToolbarComponent: TLDraw.ToolbarComponent,
+    GroupedToolbarComponent: TLDraw.GroupedToolbarComponent,
+  },
+  [ZoomScreenshareName]: {
+    AppComponent: React.memo(ZoomScreenshare.AppComponent),
+    ToolbarComponent: ZoomScreenshare.ToolbarComponent,
+    GroupedToolbarComponent: ZoomScreenshare.GroupedToolbarComponent,
+  },
+  [VegaLiteName]: {
+    AppComponent: React.memo(VegaLite.AppComponent),
+    ToolbarComponent: VegaLite.ToolbarComponent,
+    GroupedToolbarComponent: VegaLite.GroupedToolbarComponent,
+  },
+  [VegaLiteViewerName]: {
+    AppComponent: React.memo(VegaLiteViewer.AppComponent),
+    ToolbarComponent: VegaLiteViewer.ToolbarComponent,
+    GroupedToolbarComponent: VegaLiteViewer.GroupedToolbarComponent,
+  },
+  [VideoViewerName]: {
+    AppComponent: React.memo(VideoViewer.AppComponent),
+    ToolbarComponent: VideoViewer.ToolbarComponent,
+    GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent,
+  },
+  [WebpageLinkName]: {
+    AppComponent: React.memo(WebpageLink.AppComponent),
+    ToolbarComponent: WebpageLink.ToolbarComponent,
+    GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent,
+  },
+  [WebviewName]: {
+    AppComponent: React.memo(Webview.AppComponent),
+    ToolbarComponent: Webview.ToolbarComponent,
+    GroupedToolbarComponent: Webview.GroupedToolbarComponent,
+  },
+} as unknown as Record<
+  string,
+  {
+    AppComponent: () => JSX.Element;
+    ToolbarComponent: () => JSX.Element;
+    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;
+  }
+>;
 
 export * from './components';
