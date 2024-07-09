@@ -7,13 +7,21 @@
 //  */
 
 import { useAppStore } from '@sage3/frontend';
-import { Container, Tooltip, ButtonGroup, Button, Input, Grid, GridItem, useToast, useDisclosure,
+import {
+  Container,
+  Tooltip,
+  ButtonGroup,
+  Button,
+  Input,
+  Grid,
+  GridItem,
+  useToast,
+  useDisclosure,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
   DrawerContent,
   DrawerHeader,
-  Text
 } from '@chakra-ui/react';
 import { MdHistory, MdCopyAll, MdBackspace, MdDelete } from 'react-icons/md';
 import { App, AppGroup } from '../../schema';
@@ -111,9 +119,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const toast = useToast();
 
   const clearHistory = () => {
-    updateState(props._id, { history: ""});
+    updateState(props._id, { history: "" });
   }
 
+  // Copy result to clipboard
   const handleCopy = () => {
     if (!s.input) return;
     if (navigator.clipboard) {
