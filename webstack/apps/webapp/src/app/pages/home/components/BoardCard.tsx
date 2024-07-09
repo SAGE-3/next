@@ -6,10 +6,30 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast, Avatar, AvatarBadge, AvatarGroup } from '@chakra-ui/react';
+import {
+  useColorModeValue,
+  IconButton,
+  Box,
+  Text,
+  useDisclosure,
+  Icon,
+  Tooltip,
+  useToast,
+  Avatar,
+  AvatarBadge,
+  AvatarGroup,
+} from '@chakra-ui/react';
 import { MdLock, MdStar, MdExitToApp, MdLink, MdStarOutline, MdSettings, MdInfo } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser, useUsersStore, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
+import {
+  EnterBoardModal,
+  useHexColor,
+  useUser,
+  useUsersStore,
+  copyBoardUrlToClipboard,
+  EditBoardModal,
+  BoardInformationModal,
+} from '@sage3/frontend';
 import { Board, Presence } from '@sage3/shared/types';
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
@@ -25,7 +45,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   // const backgroundColorValue = useColorModeValue(`${boardColor}.200`, `${boardColor}.800`);
   const backgroundColorValue = useColorModeValue(`${props.board.data.color}`, `${props.board.data.color}`);
   const backgroundColor = useHexColor(backgroundColorValue);
-  const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
+  const borderColorValue = useColorModeValue(`${props.board.data.color}.300`, `${props.board.data.color}.300`);
   const borderColor = useHexColor(borderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
@@ -77,18 +97,22 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
       status: 'success',
     });
   };
-  
+
   // Disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: editBoardModalIsOpen, onOpen: editBoardModalOnOpen, onClose: editBoardModalOnClose } = useDisclosure();
-  const { isOpen: boardInformationModalIsOpen, onOpen: boardInformationModalOnOpen, onClose: boardInformationModalOnClose } = useDisclosure();
+  const {
+    isOpen: boardInformationModalIsOpen,
+    onOpen: boardInformationModalOnOpen,
+    onClose: boardInformationModalOnClose,
+  } = useDisclosure();
 
   // Enter Board
   const handleEnterBoard = (ev: any) => {
     ev.stopPropagation();
     onOpen();
   };
-  
+
   // prevent propagation of double click (i.e., favorite, unfavorite in quick succession)
   const handleBlockDoubleClick = (event: any) => {
     event.preventDefault();
@@ -106,38 +130,32 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   return (
     <>
       <Box
-        background={props.selected ? backgroundColor : linearBGColor}
-        p={props.selected ? '2' : '1'}
+        background={'gray.800'}
+        p="2"
         px="2"
         display="grid"
         gridTemplateAreas="'preview preview' 'name options'"
         gridTemplateColumns="1fr auto"
         justifyContent={'space-between'}
         alignItems={'center'}
-        onClick={() => props.onClick(props.board)}
+        onClick={handleEnterBoard}
         borderRadius="md"
+        // border={`2px solid ${props.selected ? backgroundColor : 'transparent'}`}
         boxSizing="border-box"
         width="400px"
         height="300px"
-        border={`solid  ${props.selected ? `2px ${borderColor}` : '1px gray'}`}
-        // borderLeft={props.selected ? `${borderColor} solid 8px` : ''}
-        _hover={{ cursor: 'pointer', border: `solid 2px ${borderColor}` }}
-        transition={'all 0.1s ease-in-out'}
-        onDoubleClick={handleEnterBoard}
+        transition={'all 0.2s ease-in-out'}
+        cursor="pointer"
+        _hover={{ transform: 'scale(1.02)' }}
+        // onDoubleClick={handleEnterBoard}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <Box gridArea="preview">
           <Box display="flex">
-            <Box
-              overflow="absolute"
-              height={0}
-              width="100%"
-              zIndex={1}
-              transform={'translate(5px, 180px)'}
-            >
-              <UserPresenceIcons 
-                usersPresent={props.usersPresent} 
+            <Box overflow="absolute" height={0} width="100%" zIndex={1} transform={'translate(5px, 180px)'}>
+              <UserPresenceIcons
+                usersPresent={props.usersPresent}
                 maxUsersDisplayed={5}
                 anonymousNames={props.board.data.isPrivate}
                 overflow="hidden"
@@ -146,22 +164,29 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
               />
             </Box>
           </Box>
-          <BoardPreview board={props.board} width={380} height={220}/>
+          <BoardPreview board={props.board} width={380} height={220} isSelected={props.selected} />
         </Box>
 
-        <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose}/>
+        <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
 
         <Box display="flex" flexDir="column" pl="1" width="220px">
-          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+          <Box
+            overflow="hidden"
+            textOverflow={'ellipsis'}
+            whiteSpace={'nowrap'}
+            mr="2"
+            fontSize="lg"
+            fontWeight={'bold'}
+            color={borderColorValue}
+          >
             {props.board.data.name}
           </Box>
-          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={props.selected ? undefined : subText}>
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={borderColorValue}>
             {props.board.data.description}
           </Box>
         </Box>
 
         <Box display="flex" alignItems={'center'}>
-
           {/* {props.usersPresent > 0 &&
           <Tooltip placement="top" hasArrow={true} label={'Number of users'} openDelay={400} ml="1">
             <Text color={borderColor} fontSize="xl" fontWeight="bold" mx="1">
@@ -169,7 +194,13 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
             </Text>
           </Tooltip>} */}
 
-          <Tooltip placement="top" hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400} ml="1">
+          <Tooltip
+            placement="top"
+            hasArrow={true}
+            label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'}
+            openDelay={400}
+            ml="1"
+          >
             <IconButton
               size="sm"
               variant={'ghost'}
@@ -182,7 +213,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
             ></IconButton>
           </Tooltip>
 
-          <Tooltip placement="top" hasArrow={true} label={'Copy this board\'s link'} openDelay={400} ml="1">
+          <Tooltip placement="top" hasArrow={true} label={"Copy this board's link"} openDelay={400} ml="1">
             <IconButton
               size="sm"
               variant={'ghost'}
@@ -190,25 +221,28 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
               // opacity={isHovered ? 1 : 0}
               aria-label="enter-board"
               fontSize="xl"
-              onClick={(e) => {handleCopyLink(e, props.board)}}
+              onClick={(e) => {
+                handleCopyLink(e, props.board);
+              }}
               onDoubleClick={handleBlockDoubleClick}
               icon={<MdLink />}
             ></IconButton>
           </Tooltip>
 
-          {props.board.data.ownerId === user?._id &&
-          <Tooltip placement="top" hasArrow={true} label={'Edit this board'} openDelay={400} ml="1">
-            <IconButton
-              size="sm"
-              variant={'ghost'}
-              colorScheme={boardColor}
-              aria-label="enter-board"
-              fontSize="xl"
-              onClick={handleSettings}
-              onDoubleClick={handleBlockDoubleClick}
-              icon={<MdSettings/>}
-            ></IconButton>
-          </Tooltip>}
+          {props.board.data.ownerId === user?._id && (
+            <Tooltip placement="top" hasArrow={true} label={'Edit this board'} openDelay={400} ml="1">
+              <IconButton
+                size="sm"
+                variant={'ghost'}
+                colorScheme={boardColor}
+                aria-label="enter-board"
+                fontSize="xl"
+                onClick={handleSettings}
+                onDoubleClick={handleBlockDoubleClick}
+                icon={<MdSettings />}
+              ></IconButton>
+            </Tooltip>
+          )}
 
           <Tooltip placement="top" hasArrow={true} label={'More Information'} openDelay={400} ml="1">
             <IconButton
@@ -219,11 +253,11 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
               fontSize="xl"
               onClick={handleInformation}
               onDoubleClick={handleBlockDoubleClick}
-              icon={<MdInfo/>}
+              icon={<MdInfo />}
             ></IconButton>
           </Tooltip>
 
-          <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
+          {/* <Tooltip placement="top" hasArrow={true} label={'Enter this board'} openDelay={400} ml="1">
             <IconButton
               size="sm"
               variant={'ghost'}
@@ -233,7 +267,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
               onClick={handleEnterBoard}
               icon={<MdExitToApp />}
             ></IconButton>
-          </Tooltip>
+          </Tooltip> */}
         </Box>
       </Box>
       <EditBoardModal

@@ -15,7 +15,7 @@ import { App, AppName } from '@sage3/applications/schema';
 
 /* App component for BoardLink */
 
-export function BoardPreview(props: { board: Board; width: number; height: number }): JSX.Element {
+export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
   // Apps
   const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
   const [boardWidth, setBoardWidth] = useState(0);
@@ -30,8 +30,8 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   const appBorderColor = useHexColor(appBorderColorValue);
   const backgroundColor = useColorModeValue(`${props.board.data.color}.400`, `${props.board.data.color}.900}`);
   const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
+    `linear-gradient(160deg, #ffffff, #fbfbfb, #f3f3f3)`,
+    `linear-gradient(160deg, #303030, #252525, #262626)`
   );
 
   async function updateAppInfo() {
@@ -77,7 +77,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
         borderRadius="md"
         background={linearBGColor}
         p="2"
-        border={`2px solid ${boardColor}`}
+        // border={`2px solid ${!props.isSelected ? 'lightgray' : boardColor}`}
         display="flex"
         alignItems="center"
         justifyContent="center"
@@ -125,8 +125,8 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
             })}
           </Box>
         ) : (
-          <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
-            This board has no opened applications.
+          <Text fontSize="xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
+            No Opened Applications
           </Text>
         )}
       </Box>

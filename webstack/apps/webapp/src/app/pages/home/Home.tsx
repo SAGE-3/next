@@ -139,7 +139,7 @@ export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
-  const [boardViewLayout, setBoardViewLayout] = useState<"list" | "grid">("grid");
+  const [boardViewLayout, setBoardViewLayout] = useState<'list' | 'grid'>('grid');
   const [boardSearch, setBoardSearch] = useState<string>('');
 
   // Selected Board Ref
@@ -1059,7 +1059,7 @@ export function HomePage() {
           backgroundColor={mainBackgroundColor}
           maxHeight="100svh"
           height="100svh"
-          overflow="hidden"
+          // overflow="hidden"
           pt={4}
           pr={4}
           pb={4}
@@ -1138,7 +1138,7 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" overflow="hidden" height="100%">
+          <Box width="100%" height="100%">
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>Boards</Tab>
@@ -1153,102 +1153,106 @@ export function HomePage() {
 
               <TabPanels>
                 <TabPanel px="0">
-                  <Box display="flex" gap="4" overflow="hidden">
+                  <Box display="flex" gap="4">
+                    <Flex gap="4" flexDirection="column">
+                      <Flex align="center" gap="2" justify="flex-start" mx="4">
+                        <IconButton
+                          aria-label={boardViewLayout}
+                          icon={boardViewLayout === 'list' ? <MdList /> : <MdGridView />}
+                          colorScheme="teal"
+                          variant="outline"
+                          onClick={() => {
+                            setBoardViewLayout(boardViewLayout === 'list' ? 'grid' : 'list');
+                          }}
+                        />
+                        <InputGroup size="md" width="452px" my="1">
+                          <InputLeftElement pointerEvents="none">
+                            <MdSearch />
+                          </InputLeftElement>
+                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                        </InputGroup>
+                      </Flex>
+                      {/* <Divider /> */}
+                      {boardViewLayout == 'grid' && (
+                        <Flex
+                          gap="4"
+                          p="4"
+                          display="flex"
+                          flexWrap="wrap"
+                          justifyContent="left"
+                          style={{
+                            maxHeight: 'calc(100vh - 360px)',
+                            width: '100%',
+                            maxWidth: '2200px',
+                          }}
+                          margin="0 auto"
+                          overflowY="scroll"
+                          overflowX="hidden"
+                          pt="2"
+                          minWidth="420px"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              width: '5px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter((board) => board.data.roomId === selectedRoom?._id)
+                            .filter((board) => boardSearchFilter(board))
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </Flex>
+                      )}
 
-                  <Flex gap="4" flexDirection="column">
-                    <Flex align="center" gap="2" justify="flex-start">
-                      <IconButton
-                        aria-label={boardViewLayout}
-                        icon={boardViewLayout === "list" ? <MdList/>:<MdGridView/>}
-                        colorScheme="teal"
-                        variant="outline"
-                        onClick={() => {setBoardViewLayout(boardViewLayout === "list" ? "grid" : "list")}}
-                      />
-                      <InputGroup size="md" width="350px" my="1">
-                        <InputLeftElement pointerEvents="none">
-                          <MdSearch />
-                        </InputLeftElement>
-                        <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                      </InputGroup>
-                    </Flex>
-                    <Divider/>
-                    {boardViewLayout == "grid" && (
-                    <Flex
-                      gap="3"
-                      pr="2"
-                      display="flex"
-                      flexWrap="wrap"
-                      justifyContent="left"
-                      style={{ 
-                        maxHeight: 'calc(100vh - 360px)',
-                        width:  '100%' 
-                      }}
-                      margin="0 auto"
-                      overflowY="scroll"
-                      minWidth="420px"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          width: '5px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                      >
-                        {boards
-                          .filter((board) => board.data.roomId === selectedRoom?._id)
-                          .filter((board) => boardSearchFilter(board))
-                          .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                          .map((board) => (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardCard
-                                board={board}
-                                onClick={() => handleBoardClick(board)}
-                                // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                              />
-                            </Box>
-                          ))}
-                      </Flex>)}
-
-
-                      {boardViewLayout == "list" && (
-                      <VStack
-                        gap="3"
-                        pr="2"
-                        style={{ height: 'calc(100svh - 360px)' }}
-                        overflowY="scroll"
-                        minWidth="420px"
-                        css={{
-                          '&::-webkit-scrollbar': {
-                            background: 'transparent',
-                            width: '5px',
-                          },
-                          '&::-webkit-scrollbar-thumb': {
-                            background: scrollBarColor,
-                            borderRadius: '48px',
-                          },
-                        }}
-                      >
-                        {boards
-                          .filter((board) => board.data.roomId === selectedRoom?._id)
-                          .filter((board) => boardSearchFilter(board))
-                          .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                          .map((board) => (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardRow
-                                key={board._id}
-                                board={board}
-                                onClick={() => handleBoardClick(board)}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
-                              />
-                            </Box>
-                          ))}
-                      </VStack>
+                      {boardViewLayout == 'list' && (
+                        <VStack
+                          gap="3"
+                          pr="2"
+                          style={{ height: 'calc(100svh - 360px)' }}
+                          overflowY="scroll"
+                          minWidth="420px"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              width: '5px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter((board) => board.data.roomId === selectedRoom?._id)
+                            .filter((board) => boardSearchFilter(board))
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardRow
+                                  key={board._id}
+                                  board={board}
+                                  onClick={() => handleBoardClick(board)}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                                />
+                              </Box>
+                            ))}
+                        </VStack>
                       )}
                     </Flex>
 
