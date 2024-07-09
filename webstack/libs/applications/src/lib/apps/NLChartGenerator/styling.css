@@ -11,3 +11,39 @@
 .chartSelection:hover {
   cursor: pointer;
 }
+
+.speech-bubble {
+  position: absolute;
+  bottom: calc(100% + 20px); /* 20px above the image */
+  left: 20rem;
+  transform: translateX(-50%); /* Center the bubble horizontally */
+  background-color: #f9f9f9;
+  color: black;
+  border: 2px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 1600px; /* Set maximum width */
+  width: 600px; /* Ensure width can adjust */
+  z-index: 100;
+  display: none; /* Initially hide */
+  opacity: 0; /* Initially invisible */
+  text-overflow: ellipsis; /* Display ellipsis for overflow */
+  pointer-events: none;
+  transition: opacity 0.3s ease-out; /* Smooth transition */
+  word-wrap: break-word; /* Ensure words break to fit */
+  white-space: normal; /* Allow text to wrap */
+}
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  bottom: -20px; /* Position arrow 20px below the bubble */
+  left: 90px; /* Position arrow on the bottom left */
+  border-width: 10px;
+  border-style: solid;
+  border-color: #f9f9f9 transparent transparent transparent; /* Match bubble background color */
+}
+
+/* Add this to your CSS file or within a <style> tag in your HTML */
+.glowing-border {
+  box-shadow: 0 0 10px rgba(221, 255, 0, 0.7), 0 0 20px rgba(183, 255, 0, 0.5);
+}

@@ -1,22 +1,20 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 import stationVariableNameTranslation from '../data/kaala.json';
 import { variableColors } from '../data/variableColors';
+import { EChartsCoreOption, dataTool } from 'echarts';
+import { stationData } from '../data/stationData';
 
 interface GenerateOptionParams {
   chartName: string;
-  data: string[][];
+  data: any;
+  attributes: string[];
   transformations: string[];
-  stationName: string;
   colorMode: string;
   appSize: { width: number; height: number; depth: number };
-  value?: string;
-  indicator?: string; // for radar chart
-  attributes?: string[];
-  label?: string;
-  bin?: string; // x-axis of histogram
-  count?: string; // y-axis of histogram, what is being counted
+  // value?: string;
+  // indicator?: string; // for radar chart
+  // label?: string;
+  // bin?: string; // x-axis of histogram
+  // count?: string; // y-axis of histogram, what is being counted
 }
 type Transformation = {
   dimension: string;
@@ -31,6 +29,7 @@ function parseValue(value: string | number | Date): string | number | Date {
   }
   return value;
 }
+const color = ['#c23531', '#2f4554', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'];
 
 function applyComparison(value: number, filterValue: number, operator: string): boolean {
   switch (operator) {
@@ -60,8 +59,6 @@ function applyFilters(data: string | any[], extractedTransformations: Transforma
   let dataRows: any[] = data.slice(1) as any[];
 
   extractedTransformations.forEach((filter) => {
-    console.log('Filtering by', filter.dimension);
-
     const dimensionIndex = headerRow.findIndex((val: string) => val === filter.dimension);
 
     if (dimensionIndex !== -1) {
@@ -92,702 +89,199 @@ function applyFilters(data: string | any[], extractedTransformations: Transforma
 export function generateOption({
   chartName,
   data,
+  attributes,
   transformations,
-  stationName,
   colorMode,
   appSize,
-  value,
-  indicator,
-  attributes,
-  label,
-  bin,
-  count,
-}: GenerateOptionParams) {
-  const extractedTransformations = extractTransformations(transformations, data);
-  data = applyFilters(data, extractedTransformations);
-
-  const chartTypes = {
-    'Column Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-      const yAxis = getQuantitativeAttribute(data, attributes);
-      const xAxis = getNominalAttribute(data, attributes);
-      const label = getNominalAttribute(data, attributes);
-      // Find the index of the xAxis, yAxis, and label in the data array
-      const xAxisIndex = data[0].indexOf(xAxis as string);
-      const yAxisIndex = data[0].indexOf(yAxis as string);
-      const labelIndex = data[0].indexOf(label as string);
-
-      // Check if the required columns exist in the data array
-      if (xAxisIndex === -1 || yAxisIndex === -1 || labelIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      // Reduce the data array to reformat it
-      const reformattedData = data.slice(1).reduce((result: any[], row) => {
-        const product = row[xAxisIndex];
-        const year = row[labelIndex];
-        const value = row[yAxisIndex];
-
-        // Check if the product already exists in the result array
-        const existingProduct = result.find((item: any) => item.product === product);
-        if (existingProduct) {
-          // If the product exists, update the value for the corresponding year
-          existingProduct[year] = value;
-        } else {
-          // If the product doesn't exist, add a new object to the result array
-          result.push({ product, [year]: value });
-        }
-        return result;
-      }, []);
-
-      // Get the unique years from the data array
-      const uniqueYears = Array.from(new Set(data.slice(1).map((row: any) => row[labelIndex])));
-      const headers = [xAxis, ...uniqueYears];
-
-      const option = {
-        legend: {},
-        tooltip: {},
-        dataset: {
-          dimensions: headers,
-          source: reformattedData,
-        },
-        xAxis: { type: 'category', name: xAxis },
-        yAxis: { name: yAxis },
-        series: headers.slice(1).map((year: any) => ({ type: 'bar' })),
-      };
-
-      return option;
-    },
-
-    'Bar Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-
-      const xAxis = getNominalAttribute(data, attributes);
-      const yAxis = getQuantitativeAttribute(data, attributes);
-
-      const xAxisIndex = data[0].indexOf(xAxis as string);
-      const yAxisIndex = data[0].indexOf(yAxis as string);
-
-      if (xAxisIndex === -1 || yAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-      // Reduce the data array to reformat it
-      const reformattedData = data.slice(1).reduce((result: any[], row) => {
-        const xAxisValue = row[xAxisIndex];
-        const yAxisValue = row[yAxisIndex];
-        result.push({
-          [xAxis as string]: xAxisValue,
-          [yAxis as string]: yAxisValue,
-        });
-        return result;
-      }, []);
-
-      const option = {
-        // legend: {},
-        // tooltip: {},
-        dataset: {
-          source: reformattedData,
-        },
-        xAxis: { type: 'value', name: xAxis },
-        yAxis: { type: 'category', name: yAxis },
-        series: [
-          {
-            type: 'bar',
-          },
-        ],
-      };
-
-      return option;
-    },
-
-    'Scatter Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-
-      const multipleQuantitativeAttributes = getMultipleQuantitativeAttributes(data, attributes);
-      if (multipleQuantitativeAttributes === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      } else if (multipleQuantitativeAttributes.length < 2) {
-        console.log('Need at least two quantitative attributes');
-        return {};
-      }
-      const xAxis = multipleQuantitativeAttributes[0];
-      const yAxis = multipleQuantitativeAttributes[1];
-      const label = getNominalAttribute(data, attributes);
-      let labelIndex = -1;
-      if (label) {
-        labelIndex = data[0].indexOf(label as string);
-      }
-      const xAxisIndex = data[0].indexOf(xAxis as string);
-      const yAxisIndex = data[0].indexOf(yAxis as string);
-
-      if (xAxisIndex === -1 || yAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      // Reduce the data array to reformat it
-      const reformattedData = data.slice(1).reduce((result: any[], row) => {
-        const xAxisValue = row[xAxisIndex];
-        const yAxisValue = row[yAxisIndex];
-        let labelValue: string | number = -1;
-        if (labelIndex !== -1) {
-          labelValue = row[labelIndex];
-        }
-        result.push({
-          [xAxis as string]: xAxisValue,
-          [yAxis as string]: yAxisValue,
-          [label as string]: labelValue,
-        });
-        return result;
-      }, []);
-
-      const xAxisMin = Math.min(
-        ...reformattedData
-          .filter((item) => item[xAxis] !== undefined && item[xAxis] !== null && item[xAxis] !== '')
-          .map((item) => item[xAxis])
-      );
-      const yAxisMin = Math.min(
-        ...reformattedData
-          .filter((item) => item[yAxis] !== undefined && item[yAxis] !== null && item[yAxis] !== '')
-          .map((item) => item[yAxis])
-      );
-
-      const option = {
-        legend: {},
-        tooltip:
-          label === -1
-            ? {}
-            : {
-                formatter: function (params: { seriesName: any; data: { [x: string]: any } }) {
-                  return `${params.seriesName}: (${params.data[xAxis]}, ${params.data[yAxis]})<br>${label}: ${params.data[label]}`;
-                },
-              },
-        dataset: [
-          {
-            source: reformattedData,
-          },
-        ],
-        xAxis: {
-          type: 'value',
-          name: xAxis,
-          min: xAxisMin,
-        },
-        yAxis: {
-          type: 'value',
-          name: yAxis,
-          min: yAxisMin,
-        },
-        series: [
-          {
-            type: 'scatter',
-          },
-        ],
-      };
-      return option;
-    },
-    'Bubble Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-
-      const xAxis = getQuantitativeAttribute(data, attributes);
-      const yAxis = getQuantitativeAttribute(data, attributes);
-      const zAxis = getQuantitativeAttribute(data, attributes);
-      const label = getNominalAttribute(data, attributes);
-
-      const xAxisIndex = data[0].indexOf(xAxis as string);
-      const yAxisIndex = data[0].indexOf(yAxis as string);
-      const zAxisIndex = data[0].indexOf(zAxis as string);
-      let labelIndex = -1;
-      if (label) {
-        labelIndex = data[0].indexOf(label as string);
-      }
-
-      if (xAxisIndex === -1 || yAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-      // Reduce the data array to reformat it
-      const reformattedData = data.slice(1).map((row) => ({
-        [xAxis as string]: row[xAxisIndex],
-        [yAxis as string]: row[yAxisIndex],
-        [zAxis as string]: row[zAxisIndex],
-        [label as string]: row[labelIndex],
-      }));
-      const option = {
-        //TODO write code to draw labels on charts
-        legend: {},
-        tooltip:
-          label === -1
-            ? {}
-            : {
-                formatter: function (params: { seriesName: any; data: { [x: string]: any } }) {
-                  return `${params.seriesName}: (${params.data[xAxis]}, ${params.data[yAxis]})<br>${label}: ${params.data[label]}`;
-                },
-              },
-        dataset: {
-          source: reformattedData,
-        },
-        xAxis: { type: 'value', name: xAxis },
-        yAxis: { type: 'value', name: yAxis },
-        visualMap: {
-          //@ts-ignore
-          min: Math.min(...reformattedData.map((item) => item[zAxis])), //@ts-ignore
-          max: Math.max(...reformattedData.map((item) => item[zAxis])),
-          dimension: zAxis,
-          inRange: {
-            symbolSize: [10, 50],
-          },
-          seriesIndex: 0,
-        },
-        series: [
-          {
-            type: 'scatter',
-            name: 'Data Points', // Set the series name for tooltip
-            //@ts-ignore
-            symbolSize: function (data) {
-              return Math.sqrt(data[zAxis]) * 10;
-            },
-            label: {
-              show: false, // Hide default label
-            },
-          },
-        ],
-      };
-      return option;
-    },
-
-    'Circular Area Chart': ({
-      //TODO FIX THIS
-      data,
-      indicator,
-      label,
-      value,
-    }: Partial<GenerateOptionParams>) => {
-      if (!data) return;
-      // Find the index of the indicator, label, and value in the data array
-      const indicatorIndex = data[0].indexOf(indicator as string);
-      const labelIndex = data[0].indexOf(label as string);
-      const valueIndex = data[0].indexOf(value as string);
-
-      if (indicatorIndex === -1 || labelIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      // Unique indicator/name of values around radar chart
-      const indicators = Array.from(new Set(data.slice(1).map((row: any) => row[indicatorIndex])));
-      const reformattedData = data.slice(1).reduce((result: any[], row) => {
-        const rowIndicator = row[indicatorIndex];
-        const rowLabel = row[labelIndex];
-        const rowValue = row[valueIndex];
-
-        const existingCity = result.find((item: any) => item[label as string] === rowLabel);
-        if (existingCity) {
-          existingCity[rowIndicator] = rowValue;
-        } else {
-          result.push({
-            [label as string]: rowLabel,
-            [rowIndicator]: rowValue,
-          });
-        }
-        return result;
-      }, []);
-      const option = {
-        legend: {},
-        tooltip: {},
-        radar: {
-          indicator: indicators.map((indicator: string) => ({
-            name: indicator,
-          })),
-        },
-        series: reformattedData.map((city) => ({
-          name: city[label as string],
-          type: 'radar',
-          data: [
-            {
-              value: Object.values(city).slice(1),
-              name: city[label as string],
-            },
-          ],
-        })),
-      };
-      return option;
-    },
-
-    // "Line Chart": ({ data, attributes }: Partial<GenerateOptionParams>) => {
-    //   if (!data || !attributes) return;
-
-    //   const xAxis = getTemporalAttribute(data, attributes);
-    //   const yAxis = getQuantitativeAttribute(data, attributes);
-    //   const label = getNominalAttribute(data, attributes);
-    //   const xAxisIndex = data[0].indexOf(xAxis as string);
-    //   const yAxisIndex = data[0].indexOf(yAxis as string);
-    //   console.log(xAxis, yAxis, label, "*********~~~***");
-    //   let labelIndex = -1;
-    //   if (label) {
-    //     labelIndex = data[0].indexOf(label as string);
-    //   }
-    //   if (xAxisIndex === -1 || yAxisIndex === -1) {
-    //     console.log("Required columns not found in data");
-    //     return {};
-    //   }
-    //   // get all unique x-axis values (i.e. Jan, Feb, Mar, Apr, May)
-    //   const xAxisVals = Array.from(
-    //     new Set(data.slice(1).map((row) => row[xAxisIndex]))
-    //   );
-    //   const yAxisVals = data.slice(1).map((row) => row[yAxisIndex]);
-
-    //   // console.log("xAxisVals", xAxisVals);
-    //   // get all unique label names (i.e. group_A, group_B, group_C)
-    //   let labelNames: (string | number)[] | number = -1;
-    //   if (labelIndex !== -1) {
-    //     labelNames = Array.from(
-    //       new Set(data.slice(1).map((row) => row[labelIndex]))
-    //     );
-    //   }
-
-    //   // create new dataset that has the label name as the key, and an array of equivalent length as the xAxis as the value
-    //   if (labelNames !== -1) {
-    //     const reformattedData = labelNames.reduce((result: any, labelName) => {
-    //       result[labelName] = new Array(xAxisVals.length).fill(0);
-    //       return result;
-    //     }, {});
-    //     // iterate through each row's yAxis value and add it at the right index of the array
-    //     for (let i = 1; i < data.length; i++) {
-    //       const row = data[i];
-    //       const labelName = row[labelIndex];
-    //       const xAxisValue = row[xAxisIndex];
-    //       const yAxisValue = row[yAxisIndex];
-    //       const xAxisValueIndex = xAxisVals.indexOf(xAxisValue);
-    //       reformattedData[labelName][xAxisValueIndex] = yAxisValue;
-    //     }
-    //     const reformattedSeries = [];
-    //     for (const [key, value] of Object.entries(reformattedData)) {
-    //       reformattedSeries.push({
-    //         name: key,
-    //         type: "line",
-    //         total: "stack",
-    //         data: value,
-    //       });
-    //     }
-    //     const option = {
-    //       legend: {},
-    //       tooltip: {},
-    //       xAxis: {
-    //         type: "category",
-    //         boundaryGap: false,
-    //         data: xAxisVals,
-    //       },
-    //       yAxis: {
-    //         type: "value",
-    //       },
-    //       series: reformattedSeries,
-    //     };
-    //     return option;
-    //   } else {
-    //     const option = {
-    //       legend: {},
-    //       tooltip: {},
-    //       xAxis: {
-    //         type: "category",
-    //         data: xAxisVals,
-    //       },
-    //       yAxis: {
-    //         type: "value",
-    //       },
-    //       series: [
-    //         {
-    //           type: "line",
-    //           data: yAxisVals,
-    //         },
-    //       ],
-    //     };
-    //     return option;
-    //   }
-    // },
-    'Line Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-      const xAxis = getTemporalAttribute(data, attributes);
-
-      const labels = getMultipleQuantitativeAttributes(data, attributes);
-
-      let yAxisIndices: number[] = [];
-      if (xAxis === -1 || labels === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      } else {
-        for (let i = 0; i < labels.length; i++) {
-          yAxisIndices.push(data[0].indexOf(labels[i] as string));
-        }
-        const xAxisIndex = data[0].indexOf(xAxis as string);
-        // get all unique x-axis values (i.e. Jan, Feb, Mar, Apr, May)
-        const xAxisVals = Array.from(new Set(data.slice(1).map((row) => row[xAxisIndex])));
-        const yAxisValsArray = [];
-        for (let i = 0; i < labels.length; i++) {
-          yAxisValsArray.push(data.slice(1).map((row) => row[yAxisIndices[i]]));
-        }
+}: GenerateOptionParams): EChartsCoreOption[] {
+  const extractedTransformations: Transformation[] = extractTransformations(transformations, data[0]['data']);
+  console.log(extractedTransformations);
+  for (let i = 0; i < data.length; i++) {
+    data[i]['data'] = applyFilters(data[i]['data'], extractedTransformations);
+  }
+  const quantitativeAttributes = getMultipleQuantitativeAttributes(data[0]['data'], attributes);
+  const temporalAttribute = getTemporalAttribute(data[0]['data'], attributes);
+  const chartOptions: EChartsCoreOption[] = [];
+  const series = [];
+  switch (chartName) {
+    case 'Line Chart':
+      for (let i = 0; i < quantitativeAttributes.length; i++) {
+        let chartOption: any = {};
         const series = [];
-        const legend = [];
-        for (let i = 0; i < labels.length; i++) {
-          let color = '#eee';
-          for (let j = 0; j < stationVariableNameTranslation.length; j++) {
-            if (stationVariableNameTranslation[j].var_id == labels[i]) {
-              for (let k = 0; k < variableColors.length; k++) {
-                if (stationVariableNameTranslation[j].var_name == variableColors[k].variableName) {
-                  color = variableColors[k].variableColor;
-                  break;
-                }
-              }
+
+        if (!temporalAttribute) {
+          console.log('No temporal attribute');
+          return [];
+        }
+
+        const xAxisIndex = data[0]['data'][0].indexOf(temporalAttribute as string);
+        const xAxisVals = Array.from(new Set(data[0]['data'].slice(1).map((row: { [x: string]: any }) => row[xAxisIndex])));
+
+        for (let j = 0; j < data.length; j++) {
+          const stationSeries: any = {};
+          const attributeIndex = data[j]['data'][0].indexOf(quantitativeAttributes[i] as string);
+          let stationColor = '#000';
+          stationSeries.name = data[i]['stationName'];
+          for (let k = 0; k < stationData.length; k++) {
+            if (data[j]['stationName'] == stationData[k].stationName) {
+              stationColor = stationData[j].color;
               break;
             }
           }
-          series.push({
-            name: labels[i],
-            type: 'line',
-            data: yAxisValsArray[i],
-            itemStyle: {
-              color: color,
-            },
-          });
-          legend.push(labels[i]);
+          console.log(stationColor);
+          stationSeries.type = 'line';
+          (stationSeries.itemStyle = {
+            color: stationColor,
+          }),
+            (stationSeries.data = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[attributeIndex]));
+          series.push(stationSeries);
         }
-        const option = {
-          legend: {
-            data: legend,
-          },
-          tooltip: {},
-          xAxis: {
-            type: 'category',
-            data: xAxisVals,
-            name: xAxis,
-          },
-          yAxis: {
-            type: 'value',
-          },
-          series: series,
-        };
-        return option;
-      }
-    },
-    'Column Histogram': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
 
-      const bin = getQuantitativeAttribute(data, attributes);
-      const xAxisIndex = data[0].indexOf(bin as string);
-
-      if (xAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      const values = data.slice(1).map((row) => row[xAxisIndex]) as number[];
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const binCount = Math.ceil(Math.sqrt(values.length));
-      const binSize = (max - min) / binCount;
-      const bins = [];
-      const count = 'count';
-
-      for (let i = 0; i < binCount; i++) {
-        const binStart = min + i * binSize;
-        const binEnd = binStart + binSize;
-        const binLabel = `${binStart.toFixed(2)} - ${binEnd.toFixed(2)}`;
-        const numCounted = values.filter((value) => value >= binStart && value < binEnd).length;
-        bins.push({
-          [bin as string]: binLabel,
-          [count as string]: numCounted,
-        });
-      }
-
-      // Ensure the last bin includes the maximum value
-      bins[bins.length - 1][count as string] += values.filter((value) => value === max).length;
-
-      const option = {
-        legend: {},
-        tooltip: {},
-        dataset: {
-          source: bins,
-        },
-        xAxis: { type: 'category', name: bin },
-        yAxis: { type: 'value', name: count },
-        series: [
-          {
-            type: 'bar',
-          },
-        ],
-      };
-      return option;
-    },
-
-    'Line Histogram': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      //TODO fix this
-      if (!data || !attributes) return;
-
-      const bin = getQuantitativeAttribute(data, attributes);
-      const xAxisIndex = data[0].indexOf(bin as string);
-
-      if (xAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      const values = data.slice(1).map((row) => row[xAxisIndex]) as number[];
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const binSize = Math.ceil((max - min) / Math.sqrt(values.length));
-      const bins = [];
-      const count = 'count';
-
-      for (let i = min; i <= max; i += binSize) {
-        const binStart = i;
-        const binEnd = i + binSize;
-        const binLabel = `${binStart} - ${binEnd - 1}`;
-        const numCounted = values.filter((value) => value >= binStart && value < binEnd).length;
-        bins.push({ [bin as string]: binLabel, [count as string]: numCounted });
-      }
-
-      const option = {
-        legend: {},
-        tooltip: {},
-        dataset: {
-          source: bins,
-        },
-        xAxis: { type: 'category', name: bin, boundaryGap: false },
-        yAxis: { type: 'value', name: count },
-        series: [
-          {
-            type: 'line',
-            smooth: 'true',
-          },
-        ],
-      };
-      return option;
-    },
-
-    'Waterfall Chart': ({ data, attributes }: Partial<GenerateOptionParams>) => {
-      if (!data || !attributes) return;
-
-      const xAxis = getNominalAttribute(data, attributes);
-      const yAxis = getQuantitativeAttribute(data, attributes);
-      const xAxisIndex = data[0].indexOf(xAxis as string);
-      const yAxisIndex = data[0].indexOf(yAxis as string);
-      if (xAxisIndex === -1 || yAxisIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
-      }
-
-      const xAxisVals = data.slice(1).map((row) => row[xAxisIndex]);
-
-      const positiveNegativeData: number[] = [];
-      // Convert the data to positive-negative format
-      // TODO: a bit gimmicky, but works for now. To revise later
-      for (let i = 1; i < data.length; i++) {
-        if (i === 1) {
-          positiveNegativeData.push(data[i][yAxisIndex] as number);
-        } else {
-          positiveNegativeData.push((data[i][yAxisIndex] as number) - (data[i - 1][yAxisIndex] as number));
-        }
-      }
-
-      const convertToWaterfallData = (data: number[]) => {
-        const helper: (number | string)[] = [];
-        const positive: (number | string)[] = [];
-        const negative: (number | string)[] = [];
-
-        for (let i = 0, sum = 0; i < data.length; i++) {
-          if (data[i] >= 0) {
-            positive.push(data[i]);
-            negative.push('-');
-          } else {
-            positive.push('-');
-            negative.push(-data[i]);
-          }
-
-          if (i === 0) {
-            helper.push(0);
-          } else {
-            sum += data[i - 1];
-            if (data[i] < 0) {
-              helper.push(sum + data[i]);
-            } else {
-              helper.push(sum);
-            }
-          }
-        }
-        return {
-          helper: helper, // gimmicky way of stacking bars
-          positive: positive,
-          negative: negative,
-        };
-      };
-      const waterfallData = convertToWaterfallData(positiveNegativeData);
-      const option = {
-        legend: {},
-        tooltip: {},
-        xAxis: {
+        chartOption.series = series;
+        chartOption.xAxis = {
           type: 'category',
           data: xAxisVals,
-          name: xAxis,
-        },
-        yAxis: {
+          name: temporalAttribute,
+        };
+        chartOption.yAxis = {
           type: 'value',
-          name: yAxis,
-        },
-        series: [
-          {
-            type: 'bar',
-            stack: 'total',
-            silent: true,
-            itemStyle: {
-              color: 'transparent',
-            },
-            data: waterfallData.helper,
-          },
-          {
-            type: 'bar',
-            stack: 'total',
-            data: waterfallData.positive,
-          },
-          {
-            type: 'bar',
-            stack: 'total',
-            data: waterfallData.negative,
-          },
-        ],
-      };
-      return option;
-    },
+          name: quantitativeAttributes[i],
+        };
 
-    'Pie Chart': ({ data, value, label }: Partial<GenerateOptionParams>) => {
-      //TODO fix this
-      if (!data) return;
-      const valueIndex = data[0].indexOf(value as string);
-      const labelIndex = data[0].indexOf(label as string);
-
-      if (valueIndex === -1 || labelIndex === -1) {
-        console.log('Required columns not found in data');
-        return {};
+        chartOption = createTitle(
+          chartOption,
+          chartName,
+          data.map((val: { [x: string]: any }) => val['stationName']),
+          data[0]['data'],
+          [quantitativeAttributes[i]]
+        );
+        chartOption = customizeChart(chartOption, colorMode);
+        chartOption = customizeLegend(chartOption);
+        chartOption = createTooltip(chartOption, colorMode);
+        chartOption = customizeXAxis(chartOption, appSize, data);
+        chartOption = customizeYAxis(chartOption, appSize, data);
+        chartOptions.push(chartOption);
       }
 
-      const option = {
-        legend: {
-          orient: 'vertical',
-          left: 'left',
-        },
-        tooltip: {},
-        dataset: {
-          source: data.slice(1),
-        },
-        series: [
+      break;
+
+    case 'Scatter Chart':
+      if (quantitativeAttributes.length >= 2) {
+        for (let i = 1; i < quantitativeAttributes.length; i++) {
+          let chartOption: any = {};
+
+          //create scatter chart
+          const xAxis = quantitativeAttributes[0];
+          const yAxis = quantitativeAttributes[i];
+          const tmpStationSeries = [];
+          console.log(data, 'data');
+          for (let i = 0; i < data.length; i++) {
+            const stationSeries: any = {};
+            let stationColor = '#000';
+            stationSeries.name = data[i]['stationName'];
+            for (let j = 0; j < stationData.length; j++) {
+              if (data[i]['stationName'] == stationData[j].stationName) {
+                stationColor = stationData[j].color;
+                break;
+              }
+            }
+            stationSeries.type = 'scatter';
+            stationSeries.emphasis = {
+              focus: 'series',
+            };
+            const xAxisIndex = data[i]['data'][0].indexOf(xAxis as string);
+            const yAxisIndex = data[i]['data'][0].indexOf(yAxis as string);
+            if (xAxisIndex === -1 || yAxisIndex === -1) {
+              console.log('Required columns not found in data');
+              return [];
+            }
+            // Reduce the data array to reformat it
+            const reformattedData = data[i]['data'].slice(1).reduce((result: any[], row: { [x: string]: any }) => {
+              const xAxisValue = row[xAxisIndex];
+              const yAxisValue = row[yAxisIndex];
+              // let labelValue: string | number = -1;
+              // if (labelIndex !== -1) {
+              //   labelValue = row[labelIndex];
+              // }
+              result.push({
+                [xAxis as string]: xAxisValue,
+                [yAxis as string]: yAxisValue,
+                label: data[i]['stationName'],
+              });
+              return result;
+            }, []);
+            const transformedData = reformattedData.map((item: { [x: string]: any }) => [item[xAxis], item[yAxis]]);
+
+            stationSeries.data = transformedData;
+            stationSeries.itemStyle = {
+              color: '#fff',
+              borderColor: stationColor,
+              borderWidth: 2,
+            };
+            stationSeries.symbolSize = 5;
+
+            tmpStationSeries.push(stationSeries);
+          }
+          chartOption.series = tmpStationSeries;
+          chartOption.xAxis = {
+            type: 'value',
+            name: xAxis,
+          };
+          chartOption.yAxis = {
+            type: 'value',
+            name: yAxis,
+          };
+          chartOption = createTitle(
+            chartOption,
+            chartName,
+            data.map((val: { [x: string]: any }) => val['stationName']),
+            data[0]['data'],
+            [quantitativeAttributes[0], quantitativeAttributes[i]]
+          );
+          chartOption = customizeChart(chartOption, colorMode);
+          chartOption = customizeLegend(chartOption);
+          chartOption = createTooltip(chartOption, colorMode);
+          chartOption = customizeXAxis(chartOption, appSize, data);
+          chartOption = customizeYAxis(chartOption, appSize, data);
+          chartOptions.push(chartOption);
+        }
+      } else {
+        console.log(quantitativeAttributes);
+        console.log('Not enough or too many attributes. Error in scatter chart');
+        return [];
+      }
+
+      break;
+    case 'Pie Chart': {
+      const tmpStationData = [];
+      for (let i = 0; i < quantitativeAttributes.length; i++) {
+        let chartOption: any = {};
+
+        const axis = quantitativeAttributes[i];
+
+        for (let j = 0; j < data.length; j++) {
+          let totalData = 0;
+          const axisIndex = data[j]['data'][0].indexOf(axis as string);
+          if (axisIndex) {
+            for (let k = 1; k < data[j]['data'].length; k++) {
+              totalData += data[j]['data'][k][axisIndex];
+            }
+            let stationColor = '#000';
+            for (let k = 0; k < stationData.length; k++) {
+              if (data[j]['stationName'] == stationData[k].stationName) {
+                stationColor = stationData[j].color;
+                break;
+              }
+            }
+            tmpStationData.push({ value: totalData.toFixed(1), name: data[j]['stationName'], itemStyle: { color: stationColor } });
+          }
+        }
+        chartOption.series = [
           {
+            name: quantitativeAttributes,
             type: 'pie',
             radius: '50%',
-            data: data.slice(1).map((row) => ({
-              value: row[valueIndex],
-              name: row[labelIndex],
-            })),
+            data: tmpStationData,
             emphasis: {
               itemStyle: {
                 shadowBlur: 10,
@@ -795,38 +289,173 @@ export function generateOption({
                 shadowColor: 'rgba(0, 0, 0, 0.5)',
               },
             },
+            label: {
+              fontSize: 20, // Increase the font size here
+            },
           },
-        ],
-      };
-      return option;
-    },
-  };
-  let option = chartTypes[chartName as keyof typeof chartTypes]
-    ? chartTypes[chartName as keyof typeof chartTypes]({
-        data,
-        value,
-        indicator,
-        attributes,
-        label,
-        bin,
-        count,
-      })
-    : {};
-  console.log(option);
-  if (JSON.stringify(option) == JSON.stringify({})) {
-    return {};
+        ];
+        chartOption = createTitle(
+          chartOption,
+          chartName,
+          data.map((val: { [x: string]: any }) => val['stationName']),
+          data[0]['data'],
+          [quantitativeAttributes[i]]
+        );
+        chartOption = customizeChart(chartOption, colorMode);
+        chartOption = customizeLegend(chartOption);
+        chartOption = createTooltip(chartOption, colorMode);
+        chartOption.tooltip.trigger = 'item';
+        chartOption = customizeXAxis(chartOption, appSize, data);
+        chartOption = customizeYAxis(chartOption, appSize, data);
+        chartOptions.push(chartOption);
+      }
+
+      break;
+    }
+    case 'Boxplot': {
+      for (let i = 0; i < quantitativeAttributes.length; i++) {
+        let chartOption: any = {};
+
+        const attribute = quantitativeAttributes[i];
+        const boxplotData = [];
+        const categories = [];
+
+        for (let j = 0; j < data.length; j++) {
+          const stationName = data[j]['stationName'];
+          categories.push(stationName);
+          const tmpStationData = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[data[j]['data'][0].indexOf(attribute)]);
+          console.log(attribute, data);
+
+          tmpStationData.sort((a: number, b: number) => a - b);
+          const q1 = tmpStationData[Math.floor(tmpStationData.length / 4)];
+          const median = tmpStationData[Math.floor(tmpStationData.length / 2)];
+          const q3 = tmpStationData[Math.floor((tmpStationData.length * 3) / 4)];
+          const min = tmpStationData[0];
+          const max = tmpStationData[tmpStationData.length - 1];
+
+          boxplotData.push([min, q1, median, q3, max]);
+        }
+
+        chartOption.series = [
+          {
+            name: attribute,
+            type: 'boxplot',
+            data: boxplotData,
+          },
+        ];
+        chartOption.xAxis = {
+          type: 'category',
+          data: categories,
+          name: 'Stations',
+        };
+        chartOption.yAxis = {
+          type: 'value',
+          name: 'Values',
+        };
+        chartOption = createTitle(
+          chartOption,
+          chartName,
+          data.map((val: { [x: string]: any }) => val['stationName']),
+          data[0]['data'],
+          [attribute]
+        );
+        chartOption = customizeChart(chartOption, colorMode);
+        chartOption = customizeLegend(chartOption);
+        chartOption = createTooltip(chartOption, colorMode);
+        chartOption = customizeXAxis(chartOption, appSize, data);
+        chartOption = customizeYAxis(chartOption, appSize, data);
+        chartOptions.push(chartOption);
+      }
+      break;
+    }
+    case 'Column Histogram': {
+      for (let i = 0; i < quantitativeAttributes.length; i++) {
+        let chartOption: any = {};
+
+        const attribute = quantitativeAttributes[i];
+        const histogramData = [];
+        const binCounts: any = {};
+        const numBins = 10; // You can adjust the number of bins
+
+        let minValue = Infinity;
+        let maxValue = -Infinity;
+
+        // Find min and max values for the current attribute across all stations
+        for (let j = 0; j < data.length; j++) {
+          const tmpStationData = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[data[j]['data'][0].indexOf(attribute)]);
+
+          tmpStationData.forEach((value: number) => {
+            if (value < minValue) {
+              minValue = value;
+            }
+            if (value > maxValue) {
+              maxValue = value;
+            }
+          });
+        }
+
+        // Collect data for the current attribute across all stations
+        for (let j = 0; j < data.length; j++) {
+          const tmpStationData = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[data[j]['data'][0].indexOf(attribute)]);
+
+          tmpStationData.forEach((value: number) => {
+            const bin = Math.floor((value - minValue) / ((maxValue - minValue) / numBins)); // Calculate bin index
+            if (!binCounts[bin]) {
+              binCounts[bin] = 0;
+            }
+            binCounts[bin]++;
+          });
+        }
+
+        // Prepare data for the histogram
+        for (const bin in binCounts) {
+          histogramData.push([parseFloat(bin) * ((maxValue - minValue) / numBins) + minValue, binCounts[bin]]);
+        }
+
+        histogramData.sort((a, b) => a[0] - b[0]);
+
+        chartOption.series = [
+          {
+            name: attribute,
+            type: 'bar',
+            data: histogramData.map((item) => ({ value: item[1], name: item[0] })),
+            barWidth: '99.3%',
+            barGap: '-100%',
+          },
+        ];
+        chartOption.xAxis = {
+          type: 'category',
+          data: histogramData.map((item) => item[0]),
+          name: attribute,
+        };
+        chartOption.yAxis = {
+          type: 'value',
+          name: 'Frequency',
+        };
+        chartOption = createTitle(
+          chartOption,
+          chartName,
+          data.map((val: { [x: string]: any }) => val['stationName']),
+          data[0]['data'],
+          [attribute]
+        );
+        chartOption = customizeChart(chartOption, colorMode);
+        chartOption = customizeLegend(chartOption);
+        chartOption = createTooltip(chartOption, colorMode);
+        chartOption = customizeXAxis(chartOption, appSize, data);
+        chartOption = customizeYAxis(chartOption, appSize, data);
+        chartOptions.push(chartOption);
+      }
+      break;
+    }
+    default:
+      return [];
   }
 
-  option = createTitle(option, chartName, stationName, data);
-  option = customizeChart(option, colorMode);
-  option = customizeLegend(option);
-  option = createTooltip(option, colorMode);
-  option = customizeXAxis(option, appSize, data);
-  option = customizeYAxis(option, appSize, data);
-  return option;
+  return chartOptions;
 }
 
-const customizeYAxis = (option, appSize, data) => {
+const customizeYAxis = (option: { yAxis: any }, appSize: { width: number; height: number; depth: number }, data: any) => {
   option.yAxis = {
     ...option.yAxis,
     axisLabel: {
@@ -836,7 +465,7 @@ const customizeYAxis = (option, appSize, data) => {
   return option;
 };
 
-const customizeXAxis = (option, appSize, data) => {
+const customizeXAxis = (option: { xAxis: any }, appSize: { width: number; height: number; depth: number }, data: any) => {
   // const interval = Math.floor((250 / appSize.width) * data.length);
   // TODO fix this later. Need to update according to app size of chart that was generated,
 
@@ -858,14 +487,14 @@ const customizeXAxis = (option, appSize, data) => {
   return option;
 };
 
-const customizeLegend = (option) => {
+const customizeLegend = (option: { legend: { bottom: string } }) => {
   option.legend = {
     bottom: '0%',
   };
   return option;
 };
 
-const createTooltip = (option: EChartsOption, colorMode: string) => {
+const createTooltip = (option: EChartsCoreOption, colorMode: string) => {
   option.tooltip = {
     show: true,
     trigger: 'axis',
@@ -879,13 +508,19 @@ const createTooltip = (option: EChartsOption, colorMode: string) => {
   return option;
 };
 
-const createTitle = (option, chartName, stationName, data) => {
-  const headers = data[0];
+const createTitle = (
+  option: { title: { text: string; left: string } },
+  chartName: string,
+  stationName: any,
+  data: string | any[],
+  headers: string[]
+) => {
+  const headerIds = data[0];
   const headersWithFullName = [];
   let startDate = '';
   let endDate = '';
-  for (let i = 0; i < headers.length; i++) {
-    if (headers[i] == 'Date') {
+  for (let i = 0; i < headerIds.length; i++) {
+    if (headerIds[i] == 'Date') {
       startDate = data[1][i];
       endDate = data[data.length - 1][i];
     }
@@ -911,6 +546,7 @@ const getNominalAttribute = (data: (string | number)[][], attributes: any[]) => 
   for (let i = 0; i < data[0].length; i++) {
     for (let j = 0; j < attributes.length; j++) {
       if (data[0][i] === attributes[j]) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
         if (isNaN(data[1][i]) && !isDateValid(data[1][i])) {
           nominalIndex = i;
@@ -933,33 +569,6 @@ const getNominalAttribute = (data: (string | number)[][], attributes: any[]) => 
   }
 };
 
-const getQuantitativeAttribute = (data: (string | number)[][], attributes: string[]) => {
-  let quantitativeIndex = -1;
-  for (let i = 0; i < data[0].length; i++) {
-    for (let j = 0; j < attributes.length; j++) {
-      if (data[0][i] === attributes[j]) {
-        //@ts-ignore
-        if (!isNaN(data[1][i])) {
-          quantitativeIndex = i;
-          break;
-        }
-      }
-    }
-    if (quantitativeIndex !== -1) break;
-  }
-
-  if (quantitativeIndex === -1) {
-    console.log('No Nominal Attribute');
-    return -1;
-  } else {
-    // const removeIndex = attributes.findIndex(
-    //   (attr) => attr === data[0][quantitativeIndex]
-    // );
-    // attributes[removeIndex] = "";
-    return data[0][quantitativeIndex];
-  }
-};
-
 function isDateValid(value: string | number | Date) {
   // Check if the value is a string
   if (typeof value !== 'string') return false;
@@ -969,7 +578,7 @@ function isDateValid(value: string | number | Date) {
   if (/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value)) {
     return true;
   }
-  console.log(/^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value));
+  //@ts-ignore
   return !isNaN(parsedDate) && /^[A-Z][a-z]{2} [A-Z][a-z]{2} \d{2} \d{4}$/.test(value);
 }
 
@@ -999,7 +608,14 @@ const getMultipleQuantitativeAttributes = (data: (string | number)[][] | { [x: s
   const quantitativeAttributes: string[] = [];
   for (let i = 0; i < data[0].length; i++) {
     for (let j = 0; j < attributes.length; j++) {
+      if (!data[0]) {
+        return [];
+      }
+      //@ts-ignore
       if (data[0][i] === attributes[j]) {
+        if (!data[1]) {
+          return [];
+        }
         //@ts-ignore
         if (!isNaN(data[1][i]) && !isDateValid(data[1][i])) {
           quantitativeIndices.push(i);
@@ -1010,7 +626,7 @@ const getMultipleQuantitativeAttributes = (data: (string | number)[][] | { [x: s
   }
   if (quantitativeIndices.length === 0) {
     console.log('No Quantitative Attribute');
-    return -1;
+    return [];
   } else {
     // for (let i = 0; i < quantitativeIndices.length; i++) {
     //   attributes[quantitativeIndices[i]] = "";
@@ -1031,9 +647,10 @@ const extractTransformations = (transformations: string[], data: string[][]) => 
   for (let i = 0; i < attributeHeaders.length; i++) {
     for (let j = 0; j < transformations.length; j++) {
       if (transformations[j].includes(attributeHeaders[i])) {
-        const transform: LooseObject = {};
+        const transform: any = {};
         transform.dimension = attributeHeaders[i];
         const match = transformations[j].match(operatorRegex);
+        console.log('match', match);
         if (match && match[1] && match[2]) {
           transform[match[1]] = match[2];
           extractedTransformations.push(transform);
@@ -1044,7 +661,7 @@ const extractTransformations = (transformations: string[], data: string[][]) => 
   return extractedTransformations;
 };
 
-function customizeChart(options: EChartsOption, colorMode: string) {
+function customizeChart(options: EChartsCoreOption, colorMode: string) {
   // Set the color mode
   if (colorMode === 'dark') {
     options.backgroundColor = '#222';

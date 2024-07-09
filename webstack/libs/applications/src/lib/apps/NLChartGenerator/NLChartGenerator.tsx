@@ -45,6 +45,8 @@ import { processStations } from './utils';
 import { EChartsCoreOption } from 'echarts';
 import { useAudio } from '@sage3/frontend';
 
+import './styling.css';
+
 import MapGL from './MapGL';
 import { MdClose } from 'react-icons/md';
 
@@ -84,6 +86,23 @@ type InteractionLogChartsSelected = {
   timeDeleted: string[];
   numberOfTimesClicked: number;
 };
+
+function showSpeechBubble(message: string) {
+  const speechBubble = document.getElementById('speechBubble');
+  if (speechBubble) {
+    speechBubble.innerHTML = '<p>' + message + '</p>';
+
+    // Show speech bubble
+    speechBubble.style.display = 'block';
+    setTimeout(function () {
+      // Fade out after 3 seconds
+      speechBubble.style.opacity = '1';
+      setTimeout(function () {
+        speechBubble.style.opacity = '0';
+      }, 15000);
+    }, 100); // Delay before showing
+  }
+}
 
 /* App component for Chat */
 
@@ -131,7 +150,8 @@ function AppComponent(props: App): JSX.Element {
   const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
 
   const [selectedChartIds, setSelectedChartIds] = useState<any>(new Set());
-  const [appCounterID, setApCounterID] = useState<number>(0);
+  const [appCounterID, setAppCounterID] = useState<number>(0);
+  const [mostRecentChartIDs, setMostRecentChartIDs] = useState<number[]>([]);
 
   const [log, setLog] = useState<any>({
     chartsThatWereGenerated: [],
@@ -156,7 +176,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     const writeLog = async () => {
-      await ArticulateAPI.sendLog(log, 'test-test');
+      await ArticulateAPI.sendLog(log, 'Study1');
     };
     if (log.chartsThatWereGenerated.length !== 0) {
       writeLog();
@@ -251,25 +271,38 @@ function AppComponent(props: App): JSX.Element {
         //do nothing
       } else {
         if (Object.keys(chartResponse).length == 0) {
+          showSpeechBubble(`I tried making a chart for you but something went wrong. Try asking again!"`);
           return;
         }
         const tmpChartOptions: EChartsCoreOption[] = await processStations(chartResponse['station_chart_info'], colorMode, props.data.size);
         const chartTitles = [];
+        const tmpMostRecentChartIDs: number[] = [];
         for (let i = 0; i < tmpChartOptions.length; i++) {
           chartTitles.push((tmpChartOptions[i] as any).title.text);
           tmpChartOptions[i].id = appCounterID + i;
+          tmpMostRecentChartIDs.push(appCounterID + i);
         }
-        setLog({
-          ...log,
-          chartsThatWereGenerated: [
-            ...log.chartsThatWereGenerated,
-            { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
-          ],
-        });
-        setApCounterID((prev: number) => prev + tmpChartOptions.length);
-        setInteractionContext({ ...interactionContext, lastChartsGenerated: [...chartTitles] });
-        // updateState(props._id, { chartsCreated: [...s.chartsCreated, ...tmpChartOptions] });
-        setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
+        chartResponse['debug']['utteranceType'] = response;
+        if (tmpChartOptions.length > 0) {
+          showSpeechBubble(
+            `I generated ${tmpChartOptions.length} charts for your request: "${request}" \n\n ${chartResponse['debug']['summarizedResponse']}`
+          );
+          const audio = new Audio('https://github.com/Tabalbar/articulate-plus/raw/dev/263128__pan14__tone-beep-amb-verb.wav');
+          audio.play();
+          setLog({
+            ...log,
+            chartsThatWereGenerated: [
+              ...log.chartsThatWereGenerated,
+              { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
+            ],
+          });
+          setAppCounterID((prev: number) => prev + tmpChartOptions.length);
+          setInteractionContext({ ...interactionContext, lastChartsGenerated: [...chartTitles] });
+          setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
+          setMostRecentChartIDs(tmpMostRecentChartIDs);
+        } else {
+          showSpeechBubble(`I tried making a chart for you but something went wrong. Try asking again!`);
+        }
       }
       setProcessing(false);
     }
@@ -293,21 +326,14 @@ function AppComponent(props: App): JSX.Element {
         },
       ],
     });
-
-    // TODO create a try catch here and handle errors.
-    setTimeout(() => {
-      // Scroll to bottom of chat box smoothly
-      goToBottom();
-    }, 100);
   };
 
-  const goToBottom = (mode: ScrollBehavior = 'smooth') => {
-    // Scroll to bottom of chat box smoothly
-    chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight,
-      behavior: mode,
-    });
-  };
+  useEffect(() => {
+    const divElement = document.getElementById('scrollable');
+    if (divElement) {
+      divElement.scrollTop = divElement.scrollHeight;
+    }
+  }, [chartOptions]);
 
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
@@ -353,6 +379,11 @@ function AppComponent(props: App): JSX.Element {
   }, [apps]);
 
   const generateChart = async (EChartOption: EChartsCoreOption) => {
+    EChartOption.title = {
+      //@ts-ignore
+      ...EChartOption.title,
+      textStyle: { fontSize: 40 },
+    };
     const app = await createApp({
       title: 'EChartsViewer',
       roomId: props.data.roomId!,
@@ -409,7 +440,7 @@ function AppComponent(props: App): JSX.Element {
     setHoveredChart(chart);
   };
 
-  const handleMouseLove = () => {
+  const handleMouseLeave = () => {
     setHoveredChart(null);
   };
 
@@ -519,19 +550,30 @@ function AppComponent(props: App): JSX.Element {
                           </Button>
                         </Box>
                         <Button onClick={isRecording ? stopRecording : startRecording}>{isRecording ? 'Sleep' : 'Wake Up'}</Button>
-
-                        <Image boxSize="15rem" transform={'translate(32px,0)'} src={artiState} />
+                        <Box position="relative">
+                          <div id="speechBubble" className="speech-bubble">
+                            <p>Hello! This is a speech bubble.</p>
+                          </div>
+                          <Image boxSize="15rem" transform={'translate(32px,0)'} src={artiState} />
+                        </Box>
                       </VStack>
                     </Center>
                   </Box>
-                  <Wrap display="flex" pt="1rem" overflowY="scroll" height="100%" width="100%">
+                  <Wrap id="scrollable" display="flex" pt="1rem" overflowY="scroll" height="100%" width="100%">
                     {chartOptions.map((chartOption: EChartsCoreOption, index: Key | null | undefined) => {
                       const chartId = chartOption.id;
                       let isSelected = false;
+                      let isNewChart = false;
                       for (const selectedChart of selectedChartIds) {
                         if (selectedChart.chartId == chartId) {
                           isSelected = true;
                           break;
+                        }
+                      }
+
+                      for (const ID of mostRecentChartIDs) {
+                        if (ID == chartId) {
+                          isNewChart = true;
                         }
                       }
 
@@ -573,12 +615,9 @@ function AppComponent(props: App): JSX.Element {
                         <WrapItem
                           key={index}
                           ml="1rem"
-                          // mb="1rem"
-                          // width="100%"
-                          // height="100%"
-                          width="200"
-                          height="114"
-                          onMouseLeave={isSelected ? undefined : handleMouseLove}
+                          width="420px"
+                          height="240px"
+                          onMouseLeave={isSelected ? undefined : handleMouseLeave}
                           onMouseOver={isSelected ? undefined : () => handleMouseOver(newChartOption)}
                           zIndex="0"
                           onClick={isSelected ? undefined : () => generateChart(chartOption)}
@@ -589,18 +628,32 @@ function AppComponent(props: App): JSX.Element {
                             rounded="lg"
                             bg={isSelected ? 'gray' : 'white'} // Apply gray background if selected
                             border="3px solid black"
+                            position="relative"
+                            className={isNewChart ? 'glowing-border' : ''} // Apply glowing border if new chart
                           >
-                            <Box zIndex={'2'}>
+                            <Box zIndex="2">
                               <Box
-                                position="absolute"
                                 width="400px"
                                 height="200px"
                                 bg={isSelected ? 'gray.800' : undefined}
                                 opacity={isSelected ? 0.7 : 1}
                                 zIndex="5"
-                              ></Box>
-
-                              <EChartsViewer option={{ ...newChartOption, legend: { show: false } }} size={{ width: 400, height: 200 }} />
+                                position="relative"
+                              >
+                                {isSelected && (
+                                  <Box
+                                    position="absolute"
+                                    top="0"
+                                    left="0"
+                                    width="100%"
+                                    height="100%"
+                                    bg="gray"
+                                    opacity="0.5"
+                                    zIndex="10"
+                                  ></Box>
+                                )}
+                                <EChartsViewer option={{ ...newChartOption, legend: { show: false } }} size={{ width: 400, height: 200 }} />
+                              </Box>
                             </Box>
                           </Box>
                         </WrapItem>

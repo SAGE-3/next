@@ -264,7 +264,7 @@ const MapGL = (props: App): JSX.Element => {
   useEffect(() => {
     if (map) {
       const stations = stationDataRef.current;
-
+      console.log(stations);
       map.on('load', () => {
         /**
          * NOT SELECTED STATION
