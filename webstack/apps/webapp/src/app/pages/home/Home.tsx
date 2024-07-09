@@ -38,13 +38,12 @@ import {
   MenuList,
   Link,
   useMediaQuery,
-  HStack,
   Input,
-  Divider,
   InputGroup,
   InputLeftElement,
   Flex,
   IconButton,
+  ButtonGroup,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -77,13 +76,13 @@ import {
   EnterBoardModal,
   ConfirmModal,
   MainButton,
-  copyBoardUrlToClipboard,
   Clock,
   isElectron,
+  useUserSettings,
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardPreview, BoardSidebarRow } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
 
 /**
  * Home page for SAGE3
@@ -94,8 +93,7 @@ import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardPreview, BoardSideb
 export function HomePage() {
   // Media Query
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-  // URL Params
-  const { roomId, boardId } = useParams();
+
   const { toHome } = useRouteNav();
 
   // Configuration information
@@ -135,11 +133,14 @@ export function HomePage() {
   const { users, subscribeToUsers } = useUsersStore((state) => state);
   const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
 
+  // Settings
+  const { setBoardListView, settings } = useUserSettings();
+  const boardListView = settings.selectedBoardListView;
+
   // User Selected Room, Board, and User
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
-  const [boardViewLayout, setBoardViewLayout] = useState<'list' | 'grid'>('grid');
   const [boardSearch, setBoardSearch] = useState<string>('');
 
   // Selected Board Ref
@@ -510,57 +511,6 @@ export function HomePage() {
     handleBoardClick(board);
   }
 
-  // Copy a sharable link to the user's os clipboard
-  const handleCopyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Check if there is a selected board
-    if (!selectedBoard) {
-      toast({
-        title: 'No board selected',
-        description: 'Please select a board to copy a link to',
-        duration: 3000,
-        isClosable: true,
-        status: 'error',
-      });
-      return;
-    } else {
-      const roomId = selectedBoard.data.roomId;
-      const boardId = selectedBoard._id;
-      // make it a sage3:// protocol link
-      copyBoardUrlToClipboard(roomId, boardId);
-      toast({
-        title: 'Success',
-        description: 'Sharable Board link copied to clipboard.',
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
-    }
-  };
-
-  // Copy the board id to the clipboard
-  const handleCopyId = async (e: React.MouseEvent<HTMLParagraphElement>) => {
-    if (navigator.clipboard) {
-      if (selectedBoard) {
-        // Select the whole text
-        const range = document.createRange();
-        range.selectNode(e.currentTarget);
-        const selection = window.getSelection();
-        selection?.removeAllRanges();
-        selection?.addRange(range);
-        // Copy the board ID into the clipboard
-        await navigator.clipboard.writeText(selectedBoard.data.code);
-        toast({
-          title: 'Success',
-          description: 'Board ID Copied to Clipboard',
-          duration: 3000,
-          isClosable: true,
-          status: 'success',
-        });
-      }
-    }
-  };
-
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
     const isOwner = selectedRoom?.data.ownerId === userId;
@@ -632,28 +582,6 @@ export function HomePage() {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
-
-  // To handle the case where the user is redirected to the home page from a board
-  useEffect(() => {
-    // Get the RoomId from the URL
-    if (roomId) {
-      // Find room
-      const room = rooms.find((r) => r._id === roomId);
-      // If the room exists, select it
-      if (room) {
-        setSelectedRoom(room);
-        // Get the BoardId from the URL
-        if (boardId) {
-          // Find board
-          const board = boards.find((b) => b._id === boardId);
-          // If the board exists, select it
-          if (board) {
-            setSelectedBoard(board);
-          }
-        }
-      }
-    }
-  }, [roomsFetched]);
 
   return (
     // Main Container
@@ -1156,16 +1084,26 @@ export function HomePage() {
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
                       <Flex align="center" gap="2" justify="flex-start" mx="4">
-                        <IconButton
-                          aria-label={boardViewLayout}
-                          icon={boardViewLayout === 'list' ? <MdList /> : <MdGridView />}
-                          colorScheme="teal"
-                          variant="outline"
-                          onClick={() => {
-                            setBoardViewLayout(boardViewLayout === 'list' ? 'grid' : 'list');
-                          }}
-                        />
-                        <InputGroup size="md" width="452px" my="1">
+                        <ButtonGroup size="md" isAttached variant="outline">
+                          <IconButton
+                            aria-label="Board List View"
+                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('list');
+                            }}
+                            icon={<MdList />}
+                          />
+                          <IconButton
+                            aria-label="Board Grid View"
+                            colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('grid');
+                            }}
+                            icon={<MdGridView />}
+                          />
+                        </ButtonGroup>
+
+                        <InputGroup size="md" width="415px" my="1">
                           <InputLeftElement pointerEvents="none">
                             <MdSearch />
                           </InputLeftElement>
@@ -1173,7 +1111,7 @@ export function HomePage() {
                         </InputGroup>
                       </Flex>
                       {/* <Divider /> */}
-                      {boardViewLayout == 'grid' && (
+                      {boardListView == 'grid' && (
                         <Flex
                           gap="4"
                           p="4"
@@ -1219,12 +1157,14 @@ export function HomePage() {
                         </Flex>
                       )}
 
-                      {boardViewLayout == 'list' && (
+                      {boardListView == 'list' && (
                         <VStack
                           gap="3"
-                          pr="2"
+                          alignItems="left"
+                          pl="4"
                           style={{ height: 'calc(100svh - 360px)' }}
                           overflowY="scroll"
+                          overflowX="hidden"
                           minWidth="420px"
                           css={{
                             '&::-webkit-scrollbar': {
@@ -1255,76 +1195,6 @@ export function HomePage() {
                         </VStack>
                       )}
                     </Flex>
-
-                    {/* <Box width="auto" minHeight="200px" px="2">
-                      {selectedBoard && (
-                        <VStack gap="0" align="stretch">
-                          <Text fontSize="3xl" fontWeight="bold">
-                            {selectedBoard.data.name}
-                          </Text>
-                          <Text fontSize="lg" fontWeight={'normal'}>
-                            Description {selectedBoard?.data.description}
-                          </Text>
-
-                          <Text fontSize="lg" fontWeight={'normal'}>
-                            Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}
-                          </Text>
-                          <Text fontSize="lg" fontWeight={'normal'}>
-                            Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}
-                          </Text>
-
-                          <HStack>
-                            <Tooltip
-                              placement="top"
-                              hasArrow={true}
-                              openDelay={400}
-                              label={'Use this ID to enter a board, instead of a URL'}
-                            >
-                              <Text fontSize="lg" fontWeight={'normal'}>
-                                Board ID
-                              </Text>
-                            </Tooltip>
-                            <Text fontSize="lg" fontWeight={'normal'} onDoubleClick={handleCopyId}>
-                              {selectedBoard?.data.code}
-                            </Text>
-                          </HStack>
-
-                          <Box mt="2" borderRadius="md" as="button" onClick={enterBoardModalOnOpen}>
-                            <BoardPreview board={selectedBoard} width={316} height={177} />
-                          </Box>
-                          <Box display="flex" my="2" gap={2}>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={enterBoardModalOnOpen}
-                            >
-                              Enter Board
-                            </Button>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={handleCopyLink}
-                            >
-                              Copy Link
-                            </Button>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={editBoardModalOnOpen}
-                              isDisabled={selectedBoard.data.ownerId !== userId}
-                            >
-                              Settings
-                            </Button>
-                          </Box>
-                        </VStack>
-                      )}
-                    </Box> */}
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
