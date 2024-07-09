@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -15,7 +15,7 @@ import { App, AppName } from '@sage3/applications/schema';
 
 /* App component for BoardLink */
 
-export function BoardPreview(props: { board: Board; width: number; height: number }): JSX.Element {
+export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
   // Apps
   const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
   const [boardWidth, setBoardWidth] = useState(0);
@@ -28,10 +28,9 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   const boardColor = useHexColor(props.board.data.color);
   const appBorderColorValue = useColorModeValue('gray.700', 'gray.200');
   const appBorderColor = useHexColor(appBorderColorValue);
-  const backgroundColor = useColorModeValue(`${props.board.data.color}.400`, `${props.board.data.color}.900}`);
   const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
+    `linear-gradient(172deg, #fafafa, #fbfbfb, #eeeeee)`,
+    `linear-gradient(172deg, #2e2e2e, #313131, #292929)`
   );
 
   async function updateAppInfo() {
@@ -69,67 +68,61 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   }, [props.board._id]);
 
   return (
-    <Tooltip placement="top" hasArrow={true} label={'Board preview - Click to enter'} openDelay={1000}>
-      <Box
-        width={`${props.width}px`}
-        height={`${props.height}px`}
-        backgroundSize="contain"
-        borderRadius="md"
-        background={linearBGColor}
-        p="2"
-        border={`2px solid ${boardColor}`}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        textAlign={'center'}
-        flexDir={'column'}
-      >
-        {props.board.data.isPrivate ? (
-          <>
-            <Icon
-              aria-label="LockBoard"
-              fontSize="96px"
-              pointerEvents="none"
-              color={boardColor}
-              m="0"
-              p="0"
-              _hover={{ cursor: 'initial' }}
-              as={MdLock}
-              textAlign={'center'}
-              mb={2}
-            />
-
-            <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold">
-              This board is private.
-            </Text>
-          </>
-        ) : appInfo.length > 0 ? (
-          <Box position="relative" height={boardHeight} width={boardWidth}>
-            {appInfo.map((app) => {
-              return (
-                <Box
-                  backgroundColor={boardColor}
-                  position="absolute"
-                  left={(app.position.x - appsX) * mapScale + 'px'}
-                  top={(app.position.y - appsY) * mapScale + 'px'}
-                  width={app.size.width * mapScale + 'px'}
-                  height={app.size.height * mapScale + 'px'}
-                  transition={'all .5s'}
-                  borderWidth="1px"
-                  borderStyle="solid"
-                  borderColor={appBorderColor}
-                  borderRadius="sm"
-                  key={app.id}
-                ></Box>
-              );
-            })}
-          </Box>
-        ) : (
-          <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
-            This board has no opened applications.
-          </Text>
-        )}
-      </Box>
-    </Tooltip>
+    <Box
+      width={`${props.width}px`}
+      height={`${props.height}px`}
+      backgroundSize="contain"
+      borderRadius="md"
+      background={linearBGColor}
+      p="2"
+      // border={`2px solid ${!props.isSelected ? 'lightgray' : boardColor}`}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      textAlign={'center'}
+      flexDir={'column'}
+    >
+      {props.board.data.isPrivate ? (
+        <>
+          <Icon
+            aria-label="LockBoard"
+            fontSize="96px"
+            pointerEvents="none"
+            color={boardColor}
+            m="0"
+            p="0"
+            _hover={{ cursor: 'initial' }}
+            as={MdLock}
+            textAlign={'center'}
+            mb={2}
+          />
+        </>
+      ) : appInfo.length > 0 ? (
+        <Box position="relative" height={boardHeight} width={boardWidth}>
+          {appInfo.map((app) => {
+            return (
+              <Box
+                backgroundColor={boardColor}
+                position="absolute"
+                left={(app.position.x - appsX) * mapScale + 'px'}
+                top={(app.position.y - appsY) * mapScale + 'px'}
+                width={app.size.width * mapScale + 'px'}
+                height={app.size.height * mapScale + 'px'}
+                transition={'all .5s'}
+                borderWidth="1px"
+                borderStyle="solid"
+                borderColor={appBorderColor}
+                borderRadius="sm"
+                key={app.id}
+              ></Box>
+            );
+          })}
+        </Box>
+      ) : (
+        <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
+          No Opened Applications
+        </Text>
+      )}
+    </Box>
   );
 }
