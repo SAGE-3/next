@@ -50,8 +50,8 @@ export interface ServerConfiguration {
 
   // External Services
   services: {
-    twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
+    zoom: ZoomSDKConfiguration;
     chat: AIChatConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
@@ -136,11 +136,10 @@ export interface AuthConfiguration {
   };
 }
 
-// The Twilio Configuration
-export interface TwilioConfiguration {
-  accountSid: string; // Your Account SID from www.twilio.com/console
-  apiKey: string; // API Key
-  apiSecret: string; // API Secret
+// The Zoom Configuration
+export interface ZoomSDKConfiguration {
+  sdkKey: string; // API Key
+  sdkSecret: string; // API Secret
 }
 
 // The OpenAI Configuration

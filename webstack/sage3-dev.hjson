@@ -42,14 +42,6 @@
 
   // External Services
   "services": {
-    "twilio": {
-      // Your Account SID from www.twilio.com/console
-      "accountSid": "",
-      // API Key
-      "apiKey": "",
-      // API Secret
-      "apiSecret": ""
-    },
     "openai": {
       // API Key
       "apiKey": "",
@@ -72,6 +64,12 @@
     "yolo": {
       "url": "https://arcade.evl.uic.edu/yolov8",
       "apiKey": ""
+    }
+    "zoom": {
+      // SDK Key
+      "sdkKey":"",
+      // SDK Secret
+      "sdkSecret":""
     }
   },
 

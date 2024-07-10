@@ -6,36 +6,34 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PresenceSchema, TwilioConfiguration } from '@sage3/shared/types';
+import { PresenceSchema, ZoomSDKConfiguration } from '@sage3/shared/types';
 import { AppSchema } from '@sage3/applications/schema';
 import { SAGE3Collection } from '../generics';
 
-import { jwt } from 'twilio/lib';
-const AccessToken = jwt.AccessToken;
-const VideoGrant = AccessToken.VideoGrant;
+import { KJUR } from 'jsrsasign';
 
 /**
  * SAGE Server Twilio Helper Class
  */
-export class SAGETwilio {
-  private config: TwilioConfiguration;
+export class SAGEZoomJWTHelper {
+  private config: ZoomSDKConfiguration;
 
   /**
    *
    * @param config Twilio config file
    * @param appCollection The apps collection
-   * @param clearAppsInterval How often to check the apps collection for twilio apps that have expired (ms)
-   * @param expiration How long can twilio apps live before they expire (ms)
+   * @param clearAppsInterval How often to check the apps collection for Zoom apps that have expired (ms)
+   * @param expiration How long can Zoom apps live before they expire (ms)
    */
   constructor(
-    config: TwilioConfiguration,
+    config: ZoomSDKConfiguration,
     appCollection: SAGE3Collection<AppSchema>,
     presCollection: SAGE3Collection<PresenceSchema>,
     clearAppsInterval: number,
     expiration: number
   ) {
     this.config = config;
-    this.clearTwilioApps(appCollection, presCollection, clearAppsInterval, expiration);
+    this.clearScreenshareApps(appCollection, presCollection, clearAppsInterval, expiration);
   }
 
   /**
@@ -45,25 +43,29 @@ export class SAGETwilio {
    * @returns
    */
   public generateVideoToken(userId: string, roomId: string) {
-    // Create an access token which we will sign and return to the client,
-    // containing the grant we just created
-    const token = new AccessToken(this.config.accountSid, this.config.apiKey, this.config.apiSecret, { identity: userId });
+    const iat = Math.round(new Date().getTime() / 1000) - 30;
+    const exp = iat + 60 * 60 * 2;
+    const oHeader = { alg: 'HS256', typ: 'JWT' };
 
-    // Grant the access token Twilio Video capabilities
-    const grant = new VideoGrant({
-      room: roomId,
-    });
+    const oPayload = {
+      app_key: this.config.sdkKey,
+      tpc: roomId,
+      role_type: 0,
+      version: 1,
+      iat: iat,
+      exp: exp,
+    };
 
-    token.addGrant(grant);
-
-    // Serialize the token to a JWT string
-    return token.toJwt();
+    const sHeader = JSON.stringify(oHeader);
+    const sPayload = JSON.stringify(oPayload);
+    const sdkJWT = KJUR.jws.JWS.sign('HS256', sHeader, sPayload, this.config.sdkSecret);
+    return sdkJWT;
   }
 
   /**
-   * Clear twilio apps that have expired or the user has left the board
+   * Clear Zoom apps that have expired or the user has left the board
    */
-  private clearTwilioApps(
+  private clearScreenshareApps(
     appCollection: SAGE3Collection<AppSchema>,
     presCollection: SAGE3Collection<PresenceSchema>,
     interval: number,

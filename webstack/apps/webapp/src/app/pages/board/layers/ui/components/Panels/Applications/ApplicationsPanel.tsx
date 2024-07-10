@@ -77,7 +77,6 @@ export function ApplicationsPanel(props: ApplicationProps) {
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
-      state.accessId = accessId;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

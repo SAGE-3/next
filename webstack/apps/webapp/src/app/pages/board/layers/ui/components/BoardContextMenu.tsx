@@ -111,7 +111,6 @@ export function BoardContextMenu(props: ContextProps) {
     if (appName === 'Screenshare') {
       width = 1280;
       height = 720;
-      state.accessId = accessId;
     }
     if (appName === 'Webview') {
       height = 650;

@@ -24,7 +24,7 @@ import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
+import { SAGEnlp, SAGEPresence, SAGEZoomJWTHelper, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
 // YJS
@@ -53,7 +53,6 @@ import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
-import { SAGETwilio } from '@sage3/backend';
 import * as express from 'express';
 
 // Exception handling
@@ -124,17 +123,18 @@ async function startServer() {
   // Load all the models: user, board, ...
   await loadCollections();
 
-  // Twilio Setup
+  // Zoom Setup
   const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
-  const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
+  const zoom = new SAGEZoomJWTHelper(config.services.zoom, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
+  app.get('/zoom/token', SAGEBase.Auth.authenticate, (req, res) => {
+    console.log('Zoom> token request');
     const authId = req.user.id;
     if (authId === undefined) {
       res.status(403).send();
     }
     const room = req.query.room as string;
     const identity = req.query.identity as string;
-    const token = twilio.generateVideoToken(identity, room);
+    const token = zoom.generateVideoToken(identity, room);
     res.send({ token });
   });
 

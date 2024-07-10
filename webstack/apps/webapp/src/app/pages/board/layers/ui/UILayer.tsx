@@ -37,7 +37,6 @@ import {
   BoardContextMenu,
   ClearBoardModal,
   AppToolbar,
-  Twilio,
   LassoToolbar,
   Controller,
   AssetsPanel,
@@ -49,6 +48,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  Zoom,
 } from './components';
 
 type UILayerProps = {
@@ -102,7 +102,7 @@ export function UILayer(props: UILayerProps) {
   const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
-  const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+  const zoomConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
   /**
    * Clear the board confirmed
@@ -294,7 +294,7 @@ export function UILayer(props: UILayerProps) {
         <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
-      <Twilio roomName={props.boardId} connect={twilioConnect} />
+      <Zoom sessionId={props.boardId} connect={zoomConnect} />
 
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 

@@ -19,7 +19,7 @@
     "secure": false,
     "ws": true
   },
-  "/twilio": {
+  "/zoom": {
     "target": "http://127.0.0.1:3333",
     "secure": false,
     "ws": true
