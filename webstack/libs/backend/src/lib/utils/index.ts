@@ -11,3 +11,4 @@ export * from './subscription-cache';
 export * from './presence';
 export * from './twilio';
 export * from './url-metadata';
+export * from './zoom-jwt';

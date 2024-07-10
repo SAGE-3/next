@@ -24,7 +24,7 @@ import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
+import { SAGEnlp, SAGEPresence, SAGEZoomJWTHelper, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
 // YJS
@@ -135,6 +135,20 @@ async function startServer() {
     const room = req.query.room as string;
     const identity = req.query.identity as string;
     const token = twilio.generateVideoToken(identity, room);
+    res.send({ token });
+  });
+
+  // Zoom Setup
+  const zoom = new SAGEZoomJWTHelper(config.services.zoom);
+  app.get('/zoom/token', SAGEBase.Auth.authenticate, (req, res) => {
+    console.log('Zoom> token request');
+    const authId = req.user.id;
+    if (authId === undefined) {
+      res.status(403).send();
+    }
+    const room = req.query.room as string;
+    const identity = req.query.identity as string;
+    const token = zoom.generateVideoToken(identity, room);
     res.send({ token });
   });
 

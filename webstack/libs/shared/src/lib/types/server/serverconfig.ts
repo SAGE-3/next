@@ -55,6 +55,7 @@ export interface ServerConfiguration {
     chat: AIChatConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
+    zoom: ZoomSDKConfiguration;
   };
 
   // Feature flags
@@ -141,6 +142,12 @@ export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
+}
+
+// The Zoom SDK Configuration
+export interface ZoomSDKConfiguration {
+  sdkKey: string; // API Key
+  sdkSecret: string; // API Secret
 }
 
 // The OpenAI Configuration
