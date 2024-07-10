@@ -7,14 +7,24 @@
  */
 
 import {
-  HStack, useToast, Button, Text,
-  Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+  HStack,
+  useToast,
+  Button,
+  Text,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverHeader,
+  PopoverAnchor,
+  useDisclosure,
+  VStack,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { TbBrandZoom } from 'react-icons/tb';
 
 import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
@@ -46,6 +56,7 @@ export function Controller(props: ControllerProps) {
   const users = getPanel('users');
   const plugins = getPanel('plugins');
   const kernels = getPanel('kernels');
+  const zoom = getPanel('zoom');
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
@@ -93,7 +104,7 @@ export function Controller(props: ControllerProps) {
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
   return (
-    <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
+    <Panel name="controller" title={'Main Menu'} width={550} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
           <IconButtonPanel
@@ -103,12 +114,16 @@ export function Controller(props: ControllerProps) {
             onLongPress={popOnOpen}
             description={`Back to ${room?.data.name} (Long-press for more options)`}
           />
-          <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
+          <PopoverContent fontSize={'sm'} width={'200px'} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
-            <PopoverBody userSelect={"text"}>
-              <VStack display={"block"}>
-                <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
-                <Button variant={"link"} fontSize={"sm"} onClick={back}>Back to previous board</Button>
+            <PopoverBody userSelect={'text'}>
+              <VStack display={'block'}>
+                <Button variant={'link'} fontSize={'sm'} onClick={() => toHome(props.roomId)}>
+                  Back to {room?.data.name}
+                </Button>
+                <Button variant={'link'} fontSize={'sm'} onClick={back}>
+                  Back to previous board
+                </Button>
               </VStack>
             </PopoverBody>
           </PopoverContent>
@@ -158,6 +173,13 @@ export function Controller(props: ControllerProps) {
           isActive={annotations?.show}
           isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
+        />
+        <IconButtonPanel
+          icon={<TbBrandZoom size="32px" />}
+          description="Zoom"
+          isActive={zoom?.show}
+          // isDisabled={!canAnnotate}
+          onClick={() => handleShowPanel(zoom)}
         />
       </HStack>
     </Panel>

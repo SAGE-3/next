@@ -49,6 +49,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  ZoomPanel,
 } from './components';
 
 type UILayerProps = {
@@ -286,6 +287,8 @@ export function UILayer(props: UILayerProps) {
       <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
 
       <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
+
+      <ZoomPanel boardId={props.boardId} roomId={props.roomId} />
 
       <AnnotationsPanel />
 

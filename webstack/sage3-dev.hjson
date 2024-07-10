@@ -50,12 +50,12 @@
       // API Secret
       "apiSecret": ""
     },
-       "zoom": {
+    "zoom": {
       // SDK Key
       "sdkKey":"",
       // SDK Secret
       "sdkSecret":""
-    }
+    },
     "openai": {
       // API Key
       "apiKey": "",

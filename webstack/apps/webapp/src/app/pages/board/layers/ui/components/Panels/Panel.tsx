@@ -68,7 +68,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
 
   return (
     <Box>
@@ -349,7 +349,7 @@ export function Panel(props: PanelProps) {
                     cursor="pointer"
                   />
                 )}
-                {panel.name !== 'controller' ? (
+                {panel.name !== 'controller' && props.showClose ? (
                   <IconButton
                     icon={<MdClose size="20px" />}
                     aria-label="close panel"
