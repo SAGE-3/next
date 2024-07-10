@@ -15,13 +15,14 @@ import {
   Badge, Tab, TabList, TabPanel, TabPanels, Tabs,
   Flex, Input, InputGroup, InputRightElement,
 } from '@chakra-ui/react';
-import { HiLightBulb } from "react-icons/hi";
+import { HiSparkles } from "react-icons/hi2";
 
 import { MdSend } from 'react-icons/md';
 
 import { useHexColor, useUserSettings, useUser } from '@sage3/frontend';
 
 type SIProps = {
+  notificationCount: number;
   isBoard?: boolean;
 };
 
@@ -53,8 +54,9 @@ export function IntelligencePane(props: SIProps) {
       alignItems={'center'}
     >
       <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose}>
-        <DrawerContent maxWidth={"50vw"} height={window.innerHeight / 2 - 45}
-          rounded={"lg"} position="absolute" style={{ top: "50%", right: 10 }}>
+        <DrawerContent maxWidth={"50vw"} height={"520px"}
+          transitionDuration={"0.2s"}
+          rounded={"lg"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}>
           <DrawerHeader p={1} m={1}>
             SAGE Intelligence
           </DrawerHeader>
@@ -64,9 +66,11 @@ export function IntelligencePane(props: SIProps) {
               <TabList>
                 <Tab>Chat</Tab>
                 <Tab>Notifications
-                  <Badge colorScheme="green" variant="solid" pos="relative" right={-1} top={-2} >
-                    4
-                  </Badge>
+                  {props.notificationCount > 0 && (
+                    <Badge colorScheme="green" variant="solid" pos="relative" right={-1} top={-2} >
+                      {props.notificationCount}
+                    </Badge>
+                  )}
                 </Tab>
                 <Tab>Settings</Tab>
               </TabList>
@@ -101,25 +105,21 @@ export function IntelligencePane(props: SIProps) {
               mr="-2"
               justifyContent="center"
               aria-label={'Controls'}
-              icon={<HiLightBulb size="28px" />}
+              icon={<HiSparkles size="32px" />}
               background={'transparent'}
               colorScheme="gray"
               transition={'all 0.2s'}
               opacity={0.75}
-              variant="ghost"
+              variant="solid"
               onClick={onOpen}
               isDisabled={false}
               _hover={{ color: teal, opacity: 1, transform: 'scale(1.5)' }}
             />
-            <Badge
-              colorScheme="green"
-              variant="solid"
-              pos="relative"
-              right={1}
-              bottom={-2}
-            >
-              4
-            </Badge>
+            {props.notificationCount > 0 && (
+              <Badge colorScheme="green" variant="solid"
+                pos="relative" right={1} bottom={-2}>
+                {props.notificationCount}
+              </Badge>)}
           </Box>
         </Tooltip>
       )}
@@ -137,7 +137,7 @@ function AIChat() {
   const bgColor = useColorModeValue('gray.200', 'gray.800');
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const textColor = useColorModeValue('gray.500', 'gray.100');
 
   // Input text for query
   const [input, setInput] = useState<string>('');
