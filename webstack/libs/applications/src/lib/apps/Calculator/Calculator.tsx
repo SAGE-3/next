@@ -6,7 +6,7 @@
 //  * the file LICENSE, distributed as part of this software.
 //  */
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useInsightStore } from '@sage3/frontend';
 import {
   Container,
   Tooltip,
@@ -35,6 +35,16 @@ import './styling.css';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const updateInsights = useInsightStore((state) => state.update);
+
+  // Get the existing labels for this app
+  const myinsight = insights.find((a) => a.data.app_id === props._id);
+  if (myinsight) {
+    // console.log(myinsight.data.labels);
+  }
 
   // Set size for the app
   props.data.size.width = 260;

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import {
@@ -26,8 +26,12 @@ import {
   PopoverTrigger,
   UnorderedList,
   useDisclosure,
+  HStack,
+  Tag,
+  TagLabel,
+  TagCloseButton,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -346,6 +350,74 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   };
 
+  function getAppTags() {
+    const [isInputVisible, setIsInputVisible] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+
+    const handleAddTag = () => {
+      setIsInputVisible(true);
+    };
+
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setInputValue(event.target.value);
+    };
+
+    const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' && inputValue.trim() !== '') { // prevent empty tags
+        setTags((prevTags) => [...prevTags, inputValue]);
+        setInputValue('');
+      }
+    };
+
+    const handleInputBlur = () => {
+      setIsInputVisible(false);
+    };
+
+    const handleDeleteTag = (index: number) => {
+      setTags((prevTags) => prevTags.filter((_, i) => i !== index));
+    };
+
+    return (
+      <HStack spacing={2}>
+        {tags.map((tag, index) => (
+          <Tag
+            size="sm"
+            key={index}
+            borderRadius="full"
+            variant="solid"
+            fontSize="12px"
+          >
+            <TagLabel>{tag}</TagLabel>
+            <TagCloseButton onClick={() => handleDeleteTag(index)} />
+          </Tag>
+        ))}
+        {isInputVisible ? (
+          <Input
+            size="xs"
+            width="100px"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+            onBlur={handleInputBlur}
+            autoFocus
+          />
+        ) : (
+          <Tooltip
+            placement="top"
+            hasArrow={true}
+            openDelay={400}
+            label="Add tag"
+          >
+            <Button onClick={handleAddTag} size="xs" p={0}>
+              <MdAddCircleOutline size="14px" />
+            </Button>
+          </Tooltip>
+        )}
+      </HStack>      
+    );
+  }
+
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       // Get the component from the app definition
@@ -535,20 +607,25 @@ export function AppToolbar(props: AppToolbarProps) {
         opacity={`${appDragging ? '0' : '1'}`}
       >
         <Box display="flex" flexDirection="column">
-          <Text
-            w="100%"
-            textAlign="left"
-            mx={1}
-            color={textColor}
-            fontSize={14}
-            fontWeight="bold"
-            h={'auto'}
-            userSelect={'none'}
-            className="handle"
-          >
-            {app?.data.type}
-          </Text>
-          <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+          <Box display="flex" flexDirection="row">
+            <Text
+              textAlign="left"
+              mx={1}
+              color={textColor}
+              fontSize={14}
+              fontWeight="bold"
+              h={'auto'}
+              userSelect={'none'}
+              className="handle"
+            >
+              {app?.data.type}
+            </Text>
+            <Box display="flex" pl="1">
+              {getAppTags()}
+            </Box>
+          </Box>
+
+          <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
             {getAppToolbar()}
           </Box>
         </Box>
