@@ -307,9 +307,9 @@ export function HomePage() {
       },
       {
         target: clockRef.current!,
-        title: 'Clock',
+        title: 'Clock and more',
         content:
-          'Your local time is displayed here, along with your network status and a help button. The help button will restart this tour.',
+          'Your local time is displayed here, with the help button. While in a board, it also displays performance and network status, help, search and settings buttons.',
       },
       {
         target: introRef.current!,

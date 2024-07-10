@@ -182,7 +182,7 @@ export function Clock(props: ClockProps) {
         </Tooltip>
       )}
       {isBoard && showUI && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label={'UI Cheatsheet'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
             h="auto"
@@ -204,13 +204,13 @@ export function Clock(props: ClockProps) {
       )}
 
       {!isBoard && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label={'Restart the guided tour'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
             h="auto"
             p={0}
             pb={'1px'}
-            mr="-2"
+            mr="-1"
             justifyContent="center"
             aria-label={'Network status'}
             icon={<MdHelpOutline size="22px" />}
