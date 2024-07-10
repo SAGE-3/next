@@ -239,7 +239,7 @@ export function UILayer(props: UILayerProps) {
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
       <HStack position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
-        <IntelligencePane isBoard={true} />
+        <IntelligencePane isBoard={true} notificationCount={0} />
         <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
       </HStack>
 
