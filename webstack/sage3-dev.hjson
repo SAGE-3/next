@@ -67,9 +67,9 @@
     }
     "zoom": {
       // SDK Key
-      "sdkKey":"GgoqBD9KQzOrjRNN6OeJSw",
+      "sdkKey":"",
       // SDK Secret
-      "sdkSecret":"fahDThWFa1AhEZihVC7RVQhtUcXNDCQjk7Ca"
+      "sdkSecret":""
     }
   },
 
