@@ -87,23 +87,6 @@ type InteractionLogChartsSelected = {
   numberOfTimesClicked: number;
 };
 
-function showSpeechBubble(message: string) {
-  const speechBubble = document.getElementById('speechBubble');
-  if (speechBubble) {
-    speechBubble.innerHTML = '<p>' + message + '</p>';
-
-    // Show speech bubble
-    speechBubble.style.display = 'block';
-    setTimeout(function () {
-      // Fade out after 3 seconds
-      speechBubble.style.opacity = '1';
-      setTimeout(function () {
-        speechBubble.style.opacity = '0';
-      }, 15000);
-    }, 100); // Delay before showing
-  }
-}
-
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
@@ -140,6 +123,7 @@ function AppComponent(props: App): JSX.Element {
     lastChartsGenerated: string[];
     lastChartsSelected: string[];
   }>({ lastChartsInteracted: [], lastChartsGenerated: [], lastChartsSelected: [] });
+  const [isControlOn, setIsControlOn] = useState(false);
 
   // UI store
   const setZoom = useUIStore((state) => state.setScale);
@@ -152,11 +136,30 @@ function AppComponent(props: App): JSX.Element {
   const [selectedChartIds, setSelectedChartIds] = useState<any>(new Set());
   const [appCounterID, setAppCounterID] = useState<number>(0);
   const [mostRecentChartIDs, setMostRecentChartIDs] = useState<number[]>([]);
+  const [latestResponse, setLatestResponse] = useState<string>('This is my latest response');
 
   const [log, setLog] = useState<any>({
     chartsThatWereGenerated: [],
     chartsThatWereSelected: [],
   });
+
+  function showSpeechBubble(message: string) {
+    const speechBubble = document.getElementById('speechBubble');
+    if (speechBubble) {
+      speechBubble.innerHTML = '<p>' + message + '</p>';
+
+      // Show speech bubble
+      speechBubble.style.display = 'block';
+      setTimeout(function () {
+        // Fade out after 3 seconds
+        speechBubble.style.opacity = '1';
+        setTimeout(function () {
+          speechBubble.style.opacity = '0';
+        }, 15000);
+      }, 100); // Delay before showing
+    }
+    setLatestResponse(message);
+  }
 
   // Sort messages by creation date to display in order
 
@@ -263,7 +266,17 @@ function AppComponent(props: App): JSX.Element {
 
     //make fetch call here with request
     const response = await ArticulateAPI.sendText(request);
-    if (response == 0 || response == 2) {
+    let isCommand = false;
+    if (isControlOn) {
+      if (response == 0) {
+        isCommand = true;
+      }
+    } else {
+      if (response == 0 || response == 2) {
+        isCommand = true;
+      }
+    }
+    if (isCommand) {
       setProcessing(true);
 
       const chartResponse = await ArticulateAPI.sendCommand(request, interactionContext);
@@ -285,7 +298,7 @@ function AppComponent(props: App): JSX.Element {
         chartResponse['debug']['utteranceType'] = response;
         if (tmpChartOptions.length > 0) {
           showSpeechBubble(
-            `I generated ${tmpChartOptions.length} charts for your request: "${request}" \n\n ${chartResponse['debug']['summarizedResponse']}`
+            `I generated ${tmpChartOptions.length} charts for your request: "${request}" \n\n ${chartResponse['debug']['summarizedResponse'][0]}`
           );
           const audio = new Audio('https://github.com/Tabalbar/articulate-plus/raw/dev/263128__pan14__tone-beep-amb-verb.wav');
           audio.play();
@@ -384,6 +397,7 @@ function AppComponent(props: App): JSX.Element {
       ...EChartOption.title,
       textStyle: { fontSize: 40 },
     };
+    console.log(EChartOption);
     const app = await createApp({
       title: 'EChartsViewer',
       roomId: props.data.roomId!,
@@ -545,6 +559,14 @@ function AppComponent(props: App): JSX.Element {
                             border="3px solid black"
                             onKeyDown={onSubmit}
                           />
+                          <Button
+                            colorScheme={isControlOn ? 'blue' : 'green'}
+                            onClick={() => {
+                              setIsControlOn((prev) => !prev);
+                            }}
+                          >
+                            {isControlOn ? 'C' : 'E'}
+                          </Button>
                           <Button height="2rem" colorScheme="green" width="5rem">
                             Go
                           </Button>
@@ -554,7 +576,14 @@ function AppComponent(props: App): JSX.Element {
                           <div id="speechBubble" className="speech-bubble">
                             <p>Hello! This is a speech bubble.</p>
                           </div>
-                          <Image boxSize="15rem" transform={'translate(32px,0)'} src={artiState} />
+                          <Image
+                            onClick={() => {
+                              showSpeechBubble(latestResponse);
+                            }}
+                            boxSize="15rem"
+                            transform={'translate(32px,0)'}
+                            src={artiState}
+                          />
                         </Box>
                       </VStack>
                     </Center>
@@ -582,9 +611,9 @@ function AppComponent(props: App): JSX.Element {
                         grid: { bottom: 50, left: 50 },
                         xAxis: {
                           ...(chartOption.xAxis as any),
-                          nameLocation: 'middle',
+                          nameLocation: 'end',
                           nameTextStyle: {
-                            fontSize: 20, // Increase the font size here
+                            fontSize: 10, // Increase the font size here
                             fontWeight: 'bold', // Customize the style of the title (optional)
                           },
                           axisLabel: {
@@ -598,6 +627,10 @@ function AppComponent(props: App): JSX.Element {
                           ...(chartOption.yAxis as any),
                           axisLabel: {
                             fontSize: 10,
+                          },
+                          nameTextStyle: {
+                            fontSize: 10, // Increase the font size here
+                            fontWeight: 'bold', // Customize the style of the title (optional)
                           },
                         },
                         title: {

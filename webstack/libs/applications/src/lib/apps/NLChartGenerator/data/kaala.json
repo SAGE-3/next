@@ -37,7 +37,7 @@
     "last_updated": "2024-03-26 05:19:13.537259",
     "unit": "W/m²",
     "var_id": "SWin_1_Avg",
-    "var_name": "Incoming shortwave radiation"
+    "var_name": "Solar Energy"
   },
   {
     "chords_id": 80282,
@@ -133,7 +133,7 @@
     "last_updated": "2024-03-26 05:19:17.912508",
     "unit": "°C",
     "var_id": "Tair_1_Avg",
-    "var_name": "Air temperature, sensor 1"
+    "var_name": "Air temperature"
   },
   {
     "chords_id": 80294,
@@ -213,7 +213,7 @@
     "last_updated": "2024-03-26 05:19:23.137102",
     "unit": "m/s",
     "var_id": "WS_1_Avg",
-    "var_name": "Mean wind speed"
+    "var_name": "Wind speed"
   },
   {
     "chords_id": 80304,
@@ -501,7 +501,7 @@
     "last_updated": "2024-03-27 01:19:00.743401",
     "unit": "m³/m³",
     "var_id": "SM_1_Avg",
-    "var_name": "Soil moisture, sensor 1"
+    "var_name": "Soil moisture"
   },
   {
     "chords_id": 80631,

@@ -24,19 +24,19 @@ export const stationData: {
   { lat: 19.77241, lon: -155.83118, realName: 'KaiauluPuuWaawaa', stationName: 'Station 16', stationID: '0242', color: '#9370DB' }, // MediumPurple
   { lat: 19.668669, lon: -155.957474, realName: 'Keahuolu', stationName: 'Station 17', stationID: '0241', color: '#3CB371' }, // MediumSeaGreen
   { lat: 19.16877, lon: -155.57035, realName: 'Kaiholena', stationName: 'Station 18', stationID: '0231', color: '#FF8C00' }, // DarkOrange
-  { lat: 19.7064059, lon: -155.1873737, realName: 'Piihonua', stationName: 'Station 19', stationID: '0213', color: '#FF00FF' }, // Magenta
+  { lat: 19.7064059, lon: -155.1873737, realName: 'Piihonua', stationName: 'Station 19', stationID: '0213', color: '#FFC0CB' }, // Pink
   { lat: 19.834341, lon: -155.122435, realName: 'Kulaimano', stationName: 'Station 20', stationID: '0212', color: '#66CDAA' }, // MediumAquamarine
-  { lat: 19.845036, lon: -155.362586, realName: 'Kanakaleonui', stationName: 'Station 21', stationID: '0211', color: '#FF1493' }, // DeepPink
-  { lat: 19.6061748, lon: -155.0515231, realName: 'Keaau', stationName: 'Station 22', stationID: '0202', color: '#FFD700' }, // Gold
-  { lat: 19.415215, lon: -155.238394, realName: 'Nahuku', stationName: 'Station 23', stationID: '0201', color: '#00FFFF' }, // Cyan
-  { lat: 20.773636, lon: -156.222311, realName: 'Waikamoi', stationName: 'Station 24', stationID: '0154', color: '#FF6347' }, // Tomato
-  { lat: 20.710361, lon: -156.25675, realName: 'Summit', stationName: 'Station 25', stationID: '0153', color: '#3CB371' }, // MediumSeaGreen
-  { lat: 20.759806, lon: -156.248167, realName: 'ParkHQ', stationName: 'Station 26', stationID: '0151', color: '#1E90FF' }, // DodgerBlue
-  { lat: 20.633945, lon: -156.273889, realName: 'Kahikinui', stationName: 'Station 27', stationID: '0144', color: '#9370DB' }, // MediumPurple
-  { lat: 20.89072, lon: -156.65493, realName: 'LahainaWTP', stationName: 'Station 28', stationID: '0131', color: '#FF4500' }, // OrangeRed
-  { lat: 20.7458333, lon: -156.4305556, realName: 'Lipoa', stationName: 'Station 29', stationID: '0121', color: '#00FA9A' }, // MediumSpringGreen
-  { lat: 20.757889, lon: -156.320028, realName: 'KulaAg', stationName: 'Station 30', stationID: '0119', color: '#BA55D3' }, // MediumOrchid
-  { lat: 20.79532, lon: -156.35991, realName: 'Pulehu', stationName: 'Station 31', stationID: '0118', color: '#87CEEB' }, // SkyBlue
-  { lat: 20.7067, lon: -156.3554, realName: 'Keokea', stationName: 'Station 32', stationID: '0116', color: '#ADFF2F' }, // GreenYellow
-  { lat: 20.8415, lon: -156.2948, realName: 'Piiholo', stationName: 'Station 33', stationID: '0115', color: '#FF8C00' }, // DarkOrange
+  { lat: 19.845036, lon: -155.362586, realName: 'Kanakaleonui', stationName: 'Station 21', stationID: '0211', color: '#B0E0E6' }, // PowderBlue
+  { lat: 19.6061748, lon: -155.0515231, realName: 'Keaau', stationName: 'Station 22', stationID: '0202', color: '#E6E6FA' }, // Lavender
+  { lat: 19.415215, lon: -155.238394, realName: 'Nahuku', stationName: 'Station 23', stationID: '0201', color: '#7FFFD4' }, // Aquamarine
+  { lat: 20.773636, lon: -156.222311, realName: 'Waikamoi', stationName: 'Station 24', stationID: '0154', color: '#98FB98' }, // PaleGreen
+  { lat: 20.710361, lon: -156.25675, realName: 'Summit', stationName: 'Station 25', stationID: '0153', color: '#AFEEEE' }, // PaleTurquoise
+  { lat: 20.759806, lon: -156.248167, realName: 'ParkHQ', stationName: 'Station 26', stationID: '0151', color: '#FFB6C1' }, // LightPink
+  { lat: 20.633945, lon: -156.273889, realName: 'Kahikinui', stationName: 'Station 27', stationID: '0144', color: '#DDA0DD' }, // Plum
+  { lat: 20.89072, lon: -156.65493, realName: 'LahainaWTP', stationName: 'Station 28', stationID: '0131', color: '#F0E68C' }, // Khaki
+  { lat: 20.7458333, lon: -156.4305556, realName: 'Lipoa', stationName: 'Station 29', stationID: '0121', color: '#FFFACD' }, // LemonChiffon
+  { lat: 20.757889, lon: -156.320028, realName: 'KulaAg', stationName: 'Station 30', stationID: '0119', color: '#FAFAD2' }, // LightGoldenrodYellow
+  { lat: 20.79532, lon: -156.35991, realName: 'Pulehu', stationName: 'Station 31', stationID: '0118', color: '#E0FFFF' }, // LightCyan
+  { lat: 20.7067, lon: -156.3554, realName: 'Keokea', stationName: 'Station 32', stationID: '0116', color: '#F5DEB3' }, // Wheat
+  { lat: 20.8415, lon: -156.2948, realName: 'Piiholo', stationName: 'Station 33', stationID: '0115', color: '#FFE4B5' }, // Moccasin
 ];

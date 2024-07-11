@@ -124,10 +124,14 @@ const fetchData = async (stationName: string, attributes: string[]) => {
 
 const filterDataByDate = (formattedData: string[][], dates: { startDate: string; endDate: string }) => {
   const { startDate, endDate } = dates;
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
+  if (startDate && endDate) {
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
 
-  return formattedData.filter((row, index) => index === 0 || (new Date(row[0]).getTime() >= start && new Date(row[0]).getTime() <= end));
+    return formattedData.filter((row, index) => index === 0 || (new Date(row[0]).getTime() >= start && new Date(row[0]).getTime() <= end));
+  } else {
+    return formattedData;
+  }
 };
 
 export const processStations = async (

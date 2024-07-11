@@ -100,6 +100,14 @@ export function generateOption({
     data[i]['data'] = applyFilters(data[i]['data'], extractedTransformations);
   }
   const quantitativeAttributes = getMultipleQuantitativeAttributes(data[0]['data'], attributes);
+  const quantitativeAttributesFullName = [];
+  for (let i = 0; i < quantitativeAttributes.length; i++) {
+    for (let j = 0; j < stationVariableNameTranslation.length; j++) {
+      if (quantitativeAttributes[i] == stationVariableNameTranslation[j]['var_id']) {
+        quantitativeAttributesFullName.push(stationVariableNameTranslation[j]['var_name']);
+      }
+    }
+  }
   const temporalAttribute = getTemporalAttribute(data[0]['data'], attributes);
   const chartOptions: EChartsCoreOption[] = [];
   const series = [];
@@ -121,7 +129,7 @@ export function generateOption({
           const stationSeries: any = {};
           const attributeIndex = data[j]['data'][0].indexOf(quantitativeAttributes[i] as string);
           let stationColor = '#000';
-          stationSeries.name = data[i]['stationName'];
+          stationSeries.name = data[j]['stationName'];
           for (let k = 0; k < stationData.length; k++) {
             if (data[j]['stationName'] == stationData[k].stationName) {
               stationColor = stationData[j].color;
@@ -145,16 +153,10 @@ export function generateOption({
         };
         chartOption.yAxis = {
           type: 'value',
-          name: quantitativeAttributes[i],
+          name: quantitativeAttributesFullName[i],
         };
 
-        chartOption = createTitle(
-          chartOption,
-          chartName,
-          data.map((val: { [x: string]: any }) => val['stationName']),
-          data[0]['data'],
-          [quantitativeAttributes[i]]
-        );
+        chartOption = createTitle(chartOption, chartName, data, data[0]['data'], [quantitativeAttributes[i]]);
         chartOption = customizeChart(chartOption, colorMode);
         chartOption = customizeLegend(chartOption);
         chartOption = createTooltip(chartOption, colorMode);
@@ -173,6 +175,8 @@ export function generateOption({
           //create scatter chart
           const xAxis = quantitativeAttributes[0];
           const yAxis = quantitativeAttributes[i];
+          const xAxisFullName = quantitativeAttributesFullName[0];
+          const yAxisFullName = quantitativeAttributesFullName[i];
           const tmpStationSeries = [];
           console.log(data, 'data');
           for (let i = 0; i < data.length; i++) {
@@ -214,30 +218,24 @@ export function generateOption({
 
             stationSeries.data = transformedData;
             stationSeries.itemStyle = {
-              color: '#fff',
+              color: 'transparent',
               borderColor: stationColor,
               borderWidth: 2,
             };
-            stationSeries.symbolSize = 5;
+            stationSeries.symbolSize = 10;
 
             tmpStationSeries.push(stationSeries);
           }
           chartOption.series = tmpStationSeries;
           chartOption.xAxis = {
             type: 'value',
-            name: xAxis,
+            name: xAxisFullName,
           };
           chartOption.yAxis = {
             type: 'value',
-            name: yAxis,
+            name: yAxisFullName,
           };
-          chartOption = createTitle(
-            chartOption,
-            chartName,
-            data.map((val: { [x: string]: any }) => val['stationName']),
-            data[0]['data'],
-            [quantitativeAttributes[0], quantitativeAttributes[i]]
-          );
+          chartOption = createTitle(chartOption, chartName, data, data[0]['data'], [quantitativeAttributes[0], quantitativeAttributes[i]]);
           chartOption = customizeChart(chartOption, colorMode);
           chartOption = customizeLegend(chartOption);
           chartOption = createTooltip(chartOption, colorMode);
@@ -294,13 +292,7 @@ export function generateOption({
             },
           },
         ];
-        chartOption = createTitle(
-          chartOption,
-          chartName,
-          data.map((val: { [x: string]: any }) => val['stationName']),
-          data[0]['data'],
-          [quantitativeAttributes[i]]
-        );
+        chartOption = createTitle(chartOption, chartName, data, data[0]['data'], [quantitativeAttributes[i]]);
         chartOption = customizeChart(chartOption, colorMode);
         chartOption = customizeLegend(chartOption);
         chartOption = createTooltip(chartOption, colorMode);
@@ -318,7 +310,7 @@ export function generateOption({
 
         const attribute = quantitativeAttributes[i];
         const boxplotData = [];
-        const categories = [];
+        const categories: string[] = [];
 
         for (let j = 0; j < data.length; j++) {
           const stationName = data[j]['stationName'];
@@ -350,15 +342,9 @@ export function generateOption({
         };
         chartOption.yAxis = {
           type: 'value',
-          name: 'Values',
+          name: quantitativeAttributesFullName[i],
         };
-        chartOption = createTitle(
-          chartOption,
-          chartName,
-          data.map((val: { [x: string]: any }) => val['stationName']),
-          data[0]['data'],
-          [attribute]
-        );
+        chartOption = createTitle(chartOption, chartName, data, data[0]['data'], [attribute]);
         chartOption = customizeChart(chartOption, colorMode);
         chartOption = customizeLegend(chartOption);
         chartOption = createTooltip(chartOption, colorMode);
@@ -368,20 +354,23 @@ export function generateOption({
       }
       break;
     }
+
     case 'Column Histogram': {
       for (let i = 0; i < quantitativeAttributes.length; i++) {
-        let chartOption: any = {};
-
         const attribute = quantitativeAttributes[i];
-        const histogramData = [];
-        const binCounts: any = {};
-        const numBins = 10; // You can adjust the number of bins
 
-        let minValue = Infinity;
-        let maxValue = -Infinity;
-
-        // Find min and max values for the current attribute across all stations
         for (let j = 0; j < data.length; j++) {
+          let chartOption: any = {};
+
+          const stationName = data[j]['stationName'];
+          const histogramData = [];
+          const binCounts: any = {};
+          const numBins = 10; // You can adjust the number of bins
+
+          let minValue = Infinity;
+          let maxValue = -Infinity;
+
+          // Find min and max values for the current attribute across the current station
           const tmpStationData = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[data[j]['data'][0].indexOf(attribute)]);
 
           tmpStationData.forEach((value: number) => {
@@ -392,12 +381,8 @@ export function generateOption({
               maxValue = value;
             }
           });
-        }
 
-        // Collect data for the current attribute across all stations
-        for (let j = 0; j < data.length; j++) {
-          const tmpStationData = data[j]['data'].slice(1).map((row: { [x: string]: any }) => row[data[j]['data'][0].indexOf(attribute)]);
-
+          // Calculate bin counts for the current station
           tmpStationData.forEach((value: number) => {
             const bin = Math.floor((value - minValue) / ((maxValue - minValue) / numBins)); // Calculate bin index
             if (!binCounts[bin]) {
@@ -405,49 +390,50 @@ export function generateOption({
             }
             binCounts[bin]++;
           });
-        }
 
-        // Prepare data for the histogram
-        for (const bin in binCounts) {
-          histogramData.push([parseFloat(bin) * ((maxValue - minValue) / numBins) + minValue, binCounts[bin]]);
-        }
+          // Prepare data for the histogram
+          for (const bin in binCounts) {
+            histogramData.push([parseFloat(bin) * ((maxValue - minValue) / numBins) + minValue, binCounts[bin]]);
+          }
 
-        histogramData.sort((a, b) => a[0] - b[0]);
+          histogramData.sort((a, b) => a[0] - b[0]);
 
-        chartOption.series = [
-          {
+          // Find the corresponding color for the current station
+          const stationColor = stationData.find((s) => s.stationName === stationName)?.color || '#000';
+
+          chartOption.series = [
+            {
+              name: stationName,
+              type: 'bar',
+              data: histogramData.map((item) => ({ value: item[1], name: item[0] })),
+              barWidth: '99.3%',
+              barGap: '-100%',
+              itemStyle: {
+                color: stationColor,
+              },
+            },
+          ];
+          chartOption.xAxis = {
+            type: 'category',
+            data: histogramData.map((item) => item[0]),
             name: attribute,
-            type: 'bar',
-            data: histogramData.map((item) => ({ value: item[1], name: item[0] })),
-            barWidth: '99.3%',
-            barGap: '-100%',
-          },
-        ];
-        chartOption.xAxis = {
-          type: 'category',
-          data: histogramData.map((item) => item[0]),
-          name: attribute,
-        };
-        chartOption.yAxis = {
-          type: 'value',
-          name: 'Frequency',
-        };
-        chartOption = createTitle(
-          chartOption,
-          chartName,
-          data.map((val: { [x: string]: any }) => val['stationName']),
-          data[0]['data'],
-          [attribute]
-        );
-        chartOption = customizeChart(chartOption, colorMode);
-        chartOption = customizeLegend(chartOption);
-        chartOption = createTooltip(chartOption, colorMode);
-        chartOption = customizeXAxis(chartOption, appSize, data);
-        chartOption = customizeYAxis(chartOption, appSize, data);
-        chartOptions.push(chartOption);
+          };
+          chartOption.yAxis = {
+            type: 'value',
+            name: quantitativeAttributesFullName[i],
+          };
+          chartOption = createTitle(chartOption, chartName, [{ stationName: stationName }], data[j]['data'], [attribute]);
+          chartOption = customizeChart(chartOption, colorMode);
+          chartOption = customizeLegend(chartOption);
+          chartOption = createTooltip(chartOption, colorMode);
+          chartOption = customizeXAxis(chartOption, appSize, data);
+          chartOption = customizeYAxis(chartOption, appSize, data);
+          chartOptions.push(chartOption);
+        }
       }
       break;
     }
+
     default:
       return [];
   }
@@ -458,6 +444,10 @@ export function generateOption({
 const customizeYAxis = (option: { yAxis: any }, appSize: { width: number; height: number; depth: number }, data: any) => {
   option.yAxis = {
     ...option.yAxis,
+    nameTextStyle: {
+      fontSize: 35, // Increase the font size here
+      fontWeight: 'bold', // Customize the style of the title (optional)
+    },
     axisLabel: {
       fontSize: 25,
     },
@@ -471,18 +461,17 @@ const customizeXAxis = (option: { xAxis: any }, appSize: { width: number; height
 
   option.xAxis = {
     ...option.xAxis,
-    nameLocation: 'middle',
+    nameLocation: 'end',
     nameTextStyle: {
-      fontSize: 20, // Increase the font size here
+      fontSize: 25, // Increase the font size here
       fontWeight: 'bold', // Customize the style of the title (optional)
     },
     axisLabel: {
-      fontSize: 15,
+      fontSize: 20,
       margin: 25,
       // interval: 30,
       rotate: 30,
     },
-    nameGap: 300,
   };
   return option;
 };
@@ -511,10 +500,12 @@ const createTooltip = (option: EChartsCoreOption, colorMode: string) => {
 const createTitle = (
   option: { title: { text: string; left: string } },
   chartName: string,
-  stationName: any,
+  stationData: any,
   data: string | any[],
   headers: string[]
 ) => {
+  const stationNames = stationData.map((val: { [x: string]: any }) => val['stationName'].split(' ')[1]);
+  console.log(stationData, stationNames);
   const headerIds = data[0];
   const headersWithFullName = [];
   let startDate = '';
@@ -533,7 +524,9 @@ const createTitle = (
     }
   }
 
-  const chartTitle = `${chartName} of ${headersWithFullName.join(', ')} for ${stationName} in ${startDate} to ${endDate}`;
+  const chartTitle = `${chartName} of ${headersWithFullName.join(', ')} for Stations: ${stationNames.join(
+    ', '
+  )} from ${startDate} to ${endDate}`;
   option.title = {
     text: chartTitle,
     left: 'center',
@@ -669,8 +662,9 @@ function customizeChart(options: EChartsCoreOption, colorMode: string) {
     options.axisLine = { lineStyle: { color: '#eee' } };
     options.tooltip = { backgroundColor: '#333', textStyle: { color: '#eee' } };
     options.grid = {
-      bottom: 100, // Increase this value to provide more space for x-axis labels
+      bottom: 130, // Increase this value to provide more space for x-axis labels
       left: 150, // Increase this value to provide more space for x-axis labels
+      top: 150,
     };
   } else if (colorMode === 'light') {
     options.backgroundColor = '#fff';
