@@ -5,7 +5,6 @@ import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLin
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
-import { name as ChitChatName, init as defaultChitChat } from './apps/ChitChat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
@@ -44,7 +43,6 @@ export const initialValues = {
   [CSVViewerName]: defaultCSVViewer,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
-  [ChitChatName]: defaultChitChat,
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [CodeEditorName]: defaultCodeEditor,

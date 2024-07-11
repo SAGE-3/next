@@ -5,7 +5,6 @@ import { state as BoardLinkState, name as BoardLinkName } from './apps/BoardLink
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
 import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps/ChartGenerator';
 import { state as ChatState, name as ChatName } from './apps/Chat';
-import { state as ChitChatState, name as ChitChatName } from './apps/ChitChat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
@@ -46,7 +45,6 @@ export type AppState =
   | CSVViewerState
   | ChartGeneratorState
   | ChatState
-  | ChitChatState
   | ClockState
   | CobrowseState
   | CodeEditorState
@@ -80,4 +78,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ChitChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
