@@ -48,6 +48,7 @@ export const apiUrls = {
     chat: {
       status: '/api/ai/chat_status',
       query: '/api/ai/chat_query',
+      ask: '/api/ai/chat',
     },
     code: {
       status: '/api/ai/code_status',

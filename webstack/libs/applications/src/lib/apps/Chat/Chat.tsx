@@ -54,6 +54,10 @@ const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative
 // OpenAI API
 // const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
 
+// Prompt to interject or not
+const LLAMA3_INTERJECT = 'You are a software program able to understand intent in multi-party conversations. You will be given a sample conversation transcript between multiple users plus an AI, and asked a question.';
+
+
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
@@ -274,8 +278,24 @@ function AppComponent(props: App): JSX.Element {
             ],
           });
         }
-
       }
+    } else {
+      // Not a question to Geppetto
+      const sample = "The conversation transcript is contained in backtick delimiters below: ```\n" +
+        new_input + "\n```";
+      const question = "Question: 'AI' should reply only when being addressed by name. Looking at the last message from 'User' in the transcript, should 'AI' interject this time? Respond in the following format:\n\nReasoning: (give very brief reasoning here)\nJudgement: INTERJECT|QUIET (choose one)";
+
+      const test_request = `<|begin_of_text|>
+      <|start_header_id|>system<|end_header_id|> ${LLAMA3_INTERJECT} <|eot_id|>
+      <|start_header_id|>user<|end_header_id|> ${sample} <|eot_id|>
+      <|start_header_id|>user<|end_header_id|> ${question} <|eot_id|>
+      <|start_header_id|>assistant<|end_header_id|>`;
+
+      const interject = await AiAPI.chat.ask({ input: test_request, model: 'chat', max_new_tokens: 100 });
+      console.log('interject>', interject);
+      // if (interject.success) {
+      //   console.log('Interject>', interject);
+      // }
     }
   };
 
