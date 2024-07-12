@@ -74,6 +74,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
     if (appName === 'SageCell') {
       w = 650;
       h = 400;
+    } else if (appName === 'Calculator') {
+      w = 260;
+      h = 369;
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
