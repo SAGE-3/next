@@ -47,7 +47,7 @@ function AppComponent(props: App): JSX.Element {
   props.data.size.height = 369;
 
   const handleButtonClick = (value: string) => {
-    let newInput = s.input + value;
+    let newInput = s.input + " " + value;
     if (s.input == "Error") {
       newInput = value
     }
@@ -146,7 +146,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose} closeOnOverlayClick={true}>
-        <DrawerContent maxW="25vw">
+        <DrawerContent maxW="25vw" height={window.innerHeight - 80} rounded={"lg"} transitionDuration={"0.2s"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}>
           <DrawerCloseButton />
           <DrawerHeader p={1} pl={5} m={1}>
             Calculation History
