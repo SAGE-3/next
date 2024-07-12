@@ -208,7 +208,7 @@ export function UserAvatarGroup(props: AvatarGroupProps) {
                     transform: 'translateX(3px)',
                   }}
                 />
-              </MenuButton>{' '}
+              </MenuButton>
             </Tooltip>
 
             <MenuList>

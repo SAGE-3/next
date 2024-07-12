@@ -1,5 +1,7 @@
 networkx
-langchain_openai
 langchain
+langchain_community
+langchain_openai
 rectpack
 graphviz
+langgraph

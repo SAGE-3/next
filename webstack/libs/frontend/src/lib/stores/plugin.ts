@@ -23,7 +23,7 @@ interface PluginState {
   plugins: Plugin[];
   error: string | null;
   fetched: boolean;
-  upload: (file: File, name: string, description: string) => Promise<{ success: boolean; message: string }>;
+  upload: (file: File, name: string, description: string, username: string) => Promise<{ success: boolean; message: string }>;
   subscribeToPlugins: () => Promise<void>;
   delete: (id: string) => Promise<void>;
 }
@@ -44,13 +44,14 @@ const PluginStore = create<PluginState>()((set, get) => {
       if (!SAGE3Ability.canCurrentUser('delete', 'plugins')) return;
       await APIHttp.DELETE('/plugins/remove/' + id);
     },
-    upload: async (file: File, name: string, description: string) => {
+    upload: async (file: File, name: string, description: string, username: string) => {
       if (!SAGE3Ability.canCurrentUser('create', 'plugins')) return;
       // Uploaded with a Form object
       const fd = new FormData();
       fd.append('plugin', file);
       fd.append('description', description);
       fd.append('name', name);
+      fd.append('username', username);
       const res = await fetch(apiUrls.plugins.upload, {
         method: 'POST',
         body: fd,

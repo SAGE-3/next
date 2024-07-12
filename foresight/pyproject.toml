@@ -1,0 +1,21 @@
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pysage3"
+version = "1.0.1"
+authors = [
+  { name="SAGE3 Team", email="sage3app@gmail.com" },
+]
+description = "SAGE3 API"
+readme = "README.md"
+requires-python = ">=3.9"
+
+[tool.hatch.build.targets.wheel]
+packages = ["foresight"]
+
+[project.urls]
+Homepage = "https://github.com/SAGE-3/next"
+
