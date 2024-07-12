@@ -47,7 +47,7 @@ function AppComponent(props: App): JSX.Element {
   props.data.size.height = 369;
 
   const handleButtonClick = (value: string) => {
-    let newInput = s.input + " " + value;
+    let newInput = s.input + value;
     if (s.input == "Error") {
       newInput = value
     }
