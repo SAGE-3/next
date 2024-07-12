@@ -30,6 +30,10 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from '@chakra-ui/react';
 import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
@@ -351,36 +355,61 @@ export function AppToolbar(props: AppToolbarProps) {
   };
 
   function getAppTags() {
-    const [isInputVisible, setIsInputVisible] = useState(false);
-    const [inputValue, setInputValue] = useState('');
-    const [tags, setTags] = useState<string[]>([]);
+    const { isOpen, onOpen, onClose } = useDisclosure(); // for managing input visibility
 
+    // Find current app's insight
+    const appInsight = insights.find((el) => el._id === app?._id);
+    const tags = appInsight ? appInsight.data.labels : []; // get current tags if exists, otherwise empty array
+
+    const [inputValue, setInputValue] = useState(''); // input val of new tag
+    const [showMore, setShowMore] = useState(false); // manage visibility of "..." tag
+    const tagContainerRef = useRef<HTMLDivElement>(null); // ref to tag container
+
+    // Show input field for adding a new tag
     const handleAddTag = () => {
-      setIsInputVisible(true);
+      onOpen();
     };
 
+    // Update input value state when input changes
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(event.target.value);
     };
 
+    // Handle enter key press in input field
     const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter' && inputValue.trim() !== '') { // prevent empty tags
-        setTags((prevTags) => [...prevTags, inputValue]);
+        const newTags = [...tags, inputValue]; // add the new tag to the list of tags
+        if (app) {
+          updateInsight(app._id, { labels: newTags }); // update insight with the new list of tags
+        }
         setInputValue('');
       }
     };
 
+    // Remove input box when it loses focus
     const handleInputBlur = () => {
-      setIsInputVisible(false);
+      onClose();
     };
 
+    // Delete a tag
     const handleDeleteTag = (index: number) => {
-      setTags((prevTags) => prevTags.filter((_, i) => i !== index));
+      const newTags = tags.filter((_, i) => i !== index); // remove tag at specified index
+      if (app) {
+        updateInsight(app._id, { labels: newTags }); // update insight with the new list of tags
+      }
     };
+
+    // Calculate total width of tags and determine if ... tag should be shown
+    useEffect(() => {
+      if (tagContainerRef.current) {
+        const totalWidth = Array.from(tagContainerRef.current.children).reduce((acc, child) => acc + child.clientWidth, 0);
+        setShowMore(totalWidth > 300);
+      }
+    }, [tags]);
 
     return (
-      <HStack spacing={2}>
-        {tags.map((tag, index) => (
+      <HStack spacing={2} ref={tagContainerRef}>
+        {tags.slice(0, showMore ? -1 : tags.length).map((tag, index) => (
           <Tag
             size="sm"
             key={index}
@@ -392,7 +421,19 @@ export function AppToolbar(props: AppToolbarProps) {
             <TagCloseButton onClick={() => handleDeleteTag(index)} />
           </Tag>
         ))}
-        {isInputVisible ? (
+        {showMore && (
+          <Menu>
+            <MenuButton as={Button} size="xs">...</MenuButton>
+            <MenuList>
+              {tags.slice(-1).map((tag, index) => (
+                <MenuItem key={index}>
+                  {tag}
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        )}
+        {isOpen ? (
           <Input
             size="xs"
             width="100px"
