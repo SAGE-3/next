@@ -45,7 +45,7 @@ async function sendText(text: string): Promise<any> {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ prompt: text, context: '', chartContext: '' }),
+    body: JSON.stringify({ prompt: text, context: '', chartContext: '', utteranceType: '' }),
   });
 
   if (!response.ok) {
@@ -65,7 +65,8 @@ async function sendCommand(
     lastChartsInteracted: string[];
     lastChartsGenerated: string[];
     lastChartsSelected: string[];
-  }
+  },
+  utteranceType: string
 ): Promise<any> {
   console.log('sending text', text);
 
@@ -74,7 +75,7 @@ async function sendCommand(
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ prompt: text, context: '', chartContext: JSON.stringify(interactionContext) }),
+    body: JSON.stringify({ prompt: text, context: '', chartContext: JSON.stringify(interactionContext), utteranceType: utteranceType }),
   });
 
   if (!response.ok) {

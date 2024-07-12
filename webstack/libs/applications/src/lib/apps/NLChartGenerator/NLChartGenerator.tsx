@@ -50,6 +50,8 @@ import './styling.css';
 import MapGL from './MapGL';
 import { MdClose } from 'react-icons/md';
 
+const fileName = 'STUDY2';
+
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
   const length = dataObject[keys[0]].length;
@@ -63,6 +65,10 @@ function convertObjectToArray(dataObject: any) {
     dataArray.push(record);
   }
   return dataArray;
+}
+
+function generateRandomNumber() {
+  return Math.floor(Math.random() * 10001);
 }
 
 function getCurrentTime() {
@@ -145,6 +151,7 @@ function AppComponent(props: App): JSX.Element {
 
   function showSpeechBubble(message: string) {
     const speechBubble = document.getElementById('speechBubble');
+    const speechBubble2 = document.getElementById('speechBubble2');
     if (speechBubble) {
       speechBubble.innerHTML = '<p>' + message + '</p>';
 
@@ -155,6 +162,19 @@ function AppComponent(props: App): JSX.Element {
         speechBubble.style.opacity = '1';
         setTimeout(function () {
           speechBubble.style.opacity = '0';
+        }, 15000);
+      }, 100); // Delay before showing
+    }
+    if (speechBubble2) {
+      speechBubble2.innerHTML = '<p>' + message + '</p>';
+
+      // Show speech bubble
+      speechBubble2.style.display = 'block';
+      setTimeout(function () {
+        // Fade out after 3 seconds
+        speechBubble2.style.opacity = '1';
+        setTimeout(function () {
+          speechBubble2.style.opacity = '0';
         }, 15000);
       }, 100); // Delay before showing
     }
@@ -179,7 +199,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     const writeLog = async () => {
-      await ArticulateAPI.sendLog(log, 'Study1');
+      await ArticulateAPI.sendLog(log, fileName);
     };
     if (log.chartsThatWereGenerated.length !== 0) {
       writeLog();
@@ -244,6 +264,62 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.context]);
 
+  const getChart = async (request: string, response: any) => {
+    setProcessing(true);
+
+    const chartResponse = await ArticulateAPI.sendCommand(request, interactionContext, response.toString());
+    console.log(chartResponse);
+    if (!chartResponse) {
+      //do nothing
+    } else {
+      if (Object.keys(chartResponse).length == 0) {
+        showSpeechBubble(`I tried making a chart for you but something went wrong."`);
+      } else {
+        const tmpChartOptions: EChartsCoreOption[] = await processStations(chartResponse['station_chart_info'], colorMode, props.data.size);
+        const chartTitles = [];
+        const tmpMostRecentChartIDs: number[] = [];
+        for (let i = 0; i < tmpChartOptions.length; i++) {
+          chartTitles.push((tmpChartOptions[i] as any).title.text);
+          tmpChartOptions[i].id = appCounterID + i;
+          tmpMostRecentChartIDs.push(appCounterID + i);
+        }
+        chartResponse['debug']['utteranceType'] = response;
+        if (tmpChartOptions.length > 0) {
+          if (response == 3 || response == 2) {
+            showSpeechBubble(
+              `Based on your interaction, I think this chart would be helpful. \n\n ${chartResponse['debug']['summarizedResponse'][0]}`
+            );
+          } else {
+            showSpeechBubble(
+              `I generated ${tmpChartOptions.length} charts for your request: "${request}" \n\n ${chartResponse['debug']['summarizedResponse'][0]}`
+            );
+          }
+
+          const audio = new Audio('https://github.com/Tabalbar/articulate-plus/raw/dev/263128__pan14__tone-beep-amb-verb.wav');
+          audio.play();
+          setLog({
+            ...log,
+            chartsThatWereGenerated: [
+              ...log.chartsThatWereGenerated,
+              { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
+            ],
+          });
+          setAppCounterID((prev: number) => prev + tmpChartOptions.length);
+          setInteractionContext({
+            ...interactionContext,
+            lastChartsGenerated: [...interactionContext.lastChartsGenerated, ...chartTitles],
+          });
+          setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
+          setMostRecentChartIDs(tmpMostRecentChartIDs);
+        } else {
+          showSpeechBubble(`I tried making a chart for you but something went wrong. Try asking again!`);
+        }
+      }
+    }
+    setProcessing(false);
+    return;
+  };
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
     // Get server time
@@ -277,68 +353,8 @@ function AppComponent(props: App): JSX.Element {
       }
     }
     if (isCommand) {
-      setProcessing(true);
-
-      const chartResponse = await ArticulateAPI.sendCommand(request, interactionContext);
-      if (!chartResponse) {
-        //do nothing
-      } else {
-        if (Object.keys(chartResponse).length == 0) {
-          showSpeechBubble(`I tried making a chart for you but something went wrong. Try asking again!"`);
-          return;
-        }
-        const tmpChartOptions: EChartsCoreOption[] = await processStations(chartResponse['station_chart_info'], colorMode, props.data.size);
-        const chartTitles = [];
-        const tmpMostRecentChartIDs: number[] = [];
-        for (let i = 0; i < tmpChartOptions.length; i++) {
-          chartTitles.push((tmpChartOptions[i] as any).title.text);
-          tmpChartOptions[i].id = appCounterID + i;
-          tmpMostRecentChartIDs.push(appCounterID + i);
-        }
-        chartResponse['debug']['utteranceType'] = response;
-        if (tmpChartOptions.length > 0) {
-          showSpeechBubble(
-            `I generated ${tmpChartOptions.length} charts for your request: "${request}" \n\n ${chartResponse['debug']['summarizedResponse'][0]}`
-          );
-          const audio = new Audio('https://github.com/Tabalbar/articulate-plus/raw/dev/263128__pan14__tone-beep-amb-verb.wav');
-          audio.play();
-          setLog({
-            ...log,
-            chartsThatWereGenerated: [
-              ...log.chartsThatWereGenerated,
-              { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
-            ],
-          });
-          setAppCounterID((prev: number) => prev + tmpChartOptions.length);
-          setInteractionContext({ ...interactionContext, lastChartsGenerated: [...chartTitles] });
-          setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
-          setMostRecentChartIDs(tmpMostRecentChartIDs);
-        } else {
-          showSpeechBubble(`I tried making a chart for you but something went wrong. Try asking again!`);
-        }
-      }
-      setProcessing(false);
+      await getChart(request, response);
     }
-    // await the request
-    // Add messages
-    updateState(props._id, {
-      ...s,
-      previousQ: request,
-      previousA: 'answer',
-      messages: [
-        ...s.messages,
-        initialAnswer,
-        {
-          id: genId(),
-          userId: user._id,
-          creationId: '',
-          creationDate: now.epoch + 1,
-          userName: 'OpenAI',
-          query: '',
-          response: 'answer',
-        },
-      ],
-    });
   };
 
   useEffect(() => {
@@ -395,7 +411,7 @@ function AppComponent(props: App): JSX.Element {
     EChartOption.title = {
       //@ts-ignore
       ...EChartOption.title,
-      textStyle: { fontSize: 40 },
+      textStyle: { fontSize: 30 },
     };
     console.log(EChartOption);
     const app = await createApp({
@@ -423,6 +439,13 @@ function AppComponent(props: App): JSX.Element {
       dragging: false,
       pinned: false,
     });
+    if (!isControlOn) {
+      setTimeout(() => {
+        //@ts-ignore
+        getChart(EChartOption.title.text, 3);
+      }, generateRandomNumber());
+    }
+
     setSelectedChartIds((prevIds: Iterable<unknown> | null | undefined) => {
       const newIds = new Set(prevIds);
       newIds.add({ chartId: EChartOption.id, appId: app.data._id });
@@ -567,9 +590,6 @@ function AppComponent(props: App): JSX.Element {
                           >
                             {isControlOn ? 'C' : 'E'}
                           </Button>
-                          <Button height="2rem" colorScheme="green" width="5rem">
-                            Go
-                          </Button>
                         </Box>
                         <Button onClick={isRecording ? stopRecording : startRecording}>{isRecording ? 'Sleep' : 'Wake Up'}</Button>
                         <Box position="relative">
@@ -636,7 +656,7 @@ function AppComponent(props: App): JSX.Element {
                         title: {
                           ...(chartOption.title as any),
                           textStyle: {
-                            fontSize: 10,
+                            fontSize: 8,
                           },
                         },
                         tooltip: {
@@ -693,6 +713,26 @@ function AppComponent(props: App): JSX.Element {
                       );
                     })}
                   </Wrap>
+                  <Box width="15rem" mt="6rem" borderLeft="gray 4px solid">
+                    <Center>
+                      <VStack>
+                        <Box display="flex"></Box>
+                        <Box position="relative">
+                          <div id="speechBubble2" className="speech-bubble2">
+                            <p>Hello! This is a speech bubble.</p>
+                          </div>
+                          <Image
+                            onClick={() => {
+                              showSpeechBubble(latestResponse);
+                            }}
+                            boxSize="15rem"
+                            transform={'translate(32px,0)'}
+                            src={artiState}
+                          />
+                        </Box>
+                      </VStack>
+                    </Center>
+                  </Box>
                 </Box>
               </Box>,
               document.body

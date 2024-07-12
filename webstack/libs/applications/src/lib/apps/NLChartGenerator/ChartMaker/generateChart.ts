@@ -132,11 +132,10 @@ export function generateOption({
           stationSeries.name = data[j]['stationName'];
           for (let k = 0; k < stationData.length; k++) {
             if (data[j]['stationName'] == stationData[k].stationName) {
-              stationColor = stationData[j].color;
+              stationColor = stationData[k].color;
               break;
             }
           }
-          console.log(stationColor);
           stationSeries.type = 'line';
           (stationSeries.itemStyle = {
             color: stationColor,
@@ -400,12 +399,13 @@ export function generateOption({
 
           // Find the corresponding color for the current station
           const stationColor = stationData.find((s) => s.stationName === stationName)?.color || '#000';
+          console.log(stationColor);
 
           chartOption.series = [
             {
               name: stationName,
               type: 'bar',
-              data: histogramData.map((item) => ({ value: item[1], name: item[0] })),
+              data: histogramData.map((item) => ({ value: item[1], name: item[0].toFixed(2) })),
               barWidth: '99.3%',
               barGap: '-100%',
               itemStyle: {
@@ -415,12 +415,12 @@ export function generateOption({
           ];
           chartOption.xAxis = {
             type: 'category',
-            data: histogramData.map((item) => item[0]),
-            name: attribute,
+            data: histogramData.map((item) => item[0].toFixed(2)),
+            name: quantitativeAttributesFullName[i],
           };
           chartOption.yAxis = {
             type: 'value',
-            name: quantitativeAttributesFullName[i],
+            name: '# of Occurances',
           };
           chartOption = createTitle(chartOption, chartName, [{ stationName: stationName }], data[j]['data'], [attribute]);
           chartOption = customizeChart(chartOption, colorMode);
