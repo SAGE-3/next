@@ -84,6 +84,7 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
+import { getTime } from 'date-fns';
 
 /**
  * Home page for SAGE3
@@ -571,6 +572,19 @@ export function HomePage() {
         duration: 2 * 1000,
         isClosable: true,
       });
+    }
+  }
+
+  // Function to get the greeting based on the time of the day
+  function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+
+    if (hour >= 5 && hour < 12) {
+      return 'morning';
+    } else if (hour >= 12 && hour < 18) {
+      return 'afternoon';
+    } else {
+      return 'evening';
     }
   }
 
@@ -1258,14 +1272,82 @@ export function HomePage() {
           marginLeft="3"
           width="100%"
           overflow="hidden"
-          p="6"
-          
+          py="6"
         >
-          <Text>Welcome to SAGE3</Text>
-          <Box borderRadius="20">
-            <Text>Recent Boards</Text>
-            <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
-              {recentBoards ? (
+          <Box
+            display="flex"
+            flexDir="column"
+            gap="6"
+            overflow="auto"
+            px="6"
+            css={{
+              '&::-webkit-scrollbar': {
+                background: 'transparent',
+                width: '5px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: scrollBarColor,
+                borderRadius: '48px',
+              },
+            }}
+          >
+            <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
+              Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
+            </Text>
+            <Box borderRadius="20">
+              <Text fontWeight="bold" mb="3">
+                Recent Boards
+              </Text>
+              <Box background="gray.800" borderRadius="20" px="3" overflow="hidden" minH="300px">
+                {recentBoards.length > 0 ? (
+                  <HStack
+                    gap="3"
+                    width="100%"
+                    overflow="auto"
+                    height="fit-content"
+                    py="5"
+                    px="2"
+                    css={{
+                      '&::-webkit-scrollbar': {
+                        background: 'transparent',
+                        height: '10px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: scrollBarColor,
+                        borderRadius: '48px',
+                      },
+                    }}
+                  >
+                    {boards
+                      .filter(recentBoardsFilter)
+                      .sort((boardA, boardB) => {
+                        // Sort by most recent
+                        const indexOfA = recentBoards.indexOf(boardA._id);
+                        const indexOfB = recentBoards.indexOf(boardB._id);
+                        return indexOfA - indexOfB;
+                      })
+                      .map((board) => (
+                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                          <BoardCard
+                            board={board}
+                            onClick={() => handleBoardClick(board)}
+                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                            selected={selectedBoard ? selectedBoard._id === board._id : false}
+                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                          />
+                        </Box>
+                      ))}
+                  </HStack>
+                ) : (
+                  <Text p="3">No recent boards.</Text>
+                )}
+              </Box>
+            </Box>
+            <Box>
+              <Text my="3" fontWeight="bold">
+                Starred Boards
+              </Text>
+              <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
                 <HStack
                   gap="3"
                   width="100%"
@@ -1285,13 +1367,8 @@ export function HomePage() {
                   }}
                 >
                   {boards
-                    .filter(recentBoardsFilter)
-                    .sort((boardA, boardB) => {
-                      // Sort by most recent
-                      const indexOfA = recentBoards.indexOf(boardA._id);
-                      const indexOfB = recentBoards.indexOf(boardB._id);
-                      return indexOfA - indexOfB;
-                    })
+                    .filter(boardStarredFilter)
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
                     .map((board) => (
                       <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                         <BoardCard
@@ -1304,47 +1381,7 @@ export function HomePage() {
                       </Box>
                     ))}
                 </HStack>
-              ) : (
-                <Text>No recent boards</Text>
-              )}
-            </Box>
-          </Box>
-          <Box>
-            <Text>Starred Boards</Text>
-            <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
-              <HStack
-                gap="3"
-                width="100%"
-                overflow="auto"
-                height="fit-content"
-                py="5"
-                px="2"
-                css={{
-                  '&::-webkit-scrollbar': {
-                    background: 'transparent',
-                    height: '10px',
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    background: scrollBarColor,
-                    borderRadius: '48px',
-                  },
-                }}
-              >
-                {boards
-                  .filter(boardStarredFilter)
-                  .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                  .map((board) => (
-                    <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                      <BoardCard
-                        board={board}
-                        onClick={() => handleBoardClick(board)}
-                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                        selected={selectedBoard ? selectedBoard._id === board._id : false}
-                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                      />
-                    </Box>
-                  ))}
-              </HStack>
+              </Box>
             </Box>
           </Box>
         </Box>
