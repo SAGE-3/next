@@ -96,6 +96,9 @@ export function App() {
       <UserSettingsProvider>
         <AuthProvider>
           <UserProvider>
+            {window.navigator.userAgent.toLowerCase().includes('macintosh') && (
+              <Box position="absolute" sx={{ '-webkit-app-region': 'drag' }} width="100vw" height="32px" />
+            )}
             {status ? (
               <Routes>
                 <Route path="/" element={<LoginPage />} />
