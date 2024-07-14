@@ -44,6 +44,7 @@ import {
   Flex,
   IconButton,
   ButtonGroup,
+  HStack,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -165,6 +166,9 @@ export function HomePage() {
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
   // const { toggleColorMode, colorMode } = useColorMode();
+
+  // Styling
+  const buttonRadius = '12';
 
   // Modals Disclosures
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
@@ -585,7 +589,7 @@ export function HomePage() {
 
   return (
     // Main Container
-    <Box display="flex" width="100%" height="100svh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
+    <Box display="flex" width="100svw" height="100svh" alignItems="center" padding="3" backgroundColor={mainBackgroundColor} ref={introRef}>
       {/* Joyride */}
       <Joyride
         ref={joyrideRef}
@@ -663,23 +667,25 @@ export function HomePage() {
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
+        borderRadius="20"
         width="350px"
         minWidth="350px"
         transition="width 0.5s"
-        height="100svh"
+        height="100%"
         display="flex"
         flexDirection="column"
-        borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {servers.length > 0 ? (
-          <Box ref={serverNameRef}>
+          <Box ref={serverNameRef} padding="2">
             <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
                 px="4"
                 py="2"
                 width="100%"
-                borderBottom={`solid ${dividerColor} 1px`}
+                borderRadius={buttonRadius}
+                // borderBottom={`solid ${dividerColor} 1px`}
                 whiteSpace="nowrap"
                 overflow="hidden"
                 textOverflow="ellipsis"
@@ -716,7 +722,7 @@ export function HomePage() {
           <Box
             px="4"
             py="2"
-            borderBottom={`solid ${dividerColor} 1px`}
+            // borderBottom={`solid ${dividerColor} 1px`}
             whiteSpace="nowrap"
             overflow="hidden"
             textOverflow="ellipsis"
@@ -728,6 +734,60 @@ export function HomePage() {
           </Box>
         )}
 
+        <Box pt="2" px="2">
+          <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for multiple boards'}>
+            <Box
+              h="40px"
+              display="flex"
+              justifyContent={'left'}
+              alignItems={'center'}
+              transition="all 0.5s"
+              borderRadius={buttonRadius}
+              _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+              pl="2"
+              onClick={handleCreateRoomClick}
+              ref={createRoomRef}
+            >
+              <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+            </Box>
+          </Tooltip>
+
+          <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+            <Box
+              h="40px"
+              display="flex"
+              justifyContent={'left'}
+              alignItems={'center'}
+              transition="all 0.5s"
+              borderRadius={buttonRadius}
+              _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+              pl="2"
+              onClick={handleRoomSearchClick}
+              ref={searchRoomsRef}
+            >
+              <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
+            </Box>
+          </Tooltip>
+
+          <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+            <Box
+              h="40px"
+              display="flex"
+              justifyContent={'left'}
+              alignItems={'center'}
+              transition="all 0.5s"
+              _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+              pl="2"
+              borderRadius={buttonRadius}
+              onClick={enterBoardByURLModalOnOpen}
+              ref={enterBoardByURLRef}
+            >
+              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
+            </Box>
+          </Tooltip>
+          <Box borderTop={`solid ${dividerColor} 1px`} mt="2" />
+        </Box>
+
         <Box
           display="flex"
           flexDirection="column"
@@ -735,6 +795,7 @@ export function HomePage() {
           flex="1"
           overflowY="scroll"
           overflowX="hidden"
+          padding="2"
           css={{
             '&::-webkit-scrollbar': {
               background: 'transparent',
@@ -747,59 +808,14 @@ export function HomePage() {
           }}
         >
           <VStack spacing={0} align="stretch">
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for multiple boards'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
-                onClick={handleCreateRoomClick}
-                ref={createRoomRef}
-              >
-                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
-              </Box>
-            </Tooltip>
-
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
-                onClick={handleRoomSearchClick}
-                ref={searchRoomsRef}
-              >
-                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
-              </Box>
-            </Tooltip>
-
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
-                onClick={enterBoardByURLModalOnOpen}
-                ref={enterBoardByURLRef}
-              >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
-              </Box>
-            </Tooltip>
-
-            <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
-
             <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
               <AccordionItem border="none" ref={roomsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
+                <AccordionButton
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                  transition={'all 0.5s'}
+                  pl="2"
+                >
                   <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
@@ -823,6 +839,7 @@ export function HomePage() {
                             label={`Description ${room.data.description}`}
                           >
                             <Box
+                              borderRadius="6"
                               key={room._id}
                               display="flex"
                               alignItems="center"
@@ -851,11 +868,11 @@ export function HomePage() {
                 </AccordionPanel>
               </AccordionItem>
 
-              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+              <Box borderTop={`solid 1px ${dividerColor}`} my={2}></Box>
               {/* <Divider/> */}
 
               <AccordionItem border="none" ref={activeBoardsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                <AccordionButton borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
                   <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
@@ -890,7 +907,7 @@ export function HomePage() {
               </AccordionItem>
 
               <AccordionItem border="none" ref={starredBoardsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                <AccordionButton borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
                   <Tooltip openDelay={400} hasArrow placement="top" label={'Your favorite rooms'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
@@ -921,7 +938,7 @@ export function HomePage() {
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem border="none" ref={recentBoardsRef}>
-                <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
+                <AccordionButton pl="2" borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
                   <Tooltip openDelay={400} hasArrow placement="top" label={'Your recently visited rooms (limit to 10)'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
@@ -957,6 +974,7 @@ export function HomePage() {
                         alignItems="center"
                         justifyContent="left"
                         transition="all 0.5s"
+                        borderRadius="6"
                         pl="48px"
                         height="28px"
                         color="red.400"
@@ -979,14 +997,16 @@ export function HomePage() {
           <MainButton config={config}></MainButton>
         </Box>
       </Box>
-      {selectedRoom && (
+      {selectedRoom ? (
         <Box
           display="flex"
           flex="1"
           flexDirection="column"
-          backgroundColor={mainBackgroundColor}
+          backgroundColor={sidebarBackgroundColor}
           maxHeight="100svh"
-          height="100svh"
+          height="100%"
+          borderRadius="20"
+          marginLeft="3"
           // overflow="hidden"
           pt={4}
           pr={4}
@@ -1226,8 +1246,110 @@ export function HomePage() {
             </Tabs>
           </Box>
         </Box>
+      ) : (
+        <Box
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          backgroundColor={sidebarBackgroundColor}
+          maxHeight="100svh"
+          height="100%"
+          borderRadius="20"
+          marginLeft="3"
+          width="100%"
+          overflow="hidden"
+          p="6"
+          
+        >
+          <Text>Welcome to SAGE3</Text>
+          <Box borderRadius="20">
+            <Text>Recent Boards</Text>
+            <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
+              {recentBoards ? (
+                <HStack
+                  gap="3"
+                  width="100%"
+                  overflow="auto"
+                  height="fit-content"
+                  py="5"
+                  px="2"
+                  css={{
+                    '&::-webkit-scrollbar': {
+                      background: 'transparent',
+                      height: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: scrollBarColor,
+                      borderRadius: '48px',
+                    },
+                  }}
+                >
+                  {boards
+                    .filter(recentBoardsFilter)
+                    .sort((boardA, boardB) => {
+                      // Sort by most recent
+                      const indexOfA = recentBoards.indexOf(boardA._id);
+                      const indexOfB = recentBoards.indexOf(boardB._id);
+                      return indexOfA - indexOfB;
+                    })
+                    .map((board) => (
+                      <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                        <BoardCard
+                          board={board}
+                          onClick={() => handleBoardClick(board)}
+                          // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                          selected={selectedBoard ? selectedBoard._id === board._id : false}
+                          usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                        />
+                      </Box>
+                    ))}
+                </HStack>
+              ) : (
+                <Text>No recent boards</Text>
+              )}
+            </Box>
+          </Box>
+          <Box>
+            <Text>Starred Boards</Text>
+            <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
+              <HStack
+                gap="3"
+                width="100%"
+                overflow="auto"
+                height="fit-content"
+                py="5"
+                px="2"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    background: 'transparent',
+                    height: '10px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: scrollBarColor,
+                    borderRadius: '48px',
+                  },
+                }}
+              >
+                {boards
+                  .filter(boardStarredFilter)
+                  .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                  .map((board) => (
+                    <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                      <BoardCard
+                        board={board}
+                        onClick={() => handleBoardClick(board)}
+                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                        selected={selectedBoard ? selectedBoard._id === board._id : false}
+                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                      />
+                    </Box>
+                  ))}
+              </HStack>
+            </Box>
+          </Box>
+        </Box>
       )}
-      <Image
+      {/* <Image
         position="absolute"
         right="2"
         bottom="2"
@@ -1238,11 +1360,11 @@ export function HomePage() {
         userSelect={'auto'}
         draggable={false}
         display={isLargerThan800 ? 'flex' : 'none'}
-      />
+      /> */}
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
+      {/* <Box position="absolute" right="1" top="1" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
         <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
-      </Box>
+      </Box> */}
     </Box>
   );
 }

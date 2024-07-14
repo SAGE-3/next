@@ -44,11 +44,12 @@ export function BoardSidebarRow(props: { board: Board; isSelected: boolean; onCl
     >
       <Box
         key={props.board._id}
+        borderRadius="6"
         display="flex"
         alignItems="center"
         justifyContent="space-between"
         transition="all 0.5s"
-        pl="48px"
+        pl="12"
         height="28px"
         backgroundColor={props.isSelected ? hightlightGrayColor : ''}
         onClick={() => props.onClick()}
@@ -60,7 +61,7 @@ export function BoardSidebarRow(props: { board: Board; isSelected: boolean; onCl
             {props.board.data.name}
           </Text>
         </Box>
-        <Box pr="5" display="flex" alignItems="center">
+        <Box pr="4" display="flex" alignItems="center">
           {props.board.data.isPrivate ? <MdLock color={userCountColor}></MdLock> : undefined}
           <Text fontSize="sm" pl="2" color={userCountColor}>
             {userCount}

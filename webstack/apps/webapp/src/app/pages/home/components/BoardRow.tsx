@@ -23,6 +23,8 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
+  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColor = useHexColor(baseBorderColorValue);
   const boardColor = props.board.data.color;
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
@@ -105,7 +107,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
         boxSizing="border-box"
         width="500px"
         height="56px"
-        border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
+        border={`solid 2px ${props.selected ? borderColor : baseBorderColor}`}
         transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
         _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         transition={'all 0.2s ease-in-out'}

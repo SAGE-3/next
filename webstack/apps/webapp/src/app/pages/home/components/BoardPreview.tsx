@@ -72,10 +72,10 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       width={`${props.width}px`}
       height={`${props.height}px`}
       backgroundSize="contain"
-      borderRadius="md"
+      borderRadius="xl"
       background={linearBGColor}
       p="2"
-      // border={`2px solid ${!props.isSelected ? 'lightgray' : boardColor}`}
+      // border={`1px solid ${!props.isSelected ? 'lightgray' : boardColor}`}
       display="flex"
       alignItems="center"
       justifyContent="center"

@@ -202,6 +202,7 @@ export function MainButton(props: MainButtonProps) {
             height="40px"
             alignItems={'center'}
             justifyContent={'left'}
+            borderRadius="10"
             width="100%"
             transition={'all 0.5s'}
             _hover={{ cursor: 'pointer' }}
@@ -219,7 +220,7 @@ export function MainButton(props: MainButtonProps) {
             </Box>
           </MenuButton>
         )}
-        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}>
+        <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'} borderRadius="10">
           <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
             Account
           </MenuItem>

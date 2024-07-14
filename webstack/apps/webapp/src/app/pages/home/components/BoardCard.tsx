@@ -23,6 +23,8 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
+  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColor = useHexColor(baseBorderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
 
@@ -103,13 +105,13 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
         justifyContent={'space-between'}
         alignItems={'center'}
         onClick={handleEnterBoard}
-        borderRadius="md"
+        borderRadius="xl"
         boxSizing="border-box"
         width="400px"
         height="300px"
         transition={'all 0.2s ease-in-out'}
         cursor="pointer"
-        border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
+        border={`solid 2px ${props.selected ? borderColor : baseBorderColor}`}
         transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
         _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
       >
