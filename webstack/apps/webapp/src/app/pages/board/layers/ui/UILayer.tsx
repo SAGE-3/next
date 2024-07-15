@@ -248,7 +248,7 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
+      <Box position="fixed" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
         <Box display="flex" gap="2">
           <MainButton
             buttonStyle="solid"
@@ -268,12 +268,12 @@ export function UILayer(props: UILayerProps) {
         <Titlebar>
           {/* ServerName Top Left */}
           <Box width="100%" height="100%" bg={bgColor} py="2" zIndex="99999">
-            <Box position="absolute" left="20" top="1" display={showUI ? 'initial' : 'none'}>
+            <Box position="fixed" left="20" top="1" display={showUI ? 'initial' : 'none'}>
               <BoardTitle room={room} board={board} config={config} />
             </Box>
 
             {/* The clock Top Right */}
-            <Box position="absolute" right="1" top="1">
+            <Box position="fixed" right="1" top="1">
               <Clock isBoard={true} />
             </Box>
           </Box>
@@ -318,7 +318,6 @@ export function UILayer(props: UILayerProps) {
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}

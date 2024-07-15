@@ -10,7 +10,7 @@ const Titlebar = ({ children }: TitlebarProps) => {
   return (
     <>
       {isMac() && (
-        <Box position="absolute" top="0" left="0" sx={{ '-webkit-app-region': 'drag' }} width="100vw" height="35px" zIndex="99999">
+        <Box position="fixed" top="0" left="0" sx={{ '-webkit-app-region': 'drag' }} width="100vw" height="35px" zIndex="99999">
           {children}
         </Box>
       )}

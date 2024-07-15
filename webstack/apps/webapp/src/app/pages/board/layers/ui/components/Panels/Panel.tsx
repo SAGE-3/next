@@ -273,7 +273,7 @@ export function Panel(props: PanelProps) {
       <Rnd
         dragHandleClassName="dragHandle" // only allow dragging the header
         position={{ ...panel.position }}
-        bounds="window"
+        bounds="parent"
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
