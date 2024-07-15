@@ -307,7 +307,7 @@ function AppComponent(props: App): JSX.Element {
           setAppCounterID((prev: number) => prev + tmpChartOptions.length);
           setInteractionContext({
             ...interactionContext,
-            lastChartsGenerated: [...interactionContext.lastChartsGenerated, ...chartTitles],
+            lastChartsGenerated: [...interactionContext.lastChartsGenerated, ...chartTitles].slice(-5), // Keep only the last 5 chart titles
           });
           setChartOptions((prev: EChartsCoreOption[]) => [...prev, ...tmpChartOptions]);
           setMostRecentChartIDs(tmpMostRecentChartIDs);
@@ -459,14 +459,20 @@ function AppComponent(props: App): JSX.Element {
         { action: 'add', chartId: EChartOption.id, appId: app.data._id, time: getCurrentTime() },
       ],
     });
-    setInteractionContext({ ...interactionContext, lastChartsSelected: [(EChartOption as any).title.text] });
+    setInteractionContext({
+      ...interactionContext,
+      lastChartsSelected: [...interactionContext.lastChartsSelected, (EChartOption as any).title.text].slice(-5), // Keep only the last 5 chart titles
+    });
   };
 
   useEffect(() => {
     for (let i = 0; i < apps.length; i++) {
-      if (selectedAppId == apps[i]._id) {
-        if (apps[i].data.type == 'EChartsViewer') {
-          setInteractionContext({ ...interactionContext, lastChartsInteracted: [apps[i].data.state.options.title.text] });
+      if (selectedAppId === apps[i]._id) {
+        if (apps[i].data.type === 'EChartsViewer') {
+          setInteractionContext((prevContext) => ({
+            ...prevContext,
+            lastChartsInteracted: [...prevContext.lastChartsInteracted, apps[i].data.state.options.title.text].slice(-5), // Keep only the last 5 chart titles
+          }));
         }
         break;
       }
