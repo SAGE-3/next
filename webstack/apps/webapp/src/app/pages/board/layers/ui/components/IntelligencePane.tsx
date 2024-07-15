@@ -5,12 +5,21 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-
+import { useState } from 'react';
 import {
   Box, useColorModeValue, Tooltip, IconButton, useDisclosure,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
-  Badge, Tab, TabList, TabPanel, TabPanels, Tabs,
+  Badge, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Spacer,
+  VStack,
+  Slider,
+  SliderFilledTrack,
+  SliderMark,
+  SliderThumb,
+  SliderTrack,
+  HStack,
+  Flex,
 } from '@chakra-ui/react';
+import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
 
 
@@ -36,6 +45,9 @@ export function IntelligencePane(props: SIProps) {
 
   // Intelligence modal
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const [sliderValue1, setSliderValue1] = useState(4);
+  const [sliderValue2, setSliderValue2] = useState(3);
 
   return (
     <Box
@@ -76,14 +88,79 @@ export function IntelligencePane(props: SIProps) {
                   <AIChat />
                 </TabPanel>
                 <TabPanel>
-                  <p>one!</p>
-                  <p>one!</p>
-                  <p>one!</p>
-                  <p>one!</p>
+                  <p>No notifcations</p>
                 </TabPanel>
+
                 <TabPanel>
-                  <p>Settings</p>
+                  <VStack>
+                    <VStack p={1} pt={1} w="100%" align={"left"}>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise</Text>
+                      <Flex>
+                        <Text fontSize="md">Novice</Text>
+                        <Spacer />
+                        <Text fontSize="md" >Authority</Text>
+                      </Flex>
+                      <Slider aria-label='slider1' min={1} max={5} step={1} defaultValue={sliderValue1}
+                        onChange={(val) => setSliderValue1(val)}>
+
+                        <SliderMark value={1} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={2} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={3} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={4} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={5} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb />
+                      </Slider>
+                    </VStack>
+
+                    <VStack p={1} pt={6} w="100%" align={"left"}>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity</Text>
+                      <Flex>
+                        <Text fontSize="md">Snapshot</Text>
+                        <Spacer />
+                        <Text fontSize="md" >Comprehensive</Text>
+                      </Flex>
+                      <Slider aria-label='slider2' min={1} max={5} step={1} defaultValue={sliderValue2}
+                        onChange={(val) => setSliderValue2(val)}>
+
+                        <SliderMark value={1} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={2} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={3} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={4} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+                        <SliderMark value={5} mt='2' ml='-2' fontSize='sm'>
+                          <MdKeyboardArrowUp />
+                        </SliderMark>
+
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb />
+                      </Slider>
+                    </VStack>
+                  </VStack>
+
                 </TabPanel>
+
               </TabPanels>
             </Tabs>
           </DrawerBody>
