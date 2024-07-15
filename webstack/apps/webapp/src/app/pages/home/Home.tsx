@@ -1322,7 +1322,7 @@ export function HomePage() {
               <Text fontWeight="bold" mb="3">
                 Recent Boards
               </Text>
-              <Box background={homeSectionColor} borderRadius="20" px="3" overflow="hidden" minH="300px">
+              <Box background={homeSectionColor} borderRadius="20" px="3" overflow="hidden">
                 {recentBoards.length > 0 ? (
                   <HStack
                     gap="3"
@@ -1372,39 +1372,43 @@ export function HomePage() {
                 Starred Boards
               </Text>
               <Box background={homeSectionColor} borderRadius="20" px="3" overflow="hidden">
-                <HStack
-                  gap="3"
-                  width="100%"
-                  overflow="auto"
-                  height="fit-content"
-                  py="5"
-                  px="2"
-                  css={{
-                    '&::-webkit-scrollbar': {
-                      background: 'transparent',
-                      height: '10px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                      background: scrollBarColor,
-                      borderRadius: '48px',
-                    },
-                  }}
-                >
-                  {boards
-                    .filter(boardStarredFilter)
-                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                    .map((board) => (
-                      <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                        <BoardCard
-                          board={board}
-                          onClick={() => handleBoardClick(board)}
-                          // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                          selected={selectedBoard ? selectedBoard._id === board._id : false}
-                          usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                        />
-                      </Box>
-                    ))}
-                </HStack>
+                {savedBoards.length > 0 ? (
+                  <HStack
+                    gap="3"
+                    width="100%"
+                    overflow="auto"
+                    height="fit-content"
+                    py="5"
+                    px="2"
+                    css={{
+                      '&::-webkit-scrollbar': {
+                        background: 'transparent',
+                        height: '10px',
+                      },
+                      '&::-webkit-scrollbar-thumb': {
+                        background: scrollBarColor,
+                        borderRadius: '48px',
+                      },
+                    }}
+                  >
+                    {boards
+                      .filter(boardStarredFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((board) => (
+                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                          <BoardCard
+                            board={board}
+                            onClick={() => handleBoardClick(board)}
+                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                            selected={selectedBoard ? selectedBoard._id === board._id : false}
+                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                          />
+                        </Box>
+                      ))}
+                  </HStack>
+                ) : (
+                  <Text p="3">No starred boards.</Text>
+                )}
               </Box>
             </Box>
           </Box>
