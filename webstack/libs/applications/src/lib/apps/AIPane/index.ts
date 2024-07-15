@@ -14,15 +14,10 @@ export const schema = z.object({
   // Tasks supported by available models for currently hosted apps
   supportedTasks: z.record(z.string(), z.record(z.string(), z.any())),
   messages: z.record(z.string(), z.any()),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  executeInfo: { executeFunc: '', params: {} },
   hostedApps: {},
   runStatus: 0,
   supportedTasks: {},

@@ -1,6 +1,5 @@
 // SAGE3 Generated from apps.json file
 
-import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
@@ -20,13 +19,10 @@ import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
 import { name as NotepadName } from './apps/Notepad';
-import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
-import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
-import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TLDrawName } from './apps/TLDraw';
@@ -38,7 +34,6 @@ import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
 
-import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
@@ -58,13 +53,10 @@ import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
 import Notepad from './apps/Notepad/Notepad';
-import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
-import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
-import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import TLDraw from './apps/TLDraw/TLDraw';
@@ -79,7 +71,6 @@ import { App, AppGroup } from './schema';
 
 
 export const Applications = {
-  [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent, GroupedToolbarComponent: AIPane.GroupedToolbarComponent },
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent, GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent },
@@ -99,13 +90,10 @@ export const Applications = {
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent, GroupedToolbarComponent: Linker.GroupedToolbarComponent },
   [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent, GroupedToolbarComponent: MapGL.GroupedToolbarComponent },
   [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent, GroupedToolbarComponent: Notepad.GroupedToolbarComponent },
-  [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent, GroupedToolbarComponent: PDFResult.GroupedToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent, GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent },
   [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
   [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
-  [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent, GroupedToolbarComponent: RTCChat.GroupedToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent, GroupedToolbarComponent: SageCell.GroupedToolbarComponent },
-  [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent, GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent, GroupedToolbarComponent: Stickie.GroupedToolbarComponent },
   [TLDrawName]: { AppComponent: React.memo(TLDraw.AppComponent), ToolbarComponent: TLDraw.ToolbarComponent, GroupedToolbarComponent: TLDraw.GroupedToolbarComponent },

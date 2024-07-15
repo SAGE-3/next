@@ -27,15 +27,10 @@ export const schema = z.object({
   assetid: z.string(),
   annotations: z.boolean(),
   boxes: bboxType,
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  executeInfo: { executeFunc: '', params: {} },
   assetid: '',
   annotations: false,
   boxes: [],

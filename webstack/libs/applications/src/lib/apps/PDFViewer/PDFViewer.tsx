@@ -44,13 +44,8 @@ function AppComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspectRatio] = useState(1);
   const [displayRatio, setDisplayRatio] = useState(1);
-  // App functions
-  const createApp = useAppStore((state) => state.create);
   // User information
   const { user } = useUser();
-  const { boardId, roomId } = useParams();
-  // Set the processing UI state
-  const [processing, setProcessing] = useState(false);
   // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
@@ -125,40 +120,6 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   }, [s.currentPage]);
-
-  // Display the processing UI
-  useEffect(() => {
-    // Only show the processing UI if the user is the one who clicked the button
-    if (s.executeInfo.executeFunc && s.client === user?._id) setProcessing(true);
-    else setProcessing(false);
-  }, [s.executeInfo.executeFunc, s.client]);
-
-  // Return from the remote python function
-  useEffect(() => {
-    if (!user) return;
-    if (s.analyzed && s.client === user._id) {
-      // Clear the client id after a response
-      updateState(props._id, { client: '' });
-      // Parse the result we got back
-      const result = JSON.parse(s.analyzed);
-      // Create a new stickie to show resuls (temporary, should be a new app for this purpose)
-      createApp({
-        title: 'Analysis - ' + file?.data.originalfilename,
-        roomId: roomId!,
-        boardId: boardId!,
-        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-        size: { width: 700, height: props.data.size.height, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'PDFResult',
-        state: {
-          result: JSON.stringify(result, null, 4),
-        },
-        raised: true,
-        dragging: false,
-        pinned: false,
-      });
-    }
-  }, [s.analyzed]);
 
   // Event handler
   const handleUserKeyPress = useCallback(
@@ -260,7 +221,7 @@ function AppComponent(props: App): JSX.Element {
   }, [divRef, handleUserKeyPress]);
 
   return (
-    <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={BsFiletypePdf}>
+    <AppWindow app={props} lockAspectRatio={displayRatio} hideBackgroundIcon={BsFiletypePdf}>
       <HStack
         roundedBottom="md"
         bg="whiteAlpha.700"
@@ -295,8 +256,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspectRatio] = useState(1);
-  // User information
-  const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -367,16 +326,6 @@ function ToolbarComponent(props: App): JSX.Element {
           height: props.data.size.height,
           depth: props.data.size.depth,
         },
-      });
-    }
-  }
-
-  // Analyze the PDF
-  function analyzePDF() {
-    if (file && user) {
-      updateState(props._id, {
-        client: user._id,
-        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
       });
     }
   }
@@ -471,22 +420,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
-
-      {/* Remote Action in Python */}
-      {/* <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
-        <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
-              <MdMenu />
-            </MenuButton>
-          </Tooltip>
-          <MenuList minWidth="150px" fontSize={'sm'}>
-            <MenuItem icon={<MdTipsAndUpdates />} onClick={analyzePDF}>
-              Analyze
-            </MenuItem>
-          </MenuList>
-        </Menu>
-      </ButtonGroup> */}
     </>
   );
 }

@@ -104,7 +104,6 @@ async def main():
                     "currentPage": 0,
                     "numPages": -1,
                     "displayPages": 1,
-                    "executeInfo": {"executeFunc": "", "params": {}},
                 }
                 app = await createApp(
                     {

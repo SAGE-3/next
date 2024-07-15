@@ -12,11 +12,6 @@
  */
 import { z } from 'zod';
 
-const executeInfoSchema = z.object({
-  executeFunc: z.string(),
-  params: z.any(),
-});
-
 export const schema = z.object({
   code: z.string(),
   msgId: z.string(),
@@ -26,10 +21,8 @@ export const schema = z.object({
   fontSize: z.number(),
   kernel: z.string(),
   session: z.string(),
-  executeInfo: executeInfoSchema,
 });
 
-export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
@@ -41,7 +34,6 @@ export const init: Partial<state> = {
   fontSize: 16,
   kernel: '',
   session: '',
-  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
 export const name = 'SageCell';

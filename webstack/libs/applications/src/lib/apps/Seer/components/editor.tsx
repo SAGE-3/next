@@ -404,7 +404,6 @@ export function CodeEditor(props: CodeEditorProps): JSX.Element {
     updateState(props.app._id, {
       code: '',
       msgId: '',
-      executeInfo: { executeFunc: '', params: {} },
     });
     editorRef.current?.setValue('');
   };

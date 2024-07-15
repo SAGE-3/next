@@ -16,7 +16,6 @@ import {
   SliderMark,
   SliderThumb,
   SliderTrack,
-  HStack,
   Flex,
 } from '@chakra-ui/react';
 import { MdKeyboardArrowUp } from 'react-icons/md';

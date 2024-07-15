@@ -13,11 +13,8 @@ export const schema = z.object({
   fontSize: z.number(),
   color: z.string(),
   lock: z.boolean(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
 });
+
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
@@ -25,7 +22,6 @@ export const init: state = {
   fontSize: 36,
   color: 'yellow',
   lock: false,
-  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'Stickie';

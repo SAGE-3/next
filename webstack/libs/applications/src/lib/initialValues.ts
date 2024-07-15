@@ -1,6 +1,5 @@
 // SAGE3 Generated from apps.json file
 
-import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
@@ -20,13 +19,10 @@ import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
-import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
 import { name as PollName, init as defaultPoll } from './apps/Poll';
-import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
-import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
@@ -38,7 +34,6 @@ import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/Webp
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
-  [AIPaneName]: defaultAIPane,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
   [ChartGeneratorName]: defaultChartGenerator,
@@ -58,13 +53,10 @@ export const initialValues = {
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,
   [NotepadName]: defaultNotepad,
-  [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
   [PluginAppName]: defaultPluginApp,
   [PollName]: defaultPoll,
-  [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
-  [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TLDrawName]: defaultTLDraw,

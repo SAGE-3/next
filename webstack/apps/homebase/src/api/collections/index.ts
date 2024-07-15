@@ -80,7 +80,6 @@ export async function loadCollections(): Promise<void> {
               code: generateReadableID(),
               isPrivate: false,
               privatePin: '',
-              executeInfo: { executeFunc: '', params: {} },
             },
             '-'
           );
