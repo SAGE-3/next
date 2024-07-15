@@ -131,7 +131,7 @@ export function Clock(props: ClockProps) {
     <Box
       sx={{ '-webkit-app-region': 'no-drag' }}
       borderRadius="md"
-      backgroundColor={backgroundColor}
+      backgroundColor={'transparent'}
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"

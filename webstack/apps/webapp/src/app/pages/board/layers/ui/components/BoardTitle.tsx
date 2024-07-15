@@ -30,7 +30,7 @@ export function BoardTitle(props: BoardTitleProps) {
   return (
     <Box
       borderRadius="md"
-      backgroundColor={backgroundColor}
+      // backgroundColor={backgroundColor}
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"

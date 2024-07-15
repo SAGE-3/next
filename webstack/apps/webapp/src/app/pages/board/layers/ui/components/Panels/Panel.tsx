@@ -68,7 +68,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
 
   return (
     <Box>

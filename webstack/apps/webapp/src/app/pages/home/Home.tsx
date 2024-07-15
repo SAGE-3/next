@@ -156,9 +156,9 @@ export function HomePage() {
   const teal = useHexColor(tealValue);
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
-  const sidebarBackgroundValue = useColorModeValue('gray.100', '#303030');
+  const sidebarBackgroundValue = useColorModeValue('gray.50', '#303030');
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
-  const mainBackgroundValue = useColorModeValue('gray.50', '#222222');
+  const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
   const dividerValue = useColorModeValue('gray.300', '#666666');
   const dividerColor = useHexColor(dividerValue);
@@ -166,7 +166,7 @@ export function HomePage() {
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
-  const homeSectionValue = useColorModeValue('gray.200', '#393939');
+  const homeSectionValue = useColorModeValue('gray.100', '#393939');
   const homeSectionColor = useHexColor(homeSectionValue);
   // const { toggleColorMode, colorMode } = useColorMode();
 
@@ -1424,7 +1424,7 @@ export function HomePage() {
       /> */}
       {/* The clock Top Right */}
       <Titlebar>
-        <Box ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'} w="fit-content" right="0" position="absolute">
+        <Box ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'} w="fit-content" right="0" position="absolute" m="2">
           <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
         </Box>
       </Titlebar>
