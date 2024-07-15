@@ -8,9 +8,18 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
 import { MdHelpOutline, MdNetworkCheck, MdRemoveRedEye, MdSearch } from 'react-icons/md';
-import { PiGaugeBold } from "react-icons/pi";
+import { PiGaugeBold } from 'react-icons/pi';
 
-import { HelpModal, useHexColor, useNetworkState, Alfred, EditVisibilityModal, useUserSettings, usePressureObserver, PressureState } from '@sage3/frontend';
+import {
+  HelpModal,
+  useHexColor,
+  useNetworkState,
+  Alfred,
+  EditVisibilityModal,
+  useUserSettings,
+  usePressureObserver,
+  PressureState,
+} from '@sage3/frontend';
 import { useParams } from 'react-router';
 
 type ClockProps = {
@@ -120,6 +129,7 @@ export function Clock(props: ClockProps) {
 
   return (
     <Box
+      sx={{ '-webkit-app-region': 'no-drag' }}
       borderRadius="md"
       backgroundColor={backgroundColor}
       whiteSpace={'nowrap'}

@@ -84,7 +84,7 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
-import { getTime } from 'date-fns';
+import Titlebar from '../../components/Titlebar';
 
 /**
  * Home page for SAGE3
@@ -166,6 +166,8 @@ export function HomePage() {
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
+  const homeSectionValue = useColorModeValue('gray.200', '#393939');
+  const homeSectionColor = useHexColor(homeSectionValue);
   // const { toggleColorMode, colorMode } = useColorMode();
 
   // Styling
@@ -609,7 +611,7 @@ export function HomePage() {
       height="100svh"
       alignItems="center"
       px="3"
-      pt={navigator.userAgent.toLowerCase().includes('macintosh') ? '8' : 3} // if mac add padding
+      pt={navigator.userAgent.toLowerCase().includes('macintosh') ? '10' : 3} // if mac add padding
       pb="3"
       backgroundColor={mainBackgroundColor}
       ref={introRef}
@@ -1320,7 +1322,7 @@ export function HomePage() {
               <Text fontWeight="bold" mb="3">
                 Recent Boards
               </Text>
-              <Box background="gray.800" borderRadius="20" px="3" overflow="hidden" minH="300px">
+              <Box background={homeSectionColor} borderRadius="20" px="3" overflow="hidden" minH="300px">
                 {recentBoards.length > 0 ? (
                   <HStack
                     gap="3"
@@ -1369,7 +1371,7 @@ export function HomePage() {
               <Text my="3" fontWeight="bold">
                 Starred Boards
               </Text>
-              <Box background="gray.800" borderRadius="20" px="3" overflow="hidden">
+              <Box background={homeSectionColor} borderRadius="20" px="3" overflow="hidden">
                 <HStack
                   gap="3"
                   width="100%"
@@ -1421,9 +1423,11 @@ export function HomePage() {
         display={isLargerThan800 ? 'flex' : 'none'}
       /> */}
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" zIndex="1000" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
-        <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
-      </Box>
+      <Titlebar>
+        <Box ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'} w="fit-content" right="0" position="absolute">
+          <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
+        </Box>
+      </Titlebar>
     </Box>
   );
 }
