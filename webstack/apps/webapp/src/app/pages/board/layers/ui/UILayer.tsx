@@ -31,6 +31,7 @@ import {
   Alfred,
   HotkeysEvent,
   useUserSettings,
+  isElectron,
 } from '@sage3/frontend';
 
 import {
@@ -263,8 +264,9 @@ export function UILayer(props: UILayerProps) {
           />
         </Box>
       </Box>
-
-      {isMac() ? (
+      
+      {/* If it's electron and mac then use custom titlebar */}
+      {isMac() && isElectron() ? (
         <Titlebar>
           {/* ServerName Top Left */}
           <Box width="100%" height="100%" bg={bgColor} py="2" zIndex="99999">

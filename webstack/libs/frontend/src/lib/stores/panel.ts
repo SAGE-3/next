@@ -1,3 +1,4 @@
+import { isMac } from './../../../../shared/src/lib/utils/platform-checker';
 /**
  * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -84,7 +85,7 @@ export const usePanelStore = create<UIState>()((set, get) => ({
       show: false,
     },
     {
-      position: { x: 5, y: 38 },
+      position: { x: 5, y: isMac() ? 38 : 35 },
       name: 'controller',
       stuck: StuckTypes.Left,
       minimized: false,
