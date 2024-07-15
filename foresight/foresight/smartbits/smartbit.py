@@ -156,9 +156,6 @@ class TrackedBaseModel(BaseModel):
     def action_sends_update(_func):
         def wrapper(self, *args, **kwargs):
             _func(self, *args, **kwargs)
-            # clearing the func and the and params
-            self.state.executeInfo.executeFunc = ""
-            self.state.executeInfo.params = {}
 
         return wrapper
 
@@ -239,15 +236,3 @@ class SmartBit(TrackedBaseModel):
     def clean_up(self):
         """cleans up any threads that are unused"""
         pass
-
-
-class ExecuteInfo(TrackedBaseModel):
-    # executeFunc is not recognized duirng manual update in refresh_data_form_update
-    # so we end up updating executeFunc instead
-    # execute_func: str = Field(alias='executeFunc')
-    executeFunc: str
-    params: dict
-
-
-# class Boxe(TrackedBaseModel):
-#

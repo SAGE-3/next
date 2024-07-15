@@ -6,7 +6,7 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
@@ -15,7 +15,6 @@ class StickieState(TrackedBaseModel):
     fontSize: int
     color: str
     lock: bool
-    executeInfo: ExecuteInfo
 
 
 class Stickie(SmartBit):
