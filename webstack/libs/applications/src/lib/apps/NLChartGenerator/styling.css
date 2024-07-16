@@ -25,6 +25,7 @@
   max-width: 1600px; /* Set maximum width */
   width: 600px; /* Ensure width can adjust */
   z-index: 100;
+  font-size: 25px;
   display: none; /* Initially hide */
   opacity: 0; /* Initially invisible */
   text-overflow: ellipsis; /* Display ellipsis for overflow */
@@ -54,6 +55,7 @@
   padding: 10px;
   border-radius: 10px;
   max-width: 1600px; /* Set maximum width */
+  font-size: 25px;
   width: 600px; /* Ensure width can adjust */
   z-index: 100;
   display: none; /* Initially hide */

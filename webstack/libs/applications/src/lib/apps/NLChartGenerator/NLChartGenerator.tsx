@@ -21,6 +21,7 @@ import {
   IconButton,
   Center,
   VStack,
+  HStack,
 } from '@chakra-ui/react';
 import vegaEmbed from 'vega-embed';
 import { ArticulateAPI, ConfirmModal, useThrottleApps, useUIStore } from '@sage3/frontend';
@@ -50,7 +51,7 @@ import './styling.css';
 import MapGL from './MapGL';
 import { MdClose } from 'react-icons/md';
 
-const fileName = 'STUDY2';
+const fileName = 'test';
 
 function convertObjectToArray(dataObject: any) {
   const keys = Object.keys(dataObject);
@@ -197,14 +198,11 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [finalText]);
 
-  useEffect(() => {
-    const writeLog = async () => {
-      await ArticulateAPI.sendLog(log, fileName);
-    };
-    if (log.chartsThatWereGenerated.length !== 0) {
-      writeLog();
-    }
-  }, [log]);
+  const writeLog = async () => {
+    await ArticulateAPI.sendLog(log, fileName);
+    //alert
+    alert('Log saved!');
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -597,7 +595,11 @@ function AppComponent(props: App): JSX.Element {
                             {isControlOn ? 'C' : 'E'}
                           </Button>
                         </Box>
-                        <Button onClick={isRecording ? stopRecording : startRecording}>{isRecording ? 'Sleep' : 'Wake Up'}</Button>
+                        <HStack>
+                          <Button onClick={isRecording ? stopRecording : startRecording}>{isRecording ? 'Sleep' : 'Wake Up'}</Button>
+                          <Button onClick={writeLog}>Save</Button>
+                        </HStack>
+
                         <Box position="relative">
                           <div id="speechBubble" className="speech-bubble">
                             <p>Hello! This is a speech bubble.</p>
