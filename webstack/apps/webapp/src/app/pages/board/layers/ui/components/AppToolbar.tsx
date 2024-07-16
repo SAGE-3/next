@@ -34,8 +34,9 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  keyframes,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -355,62 +356,100 @@ export function AppToolbar(props: AppToolbarProps) {
   };
 
   function getAppTags() {
-    const { isOpen, onOpen, onClose } = useDisclosure(); // for managing input visibility
-
+    const { isOpen: isInputOpen, onOpen: onInputOpen, onClose: onInputClose } = useDisclosure(); // manage input visibility
+    const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); // manage menu visibility
+  
     // Find current app's insight
     const appInsight = insights.find((el) => el._id === app?._id);
-    const tags = appInsight ? appInsight.data.labels : []; // get current tags if exists, otherwise empty array
+    const tags = appInsight ? appInsight.data.labels : [];
+  
+    const [inputValue, setInputValue] = useState('');
+    const [newTagAdded, setNewTagAdded] = useState(false); // manage flash animation
+    const [overflowTags, setOverflowTags] = useState<string[]>([]);
+    const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
 
-    const [inputValue, setInputValue] = useState(''); // input val of new tag
-    const [showMore, setShowMore] = useState(false); // manage visibility of "..." tag
-    const tagContainerRef = useRef<HTMLDivElement>(null); // ref to tag container
-
+    // Define keyframe animation for flashing "..." button
+    const flash = keyframes`
+      0% { background-color: transparent; }
+      50% { background-color: teal; }
+      100% { background-color: transparent; }
+    `;
+  
     // Show input field for adding a new tag
     const handleAddTag = () => {
-      onOpen();
+      onInputOpen();
     };
-
+  
     // Update input value state when input changes
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(event.target.value);
     };
-
+  
     // Handle enter key press in input field
     const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter' && inputValue.trim() !== '') { // prevent empty tags
-        const newTags = [...tags, inputValue]; // add the new tag to the list of tags
+        const newTags = [...tags, inputValue];
         if (app) {
-          updateInsight(app._id, { labels: newTags }); // update insight with the new list of tags
+          updateInsight(app._id, { labels: newTags });
         }
         setInputValue('');
+
+        // Flash the "..." button when a new tag is added
+        setNewTagAdded(true);
+        setTimeout(() => setNewTagAdded(false), 500);
       }
     };
-
+  
     // Remove input box when it loses focus
     const handleInputBlur = () => {
-      onClose();
+      onInputClose();
     };
-
+  
     // Delete a tag
     const handleDeleteTag = (index: number) => {
       const newTags = tags.filter((_, i) => i !== index); // remove tag at specified index
       if (app) {
-        updateInsight(app._id, { labels: newTags }); // update insight with the new list of tags
+        updateInsight(app._id, { labels: newTags });
       }
     };
-
-    // Calculate total width of tags and determine if ... tag should be shown
+  
+    // Calculate total width of tags to determine if "..." menu is needed
     useEffect(() => {
-      if (tagContainerRef.current) {
-        const totalWidth = Array.from(tagContainerRef.current.children).reduce((acc, child) => acc + child.clientWidth, 0);
-        setShowMore(totalWidth > 300);
-      }
+      const updateOverflowTags = () => {
+        if (tagsContainerRef.current) {
+          let totalWidth = 0;
+          const tempOverflowTags: string[] = [];
+          tags.forEach((tag) => {
+            const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
+            if (totalWidth + tagWidth > 300) { // if exceeds width limit
+              tempOverflowTags.push(tag); // add to overflow tags
+            } else {
+              totalWidth += tagWidth; // otherwise, add to total width
+            }
+          });
+          setOverflowTags(tempOverflowTags);
+        }
+      };
+  
+      updateOverflowTags(); // initial call to set overflow tags
+      window.addEventListener('resize', updateOverflowTags); // update on window resize
+      return () => {
+        window.removeEventListener('resize', updateOverflowTags); // cleanup on unmount
+      };
     }, [tags]);
+  
+    const visibleTags = tags.filter((tag) => !overflowTags.includes(tag)); // tags which are visible in the main list
 
+    // Expand or collapse tag menu
+    const toggleMenu = () => {
+      isMenuOpen ? onMenuClose() : onMenuOpen();
+    }
+  
     return (
-      <HStack spacing={2} ref={tagContainerRef}>
-        {tags.slice(0, showMore ? -1 : tags.length).map((tag, index) => (
+      <HStack spacing={2} ref={tagsContainerRef}>
+        {visibleTags.map((tag, index) => (
           <Tag
+            id={`tag-${tag}`}
             size="sm"
             key={index}
             borderRadius="full"
@@ -421,19 +460,35 @@ export function AppToolbar(props: AppToolbarProps) {
             <TagCloseButton onClick={() => handleDeleteTag(index)} />
           </Tag>
         ))}
-        {showMore && (
-          <Menu>
-            <MenuButton as={Button} size="xs">...</MenuButton>
+        {overflowTags.length > 0 && (
+          <Menu isOpen={isMenuOpen}>
+            <MenuButton
+              as={Button}
+              size="xs"
+              animation={newTagAdded ? `${flash} 0.5s` : 'none'}
+              onClick={toggleMenu}
+            >
+              {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+            </MenuButton>
             <MenuList>
-              {tags.slice(-1).map((tag, index) => (
+              {overflowTags.map((tag, index) => (
                 <MenuItem key={index}>
-                  {tag}
+                  <Tag
+                    id={`tag-${tag}`}
+                    size="sm"
+                    borderRadius="full"
+                    variant="solid"
+                    fontSize="12px"
+                  >
+                    <TagLabel>{tag}</TagLabel>
+                    <TagCloseButton onClick={() => handleDeleteTag(index + visibleTags.length)} />
+                  </Tag>
                 </MenuItem>
               ))}
             </MenuList>
           </Menu>
         )}
-        {isOpen ? (
+        {isInputOpen ? (
           <Input
             size="xs"
             width="100px"
@@ -444,21 +499,23 @@ export function AppToolbar(props: AppToolbarProps) {
             autoFocus
           />
         ) : (
-          <Tooltip
-            placement="top"
-            hasArrow={true}
-            openDelay={400}
-            label="Add tag"
-          >
-            <Button onClick={handleAddTag} size="xs" p={0}>
-              <MdAddCircleOutline size="14px" />
-            </Button>
-          </Tooltip>
+          <>
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              label="Add tag"
+            >
+              <Button onClick={handleAddTag} size="xs" p={0}>
+                <MdAddCircleOutline size="14px" />
+              </Button>
+            </Tooltip>
+          </>
         )}
-      </HStack>      
+      </HStack>
     );
   }
-
+  
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       // Get the component from the app definition
