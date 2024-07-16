@@ -3,6 +3,7 @@
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
@@ -10,6 +11,7 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as EChartsGenName, init as defaultEChartsGen } from './apps/EChartsGen';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
@@ -36,12 +38,12 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
+  [CalculatorName]: defaultCalculator,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
@@ -49,6 +51,7 @@ export const initialValues = {
   [CodeEditorName]: defaultCodeEditor,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [EChartsGenName]: defaultEChartsGen,
   [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
@@ -75,6 +78,5 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
-  [CalculatorName]: defaultCalculator,
 };
 

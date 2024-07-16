@@ -3,6 +3,7 @@
 import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
 import { state as BoardLinkState, name as BoardLinkName } from './apps/BoardLink';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
 import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps/ChartGenerator';
 import { state as ChatState, name as ChatName } from './apps/Chat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
@@ -10,6 +11,7 @@ import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { state as EChartsGenState, name as EChartsGenName } from './apps/EChartsGen';
 import { state as EChartsViewerState, name as EChartsViewerName } from './apps/EChartsViewer';
 import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
 import { state as HCDPState, name as HCDPName } from './apps/HCDP';
@@ -36,7 +38,6 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
 
 
 export type AppState =
@@ -44,6 +45,7 @@ export type AppState =
   | AIPaneState
   | BoardLinkState
   | CSVViewerState
+  | CalculatorState
   | ChartGeneratorState
   | ChatState
   | ClockState
@@ -51,6 +53,7 @@ export type AppState =
   | CodeEditorState
   | CounterState
   | DeepZoomImageState
+  | EChartsGenState
   | EChartsViewerState
   | GLTFViewerState
   | HCDPState
@@ -76,8 +79,7 @@ export type AppState =
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState
-  | CalculatorState;
+  | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName | typeof CalculatorName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsGenName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
