@@ -145,10 +145,9 @@ function AppComponent(props: App): JSX.Element {
   const [mostRecentChartIDs, setMostRecentChartIDs] = useState<number[]>([]);
   const [latestResponse, setLatestResponse] = useState<string>('This is my latest response');
 
-  const [log, setLog] = useState<any>({
-    chartsThatWereGenerated: [],
-    chartsThatWereSelected: [],
-  });
+  const [logChartsGenerated, setLogChartsGenerated] = useState<any>([]);
+  const [logChartsAdded, setLogChartsAdded] = useState<any>([]);
+  const [logChartsDeleted, setLogChartsDeleted] = useState<any>([]);
 
   function showSpeechBubble(message: string) {
     const speechBubble = document.getElementById('speechBubble');
@@ -199,6 +198,11 @@ function AppComponent(props: App): JSX.Element {
   }, [finalText]);
 
   const writeLog = async () => {
+    const log = {
+      chartsGenerated: logChartsGenerated,
+      chartsAdded: logChartsAdded,
+      chartsDeleted: logChartsDeleted,
+    };
     await ArticulateAPI.sendLog(log, fileName);
     //alert
     alert('Log saved!');
@@ -295,13 +299,10 @@ function AppComponent(props: App): JSX.Element {
 
           const audio = new Audio('https://github.com/Tabalbar/articulate-plus/raw/dev/263128__pan14__tone-beep-amb-verb.wav');
           audio.play();
-          setLog({
-            ...log,
-            chartsThatWereGenerated: [
-              ...log.chartsThatWereGenerated,
-              { chartOptions: [...tmpChartOptions], chartInformation: chartResponse['debug'] },
-            ],
-          });
+          setLogChartsGenerated([
+            ...logChartsGenerated,
+            { chartOptions: [...tmpChartOptions], time: getCurrentTime(), chartInformation: chartResponse['debug'] },
+          ]);
           setAppCounterID((prev: number) => prev + tmpChartOptions.length);
           setInteractionContext({
             ...interactionContext,
@@ -394,10 +395,7 @@ function AppComponent(props: App): JSX.Element {
       );
       prevApps.forEach((app: any) => {
         if (!appIds.has(app.chartId)) {
-          setLog({
-            ...log,
-            chartsThatWereSelected: [...log.chartsThatWereSelected, { action: 'delete', chartId: app.chartId, time: getCurrentTime() }],
-          });
+          setLogChartsDeleted([...logChartsDeleted, { chartId: app.chartId, time: getCurrentTime() }]);
           newIds.delete(app);
         }
       });
@@ -450,13 +448,7 @@ function AppComponent(props: App): JSX.Element {
       return newIds;
     });
     setHoveredChart(null);
-    setLog({
-      ...log,
-      chartsThatWereSelected: [
-        ...log.chartsThatWereSelected,
-        { action: 'add', chartId: EChartOption.id, appId: app.data._id, time: getCurrentTime() },
-      ],
-    });
+    setLogChartsAdded([...logChartsAdded, { chartId: EChartOption.id, time: getCurrentTime() }]);
     setInteractionContext({
       ...interactionContext,
       lastChartsSelected: [...interactionContext.lastChartsSelected, (EChartOption as any).title.text].slice(-5), // Keep only the last 5 chart titles
