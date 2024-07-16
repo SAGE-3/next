@@ -49,6 +49,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  TagsDisplay,
 } from './components';
 
 type UILayerProps = {
@@ -234,7 +235,7 @@ export function UILayer(props: UILayerProps) {
     alredOnOpen();
     return false;
   });
-
+  
   return (
     <>
       {/* The Corner SAGE3 Image Bottom Right */}
@@ -306,6 +307,11 @@ export function UILayer(props: UILayerProps) {
 
       {/* Presence Follow Component. Doesnt Render Anything */}
       <PresenceFollow />
+
+      {/* Display a list of all tags */}
+      <Box position="absolute" right="230" top="2">
+        <TagsDisplay />
+      </Box>
     </>
   );
 }
