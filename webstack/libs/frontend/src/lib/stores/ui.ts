@@ -61,8 +61,9 @@ interface UIState {
   clearSavedSelectedAppsIds: () => void;
 
   //Tags
-  selectedTag: string;
-  setSelectedTag: (value: string) => void;
+  selectedTags: string[];
+  addSelectedTag: (value: string) => void;
+  removeSelectedTag: (value: string) => void;
 
   // whiteboard
   whiteboardMode: DrawingMode;
@@ -336,8 +337,9 @@ export const useUIStore = create<UIState>()((set, get) => ({
       });
   },
 
-  selectedTag: '',
-  setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
+  selectedTags: [],
+  addSelectedTag: (value: string) => set((state) => ({ ...state, selectedTags: [...state.selectedTags, value] })),
+  removeSelectedTag: (value: string) => set((state) => ({ ...state, selectedTags: state.selectedTags.filter(tag => tag !== value) })),
 }));
 
 /**

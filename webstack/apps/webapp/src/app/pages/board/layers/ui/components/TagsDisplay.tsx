@@ -12,8 +12,7 @@ import { useUIStore, useInsightStore } from '@sage3/frontend';
 
 export function TagsDisplay() {
   // UI Store
-//   const { selectedTag, setSelectedTag } = useUIStore((state) => state);
-  const { selectedTag, setSelectedTag } = useUIStore((state) => state);
+  const { selectedTags, addSelectedTag, removeSelectedTag } = useUIStore((state) => state);
 
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
@@ -29,13 +28,13 @@ export function TagsDisplay() {
 
   // Highlight all apps with the specified tag
   const highlightApps = (tagName: string) => {
-    setSelectedTag(tagName);
+    selectedTags.includes(tagName) ? removeSelectedTag(tagName) : addSelectedTag(tagName);
   }
 
   return (
     <HStack spacing={2}>
       {uniqueTags.map((tag, index) => (
-        <Tag key={index} size="sm" borderRadius="full" variant="solid" fontSize="12px" colorScheme={tag === selectedTag ? 'green' : 'gray'} onClick={() => 
+        <Tag key={index} size="sm" borderRadius="full" variant="solid" fontSize="12px" colorScheme={selectedTags.includes(tag) ? 'teal' : 'gray'} onClick={() => 
             highlightApps(tag)
         }>
           <TagLabel>{tag}</TagLabel>
