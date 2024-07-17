@@ -6,8 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { HStack, Tag, TagLabel } from '@chakra-ui/react';
-
+import { useState, useRef, useEffect } from 'react';
+import {
+  HStack,
+  Tag,
+  TagLabel,
+  useDisclosure,
+  Button,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem, } from '@chakra-ui/react';
+import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useUIStore, useInsightStore } from '@sage3/frontend';
 
 export function TagsDisplay() {
@@ -31,15 +41,84 @@ export function TagsDisplay() {
     selectedTags.includes(tagName) ? removeSelectedTag(tagName) : addSelectedTag(tagName);
   }
 
+  // Manage menu visibility
+  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); 
+
+  const [overflowTags, setOverflowTags] = useState<string[]>([]);
+  const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
+
+  // Calculate total width of tags to determine if "..." menu is needed
+  useEffect(() => {
+    const updateOverflowTags = () => {
+      if (tagsContainerRef.current) {
+        let totalWidth = 0;
+        const tempOverflowTags: string[] = [];
+        uniqueTags.forEach((tag) => {
+          const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
+          if (totalWidth + tagWidth > 500) { // if exceeds width limit
+            tempOverflowTags.push(tag); // add to overflow tags
+          }
+          else {
+            totalWidth += tagWidth; // otherwise, add to total width
+          }
+        });
+        setOverflowTags(tempOverflowTags);
+      }
+    };
+
+    updateOverflowTags(); // initial call to set overflow tags
+  }, [uniqueTags]);
+  const visibleTags = uniqueTags.filter((tag) => !overflowTags.includes(tag)); // tags which are visible in the main list
+
+  // Expand or collapse tag menu
+  const toggleMenu = () => {
+    isMenuOpen ? onMenuClose() : onMenuOpen();
+  }
+
   return (
-    <HStack spacing={2}>
-      {uniqueTags.map((tag, index) => (
-        <Tag key={index} size="sm" borderRadius="full" variant="solid" fontSize="12px" colorScheme={selectedTags.includes(tag) ? 'teal' : 'gray'} onClick={() => 
-            highlightApps(tag)
-        }>
+    <HStack spacing={2} ref={tagsContainerRef}>
+      {visibleTags.map((tag, index) => (
+        <Tag
+          id={`tag-${tag}`}
+          size="sm"
+          key={index}
+          borderRadius="full"
+          variant="solid"
+          fontSize="12px"
+          colorScheme={selectedTags.includes(tag) ? 'teal' : 'gray'}
+          onClick={() => highlightApps(tag)}
+        >
           <TagLabel>{tag}</TagLabel>
         </Tag>
       ))}
+      {overflowTags.length > 0 && (
+          <Menu isOpen={isMenuOpen}>
+            <MenuButton
+              as={Button}
+              size="xs"
+              onClick={toggleMenu}
+            >
+              {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+            </MenuButton>
+            <MenuList>
+              {overflowTags.map((tag, index) => (
+                <MenuItem key={index}>
+                  <Tag
+                    id={`tag-${tag}`}
+                    size="sm"
+                    borderRadius="full"
+                    variant="solid"
+                    fontSize="12px"
+                    colorScheme={selectedTags.includes(tag) ? 'teal' : 'gray'}
+                    onClick={() => highlightApps(tag)}
+                  >
+                    <TagLabel>{tag}</TagLabel>
+                  </Tag>
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        )}
     </HStack>
   );
 }
