@@ -69,7 +69,7 @@ services:
       restart_policy:
         condition: on-failure
   seer:
-    image: "ghcr.io/sage-3/seer:dev_arm64"
+    image: "ghcr.io/sage-3/seer:arm64"
     ports:
       - "127.0.0.1:9999:9999"
     environment:

@@ -17,7 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Login To GitHub Container Registry
       - name: Log in to the Container GHCR registry
         uses: docker/login-action@v2
         with:
@@ -25,7 +24,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
@@ -36,8 +34,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/sage-3/next:amd64
 
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build and push image node_server
         uses: docker/build-push-action@v4
         with:
           file: deployment/node_server/Dockerfile
@@ -45,6 +42,16 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next:amd64
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push image seer
+        uses: docker/build-push-action@v4
+        with:
+          file: deployment/seer/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/seer:amd64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
@@ -56,7 +63,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Login To GitHub Container Registry
       - name: Log in to the Container GHCR registry
         uses: docker/login-action@v2
         with:
@@ -64,7 +70,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # https://github.com/docker/setup-buildx-action
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v2
@@ -75,8 +80,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/sage-3/next:arm64
 
-      # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build and push image node_server
         uses: docker/build-push-action@v4
         with:
           file: deployment/node_server/Dockerfile
@@ -84,4 +88,14 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next:arm64
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push image seer
+        uses: docker/build-push-action@v4
+        with:
+          file: deployment/seer/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/seer:arm64
           labels: ${{ steps.meta.outputs.labels }}
