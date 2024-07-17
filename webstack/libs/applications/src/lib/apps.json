@@ -1,6 +1,7 @@
 [
     "BoardLink",
     "CSVViewer",
+    "Calculator",
     "ChartGenerator",
     "Chat",
     "Clock",
