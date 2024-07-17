@@ -104,7 +104,7 @@ export function IntelligencePane(props: SIProps) {
                     <VStack p={1} pt={1} w="100%" align={"left"}>
                       <Text fontSize="lg" mb={1} fontWeight={"bold"}>Location</Text>
                       <HStack>
-                        <Button colorScheme="purple" size="lg" w="130px"
+                        <Button colorScheme="purple" size="sm" w="130px" variant={"solid"}
                           onClick={() => {
                             navigator.geolocation.getCurrentPosition(function (location) {
                               setLocation(location.coords.latitude + ',' + location.coords.longitude);
@@ -113,7 +113,7 @@ export function IntelligencePane(props: SIProps) {
                         <Spacer />
                         <Text fontSize="md" mt={1} >Lat-Lng: {location}</Text>
                       </HStack>
-                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise</Text>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise (Not implemented)</Text>
                       <Flex>
                         <Text fontSize="md">Novice</Text>
                         <Spacer />
@@ -145,7 +145,7 @@ export function IntelligencePane(props: SIProps) {
                     </VStack>
 
                     <VStack p={1} pt={6} w="100%" align={"left"}>
-                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity</Text>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity (Not implemented)</Text>
                       <Flex>
                         <Text fontSize="md">Snapshot</Text>
                         <Spacer />

@@ -47,6 +47,8 @@ export interface ServerConfiguration {
 
   // Python server for jupyter kernels
   kernels: { url: string };
+  // Python server for agents
+  agents: { url: string };
 
   // External Services
   services: {

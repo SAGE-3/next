@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { config } from 'apps/homebase/src/config';
 import * as express from 'express';
 
 // Request types matching Pydantic models: Question and Answer
@@ -80,8 +81,7 @@ export class LangChainModel extends AgentModel {
 
   constructor() {
     super();
-    // this._url = "http://seer:9999";
-    this._url = 'http://localhost:9999';
+    this._url = config.agents.url;
   }
 
   public async health(): Promise<boolean> {

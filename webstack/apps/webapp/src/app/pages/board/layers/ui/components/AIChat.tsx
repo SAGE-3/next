@@ -82,7 +82,7 @@ export function AIChat() {
       q: new_input
     };
     // Invoke the agent
-    const response = await AiAPI.langchain.ask(question);
+    const response = await AiAPI.agents.ask(question);
     if (response.success) {
       // Store the agent's response
       setResponse(response.r);

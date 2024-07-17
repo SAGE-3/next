@@ -236,7 +236,7 @@ async function agentStatus(): Promise<boolean> {
   // Try/catch block to handle errors
   try {
     // Send the request
-    const response = await fetch(apiUrls.ai.langchain.status, {
+    const response = await fetch(apiUrls.ai.agents.status, {
       method: 'GET',
     });
     return response.ok;
@@ -253,7 +253,7 @@ async function agentAsk(request: AgentQueryType): Promise<AgentQueryResponse> {
   // Try/catch block to handle errors
   try {
     // Send the request
-    const response = await fetch(apiUrls.ai.langchain.ask, {
+    const response = await fetch(apiUrls.ai.agents.ask, {
       method: 'POST',
       headers: modelHeaders,
       body: JSON.stringify(request),
@@ -285,7 +285,7 @@ export const AiAPI = {
     labels: imageLabels,
     image: imageToImage,
   },
-  langchain: {
+  agents: {
     status: agentStatus,
     ask: agentAsk,
   },

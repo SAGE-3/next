@@ -45,6 +45,7 @@ import {
   NLPRouter,
   LogsRouter,
   KernelsRouter,
+  AgentsRouter,
   PresenceThrottle,
   AiRouter,
   AgentRouter,
@@ -74,8 +75,9 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
-  // Kernels Routes
+  // Proxied Routes
   router.use('/kernels', KernelsRouter());
+  router.use('/agents', AgentsRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());
