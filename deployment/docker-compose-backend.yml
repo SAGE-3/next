@@ -26,7 +26,7 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       - ENVIRONMENT=development
-      - SAGE3_SERVER=${SAGE3_SERVER}:3333
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
