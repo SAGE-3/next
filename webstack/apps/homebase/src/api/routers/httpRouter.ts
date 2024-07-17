@@ -44,7 +44,7 @@ import {
   TimeRouter,
   NLPRouter,
   LogsRouter,
-  FastAPIRouter,
+  KernelsRouter,
   PresenceThrottle,
   AiRouter,
   AgentRouter,
@@ -74,8 +74,8 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
-  // FastAPI Routes
-  router.use('/fastapi', FastAPIRouter());
+  // Kernels Routes
+  router.use('/kernels', KernelsRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());

@@ -45,8 +45,8 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
-  // FastAPI
-  fastapi: { url: string };
+  // Python server for jupyter kernels
+  kernels: { url: string };
 
   // External Services
   services: {

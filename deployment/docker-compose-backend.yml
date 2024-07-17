@@ -30,7 +30,7 @@ services:
       - TOKEN=${TOKEN}
     restart: always
     working_dir: /app
-    command: python src/main.py --url http://jupyter:8888/jupyter
+    command: python src/main.py --url http://jupyter:8888
     depends_on:
       jupyter:
         condition: service_healthy
@@ -43,24 +43,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-  # seer:
-  #   image: "ghcr.io/sage-3/seer:dev_arm64"
-  #   ports:
-  #     - "127.0.0.1:9999:9999"
-  #   environment:
-  #     - ENVIRONMENT=development
-  #     - SAGE3_SERVER=${SAGE3_SERVER}
-  #     - TOKEN=${TOKEN}
-  #   restart: always
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:9999/healthz"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 10s
-  #   deploy:
-  #     restart_policy:
-  #       condition: on-failure
   jupyter:
     image: "quay.io/jupyter/datascience-notebook:2024-05-27"
     volumes:
@@ -77,18 +59,8 @@ services:
       - "redis-server"
     command: /conf/start.sh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/jupyter"]
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
       interval: 30s
       timeout: 30s
       retries: 3
       start_period: 30s
-  nginx:
-    image: nginx:latest
-    container_name: nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./configurations/nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./configurations/nginx/keys:/etc/ssl/

@@ -14,7 +14,7 @@ import { apiUrls } from '../../config';
  * @returns An array of all the kernels
  */
 async function fetchKernels(): Promise<KernelInfo[]> {
-  const response = await fetch(apiUrls.fastapi.getKernels, {
+  const response = await fetch(apiUrls.kernels.getKernels, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -31,7 +31,7 @@ async function fetchKernels(): Promise<KernelInfo[]> {
  * @returns
  */
 async function fetchKernel(kernelId: string): Promise<KernelInfo | undefined> {
-  const response = await fetch(apiUrls.fastapi.getKernels, {
+  const response = await fetch(apiUrls.kernels.getKernels, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -44,13 +44,13 @@ async function fetchKernel(kernelId: string): Promise<KernelInfo | undefined> {
 }
 
 /**
- * Check if the SAGE FastAPI server is online
- * @returns true if the SAGE FastAPI server is online, false otherwise
+ * Check if the SAGE Kernels server is online
+ * @returns true if the SAGE Kernels server is online, false otherwise
  */
 async function checkStatus(): Promise<boolean> {
   let online = true;
   try {
-    const response = await fetch(apiUrls.fastapi.heartbeat, {
+    const response = await fetch(apiUrls.kernels.heartbeat, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -77,7 +77,7 @@ async function checkStatus(): Promise<boolean> {
  */
 async function createKernel(kernelInfo: KernelInfo): Promise<boolean> {
   try {
-    const response = await fetch(apiUrls.fastapi.createKernel(kernelInfo.name), {
+    const response = await fetch(apiUrls.kernels.createKernel(kernelInfo.name), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...kernelInfo }),
@@ -103,7 +103,7 @@ async function createKernel(kernelInfo: KernelInfo): Promise<boolean> {
  * @returns
  */
 async function deleteKernel(kernelId: string): Promise<boolean> {
-  const response = await fetch(apiUrls.fastapi.deleteKernel(kernelId), {
+  const response = await fetch(apiUrls.kernels.deleteKernel(kernelId), {
     method: 'DELETE',
   });
   return response.ok;
@@ -115,7 +115,7 @@ async function deleteKernel(kernelId: string): Promise<boolean> {
  * @returns
  */
 async function restartKernel(kernelId: string): Promise<boolean> {
-  const response = await fetch(apiUrls.fastapi.restartKernel(kernelId), {
+  const response = await fetch(apiUrls.kernels.restartKernel(kernelId), {
     method: 'POST',
   });
   return response.ok;
@@ -129,7 +129,7 @@ async function restartKernel(kernelId: string): Promise<boolean> {
  * @returns
  */
 async function executeCode(code: string, kernelId: string, userId: string): Promise<{ ok: boolean; msg_id: string }> {
-  const response = await fetch(apiUrls.fastapi.executeKernel(kernelId), {
+  const response = await fetch(apiUrls.kernels.executeKernel(kernelId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -152,7 +152,7 @@ async function executeCode(code: string, kernelId: string, userId: string): Prom
  * @returns
  */
 async function interruptKernel(kernelId: string): Promise<any> {
-  const response = await fetch(apiUrls.fastapi.interruptKernel(kernelId), {
+  const response = await fetch(apiUrls.kernels.interruptKernel(kernelId), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -165,7 +165,7 @@ async function interruptKernel(kernelId: string): Promise<any> {
  *
  */
 async function fetchKernelTypes(): Promise<string[]> {
-  const response = await fetch(apiUrls.fastapi.getKernelsSpecs, {
+  const response = await fetch(apiUrls.kernels.getKernelsSpecs, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -183,7 +183,7 @@ async function fetchKernelTypes(): Promise<string[]> {
  * @returns
  */
 async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> {
-  const response = await fetch(apiUrls.fastapi.statusKernel(msgId), {
+  const response = await fetch(apiUrls.kernels.statusKernel(msgId), {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -212,13 +212,13 @@ function startServerSentEventsStream(
   messageCallback: (event: MessageEvent<unknown>) => void
   // errorCallback: (error: MessageEvent<unknown>) => void
 ): EventSource {
-  const eventSource = new EventSource(apiUrls.fastapi.getMessageStream(msgId));
+  const eventSource = new EventSource(apiUrls.kernels.getMessageStream(msgId));
   eventSource.addEventListener('new_message', messageCallback);
   // eventSource.addEventListener('error', errorCallback);
   return eventSource;
 }
 
-export const FastAPI = {
+export const Kernels = {
   interruptKernel,
   executeCode,
   createKernel,

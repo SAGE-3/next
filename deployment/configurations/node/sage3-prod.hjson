@@ -34,9 +34,9 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
-  // Fastapi python server
-  "fastapi": {
-    "url": "http://fastapi:8000"
+  // Fastapi python server for kernels
+  "kernels": {
+    "url": "http://127.0.0.1:8000"
   },
 
  // External Services

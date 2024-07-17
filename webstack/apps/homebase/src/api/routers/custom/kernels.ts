@@ -13,15 +13,15 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { config } from '../../../config';
 
 /**
- * Route forwarding the fastapi calls to the fastapi server
+ * Route forwarding the kernels calls to the sage kernels server
  */
-export function FastAPIRouter() {
-  console.log('FastAPI> router for FastAPI', config.fastapi.url);
+export function KernelsRouter() {
+  console.log('Kernels> router for sage kernels', config.kernels.url);
 
   const router = createProxyMiddleware({
-    target: config.fastapi.url,
+    target: config.kernels.url,
     changeOrigin: true,
-    pathRewrite: { '^/api/fastapi': '' },
+    pathRewrite: { '^/api/kernels': '' },
     logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
     selfHandleResponse: true, // Add this to handle the response manually
