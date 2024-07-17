@@ -36,6 +36,7 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
+import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
@@ -74,5 +75,6 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
+  [CalculatorName]: defaultCalculator,
 };
 
