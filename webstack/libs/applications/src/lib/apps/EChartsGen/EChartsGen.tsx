@@ -15,11 +15,19 @@ import { state as AppState } from './index';
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
 
+// components
+import ChartVisualizer from './components/ChartVisualizer';
+import Chat from './components/Chat';
+
 // Styling
 import './styling.css';
+import { CATEGORIES } from './constants/constants';
 
+const components = {
+  [CATEGORIES.CHAT]: (props: App) => <Chat.AppComponent {...props} />,
+  [CATEGORIES.CHART]: (props: App) => <ChartVisualizer.AppComponent {...props} />,
+};
 /* App component for EChartsGen */
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
@@ -27,9 +35,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <>
-        <h1> chart : {s.chart}</h1>
-      </>
+      <>{components[s.appType](props)}</>
     </AppWindow>
   );
 }
@@ -39,11 +45,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
 
-  return (
-    <>
-      <Button colorScheme="green">Action</Button>
-    </>
-  );
+  return <></>;
 }
 
 /**
