@@ -50,6 +50,10 @@ const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
 
+// SAGE3 Google maps APIKEY needed for user geo-location service
+// Stupid way to hide the key (I know)
+process.env.GOOGLE_API_KEY = Buffer.from('QUl6YVN5RGNOWjNCbzY1RmJtUzBOaVJ6WEdaekNjSFJIdm9ncURn', 'base64').toString('ascii');
+
 // Analytics
 var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
 var analytics_enabled = true;
@@ -353,6 +357,23 @@ function disableGeolocation(session) {
   }
 }
 
+function enableGeolocation(session) {
+  session.setPermissionRequestHandler((webContents, permission, callback) => {
+    console.log('Electron>	req', permission);
+    if (permission === 'geolocation') {
+      return callback(true);
+    }
+    callback(true);
+  });
+  session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    console.log('Electron>	check', permission);
+    if (permission === 'geolocation') {
+      return true;
+    }
+    return true;
+  });
+}
+
 // Size and position of the window
 let state = {};
 const defaultSize = {
@@ -483,8 +504,9 @@ function createWindow() {
   state = ensureVisibleOnSomeDisplay(restore());
 
   // Deny geolocation on Mac, it causes a crash in Electron v13
-  const session = electron.session.defaultSession;
-  disableGeolocation(session);
+  // const session = electron.session.defaultSession;
+  // disableGeolocation(session);
+  // enableGeolocation(session);
 
   // Screen recording self: true means desktop capture wont show SAGE3 client
   // mainWindow.setContentProtection(true);
@@ -762,7 +784,7 @@ function createWindow() {
 
   // New webview added
   mainWindow.webContents.on('did-attach-webview', function (event, webContents) {
-    disableGeolocation(webContents.session);
+    // disableGeolocation(webContents.session);
   });
 
   // Block the zoom limits
