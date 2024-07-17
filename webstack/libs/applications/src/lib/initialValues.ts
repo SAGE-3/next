@@ -2,6 +2,7 @@
 
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
@@ -32,11 +33,11 @@ import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './app
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 
 export const initialValues = {
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
+  [CalculatorName]: defaultCalculator,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
@@ -67,6 +68,5 @@ export const initialValues = {
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
-  [CalculatorName]: defaultCalculator,
 };
 
