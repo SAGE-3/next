@@ -5,9 +5,9 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Box, useColorModeValue, Tooltip, IconButton, useDisclosure,
+  Button, Box, useColorModeValue, Tooltip, IconButton, useDisclosure,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   Badge, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Spacer,
   VStack,
@@ -17,6 +17,7 @@ import {
   SliderThumb,
   SliderTrack,
   Flex,
+  HStack,
 } from '@chakra-ui/react';
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
@@ -33,20 +34,28 @@ type SIProps = {
 // SAP Intelligence Panel
 export function IntelligencePane(props: SIProps) {
   const isBoard = props.isBoard ? props.isBoard : false;
-
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
 
   // Colors
   const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
-  const tealColorMode = useColorModeValue('teal.500', 'teal.200');
-  const teal = useHexColor(tealColorMode);
+  const purpleColorMode = useColorModeValue('purple.400', 'purple.500');
+  const purple = useHexColor(purpleColorMode);
 
   // Intelligence modal
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [sliderValue1, setSliderValue1] = useState(4);
   const [sliderValue2, setSliderValue2] = useState(3);
+  const [location, setLocation] = useState('');
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(function (location) {
+      console.log('LatLong> ', location);
+      setLocation(location.coords.latitude + ',' + location.coords.longitude);
+    });
+
+  }, []);
 
   return (
     <Box
@@ -61,7 +70,7 @@ export function IntelligencePane(props: SIProps) {
       alignItems={'center'}
     >
       <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose}>
-        <DrawerContent maxWidth={"50vw"} height={"520px"}
+        <DrawerContent maxWidth={"50vw"} height={"532px"}
           transitionDuration={"0.2s"}
           rounded={"lg"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}>
           <DrawerHeader p={1} m={1}>
@@ -93,6 +102,17 @@ export function IntelligencePane(props: SIProps) {
                 <TabPanel>
                   <VStack>
                     <VStack p={1} pt={1} w="100%" align={"left"}>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Location</Text>
+                      <HStack>
+                        <Button colorScheme="purple" size="lg" w="130px"
+                          onClick={() => {
+                            navigator.geolocation.getCurrentPosition(function (location) {
+                              setLocation(location.coords.latitude + ',' + location.coords.longitude);
+                            }, function (e) { console.log('Location> error', e); });
+                          }}> Get Location </Button>
+                        <Spacer />
+                        <Text fontSize="md" mt={1} >Lat-Lng: {location}</Text>
+                      </HStack>
                       <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise</Text>
                       <Flex>
                         <Text fontSize="md">Novice</Text>
@@ -185,7 +205,7 @@ export function IntelligencePane(props: SIProps) {
               variant="solid"
               onClick={onOpen}
               isDisabled={false}
-              _hover={{ color: teal, opacity: 1, transform: 'scale(1.5)' }}
+              _hover={{ color: purple, opacity: 1, transform: 'scale(1.5)' }}
             />
             {props.notificationCount > 0 && (
               <Badge colorScheme="green" variant="solid"

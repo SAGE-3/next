@@ -261,7 +261,7 @@ async function agentAsk(request: AgentQueryType): Promise<AgentQueryResponse> {
     if (response.status === 200) {
       // Parse the response
       const jsonResponse = await response.json();
-      return { success: true, r: jsonResponse.r, id: jsonResponse.id };
+      return { success: true, r: jsonResponse.r, id: jsonResponse.id, actions: jsonResponse.actions };
     } else {
       return { success: false, r: response.statusText, id: request.id };
     }

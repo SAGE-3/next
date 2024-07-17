@@ -40,6 +40,7 @@ export type AgentQueryType = {
   ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
   id: string;
   user: string;
+  location: string;
   q: string;
 };
 
@@ -47,4 +48,5 @@ export type AgentQueryResponse = {
   id: string;
   r: string;
   success: boolean;
+  actions?: any[];
 };

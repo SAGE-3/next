@@ -18,6 +18,7 @@ type QuestionType = {
 type AnswerType = {
   id: string;
   r: string;
+  actions?: string[];
 };
 
 type AgentQueryResponse = AnswerType & { success: boolean };
@@ -109,6 +110,7 @@ export class LangChainModel extends AgentModel {
           success: true,
           id: data.id,
           r: data.r,
+          actions: data.actions,
         };
       } else {
         return {
