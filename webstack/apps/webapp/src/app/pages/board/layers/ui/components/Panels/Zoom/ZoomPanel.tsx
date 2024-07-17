@@ -67,7 +67,7 @@ export function ZoomPanel(props: ZoomProps) {
       videoSDKJWT: token,
       sessionName: props.boardId,
       userName: user?.data.name,
-      features: ['video', 'audio', 'settings', 'users', 'chat', 'share'],
+      features: ['video', 'audio', 'settings', 'users'],
     };
     uitoolkit.joinSession(zoomUIRef.current, config);
     uitoolkit.onSessionJoined(() => sessionJoined());
