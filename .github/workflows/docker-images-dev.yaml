@@ -56,6 +56,17 @@ jobs:
 
   build-and-push-arm:
     runs-on: [self-hosted, macOS, ARM64]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dockerfile: deployment/node_server/Dockerfile
+            image: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
+          - dockerfile: .deployment/seer/Dockerfile
+            image: ${{ env.REGISTRY }}/sage-3/agents:dev_arm64
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout
@@ -74,28 +85,18 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      # - name: Extract metadata (tags, labels) for Docker
-      #   id: meta
-      #   uses: docker/metadata-action@v5
-      #   with:
-      #     images: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
 
       - name: Build and push image node_server
         uses: docker/build-push-action@v5
         with:
-          file: deployment/node_server/Dockerfile
-          context: "{{defaultContext}}:."
-          platforms: linux/arm64
+          context: .
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
-          # labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Build and push image agents
-        uses: docker/build-push-action@v5
-        with:
-          file: deployment/seer/Dockerfile
-          context: "{{defaultContext}}:."
           platforms: linux/arm64
-          push: true
-          tags: ${{ env.REGISTRY }}/sage-3/agents:dev_arm64
-          # labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
