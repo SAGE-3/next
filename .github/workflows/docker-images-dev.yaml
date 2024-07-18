@@ -53,7 +53,7 @@ jobs:
           push: true
           platforms: linux/amd64
           # tags: ${{ steps.meta.outputs.tags }}
-          tags: ${{ maxtrix.image }}:agents_amd64
+          tags: ${{ matrix.image }}:agents_amd64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
@@ -101,5 +101,5 @@ jobs:
           push: true
           platforms: linux/arm64
           # tags: ${{ steps.meta.outputs.tags }}
-          tags: ${{ maxtrix.image }}:agents_arm64
+          tags: ${{ matrix.image }}:agents_arm64
           labels: ${{ steps.meta.outputs.labels }}
