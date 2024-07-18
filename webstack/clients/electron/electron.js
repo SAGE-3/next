@@ -80,6 +80,9 @@ const ipcMain = electron.ipcMain;
 // Restore the network order
 dns.setDefaultResultOrder('ipv4first');
 
+// Enable SharedArrayBuffer
+app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
+
 /////////////////////////////////////////////////////////////////
 // Auto updater
 /////////////////////////////////////////////////////////////////
