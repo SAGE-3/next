@@ -61,9 +61,9 @@ jobs:
       matrix:
         include:
           - dockerfile: deployment/node_server/Dockerfile
-            image: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
+            image: ghcr.io/sage-3/next:dev_arm64
           - dockerfile: .deployment/seer/Dockerfile
-            image: ${{ env.REGISTRY }}/sage-3/agents:dev_arm64
+            image: ghcr.io/sage-3/agents:dev_arm64
     permissions:
       contents: read
       packages: write
