@@ -49,6 +49,14 @@ export function IntelligencePane(props: SIProps) {
   const [sliderValue2, setSliderValue2] = useState(3);
   const [location, setLocation] = useState('');
 
+  const openOrClose = () => {
+    if (isOpen) {
+      onClose();
+    } else {
+      onOpen();
+    }
+  };
+
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(function (location) {
       console.log('LatLong> ', location);
@@ -203,7 +211,7 @@ export function IntelligencePane(props: SIProps) {
               transition={'all 0.2s'}
               opacity={0.75}
               variant="solid"
-              onClick={onOpen}
+              onClick={openOrClose}
               isDisabled={false}
               _hover={{ color: purple, opacity: 1, transform: 'scale(1.5)' }}
             />
