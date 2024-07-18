@@ -148,6 +148,8 @@ export interface TwilioConfiguration {
 export interface ZoomSDKConfiguration {
   sdkKey: string; // API Key
   sdkSecret: string; // API Secret
+  meetingSDKKey: string; // Meeting SDK Key
+  meetingAppKey: string;
 }
 
 // The OpenAI Configuration

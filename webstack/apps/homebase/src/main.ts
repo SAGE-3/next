@@ -151,6 +151,17 @@ async function startServer() {
     const token = zoom.generateVideoToken(identity, room);
     res.send({ token });
   });
+  app.get('/zoom/meetingtoken', SAGEBase.Auth.authenticate, (req, res) => {
+    console.log('Zoom> token request');
+    const authId = req.user.id;
+    if (authId === undefined) {
+      res.status(403).send();
+    }
+    const meeting_number = Number(req.query.meetingnumber) as number;
+    const role = Number(req.query.role) as number;
+    const token = zoom.generateMeetingToken(meeting_number, role);
+    res.send({ token, sdkKey: config.services.zoom.meetingSDKKey });
+  });
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());

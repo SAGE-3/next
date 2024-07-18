@@ -54,7 +54,11 @@
       // SDK Key
       "sdkKey":"",
       // SDK Secret
-      "sdkSecret":""
+      "sdkSecret":"",
+      // Meeting SDK Key
+      meetingSDKKey: "",
+      // Meeting App Key
+      meetingAppKey: ""
     },
     "openai": {
       // API Key
