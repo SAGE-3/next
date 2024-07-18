@@ -22,7 +22,7 @@ export function AgentsRouter() {
     target: config.agents.url,
     changeOrigin: true,
     pathRewrite: { '^/api/agents': '' },
-    logLevel: 'debug', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
+    logLevel: 'info', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
     selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying

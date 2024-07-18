@@ -28,11 +28,11 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
+      # - name: Extract metadata (tags, labels) for Docker
+      #   id: meta
+      #   uses: docker/metadata-action@v5
+      #   with:
+      #     images: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
 
       - name: Build and push image node_server
         uses: docker/build-push-action@v5
@@ -42,13 +42,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/sage-3/seer:dev_amd64
+          # labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push image seer
         uses: docker/build-push-action@v5
@@ -58,7 +52,7 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/seer:dev_amd64
-          labels: ${{ steps.meta.outputs.labels }}
+          # labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
     runs-on: [self-hosted, macOS, ARM64]
@@ -80,11 +74,11 @@ jobs:
         id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
+      # - name: Extract metadata (tags, labels) for Docker
+      #   id: meta
+      #   uses: docker/metadata-action@v5
+      #   with:
+      #     images: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
 
       - name: Build and push image node_server
         uses: docker/build-push-action@v5
@@ -94,7 +88,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
-          labels: ${{ steps.meta.outputs.labels }}
+          # labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push image seer
         uses: docker/build-push-action@v5
@@ -104,4 +98,4 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/seer:dev_arm64
-          labels: ${{ steps.meta.outputs.labels }}
+          # labels: ${{ steps.meta.outputs.labels }}
