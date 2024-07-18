@@ -76,10 +76,10 @@ export function AppWindow(props: WindowProps) {
   // Tag Highlight
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
-  const { selectedTags } = useUIStore(state => state);
+  const { selectedTag } = useUIStore(state => state);
   const myInsights = insights.find(el => props.app._id == el.data.app_id);
   const myLabels = myInsights ? myInsights.data.labels : [];
-  const isHighlight = selectedTags.some(tag => myLabels.includes(tag));
+  const isHighlight = myLabels.includes(selectedTag);
 
   // Lasso Information
   const lassoMode = useUIStore((state) => state.lassoMode);
