@@ -18,11 +18,17 @@ function ChartVisualizer({ children }: ChartVisualizerProps) {
 
 function AppComponent(props: App) {
   const s = props.data.state;
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<any[] | null>(null);
+
+  console.log('s', s);
 
   async function getAsset() {
     try {
-      const assetRes = await fetch(apiUrls.assets.getAssetById('3b7dd687-dcf7-4ab2-840f-552d1c0e802e.csv'));
+      const assetRes = await fetch(apiUrls.assets.getAssetById(s.fileId));
+
+      if (!assetRes.ok) {
+        throw new Error('Failed to fetch asset');
+      }
 
       const asset = await assetRes.text();
 
@@ -40,20 +46,30 @@ function AppComponent(props: App) {
   }
 
   useEffect(() => {
-    console.log('fileId', s.fileId);
-    console.log('chartSpecs', s.chartSpecs);
-    getAsset();
+    if (!data || !s.fileId || !s.chartSpecs) {
+      console.log('fileId', s.fileId);
+      console.log('chartSpecs', s.chartSpecs);
+      console.log('rerendering');
+      getAsset();
+    }
   }, []);
 
-  return s.chartSpecs && s.fileId ? (
-    <Chart
-      option={
-        charts[s.chartSpecs.chartType as ChartType].generateOption({
-          data,
-          visualizationElements: s.chartSpecs.visualizationElements,
-        }) as EChartsCoreOption
-      }
-    />
+  console.log('data', data);
+
+  return s.chartSpecs && s.fileId && data ? (
+    <Box width="full" height="full" overflow="auto">
+      <Box height="80%">
+        <Chart
+          option={
+            charts[s.chartSpecs.chartType as ChartType].generateOption({
+              data,
+              visualizationElements: s.chartSpecs.visualizationElements,
+            }) as EChartsCoreOption
+          }
+        />
+      </Box>
+      <Box padding="3">{s.chartSpecs.explanation}</Box>
+    </Box>
   ) : (
     <Box>Invalid chart </Box>
   );

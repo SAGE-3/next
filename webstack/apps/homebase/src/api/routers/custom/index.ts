@@ -16,3 +16,4 @@ export * from './logs';
 export * from './presencethrottle';
 export * from './fastapi';
 export * from './ai/ai-router';
+export * from './chart/ai-chart';

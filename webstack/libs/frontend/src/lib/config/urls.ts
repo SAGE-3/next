@@ -59,4 +59,7 @@ export const apiUrls = {
       image: '/api/ai/image_to_image',
     },
   },
+  aiChart: {
+    query: '/api/chart/query'
+  }
 };

@@ -27,7 +27,7 @@ export const schema = z.object({
         indicator: z.string(), // for circular area chart
         value: z.string(),
         bin: z.string(), // for histogram
-        count: z.string(),
+        count: z.string(), // for histogram
         bubbleDiameter: z.string(),
         treeMapParent: z.string(),
         treeMapChild: z.string(),
@@ -39,7 +39,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  appType: 'Chart',
+  appType: 'Chat',
   fileId: '3b7dd687-dcf7-4ab2-840f-552d1c0e802e.csv',
   chartSpecs: null,
 };

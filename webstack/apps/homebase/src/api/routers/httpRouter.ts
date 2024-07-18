@@ -47,6 +47,7 @@ import {
   FastAPIRouter,
   PresenceThrottle,
   AiRouter,
+  AiChartRouter,
 } from './custom';
 
 import { config } from '../../config';
@@ -101,6 +102,9 @@ export function expressAPIRouter(): express.Router {
 
   // Ai Routes
   router.use('/ai', AiRouter());
+
+  // Chart Route
+  router.use('/chart', AiChartRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, FormControl, Input } from '@chakra-ui/react';
 import { App, AppState } from '../../../schema';
 import Papa from 'papaparse';
-import { apiUrls } from '@sage3/frontend';
+import { apiUrls, useAppStore } from '@sage3/frontend';
+import { CATEGORIES } from '../constants/constants';
 
 type ChatProps = {
   children: React.ReactNode;
@@ -13,7 +14,11 @@ function Chat({ children }: ChatProps) {
 }
 
 function AppComponent(props: App) {
+  // get room id
   const roomId = props.data.roomId;
+  // create app function
+  const createApp = useAppStore((state) => state.create);
+
   const [file, setFile] = useState<File | null>(null);
   const [fileData, setFileData] = useState<(string | number)[][] | null>(null);
 
@@ -49,13 +54,61 @@ function AppComponent(props: App) {
       fd.append('files', file as File);
       fd.append('room', roomId);
 
+      // upload file
       const uploadRes = await fetch(apiUrls.assets.upload, {
         method: 'POST',
         body: fd,
       });
-      const assetId = await uploadRes.json();
+      const assetInfo = await uploadRes.json();
+      console.log('uploaded file>', assetInfo[0].filename);
 
-      console.log('assetId', assetId);
+      // query ai
+      const query = {
+        prompt: prompt,
+        data: fileData?.slice(0, 2), // only send the first two rows which include headers and part of the data
+      };
+      const res = await fetch(apiUrls.aiChart.query, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(query),
+      });
+
+      const gptAnswer = await res.json();
+      console.log('response', JSON.parse(gptAnswer.response));
+
+      // TODO: use zod to very schema
+
+      const appState: AppState = {
+        fileId: assetInfo[0].filename,
+        chartSpecs: JSON.parse(gptAnswer.response),
+      };
+
+      createApp({
+        title: 'EChartsGen',
+        roomId: roomId,
+        boardId: props.data.boardId,
+        position: {
+          x: props.data.position.x + props.data.size.width,
+          y: props.data.position.y,
+          z: 0,
+        },
+        size: {
+          width: 800,
+          height: 800,
+          depth: 0,
+        },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'EChartsGen',
+        state: {
+          appType: CATEGORIES.CHART,
+          ...appState,
+        },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
     } catch (error) {
       console.error('error', error);
     }
@@ -88,8 +141,6 @@ function AppComponent(props: App) {
           <Button type="submit">Submit</Button>
         </form>
       </Box>
-
-      <Button onClick={getAsset}>Test</Button>
     </Box>
   );
 }
