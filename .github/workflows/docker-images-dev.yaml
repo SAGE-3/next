@@ -62,7 +62,7 @@ jobs:
         include:
           - dockerfile: deployment/node_server/Dockerfile
             image: ghcr.io/sage-3/next
-          - dockerfile: .deployment/seer/Dockerfile
+          - dockerfile: deployment/seer/Dockerfile
             image: ghcr.io/sage-3/agents
     permissions:
       contents: read
