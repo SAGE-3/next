@@ -48,7 +48,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
@@ -73,12 +73,12 @@ services:
     ports:
       - "127.0.0.1:9999:9999"
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9999/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
       interval: 30s
       timeout: 10s
       retries: 3

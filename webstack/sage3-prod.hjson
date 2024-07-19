@@ -36,11 +36,11 @@
 
   // Fastapi python server for kernels
   "kernels": {
-    "url": "http://127.0.0.1:8000"
+    "url": "http://kernelserver:8000"
   },
   // Fastapi python server for agents
   "agents": {
-    "url": "http://127.0.0.1:9999"
+    "url": "http://seer:9999"
   },
 
   // External Services
