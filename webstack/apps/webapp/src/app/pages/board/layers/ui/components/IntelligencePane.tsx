@@ -38,7 +38,7 @@ export function IntelligencePane(props: SIProps) {
   const showUI = settings.showUI;
 
   // Colors
-  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
+  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
   const purpleColorMode = useColorModeValue('purple.400', 'purple.500');
   const purple = useHexColor(purpleColorMode);
 
@@ -66,17 +66,7 @@ export function IntelligencePane(props: SIProps) {
   }, []);
 
   return (
-    <Box
-      borderRadius="md"
-      backgroundColor={backgroundColor}
-      whiteSpace={'nowrap'}
-      width="100%"
-      display="flex"
-      pr={2}
-      pl={1}
-      justifyContent="right"
-      alignItems={'center'}
-    >
+    <Box borderRadius="md" display="flex">
       <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose}>
         <DrawerContent maxWidth={"50vw"} height={"532px"}
           transitionDuration={"0.2s"}
@@ -194,35 +184,28 @@ export function IntelligencePane(props: SIProps) {
         </DrawerContent>
       </Drawer>
 
-      {isBoard && showUI && (
+      {isBoard && showUI &&
         <Tooltip label={'SAGE Intelligence'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <Box p={0} m={0}>
-            <IconButton
-              borderRadius="md"
-              h="auto"
-              p={0}
-              pb={'1px'}
-              mr="-2"
-              justifyContent="center"
-              aria-label={'Controls'}
-              icon={<HiSparkles size="32px" />}
-              background={'transparent'}
-              colorScheme="gray"
-              transition={'all 0.2s'}
-              opacity={0.75}
-              variant="solid"
-              onClick={openOrClose}
-              isDisabled={false}
-              _hover={{ color: purple, opacity: 1, transform: 'scale(1.5)' }}
-            />
-            {props.notificationCount > 0 && (
-              <Badge colorScheme="green" variant="solid"
-                pos="relative" right={1} bottom={-2}>
-                {props.notificationCount}
-              </Badge>)}
-          </Box>
+          <IconButton
+            borderRadius="md"
+            h="24px"
+            pb={'1px'}
+            m={0}
+            aria-label={'Controls'}
+            icon={<HiSparkles size="24px" />}
+            colorScheme="purple"
+            transition={'all 0.2s'}
+            variant={"ghost"}
+            onClick={openOrClose}
+            _hover={{ color: purple, opacity: 1, transform: 'scale(1.5)' }}
+          />
+          {props.notificationCount > 0 &&
+            <Badge colorScheme="green" variant="solid"
+              pos="relative" right={1} bottom={-2}>
+              {props.notificationCount}
+            </Badge>}
         </Tooltip>
-      )}
+      }
     </Box>
   );
 }
