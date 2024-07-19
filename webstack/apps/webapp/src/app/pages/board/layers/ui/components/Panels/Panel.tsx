@@ -89,7 +89,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          {...longPressEvent}
+          // onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
+          {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -392,12 +393,16 @@ const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
 
   const start = useCallback(
     (event: TouchEvent | MouseEvent) => {
-      // prevent ghost click on mobile devices
-      if (isPreventDefault && event.target) {
-        event.target.addEventListener('touchend', preventDefault, { passive: false });
-        target.current = event.target;
+      // prevent ghost click on mobile devices, only if long click was triggered
+      // Warning: LongPRess may not stop propagation of onClick for all function calls;
+      //          only currently works because the popup (modal) releases the cursor (for mouse)
+      const preventTouchClick = () => {
+        if (isPreventDefault && event.target) {
+          event.target.addEventListener('touchend', preventDefault, { passive: false });
+          target.current = event.target;
+        }
       }
-      timeout.current = setTimeout(() => callback(event), delay);
+      timeout.current = setTimeout(() => {callback(event); preventTouchClick();}, delay);
     },
     [callback, delay, isPreventDefault]
   );
