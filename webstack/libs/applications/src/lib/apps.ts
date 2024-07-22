@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
@@ -36,6 +37,7 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
+import { name as CalculatorName } from './apps/Calculator';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -74,8 +76,8 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
+import Calculator from './apps/Calculator/Calculator';
 import React from 'react';
-import { App, AppGroup } from './schema';
 
 
 export const Applications = {
@@ -115,6 +117,7 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
+  [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';

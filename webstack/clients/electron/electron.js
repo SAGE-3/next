@@ -50,6 +50,10 @@ const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
 
+// SAGE3 Google maps APIKEY needed for user geo-location service
+// Stupid way to hide the key (I know)
+process.env.GOOGLE_API_KEY = Buffer.from('QUl6YVN5RGNOWjNCbzY1RmJtUzBOaVJ6WEdaekNjSFJIdm9ncURn', 'base64').toString('ascii');
+
 // Analytics
 var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
 var analytics_enabled = true;
@@ -76,7 +80,6 @@ const desktopCapturer = electron.desktopCapturer;
 const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
-const autoUpdater = electron.autoUpdater;
 
 // Restore the network order
 dns.setDefaultResultOrder('ipv4first');
@@ -85,6 +88,7 @@ dns.setDefaultResultOrder('ipv4first');
 // Auto updater
 /////////////////////////////////////////////////////////////////
 console.log('APP Updater> current version', app.getVersion());
+const autoUpdater = electron.autoUpdater;
 
 // autoUpdater.on('error', (error) => {
 //   console.log('APP Updater> error', error);
@@ -113,7 +117,6 @@ console.log('APP Updater> current version', app.getVersion());
 //     if (returnValue.response === 0) autoUpdater.quitAndInstall();
 //   });
 // });
-
 // autoUpdater.setFeedURL({
 //   url: 'https://update.electronjs.org/SAGE-3/next/darwin-arm64/client-1.0.0-beta.31',
 //   requestHeaders: { 'User-Agent': 'update-electron-app/2.0.1 (darwin: arm64)' },
@@ -121,8 +124,17 @@ console.log('APP Updater> current version', app.getVersion());
 // autoUpdater.checkForUpdates();
 
 // Auto update
-require('update-electron-app')({ repo: 'SAGE-3/next' });
-
+// require('update-electron-app')({ repo: 'SAGE-3/next' });
+const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
+updateElectronApp({
+  updateSource: {
+    host: 'https://update.electronjs.org',
+    type: UpdateSourceType.ElectronPublicUpdateService,
+    repo: 'SAGE-3/next',
+  },
+  updateInterval: '10 minutes',
+  logger: require('electron-log'),
+});
 /////////////////////////////////////////////////////////////////
 
 // Registering a custom protocol sage3://
@@ -345,6 +357,23 @@ function disableGeolocation(session) {
   }
 }
 
+function enableGeolocation(session) {
+  session.setPermissionRequestHandler((webContents, permission, callback) => {
+    console.log('Electron>	req', permission);
+    if (permission === 'geolocation') {
+      return callback(true);
+    }
+    callback(true);
+  });
+  session.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
+    console.log('Electron>	check', permission);
+    if (permission === 'geolocation') {
+      return true;
+    }
+    return true;
+  });
+}
+
 // Size and position of the window
 let state = {};
 const defaultSize = {
@@ -475,8 +504,9 @@ function createWindow() {
   state = ensureVisibleOnSomeDisplay(restore());
 
   // Deny geolocation on Mac, it causes a crash in Electron v13
-  const session = electron.session.defaultSession;
-  disableGeolocation(session);
+  // const session = electron.session.defaultSession;
+  // disableGeolocation(session);
+  // enableGeolocation(session);
 
   // Screen recording self: true means desktop capture wont show SAGE3 client
   // mainWindow.setContentProtection(true);
@@ -754,7 +784,7 @@ function createWindow() {
 
   // New webview added
   mainWindow.webContents.on('did-attach-webview', function (event, webContents) {
-    disableGeolocation(webContents.session);
+    // disableGeolocation(webContents.session);
   });
 
   // Block the zoom limits
@@ -859,6 +889,7 @@ function createWindow() {
     const currentURL = mainWindow.webContents.getURL();
     const parsedURL = new URL(currentURL);
     // updater.checkForUpdates(parsedURL.origin, true);
+    autoUpdater.checkForUpdates();
   });
 
   // Request from the renderer process

@@ -9,17 +9,19 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: <%= name %>
- * created by: <%= username %>
+ * SAGE3 application: Calculator
+ * created by: Loelle Lam
  */
 
 export const schema = z.object({
-  <%= statename %>: z.<%= statetype %>(),
+  input: z.string(),
+  history: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  <%= statename %>: <%= val %>,
+  input: '',
+  history: '',
 };
 
-export const name = '<%= name %>';
+export const name = 'Calculator';

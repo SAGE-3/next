@@ -31,7 +31,6 @@ interface PressureRecord {
 }
 
 function stateToValue(state: PressureState): number {
-  console.log('stateToValue', state);
   switch (state) {
     case PressureState.nominal:
       return 1;
@@ -69,7 +68,6 @@ export function usePressureObserver(): Pressure {
 
     const handleStateChange = (records: PressureRecord[]) => {
       const lastRecord = records[records.length - 1];
-      // console.log(`Current pressure ${lastRecord.state} ${lastRecord.time} ${lastRecord.source}`);
       setState({
         state: lastRecord.state,
         value: stateToValue(lastRecord.state),

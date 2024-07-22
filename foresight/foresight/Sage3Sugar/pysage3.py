@@ -66,7 +66,6 @@ class PySage3:
         # Populate existing apps
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
-
             self.__handle_create("APPS", app_info)
 
     def create_app(self, room_id, board_id, app_type, state, app=None):
@@ -143,7 +142,9 @@ class PySage3:
     def __remove_keys_from_dict__(self, app_dict, keys_to_remove):
         def _remove_keys_from_dict(d, keys_to_remove):
             if isinstance(d, dict):
-                for key in list(d.keys()):  # Use list() to avoid 'dictionary changed size during iteration' error
+                for key in list(
+                    d.keys()
+                ):  # Use list() to avoid 'dictionary changed size during iteration' error
                     if key in keys_to_remove:
                         del d[key]
                     else:
@@ -213,18 +214,11 @@ class PySage3:
     def __handle_delete(self, collection, doc):
         """Delete not yet supported through API"""
         with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"----Deleting {doc} \n")
-            out_file.write(f"----Deleting {doc} \n")
-            try: 
-                room_id = doc['data']['roomId']
-                board_id = doc['data']['boardId']
-                smartbit_id = doc["_id"]
-                out_file.write(f"before: {len( self.rooms[room_id].boards[board_id].smartbits)}\n")
-        
-                del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
-                out_file.write(f"before: {len( self.rooms[room_id].boards[board_id].smartbits)}\n")
-            except Exception as e:
-                out_file.write(f"Exception {e}")
+            out_file.write(f"Deleting {doc} \n")
+        room_id = doc["data"]["roomId"]
+        board_id = doc["data"]["boardId"]
+        smartbit_id = doc["_id"]
+        del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
 
     def __process_messages(self, ws, msg):
         message = json.loads(msg)
@@ -318,7 +312,6 @@ class PySage3:
             app.data.rotation.z = z
         app.send_updates()
 
-        
     def list_assets(self, room_id=None, board_id=None, asset_id=None):
         # TODO: clean this. Poorly written. Also handle baord_id
         assets = self.s3_comm.get_assets()
@@ -336,7 +329,7 @@ class PySage3:
                     "filename": asset["data"]["originalfilename"],
                     "mimetype": asset["data"]["mimetype"],
                     "size": asset["data"]["size"],
-                    "path": asset["data"]["path"]
+                    "path": asset["data"]["path"],
                 }
             )
         return assets_info
@@ -345,11 +338,10 @@ class PySage3:
         assets = self.list_assets()
         if assets is not None:
             for asset in assets:
-                if asset['filename'] == file_name:
-                    return asset['_id']
+                if asset["filename"] == file_name:
+                    return asset["_id"]
         return None
 
-        
     def get_public_url(self, asset_id):
         """Returns the public url for the asset with the given id"""
         return self.s3_comm.format_public_url(asset_id)
@@ -360,9 +352,7 @@ class PySage3:
             return self.get_public_url(asset_id)
         else:
             return None
-        
 
-    
     def update_state_attrs(self, app, **kwargs):
         """Updates the state attributes of the given app.
         The attributes to be updated are passed as kwargs"""
@@ -404,17 +394,23 @@ class PySage3:
     def get_app(self, app_id: str = None) -> dict:
         return self.s3_comm.get_app(app_id)
 
-    def get_apps(self, room_id: str = None, board_id: str = None, add_tags=False, filter_tags=None) -> List[dict]:
+    def get_apps(
+        self,
+        room_id: str = None,
+        board_id: str = None,
+        add_tags=False,
+        filter_tags=None,
+    ) -> List[dict]:
         all_apps = self.s3_comm.get_apps(room_id, board_id)
         if add_tags:
             all_tags = self.get_alltags()
             for app in all_apps:
-                if app['_id'] in all_tags:
-                    app['tags'] = all_tags[app['_id']]
+                if app["_id"] in all_tags:
+                    app["tags"] = all_tags[app["_id"]]
                 else:
-                    app['tags'] = []
+                    app["tags"] = []
 
-        all_apps = {x['_id']: x for x in all_apps}
+        all_apps = {x["_id"]: x for x in all_apps}
         if filter_tags:
             all_apps = self.__remove_keys_from_dict__(all_apps, filter_tags)
 
@@ -430,30 +426,27 @@ class PySage3:
             print("Please provide a board id to filter by")
         return self.get_apps(board_id=board_id)
 
-
     def get_apps_text(self, apps: list = None) -> list:
-        #TODO: fix names below to class.__name__
+        # TODO: fix names below to class.__name__
         if apps is None:
             apps = self.get_apps()
 
         text = ""
         for app_id, app in apps.items():
-            app_type = app.get('data', {}).get('type', None)
+            app_type = app.get("data", {}).get("type", None)
 
             if app_type is None:
                 return "AppType Not Valid"
-            elif app_type == 'Stickie':
-                text += app.get('data', {}).get('state', {}).get('text', "")+"\n"
-            elif app_type == 'PDFViewer':
-                asset_id = app.get('data', {}).get('state', {}).get('assetid')
+            elif app_type == "Stickie":
+                text += app.get("data", {}).get("state", {}).get("text", "") + "\n"
+            elif app_type == "PDFViewer":
+                asset_id = app.get("data", {}).get("state", {}).get("assetid")
                 asset_info = self.list_assets(asset_id=asset_id)
-                asset_path = asset_info[asset_id]['data']["path"]
+                asset_path = asset_info[asset_id]["data"]["path"]
                 text += self.s3_comm.get_pdf_text(asset_path)
             else:
                 return "Cannot yet summarize {app_type}"
         return text
-
-
 
     # def format_smartbits_with_tags():
     #     all_tags = get_alltags()
@@ -467,15 +460,15 @@ class PySage3:
     #     all_apps = {x['app_id']: x for x in all_apps}
     #     return all_apps
 
-    def get_smartbits(self, room_id: str = None, board_id: str = None,
-                      add_tags = False) -> dict:
+    def get_smartbits(
+        self, room_id: str = None, board_id: str = None, add_tags=False
+    ) -> dict:
         if room_id is None or board_id is None:
             print("Please provide a room id and a board id")
             return
         # TODO: add option add_tags for the sake of consistency
         #   The get_apps does take that param and adds tags
         # TODO: fix the the return above (return sys error/)
-
 
         smartbits = self.rooms.get(room_id).boards.get(board_id).smartbits
 
