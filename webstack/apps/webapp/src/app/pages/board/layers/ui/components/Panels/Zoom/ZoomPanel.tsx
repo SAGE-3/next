@@ -51,20 +51,24 @@ async function fetchMeetingToken(role: number, meetingNumber: number) {
   return { token, sdkKey };
 }
 
-/**
+/**https://us05web.zoom.us/j/84208980859?pwd=RD2eVirJqBiJuw4uPfTfbflW432SNO.1
+ * https://uic.zoom.us/j/89893595365?pwd=UHM0a3dhZlhxNjNjejZ5MzhmL1dGZz09
+ * https://us05web.zoom.us/j/84699182633?pwd=E24FSFntBZZyG0yUCZax2HTpgP0uq1.1
  * Panel to show all the Server's plugins and allow the users to create new apps from them
  * @param props
  * @returns
  */
 export function ZoomPanel(props: ZoomProps) {
-  var meetingNumber = '2175812669';
-  var passWord = 'sage.123';
+  var meetingNumber = '84699182633';
+  var passWord = 'E24FSFntBZZyG0yUCZax2HTpgP0uq1.1';
   var role = 0;
   var userName = 'React';
   var userEmail = '';
   var registrantToken = '';
   var zakToken = '';
   var leaveUrl = 'http://localhost:3000';
+
+  const { user } = useUser();
 
   const eleRef = useRef(null);
 
@@ -85,7 +89,7 @@ export function ZoomPanel(props: ZoomProps) {
       sdkKey: sdkKey,
       meetingNumber: meetingNumber,
       password: passWord,
-      userName: userName,
+      userName: user ? user?.data.name : 'SAGE3-User',
     });
   }
 
