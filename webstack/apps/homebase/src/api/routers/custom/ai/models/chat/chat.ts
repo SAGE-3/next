@@ -59,7 +59,11 @@ export class ChatModel extends AiModel {
       const modelBody = {
         inputs: input,
         parameters: {
+          // maximum number of tokens to generate
           max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+          // stop tokens for llama3/3.1
+          stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
+          // temperature
           temperature: 0.3,
         },
       };
@@ -97,7 +101,11 @@ export class ChatModel extends AiModel {
         const modelBody = {
           inputs: input,
           parameters: {
+            // maximum number of tokens to generate
             max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+            // stop tokens for llama3/3.1
+            stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
+            // temperature
             temperature: 0.3,
           },
         };

@@ -2,7 +2,8 @@ from langchain_core.tools import BaseTool
 from langchain.callbacks.manager import CallbackManagerForToolRun
 from langchain.pydantic_v1 import BaseModel, PrivateAttr, UUID4
 from typing import Optional, Type, Any
-from src.tools.wall_tools_models import CreateAppToolInput, DeleteAppToolInput, SummarizeAppsToolInput
+from src.tools.wall_tools_models import CreateAppToolInput, DeleteAppToolInput, SummarizeAppsToolInput, \
+    RearrangeAppToolInput
 from src.smartbits import SmartBit
 from src.config.temp_room_board_info import config as room_board_info
 
@@ -37,6 +38,25 @@ class DeleteAppTool(BaseTool):
 
     name: str = "DeleteAppTool"
     description: str = "Remove the app with the provided app_id from the wall"
+
+    _ps3: Any = PrivateAttr()
+
+    def __init__(self, ps3_instance=None):
+        super().__init__()
+        if ps3_instance is not None:
+            self._ps3 = ps3_instance  # Initialize the private attribute
+
+    def _run(self, app_id: UUID4, run_manager: Optional[CallbackManagerForToolRun] = None) -> str:
+        self._ps3.delete_app(app_id)
+        print("Running delete app")
+        return "Done with DeleteAppTool"
+
+
+class RearrangeAppTool(BaseTool):
+    args_schema: Type[BaseModel] = RearrangeAppToolInput
+
+    name: str = "RearrangeAppTool"
+    description: str = "Rearrange the apps referenced by the provided app_id on the wall according to a given pattern."
 
     _ps3: Any = PrivateAttr()
 
