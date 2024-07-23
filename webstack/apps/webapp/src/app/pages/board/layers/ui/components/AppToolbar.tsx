@@ -215,6 +215,38 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
+  // Hooks for getAppTags()
+  const { isOpen: isInputOpen, onOpen: onInputOpen, onClose: onInputClose } = useDisclosure(); // manage input visibility
+  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); // manage menu visibility
+  const [inputValue, setInputValue] = useState('');
+  const [newTagAdded, setNewTagAdded] = useState(false); // manage flash animation
+  const [overflowTags, setOverflowTags] = useState<string[]>([]);
+  const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
+  // Calculate total width of tags to determine if overflow menu is needed
+  useEffect(() => {
+    const updateOverflowTags = () => {
+      if (tagsContainerRef.current) {
+        let totalWidth = 0;
+        const tempOverflowTags: string[] = [];
+        tags.forEach((tag) => {
+          const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
+          if (totalWidth + tagWidth > 300) { // if exceeds width limit
+            tempOverflowTags.push(tag); // add to overflow tags
+          } else {
+            totalWidth += tagWidth; // otherwise, add to total width
+          }
+        });
+        setOverflowTags(tempOverflowTags);
+      }
+    };
+
+    updateOverflowTags(); // initial call to set overflow tags
+    window.addEventListener('resize', updateOverflowTags); // update on window resize
+    return () => {
+      window.removeEventListener('resize', updateOverflowTags); // cleanup on unmount
+    };
+  }, [tags]);
+
   function moveToApp() {
     if (!app) return;
     if (previousLocation.app !== app._id || !previousLocation.set) {
@@ -356,17 +388,12 @@ export function AppToolbar(props: AppToolbarProps) {
   };
 
   function getAppTags() {
-    const { isOpen: isInputOpen, onOpen: onInputOpen, onClose: onInputClose } = useDisclosure(); // manage input visibility
-    const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); // manage menu visibility
-  
     // Find current app's insight
     const appInsight = insights.find((el) => el._id === app?._id);
     const tags = appInsight ? appInsight.data.labels : [];
-  
-    const [inputValue, setInputValue] = useState('');
-    const [newTagAdded, setNewTagAdded] = useState(false); // manage flash animation
-    const [overflowTags, setOverflowTags] = useState<string[]>([]);
-    const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
+
+    // Store tags which should be visible in the main list
+    const visibleTags = tags.filter((tag) => !overflowTags.includes(tag));
 
     // Define keyframe animation for flashing "..." button
     const flash = keyframes`
@@ -412,33 +439,6 @@ export function AppToolbar(props: AppToolbarProps) {
         updateInsight(app._id, { labels: newTags });
       }
     };
-  
-    // Calculate total width of tags to determine if "..." menu is needed
-    useEffect(() => {
-      const updateOverflowTags = () => {
-        if (tagsContainerRef.current) {
-          let totalWidth = 0;
-          const tempOverflowTags: string[] = [];
-          tags.forEach((tag) => {
-            const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
-            if (totalWidth + tagWidth > 300) { // if exceeds width limit
-              tempOverflowTags.push(tag); // add to overflow tags
-            } else {
-              totalWidth += tagWidth; // otherwise, add to total width
-            }
-          });
-          setOverflowTags(tempOverflowTags);
-        }
-      };
-  
-      updateOverflowTags(); // initial call to set overflow tags
-      window.addEventListener('resize', updateOverflowTags); // update on window resize
-      return () => {
-        window.removeEventListener('resize', updateOverflowTags); // cleanup on unmount
-      };
-    }, [tags]);
-  
-    const visibleTags = tags.filter((tag) => !overflowTags.includes(tag)); // tags which are visible in the main list
 
     // Expand or collapse tag menu
     const toggleMenu = () => {

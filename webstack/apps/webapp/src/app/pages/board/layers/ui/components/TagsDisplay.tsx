@@ -16,7 +16,8 @@ import {
   Menu,
   MenuButton,
   MenuList,
-  MenuItem, } from '@chakra-ui/react';
+  MenuItem,
+} from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useUIStore, useInsightStore } from '@sage3/frontend';
 
@@ -81,7 +82,7 @@ export function TagsDisplay() {
         const tempOverflowTags: string[] = [];
         uniqueTags.forEach((tag) => {
           const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
-          if (totalWidth + tagWidth > 500) { // if exceeds width limit
+          if (totalWidth + tagWidth > (window.innerWidth / 3)) { // if exceeds width limit
             tempOverflowTags.push(tag); // add to overflow tags
           }
           else {
