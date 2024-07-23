@@ -42,7 +42,12 @@ server = "https://arcade.evl.uic.edu/llama/"
 llm = HuggingFaceEndpoint(
     endpoint_url=server,
     max_new_tokens=2048,
-    # huggingfacehub_api_token=token,
+    stop_sequences=[
+        "<|start_header_id|>",
+        "<|end_header_id|>",
+        "<|eot_id|>",
+        "<|reserved_special_token",
+    ],
 )
 
 # Prompt template for Llama3
