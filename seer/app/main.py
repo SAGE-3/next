@@ -1,7 +1,8 @@
-# python module
+# python modules
 import os, json
 import logging
 from dotenv import load_dotenv
+from datetime import date
 
 # Models
 from pydantic import BaseModel, Json
@@ -61,7 +62,7 @@ template = """
   <|eot_id|>
   <|start_header_id|>assistant<|end_header_id|>
 """
-sys_template_str = "You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
+sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
 human_template_str = "Answer: {question}"
 # Building the template
 prompt = PromptTemplate.from_template(
@@ -116,8 +117,14 @@ def read_root():
 async def ask_question(qq: Question):
     logger.debug("Got question> from " + qq.user + " from:" + qq.location)
     try:
+        today = date.today()
         response = await session.ainvoke(
-            {"question": qq.q, "username": qq.user, "location": qq.location}
+            {
+                "question": qq.q,
+                "username": qq.user,
+                "location": qq.location,
+                "date": today,
+            }
         )
         text = response
         # Propose the answer to the user
