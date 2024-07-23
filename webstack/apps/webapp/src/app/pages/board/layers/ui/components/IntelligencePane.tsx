@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import {
-  Button, Box, useColorModeValue, Tooltip, IconButton, useDisclosure,
+  Button, Box, useColorModeValue, Tooltip, useDisclosure,
   Drawer, DrawerBody, DrawerCloseButton, DrawerContent, DrawerHeader,
   Badge, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Spacer,
   VStack,
@@ -21,7 +21,6 @@ import {
 } from '@chakra-ui/react';
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
-
 
 import { useHexColor, useUserSettings } from '@sage3/frontend';
 import { AIChat } from './AIChat';
@@ -38,8 +37,7 @@ export function IntelligencePane(props: SIProps) {
   const showUI = settings.showUI;
 
   // Colors
-  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
-  const purpleColorMode = useColorModeValue('purple.400', 'purple.500');
+  const purpleColorMode = useColorModeValue('purple.400', 'purple.400');
   const purple = useHexColor(purpleColorMode);
 
   // Intelligence modal
@@ -185,27 +183,27 @@ export function IntelligencePane(props: SIProps) {
       </Drawer>
 
       {isBoard && showUI &&
-        <Tooltip label={'SAGE Intelligence'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="24px"
-            pb={'1px'}
-            m={0}
-            aria-label={'Controls'}
-            icon={<HiSparkles size="24px" />}
-            colorScheme="purple"
-            transition={'all 0.2s'}
-            variant={"ghost"}
+        <Tooltip label={'Intelligence Panel'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <Button
+            aria-label='SAGE Intelligence'
+            as={Button}
+            size="sm"
+            colorScheme='purple'
+            variant='solid'
+            leftIcon={<HiSparkles fontSize="18px" />}
+            width="100%"
+            _hover={{ cursor: 'pointer', opacity: 1, backgroundColor: purple }}
             onClick={openOrClose}
-            _hover={{ color: purple, opacity: 1, transform: 'scale(1.5)' }}
-          />
-          {props.notificationCount > 0 &&
-            <Badge colorScheme="green" variant="solid"
-              pos="relative" right={1} bottom={-2}>
-              {props.notificationCount}
-            </Badge>}
+          >
+            SAGE Intelligence
+            {props.notificationCount > 0 &&
+              <Badge colorScheme="green" variant="solid"
+                pos="relative" m={"3px"}>
+                {props.notificationCount}
+              </Badge>}
+          </Button>
         </Tooltip>
       }
-    </Box>
+    </Box >
   );
 }

@@ -8,10 +8,8 @@
 
 import {
   Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip,
-  Menu, MenuButton, MenuList, MenuItem, Button,
 } from '@chakra-ui/react';
-import { MdHelpOutline, MdSearch, MdRemoveRedEye } from 'react-icons/md';
-import { HiBars3 } from 'react-icons/hi2';
+import { MdRemoveRedEye } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -36,7 +34,6 @@ import {
   HotkeysEvent,
   useUserSettings,
   useHexColor,
-  HelpModal,
   EditVisibilityModal,
 } from '@sage3/frontend';
 
@@ -111,20 +108,12 @@ export function UILayer(props: UILayerProps) {
 
   // Alfred Modal
   const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
-  // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // Presence settings modal
   const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
-  const handleHelpOpen = () => {
-    helpOnOpen();
-  };
-  const handleAlfredOpen = () => {
-    alfredOnOpen();
-  };
   const handlePresenceSettingsOpen = () => {
     visibilityOnOpen();
   };
@@ -262,8 +251,6 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <>
-      {/* Help Modal */}
-      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {/* Presence settings modal dialog */}
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
@@ -290,43 +277,6 @@ export function UILayer(props: UILayerProps) {
         </Tooltip>)}
 
         <IntelligencePane isBoard={true} notificationCount={4} />
-
-        {showUI && (<Menu preventOverflow={false} placement="top-start">
-          <Tooltip label={'Settings'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-            <MenuButton
-              as={Button}
-              size="sm"
-              variant="ghost"
-              colorScheme={"teal"}
-              leftIcon={<HiBars3 size="24px" />}
-            />
-          </Tooltip>
-
-          <MenuList maxHeight="50vh" overflowX="clip" minW="150px">
-            <MenuItem
-              justifyContent="right"
-              onClick={handleAlfredOpen}
-              icon={<MdSearch fontSize="24px" />}
-            >
-              Search
-            </MenuItem>
-            <MenuItem
-              onClick={handlePresenceSettingsOpen}
-              icon={<MdRemoveRedEye fontSize="24px" />}
-              justifyContent="right"
-            >
-              Visibility
-            </MenuItem>
-            <MenuItem
-              onClick={handleHelpOpen}
-              icon={<MdHelpOutline size="22px" />}
-              justifyContent="right"
-            >
-              UI CheatSheet
-            </MenuItem>
-
-          </MenuList>
-        </Menu>)}
       </HStack >
 
       {/* Main Button Bottom Left */}
