@@ -101,7 +101,7 @@ export function Controller(props: ControllerProps) {
             isActive={false}
             onClick={handleHomeClick}
             onLongPress={popOnOpen}
-            description={`Back to ${room?.data.name} (Long-press for more options)`}
+            description={`Back to ${room?.data.name} (Right-click for more options)`}
           />
           <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
