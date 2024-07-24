@@ -90,7 +90,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
           onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
-          // {...longPressEvent} // if onContextMeqnu is uncommented, you should comment me
+          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
