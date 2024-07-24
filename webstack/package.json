@@ -29,6 +29,7 @@
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fluent-org/logger": "^1.0.10",
+    "@jitsi/react-sdk": "^1.4.0",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.6.0",
     "@react-three/fiber": "^8.14.1",

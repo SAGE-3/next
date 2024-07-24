@@ -14,6 +14,8 @@ import { use } from 'passport';
 import uitoolkit from '@zoom/videosdk-ui-toolkit';
 import '@zoom/videosdk-ui-toolkit/dist/videosdk-ui-toolkit.css';
 import { set } from 'date-fns';
+import { JitsiMeeting } from '@jitsi/react-sdk';
+import { useParams } from 'react-router';
 export interface ZoomProps {
   boardId: string;
   roomId: string;
@@ -43,6 +45,7 @@ export function ZoomPanel(props: ZoomProps) {
   const [token, setToken] = useState<string>('');
   const [pending, setPending] = useState<boolean>(false);
   const [joined, setJoined] = useState<boolean>(false);
+  const { boardId } = useParams();
 
   // HTML Ref
   const zoomUIRef = useRef<HTMLDivElement>(null);
@@ -88,33 +91,34 @@ export function ZoomPanel(props: ZoomProps) {
   }
 
   return (
-    <Panel title={'Zoom'} name="zoom" width={0} showClose={joined ? false : true}>
+    <Panel title={'Jitsi'} name="zoom" width={0} showClose={joined ? false : true}>
       <Box width="650px" height="625px" display="flex" flexDir="column" justifyContent="space-between">
-        <Box
-          position="absolute"
-          height="620px"
-          width="640px"
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          fontSize="4xl"
-          fontWeight="bold"
-          pointerEvents="none"
-        >
-          {pending || joined ? '' : 'Zoom Conference'}
-        </Box>
-        <Box display="flex" alignItems="start" transform="translateY(-5px)" height="620px" width="640px">
-          <Box ref={zoomUIRef}></Box>
-        </Box>
-
-        <Box display="flex" justifyContent="space-around" mb="10px">
-          <Button onClick={joinSession} isDisabled={pending || joined} colorScheme="teal" size="xs">
-            Join Zoom Call
-          </Button>
-          <Button onClick={leaveSession} isDisabled={!joined} colorScheme="red" size="xs">
-            Leave Zoom Call
-          </Button>
-        </Box>
+        {boardId && (
+          <JitsiMeeting
+            domain={'nvip-viz.cis230038.projects.jetstream-cloud.org'}
+            roomName={boardId}
+            configOverwrite={{
+              startWithAudioMuted: true,
+              disableModeratorIndicator: true,
+              startScreenSharing: true,
+              enableEmailInStats: false,
+            }}
+            interfaceConfigOverwrite={{
+              DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+            }}
+            userInfo={{
+              displayName: user ? user?.data.name : 'Anonymous',
+              email: user ? user?.data.email : 'Anonymous@gmail.com',
+            }}
+            onApiReady={(externalApi) => {
+              // here you can attach custom event listeners to the Jitsi Meet External API
+              // you can also store it locally to execute commands
+            }}
+            getIFrameRef={(iframeRef) => {
+              iframeRef.style.height = '600px';
+            }}
+          />
+        )}
       </Box>
     </Panel>
   );
