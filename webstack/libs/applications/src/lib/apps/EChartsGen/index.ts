@@ -16,10 +16,11 @@ import { z } from 'zod';
 
 export const schema = z.object({
   appType: z.string(),
-  fileId: z.string(),
+  fileId: z.string().nullable(),
   chartSpecs: z
     .object({
       chartType: z.string(),
+      attributes: z.array(z.string()).nullable(),
       visualizationElements: z.object({
         xAxis: z.string(),
         yAxis: z.string(),
@@ -35,13 +36,15 @@ export const schema = z.object({
       }),
     })
     .nullable(),
+  model: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   appType: 'Chat',
-  fileId: '3b7dd687-dcf7-4ab2-840f-552d1c0e802e.csv',
+  fileId: null,
   chartSpecs: null,
+  model: 'gpt-4',
 };
 
 export const name = 'EChartsGen';
