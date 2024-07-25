@@ -38,7 +38,7 @@ import {
   MdManageAccounts,
   MdOutlineLogout,
   MdOutlineVpnKey,
-  MdHelp,
+  MdInfoOutline,
   MdArrowForward,
   MdLock,
   MdLockOpen,
@@ -248,23 +248,17 @@ export function MainButton(props: MainButtonProps) {
         <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}
           p="2px" m="0">
           <MenuGroup title="SAGE3" p="0" m="1">
-            <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />} py="1px" m="0">
-              About
-            </MenuItem>
+            {props.boardInfo && (<MenuItem py="1px" m="0"
+              onClick={handleHelpOpen}
+              icon={<MdHelpOutline size="24px" />}
+              justifyContent="right"
+            > Help </MenuItem>)}
+            <MenuItem onClick={openAbout} icon={<MdInfoOutline fontSize="24px" />} py="1px" m="0"> About </MenuItem>
             {props.boardInfo && (<MenuItem py="1px" m="0"
               justifyContent="right"
               onClick={handleAlfredOpen}
               icon={<MdSearch fontSize="24px" />}
-            >
-              Search
-            </MenuItem>)}
-            {props.boardInfo && (<MenuItem py="1px" m="0"
-              onClick={handleHelpOpen}
-              icon={<MdHelpOutline size="22px" />}
-              justifyContent="right"
-            >
-              UI CheatSheet
-            </MenuItem>)}
+            > Search </MenuItem>)}
           </MenuGroup>
 
           <MenuDivider />
