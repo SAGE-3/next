@@ -7,9 +7,10 @@
  */
 
 import {
-  HStack, useToast, Button, Text,
+  Stack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+  useDisclosure, VStack,
+  StackDirection,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -18,6 +19,7 @@ import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
+import { useEffect, useState } from 'react';
 
 export interface ControllerProps {
   roomId: string;
@@ -26,6 +28,9 @@ export interface ControllerProps {
 }
 
 export function Controller(props: ControllerProps) {
+  // Orientation
+  const [direction, setDirection] = useState<StackDirection>('row');
+  const [title, setTitle] = useState('Main Menu');
   // Rooms Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
@@ -46,6 +51,7 @@ export function Controller(props: ControllerProps) {
   const users = getPanel('users');
   const plugins = getPanel('plugins');
   const kernels = getPanel('kernels');
+  const main = getPanel("controller")!; // not undefined
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
@@ -92,9 +98,32 @@ export function Controller(props: ControllerProps) {
   // Popover for long press
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
+  // Track the stuck state of the main panel to change the orientation of the panel
+  useEffect(() => {
+    if (main.stuck === StuckTypes.Left || main.stuck === StuckTypes.Right) {
+      setDirection('column');
+      setTitle('');
+      // Adjust the position of the main panel if it is stuck to the right
+      if (main.stuck === StuckTypes.Right) {
+        if (main.position.x < window.innerWidth) {
+          updatePanel(main.name, { position: { x: window.innerWidth - 90, y: main.position.y } });
+        }
+      }
+    } else {
+      setDirection('row');
+      setTitle('Main Menu');
+      if (main.stuck === StuckTypes.Bottom) {
+        // Adjust the position of the main panel if it is stuck to the bottom
+        if (main.position.y < window.innerHeight) {
+          updatePanel(main.name, { position: { x: main.position.x, y: window.innerHeight - 90 } });
+        }
+      }
+    }
+  }, [main.stuck]);
+
   return (
-    <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
-      <HStack w="100%">
+    <Panel name="controller" title={title} width={430} showClose={false} titleDblClick={handleCopyId}>
+      <Stack w="100%" direction={direction}>
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
           <IconButtonPanel
             icon={<MdArrowBack />}
@@ -159,7 +188,7 @@ export function Controller(props: ControllerProps) {
           isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
         />
-      </HStack>
+      </Stack>
     </Panel>
   );
 }
