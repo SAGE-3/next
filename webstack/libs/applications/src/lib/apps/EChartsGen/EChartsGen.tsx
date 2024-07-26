@@ -18,6 +18,7 @@ import { AppWindow } from '../../components';
 // components
 import ChartVisualizer from './components/ChartVisualizer';
 import Chat from './components/Chat';
+import Experimental from './components/Experimental';
 
 // Styling
 import './styling.css';
@@ -26,6 +27,7 @@ import { CATEGORIES } from './constants/constants';
 const components = {
   [CATEGORIES.CHAT]: (props: App) => <Chat.AppComponent {...props} />,
   [CATEGORIES.CHART]: (props: App) => <ChartVisualizer.AppComponent {...props} />,
+  [CATEGORIES.EXPERIMENTAL]: (props: App) => <Experimental.AppComponent {...props} />,
 };
 /* App component for EChartsGen */
 function AppComponent(props: App): JSX.Element {
