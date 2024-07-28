@@ -51,8 +51,6 @@ import {
   BoardTitle,
   KernelsPanel,
 } from './components';
-import Titlebar from 'apps/webapp/src/app/components/Titlebar';
-import { isMac } from '@sage3/shared';
 
 type UILayerProps = {
   boardId: string;
@@ -265,34 +263,15 @@ export function UILayer(props: UILayerProps) {
         </Box>
       </Box>
 
-      {/* If it's electron and mac then use custom titlebar */}
-      {isMac() && isElectron() ? (
-        <Titlebar>
-          {/* ServerName Top Left */}
-          <Box width="100%" height="100%" bg={bgColor} py="2" zIndex="99999" roundedBottom="5">
-            <Box position="fixed" left="20" top="1" display={showUI ? 'initial' : 'none'}>
-              <BoardTitle room={room} board={board} config={config} />
-            </Box>
+      {/* ServerName Top Left */}
+      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
+        <BoardTitle room={room} board={board} config={config} />
+      </Box>
 
-            {/* The clock Top Right */}
-            <Box position="fixed" right="1" top="1">
-              <Clock isBoard={true} />
-            </Box>
-          </Box>
-        </Titlebar>
-      ) : (
-        <>
-          {/* ServerName Top Left */}
-          <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
-            <BoardTitle room={room} board={board} config={config} />
-          </Box>
-
-          {/* The clock Top Right */}
-          <Box position="absolute" right="1" top="1">
-            <Clock isBoard={true} />
-          </Box>
-        </>
-      )}
+      {/* The clock Top Right */}
+      <Box position="absolute" right="1" top="1">
+        <Clock isBoard={true} />
+      </Box>
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 

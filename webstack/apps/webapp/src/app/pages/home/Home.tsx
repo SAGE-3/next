@@ -84,7 +84,6 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
-import Titlebar from '../../components/Titlebar';
 
 /**
  * Home page for SAGE3
@@ -1427,11 +1426,9 @@ export function HomePage() {
         display={isLargerThan800 ? 'flex' : 'none'}
       /> */}
       {/* The clock Top Right */}
-      <Titlebar>
-        <Box ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'} w="fit-content" right="0" position="absolute" m="2">
-          <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
-        </Box>
-      </Titlebar>
+      <Box ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'} w="fit-content" right="0" position="absolute" m="2">
+        <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
+      </Box>
     </Box>
   );
 }

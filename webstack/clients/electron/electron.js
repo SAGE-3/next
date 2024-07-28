@@ -431,21 +431,11 @@ const resetToDefaults = () => {
  * @method     createWindow
  */
 function createWindow() {
-  // Make title bar disappear on Mac
-  const titleBarOptions = {};
-  if (process.platform === 'darwin') {
-    titleBarOptions.frame = false;
-    titleBarOptions.titleBarStyle = 'hidden';
-    titleBarOptions.trafficLightPosition = { x: 12, y: 12 };
-  } else {
-    titleBarOptions.frame = !commander.no_decoration;
-  }
   // Create option data structure
   var options = {
     width: commander.width,
     height: commander.height,
-    // frame: !commander.no_decoration,
-    ...titleBarOptions,
+    frame: !commander.no_decoration,
     fullscreen: commander.fullscreen,
     show: !commander.fullscreen,
     // autoHideMenuBar: true,
