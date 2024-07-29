@@ -329,7 +329,7 @@ export function UserAvatar(props: UserAvatarProps) {
                 icon={props.yourFollowing ? <MdStop /> : <HiOutlineChevronDoubleRight />}
                 onClick={() => props.followUser(userId)}
               >
-                {props.yourFollowing ? 'Unfollow' : 'Follow'}
+                {props.yourFollowing ? 'Unfollow Them' : 'Follow Them'}
               </MenuItem>
             </Tooltip>
             {props.followingYou ? (
