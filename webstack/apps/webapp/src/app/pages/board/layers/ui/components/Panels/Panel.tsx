@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect, createRef, useRef, useCallback } from 'react';
+import { useState, useEffect, createRef, useRef, useCallback, CSSProperties } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
@@ -18,9 +18,12 @@ const bigFont = 18;
 const smallFont = 14;
 
 // Add a title to the chakra button props
-export interface ButtonPanelProps extends ButtonProps {
+export interface ButtonPanelProps {
   title: string;
   textColor?: string;
+  draggable?: boolean;
+  onClick?: () => void;
+  style?: CSSProperties | undefined;
 }
 
 // Button with a title and using the font size from parent panel
@@ -90,7 +93,7 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
           onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
-          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
+        // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -402,7 +405,7 @@ const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
           target.current = event.target;
         }
       }
-      timeout.current = setTimeout(() => {callback(event); preventTouchClick();}, delay);
+      timeout.current = setTimeout(() => { callback(event); preventTouchClick(); }, delay);
     },
     [callback, delay, isPreventDefault]
   );
