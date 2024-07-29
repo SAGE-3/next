@@ -30,7 +30,6 @@ export interface ControllerProps {
 export function Controller(props: ControllerProps) {
   // Orientation
   const [direction, setDirection] = useState<StackDirection>('row');
-  const [title, setTitle] = useState('Main Menu');
   // Rooms Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
@@ -67,31 +66,65 @@ export function Controller(props: ControllerProps) {
 
   // Copy the board id to the clipboard
   const toast = useToast();
-  const handleCopyId = async () => {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(props.boardId);
-      toast({
-        title: 'Success',
-        description: `BoardID Copied to Clipboard`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
-    }
-  };
+
+  // const handleCopyId = async () => {
+  //   if (navigator.clipboard) {
+  //     await navigator.clipboard.writeText(props.boardId);
+  //     toast({
+  //       title: 'Success',
+  //       description: `BoardID Copied to Clipboard`,
+  //       duration: 3000,
+  //       isClosable: true,
+  //       status: 'success',
+  //     });
+  //   }
+  // };
 
   // Show the various panels
   const handleShowPanel = (panel: PanelUI | undefined) => {
     if (!panel) return;
     let position;
-    if (panel.stuck === StuckTypes.None) {
-      const controller = getPanel('controller');
-      if (controller) {
-        position = { ...controller.position };
-        position.y = position.y + 85;
+    const controller = getPanel('controller');
+    if (controller) {
+      position = { ...controller.position };
+      if (controller.stuck === StuckTypes.None) {
+        position.y = position.y + 60;
+      } else if (controller.stuck === StuckTypes.Right) {
+        let offset = 0;
+        panel.name === 'users' && (offset = 160);
+        panel.name === 'applications' && (offset = 200);
+        panel.name === 'plugins' && (offset = 240);
+        panel.name === 'kernels' && (offset = 720);
+        panel.name === 'assets' && (offset = 820);
+        panel.name === 'navigation' && (offset = 335);
+        panel.name === 'annotations' && (offset = 610);
+        position.x = position.x - offset;
+      } else if (controller.stuck === StuckTypes.Left) {
+        position.x = position.x + 95;
+      } else if (controller.stuck === StuckTypes.Top || controller.stuck === StuckTypes.TopRight ||
+        controller.stuck === StuckTypes.TopLeft
+      ) {
+        position.y = position.y + 60;
+      } else if (controller.stuck === StuckTypes.Bottom || controller.stuck === StuckTypes.BottomRight
+        || controller.stuck === StuckTypes.BottomLeft
+      ) {
+        let offset = 0;
+        panel.name === 'users' && (offset = 90);
+        panel.name === 'applications' && (offset = 350);
+        panel.name === 'plugins' && (offset = 90);
+        panel.name === 'kernels' && (offset = 140);
+        panel.name === 'assets' && (offset = 320);
+        panel.name === 'navigation' && (offset = 195);
+        panel.name === 'annotations' && (offset = 155);
+        position.y = position.y - offset;
       }
+
     }
-    position ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show });
+    if (position) {
+      updatePanel(panel.name, { show: !panel.show, position });
+    } else {
+      updatePanel(panel.name, { show: !panel.show });
+    }
     bringPanelForward(panel.name);
   };
 
@@ -102,27 +135,25 @@ export function Controller(props: ControllerProps) {
   useEffect(() => {
     if (main.stuck === StuckTypes.Left || main.stuck === StuckTypes.Right) {
       setDirection('column');
-      setTitle('');
       // Adjust the position of the main panel if it is stuck to the right
       if (main.stuck === StuckTypes.Right) {
         if (main.position.x < window.innerWidth) {
-          updatePanel(main.name, { position: { x: window.innerWidth - 90, y: main.position.y } });
+          updatePanel(main.name, { position: { x: window.innerWidth - 95, y: main.position.y } });
         }
       }
     } else {
       setDirection('row');
-      setTitle('Main Menu');
       if (main.stuck === StuckTypes.Bottom) {
         // Adjust the position of the main panel if it is stuck to the bottom
         if (main.position.y < window.innerHeight) {
-          updatePanel(main.name, { position: { x: main.position.x, y: window.innerHeight - 90 } });
+          updatePanel(main.name, { position: { x: main.position.x, y: window.innerHeight - 60 } });
         }
       }
     }
   }, [main.stuck]);
 
   return (
-    <Panel name="controller" title={title} width={430} showClose={false} titleDblClick={handleCopyId}>
+    <Panel name="controller" title="" width={430} showClose={false} showMinimize={false}>
       <Stack w="100%" direction={direction}>
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
           <IconButtonPanel
