@@ -48,7 +48,6 @@ const { buildMenu } = require('./src/menuBuilder');
 // Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
-console.log(windowState);
 const bookmarkStore = require('./src/bookmarkstore');
 
 // SAGE3 Google maps APIKEY needed for user geo-location service
