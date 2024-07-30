@@ -95,6 +95,8 @@ function AppComponent(props: App) {
   //       body: JSON.stringify(query),
   //     });
 
+  //     if (!res.ok) throw new Error('Unable to generate chart.');
+
   //     const gptAnswer = await res.json();
   //     console.log('response', JSON.parse(gptAnswer.response));
 
@@ -173,7 +175,7 @@ function AppComponent(props: App) {
       const initChartSpecs = {
         chartType: chartInfo.charts[0].chartType,
         visualizationElements: chartInfo.charts[0].visualizationElements ?? null,
-        attributes: chartInfo.charts[0].attributes ?? null,
+        attributes: chartInfo.charts[0].attributes[0] ?? null,
       };
 
       const appState: AppState = {

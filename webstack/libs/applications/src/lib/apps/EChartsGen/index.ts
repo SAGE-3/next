@@ -41,7 +41,7 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  appType: 'Experimental',
+  appType: 'Chat',
   fileId: null,
   chartSpecs: null,
   model: 'gpt-4',

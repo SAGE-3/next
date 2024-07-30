@@ -903,12 +903,19 @@ export const charts = {
       const bubbleDiameterIndex = data[0].indexOf(visualizationElements?.bubbleDiameter as string);
       console.log('bubble diameter index', bubbleDiameterIndex);
       if (xAxisIndex === -1 || yAxisIndex === -1 || bubbleDiameterIndex === -1) {
-        throw new Error('Required columns not found in data');
+        throw new Error('Bubble chart> Required columns not found in data');
       }
       const xAxisName = data[0][xAxisIndex];
       const yAxisName = data[0][yAxisIndex];
       const reformattedData = data.slice(1).map((row) => [row[xAxisIndex], row[yAxisIndex], row[bubbleDiameterIndex]]);
       const bubbleDiameterSizeIndex = 2; // from reformattedData
+
+      const minBubbleValue = Math.min(...reformattedData.slice(1).map((row) => parseFloat(row[2] as string)));
+      const maxBubbleValue = Math.max(...reformattedData.slice(1).map((row) => parseFloat(row[2] as string)));
+
+      const minSize = 5;
+      const maxSize = 50;
+
       const option = {
         legend: {},
         tooltip: {
@@ -926,7 +933,9 @@ export const charts = {
           {
             type: 'scatter',
             data: reformattedData,
-            symbolSize: (data: any) => Math.sqrt(data[bubbleDiameterSizeIndex]) / 10, // ! Might need a better way to scale this
+            symbolSize: (data: any) =>
+              minSize +
+              Math.sqrt((data[bubbleDiameterSizeIndex] - minBubbleValue) / (maxBubbleValue - minBubbleValue)) * (maxSize - minSize), // ! Might need a better way to scale this
           },
         ],
       };

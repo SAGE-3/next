@@ -7,7 +7,7 @@ import { TableContainer, Table, Thead, Tr, Th, Td, Tbody } from '@chakra-ui/reac
 function CsvTable({ data }: CsvTableType) {
   return (
     <TableContainer>
-      <Table variant="striped" colorScheme="teal">
+      <Table variant="striped" colorScheme="lightgray">
         <Thead>
           <Tr>
             {data[0].map((d: string | number) => (

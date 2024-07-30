@@ -8,6 +8,7 @@ import { pickChart } from '../util/pickChart';
 import * as articulate from '../api/articulate-llm';
 import { CATEGORIES } from '../constants/constants';
 import ThreeDimAreaChart from '../charts/ThreeDimAreaChart';
+import CsvTable from '../charts/CsvTable';
 
 type ExperimentalProps = {
   children: React.ReactNode;
@@ -36,10 +37,25 @@ function AppComponent(props: App) {
     [20, 5, 33],
   ];
 
+  const testData = [
+    ['x', 'y', 'z', 'a', 'b', 'c'],
+    [12, 2, 4, 5, 6, 7],
+    [23, 55, 1, 8, 9, 10],
+    [7, 18, 30, 11, 12, 13],
+    [42, 11, 26, 14, 15, 16],
+    [15, 37, 6, 17, 18, 19],
+    [29, 8, 19, 20, 21, 'asdfasfasdfasdfasdfasdfasdfasdfadf'],
+    [35, 25, 14, 23, 24, 25],
+    [10, 45, 3, 26, 27, 28],
+    [20, 5, 33, 29, 30, 31],
+    [32, 16, 22, 33, 34, 35],
+  ];
+
   return (
     <Box height="full" width="full" overflow="auto">
-      <Box>Experimental</Box>
-      <ThreeDimAreaChart data={threeDAreaChartData} />
+      {/* <Box>Experimental</Box>
+      <ThreeDimAreaChart data={threeDAreaChartData} /> */}
+      <CsvTable data={testData} />
     </Box>
   );
 }
