@@ -54,12 +54,14 @@ function AppComponent(props: App) {
 
       // If it's a table show a table
       if (s.chartSpecs.chartType.toLowerCase() === 'table') {
+        setData(chartData);
         setIsTable(true);
         return;
       }
 
       // If it's a 3D chart show it
       if (s.chartSpecs.chartType.toLowerCase() === '3d area chart') {
+        setData(chartData);
         setIs3DChart(true);
         return;
       }

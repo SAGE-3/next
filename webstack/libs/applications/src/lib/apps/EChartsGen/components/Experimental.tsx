@@ -44,7 +44,7 @@ function AppComponent(props: App) {
     [7, 18, 30, 11, 12, 13],
     [42, 11, 26, 14, 15, 16],
     [15, 37, 6, 17, 18, 19],
-    [29, 8, 19, 20, 21, 'asdfasfasdfasdfasdfasdfasdfasdfadf'],
+    [29, 8, 19, 20, 21, "asdfasfasdfasdfasdfasdfasdfasdfadf"],
     [35, 25, 14, 23, 24, 25],
     [10, 45, 3, 26, 27, 28],
     [20, 5, 33, 29, 30, 31],
@@ -53,9 +53,9 @@ function AppComponent(props: App) {
 
   return (
     <Box height="full" width="full" overflow="auto">
-      {/* <Box>Experimental</Box>
-      <ThreeDimAreaChart data={threeDAreaChartData} /> */}
-      <CsvTable data={testData} />
+      {/* <Box>Experimental</Box> */}
+      {/* <ThreeDimAreaChart data={threeDAreaChartData} /> */}
+      {/* <CsvTable data={testData} /> */}
     </Box>
   );
 }

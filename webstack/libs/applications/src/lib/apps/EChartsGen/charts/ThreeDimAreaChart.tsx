@@ -10,6 +10,7 @@ const ThreeDimAreaChart: React.FC<ThreeDimAreaChartProps> = ({ data }) => {
 
   useEffect(() => {
     const currentChartRef = chartRef.current;
+    console.log('rerendering 3d area chart');
 
     if (currentChartRef && data.length > 1) {
       // Extract header and data
