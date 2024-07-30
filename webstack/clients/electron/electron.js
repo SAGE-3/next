@@ -48,6 +48,7 @@ const { buildMenu } = require('./src/menuBuilder');
 // Stores
 const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
+console.log(windowState);
 const bookmarkStore = require('./src/bookmarkstore');
 
 // SAGE3 Google maps APIKEY needed for user geo-location service
@@ -316,13 +317,6 @@ function openWindow() {
 
   // if server is specified, used the URL
   if (commander.server) {
-    // Start to build a URL to load
-    var location = commander.server;
-    currentServer = location;
-
-    if (gotoURL) mainWindow.loadURL(gotoURL);
-    else mainWindow.loadURL(location);
-
     if (commander.monitor !== null) {
       mainWindow.on('show', function () {
         mainWindow.setFullScreen(true);
@@ -390,15 +384,13 @@ const defaultSize = {
 
 // Function to save the state in the data store
 const saveState = async () => {
-  if (!mainWindow.isMinimized()) {
+  if (mainWindow && !mainWindow.isMinimized()) {
     Object.assign(state, getCurrentPosition());
   }
-  state.fullscreen = mainWindow.isFullScreen();
-
-  // Save the board URL in a format that can be used to re-enter the board
-  var boardURL = mainWindow.webContents.getURL();
-  boardURL = boardURL.replace('/board/', '/enter/');
-  state.server = boardURL;
+  state.fullScreen = false;
+  if (mainWindow) {
+    state.fullscreen = mainWindow.isFullScreen();
+  }
 
   // Save the state
   windowStore.setWindow(state);
@@ -530,6 +522,38 @@ function createWindow() {
 
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
+
+  let location = windowState.server || 'file://html/landing.html';
+  if (commander.server) location = commander.server;
+  if (gotoURL) location = gotoURL;
+
+  console.log('Electron>	Opening', location);
+
+  mainWindow.loadURL(location);
+
+  mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
+    // If URL Contains /board we are within a board and lets save the url as a board url
+    // https://pele.manoa.hawaii.edu/#/enter/55b1bf6a-d308-4afc-979c-84bca5c62a2b/6a97a383-a1ca-4193-9604-3632c8bbf0a4
+    // https://host/#/enter/uuid/uuid
+    // Extract string after /#/
+    let savedURL = null;
+    if (url.includes('/board')) {
+      const boardURL = url.split('/board/')[1];
+      const hostname = new URL(url).hostname;
+      savedURL = `https://${hostname}/#/enter/${boardURL}`;
+    } else {
+      console.log('Electron>	Not a board');
+      // Save just the plain url with no modifications
+      const urlInstance = new URL(url);
+      const hostname = urlInstance.hostname;
+      savedURL = `https://${hostname}`;
+    }
+    if (savedURL) {
+      console.log('Electron>	Saving Location', savedURL);
+      state.server = savedURL;
+      saveState();
+    }
+  });
 
   // Build a menu
   buildMenu(mainWindow, commander);
