@@ -20,7 +20,11 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
-import { useUIStore, useInsightStore } from '@sage3/frontend';
+import {
+  useUIStore,
+  useInsightStore,
+  useHexColor,
+} from '@sage3/frontend';
 
 type TagFrequency = Record<string, number>
 
@@ -130,11 +134,12 @@ export function TagsDisplay() {
           size="sm"
           key={index}
           borderRadius="full"
-          border={groupTags.includes(tag) ? 'dashed 2px white' : 'solid 2px transparent'}
+          border="solid 2px"
+          borderColor={tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'gray'}
           variant="solid"
           cursor="pointer"
           fontSize="12px"
-          colorScheme={tag.split(delimiter)[1]}
+          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
           onClick={() => groupApps(tag)}
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
@@ -165,11 +170,12 @@ export function TagsDisplay() {
                     id={`tag-${tag}`}
                     size="sm"
                     borderRadius="full"
-                    border={groupTags.includes(tag) ? 'dashed 2px white' : 'solid 2px transparent'}
+                    border="solid 2px"
+                    borderColor={tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'gray'}
                     variant="solid"
                     cursor="pointer"
                     fontSize="12px"
-                    colorScheme={tag.split(delimiter)[1]}
+                    bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
                     onClick={() => groupApps(tag)}
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}

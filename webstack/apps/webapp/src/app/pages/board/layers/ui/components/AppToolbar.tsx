@@ -229,7 +229,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
   const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of ;~ invalid tag syntax
   const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
-  const [tagColor, setTagColor] = useState<string>("teal"); // store current color of the ColorPicker
+  const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
   const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
   const toast = useToast();
 
@@ -469,6 +469,7 @@ export function AppToolbar(props: AppToolbarProps) {
       setIsModalOpen(true);
       setOldTag(tag); 
       setInputValue(tag.split(delimiter)[0]);
+      setTagColor(tag.split(delimiter)[1] as SAGEColors);
     };
 
     // Close modal and clear input value
@@ -555,7 +556,7 @@ export function AppToolbar(props: AppToolbarProps) {
     };
 
     const handleColorChange = (color: string) => {
-      setTagColor(color);
+      setTagColor(color as SAGEColors);
     }
   
     return (
