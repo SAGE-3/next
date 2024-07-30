@@ -531,25 +531,33 @@ function createWindow() {
 
   mainWindow.loadURL(location);
 
+  // Did navigate event
+  mainWindow.webContents.on('did-navigate', (event, url) => {
+    // Check if theu user navigated to the landing page
+    if (url.includes('file') && url.includes('landing.html')) {
+      state.server = 'file://html/landing.html';
+      saveState();
+    }
+  });
+
   mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
     // If URL Contains /board we are within a board and lets save the url as a board url
-    // https://pele.manoa.hawaii.edu/#/enter/55b1bf6a-d308-4afc-979c-84bca5c62a2b/6a97a383-a1ca-4193-9604-3632c8bbf0a4
-    // https://host/#/enter/uuid/uuid
-    // Extract string after /#/
     let savedURL = null;
     if (url.includes('/board')) {
-      const boardURL = url.split('/board/')[1];
+      // Grab the last two parts of the URL (/board/roomId/boardId)
+      // Safer since the URL could have more parts for odd cases
+      const parts = url.split('/');
+      const roomId = parts[parts.length - 2];
+      const boardId = parts[parts.length - 1];
       const hostname = new URL(url).hostname;
-      savedURL = `https://${hostname}/#/enter/${boardURL}`;
+      savedURL = `https://${hostname}/#/enter/${roomId}/${boardId}`;
     } else {
-      console.log('Electron>	Not a board');
       // Save just the plain url with no modifications
       const urlInstance = new URL(url);
       const hostname = urlInstance.hostname;
       savedURL = `https://${hostname}`;
     }
     if (savedURL) {
-      console.log('Electron>	Saving Location', savedURL);
       state.server = savedURL;
       saveState();
     }
