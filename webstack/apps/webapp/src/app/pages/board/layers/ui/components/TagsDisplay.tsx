@@ -17,33 +17,76 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Tooltip,
 } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { useUIStore, useInsightStore } from '@sage3/frontend';
+
+type TagFrequency = Record<string, number>
 
 export function TagsDisplay() {
   // UI Store
   const { setSelectedAppsIds, setSelectedTag } = useUIStore((state) => state);
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
-  
-  // Manage menu visibility
-  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); 
 
+  // Semantic to separate a tag's string name from color
+  const delimiter = ";~";
+
+   // Tag names are sorted from most to least frequent
+  const [sortedTags, setSortedTags] = useState<string[]>([]);
   // Keep track of tags in overflow menu
-  const [overflowTags, setOverflowTags] = useState<string[]>([]);
+  const [overflowIndex, setOverflowIndex] = useState<number>(-1);
   // Ref to the container holding tags
   const tagsContainerRef = useRef<HTMLDivElement>(null);
+
+  // Manage menu visibility
+  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); 
+  
   // Manage the state of selected board tags
   const [groupTags, setGroupTags] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Keep track of frequency of all tags
+    const freqCounter: TagFrequency = {};
+    insights.forEach(insight => {
+      insight.data.labels.forEach(tag => {
+        if (freqCounter[tag]) {
+          freqCounter[tag] += 1;
+        }
+        else {
+          freqCounter[tag] = 1;
+        }
+      });
+    });
 
-  // Retrieve tags from all apps
-  const allTags: string[] = [];
-  insights.forEach((insight) => {
-    allTags.push(...insight.data.labels);
-  });
-  // Ensure tags are unique
-  const uniqueTags = Array.from(new Set(allTags));
+    let allTags: string[] = [];
+    insights.forEach((insight) => {
+      allTags.push(...insight.data.labels);
+    });
+    allTags = Array.from(new Set(allTags));
+    allTags.sort((a, b) => freqCounter[b] - freqCounter[a]); // Sort in descending order
+    setSortedTags(allTags);
+
+    // Calculate total width of tags to determine if overflow menu is needed for each app
+    if (tagsContainerRef.current) {
+      let totalWidth = 0;
+      for (let i = 0; i < sortedTags.length; i++) {
+        const tagWidth = document.getElementById(`tag-${sortedTags[i]}`)?.offsetWidth || 0;
+        if (totalWidth + tagWidth > (window.innerWidth / 3)) { // if exceeds width limit
+          setOverflowIndex(i);
+          break;
+        }
+        else {
+          totalWidth += tagWidth; // otherwise, add to total width
+        }
+      }
+    }
+  }, [insights]);
+
+  // Separate tags into two lists
+  const visibleTags = overflowIndex === -1 ? sortedTags : sortedTags.slice(0, overflowIndex);
+  const overflowTags = overflowIndex === -1 ? [] : sortedTags.slice(overflowIndex);
 
   // Group apps with specified tags
   const groupApps = (tagName: string) => {
@@ -74,29 +117,6 @@ export function TagsDisplay() {
     setSelectedTag('');
   }
 
-  // Calculate total width of tags to determine if "..." menu is needed
-  useEffect(() => {
-    const updateOverflowTags = () => {
-      if (tagsContainerRef.current) {
-        let totalWidth = 0;
-        const tempOverflowTags: string[] = [];
-        uniqueTags.forEach((tag) => {
-          const tagWidth = document.getElementById(`tag-${tag}`)?.offsetWidth || 0;
-          if (totalWidth + tagWidth > (window.innerWidth / 3)) { // if exceeds width limit
-            tempOverflowTags.push(tag); // add to overflow tags
-          }
-          else {
-            totalWidth += tagWidth; // otherwise, add to total width
-          }
-        });
-        setOverflowTags(tempOverflowTags);
-      }
-    };
-
-    updateOverflowTags(); // initial call to set overflow tags
-  }, [uniqueTags]);
-  const visibleTags = uniqueTags.filter((tag) => !overflowTags.includes(tag)); // tags which are visible in the main list
-
   // Expand or collapse tag menu
   const toggleMenu = () => {
     isMenuOpen ? onMenuClose() : onMenuOpen();
@@ -110,40 +130,51 @@ export function TagsDisplay() {
           size="sm"
           key={index}
           borderRadius="full"
+          border={groupTags.includes(tag) ? 'dashed 2px white' : 'solid 2px transparent'}
           variant="solid"
+          cursor="pointer"
           fontSize="12px"
-          colorScheme={groupTags.includes(tag) ? 'teal' : 'gray'}
+          colorScheme={tag.split(delimiter)[1]}
           onClick={() => groupApps(tag)}
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
         >
-          <TagLabel>{tag}</TagLabel>
+          <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
         </Tag>
       ))}
       {overflowTags.length > 0 && (
           <Menu isOpen={isMenuOpen}>
-            <MenuButton
-              as={Button}
-              size="xs"
-              onClick={toggleMenu}
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              label="See more tags"
             >
-              {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
-            </MenuButton>
-            <MenuList>
+              <MenuButton
+                as={Button}
+                size="xs"
+                onClick={toggleMenu}
+              >
+                {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+              </MenuButton>
+            </Tooltip>
+            <MenuList sx={{maxHeight: '500px', overflowY: 'auto'}}>
               {overflowTags.map((tag, index) => (
                 <MenuItem key={index}>
                   <Tag
                     id={`tag-${tag}`}
                     size="sm"
                     borderRadius="full"
+                    border={groupTags.includes(tag) ? 'dashed 2px white' : 'solid 2px transparent'}
                     variant="solid"
+                    cursor="pointer"
                     fontSize="12px"
-                    colorScheme={groupTags.includes(tag) ? 'teal' : 'gray'}
+                    colorScheme={tag.split(delimiter)[1]}
                     onClick={() => groupApps(tag)}
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
                   >
-                    <TagLabel>{tag}</TagLabel>
+                    <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
                   </Tag>
                 </MenuItem>
               ))}
