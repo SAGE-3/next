@@ -30,11 +30,11 @@ import 'tldraw/tldraw.css'
 const defaultTickRate = 1000 / 3;
 
 // Zustand store to communicate with toolbar
-interface MapStore {
+interface DrawStore {
   ed: { [key: string]: Editor };
   saveEditor: (id: string, ed: Editor) => void;
 }
-const useStore = create<MapStore>()((set) => ({
+const useStore = create<DrawStore>()((set) => ({
   ed: {},
   saveEditor: (id: string, ed: Editor) => set((state) => ({ ed: { ...state.ed, ...{ [id]: ed } } })),
 }));

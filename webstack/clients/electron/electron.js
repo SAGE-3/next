@@ -84,6 +84,9 @@ const ipcMain = electron.ipcMain;
 // Restore the network order
 dns.setDefaultResultOrder('ipv4first');
 
+// Enable SharedArrayBuffer for Zoom
+app.commandLine.appendSwitch('enable-features', 'SharedArrayBuffer');
+
 /////////////////////////////////////////////////////////////////
 // Auto updater
 /////////////////////////////////////////////////////////////////
@@ -313,13 +316,6 @@ function openWindow() {
 
   // if server is specified, used the URL
   if (commander.server) {
-    // Start to build a URL to load
-    var location = commander.server;
-    currentServer = location;
-
-    if (gotoURL) mainWindow.loadURL(gotoURL);
-    else mainWindow.loadURL(location);
-
     if (commander.monitor !== null) {
       mainWindow.on('show', function () {
         mainWindow.setFullScreen(true);
@@ -387,15 +383,13 @@ const defaultSize = {
 
 // Function to save the state in the data store
 const saveState = async () => {
-  if (!mainWindow.isMinimized()) {
+  if (mainWindow && !mainWindow.isMinimized()) {
     Object.assign(state, getCurrentPosition());
   }
-  state.fullscreen = mainWindow.isFullScreen();
-
-  // Save the board URL in a format that can be used to re-enter the board
-  var boardURL = mainWindow.webContents.getURL();
-  boardURL = boardURL.replace('/board/', '/enter/');
-  state.server = boardURL;
+  state.fullScreen = false;
+  if (mainWindow) {
+    state.fullscreen = mainWindow.isFullScreen();
+  }
 
   // Save the state
   windowStore.setWindow(state);
@@ -527,6 +521,46 @@ function createWindow() {
 
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
+
+  let location = windowState.server || 'file://html/landing.html';
+  if (commander.server) location = commander.server;
+  if (gotoURL) location = gotoURL;
+
+  console.log('Electron>	Opening', location);
+
+  mainWindow.loadURL(location);
+
+  // Did navigate event
+  mainWindow.webContents.on('did-navigate', (event, url) => {
+    // Check if theu user navigated to the landing page
+    if (url.includes('file') && url.includes('landing.html')) {
+      state.server = 'file://html/landing.html';
+      saveState();
+    }
+  });
+
+  mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
+    // If URL Contains /board we are within a board and lets save the url as a board url
+    let savedURL = null;
+    if (url.includes('/board')) {
+      // Grab the last two parts of the URL (/board/roomId/boardId)
+      // Safer since the URL could have more parts for odd cases
+      const parts = url.split('/');
+      const roomId = parts[parts.length - 2];
+      const boardId = parts[parts.length - 1];
+      const hostname = new URL(url).hostname;
+      savedURL = `https://${hostname}/#/enter/${roomId}/${boardId}`;
+    } else {
+      // Save just the plain url with no modifications
+      const urlInstance = new URL(url);
+      const hostname = urlInstance.hostname;
+      savedURL = `https://${hostname}`;
+    }
+    if (savedURL) {
+      state.server = savedURL;
+      saveState();
+    }
+  });
 
   // Build a menu
   buildMenu(mainWindow, commander);
