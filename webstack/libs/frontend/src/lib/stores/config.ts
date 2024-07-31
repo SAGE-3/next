@@ -20,7 +20,7 @@ interface ConfigState {
 }
 
 /**
- * The UIStore.
+ * The Config store
  */
 export const useConfigStore = create<ConfigState>()((set, get) => {
   // get the confguration from the server and set it

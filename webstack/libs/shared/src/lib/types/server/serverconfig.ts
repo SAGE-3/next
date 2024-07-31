@@ -91,6 +91,7 @@ export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' 
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
+  chat: ServerConfiguration['services']['chat'];
 };
 
 /**

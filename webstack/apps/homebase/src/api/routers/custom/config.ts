@@ -49,6 +49,7 @@ export function ConfigRouter(): express.Router {
       token: token,
       admins: config.auth.admins || [],
       openai: config.services.openai || {},
+      chat: config.services.chat || {},
     } as OpenConfiguration;
     res.json(configuration);
   });
