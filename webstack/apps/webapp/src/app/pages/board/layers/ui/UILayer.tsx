@@ -276,7 +276,7 @@ export function UILayer(props: UILayerProps) {
           />
         </Tooltip>)}
 
-        <IntelligencePane isBoard={true} notificationCount={4} />
+        <IntelligencePane isBoard={true} notificationCount={0} />
       </HStack >
 
       {/* Main Button Bottom Left */}
