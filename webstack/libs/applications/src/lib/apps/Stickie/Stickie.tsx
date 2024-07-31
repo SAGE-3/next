@@ -221,8 +221,10 @@ function AppComponent(props: App): JSX.Element {
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
+          whiteSpace={'pre-wrap'}
           // display={isSmall || isDragging ? 'none' : 'block'}
           css={{
+            scrollPaddingBlock: '1em',
             // Balance the text, improve text layouts
             textWrap: 'pretty', // 'balance',
             '&::-webkit-scrollbar': {
