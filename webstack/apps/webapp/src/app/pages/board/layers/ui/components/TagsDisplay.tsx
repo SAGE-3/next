@@ -11,6 +11,7 @@ import {
   HStack,
   Tag,
   TagLabel,
+  TagCloseButton,
   useDisclosure,
   Button,
   Menu,
@@ -33,6 +34,7 @@ export function TagsDisplay() {
   const { setSelectedAppsIds, setSelectedTag } = useUIStore((state) => state);
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
+  const updateBatchInsight = useInsightStore((state) => state.updateBatch);
 
   // Semantic to separate a tag's string name from color
   const delimiter = ";~";
@@ -102,7 +104,7 @@ export function TagsDisplay() {
   
       // Get all app ids with the updated set of tags
       const appIds = insights
-        .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag)))
+        .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag))) // at least one tag exists in labels
         .map(insight => insight._id);
   
       // Update selection of apps
@@ -120,6 +122,23 @@ export function TagsDisplay() {
   const unhighlightApps = () => {
     setSelectedTag('');
   }
+
+  // Delete tag from all associated apps
+  const handleDeleteTag = (tagName: string) => {
+    // Collect all the updates
+    const updates = insights
+      .filter(insight => insight.data.labels.some(label => label.includes(tagName)))
+      .map(insight => ({
+        id: insight._id,
+        updates: { labels: insight.data.labels.filter(label => !label.includes(tagName)) }
+      }));
+
+    // Perform batch update if there are any updates to be made
+    updateBatchInsight(updates);
+
+    // Undo the propagated onClick
+    groupApps(tagName);
+  };
 
   // Expand or collapse tag menu
   const toggleMenu = () => {
@@ -139,12 +158,14 @@ export function TagsDisplay() {
           variant="solid"
           cursor="pointer"
           fontSize="12px"
+          color={groupTags.includes(tag) ? 'black' : 'white'}
           bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
           onClick={() => groupApps(tag)}
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
         >
           <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
+          <TagCloseButton onClick={() => handleDeleteTag(tag)} />
         </Tag>
       ))}
       {overflowTags.length > 0 && (
@@ -175,12 +196,14 @@ export function TagsDisplay() {
                     variant="solid"
                     cursor="pointer"
                     fontSize="12px"
+                    color={groupTags.includes(tag) ? 'black' : 'white'}
                     bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
                     onClick={() => groupApps(tag)}
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
                   >
                     <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
+                    <TagCloseButton onClick={() => handleDeleteTag(tag)} />
                   </Tag>
                 </MenuItem>
               ))}

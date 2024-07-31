@@ -42,7 +42,6 @@ import {
   ModalCloseButton,
   ModalBody,
   ModalFooter,
-  Center,
   useToast,
   Alert,
   AlertIcon,
@@ -629,39 +628,32 @@ export function AppToolbar(props: AppToolbarProps) {
         {isModalOpen && (
           <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
             <ModalOverlay />
-            <ModalContent>
+            <ModalContent sx={{ maxW: '410px'}}>
               <ModalHeader>
                 {oldTag === '' ? "Add Tag" : "Edit Tag"}
               </ModalHeader>
               <ModalCloseButton />
               <ModalBody>
-                <Center>
-                  <Input
-                    size="md"
-                    width="360px"
-                    mb={5}
-                    placeholder={oldTag === '' ? "Enter tags separated by spaces" : ''}
-                    _placeholder={{ opacity: 1, color: 'gray.400' }}
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleTagFromModal();
-                    }}
-                    animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
-                    autoFocus
-                  />
-                </Center>
-                <Center>
-                  <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} size="md" />
-                </Center>
+                <Input
+                  width="360px"
+                  mb={5}
+                  placeholder={oldTag === '' ? "Enter tags separated by spaces" : ''}
+                  _placeholder={{ opacity: 1, color: 'gray.400' }}
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleTagFromModal();
+                  }}
+                  animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
+                  autoFocus
+                />
+                <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
                 {isInvalidTag && (
-                  <Center>
-                    <Alert status="error" mt={5} width="360px" variant="left-accent">
-                      <AlertIcon />
-                      <AlertTitle>Error!</AlertTitle>
-                      <AlertDescription>The sequence ;~ is not allowed.</AlertDescription>
-                    </Alert>
-                  </Center>
+                  <Alert status="error" mt={5} width="360px" variant="left-accent">
+                    <AlertIcon />
+                    <AlertTitle>Error!</AlertTitle>
+                    <AlertDescription>The sequence ;~ is not allowed.</AlertDescription>
+                  </Alert>
                 )}
               </ModalBody>
               <ModalFooter>
