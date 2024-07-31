@@ -21,35 +21,62 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 
 # SAGE3 handle
 ps3 = PySage3(conf, prod_type)
-
+sage3_config = ps3.s3_comm.web_config
+logger.info("SAGE3 server configuration:")
+openai = sage3_config["openai"]
+logger.info(
+    (
+        "openai key: "
+        + openai["apiKey"]
+        + openai["apiKey"]
+        + " - model: "
+        + openai["model"]
+    ),
+)
+chat = sage3_config["chat"]
+logger.info(
+    "chat server: url: " + chat["url"] + " - model: " + chat["model"],
+)
 
 # AI
 from langchain_huggingface import llms
-from langchain_huggingface import HuggingFaceEndpoint
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.globals import set_debug, set_verbose
 
+# Models
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain_openai import ChatOpenAI
+
+
 # set to debug the queries into langchain
-# set_debug(True)
-# set_verbose(True)
+set_debug(True)
+set_verbose(True)
 
 # Llama3 server at EVL
-server = "https://arcade.evl.uic.edu/llama/"
+#     "https://arcade.evl.uic.edu/llama/"
+# Get the value from the SAGE3 server configuration
+chat_server = chat["url"]
+if chat_server[-1] != "/":
+    # add the trailing slash
+    chat_server += "/"
 
-# Get the token from the environment (shouln't be needed but a bug in the library)
-# token = os.getenv("HF_TOKEN")
 # LLM model using TGI interface
-llm = HuggingFaceEndpoint(
-    endpoint_url=server,
-    max_new_tokens=2048,
-    stop_sequences=[
-        "<|start_header_id|>",
-        "<|end_header_id|>",
-        "<|eot_id|>",
-        "<|reserved_special_token",
-    ],
-)
+if chat["url"] and chat["model"]:
+    llm_chat = HuggingFaceEndpoint(
+        endpoint_url=chat_server,
+        max_new_tokens=2048,
+        stop_sequences=[
+            "<|start_header_id|>",
+            "<|end_header_id|>",
+            "<|eot_id|>",
+            "<|reserved_special_token",
+        ],
+    )
+
+if openai["apiKey"] and openai["model"]:
+    llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
+
 
 # Prompt template for Llama3
 template = """
@@ -75,7 +102,10 @@ prompt = PromptTemplate.from_template(
 output_parser = StrOutputParser()
 
 # Session : prompt building and then LLM
-session = prompt | llm | output_parser
+if llm_openai:
+    session = prompt | llm_openai | output_parser
+elif llm_chat:
+    session = prompt | llm_chat | output_parser
 
 # Pydantic models: Question, Answer, Context
 
