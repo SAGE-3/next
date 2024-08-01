@@ -7,8 +7,8 @@
 # -----------------------------------------------------------------------------
 
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel, Field
+from typing import Optional, Literal, List
+from pydantic import BaseModel, Field, UUID4
 from typing import ClassVar
 from abc import abstractmethod
 
@@ -164,21 +164,33 @@ class TrackedBaseModel(BaseModel):
 
 
 class Position(TrackedBaseModel):
-    x: float
-    y: float
-    z: float
+    """
+    The position of the app on the board
+    """
+
+    x: float = Field(description="The x position of the app")
+    y: float = Field(description="The y position of the app")
+    z: float = Field(description="The z position of the app")
 
 
 class Size(TrackedBaseModel):
-    width: float
-    height: float
-    depth: float
+    """
+    The dimensions of the app
+    """
+
+    width: float = Field(description="The width of the app", default=200)
+    height: float = Field(description="The height of the app", default=200)
+    depth: float = Field(description="The depth of the app", default=0)
 
 
 class Rotation(TrackedBaseModel):
-    x: float
-    y: float
-    z: float
+    """
+    The rotation of the app on the board
+    """
+
+    x: float = Field(description="The x angle of the app", default=0)
+    y: float = Field(description="The y angle of the app", default=0)
+    z: float = Field(description="The z angle of the app", default=0)
 
 
 class AppTypes(Enum):
@@ -197,22 +209,21 @@ class AppTypes(Enum):
 
 
 class Data(TrackedBaseModel):
-    # name: str
-    # description: str
-    position: Position
-    size: Size
-    rotation: Rotation
-    # type: AppTypes
-    type: str
-    raised: bool
-    # owner_id: str = Field(alias='ownerId')
+    position: Position = Field(description="The position of the app on the board")
+    size: Size = Field(description="The dimensions of the app on the board")
+    rotation: Rotation = Field(description="The rotation of the app on the board")
+    raised: bool = Field(description="is the app raised")
+    type: str = Field(
+        description="The type of the app represented. For example, Stickie for stickie note, PDFViewer, etc."
+    )
 
 
 class SmartBit(TrackedBaseModel):
-    app_id: str = Field(alias="_id")
-    _createdAt: int
-    _updatedAt: int
-    data: Data
+    app_id: UUID4 = Field(alias="_id", description="A valid UUID4 of this asset.")
+    data: Data = Field(description="Generic app data like position, width and height")
+    tags: List[str] = Field(description="List of tag assigned to this app", default=[])
+    _createdAt: int = Field(description="Time of creation of this app")
+    _updatedAt: int = Field(description="Time when the app was last updated.")
 
     _s3_comm: ClassVar = SageCommunication(conf, prod_type)
 

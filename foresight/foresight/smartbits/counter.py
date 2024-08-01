@@ -6,12 +6,13 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
+from pydantic import Field
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
 class CounterState(TrackedBaseModel):
-    count: int
+    count: int = Field(description="The count to display on the counter")
 
 
 class Counter(SmartBit):
