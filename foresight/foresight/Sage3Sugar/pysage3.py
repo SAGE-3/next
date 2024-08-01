@@ -25,6 +25,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
+
 # TODO import functions explicitly below
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
@@ -270,7 +271,7 @@ class PySage3:
         if width is not None:
             app.data.size.width = width
         if height is not None:
-            app.data.size.height = width
+            app.data.size.height = height
         if depth is not None:
             app.data.size.depth = depth
         app.send_updates()
@@ -558,7 +559,7 @@ class PySage3:
             align_to_bottom(smartbits)
         elif align == "column":
             align_by_col(smartbits, num_cols=by_dim)
-        elif align== "row":
+        elif align == "row":
             align_by_row(smartbits, num_rows=by_dim)
         elif align == "stack":
             align_stack(smartbits)
