@@ -1,8 +1,7 @@
 # python modules
-import os, json
+import os, json, time
 import logging
 from dotenv import load_dotenv
-from datetime import date
 
 # Models
 from pydantic import BaseModel, Json
@@ -150,8 +149,8 @@ async def ask_question(qq: Question):
         "Got question> from " + qq.user + " from:" + qq.location + " using: " + qq.model
     )
     try:
-        # Get the current date
-        today = date.today()
+        # Get the current date and time
+        today = time.asctime()
 
         # Select the session
         if qq.model == "chat":
@@ -205,8 +204,8 @@ async def summary(qq: Question):
         "Got summary> from " + qq.user + " from:" + qq.location + " using: " + qq.model
     )
     try:
-        # Get the current date
-        today = date.today()
+        # Get the current date and time
+        today = time.asctime()
 
         # Select the session
         if qq.model == "chat":
@@ -229,7 +228,10 @@ async def summary(qq: Question):
                 logger.info("Stickie> " + text)
 
         # Build the question
-        new_question = "Summarize the following text:\n" + whole_text
+        new_question = (
+            "First, summarize the following text concisely and then, offer your opinion on the topics addressed in the text:\n"
+            + whole_text
+        )
 
         # Ask the question
         response = await session.ainvoke(
