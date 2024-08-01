@@ -50,10 +50,16 @@ export function AgentRouter(): express.Router {
   router.post('/ask', async ({ body }, res) => {
     // Try/catch block to handle errors
     try {
-      // Query Llama with the input
+      // Query langchain with the input
       const response = await session.ask(body);
-      // Return the response
-      res.status(200).json(response);
+      if (response.success) {
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false, error_message: response.r } as AgentStatusResponse;
+        res.status(500).json(responseMessage);
+      }
     } catch (error) {
       // Return an error message if the request fails
       const responseMessage = { success: false, error_message: error.toString() } as AgentStatusResponse;
@@ -77,7 +83,7 @@ export abstract class AgentModel {
 
 export class LangChainModel extends AgentModel {
   private _url: string;
-  public name = 'langchain-llama3';
+  public name = 'langchain';
 
   constructor() {
     super();
@@ -113,10 +119,11 @@ export class LangChainModel extends AgentModel {
           actions: data.actions,
         };
       } else {
+        const error = await response.json();
         return {
           success: false,
           id: request.id,
-          r: `Failed to query ${this.name}`,
+          r: error.detail,
         };
       }
     } catch (error) {

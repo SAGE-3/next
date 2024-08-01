@@ -13,7 +13,7 @@ import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, use
 
 import { MdSend, MdSettings } from 'react-icons/md';
 
-import { useUIStore, AiAPI, useHexColor, useUser, useAppStore } from '@sage3/frontend';
+import { useUIStore, AiAPI, useHexColor, useUser, useAppStore, useConfigStore } from '@sage3/frontend';
 import { AgentQueryType, genId } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -34,6 +34,8 @@ export function AIChat() {
   const scale = useUIStore((state) => state.scale);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const createApp = useAppStore((state) => state.create);
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -48,6 +50,7 @@ export function AIChat() {
   const [position, setPosition] = useState([0, 0]);
   const [username, setUsername] = useState('');
   const [location, setLocation] = useState('');
+  const [selectedModel, setSelectedModel] = useState('chat');
 
   // Display some notifications
   const toast = useToast();
@@ -79,7 +82,8 @@ export function AIChat() {
       }, id: id,
       user: username,
       location: location,
-      q: new_input
+      q: new_input,
+      model: selectedModel,
     };
     // Invoke the agent
     const response = await AiAPI.agents.ask(question);
@@ -95,7 +99,7 @@ export function AIChat() {
     } else {
       toast({
         title: 'Error',
-        description: 'Error sending query to the agent. Please try again.',
+        description: response.r || 'Error sending query to the agent. Please try again.',
         status: 'error',
         duration: 4000,
         isClosable: true,
@@ -160,11 +164,21 @@ export function AIChat() {
   };
 
   useEffect(() => {
-    async function fetchStatus() {
-      const response = true;
-      console.log('Agent Status>', response);
+    // async function fetchStatus() {
+    //   const response = true;
+    //   console.log('Agent Status>', response);
+    // }
+    // fetchStatus();
+
+    // Look for a previously set model
+    const local = localStorage.getItem('s3_ai_model');
+    if (local) {
+      // If value previously set in IntelligencePane/Settings, use it
+      setSelectedModel(local);
+    } else {
+      // Otherwise, use openai if available, else chat
+      setSelectedModel(config.openai.apiKey ? 'openai' : 'chat');
     }
-    fetchStatus();
 
     if (inputRef.current) {
       inputRef.current.focus();

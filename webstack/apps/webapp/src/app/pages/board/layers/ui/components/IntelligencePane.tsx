@@ -18,12 +18,19 @@ import {
   SliderTrack,
   Flex,
   HStack,
+  List,
+  ListItem,
+  UnorderedList,
+  Radio,
+  RadioGroup,
+  Stack,
 } from '@chakra-ui/react';
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
 
-import { useHexColor, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useUserSettings, useConfigStore } from '@sage3/frontend';
 import { AIChat } from './AIChat';
+import { set } from 'date-fns';
 
 type SIProps = {
   notificationCount: number;
@@ -35,6 +42,8 @@ export function IntelligencePane(props: SIProps) {
   const isBoard = props.isBoard ? props.isBoard : false;
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  // Configuration information
+  const config = useConfigStore((state) => state.config);
 
   // Colors
   const purpleColorMode = useColorModeValue('purple.400', 'purple.400');
@@ -46,6 +55,7 @@ export function IntelligencePane(props: SIProps) {
   const [sliderValue1, setSliderValue1] = useState(4);
   const [sliderValue2, setSliderValue2] = useState(3);
   const [location, setLocation] = useState('');
+  const [selectedModel, setSelectedModel] = useState('chat');
 
   const openOrClose = () => {
     if (isOpen) {
@@ -55,12 +65,27 @@ export function IntelligencePane(props: SIProps) {
     }
   };
 
+  const setAIModel = (val: string) => {
+    console.log('AI Model> ', val);
+    setSelectedModel(val);
+    localStorage.setItem('s3_ai_model', val);
+  };
+
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(function (location) {
       console.log('LatLong> ', location);
       setLocation(location.coords.latitude + ',' + location.coords.longitude);
     });
 
+    // Look for a previously set model
+    const local = localStorage.getItem('s3_ai_model');
+    if (local) {
+      // If value previously set, use it
+      setSelectedModel(local);
+    } else {
+      // Otherwise, use openai if available, else chat
+      setSelectedModel(config.openai.apiKey ? 'openai' : 'chat');
+    }
   }, []);
 
   return (
@@ -85,6 +110,7 @@ export function IntelligencePane(props: SIProps) {
                   )}
                 </Tab>
                 <Tab>Settings</Tab>
+                <Tab>Debug</Tab>
               </TabList>
 
               <TabPanels>
@@ -98,18 +124,18 @@ export function IntelligencePane(props: SIProps) {
                 <TabPanel>
                   <VStack>
                     <VStack p={1} pt={1} w="100%" align={"left"}>
-                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Location</Text>
-                      <HStack>
-                        <Button colorScheme="purple" size="sm" w="130px" variant={"solid"}
-                          onClick={() => {
-                            navigator.geolocation.getCurrentPosition(function (location) {
-                              setLocation(location.coords.latitude + ',' + location.coords.longitude);
-                            }, function (e) { console.log('Location> error', e); });
-                          }}> Get Location </Button>
-                        <Spacer />
-                        <Text fontSize="md" mt={1} >Lat-Lng: {location}</Text>
-                      </HStack>
-                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise (Not implemented)</Text>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>AI Models</Text>
+                      <RadioGroup defaultValue={selectedModel} onChange={setAIModel}>
+                        <Stack>
+                          <Radio value='chat' isDisabled={!config.chat.url}><b>Chat</b>: {config.chat.model} - {config.chat.url.substring(0, 12) + '•'.repeat(10)}</Radio>
+                          <Radio value='openai' isDisabled={!config.openai.apiKey}><b>OpenAI</b>: {config.openai.model} - {config.openai.apiKey ? config.openai.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
+                          </Radio>
+                        </Stack>
+                      </RadioGroup>
+                    </VStack>
+
+                    <VStack p={1} pt={1} w="100%" align={"left"}>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise <small>(Not Yet Implemented)</small></Text>
                       <Flex>
                         <Text fontSize="md">Novice</Text>
                         <Spacer />
@@ -141,7 +167,7 @@ export function IntelligencePane(props: SIProps) {
                     </VStack>
 
                     <VStack p={1} pt={6} w="100%" align={"left"}>
-                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity (Not implemented)</Text>
+                      <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity <small>(Not Yet Implemented)</small></Text>
                       <Flex>
                         <Text fontSize="md">Snapshot</Text>
                         <Spacer />
@@ -173,7 +199,23 @@ export function IntelligencePane(props: SIProps) {
                       </Slider>
                     </VStack>
                   </VStack>
+                </TabPanel>
 
+                <TabPanel>
+                  {/* Debug panel */}
+                  <VStack p={1} pt={1} w="100%" align={"left"}>
+                    <Text fontSize="lg" mb={1} fontWeight={"bold"}>Location</Text>
+                    <HStack>
+                      <Button colorScheme="purple" size="sm" w="130px" variant={"solid"}
+                        onClick={() => {
+                          navigator.geolocation.getCurrentPosition(function (location) {
+                            setLocation(location.coords.latitude + ',' + location.coords.longitude);
+                          }, function (e) { console.log('Location> error', e); });
+                        }}> Get Location </Button>
+                      <Spacer />
+                      <Text fontSize="md" mt={1} >Lat-Lng: {location}</Text>
+                    </HStack>
+                  </VStack>
                 </TabPanel>
 
               </TabPanels>

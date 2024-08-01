@@ -263,7 +263,8 @@ async function agentAsk(request: AgentQueryType): Promise<AgentQueryResponse> {
       const jsonResponse = await response.json();
       return { success: true, r: jsonResponse.r, id: jsonResponse.id, actions: jsonResponse.actions };
     } else {
-      return { success: false, r: response.statusText, id: request.id };
+      const error_text = await response.json();
+      return { success: false, r: error_text.error_message, id: request.id };
     }
   } catch (error) {
     return { success: false, r: 'Query failed', id: request.id };

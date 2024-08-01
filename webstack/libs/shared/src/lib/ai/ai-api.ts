@@ -42,6 +42,7 @@ export type AgentQueryType = {
   user: string;
   location: string;
   q: string;
+  model: string;
 };
 
 export type AgentQueryResponse = {

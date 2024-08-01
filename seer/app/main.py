@@ -9,7 +9,7 @@ from pydantic import BaseModel, Json
 from typing import List, Any, NamedTuple
 
 # Web API
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -50,8 +50,8 @@ from langchain_openai import ChatOpenAI
 
 
 # set to debug the queries into langchain
-set_debug(True)
-set_verbose(True)
+# set_debug(True)
+# set_verbose(True)
 
 # Llama3 server at EVL
 #     "https://arcade.evl.uic.edu/llama/"
@@ -103,9 +103,9 @@ output_parser = StrOutputParser()
 
 # Session : prompt building and then LLM
 if llm_openai:
-    session = prompt | llm_openai | output_parser
-elif llm_chat:
-    session = prompt | llm_chat | output_parser
+    session_openai = prompt | llm_openai | output_parser
+if llm_chat:
+    session_chat = prompt | llm_chat | output_parser
 
 # Pydantic models: Question, Answer, Context
 
@@ -124,6 +124,7 @@ class Question(BaseModel):
     q: str  # question
     user: str  # user name
     location: str  # location
+    model: str  # AI model: chat, openai
 
 
 class Answer(BaseModel):
@@ -145,9 +146,22 @@ def read_root():
 
 @app.post("/ask")
 async def ask_question(qq: Question):
-    logger.debug("Got question> from " + qq.user + " from:" + qq.location)
+    logger.info(
+        "Got question> from " + qq.user + " from:" + qq.location + " using: " + qq.model
+    )
     try:
+        # Get the current date
         today = date.today()
+
+        # Select the session
+        if qq.model == "chat":
+            session = session_chat
+        elif qq.model == "openai":
+            session = session_openai
+        else:
+            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+
+        # Ask the question
         response = await session.ainvoke(
             {
                 "question": qq.q,
@@ -170,16 +184,19 @@ async def ask_question(qq: Question):
                 },
             }
         )
-    except:
-        text = "I am sorry, I could not answer your question."
 
-    val = Answer(
-        id=qq.id,
-        r=text,
-        actions=[action1],
-    )
+        # Build the answer object
+        val = Answer(
+            id=qq.id,
+            r=text,
+            actions=[action1],
+        )
+        return val
 
-    return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
 
 
 if __name__ == "__main__":

@@ -45,7 +45,7 @@ import {
   NLPRouter,
   LogsRouter,
   KernelsRouter,
-  AgentsRouter,
+  // AgentsRouter,
   PresenceThrottle,
   AiRouter,
   AgentRouter,
@@ -77,7 +77,7 @@ export function expressAPIRouter(): express.Router {
 
   // Proxied Routes
   router.use('/kernels', KernelsRouter());
-  router.use('/agents', AgentsRouter());
+  // router.use('/agents', AgentsRouter());  // Not sure if needed since not using streams
 
   // Collections
   router.use('/users', UsersCollection.router());
@@ -106,7 +106,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/ai', AiRouter());
 
   // Agent Routes
-  router.use('/agent', AgentRouter());
+  router.use('/agents', AgentRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();
