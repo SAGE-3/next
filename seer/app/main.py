@@ -219,19 +219,14 @@ async def summary(qq: Question):
         # Collect all the stickies of the board
         room_id = qq.ctx.roomId
         board_id = qq.ctx.boardId
-        applist = ps3.get_smartbits(room_id, board_id)
+        applist = ps3.get_apps(room_id, board_id)
         whole_text = ""
-        for _, app in applist:
-            if app.data.type == "Stickie":
-                whole_text += app.state.text + "\n"
-                logger.info(
-                    "Stickie>"
-                    + str(app.app_id)
-                    + " "
-                    + app.data.type
-                    + " : "
-                    + app.state.text
-                )
+        for app_id, app in applist.items():
+            app_type = app.get("data", {}).get("type", None)
+            if app_type == "Stickie":
+                text = app.get("data", {}).get("state", {}).get("text")
+                whole_text += text + "\n"
+                logger.info("Stickie> " + text)
 
         # Build the question
         new_question = "Summarize the following text:\n" + whole_text
