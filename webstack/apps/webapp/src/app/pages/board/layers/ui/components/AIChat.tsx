@@ -9,7 +9,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router';
 
-import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, useToast, List, ListItem, ListIcon, Tooltip } from '@chakra-ui/react';
+import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, useToast, List, ListItem, ListIcon, Tooltip, Spinner } from '@chakra-ui/react';
 
 import { MdSend, MdSettings } from 'react-icons/md';
 
@@ -51,6 +51,7 @@ export function AIChat() {
   const [username, setUsername] = useState('');
   const [location, setLocation] = useState('');
   const [selectedModel, setSelectedModel] = useState('chat');
+  const [isWorking, setIsWorking] = useState(false);
 
   // Display some notifications
   const toast = useToast();
@@ -88,6 +89,7 @@ export function AIChat() {
     if (new_input === 'summary') {
       // Invoke the agent
       const response = await AiAPI.agents.summary(question);
+      setIsWorking(false);
       if (response.success) {
         // Store the agent's response
         setResponse(response.r);
@@ -109,6 +111,7 @@ export function AIChat() {
     } else {
       // Invoke the agent
       const response = await AiAPI.agents.ask(question);
+      setIsWorking(false);
       if (response.success) {
         // Store the agent's response
         setResponse(response.r);
@@ -133,6 +136,7 @@ export function AIChat() {
 
   const sendMessage = async () => {
     const text = input.trim();
+    setIsWorking(true);
     setInput('');
     setResponse('');
     setActions([]);
@@ -284,7 +288,7 @@ export function AIChat() {
                   bg={textColor}
                   p={1}
                   m={3}
-                  maxWidth="80%"
+                  // maxWidth="80%"
                   userSelect={'none'}
                   _hover={{ background: "purple.300" }}
                   background={'purple.200'}
@@ -293,7 +297,7 @@ export function AIChat() {
                 >
                   <Tooltip label="Double click to apply action" aria-label="A tooltip">
                     <ListItem key={index}><ListIcon as={MdSettings} color='green.500' />
-                      {action.type} {action.app} - {JSON.stringify(action.state)}
+                      Show the result on the board
                     </ListItem>
                   </Tooltip>
                 </Box>
@@ -316,7 +320,7 @@ export function AIChat() {
           ref={inputRef}
         />
         <InputRightElement onClick={sendMessage}>
-          <MdSend color="green.500" />
+          {isWorking ? <Spinner /> : <MdSend color="green.500" />}
         </InputRightElement>
       </InputGroup>
 
