@@ -222,8 +222,8 @@ class SmartBit(TrackedBaseModel):
     app_id: UUID4 = Field(alias="_id", description="A valid UUID4 of this asset.")
     data: Data = Field(description="Generic app data like position, width and height")
     tags: List[str] = Field(description="List of tag assigned to this app", default=[])
-    _createdAt: int = Field(description="Time of creation of this app")
-    _updatedAt: int = Field(description="Time when the app was last updated.")
+    _createdAt: int
+    _updatedAt: int
 
     _s3_comm: ClassVar = SageCommunication(conf, prod_type)
 
