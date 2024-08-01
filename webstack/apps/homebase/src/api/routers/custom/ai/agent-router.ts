@@ -67,6 +67,27 @@ export function AgentRouter(): express.Router {
     }
   });
 
+  // Post a summary request
+  router.post('/summary', async ({ body }, res) => {
+    // Try/catch block to handle errors
+    try {
+      // Query langchain with the input
+      const response = await session.summary(body);
+      if (response.success) {
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false, error_message: response.r } as AgentStatusResponse;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false, error_message: error.toString() } as AgentStatusResponse;
+      res.status(500).json(responseMessage);
+    }
+  });
+
   return router;
 }
 
@@ -106,6 +127,38 @@ export class LangChainModel extends AgentModel {
   public async ask(request: AgentQueryType): Promise<AgentQueryResponse> {
     try {
       const response = await fetch(`${this._url}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+      if (response.status == 200) {
+        const data: AnswerType = await response.json();
+        return {
+          success: true,
+          id: data.id,
+          r: data.r,
+          actions: data.actions,
+        };
+      } else {
+        const error = await response.json();
+        return {
+          success: false,
+          id: request.id,
+          r: error.detail,
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        id: request.id,
+        r: `Failed to query  ${this.name}: ${error.message}`,
+      };
+    }
+  }
+
+  public async summary(request: AgentQueryType): Promise<AgentQueryResponse> {
+    try {
+      const response = await fetch(`${this._url}/summary`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),

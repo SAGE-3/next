@@ -62,6 +62,7 @@ export const apiUrls = {
     agents: {
       status: '/api/agents/status',
       ask: '/api/agents/ask',
+      summary: '/api/agents/summary',
     },
   },
 };

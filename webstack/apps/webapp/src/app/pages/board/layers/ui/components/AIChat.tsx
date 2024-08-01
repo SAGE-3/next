@@ -85,25 +85,49 @@ export function AIChat() {
       q: new_input,
       model: selectedModel,
     };
-    // Invoke the agent
-    const response = await AiAPI.agents.ask(question);
-    if (response.success) {
-      // Store the agent's response
-      setResponse(response.r);
-      // Get the propose actions
-      if (response.actions) {
-        setActions(response.actions);
+    if (new_input === 'summary') {
+      // Invoke the agent
+      const response = await AiAPI.agents.summary(question);
+      if (response.success) {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      } else {
+        toast({
+          title: 'Error',
+          description: response.r || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
       }
-      // Increase the position
-      setPosition([position[0] + (400 + 20), position[1]]);
     } else {
-      toast({
-        title: 'Error',
-        description: response.r || 'Error sending query to the agent. Please try again.',
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-      });
+      // Invoke the agent
+      const response = await AiAPI.agents.ask(question);
+      if (response.success) {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      } else {
+        toast({
+          title: 'Error',
+          description: response.r || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      }
+
     }
   };
 

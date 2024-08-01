@@ -199,5 +199,80 @@ async def ask_question(qq: Question):
         raise HTTPException(status_code=500, detail=text)
 
 
+@app.post("/summary")
+async def summary(qq: Question):
+    logger.info(
+        "Got summary> from " + qq.user + " from:" + qq.location + " using: " + qq.model
+    )
+    try:
+        # Get the current date
+        today = date.today()
+
+        # Select the session
+        if qq.model == "chat":
+            session = session_chat
+        elif qq.model == "openai":
+            session = session_openai
+        else:
+            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+
+        # Collect all the stickies of the board
+        room_id = qq.ctx.roomId
+        board_id = qq.ctx.boardId
+        applist = ps3.get_smartbits(room_id, board_id)
+        whole_text = ""
+        for _, app in applist:
+            if app.data.type == "Stickie":
+                whole_text += app.state.text + "\n"
+                logger.info(
+                    "Stickie>"
+                    + str(app.app_id)
+                    + " "
+                    + app.data.type
+                    + " : "
+                    + app.state.text
+                )
+
+        # Build the question
+        new_question = "Summarize the following text:\n" + whole_text
+
+        # Ask the question
+        response = await session.ainvoke(
+            {
+                "question": new_question,
+                "username": qq.user,
+                "location": qq.location,
+                "date": today,
+            }
+        )
+        text = response
+        # Propose the answer to the user
+        action1 = json.dumps(
+            {
+                "type": "create_app",
+                "app": "Stickie",
+                "state": {"text": text, "fontSize": 24, "color": "purple"},
+                "data": {
+                    "title": "Answer",
+                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                    "size": {"width": 400, "height": 400, "depth": 0},
+                },
+            }
+        )
+
+        # Build the answer object
+        val = Answer(
+            id=qq.id,
+            r=text,
+            actions=[action1],
+        )
+        return val
+
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=9999, log_level="info")
