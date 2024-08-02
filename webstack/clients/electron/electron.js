@@ -601,11 +601,17 @@ function createWindow() {
     const request = args.request;
     switch (request) {
       case 'redirect':
-        const url = args.url;
-        if (!checkServerIsSage(url)) return;
-        mainWindow.loadURL(url);
+        const redirectUrl = args.url;
+        if (!checkServerIsSage(redirectUrl)) return;
+        mainWindow.loadURL(redirectUrl);
         break;
       case 'get-list':
+        updateLandingPage(mainWindow);
+        break;
+      case 'add-bookmark':
+        const name = args.name;
+        const addUrl = args.url;
+        bookmarkStore.addBookmark(name, addUrl);
         updateLandingPage(mainWindow);
         break;
     }

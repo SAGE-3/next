@@ -10,68 +10,236 @@
 <body>
   <script>
 
+    // Some Colors
+    const green = '#3cac66';
+    const red = '#EA6343';
 
-    function rebuildBookmarksList(bookmarks) {
-      const list = document.getElementById('bookmarks-content');
-      list.innerHTML = '';
-      bookmarks.forEach((bookmark) => addServerItemToTable(bookmark));
+    // Add hub element item to the list
+    function addHubItemToList(bookmark) {
+      const list = document.getElementById('hubs-list');
+      const hubElement = document.createElement('div');
+      hubElement.className = 'hub';
+      // Pending Status
+      hubElement.style.opacity = '0.50';
+      hubElement.style.cursor = 'not-allowed';
+
+      // Left Div Element
+      const leftDiv = document.createElement('div');
+      leftDiv.style.display = 'flex';
+      leftDiv.style.flexDirection = 'row';
+      leftDiv.style.alignItems = 'center';
+
+      const onlineIcon = document.createElement('div');
+      onlineIcon.id = 'online-icon-' + bookmark.url;
+      onlineIcon.style.width = '20px';
+      onlineIcon.style.height = '20px';
+      onlineIcon.style.borderRadius = '50%';
+      onlineIcon.style.backgroundColor = 'gray';
+      leftDiv.appendChild(onlineIcon);
+
+      const textDiv = document.createElement('div');
+      textDiv.style.marginLeft = '10px';
+      textDiv.style.display = 'flex';
+      textDiv.style.flexDirection = 'column';
+      textDiv.style.paddingLeft = "2px";
+      leftDiv.appendChild(textDiv);
+
+      const name = document.createElement('div');
+      name.innerText = bookmark.name;
+      name.style.fontWeight = 'bold';
+      name.style.fontSize = '1.2em';
+      name.style.marginBottom = '3px';
+      textDiv.appendChild(name);
+
+      const onlineUsers = document.createElement('div');
+      // Random number for now
+      onlineUsers.innerText = (Math.random() * 1000).toFixed(0) + ' Users'
+      hubElement.appendChild(leftDiv);
+      hubElement.appendChild(onlineUsers);
+
+      list.appendChild(hubElement);
+
+      // Fetch Server info and update the status
+      fetchServerInfo(bookmark.url).then((info) => {
+        // Server is Online
+        if (info) {
+          onlineIcon.style.backgroundColor = green;
+          hubElement.style.opacity = '1';
+          hubElement.style.cursor = 'pointer';
+          hubElement.style.pointerEvents = 'auto';
+          // On hover style change
+          hubElement.onmouseover = () => {
+            hubElement.style.backgroundColor = 'rgb(78, 78, 78)';
+            hubElement.style.transition = 'all 0.15s ease-in-out';
+          }
+          hubElement.onmouseout = () => {
+            hubElement.style.backgroundColor = 'rgb(58, 58, 58)';
+            hubElement.style.transition = 'all 0.15s ease-in-out';
+          }
+          hubElement.onclick = () => changePage(bookmark.url);
+        } else {
+          // Server is Offline
+          onlineIcon.style.backgroundColor = red;
+          hubElement.style.cursor = 'not-allowed';
+        }
+      });
     }
 
-    function addServerItemToTable(bookmark) {
-      const list = document.getElementById('bookmarks-content');
-      const a_bookmark = document.createElement('a');
-      a_bookmark.href = bookmark.url;
-      const a_text = document.createTextNode(bookmark.name);
-      a_bookmark.appendChild(a_text);
-      list.appendChild(a_bookmark);
+    // Change the user's page the the given url
+    async function changePage(url) {
+      window.location = url;
     }
 
-    function redirectTo(form) {
-      const url = form.serverurl.value;
-      window.electron.send('store-interface', { request: 'redirect', url });
-      return false;
+    // Function to show a dialog alert box at the bottom of the screen and removes it after 5 seconds
+    function showNotification(message, isError) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.innerText = message;
+      // Style it inline here
+      notification.style.position = 'fixed';
+      notification.style.bottom = '12px';
+      notification.style.left = 'calc(50% - 200px)';
+      notification.style.width = '400px';
+      notification.style.borderRadius = '5px';
+      notification.style.backgroundColor = isError ? red : green;
+      notification.style.color = 'white';
+      notification.style.padding = '10px';
+      notification.style.textAlign = 'center';
+      notification.style.zIndex = '1000';
+
+      // Shake animation of the error notification
+      if (isError) notification.style.animation = 'shake 0.25s';
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.remove();
+      }, 3000);
     }
 
-    window.electron.on('store-interface', (args) => {
+    // Show the add hub dialog
+    function showAddHubDialog() {
+      const addHub = document.getElementById('add-hub');
+      addHub.style.visibility = 'visible';
+    }
+
+    // Hide the add hub dialog
+    function hideAddHubDialog() {
+      const addHub = document.getElementById('add-hub');
+      addHub.style.visibility = 'hidden';
+    }
+
+    // Fetch the sage3 server info from the given url
+    async function fetchServerInfo(url) {
+      // GET request
+      try {
+        // Ensure the url does not have a slash at the end
+        if (url.endsWith('/')) {
+          url = url.slice(0, -1);
+        }
+        const response = await fetch(url + '/api/info');
+        // If the response is successful, parse the JSON
+        if (response.ok) {
+          const data = await response.json();
+          return data;
+        } else {
+          console.log('Error:', response.status);
+          return false;
+        }
+        const data = await response.json();
+      } catch (error) {
+        console.error('Error:', error);
+        return false;
+      }
+
+      return data;
+    }
+
+    // Listen for messages from the main process to update bookmark list
+    window.electron.on('store-interface', async (args) => {
       const response = args.response;
       if (response == 'bookmarks-list') {
         const bookmarks = args.bookmarks;
-        rebuildBookmarksList(bookmarks);
+
+        // Clear the list
+        const list = document.getElementById('hubs-list');
+        list.innerHTML = '';
+
+        // Sort Bookmarks by name
+        bookmarks.sort((a, b) => a.name.localeCompare(b.name));
+        // Add each bookmark to the list
+        bookmarks.forEach((bookmark) => addHubItemToList(bookmark));
+
       }
     });
-    window.electron.send('store-interface', { request: 'get-list' });
+
+    // Add a new hub to the list
+    function addNewHub(form) {
+      const url = form.serverurl.value;
+      // Get server Info
+      fetchServerInfo(url).then((info) => {
+        if (info) {
+          window.electron.send('store-interface', { request: 'add-bookmark', url, name: info.serverName });
+          showNotification('Server added successfully', false);
+          hideAddHubDialog();
+        } else {
+          showNotification('Could not add server', true);
+        }
+      }).catch(error => {
+        console.error('Error:', error);
+        showNotification('Could not add server', true);
+      });
+    }
+
+    function refreshHubList() {
+      window.electron.send('store-interface', { request: 'get-list' });
+    }
+
+    // Get the list of bookmarks at initial load
+    refreshHubList();
 
   </script>
 
   <div class="container">
     <div class="column">
-      <img src="../images/SAGE3DarkMode.png" alt="" width="500px" />
+      <div
+        style="height: 200px; width: 500px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
+        <img src="../images/SAGE3_APNG_WhiteText.png" style="transform: translateX(-15px)" alt="" width="750px" />
+      </div>
 
-      <div style="height: 50px; width: 100%"></div>
 
-      <h2 style="margin:5px;">Choose a server from...</h2>
-      <div class="dropdown">
-        
-        <button class="dropbtn" style="margin-top: 10px;">Servers</button>
-        <div class="dropdown-content" id="bookmarks-content">
-          <a href="#">Link 1</a>
+      <div style="height: 40px; width: 100%"></div>
+
+      <div style="display: flex;  justify-content: space-between; width:455px; margin-bottom: 8px;">
+        <div style="display: flex; align-items: center ; justify-content: left;">
+          <h2 style="margin:0px; transform: translateX(-20px)">Select a Hub</h2>
+        </div>
+        <div style="display: flex; align-items: center ; justify-content: right;">
+          <button class="add-hub-button" onclick="showAddHubDialog()">Add an unlisted hub</button>
+          <button class="refresh-hub-button" onclick="refreshHubList()">Refresh ⟲</button>
+        </div>
+
+      </div>
+
+      <!-- vertical list of hubs  -->
+      <div id="hubs-list"></div>
+
+      <!-- Add hub dialog -->
+      <div id="add-hub">
+        <div id="add-hub-dialog">
+          <h2 style="margin-top: 0px; margin-bottom:0px;">Add a new hub</h2>
+          <p style="margin-top: 2px; margin-bottom:0px;">URL must contain 'https'. (i.e. https://sage.app)</p>
+          <form id="new-hub-form" name="myForm" action="" onsubmit="addNewHub(this); return false;">
+            <input id="input-url" type="text" name="serverurl" value=""
+              placeholder="Enter the full URL of the hub you want to add" required />
+            </br>
+            <input type="submit" value="Submit" />
+          </form>
+        </div>
+        <div id="add-hub-dimmer" onclick="hideAddHubDialog()"></div>
+        <div>
         </div>
       </div>
-      <div style="height: 40px; width: 100%"></div>
-      <hr width="500px">
-      <div style="height: 30px; width: 100%"></div>
-      <h2 style="margin:10px;">Enter a SAGE3 Server URL</h2>
-
-
-      <form id="boardform" name="myForm" action="" onsubmit="redirectTo(this); return false;">
-        <input id="input-url" type="text" name="serverurl" value="" />
-        </br>
-        <input type="submit" value="Enter" />
-      </form>
+      <br />
     </div>
-  </div>
-  <br />
-  </div>
   </div>
 </body>
 
