@@ -53,7 +53,7 @@
 
       const onlineUsers = document.createElement('div');
       // Random number for now
-      onlineUsers.innerText = (Math.random() * 1000).toFixed(0) + ' Users'
+      onlineUsers.innerText = '';
       hubElement.appendChild(leftDiv);
       hubElement.appendChild(onlineUsers);
 
@@ -67,6 +67,9 @@
           hubElement.style.opacity = '1';
           hubElement.style.cursor = 'pointer';
           hubElement.style.pointerEvents = 'auto';
+          if (info.onlineUsers) {
+            onlineUsers.innerText = info.onlineUsers + ' Users';
+          } 
           // On hover style change
           hubElement.onmouseover = () => {
             hubElement.style.backgroundColor = 'rgb(78, 78, 78)';
