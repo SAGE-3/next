@@ -620,7 +620,7 @@ export function AppToolbar(props: AppToolbarProps) {
           openDelay={400}
           label="Add tag"
         >
-          <Button onClick={handleAddTag} size="xs" p={0}>
+          <Button onClick={handleAddTag} size="xs" p={0} width="30px">
             <MdAddCircleOutline size="14px" />
           </Button>
         </Tooltip>

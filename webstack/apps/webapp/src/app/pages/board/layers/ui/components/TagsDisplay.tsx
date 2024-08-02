@@ -21,6 +21,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
+import { colors, SAGEColors } from '@sage3/shared';
 import {
   useUIStore,
   useInsightStore,
@@ -88,7 +89,18 @@ export function TagsDisplay() {
         }
       }
     }
+    console.log("rerender");
   }, [insights]);
+
+  // Map all sage colors to hex
+  let colorMap : Record<SAGEColors, string> = {} as Record<SAGEColors, string>;
+  colors.forEach((c) => {
+    colorMap[c] = useHexColor(c);
+  });
+  // Get tag's color in hex
+  const getTagColor = (color: string) => {
+    return colorMap[color as SAGEColors];
+  };
 
   // Separate tags into two lists
   const visibleTags = overflowIndex === -1 ? sortedTags : sortedTags.slice(0, overflowIndex);
@@ -154,12 +166,12 @@ export function TagsDisplay() {
           key={index}
           borderRadius="full"
           border="solid 2px"
-          borderColor={tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'gray'}
+          borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
           variant="solid"
           cursor="pointer"
           fontSize="12px"
           color={groupTags.includes(tag) ? 'black' : 'white'}
-          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
+          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'rgba(128, 128, 128, 0.7)'}
           onClick={() => groupApps(tag)}
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
@@ -192,12 +204,12 @@ export function TagsDisplay() {
                     size="sm"
                     borderRadius="full"
                     border="solid 2px"
-                    borderColor={tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'gray'}
+                    borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
                     variant="solid"
                     cursor="pointer"
                     fontSize="12px"
                     color={groupTags.includes(tag) ? 'black' : 'white'}
-                    bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? useHexColor(tag.split(delimiter)[1]) : 'transparent'}
+                    bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'rgba(128, 128, 128, 0.7)'}
                     onClick={() => groupApps(tag)}
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
