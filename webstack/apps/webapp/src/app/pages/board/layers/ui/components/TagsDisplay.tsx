@@ -89,7 +89,6 @@ export function TagsDisplay() {
         }
       }
     }
-    console.log("rerender");
   }, [insights]);
 
   // Map all sage colors to hex
@@ -106,24 +105,22 @@ export function TagsDisplay() {
   const visibleTags = overflowIndex === -1 ? sortedTags : sortedTags.slice(0, overflowIndex);
   const overflowTags = overflowIndex === -1 ? [] : sortedTags.slice(overflowIndex);
 
-  // Group apps with specified tags
+  // Group apps given specified tags
   const groupApps = (tagName: string) => {
-    // Update groupTags
-    setGroupTags(prevTags => {
-      const updatedTags = prevTags.includes(tagName)
-        ? prevTags.filter(tag => tag !== tagName)  // Remove tagName from groupTags
-        : [...prevTags, tagName];  // Add tagName to groupTags
+    // Update groupTags and get the updated tags
+    const updatedTags = groupTags.includes(tagName)
+      ? groupTags.filter(tag => tag !== tagName)  // Remove tagName if it exists
+      : [...groupTags, tagName];  // Add tagName if it doesn't exist
   
-      // Get all app ids with the updated set of tags
-      const appIds = insights
-        .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag))) // at least one tag exists in labels
-        .map(insight => insight._id);
+    setGroupTags(updatedTags);
   
-      // Update selection of apps
-      setSelectedAppsIds(appIds);
-    
-      return updatedTags;
-    });
+    // Get all app ids with the updated set of tags
+    const appIds = insights
+      .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag)))  // At least one tag exists in labels
+      .map(insight => insight._id);
+  
+    // Update selection of apps
+    setSelectedAppsIds(appIds);
   };
 
   // Highlight all apps with the specified tag
@@ -145,7 +142,7 @@ export function TagsDisplay() {
         updates: { labels: insight.data.labels.filter(label => !label.includes(tagName)) }
       }));
 
-    // Perform batch update if there are any updates to be made
+    // Perform batch update
     updateBatchInsight(updates);
 
     // Undo the propagated onClick
