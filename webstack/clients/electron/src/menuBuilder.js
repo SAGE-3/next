@@ -91,7 +91,7 @@ function buildSageMenu(window, commander) {
       if (!isSage) return;
       const name = await dialogUserTextInput('Name of Hub', 'Name', '');
       if (name) {
-        bookmarkStore.addBookmark(name, url);
+        bookmarkStore.addBookmark(name, isSage);
         buildMenu(window);
         updateLandingPage(window);
       }
