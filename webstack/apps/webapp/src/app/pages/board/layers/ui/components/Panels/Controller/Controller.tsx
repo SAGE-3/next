@@ -9,7 +9,7 @@
 import {
   HStack, useToast, Button, Text,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+  PopoverHeader, PopoverCloseButton, PopoverTrigger, useDisclosure, VStack,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -96,15 +96,19 @@ export function Controller(props: ControllerProps) {
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-          <IconButtonPanel
-            icon={<MdArrowBack />}
-            isActive={false}
-            onClick={handleHomeClick}
-            onLongPress={popOnOpen}
-            description={`Back to ${room?.data.name} (Right-click for more options)`}
-          />
+          <PopoverTrigger>
+            <IconButtonPanel
+              icon={<MdArrowBack />}
+              isActive={false}
+              onClick={handleHomeClick}
+              onLongPress={popOnOpen}
+              description={`Back to ${room?.data.name} (Right-click for more options)`}
+            />
+          </PopoverTrigger>
           <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Navigate</PopoverHeader>
             <PopoverBody userSelect={"text"}>
               <VStack display={"block"}>
                 <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
