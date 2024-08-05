@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -168,7 +168,7 @@ export function TagsDisplay() {
           cursor="pointer"
           fontSize="12px"
           color={groupTags.includes(tag) ? 'black' : 'white'}
-          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'rgba(128, 128, 128, 0.7)'}
+          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
           onClick={() => groupApps(tag)}
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
@@ -206,7 +206,7 @@ export function TagsDisplay() {
                     cursor="pointer"
                     fontSize="12px"
                     color={groupTags.includes(tag) ? 'black' : 'white'}
-                    bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'rgba(128, 128, 128, 0.7)'}
+                    bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
                     onClick={() => groupApps(tag)}
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
