@@ -9,8 +9,8 @@
 import {
   Stack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  useDisclosure, VStack,
-  StackDirection,
+  PopoverTrigger, PopoverCloseButton, PopoverHeader,
+  useDisclosure, VStack, StackDirection,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -163,8 +163,17 @@ export function Controller(props: ControllerProps) {
             onLongPress={popOnOpen}
             description={`Back to ${room?.data.name} (Right-click for more options)`}
           />
-          <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
+          <PopoverContent fontSize={'sm'} width={"200px"}
+            top={
+              main.stuck === StuckTypes.Bottom ? "-100px" :
+                main.stuck === StuckTypes.Top ? "60px" : "0px"
+            } left={
+              main.stuck === StuckTypes.Left ? "90px" :
+                main.stuck === StuckTypes.Right ? "-205px" : "50px"
+            }>
             <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Navigate</PopoverHeader>
             <PopoverBody userSelect={"text"}>
               <VStack display={"block"}>
                 <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>

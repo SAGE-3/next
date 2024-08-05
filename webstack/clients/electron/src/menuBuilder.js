@@ -74,7 +74,7 @@ function buildSageMenu(window, commander) {
 
   // Clear Bookmarks button
   const clearBookmarks = {
-    label: 'Restore Original Server List',
+    label: 'Restore Default Hub List',
     click: () => {
       bookmarkStore.clear();
       buildMenu(window);
@@ -84,14 +84,14 @@ function buildSageMenu(window, commander) {
 
   // Add the current location to the bookmarks
   const addBookmark = {
-    label: 'Save current Server',
+    label: 'Save current Hub',
     click: async () => {
       const url = window.webContents.getURL();
       const isSage = await checkServerIsSage(url);
       if (!isSage) return;
-      const name = await dialogUserTextInput('Name of Server', 'Name', '');
+      const name = await dialogUserTextInput('Name of Hub', 'Name', '');
       if (name) {
-        bookmarkStore.addBookmark(name, url);
+        bookmarkStore.addBookmark(name, isSage);
         buildMenu(window);
         updateLandingPage(window);
       }
@@ -128,7 +128,7 @@ function buildSageMenu(window, commander) {
       label: 'File',
       submenu: [
         {
-          label: 'Return To Server List',
+          label: 'Return To Hub List',
           click() {
             if (window) {
               window.loadFile('./html/landing.html');
@@ -248,7 +248,7 @@ function buildSageMenu(window, commander) {
       label: 'View',
       submenu: [
         {
-          label: 'Reload Site',
+          label: 'Reload this page',
           accelerator: 'CommandOrControl+R',
           click: function (item, focusedWindow) {
             if (focusedWindow) {
@@ -347,9 +347,20 @@ function buildSageMenu(window, commander) {
       ],
     },
     {
-      label: 'Servers',
+      label: 'Hubs',
       role: 'bookmarks',
       submenu: [
+        {
+          label: 'Return To Hub List',
+          click() {
+            if (window) {
+              window.loadFile('./html/landing.html');
+            }
+          },
+        },
+        {
+          type: 'separator',
+        },
         ...bookmarks,
         {
           type: 'separator',
@@ -359,7 +370,7 @@ function buildSageMenu(window, commander) {
           type: 'separator',
         },
         {
-          label: 'Remove Server',
+          label: 'Remove Hub',
           submenu: removeBookmarks,
         },
         clearBookmarks,
