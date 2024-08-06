@@ -25,8 +25,7 @@ from foresight.utils.sage_communication import SageCommunication
 from foresight.smartbits.genericsmartbit import GenericSmartBit
 from foresight.utils.sage_websocket import SageWebsocket
 from foresight.json_templates.templates import create_app_template
-
-# TODO import functions explicitely below
+# TODO import functions explicitly below
 from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
 
@@ -169,6 +168,8 @@ class PySage3:
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
+        with open("/tmp/log.out", "w") as out_file:
+            out_file.write(f"creating {doc} \n")
         # we need state to be at the same level as data
         if collection == "ROOMS":
             new_room = Room(doc)
@@ -530,7 +531,7 @@ class PySage3:
         return count
 
     def align_selected_apps(
-        self, smartbits: List[SmartBit] = None, align: str = "", gap=20, **kwargs
+        self, smartbits: List[SmartBit] = None, align: str = "", gap=20, by_dim=1
     ) -> None:
         """
         Aligns the apps in the list according to the given align_type
@@ -542,7 +543,7 @@ class PySage3:
         # sort smartbits by the word in parentheses in the state.text field
         # smartbits = sorted(smartbits, key=lambda sb: (sb.state.text.split('(')[1].split(')')[0]))
 
-        by_dim = kwargs.get("by_dim", 1)  # number of rows or columns to use
+        # by_dim = kwargs.get("by_dim", 1)  # number of rows or columns to use
 
         if smartbits is None:
             return
@@ -555,9 +556,9 @@ class PySage3:
             align_to_top(smartbits)
         elif align == "bottom":
             align_to_bottom(smartbits)
-        elif "column" in align:
+        elif align == "column":
             align_by_col(smartbits, num_cols=by_dim)
-        elif "row" in align:
+        elif align== "row":
             align_by_row(smartbits, num_rows=by_dim)
         elif align == "stack":
             align_stack(smartbits)

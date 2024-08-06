@@ -10,13 +10,12 @@ import {
   HStack,
   useToast,
   Button,
-  Text,
   Popover,
   PopoverArrow,
   PopoverBody,
   PopoverContent,
   PopoverHeader,
-  PopoverAnchor,
+  PopoverCloseButton,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
@@ -112,10 +111,12 @@ export function Controller(props: ControllerProps) {
             isActive={false}
             onClick={handleHomeClick}
             onLongPress={popOnOpen}
-            description={`Back to ${room?.data.name} (Long-press for more options)`}
+            description={`Back to ${room?.data.name} (Right-click for more options)`}
           />
           <PopoverContent fontSize={'sm'} width={'200px'} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Navigate</PopoverHeader>
             <PopoverBody userSelect={'text'}>
               <VStack display={'block'}>
                 <Button variant={'link'} fontSize={'sm'} onClick={() => toHome(props.roomId)}>

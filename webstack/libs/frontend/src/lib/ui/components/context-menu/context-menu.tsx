@@ -37,6 +37,14 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
 }
 
 /**
+ * Check if the device is a touch device using CSS media queries
+ * @returns boolean
+ */
+function isTouchDevice(): boolean {
+  return window.matchMedia("(any-pointer: coarse)").matches;
+}
+
+/**
  * ContextMenu component
  * @param props children divId
  * @returns JSX.Element
@@ -83,7 +91,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
-      // console.log('ContextMenuHandler> type', type, event.type, showContextMenu);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
@@ -92,8 +99,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       } else {
         if (event.type === 'touchstart' && showContextMenu) {
           if (event.target.id === 'board' || event.target.id === '') {
-            setTimeout(() => setShowContextMenu(false));
+            setTimeout(() => setShowContextMenu(false), 400);
           }
+        } else if (event.type === 'touchend' && showContextMenu) {
+          document.removeEventListener('touchmove', ctx.onTouchMove);
         }
       }
     });
@@ -101,19 +110,23 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
-    // document.addEventListener('touchstart', ctx.onTouchStart);
-    // document.addEventListener('touchcancel', ctx.onTouchCancel);
-    // document.addEventListener('touchend', ctx.onTouchEnd);
-    // document.addEventListener('touchmove', ctx.onTouchMove);
+    if (isTouchDevice()) {
+      document.addEventListener('touchstart', ctx.onTouchStart);
+      document.addEventListener('touchcancel', ctx.onTouchCancel);
+      document.addEventListener('touchend', ctx.onTouchEnd);
+      document.addEventListener('touchmove', ctx.onTouchMove);
+    }
 
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
-      // document.removeEventListener('touchstart', ctx.onTouchStart);
-      // document.removeEventListener('touchcancel', ctx.onTouchCancel);
-      // document.removeEventListener('touchend', ctx.onTouchEnd);
-      // document.removeEventListener('touchmove', ctx.onTouchMove);
+      if (isTouchDevice()) {
+        document.removeEventListener('touchstart', ctx.onTouchStart);
+        document.removeEventListener('touchcancel', ctx.onTouchCancel);
+        document.removeEventListener('touchend', ctx.onTouchEnd);
+        document.removeEventListener('touchmove', ctx.onTouchMove);
+      }
     };
   }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 

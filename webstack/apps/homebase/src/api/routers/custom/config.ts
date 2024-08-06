@@ -11,6 +11,8 @@ import * as express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
 
+import { PresenceCollection } from '../../collections';
+
 const JUPYTER_TOKEN_KEY = 'config:jupyter:token';
 let JUPYTER_TOKEN: string | undefined = undefined;
 
@@ -59,8 +61,14 @@ export function ConfigRouter(): express.Router {
 export function InfoRouter(): express.Router {
   const router = express.Router();
 
+  // Ask presence collection for total users
+
   // Get server configuration data structure
   router.get('/', async (req, res) => {
+    // Ask presence collection for total users
+    const presenceDocs = await PresenceCollection.getAll();
+    const onlineUsers = presenceDocs ? presenceDocs.length : 0;
+
     // Configuration public values
     const configuration = {
       serverName: config.serverName,
@@ -69,6 +77,7 @@ export function InfoRouter(): express.Router {
       version: config.version,
       logins: config.auth.strategies,
       isSage3: true,
+      onlineUsers,
     } as PublicInformation;
     res.json(configuration);
   });

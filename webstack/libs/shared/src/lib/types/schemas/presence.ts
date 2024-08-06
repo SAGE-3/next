@@ -34,6 +34,8 @@ const schema = z.object({
     size: SizeSchema,
   }),
   following: z.string(),
+  // Go to viewport
+  goToViewport: z.string(),
 });
 
 export type PresenceSchema = z.infer<typeof schema>;
