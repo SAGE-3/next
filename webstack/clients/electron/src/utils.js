@@ -67,7 +67,7 @@ async function verifySage3Server(url) {
   try {
     // First test the secure url
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
-    const response = await fetch(url, { method: 'GET', mode: 'cors' });
+    const response = await fetch(url + 'api/info', { method: 'GET', mode: 'cors' });
     const response_json = await response.json();
     return response_json.isSage3;
   } catch (e) {
@@ -102,13 +102,13 @@ function updateUrl(url) {
   }
 
   const securedParsed = new URL(secured);
-  securedParsed.pathname = '/api/info';
+  securedParsed.pathname = '';
   securedParsed.search = '';
   securedParsed.hash = '';
   secured = securedParsed.toString();
 
   const unsecuredParsed = new URL(unsecured);
-  unsecuredParsed.pathname = '/api/info';
+  unsecuredParsed.pathname = '';
   unsecuredParsed.search = '';
   unsecuredParsed.hash = '';
   unsecured = unsecuredParsed.toString();

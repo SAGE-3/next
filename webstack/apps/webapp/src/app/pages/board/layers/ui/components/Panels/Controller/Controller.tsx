@@ -7,9 +7,9 @@
  */
 
 import {
-  HStack, useToast, Button, Text,
+  HStack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+  PopoverHeader, PopoverCloseButton, useDisclosure, VStack,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -105,6 +105,8 @@ export function Controller(props: ControllerProps) {
           />
           <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Navigate</PopoverHeader>
             <PopoverBody userSelect={"text"}>
               <VStack display={"block"}>
                 <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
