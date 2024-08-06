@@ -248,56 +248,59 @@ function buildSageMenu(window, commander) {
       label: 'View',
       submenu: [
         {
-          label: 'Reload this page',
+          label: 'Refresh Content',
           accelerator: 'CommandOrControl+R',
           click: function (item, focusedWindow) {
             if (focusedWindow) {
               focusedWindow.reload();
             }
-          },
-        },
-        {
-          type: 'separator',
-        },
-        {
-          label: 'Actual Size',
-          accelerator: 'CommandOrControl+0',
-          // role: 'resetZoom',
-          click() {
             if (window) {
               window.webContents.setZoomLevel(0);
             }
           },
         },
-        {
-          label: 'Zoom In',
-          accelerator: 'CommandOrControl+=',
-          // role: 'zoomIn',
-          click() {
-            if (window) {
-              const zl = window.webContents.getZoomLevel();
-              if (zl < 10) {
-                window.webContents.setZoomLevel(zl + 1);
-              }
-            }
-          },
-        },
-        {
-          label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-',
-          // role: 'zoomOut',
-          click() {
-            if (window) {
-              const zl = window.webContents.getZoomLevel();
-              if (zl > -8) {
-                window.webContents.setZoomLevel(zl - 1);
-              }
-            }
-          },
-        },
-        {
-          type: 'separator',
-        },
+        // {
+        //   type: 'separator',
+        // },
+        // {
+        //   label: 'Reset Size',
+        //   accelerator: 'CommandOrControl+0',
+        //   // role: 'resetZoom',
+        //   click() {
+        //     if (window) {
+        //       window.webContents.setZoomLevel(0);
+        //     }
+        //   },
+        // },
+        // {
+        //   label: 'Zoom In',
+        //   accelerator: 'CommandOrControl+=',
+        //   // role: 'zoomIn',
+        //   click() {
+        //     if (window) {
+        //       const zl = window.webContents.getZoomLevel();
+        //       if (zl < 10) {
+        //         window.webContents.setZoomLevel(zl + 1);
+        //       }
+        //     }
+        //   },
+        // },
+        // {
+        //   label: 'Zoom Out',
+        //   accelerator: 'CommandOrControl+-',
+        //   // role: 'zoomOut',
+        //   click() {
+        //     if (window) {
+        //       const zl = window.webContents.getZoomLevel();
+        //       if (zl > -8) {
+        //         window.webContents.setZoomLevel(zl - 1);
+        //       }
+        //     }
+        //   },
+        // },
+        // {
+        //   type: 'separator',
+        // },
         {
           label: 'Toggle Full Screen',
           accelerator: (function () {
@@ -320,6 +323,9 @@ function buildSageMenu(window, commander) {
               }
             }
           },
+        },
+        {
+          type: 'separator',
         },
         {
           label: 'Toggle Developer Tools',

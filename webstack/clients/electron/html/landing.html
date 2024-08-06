@@ -196,6 +196,58 @@
       window.electron.send('store-interface', { request: 'get-list' });
     }
 
+    // Somone pastes in a URL and wants to join a board
+    async function joinBoard(url) {
+
+      // Check if the url starts with sage3://
+      if (!url.startsWith('sage3://')) {
+        // Change the page
+        showNotification('Invalid URL. URL should begin with \'sage3:/\'', true);
+        return;
+      }
+      // Replace the sage3:// with https://
+      url = url.replace('sage3://', 'https://');
+      // Check if the URL is valid
+      let hostname = null;
+      try {
+        // Get hostname
+        hostname = new URL(url).hostname;
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Invalid URL', true);
+        return;
+      }
+      const sage3APIURL = `https://${hostname}`;
+      const serverInfo = await fetchServerInfo(sage3APIURL);
+      // Is this a SAGE3 Server?
+      if (!serverInfo) {
+        showNotification('Invalid SAGE3 Server', true);
+        return;
+      }
+      // Get the RoomID and BoardID from the url
+      let boardId = null;
+      let roomId = null;
+      try {
+        const splitUrl = url.split('/');
+      boardId = splitUrl[splitUrl.length - 1];
+      roomId = splitUrl[splitUrl.length - 2];
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Invalid URL', true);
+        return;
+      }
+      // Are the ids valid? 
+      if (!boardId || !roomId) {
+        showNotification('Invalid URL, requires Room ID and Board ID', true);
+        return;
+      }
+      // Lets build that Board URL
+      const boardURL = `https://${hostname}/#/enter/${roomId}/${boardId}`;
+      // Change the page
+      changePage(boardURL);
+
+    }
+
     // Get the list of bookmarks at initial load
     refreshHubList();
 
@@ -216,8 +268,8 @@
           <h2 style="margin:0px; transform: translateX(-20px)">Select a Hub</h2>
         </div>
         <div style="display: flex; align-items: center ; justify-content: right;">
-          <button class="add-hub-button" onclick="showAddHubDialog()">Add an unlisted hub</button>
-          <button class="refresh-hub-button" onclick="refreshHubList()">Refresh ⟲</button>
+          <button class="add-hub-button" onclick="showAddHubDialog()">Add an Unlisted Hub</button>
+          <button class="refresh-hub-button" onclick="refreshHubList()">Refresh</button>
         </div>
 
       </div>
@@ -225,10 +277,24 @@
       <!-- vertical list of hubs  -->
       <div id="hubs-list"></div>
 
+
+      <!-- Divider -->
+      <hr style="width: 400px; margin-top: 20px; margin-bottom: 20px; border: 0; border-top: 1px solid #333;">
+
+
+      <div id="join-board">
+        <h3 style="margin: 0px;" >Join a Board</h3>
+        <form id="join-board-form" name="myForm" action="" onsubmit="joinBoard(this.url.value); return false;">
+          <input id="input-join-board" type="text" name="url" value="" placeholder="Enter the URL of the board you wish to join" required />
+          </br>
+          <input id="submit-join-board" type="submit" value="Join" />
+        </form>
+      </div>
+
       <!-- Add hub dialog -->
       <div id="add-hub">
         <div id="add-hub-dialog">
-          <h2 style="margin-top: 0px; margin-bottom:0px;">Add a new hub</h2>
+          <h2 style="margin-top: 0px; margin-bottom:0px;">Add an Unlisted Hub</h2>
           <p style="margin-top: 2px; margin-bottom:0px;">URL must contain 'https'. (i.e. https://sage.app)</p>
           <form id="new-hub-form" name="myForm" action="" onsubmit="addNewHub(this); return false;">
             <input id="input-url" type="text" name="serverurl" value=""
