@@ -160,6 +160,10 @@ input[type='submit'] {
   font-weight: bold;
 }
 
+input::placeholder {
+  color: darkgray;
+}
+
 #input-join-board {
   width: calc(100% - 20px);
   height: 32px;
