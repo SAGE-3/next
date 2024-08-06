@@ -6,13 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback, useLayoutEffect, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
-import './style.scss';
 import { useUIStore } from '../../../stores';
-
 import ContextMenuHandler from './ContextMenuHandler';
+
+import './style.scss';
 
 /**
  * Convert a touch position to a mouse position
@@ -71,7 +71,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      if (event.target.id === props.divId) {
+      if (event.target.id === props.divId && !isTouchDevice()) {
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
