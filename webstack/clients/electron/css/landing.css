@@ -41,10 +41,15 @@ body {
   width: 455px;
   transition: all 0.15s ease-in-out;
 }
-/* .hub:hover {
-  background: rgb(78, 78, 78);
-  transition: all 0.15s ease-in-out;
-} */
+
+#join-board {
+  height: 160px;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  align-items: left;
+}
 
 .container {
   display: flex;
@@ -153,6 +158,20 @@ input[type='submit'] {
   transform: scale(1);
   transition: all ease-in-out 0.15s;
   font-weight: bold;
+}
+
+#input-join-board {
+  width: calc(100% - 20px);
+  height: 32px;
+  padding: 8px;
+  border-radius: 4px;
+  border: none;
+  font-size: 18px;
+  margin-top: 12px;
+}
+
+#submit-join-board {
+  width: calc(100% - 20px);
 }
 
 #add-hub {
