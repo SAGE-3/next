@@ -7,9 +7,9 @@
  */
 
 import {
-  HStack, useToast, Button, Text,
+  HStack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverCloseButton, PopoverTrigger, useDisclosure, VStack,
+  PopoverHeader, PopoverCloseButton, useDisclosure, VStack,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -96,15 +96,13 @@ export function Controller(props: ControllerProps) {
     <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
       <HStack w="100%">
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-          <PopoverTrigger>
-            <IconButtonPanel
-              icon={<MdArrowBack />}
-              isActive={false}
-              onClick={handleHomeClick}
-              onLongPress={popOnOpen}
-              description={`Back to ${room?.data.name} (Right-click for more options)`}
-            />
-          </PopoverTrigger>
+          <IconButtonPanel
+            icon={<MdArrowBack />}
+            isActive={false}
+            onClick={handleHomeClick}
+            onLongPress={popOnOpen}
+            description={`Back to ${room?.data.name} (Right-click for more options)`}
+          />
           <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
             <PopoverArrow />
             <PopoverCloseButton />
