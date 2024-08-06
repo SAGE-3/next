@@ -139,7 +139,6 @@ export function KernelsPanel(props: KernelsPanelProps) {
         fontSize: 16,
         kernel: kernelInfo.kernel_id,
         session: '',
-        executeInfo: { executeFunc: '', params: {} },
       },
       raised: true,
       dragging: false,

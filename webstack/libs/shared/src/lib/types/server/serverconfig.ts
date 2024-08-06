@@ -45,8 +45,10 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
-  // FastAPI
-  fastapi: { url: string };
+  // Python server for jupyter kernels
+  kernels: { url: string };
+  // Python server for agents
+  agents: { url: string };
 
   // External Services
   services: {
@@ -90,6 +92,7 @@ export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' 
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
+  chat: ServerConfiguration['services']['chat'];
 };
 
 /**

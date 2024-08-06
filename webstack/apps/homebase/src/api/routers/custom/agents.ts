@@ -13,16 +13,16 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import { config } from '../../../config';
 
 /**
- * Route forwarding the fastapi calls to the fastapi server
+ * Route forwarding the agents calls to the langchain server
  */
-export function FastAPIRouter() {
-  console.log('FastAPI> router for FastAPI', config.fastapi.url);
+export function AgentsRouter() {
+  console.log('Agents> router for langchain agents', config.agents.url);
 
   const router = createProxyMiddleware({
-    target: config.fastapi.url,
+    target: config.agents.url,
     changeOrigin: true,
-    pathRewrite: { '^/api/fastapi': '' },
-    logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
+    pathRewrite: { '^/api/agents': '' },
+    logLevel: 'info', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
     logProvider: () => console,
     selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying

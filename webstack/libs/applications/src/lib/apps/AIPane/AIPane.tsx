@@ -158,9 +158,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Notifies backend of a new app being added and it's app type
   function newAppAdded(appType: string) {
-    updateState(props._id, {
-      executeInfo: { executeFunc: 'new_app_added', params: { app_type: appType } },
-    });
+    // updateState(props._id, {
+    //   executeInfo: { executeFunc: 'new_app_added', params: { app_type: appType } },
+    // });
   }
 
   // Custom close button to remove messages from messages menu.

@@ -10,16 +10,11 @@ import { z } from 'zod';
 
 export const schema = z.object({
   count: z.number(),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   count: 42,
-  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'Counter';

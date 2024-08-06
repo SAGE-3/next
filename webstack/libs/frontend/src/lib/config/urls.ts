@@ -20,17 +20,17 @@ export const apiUrls = {
     getNotebookByName: (name: string) => `/api/contents/notebooks/${name}`,
     upload: '/api/assets/upload',
   },
-  fastapi: {
-    heartbeat: `/api/fastapi/heartbeat`,
-    getKernels: `/api/fastapi/collection`,
-    getKernelsSpecs: `/api/fastapi/kernelspecs`,
-    getMessageStream: (msgId: string) => `/api/fastapi/status/${msgId}/stream`,
-    createKernel: (name: string) => `/api/fastapi/kernels/${name}`,
-    deleteKernel: (id: string) => `/api/fastapi/kernels/${id}`,
-    restartKernel: (id: string) => `/api/fastapi/restart/${id}`,
-    executeKernel: (id: string) => `/api/fastapi/execute/${id}`,
-    statusKernel: (id: string) => `/api/fastapi/status/${id}`,
-    interruptKernel: (id: string) => `/api/fastapi/interrupt/${id}`,
+  kernels: {
+    heartbeat: `/api/kernels/heartbeat`,
+    getKernels: `/api/kernels/collection`,
+    getKernelsSpecs: `/api/kernels/kernelspecs`,
+    getMessageStream: (msgId: string) => `/api/kernels/status/${msgId}/stream`,
+    createKernel: (name: string) => `/api/kernels/kernels/${name}`,
+    deleteKernel: (id: string) => `/api/kernels/kernels/${id}`,
+    restartKernel: (id: string) => `/api/kernels/restart/${id}`,
+    executeKernel: (id: string) => `/api/kernels/execute/${id}`,
+    statusKernel: (id: string) => `/api/kernels/status/${id}`,
+    interruptKernel: (id: string) => `/api/kernels/interrupt/${id}`,
   },
   plugins: {
     upload: '/api/plugins/upload',
@@ -48,6 +48,7 @@ export const apiUrls = {
     chat: {
       status: '/api/ai/chat_status',
       query: '/api/ai/chat_query',
+      ask: '/api/ai/chat',
     },
     code: {
       status: '/api/ai/code_status',
@@ -57,6 +58,11 @@ export const apiUrls = {
       status: '/api/ai/image_status',
       labels: '/api/ai/image_to_labels',
       image: '/api/ai/image_to_image',
+    },
+    agents: {
+      status: '/api/agents/status',
+      ask: '/api/agents/ask',
+      summary: '/api/agents/summary',
     },
   },
 };

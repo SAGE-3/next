@@ -729,7 +729,7 @@ function AppComponent(props: App): JSX.Element {
         </InputGroup>
 
         <Box bg={'blackAlpha.100'} rounded={'sm'} p={1} m={0}>
-          <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="2xs">
+          <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="xs">
             {analysis}
           </Text>
         </Box>

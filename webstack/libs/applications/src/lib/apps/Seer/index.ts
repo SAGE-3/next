@@ -16,11 +16,6 @@ import { KernelInfoSchema, KernelInfo } from '@sage3/shared/types';
 
 export const name = 'Seer';
 
-const executeInfoSchema = z.object({
-  executeFunc: z.string(),
-  params: z.any(),
-});
-
 const ContentItemSchema = z
   .object({
     stdout: z.string().optional(),
@@ -62,10 +57,8 @@ export const schema = z.object({
   online: z.boolean(),
   prompt: z.string(),
   kernels: z.array(KernelInfoSchema),
-  executeInfo: executeInfoSchema,
 });
 
-export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type ContentItemType = z.infer<typeof ContentItemSchema>;
 export type state = z.infer<typeof schema>;
 
@@ -82,5 +75,4 @@ export const init: Partial<state> = {
   prompt: '',
   online: false,
   kernels: [] as KernelInfo[],
-  executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };

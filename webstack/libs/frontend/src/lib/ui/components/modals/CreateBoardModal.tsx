@@ -136,7 +136,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           isPrivate: isProtected,
           code: roomID,
           privatePin: isProtected ? key : '',
-          executeInfo: { executeFunc: '', params: {} },
         });
         if (board) {
           toast({

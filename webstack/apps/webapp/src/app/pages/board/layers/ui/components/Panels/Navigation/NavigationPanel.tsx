@@ -56,9 +56,6 @@ export function NavigationPanel(props: NavProps) {
   const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
   const userViewport = useUIStore((state) => state.viewport);
 
-  // Clear board modal
-  // const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
-
   const backgroundColor = useColorModeValue('gray.100', 'gray.600');
   const borderColor = useColorModeValue('teal.500', 'teal.500');
   const appBorderColor = useColorModeValue('teal.600', 'teal.100');
@@ -124,42 +121,8 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
-  // Organize board using python function
-  // function organizeApps() {
-  //   // get presence of current user for its viewport
-
-  //   // Trigger the smart function
-  //   updateBoard(props.boardId, {
-  //     executeInfo: {
-  //       executeFunc: 'reorganize_layout',
-  //       params: {
-  //         viewport_position: userViewport.position,
-  //         viewport_size: userViewport.size,
-  //         by: 'app_type',
-  //         mode: 'tiles',
-  //       },
-  //     },
-  //   });
-  // }
-
-  // Result the confirmation modal
-  // const onOrganizeConfirm = () => {
-  //   organizeApps();
-  //   organizeOnClose();
-  // };
-
   return (
     <>
-      {/* Organize board dialog */}
-
-      {/* <ConfirmModal
-        title="Organize the Board"
-        message="Are you sure you want to automatically organize the applications?"
-        onConfirm={onOrganizeConfirm}
-        onClose={organizeOnClose}
-        isOpen={organizeIsOpen}
-      /> */}
-
       <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
         <Box alignItems="center" display="flex">
           <Box
@@ -248,7 +211,7 @@ export function NavigationPanel(props: NavProps) {
               </Tooltip>
             </Box>
 
-            {/* Organize Apps and Fit View */}
+            {/* Reset View */}
             <Box display="flex" mb="2">
               <Tooltip label="Reset View" placement="top" hasArrow openDelay={500}>
                 <IconButton

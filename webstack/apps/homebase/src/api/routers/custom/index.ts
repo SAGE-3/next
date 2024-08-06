@@ -14,5 +14,7 @@ export * from './nlp';
 export * from './subscription';
 export * from './logs';
 export * from './presencethrottle';
-export * from './fastapi';
+export * from './kernels';
+export * from './agents';
 export * from './ai/ai-router';
+export * from './ai/agent-router';

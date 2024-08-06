@@ -478,7 +478,7 @@ function AppComponent(props: App): JSX.Element {
       // Controller to stop the event source if needed
       const ctrl = new AbortController();
       // Get the URL of the stream
-      const streamURL = apiUrls.fastapi.getMessageStream(s.msgId);
+      const streamURL = apiUrls.kernels.getMessageStream(s.msgId);
       // Fetch the evet source
       fetchEventSource(streamURL, {
         method: 'GET',

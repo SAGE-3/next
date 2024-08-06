@@ -55,6 +55,9 @@ jupyter labextension disable "@jupyterlab/apputils-extension:announcements"
 #     --notebook-dir="notebooks"
 # fi
 
+BASE_URL="/"
+
 jupyter lab --collaborative --no-browser --ServerApp.token="$token" --ServerApp.port=8888 \
   --ServerApp.ip=0.0.0.0 --ServerApp.allow_origin='*' \
+  --ServerApp.base_url=${BASE_URL} \
   --notebook-dir="notebooks"

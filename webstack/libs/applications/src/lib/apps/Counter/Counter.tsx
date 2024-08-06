@@ -50,12 +50,7 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   function handleReset() {
-    updateState(props._id, {
-      executeInfo: {
-        executeFunc: 'reset_to_zero',
-        params: {},
-      },
-    });
+    updateState(props._id, { count: 0 });
   }
 
   return (

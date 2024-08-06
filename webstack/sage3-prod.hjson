@@ -34,9 +34,13 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
-  // Fastapi python server
-  "fastapi": {
-    "url": "http://fastapi:8000"
+  // Fastapi python server for kernels
+  "kernels": {
+    "url": "http://kernelserver:8000"
+  },
+  // Fastapi python server for agents
+  "agents": {
+    "url": "http://seer:9999"
   },
 
   // External Services
@@ -54,11 +58,11 @@
       "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
-    }
+    },
     "codellama": {
-      url: "https://astrolab.evl.uic.edu:4343",
-      apiKey: "",
-      max_tokens: 400,
+      "url": "https://astrolab.evl.uic.edu:4343",
+      "apiKey": "",
+      "max_tokens": 400
     }
   },
 
