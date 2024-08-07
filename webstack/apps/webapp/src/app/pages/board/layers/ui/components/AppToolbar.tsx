@@ -27,13 +27,10 @@ import {
   UnorderedList,
   useDisclosure,
   HStack,
+  VStack,
   Tag,
   TagLabel,
   TagCloseButton,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   keyframes,
   Modal,
   ModalOverlay,
@@ -220,7 +217,6 @@ export function AppToolbar(props: AppToolbarProps) {
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   // Hooks for getAppTags()
-  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); // manage overflow menu visibility
   const [tagFrequency, setTagFrequency] = useState<TagFrequency>({}); // store tag label and associated frequency
   const [overflowIndex, setOverflowIndex] = useState<number>(-1); // store the first index of the tag at which overflow occurs
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
@@ -230,6 +226,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
   const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
   const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
+  const [isOverflowOpen, setIsOverflowOpen] = useState<boolean>(false); // manage overflow menu visibility
+  const overflowBg = useColorModeValue('gray.50', 'gray.700'); // overflow menu colors based on light/dark mode
   const toast = useToast();
 
   useEffect(() => {
@@ -452,11 +450,6 @@ export function AppToolbar(props: AppToolbarProps) {
       }
     };
 
-    // Expand or collapse tag overflow menu
-    const toggleMenu = () => {
-      isMenuOpen ? onMenuClose() : onMenuOpen();
-    }
-
     // Show modal for adding a new tag
     const handleAddTag = () => {
       setIsModalOpen(true);
@@ -571,47 +564,73 @@ export function AppToolbar(props: AppToolbarProps) {
             cursor="pointer"
             fontSize="12px"
             colorScheme={tag.split(delimiter)[1]}
+            onClick={() => handleEditTag(tag)}
           >
-            <TagLabel onClick={() => handleEditTag(tag)}>{tag.split(delimiter)[0]}</TagLabel>
-            <TagCloseButton onClick={() => handleDeleteTag(tag)} />
+            <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
+            <TagCloseButton onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteTag(tag);
+              }}
+            />
           </Tag>
         ))}
         {/* Menu for overflow tags */}
         {overflowTags.length > 0 && (
-          <Menu isOpen={isMenuOpen}>
+          <Box>
             <Tooltip
               placement="top"
               hasArrow={true}
               openDelay={400}
               label="See more tags"
             >
-              <MenuButton
-                as={Button}
+              <Button 
                 size="xs"
-                onClick={toggleMenu}
+                cursor="pointer" 
+                onClick={() => setIsOverflowOpen(!isOverflowOpen)}
               >
-                {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
-              </MenuButton>
+                {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+              </Button>
             </Tooltip>
-            <MenuList sx={{maxHeight: '200px', overflowY: 'auto'}}>
-              {overflowTags.map((tag, index) => (
-                <MenuItem key={index}>
-                  <Tag
-                    id={`tag-${tag}`}
-                    size="sm"
-                    borderRadius="full"
-                    variant="solid"
-                    cursor="pointer"
-                    fontSize="12px"
-                    colorScheme={tag.split(delimiter)[1]}
-                  >
-                    <TagLabel onClick={() => handleEditTag(tag)}>{tag.split(delimiter)[0]}</TagLabel>
-                    <TagCloseButton onClick={() => handleDeleteTag(tag)} />
-                  </Tag>
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Menu>
+            
+            {isOverflowOpen && (
+              <Box 
+                position="absolute" 
+                top="10"
+                bg={overflowBg}
+                borderWidth="1px"
+                boxShadow="md"
+                minWidth="200px"
+                maxHeight="200px" 
+                overflowY="auto" 
+                borderRadius="md"
+                p={3}
+                zIndex={100}
+              >
+                <VStack spacing={2} align="flex-start">
+                  {overflowTags.map((tag, index) => (
+                    <Tag
+                      id={`tag-${tag}`}
+                      size="sm"
+                      key={index}
+                      borderRadius="full"
+                      variant="solid"
+                      cursor="pointer"
+                      fontSize="12px"
+                      colorScheme={tag.split(delimiter)[1]}
+                      onClick={() => handleEditTag(tag)}
+                    >
+                      <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
+                      <TagCloseButton onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag);
+                        }}
+                      />
+                    </Tag>
+                  ))}
+                </VStack>
+              </Box>
+            )}
+          </Box>
         )}
         {/* Button to add tag */}
         <Tooltip

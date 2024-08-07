@@ -12,13 +12,11 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
-  useDisclosure,
+  Box,
+  VStack,
   Button,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Tooltip,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { colors, SAGEColors } from '@sage3/shared';
@@ -40,15 +38,17 @@ export function TagsDisplay() {
   // Semantic to separate a tag's string name from color
   const delimiter = ";~";
 
-   // Tag names are sorted from most to least frequent
+  // Tag names are sorted from most to least frequent
   const [sortedTags, setSortedTags] = useState<string[]>([]);
   // Keep track of tags in overflow menu
   const [overflowIndex, setOverflowIndex] = useState<number>(-1);
   // Ref to the container holding tags
   const tagsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Manage menu visibility
-  const { isOpen: isMenuOpen, onOpen: onMenuOpen, onClose: onMenuClose } = useDisclosure(); 
+  // Manage overflow menu visibility
+  const [isOverflowOpen, setIsOverflowOpen] = useState<boolean>(false);
+  // Overflow menu colors based on light/dark mode
+  const overflowBg = useColorModeValue('gray.50', 'gray.700');
   
   // Manage the state of selected board tags
   const [groupTags, setGroupTags] = useState<string[]>([]);
@@ -144,15 +144,7 @@ export function TagsDisplay() {
 
     // Perform batch update
     updateBatchInsight(updates);
-
-    // Undo the propagated onClick
-    groupApps(tagName);
   };
-
-  // Expand or collapse tag menu
-  const toggleMenu = () => {
-    isMenuOpen ? onMenuClose() : onMenuOpen();
-  }
 
   return (
     <HStack spacing={2} ref={tagsContainerRef}>
@@ -174,31 +166,50 @@ export function TagsDisplay() {
           onMouseLeave={unhighlightApps}
         >
           <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-          <TagCloseButton onClick={() => handleDeleteTag(tag)} />
+          <TagCloseButton onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteTag(tag);
+            }}
+          />
         </Tag>
       ))}
       {overflowTags.length > 0 && (
-          <Menu isOpen={isMenuOpen}>
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              openDelay={400}
-              label="See more tags"
+        <Box>
+          <Tooltip
+            placement="top"
+            hasArrow={true}
+            openDelay={400}
+            label="See more tags"
+          >
+            <Button 
+              size="xs"
+              cursor="pointer" 
+              onClick={() => setIsOverflowOpen(!isOverflowOpen)}
             >
-              <MenuButton
-                as={Button}
-                size="xs"
-                onClick={toggleMenu}
-              >
-                {isMenuOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
-              </MenuButton>
-            </Tooltip>
-            <MenuList sx={{maxHeight: '500px', overflowY: 'auto'}}>
-              {overflowTags.map((tag, index) => (
-                <MenuItem key={index}>
+              {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+            </Button>
+          </Tooltip>
+          
+          {isOverflowOpen && (
+            <Box 
+              position="absolute" 
+              top="110%" 
+              right={0} 
+              bg={overflowBg}
+              borderWidth="1px"
+              boxShadow="md"
+              minWidth="200px"
+              maxHeight="500px" 
+              overflowY="auto" 
+              borderRadius="md"
+              p={3}
+            >
+              <VStack spacing={2} align="flex-start">
+                {overflowTags.map((tag, index) => (
                   <Tag
                     id={`tag-${tag}`}
                     size="sm"
+                    key={index}
                     borderRadius="full"
                     border="solid 2px"
                     borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
@@ -212,13 +223,18 @@ export function TagsDisplay() {
                     onMouseLeave={unhighlightApps}
                   >
                     <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-                    <TagCloseButton onClick={() => handleDeleteTag(tag)} />
+                    <TagCloseButton onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTag(tag);
+                      }}
+                    />
                   </Tag>
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Menu>
-        )}
+                ))}
+              </VStack>
+            </Box>
+          )}
+        </Box>
+      )}
     </HStack>
   );
 }
