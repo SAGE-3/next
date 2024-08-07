@@ -46,7 +46,8 @@ import { AppWindow } from '../../components';
 
 // LLAMA2 API
 //  - API: https://huggingface.github.io/text-generation-inference/
-const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
+const LLAMA2_SERVER = 'https://arcade.evl.uic.edu/llama';
+// const LLAMA2_SERVER = 'https://compaasgold03.evl.uic.edu';
 const LLAMA2_ENDPOINT = '/generate_stream';
 const LLAMA2_URL = LLAMA2_SERVER + LLAMA2_ENDPOINT;
 const LLAMA2_TOKENS = 300;
