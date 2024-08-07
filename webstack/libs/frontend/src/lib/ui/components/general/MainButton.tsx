@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -43,6 +43,7 @@ import {
   MdLock,
   MdLockOpen,
   MdPeople,
+  MdBugReport,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
@@ -60,6 +61,7 @@ import {
   useHexColor,
   UserSearchModal,
   useAbility,
+  FeedbackModal,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -109,6 +111,9 @@ export function MainButton(props: MainButtonProps) {
 
   // Nav
   const { toAdmin } = useRouteNav();
+
+  // FeedbackModel
+  const { isOpen: feedbackIsOpen, onOpen: feedbackOnOpen, onClose: feedbackOnClose } = useDisclosure();
 
   // Enter Board Modal
   const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
@@ -178,6 +183,8 @@ export function MainButton(props: MainButtonProps) {
   return (
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
+
+      <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} />
 
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
@@ -327,6 +334,9 @@ export function MainButton(props: MainButtonProps) {
 
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
+          </MenuItem>
+          <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />}>
+            Feedback
           </MenuItem>
 
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
