@@ -7,9 +7,16 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip, IconButton, useDisclosure, Text, ButtonGroup } from '@chakra-ui/react';
+import { Box, useColorModeValue, Tooltip, IconButton, Image, Text, ButtonGroup, AbsoluteCenter } from '@chakra-ui/react';
 
 import { MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore, MdOutlineResetTv } from 'react-icons/md';
+
+// Icons for file types
+import {
+  MdOutlineImage, MdOndemandVideo, MdOutlineStickyNote2
+} from 'react-icons/md';
+import { FaPython } from 'react-icons/fa';
+import { AiOutlineFilePdf, AiOutlinePython } from "react-icons/ai";
 
 import {
   ConfirmModal,
@@ -37,7 +44,7 @@ export function NavigationPanel(props: NavProps) {
   const apps = useThrottleApps(250);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   // Board Store
-  const updateBoard = useBoardStore((state) => state.update);
+  // const updateBoard = useBoardStore((state) => state.update);
   // UI Store
   const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const scale = useThrottleScale(250);
@@ -60,7 +67,7 @@ export function NavigationPanel(props: NavProps) {
   // const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
 
   const backgroundColor = useColorModeValue('gray.100', 'gray.600');
-  const borderColor = useColorModeValue('teal.500', 'teal.500');
+  const borderColor = 'teal.500'; // useColorModeValue('teal.500', 'teal.500');
   const appBorderColor = useColorModeValue('teal.600', 'teal.100');
 
   const mapWidth = 200;
@@ -184,7 +191,12 @@ export function NavigationPanel(props: NavProps) {
                   return (
                     <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                       <Box
-                        backgroundColor={borderColor}
+                        backgroundColor={
+                          app.data.type === "Stickie" ? app.data.state.color + '.400' :
+                            app.data.type === "PDFViewer" ? 'red.300' :
+                              app.data.type === "VideoViewer" ? 'cyan.400' :
+                                app.data.type === "ImageViewer" ? 'orange.200' :
+                                  borderColor}
                         position="absolute"
                         left={(app.data.position.x - appsX) * mapScale + 'px'}
                         top={(app.data.position.y - appsY) * mapScale + 'px'}
@@ -198,7 +210,18 @@ export function NavigationPanel(props: NavProps) {
                         borderColor={appBorderColor}
                         borderRadius="sm"
                         cursor="pointer"
-                      ></Box>
+                      >
+                        {app.data.type === "ImageViewer" ?
+                          <AbsoluteCenter axis="both"><MdOutlineImage /> </AbsoluteCenter> : null}
+                        {app.data.type === "PDFViewer" ?
+                          <AbsoluteCenter axis="both"><AiOutlineFilePdf /> </AbsoluteCenter> : null}
+                        {app.data.type === "Stickie" ?
+                          <AbsoluteCenter axis="both"><MdOutlineStickyNote2 /> </AbsoluteCenter> : null}
+                        {app.data.type === "SageCell" ?
+                          <AbsoluteCenter axis="both"><AiOutlinePython /> </AbsoluteCenter> : null}
+                        {app.data.type === "VideoViewer" ?
+                          <AbsoluteCenter axis="both"><MdOndemandVideo /> </AbsoluteCenter> : null}
+                      </Box>
                     </Tooltip>
                   );
                 })}
