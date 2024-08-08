@@ -39,7 +39,7 @@
     "url": "http://fastapi:8000"
   },
 
-    // Feedback URL
+  // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
   },
@@ -59,11 +59,11 @@
       "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
-    }
+    },
     "codellama": {
-      url: "https://astrolab.evl.uic.edu:4343",
-      apiKey: "",
-      max_tokens: 400,
+      "url": "https://astrolab.evl.uic.edu:4343",
+      "apiKey": "",
+      "max_tokens": 400
     }
   },
 

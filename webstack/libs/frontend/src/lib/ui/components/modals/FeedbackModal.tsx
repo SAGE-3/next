@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import {
   Modal,
   Button,
@@ -21,7 +22,6 @@ import {
 } from '@chakra-ui/react';
 
 import { useUser } from '@sage3/frontend';
-import { useState } from 'react';
 
 type FeedbackProps = {
   onClose: () => void;

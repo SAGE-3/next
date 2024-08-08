@@ -42,7 +42,6 @@
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
-
   },
   
   // External Services
@@ -64,8 +63,6 @@
     "chat": {
       "url": "https://arcade.evl.uic.edu/llama",
       "model": "llama3",
-      // "url": "https://compaasgold03.evl.uic.edu",
-      // "model": "llama2",
       "max_tokens": 2048,
       "apiKey": ""
     },
