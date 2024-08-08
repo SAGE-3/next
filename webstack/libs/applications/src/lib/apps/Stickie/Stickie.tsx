@@ -93,6 +93,16 @@ function AppComponent(props: App): JSX.Element {
   // Use Yjs
   const { yApps } = useYjs();
 
+  // Check if there's no tags, then add the color as a tag
+  useEffect(() => {
+    // Check tags
+    const mine = useInsightStore.getState().insights.find((el) => el._id === props._id);
+    if (!mine) {
+      useInsightStore.getState().update(props._id, { labels: [s.color + ':' + s.color] });
+    }
+  }, []);
+
+
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);
@@ -157,7 +167,7 @@ function AppComponent(props: App): JSX.Element {
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
-    // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
+    // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
     debounceFunc.current(inputValue);
   }
 
@@ -221,10 +231,9 @@ function AppComponent(props: App): JSX.Element {
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
-          // display={isSmall || isDragging ? 'none' : 'block'}
           css={{
-            // Balance the text, improve text layouts
-            textWrap: 'pretty', // 'balance',
+            // Balance the text, improve text layouts: pretty or balance
+            textWrap: 'pretty',
             '&::-webkit-scrollbar': {
               background: `${backgroundColor}`,
               width: '24px',
@@ -352,7 +361,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // Update the application state
     updateState(props._id, { color: color });
     // Update the tags with the new color
-    updateTags(props._id, oldcolor, color);
+    updateTags(props._id, oldcolor + ":" + oldcolor, color + ":" + color);
   };
 
   const lockUnlock = () => {

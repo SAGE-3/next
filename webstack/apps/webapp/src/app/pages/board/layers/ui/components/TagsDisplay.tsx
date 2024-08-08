@@ -19,14 +19,11 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
-import { colors, SAGEColors } from '@sage3/shared';
-import {
-  useUIStore,
-  useInsightStore,
-  useHexColor,
-} from '@sage3/frontend';
 
-type TagFrequency = Record<string, number>
+import { colors, SAGEColors } from '@sage3/shared';
+import { useUIStore, useInsightStore, useHexColor, } from '@sage3/frontend';
+
+type TagFrequency = Record<string, number>;
 
 export function TagsDisplay() {
   // UI Store
@@ -36,7 +33,7 @@ export function TagsDisplay() {
   const updateBatchInsight = useInsightStore((state) => state.updateBatch);
 
   // Semantic to separate a tag's string name from color
-  const delimiter = ";~";
+  const delimiter = ":";
 
   // Tag names are sorted from most to least frequent
   const [sortedTags, setSortedTags] = useState<string[]>([]);
@@ -49,10 +46,33 @@ export function TagsDisplay() {
   const [isOverflowOpen, setIsOverflowOpen] = useState<boolean>(false);
   // Overflow menu colors based on light/dark mode
   const overflowBg = useColorModeValue('gray.50', 'gray.700');
-  
+
   // Manage the state of selected board tags
   const [groupTags, setGroupTags] = useState<string[]>([]);
-  
+
+  // Window size tracking
+  // const [winWidth, setWidth] = useState(window.innerWidth);
+
+  function updateOverflowIndex() {
+    // Calculate total width of tags to determine if overflow menu is needed for each app
+    if (tagsContainerRef.current) {
+      let totalWidth = 0;
+      let newIndex = -1;
+      for (let i = 0; i < sortedTags.length; i++) {
+        const tagWidth = document.getElementById(`tag-${sortedTags[i]}`)?.offsetWidth || 0;
+        // if exceeds width limit
+        if (totalWidth + tagWidth > (window.innerWidth / 3)) {
+          newIndex = i;
+          break;
+        } else {
+          // if exceeds width limit
+          totalWidth += tagWidth;
+        }
+      }
+      if (newIndex != overflowIndex) setOverflowIndex(newIndex);
+    }
+  }
+
   useEffect(() => {
     // Keep track of frequency of all tags
     const freqCounter: TagFrequency = {};
@@ -75,24 +95,26 @@ export function TagsDisplay() {
     allTags.sort((a, b) => freqCounter[b] - freqCounter[a]); // Sort in descending order
     setSortedTags(allTags);
 
-    // Calculate total width of tags to determine if overflow menu is needed for each app
-    if (tagsContainerRef.current) {
-      let totalWidth = 0;
-      for (let i = 0; i < sortedTags.length; i++) {
-        const tagWidth = document.getElementById(`tag-${sortedTags[i]}`)?.offsetWidth || 0;
-        if (totalWidth + tagWidth > (window.innerWidth / 3)) { // if exceeds width limit
-          setOverflowIndex(i);
-          break;
-        }
-        else {
-          totalWidth += tagWidth; // otherwise, add to total width
-        }
-      }
-    }
+    updateOverflowIndex();
   }, [insights]);
 
+
+  // useEffect(() => {
+  //   updateOverflowIndex();
+  // }, [winWidth]);
+
+  // // Update the window size
+  // const updateDimensions = () => {
+  //   setWidth(window.innerWidth);
+  // };
+  // useEffect(() => {
+  //   window.addEventListener('resize', updateDimensions);
+  //   return () => window.removeEventListener('resize', updateDimensions);
+  // }, []);
+
+
   // Map all sage colors to hex
-  let colorMap : Record<SAGEColors, string> = {} as Record<SAGEColors, string>;
+  let colorMap: Record<SAGEColors, string> = {} as Record<SAGEColors, string>;
   colors.forEach((c) => {
     colorMap[c] = useHexColor(c);
   });
@@ -111,14 +133,14 @@ export function TagsDisplay() {
     const updatedTags = groupTags.includes(tagName)
       ? groupTags.filter(tag => tag !== tagName)  // Remove tagName if it exists
       : [...groupTags, tagName];  // Add tagName if it doesn't exist
-  
+
     setGroupTags(updatedTags);
-  
+
     // Get all app ids with the updated set of tags
     const appIds = insights
       .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag)))  // At least one tag exists in labels
       .map(insight => insight._id);
-  
+
     // Update selection of apps
     setSelectedAppsIds(appIds);
   };
@@ -153,7 +175,7 @@ export function TagsDisplay() {
           id={`tag-${tag}`}
           size="sm"
           key={index}
-          borderRadius="full"
+          borderRadius="md"
           border="solid 2px"
           borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
           variant="solid"
@@ -165,11 +187,11 @@ export function TagsDisplay() {
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
         >
-          <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-          <TagCloseButton onClick={(e) => {
+          <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+          <TagCloseButton m={0} onClick={(e) => {
             e.stopPropagation();
             handleDeleteTag(tag);
-            }}
+          }}
           />
         </Tag>
       ))}
@@ -181,26 +203,26 @@ export function TagsDisplay() {
             openDelay={400}
             label="See more tags"
           >
-            <Button 
+            <Button
               size="xs"
-              cursor="pointer" 
+              cursor="pointer"
               onClick={() => setIsOverflowOpen(!isOverflowOpen)}
             >
               {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
             </Button>
           </Tooltip>
-          
+
           {isOverflowOpen && (
-            <Box 
-              position="absolute" 
-              top="110%" 
-              right={0} 
+            <Box
+              position="absolute"
+              top="110%"
+              right={0}
               bg={overflowBg}
               borderWidth="1px"
               boxShadow="md"
               minWidth="200px"
-              maxHeight="500px" 
-              overflowY="auto" 
+              maxHeight="500px"
+              overflowY="auto"
               borderRadius="md"
               p={3}
             >
@@ -210,7 +232,7 @@ export function TagsDisplay() {
                     id={`tag-${tag}`}
                     size="sm"
                     key={index}
-                    borderRadius="full"
+                    borderRadius="md"
                     border="solid 2px"
                     borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
                     variant="solid"
@@ -222,11 +244,11 @@ export function TagsDisplay() {
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
                   >
-                    <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-                    <TagCloseButton onClick={(e) => {
+                    <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+                    <TagCloseButton m={0} onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteTag(tag);
-                      }}
+                    }}
                     />
                   </Tag>
                 ))}

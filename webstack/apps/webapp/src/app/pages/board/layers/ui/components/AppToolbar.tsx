@@ -222,7 +222,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
   const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
-  const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of ;~ invalid tag syntax
+  const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of invalid tag syntax
   const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
   const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
   const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
@@ -420,7 +420,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   function getAppTags() {
     // Semantic to separate a tag's string name from color
-    const delimiter = ";~";
+    const delimiter = ":";
 
     // Define the invalid input shake animation
     const shakeAnimation = keyframes`
@@ -437,7 +437,8 @@ export function AppToolbar(props: AppToolbarProps) {
 
     // Update input value state when input changes
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (oldTag == '' || !event.target.value.includes(' ')) { // prevent spaces while editing a tag
+      // prevent spaces while editing a tag
+      if (oldTag == '' || !event.target.value.includes(' ')) {
         setInputValue(event.target.value);
       }
     };
@@ -452,16 +453,16 @@ export function AppToolbar(props: AppToolbarProps) {
 
     // Show modal for adding a new tag
     const handleAddTag = () => {
-      setIsModalOpen(true);
       setOldTag('');
+      setIsModalOpen(true);
     };
-            
+
     // Show modal for editing a tag
     const handleEditTag = (tag: string) => {
-      setIsModalOpen(true);
-      setOldTag(tag); 
+      setOldTag(tag);
       setInputValue(tag.split(delimiter)[0]);
       setTagColor(tag.split(delimiter)[1] as SAGEColors);
+      setIsModalOpen(true);
     };
 
     // Close modal and clear input value
@@ -502,7 +503,7 @@ export function AppToolbar(props: AppToolbarProps) {
             duration: 3000,
           });
 
-          setInputValue('');        
+          setInputValue('');
           // Close the modal after adding the tag
           setIsModalOpen(false);
         }
@@ -541,7 +542,7 @@ export function AppToolbar(props: AppToolbarProps) {
             duration: 3000,
           });
 
-          setInputValue('');        
+          setInputValue('');
           setIsModalOpen(false);
         }
       }
@@ -550,27 +551,27 @@ export function AppToolbar(props: AppToolbarProps) {
     const handleColorChange = (color: string) => {
       setTagColor(color as SAGEColors);
     }
-  
+
     return (
-      <HStack spacing={2} ref={tagsContainerRef}>
+      <HStack spacing={1} ref={tagsContainerRef}>
         {/* Main list of tags */}
         {visibleTags.map((tag, index) => (
           <Tag
             id={`tag-${tag}`}
             size="sm"
             key={index}
-            borderRadius="full"
+            borderRadius="md"
             variant="solid"
             cursor="pointer"
             fontSize="12px"
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => handleEditTag(tag)}
           >
-            <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-            <TagCloseButton onClick={(e) => {
+            <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+            <TagCloseButton m={0} onClick={(e) => {
               e.stopPropagation();
               handleDeleteTag(tag);
-              }}
+            }}
             />
           </Tag>
         ))}
@@ -583,25 +584,25 @@ export function AppToolbar(props: AppToolbarProps) {
               openDelay={400}
               label="See more tags"
             >
-              <Button 
+              <Button
                 size="xs"
-                cursor="pointer" 
+                cursor="pointer"
                 onClick={() => setIsOverflowOpen(!isOverflowOpen)}
               >
                 {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
               </Button>
             </Tooltip>
-            
+
             {isOverflowOpen && (
-              <Box 
-                position="absolute" 
+              <Box
+                position="absolute"
                 top="10"
                 bg={overflowBg}
                 borderWidth="1px"
                 boxShadow="md"
                 minWidth="200px"
-                maxHeight="200px" 
-                overflowY="auto" 
+                maxHeight="200px"
+                overflowY="auto"
                 borderRadius="md"
                 p={3}
                 zIndex={100}
@@ -612,18 +613,18 @@ export function AppToolbar(props: AppToolbarProps) {
                       id={`tag-${tag}`}
                       size="sm"
                       key={index}
-                      borderRadius="full"
+                      borderRadius="md"
                       variant="solid"
                       cursor="pointer"
                       fontSize="12px"
                       colorScheme={tag.split(delimiter)[1]}
                       onClick={() => handleEditTag(tag)}
                     >
-                      <TagLabel>{tag.split(delimiter)[0]}</TagLabel>
-                      <TagCloseButton onClick={(e) => {
+                      <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+                      <TagCloseButton m={0} onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteTag(tag);
-                        }}
+                      }}
                       />
                     </Tag>
                   ))}
@@ -647,7 +648,7 @@ export function AppToolbar(props: AppToolbarProps) {
         {isModalOpen && (
           <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
             <ModalOverlay />
-            <ModalContent sx={{ maxW: '410px'}}>
+            <ModalContent sx={{ maxW: '410px' }}>
               <ModalHeader>
                 {oldTag === '' ? "Add Tag" : "Edit Tag"}
               </ModalHeader>
@@ -671,13 +672,13 @@ export function AppToolbar(props: AppToolbarProps) {
                   <Alert status="error" mt={5} width="360px" variant="left-accent">
                     <AlertIcon />
                     <AlertTitle>Error!</AlertTitle>
-                    <AlertDescription>The sequence ;~ is not allowed.</AlertDescription>
+                    <AlertDescription>Invalid characters used.</AlertDescription>
                   </Alert>
                 )}
               </ModalBody>
               <ModalFooter>
                 <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>{oldTag === '' ? "Add" : "Save"}</Button>
-                <Button colorScheme="red" onClick={handleCloseModal} width="80px">Cancel</Button>  
+                <Button colorScheme="red" onClick={handleCloseModal} width="80px">Cancel</Button>
               </ModalFooter>
             </ModalContent>
           </Modal>
@@ -685,7 +686,7 @@ export function AppToolbar(props: AppToolbarProps) {
       </HStack>
     );
   }
-  
+
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       // Get the component from the app definition
@@ -878,13 +879,14 @@ export function AppToolbar(props: AppToolbarProps) {
           <Box display="flex" flexDirection="row">
             <Text
               textAlign="left"
-              mx={1}
+              mx={0}
+              p={0}
               color={textColor}
               fontSize={14}
               fontWeight="bold"
               h={'auto'}
               userSelect={'none'}
-              className="handle"
+            // className="handle"
             >
               {app?.data.type}
             </Text>
