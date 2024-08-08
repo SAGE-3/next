@@ -187,8 +187,8 @@ export function TagsDisplay() {
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
         >
-          <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
-          <TagCloseButton m={0} onClick={(e) => {
+          <TagLabel m={1}>{tag.split(delimiter)[0]}</TagLabel>
+          <TagCloseButton fontSize={"18px"} m={0} onClick={(e) => {
             e.stopPropagation();
             handleDeleteTag(tag);
           }}
