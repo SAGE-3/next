@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import {
@@ -26,8 +26,26 @@ import {
   PopoverTrigger,
   UnorderedList,
   useDisclosure,
+  HStack,
+  VStack,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+  keyframes,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  useToast,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline, MdExpandMore, MdExpandLess } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -43,7 +61,9 @@ import {
   ConfirmModal,
   usePresenceStore,
   useUserSettings,
+  ColorPicker,
 } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 
@@ -51,6 +71,8 @@ type AppToolbarProps = {
   boardId: string;
   roomId: string;
 };
+
+type TagFrequency = Record<string, number>
 
 /**
  * AppToolbar Component
@@ -114,18 +136,6 @@ export function AppToolbar(props: AppToolbarProps) {
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const updateInsight = useInsightStore((state) => state.update);
-
-  useEffect(() => {
-    if (insights && insights.length > 0 && app) {
-      // Match the app with the insight
-      const insight = insights.find((el) => el._id === app._id);
-      if (insight) {
-        // if found, update the tags
-        setTags(insight.data.labels);
-        setInputLabel(insight.data.labels.join(' '));
-      }
-    }
-  }, [app, insights]);
 
   // Abilities
   const canDeleteApp = useAbility('delete', 'apps');
@@ -205,6 +215,68 @@ export function AppToolbar(props: AppToolbarProps) {
       }
     }
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
+
+  // Hooks for getAppTags()
+  const [tagFrequency, setTagFrequency] = useState<TagFrequency>({}); // store tag label and associated frequency
+  const [overflowIndex, setOverflowIndex] = useState<number>(-1); // store the first index of the tag at which overflow occurs
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
+  const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
+  const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
+  const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of invalid tag syntax
+  const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
+  const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
+  const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
+  const [isOverflowOpen, setIsOverflowOpen] = useState<boolean>(false); // manage overflow menu visibility
+  const overflowBg = useColorModeValue('gray.50', 'gray.700'); // overflow menu colors based on light/dark mode
+  const toast = useToast();
+
+  useEffect(() => {
+    // Keep track of frequency of all tags
+    const freqCounter: TagFrequency = {};
+    insights.forEach(insight => {
+      insight.data.labels.forEach(tag => {
+        if (freqCounter[tag]) {
+          freqCounter[tag] += 1;
+        }
+        else {
+          freqCounter[tag] = 1;
+        }
+      });
+    });
+    setTagFrequency(freqCounter);
+
+    // Set current app's tags in sorted order
+    if (insights && insights.length > 0 && app) {
+      // Match the app with the insight
+      const insight = insights.find((el) => el._id === app._id);
+      if (insight) {
+        // if found, update the tags
+        const appTags = insight.data.labels;
+        // Store sorted order of tags
+        const sorted = appTags.slice().sort((a, b) => {
+          return tagFrequency[b] - tagFrequency[a]; // Sort in descending order
+        });
+
+        setTags(sorted);
+        setInputLabel(sorted.join(' '));
+      }
+    }
+
+    // Calculate total width of tags to determine if overflow menu is needed for each app
+    if (tagsContainerRef.current) {
+      let totalWidth = 0;
+      for (let i = 0; i < tags.length; i++) {
+        const tagWidth = document.getElementById(`tag-${tags[i]}`)?.offsetWidth || 0;
+        if (totalWidth + tagWidth > 300) { // if exceeds width limit
+          setOverflowIndex(i);
+          break;
+        }
+        else {
+          totalWidth += tagWidth; // otherwise, add to total width
+        }
+      }
+    }
+  }, [insights, app]);
 
   function moveToApp() {
     if (!app) return;
@@ -345,6 +417,275 @@ export function AppToolbar(props: AppToolbarProps) {
       update(app._id, { pinned: !app.data.pinned });
     }
   };
+
+  function getAppTags() {
+    // Semantic to separate a tag's string name from color
+    const delimiter = ":";
+
+    // Define the invalid input shake animation
+    const shakeAnimation = keyframes`
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      50% { transform: translateX(10px); }
+      75% { transform: translateX(-10px); }
+      100% { transform: translateX(0); }
+    `;
+
+    // Separate tags into two lists
+    const visibleTags = overflowIndex === -1 ? tags : tags.slice(0, overflowIndex);
+    const overflowTags = overflowIndex === -1 ? [] : tags.slice(overflowIndex);
+
+    // Update input value state when input changes
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      // prevent spaces while editing a tag
+      if (oldTag == '' || !event.target.value.includes(' ')) {
+        setInputValue(event.target.value);
+      }
+    };
+
+    // Delete a tag
+    const handleDeleteTag = (tagName: string) => {
+      const newTags = tags.filter((tag) => tag !== tagName);
+      if (app) {
+        updateInsight(app._id, { labels: newTags });
+      }
+    };
+
+    // Show modal for adding a new tag
+    const handleAddTag = () => {
+      setOldTag('');
+      setIsModalOpen(true);
+    };
+
+    // Show modal for editing a tag
+    const handleEditTag = (tag: string) => {
+      setOldTag(tag);
+      setInputValue(tag.split(delimiter)[0]);
+      setTagColor(tag.split(delimiter)[1] as SAGEColors);
+      setIsModalOpen(true);
+    };
+
+    // Close modal and clear input value
+    const handleCloseModal = () => {
+      setIsModalOpen(false);
+      setInputValue('');
+      setIsInvalidTag(false);
+      setInvalidTagAnimation(false);
+    };
+
+    // Handle adding a new tag from the modal
+    const handleTagFromModal = () => {
+      // Check for invalid tags
+      if (inputValue.includes(delimiter)) {
+        setIsInvalidTag(true);
+
+        setInvalidTagAnimation(true);
+        setTimeout(() => setInvalidTagAnimation(false), 500);
+
+        return;
+      }
+      setIsInvalidTag(false);
+
+      if (oldTag === '') { // add mode
+        // Split tags by space and remove empty strings
+        const newTags = inputValue.split(' ').filter(tag => tag.trim() !== '');
+        // Append the color of the tag
+        const coloredTags = newTags.map((tag) => tag + delimiter + tagColor);
+        // Filter out tags already in the list and ensure uniqueness
+        const uniqueNewTags = Array.from(new Set(coloredTags.filter(tag => !tags.includes(tag))));
+
+        if (uniqueNewTags.length > 0) {
+          const updatedTags = [...tags, ...uniqueNewTags];
+          if (app) updateInsight(app._id, { labels: updatedTags });
+          toast({
+            title: 'New Tags Successfully Added',
+            status: 'success',
+            duration: 3000,
+          });
+
+          setInputValue('');
+          // Close the modal after adding the tag
+          setIsModalOpen(false);
+        }
+        else {
+          toast({
+            title: 'No New Tags To Add',
+            status: 'warning',
+            duration: 3000,
+          });
+        }
+      }
+      else { // edit mode
+        const newTag = inputValue + delimiter + tagColor;
+
+        if (inputValue === '') {
+          toast({
+            title: 'Tag Cannot Be Empty',
+            status: 'warning',
+            duration: 3000,
+          });
+        }
+        else if (tags.includes(newTag)) {
+          toast({
+            title: 'App Already Has This Tag',
+            status: 'warning',
+            duration: 3000,
+          });
+        }
+        else {
+          const updatedTags = tags.filter((tag) => tag !== oldTag); // remove old tag
+          if (app) updateInsight(app._id, { labels: [...updatedTags, newTag] });
+
+          toast({
+            title: 'Successfully Modified Tag',
+            status: 'success',
+            duration: 3000,
+          });
+
+          setInputValue('');
+          setIsModalOpen(false);
+        }
+      }
+    };
+
+    const handleColorChange = (color: string) => {
+      setTagColor(color as SAGEColors);
+    }
+
+    return (
+      <HStack spacing={1} ref={tagsContainerRef}>
+        {/* Main list of tags */}
+        {visibleTags.map((tag, index) => (
+          <Tag
+            id={`tag-${tag}`}
+            size="sm"
+            key={index}
+            borderRadius="md"
+            variant="solid"
+            cursor="pointer"
+            fontSize="12px"
+            colorScheme={tag.split(delimiter)[1]}
+            onClick={() => handleEditTag(tag)}
+          >
+            <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+            <TagCloseButton m={0} onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteTag(tag);
+            }}
+            />
+          </Tag>
+        ))}
+        {/* Menu for overflow tags */}
+        {overflowTags.length > 0 && (
+          <Box>
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              label="See more tags"
+            >
+              <Button
+                size="xs"
+                cursor="pointer"
+                onClick={() => setIsOverflowOpen(!isOverflowOpen)}
+              >
+                {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
+              </Button>
+            </Tooltip>
+
+            {isOverflowOpen && (
+              <Box
+                position="absolute"
+                top="10"
+                bg={overflowBg}
+                borderWidth="1px"
+                boxShadow="md"
+                minWidth="200px"
+                maxHeight="200px"
+                overflowY="auto"
+                borderRadius="md"
+                p={3}
+                zIndex={100}
+              >
+                <VStack spacing={2} align="flex-start">
+                  {overflowTags.map((tag, index) => (
+                    <Tag
+                      id={`tag-${tag}`}
+                      size="sm"
+                      key={index}
+                      borderRadius="md"
+                      variant="solid"
+                      cursor="pointer"
+                      fontSize="12px"
+                      colorScheme={tag.split(delimiter)[1]}
+                      onClick={() => handleEditTag(tag)}
+                    >
+                      <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+                      <TagCloseButton m={0} onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag);
+                      }}
+                      />
+                    </Tag>
+                  ))}
+                </VStack>
+              </Box>
+            )}
+          </Box>
+        )}
+        {/* Button to add tag */}
+        <Tooltip
+          placement="top"
+          hasArrow={true}
+          openDelay={400}
+          label="Add tag"
+        >
+          <Button onClick={handleAddTag} size="xs" p={0} width="30px">
+            <MdAddCircleOutline size="14px" />
+          </Button>
+        </Tooltip>
+        {/* Modal for adding a new tag */}
+        {isModalOpen && (
+          <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
+            <ModalOverlay />
+            <ModalContent sx={{ maxW: '410px' }}>
+              <ModalHeader>
+                {oldTag === '' ? "Add Tag" : "Edit Tag"}
+              </ModalHeader>
+              <ModalCloseButton />
+              <ModalBody>
+                <Input
+                  width="360px"
+                  mb={5}
+                  placeholder={oldTag === '' ? "Enter tags separated by spaces" : ''}
+                  _placeholder={{ opacity: 1, color: 'gray.400' }}
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleTagFromModal();
+                  }}
+                  animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
+                  autoFocus
+                />
+                <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
+                {isInvalidTag && (
+                  <Alert status="error" mt={5} width="360px" variant="left-accent">
+                    <AlertIcon />
+                    <AlertTitle>Error!</AlertTitle>
+                    <AlertDescription>Invalid characters used.</AlertDescription>
+                  </Alert>
+                )}
+              </ModalBody>
+              <ModalFooter>
+                <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>{oldTag === '' ? "Add" : "Save"}</Button>
+                <Button colorScheme="red" onClick={handleCloseModal} width="80px">Cancel</Button>
+              </ModalFooter>
+            </ModalContent>
+          </Modal>
+        )}
+      </HStack>
+    );
+  }
 
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
@@ -535,20 +876,26 @@ export function AppToolbar(props: AppToolbarProps) {
         opacity={`${appDragging ? '0' : '1'}`}
       >
         <Box display="flex" flexDirection="column">
-          <Text
-            w="100%"
-            textAlign="left"
-            mx={1}
-            color={textColor}
-            fontSize={14}
-            fontWeight="bold"
-            h={'auto'}
-            userSelect={'none'}
-            className="handle"
-          >
-            {app?.data.type}
-          </Text>
-          <Box alignItems="center" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
+          <Box display="flex" flexDirection="row">
+            <Text
+              textAlign="left"
+              mx={0}
+              p={0}
+              color={textColor}
+              fontSize={14}
+              fontWeight="bold"
+              h={'auto'}
+              userSelect={'none'}
+            // className="handle"
+            >
+              {app?.data.type}
+            </Text>
+            <Box display="flex" pl="1">
+              {getAppTags()}
+            </Box>
+          </Box>
+
+          <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
             {getAppToolbar()}
           </Box>
         </Box>
