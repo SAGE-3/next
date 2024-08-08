@@ -6,12 +6,60 @@
  *
  */
 
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+  --clr-1: #dcadf7;
+  --clr-2: #c379ee;
+  --clr-3: #aa55e2;
+  --clr-4: #7e00fc;
+  --clr-5: #5600f6;
+}
+
+@property --gradient-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rotation {
+  0% {
+    --gradient-angle: 0deg;
+  }
+  100% {
+    --gradient-angle: 360deg;
+  }
+}
+
 /* CSS definitions for the app stickies */
-::-webkit-input-placeholder { /* Chrome */
+::-webkit-input-placeholder {
+  /* Chrome */
   color: #000000;
   opacity: 0.2;
 }
-::-moz-placeholder { /* Firefox 19+ */
+::-moz-placeholder {
+  /* Firefox 19+ */
   color: #000000;
   opacity: 0.3;
+}
+
+.card {
+  position: relative; /* for absolute positioning pseudoelements */
+  border-radius: 0.5rem;
+}
+
+.card::before,
+.card::after {
+  z-index: -1;
+  content: '';
+  position: absolute;
+  inset: -0.5rem; /* top bottom left right is 0 */
+  background: conic-gradient(from var(--gradient-angle), var(--clr-3), var(--clr-4), var(--clr-5), var(--clr-4), var(--clr-3));
+  border-radius: inherit;
+  animation: rotation 1.2s linear infinite;
+}
+
+.card::after {
+  filter: blur(5rem);
 }

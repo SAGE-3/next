@@ -346,6 +346,7 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+      className="card"
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
