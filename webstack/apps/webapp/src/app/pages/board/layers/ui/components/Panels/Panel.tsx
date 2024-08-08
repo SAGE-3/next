@@ -108,6 +108,7 @@ export type PanelProps = {
   width: number;
   children?: JSX.Element;
   showClose: boolean;
+  showMinimize?: boolean;
   titleDblClick?: () => void;
 };
 
@@ -335,14 +336,14 @@ export function Panel(props: PanelProps) {
 
               <Box display="flex" flexWrap={'nowrap'}>
                 {!panel.minimized ? (
-                  <IconButton
+                  props.showMinimize ? <IconButton
                     size="xs"
                     icon={<MdExpandLess size="24px" />}
                     aria-label="show less"
                     onClick={handleMinimizeClick}
                     mx="1"
                     cursor="pointer"
-                  />
+                  /> : null
                 ) : (
                   <IconButton
                     size="xs"
