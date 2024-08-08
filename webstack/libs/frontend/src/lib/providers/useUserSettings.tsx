@@ -13,6 +13,7 @@ type UserSettings = {
   showViewports: boolean;
   showAppTitles: boolean;
   showUI: boolean;
+  selectedBoardListView: 'grid' | 'list';
 };
 
 const defaultSettings: UserSettings = {
@@ -20,6 +21,7 @@ const defaultSettings: UserSettings = {
   showViewports: true,
   showAppTitles: false,
   showUI: true,
+  selectedBoardListView: 'list',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -30,16 +32,18 @@ type UserSettingsContextType = {
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
   toggleShowUI: () => void;
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
   restoreDefaultSettings: () => void;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => { },
-  toggleShowViewports: () => { },
-  toggleShowAppTitles: () => { },
-  toggleShowUI: () => { },
-  restoreDefaultSettings: () => { },
+  toggleShowCursors: () => {},
+  toggleShowViewports: () => {},
+  toggleShowAppTitles: () => {},
+  toggleShowUI: () => {},
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
+  restoreDefaultSettings: () => {},
 });
 
 /**
@@ -118,6 +122,18 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
+  const setBoardListView = useCallback(
+    (value: UserSettings['selectedBoardListView']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.selectedBoardListView = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
@@ -125,7 +141,15 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
 
   return (
     <UserSettingsContext.Provider
-      value={{ settings, toggleShowCursors, toggleShowViewports, toggleShowAppTitles, toggleShowUI, restoreDefaultSettings }}
+      value={{
+        settings,
+        toggleShowCursors,
+        toggleShowViewports,
+        toggleShowAppTitles,
+        toggleShowUI,
+        setBoardListView,
+        restoreDefaultSettings,
+      }}
     >
       {props.children}
     </UserSettingsContext.Provider>

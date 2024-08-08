@@ -51,8 +51,9 @@ interface modelInfo {
 const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
 // LLAMA3
 const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
-// OpenAI API
-// const OPENAI_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion and in Markdown format.';
+// Prompt to interject or not
+const LLAMA3_INTERJECT = 'You are a helpful AI assistant with many names (sage, sage3, ai, siri, google, bixby, alexa) and able to understand intent in multi-party conversations. You will be given a sample conversation transcript between multiple users plus you, and asked a question.';
+
 
 /* App component for Chat */
 
@@ -62,11 +63,11 @@ function AppComponent(props: App): JSX.Element {
 
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
-  const geppettoColor = useHexColor('purple');
-  const openaiColor = useHexColor('green');
+  const sageColor = useHexColor('purple');
   const aiTypingColor = useHexColor('orange');
   const otherUserColor = useHexColor('gray');
   const bgColor = useColorModeValue('gray.200', 'gray.800');
+  const fgColor = useColorModeValue('gray.800', 'gray.200');
   const sc = useColorModeValue('gray.400', 'gray.200');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.700', 'gray.100');
@@ -90,6 +91,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
+  const [analysis, setAnalysis] = useState<string>("\u00A0"); // space
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -107,8 +109,9 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const sendMessage = async () => {
-    await newMessage(input.trim());
+    const text = input.trim();
     setInput('');
+    await newMessage(text);
   };
 
   const onSubmit = (e: React.KeyboardEvent) => {
@@ -130,7 +133,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.context) {
       // Quick summary
-      const ctx = `@G Please carefully read the following document text:
+      const ctx = `SAGE, Please carefully read the following document text:
 
       <document>
       ${s.context}
@@ -179,11 +182,9 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get server time
     const now = await serverTime();
-    // Is it a question to Geppetto?
-    const isGeppettoQuestion = new_input.startsWith('@G');
-    const isOpenAIQuestion = new_input.startsWith('@O');
-    const isQuestion = isGeppettoQuestion || isOpenAIQuestion;
-    const name = isQuestion ? (isOpenAIQuestion ? 'OpenAI' : 'Geppetto') : user?.data.name;
+    // Is it a question to SAGE?
+    const isQuestion = new_input.startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
       id: genId(),
@@ -196,23 +197,19 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
+      setAnalysis("Direct question to SAGE.");
       setProcessing(true);
-      // Remove the @X
-      const request = new_input.slice(2);
-      // Build the request
-      // let tempText = '';
-      // setStreamText(tempText);
+      // Remove the @G from the question
+      const request = isQuestion ? new_input.slice(2) : new_input;
 
-      if (isGeppettoQuestion) {
+      if (isQuestion) {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
           if (selectedModel?.model === 'llama2') {
-            /*
-              schema for follow up questions:
-              https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-              {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-              <s>[INST] {{ user_msg_2 }} [/INST]
-             */
+            // schema for follow up questions:
+            // https://huggingface.co/blog/llama2#how-to-prompt-llama-2
+            // {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
+            // <s>[INST] {{ user_msg_2 }} [/INST]
             complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
           } else {
             // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
@@ -267,14 +264,107 @@ function AppComponent(props: App): JSX.Element {
                 userId: user._id,
                 creationId: '',
                 creationDate: now.epoch + 1,
-                userName: 'Geppetto',
+                userName: 'SAGE',
                 query: '',
                 response: new_text,
               },
             ],
           });
         }
+      }
+    } else {
+      // Not a question to SAGE
+      const sample = "The conversation transcript is contained in backtick delimiters below: ```\n" +
+        new_input + "\n```";
+      const question = "Question: you are an AI assistant and should reply only when being addressed by name. Looking at the last message from 'User' in the transcript, should an AI assistant interject this time? Respond in the following JSON format:\n\nreasoning: (give very brief reasoning here)\njudgement: INTERJECT|QUIET (choose one)";
 
+      const test_request = `<|begin_of_text|>
+      <|start_header_id|>system<|end_header_id|> ${LLAMA3_INTERJECT} <|eot_id|>
+      <|start_header_id|>user<|end_header_id|> ${sample} <|eot_id|>
+      <|start_header_id|>user<|end_header_id|> ${question} <|eot_id|>
+      <|start_header_id|>assistant<|end_header_id|>`;
+
+      const interject = await AiAPI.chat.query({ input: test_request, model: 'chat', max_new_tokens: 100 });
+      if (interject && interject.success && interject.output) {
+        try {
+          const text = interject.output.replace(/(\r\n|\n|\r|```)/gm, '').trim();
+          const json = JSON.parse(text);
+          const reasoning = json.reasoning;
+          const judgement = json.judgement;
+
+          // Display the reasoning in the chat
+          setAnalysis(reasoning);
+
+          if (judgement === 'INTERJECT') {
+            // Add messages
+            const initialAnswer = {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch,
+              userName: 'SAGE',
+              query: new_input,
+              response: 'Working on it...',
+            };
+            updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+            let complete_request = '';
+            if (previousQuestion && previousAnswer) {
+              if (selectedModel?.model === 'llama2') {
+                complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${new_input} [/INST]`;
+              } else {
+                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                     <|start_header_id|>user<|end_header_id|>
+                     ${previousQuestion}<|eot_id|>
+                     <|start_header_id|>assistant<|end_header_id|>
+                     ${previousAnswer}<|eot_id|>
+                     <|start_header_id|>user<|end_header_id|>
+                     ${new_input} <|eot_id|>
+                     <|start_header_id|>assistant<|end_header_id|>`;
+              }
+            } else {
+              if (selectedModel?.model === 'llama2') {
+                complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${new_input} [/INST]`;
+              } else {
+                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+                       <|start_header_id|>user<|end_header_id|> ${new_input} <|eot_id|>
+                       <|start_header_id|>assistant<|end_header_id|>`;
+              }
+            }
+            // Send request to backend
+            const backend = await AiAPI.chat.query({ input: complete_request, model: 'chat', max_new_tokens: 400, app_id: props._id });
+            if (backend.success) {
+              const new_text = backend.output || '';
+              setProcessing(false);
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(new_text);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: new_input,
+                previousA: new_text,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: new_text,
+                  },
+                ],
+              });
+            }
+          }
+
+        } catch (error) {
+          setAnalysis("Inconclusive answer from SAGE. Please try again.");
+        }
       }
     }
   };
@@ -287,8 +377,9 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  const stopGeppetto = async () => {
+  const stopSAGE = async () => {
     setProcessing(false);
+    setAnalysis("\u00A0");
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -305,7 +396,7 @@ function AppComponent(props: App): JSX.Element {
               userId: user._id,
               creationId: '',
               creationDate: now.epoch,
-              userName: 'Geppetto/OpenAI',
+              userName: 'SAGE',
               query: '',
               response: streamText + '...(interrupted)',
             },
@@ -317,9 +408,10 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // Reset the chat: clear previous question and answer, and all the messages
-  const resetGepetto = () => {
+  const resetSAGE = () => {
     setPreviousQuestion('');
     setPreviousAnswer('');
+    setAnalysis("\u00A0");
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
 
@@ -476,7 +568,7 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 ) : null}
 
-                {/* Start of Geppetto Messages */}
+                {/* Start of SAGE Messages */}
                 {message.response.length ? (
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
@@ -500,7 +592,7 @@ function AppComponent(props: App): JSX.Element {
                           color="white"
                           rounded={'md'}
                           textAlign={'left'}
-                          bg={message.userName === 'OpenAI' ? openaiColor : geppettoColor}
+                          bg={sageColor}
                           p={1}
                           m={3}
                           fontFamily="arial"
@@ -529,14 +621,14 @@ function AppComponent(props: App): JSX.Element {
                               e.dataTransfer.setData(
                                 'app_state',
                                 JSON.stringify({
-                                  color: message.userName === 'OpenAI' ? 'green' : 'purple',
+                                  color: 'purple',
                                   text: message.response,
                                   fontSize: 24,
                                 })
                               );
                             }}
                           >
-                            <Markdown style={{ marginLeft: '15px', textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            <Markdown style={{ textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
                           </Box>
                         </Box>
                       </Tooltip>
@@ -558,7 +650,7 @@ function AppComponent(props: App): JSX.Element {
             );
           })}
 
-          {/* In progress Geppetto Messages */}
+          {/* In progress SAGE Messages */}
           {
             streamText && (
               <Box position="relative" my={1} maxWidth={'70%'}>
@@ -593,7 +685,7 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop Geppetto'} openDelay={400}>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop SAGE'} openDelay={400}>
             <IconButton
               aria-label="stop"
               size={'xs'}
@@ -602,7 +694,7 @@ function AppComponent(props: App): JSX.Element {
               colorScheme={'blue'}
               variant="ghost"
               icon={<MdStopCircle size="24px" />}
-              onClick={stopGeppetto}
+              onClick={stopSAGE}
               width="34%"
             />
           </Tooltip>
@@ -615,15 +707,14 @@ function AppComponent(props: App): JSX.Element {
               colorScheme={'blue'}
               variant="ghost"
               icon={<MdChangeCircle size="24px" />}
-              onClick={resetGepetto}
+              onClick={resetSAGE}
               width="33%"
             />
           </Tooltip>
         </HStack>
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder={"Chat or @G ask Geppetto" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
-            // placeholder="Chat, @G ask Geppetto or @A ask OpenAI"
+            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -636,6 +727,13 @@ function AppComponent(props: App): JSX.Element {
             <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>
+
+        <Box bg={'blackAlpha.100'} rounded={'sm'} p={1} m={0}>
+          <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="2xs">
+            {analysis}
+          </Text>
+        </Box>
+
       </Flex>
     </AppWindow>
   );
@@ -664,7 +762,7 @@ function ToolbarComponent(props: App): JSX.Element {
       }
       if (message.response.length) {
         if (message.response !== 'Working on it...') {
-          content += `Geppetto> ${message.response} \n`;
+          content += `SAGE> ${message.response} \n`;
         }
       }
     });
@@ -674,7 +772,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with date
-    const filename = 'geppetto-' + dt + '.txt';
+    const filename = 'sage-' + dt + '.txt';
     // Go for download
     downloadFile(txturl, filename);
   };

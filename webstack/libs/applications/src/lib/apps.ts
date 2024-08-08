@@ -16,6 +16,7 @@ import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
 import { name as ImageViewerName } from './apps/ImageViewer';
+import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
@@ -54,6 +55,7 @@ import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
+import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
@@ -94,6 +96,7 @@ export const Applications = {
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent, GroupedToolbarComponent: HCDP.GroupedToolbarComponent },
   [IFrameName]: { AppComponent: React.memo(IFrame.AppComponent), ToolbarComponent: IFrame.ToolbarComponent, GroupedToolbarComponent: IFrame.GroupedToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent, GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent },
+  [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent, GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent },
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent, GroupedToolbarComponent: LeafLet.GroupedToolbarComponent },
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent, GroupedToolbarComponent: Linker.GroupedToolbarComponent },
   [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent, GroupedToolbarComponent: MapGL.GroupedToolbarComponent },

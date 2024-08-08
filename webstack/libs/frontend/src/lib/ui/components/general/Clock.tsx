@@ -8,8 +8,9 @@
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
 import { MdHelpOutline, MdNetworkCheck, MdRemoveRedEye, MdSearch } from 'react-icons/md';
+import { PiGaugeBold } from "react-icons/pi";
 
-import { HelpModal, useHexColor, useNetworkState, Alfred, EditVisibilityModal, useUserSettings } from '@sage3/frontend';
+import { HelpModal, useHexColor, useNetworkState, Alfred, EditVisibilityModal, useUserSettings, usePressureObserver, PressureState } from '@sage3/frontend';
 import { useParams } from 'react-router';
 
 type ClockProps = {
@@ -48,6 +49,11 @@ export function Clock(props: ClockProps) {
   const [netcolor, setNetcolor] = useState(onlineColor);
   const [netlabel, setNetlabel] = useState('online');
 
+  // Pressure Observer
+  const pressure = usePressureObserver();
+  const [cpucolor, setCPUcolor] = useState(onlineColor);
+  const [cpulabel, setCPUlabel] = useState('nominal');
+
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
@@ -84,6 +90,21 @@ export function Clock(props: ClockProps) {
       }
     }
   }, [networkStatus]);
+
+  useEffect(() => {
+    if (pressure) {
+      if (pressure.state === PressureState.nominal) {
+        setCPUcolor(onlineColor);
+      } else if (pressure.state === PressureState.fair) {
+        setCPUcolor(midtierColor);
+      } else if (pressure.state === PressureState.serious) {
+        setCPUcolor(lowtierColor);
+      } else if (pressure.state === PressureState.critical) {
+        setCPUcolor(offlineColor);
+      }
+      setCPUlabel(pressure.state.toString());
+    }
+  }, [pressure]);
 
   const handleHelpOpen = () => {
     helpOnOpen();
@@ -161,7 +182,7 @@ export function Clock(props: ClockProps) {
         </Tooltip>
       )}
       {isBoard && showUI && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label={'UI Cheatsheet'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
             h="auto"
@@ -183,13 +204,13 @@ export function Clock(props: ClockProps) {
       )}
 
       {!isBoard && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label={'Restart the guided tour'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
             h="auto"
             p={0}
             pb={'1px'}
-            mr="-2"
+            mr="-1"
             justifyContent="center"
             aria-label={'Network status'}
             icon={<MdHelpOutline size="22px" />}
@@ -211,7 +232,7 @@ export function Clock(props: ClockProps) {
             borderRadius="md"
             h="auto"
             p={0}
-            m={0}
+            mr={-2}
             fontSize="lg"
             justifyContent="center"
             aria-label={'Network status'}
@@ -221,9 +242,30 @@ export function Clock(props: ClockProps) {
             transition={'all 0.2s'}
             opacity={0.75}
             variant="ghost"
-            // onClick={props.onClick}
             isDisabled={false}
             _hover={{ color: netcolor, opacity: 1, transform: 'scale(1.15)' }}
+          />
+        </Tooltip>
+      )}
+
+      {isBoard && showUI && (
+        <Tooltip label={'CPU load: ' + cpulabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <IconButton
+            borderRadius="md"
+            h="auto"
+            p={0}
+            m={0}
+            fontSize="lg"
+            justifyContent="center"
+            aria-label={'CPU pressure'}
+            icon={<PiGaugeBold size="24px" color={cpucolor} />}
+            background={'transparent'}
+            color={cpucolor}
+            transition={'all 0.2s'}
+            opacity={0.75}
+            variant="ghost"
+            isDisabled={false}
+            _hover={{ color: cpucolor, opacity: 1, transform: 'scale(1.15)' }}
           />
         </Tooltip>
       )}

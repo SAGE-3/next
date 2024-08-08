@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
@@ -22,7 +22,7 @@ import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
-import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap } from 'react-icons/md';
+import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap, MdZoomOutMap } from 'react-icons/md';
 import { RiUserFollowFill } from "react-icons/ri";
 import 'tldraw/tldraw.css'
 
@@ -30,11 +30,11 @@ import 'tldraw/tldraw.css'
 const defaultTickRate = 1000 / 3;
 
 // Zustand store to communicate with toolbar
-interface MapStore {
+interface DrawStore {
   ed: { [key: string]: Editor };
   saveEditor: (id: string, ed: Editor) => void;
 }
-const useStore = create<MapStore>()((set) => ({
+const useStore = create<DrawStore>()((set) => ({
   ed: {},
   saveEditor: (id: string, ed: Editor) => set((state) => ({ ed: { ...state.ed, ...{ [id]: ed } } })),
 }));
@@ -48,6 +48,8 @@ function AppComponent(props: App): JSX.Element {
   const store = useYjsStore({ roomId: props._id })
   const scale = useUIStore((state) => state.scale);
   const ed: Editor = useStore((state) => state.ed[props._id]);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+  const [selected, setSelected] = useState(false);
   const { user } = useUser();
 
   // Fit the editor to the window when the state is true
@@ -102,6 +104,16 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [ed, s.follow, user?._id]);
 
+  // Track if the app is selected
+  useEffect(() => {
+    if (selectedApp !== props._id && selected) {
+      setSelected(false);
+    }
+    if (selectedApp === props._id && !selected) {
+      setSelected(true);
+    }
+  }, [selectedApp]);
+
   // Save the editor instance to the store
   const onMount = (editor: Editor) => {
     if (editor) {
@@ -140,7 +152,7 @@ function AppComponent(props: App): JSX.Element {
       <Box position="fixed" inset={0} borderRadius={8} overflow="hidden"
         transform={`scale(${1 / scale})`} transformOrigin={'top left'}
         width={props.data.size.width * scale} height={props.data.size.height * scale}>
-        <Tldraw components={components} store={store} onMount={onMount} />
+        <Tldraw components={components} store={store} onMount={onMount} hideUi={!selected} />
       </Box>
     </AppWindow >
   );
@@ -179,6 +191,12 @@ const ToolbarComponent = (props: App) => {
     updateState(props._id, { fit: true });
   };
 
+  // Reset zoom to 100%
+  const handleHundred = () => {
+    if (ed) ed.resetZoom();
+    // updateState(props._id, { fit: true });
+  };
+
   // Follow the user
   const handleFollow = () => {
     if (user) {
@@ -207,6 +225,11 @@ const ToolbarComponent = (props: App) => {
         <Tooltip placement="top-start" hasArrow={true} label={'Zoom to Fit'} openDelay={400}>
           <Button onClick={() => handleFit()}>
             <MdZoomInMap />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom to 100%'} openDelay={400}>
+          <Button onClick={() => handleHundred()}>
+            <MdZoomOutMap />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Follow Me'} openDelay={400}>

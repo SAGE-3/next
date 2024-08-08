@@ -80,6 +80,7 @@ export interface ServerConfiguration {
 export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
   isSage3: boolean;
   logins: ServerConfiguration['auth']['strategies'];
+  onlineUsers: number;
 };
 
 // Public to authenticated users from server to the configuration request, for security reasons
