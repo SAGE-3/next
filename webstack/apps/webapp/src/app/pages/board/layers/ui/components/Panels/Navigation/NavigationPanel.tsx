@@ -191,12 +191,7 @@ export function NavigationPanel(props: NavProps) {
                   return (
                     <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                       <Box
-                        backgroundColor={
-                          app.data.type === "Stickie" ? app.data.state.color + '.400' :
-                            app.data.type === "PDFViewer" ? 'red.300' :
-                              app.data.type === "VideoViewer" ? 'cyan.400' :
-                                app.data.type === "ImageViewer" ? 'orange.200' :
-                                  borderColor}
+                        backgroundColor={app.data.type === "Stickie" ? app.data.state.color + '.400' : borderColor}
                         position="absolute"
                         left={(app.data.position.x - appsX) * mapScale + 'px'}
                         top={(app.data.position.y - appsY) * mapScale + 'px'}
