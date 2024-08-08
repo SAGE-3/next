@@ -349,7 +349,7 @@ export function UILayer(props: UILayerProps) {
       <PresenceFollow />
 
       {/* Display a list of all tags */}
-      <Box position="absolute" right="230" top="2">
+      <Box position="absolute" right="170" top="1">
         <TagsDisplay />
       </Box>
     </>
