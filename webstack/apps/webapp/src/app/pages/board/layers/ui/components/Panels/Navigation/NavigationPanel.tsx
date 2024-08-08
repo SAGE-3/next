@@ -206,7 +206,7 @@ export function NavigationPanel(props: NavProps) {
                         borderRadius="sm"
                         cursor="pointer"
                       >
-                        {app.data.type === "ImageViewer" ?
+                        {/* {app.data.type === "ImageViewer" ?
                           <AbsoluteCenter axis="both"><MdOutlineImage /> </AbsoluteCenter> : null}
                         {app.data.type === "PDFViewer" ?
                           <AbsoluteCenter axis="both"><AiOutlineFilePdf /> </AbsoluteCenter> : null}
@@ -215,7 +215,7 @@ export function NavigationPanel(props: NavProps) {
                         {app.data.type === "SageCell" ?
                           <AbsoluteCenter axis="both"><AiOutlinePython /> </AbsoluteCenter> : null}
                         {app.data.type === "VideoViewer" ?
-                          <AbsoluteCenter axis="both"><MdOndemandVideo /> </AbsoluteCenter> : null}
+                          <AbsoluteCenter axis="both"><MdOndemandVideo /> </AbsoluteCenter> : null} */}
                       </Box>
                     </Tooltip>
                   );
