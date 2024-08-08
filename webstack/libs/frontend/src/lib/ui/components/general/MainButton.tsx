@@ -38,11 +38,15 @@ import {
   MdManageAccounts,
   MdOutlineLogout,
   MdOutlineVpnKey,
-  MdHelp,
+  MdInfoOutline,
   MdArrowForward,
   MdLock,
   MdLockOpen,
   MdPeople,
+  MdBugReport,
+  MdSearch,
+  MdRemoveRedEye,
+  MdHelpOutline,
 } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
@@ -60,6 +64,11 @@ import {
   useHexColor,
   UserSearchModal,
   useAbility,
+  FeedbackModal,
+  useConfigStore,
+  HelpModal,
+  EditVisibilityModal,
+  Alfred,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -81,6 +90,9 @@ export function MainButton(props: MainButtonProps) {
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
 
+  const config = useConfigStore((state) => state.config);
+  const feedbackUrl = config.feedback ? config.feedback.url : null;
+
   // Track if the menu is open or not
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
@@ -96,6 +108,23 @@ export function MainButton(props: MainButtonProps) {
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
   const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
 
+  // Alfred Modal
+  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // Help modal
+  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Presence settings modal
+  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
+
+  const handleHelpOpen = () => {
+    helpOnOpen();
+  };
+  const handleAlfredOpen = () => {
+    alfredOnOpen();
+  };
+  const handlePresenceSettingsOpen = () => {
+    visibilityOnOpen();
+  };
+
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Boards
@@ -109,6 +138,9 @@ export function MainButton(props: MainButtonProps) {
 
   // Nav
   const { toAdmin } = useRouteNav();
+
+  // FeedbackModel
+  const { isOpen: feedbackIsOpen, onOpen: feedbackOnOpen, onClose: feedbackOnClose } = useDisclosure();
 
   // Enter Board Modal
   const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
@@ -152,10 +184,6 @@ export function MainButton(props: MainButtonProps) {
 
   const [boardListOpen, setBoardListOpen] = useState<boolean>(false);
 
-  // const openBoardList = () => {
-  //   setBoardListOpen(true);
-  // };
-
   const closeBoardList = () => {
     if (boardListOpen) {
       setBoardListOpen(false);
@@ -178,6 +206,18 @@ export function MainButton(props: MainButtonProps) {
   return (
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
+
+      {/* Help Modal */}
+      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+
+      {/* Presence settings modal dialog */}
+      <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
+
+      {/* Alfred modal dialog */}
+      {props.boardInfo && (<Alfred boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />)}
+
+      {/* Feedback modal */}
+      {feedbackUrl && <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} url={feedbackUrl} />}
 
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
@@ -219,119 +259,151 @@ export function MainButton(props: MainButtonProps) {
             </Box>
           </MenuButton>
         )}
-        <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}>
-          <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />}>
-            Account
-          </MenuItem>
-          {isAdmin && (
-            <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />}>
-              Admin Page
-            </MenuItem>
-          )}
 
-          <MenuItem onClick={userSearchOnOpen} icon={<MdPeople fontSize="24px" />}>
-            Users
-          </MenuItem>
-
-          {props.config?.features?.plugins && (
-            <MenuItem onClick={pluginOnOpen} isDisabled={!canCreatePlugins} icon={<HiPuzzle fontSize="24px" />}>
-              Plugins
-            </MenuItem>
-          )}
-          <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />}>
-            {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-          </MenuItem>
+        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}
+          p="2px" m="0">
+          <MenuGroup title="SAGE3" p="0" m="1">
+            {props.boardInfo && (<MenuItem py="1px" m="0"
+              onClick={handleHelpOpen}
+              icon={<MdHelpOutline size="24px" />}
+              justifyContent="right"
+            > Help </MenuItem>)}
+            <MenuItem onClick={openAbout} icon={<MdInfoOutline fontSize="24px" />} py="1px" m="0"> About </MenuItem>
+            {props.boardInfo && (<MenuItem py="1px" m="0"
+              justifyContent="right"
+              onClick={handleAlfredOpen}
+              icon={<MdSearch fontSize="24px" />}
+            > Search </MenuItem>)}
+            {feedbackUrl && (
+              <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />} py="1px" m="0">
+                Feedback
+              </MenuItem>
+            )}
+          </MenuGroup>
 
           <MenuDivider />
-          {props.boardInfo && (
-            <MenuItem onClick={(e) => handleCopyLink(e)} icon={<MdLink fontSize="24px" />}>
-              Copy Board Link
+
+          <MenuGroup title="Settings" m="1">
+            <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
+              {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
             </MenuItem>
-          )}
+            {props.config?.features?.plugins && (
+              <MenuItem onClick={pluginOnOpen} isDisabled={!canCreatePlugins} icon={<HiPuzzle fontSize="24px" />} py="1px" m="0">
+                Plugins
+              </MenuItem>
+            )}
+            <MenuItem
+              onClick={handlePresenceSettingsOpen}
+              icon={<MdRemoveRedEye fontSize="24px" />}
+              justifyContent="right" py="1px" m="0"
+            >
+              Visibility
+            </MenuItem>
+          </MenuGroup>
+
+          <MenuDivider />
+
           {props.boardInfo && (
-            <Menu isOpen={boardListOpen} placement="right-end" onClose={closeBoardList}>
-              <MenuButton
-                as={MenuItem}
-                icon={<MdArrowForward fontSize="24px" />}
-                onClick={toggleBoardList}
-                _hover={{ background: bgColor }}
-              >
-                Go To Board
-              </MenuButton>
-              <MenuList maxHeight="50vh" overflowY={'scroll'} overflowX="clip" width="300px">
-                <MenuGroup title={`${props.boardInfo.roomName} Boards`}>
-                  {boards.map(
-                    (board) =>
-                      board._id !== boardId && (
-                        <MenuItem
-                          as={Box}
-                          key={board._id}
-                          display="flex"
-                          justifyContent={'space-between'}
-                          py="0"
-                          pl="0"
-                          _hover={{ background: 'none' }}
-                        >
-                          <Box
-                            width="80%"
-                            whiteSpace="nowrap"
-                            overflow="hidden"
-                            onClick={() => goToBoard(board)}
-                            _hover={{ cursor: 'pointer', background: bgColor }}
-                            height="40px"
-                            lineHeight={'40px'}
-                            textOverflow={'ellipsis'}
+            <MenuGroup title="Navigation" m="1">
+              <MenuItem onClick={(e) => handleCopyLink(e)} icon={<MdLink fontSize="24px" />} py="1px" m="0">
+                Copy Board Link
+              </MenuItem>
+              <Menu isOpen={boardListOpen} placement="right-end" onClose={closeBoardList}>
+                <MenuButton
+                  as={MenuItem}
+                  icon={<MdArrowForward fontSize="24px" />}
+                  onClick={toggleBoardList}
+                  _hover={{ background: bgColor }} py="1px" m="0"
+                >
+                  Go To Board
+                </MenuButton>
+                <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width="300px">
+                  <MenuGroup title={`${props.boardInfo.roomName} Boards`}>
+                    {boards.map(
+                      (board) =>
+                        board._id !== boardId && (
+                          <MenuItem
+                            as={Box}
+                            key={board._id}
+                            display="flex"
+                            justifyContent={'space-between'}
+                            p="0"
+                            m="0"
+                            _hover={{ background: 'none' }}
+                            height={'32px'}
+                            lineHeight={'32px'}
                           >
-                            <IconButton
-                              aria-label="LockBoard"
-                              fontSize="xl"
-                              variant="unstlyed"
-                              pointerEvents="none"
-                              color={board.data.isPrivate ? lockColor : unlockColor}
-                              m="0"
-                              p="0"
-                              _hover={{ cursor: 'initial' }}
-                              icon={board.data.isPrivate ? <MdLock /> : <MdLockOpen />}
-                            />
-                            {board.data.name}
-                          </Box>
-                          {/* <Box display="flex" justifyContent={'space-between'} width="20%"> */}
-                          <Tooltip label="Copy Board Link" placement="top" hasArrow openDelay={700}>
-                            <IconButton
-                              aria-label="Board Edit"
-                              fontSize="2xl"
-                              variant="unstlyed"
-                              m="0"
-                              p="0"
-                              _hover={{ transform: 'scale(1.3)' }}
-                              onClick={(e) => handleCopyLink(e, board)}
-                              icon={<MdLink />}
-                            />
-                          </Tooltip>
-                          {/* </Box> */}
-                        </MenuItem>
-                      )
-                  )}
-                </MenuGroup>
-              </MenuList>
-            </Menu>
+                            <Box
+                              width="80%"
+                              whiteSpace="nowrap"
+                              overflow="hidden"
+                              onClick={() => goToBoard(board)}
+                              _hover={{ cursor: 'pointer', background: bgColor }}
+                              textOverflow={'ellipsis'}
+                              height={'32px'}
+                              lineHeight={'32px'}
+                            >
+                              <IconButton
+                                aria-label="LockBoard"
+                                fontSize="lg"
+                                variant="unstlyed"
+                                pointerEvents="none"
+                                color={board.data.isPrivate ? lockColor : unlockColor}
+                                m="0"
+                                p="0"
+                                _hover={{ cursor: 'initial' }}
+                                icon={board.data.isPrivate ? <MdLock /> : <MdLockOpen />}
+                              />
+                              {board.data.name}
+                            </Box>
+
+                            <Tooltip label="Copy Board Link" placement="top" hasArrow openDelay={700}>
+                              <IconButton
+                                aria-label="Board Edit"
+                                fontSize="lg"
+                                variant="unstlyed"
+                                m="0"
+                                p="0"
+                                _hover={{ transform: 'scale(1.1)' }}
+                                onClick={(e) => handleCopyLink(e, board)}
+                                icon={<MdLink />}
+                              />
+                            </Tooltip>
+                          </MenuItem>
+                        )
+                    )}
+                  </MenuGroup>
+                </MenuList>
+              </Menu>
+            </MenuGroup>
           )}
           {props.backToRoom && (
             <>
-              <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />}>
+              <MenuItem onClick={props.backToRoom} icon={<MdArrowBack fontSize="24px" />} py="1px" m="0">
                 Back to Room
               </MenuItem>
               <MenuDivider />
             </>
           )}
 
-          <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
-            About
-          </MenuItem>
+          <MenuGroup title="Account" m="1">
+            <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />} py="1px" m="0">
+              Account
+            </MenuItem>
+            {isAdmin && (
+              <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
+                Admin Page
+              </MenuItem>
+            )}
 
-          <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
-            Logout
-          </MenuItem>
+            <MenuItem onClick={userSearchOnOpen} icon={<MdPeople fontSize="24px" />} py="1px" m="0">
+              Users
+            </MenuItem>
+
+            <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />} py="1px" m="0">
+              Logout
+            </MenuItem>
+          </MenuGroup>
         </MenuList>
       </Menu>
 

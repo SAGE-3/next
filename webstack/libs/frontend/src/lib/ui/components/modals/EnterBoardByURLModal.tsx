@@ -192,11 +192,11 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
       <ConfirmModal
         isOpen={differentServerIsOpen}
         onClose={cancelReset}
-        title={'Different Server'}
+        title={'Different Hub'}
         cancelText={'Cancel'}
         confirmText="Confirm"
         confirmColor="green"
-        message={`This board exists on a different server. Are you sure you want to leave this server?`}
+        message={`This board exists on a different hub. Are you sure you want to leave this hub?`}
         onConfirm={differentServerConfirm}
       />
 
