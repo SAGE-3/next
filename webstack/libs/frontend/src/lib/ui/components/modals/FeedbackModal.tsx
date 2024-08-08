@@ -21,16 +21,13 @@ import {
 } from '@chakra-ui/react';
 
 import { useUser } from '@sage3/frontend';
-import { set } from 'date-fns';
-import { use } from 'passport';
 import { useState } from 'react';
 
 type FeedbackProps = {
   onClose: () => void;
   isOpen: boolean;
+  url: string;
 };
-
-const feedbackUrl = 'http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback';
 
 export function FeedbackModal(props: FeedbackProps) {
   const { user } = useUser();
@@ -66,7 +63,7 @@ export function FeedbackModal(props: FeedbackProps) {
     const url = window.location.href;
 
     //  POST request to the feedback endpoint
-    const response = await fetch(feedbackUrl, {
+    const response = await fetch(props.url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

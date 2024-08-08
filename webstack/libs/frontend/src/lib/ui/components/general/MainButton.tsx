@@ -62,6 +62,7 @@ import {
   UserSearchModal,
   useAbility,
   FeedbackModal,
+  useConfigStore,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -82,6 +83,9 @@ export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
+
+  const config = useConfigStore((state) => state.config);
+  const feedbackUrl = config.feedback ? config.feedback.url : null;
 
   // Track if the menu is open or not
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -184,7 +188,7 @@ export function MainButton(props: MainButtonProps) {
     <>
       {enterBoard && <EnterBoardModal board={enterBoard} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
 
-      <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} />
+      {feedbackUrl && <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} url={feedbackUrl} />}
 
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
@@ -335,9 +339,11 @@ export function MainButton(props: MainButtonProps) {
           <MenuItem onClick={openAbout} icon={<MdHelp fontSize="24px" />}>
             About
           </MenuItem>
-          <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />}>
-            Feedback
-          </MenuItem>
+          {feedbackUrl && (
+            <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />}>
+              Feedback
+            </MenuItem>
+          )}
 
           <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />}>
             Logout
