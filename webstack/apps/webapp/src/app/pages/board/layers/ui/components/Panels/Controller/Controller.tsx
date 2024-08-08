@@ -6,10 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   Stack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverTrigger, PopoverCloseButton, PopoverHeader,
+  PopoverCloseButton, PopoverHeader,
   useDisclosure, VStack, StackDirection,
 } from '@chakra-ui/react';
 
@@ -19,7 +20,6 @@ import { HiChip, HiPuzzle } from 'react-icons/hi';
 
 import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
-import { useEffect, useState } from 'react';
 
 export interface ControllerProps {
   roomId: string;
@@ -88,7 +88,11 @@ export function Controller(props: ControllerProps) {
     if (controller) {
       position = { ...controller.position };
       if (controller.stuck === StuckTypes.None) {
-        position.y = position.y + 60;
+        if (direction === 'row') {
+          position.y = position.y + 60;
+        } else {
+          position.x = position.x + 90;
+        }
       } else if (controller.stuck === StuckTypes.Right) {
         let offset = 0;
         panel.name === 'users' && (offset = 160);
@@ -141,7 +145,7 @@ export function Controller(props: ControllerProps) {
           updatePanel(main.name, { position: { x: window.innerWidth - 95, y: main.position.y } });
         }
       }
-    } else {
+    } else if (main.stuck === StuckTypes.Bottom || main.stuck === StuckTypes.Top) {
       setDirection('row');
       if (main.stuck === StuckTypes.Bottom) {
         // Adjust the position of the main panel if it is stuck to the bottom
