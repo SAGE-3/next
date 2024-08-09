@@ -217,8 +217,8 @@ export function AppToolbar(props: AppToolbarProps) {
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   // Hooks for getAppTags()
-  const [tagFrequency, setTagFrequency] = useState<TagFrequency>({}); // store tag label and associated frequency
-  const [overflowIndex, setOverflowIndex] = useState<number>(-1); // store the first index of the tag at which overflow occurs
+  const [visibleTags, setVisibleTags] = useState<string[]>([]);
+  const [overflowTags, setOverflowTags] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
   const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
@@ -232,18 +232,17 @@ export function AppToolbar(props: AppToolbarProps) {
 
   useEffect(() => {
     // Keep track of frequency of all tags
-    const freqCounter: TagFrequency = {};
+    const tagFrequency: TagFrequency = {};
     insights.forEach(insight => {
       insight.data.labels.forEach(tag => {
-        if (freqCounter[tag]) {
-          freqCounter[tag] += 1;
+        if (tagFrequency[tag]) {
+          tagFrequency[tag] += 1;
         }
         else {
-          freqCounter[tag] = 1;
+          tagFrequency[tag] = 1;
         }
       });
     });
-    setTagFrequency(freqCounter);
 
     // Set current app's tags in sorted order
     if (insights && insights.length > 0 && app) {
@@ -256,27 +255,17 @@ export function AppToolbar(props: AppToolbarProps) {
         const sorted = appTags.slice().sort((a, b) => {
           return tagFrequency[b] - tagFrequency[a]; // Sort in descending order
         });
-
         setTags(sorted);
         setInputLabel(sorted.join(' '));
       }
     }
-
-    // Calculate total width of tags to determine if overflow menu is needed for each app
-    if (tagsContainerRef.current) {
-      let totalWidth = 0;
-      for (let i = 0; i < tags.length; i++) {
-        const tagWidth = document.getElementById(`tag-${tags[i]}`)?.offsetWidth || 0;
-        if (totalWidth + tagWidth > 300) { // if exceeds width limit
-          setOverflowIndex(i);
-          break;
-        }
-        else {
-          totalWidth += tagWidth; // otherwise, add to total width
-        }
-      }
-    }
   }, [insights, app]);
+
+  // Separate tags into two lists
+  useEffect(() => {
+    setVisibleTags(tags.slice(0, 3));
+    setOverflowTags(tags.slice(3));
+  }, [tags]);
 
   function moveToApp() {
     if (!app) return;
@@ -430,10 +419,6 @@ export function AppToolbar(props: AppToolbarProps) {
       75% { transform: translateX(-10px); }
       100% { transform: translateX(0); }
     `;
-
-    // Separate tags into two lists
-    const visibleTags = overflowIndex === -1 ? tags : tags.slice(0, overflowIndex);
-    const overflowTags = overflowIndex === -1 ? [] : tags.slice(overflowIndex);
 
     // Update input value state when input changes
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -757,24 +742,6 @@ export function AppToolbar(props: AppToolbarProps) {
                         </ListItem>
                         <ListItem>
                           <b>Created</b>: {when}
-                        </ListItem>
-                        <ListItem whiteSpace={'nowrap'}>
-                          <b>Tags</b>:{' '}
-                          <Input
-                            width="300px"
-                            m={0}
-                            p={0}
-                            size="xs"
-                            variant="filled"
-                            value={inputLabel}
-                            placeholder="Enter tags here separated by spaces"
-                            _placeholder={{ opacity: 1, color: 'gray.400' }}
-                            focusBorderColor="gray.500"
-                            onChange={handleChange}
-                            onKeyDown={(e) => {
-                              onSubmit(e, onClose);
-                            }}
-                          />
                         </ListItem>
                       </UnorderedList>
                     </PopoverBody>

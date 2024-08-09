@@ -37,8 +37,11 @@ export function TagsDisplay() {
 
   // Tag names are sorted from most to least frequent
   const [sortedTags, setSortedTags] = useState<string[]>([]);
-  // Keep track of tags in overflow menu
+  // Keep track of which tags belong in overflow menu
   const [overflowIndex, setOverflowIndex] = useState<number>(-1);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [visibleTags, setVisibleTags] = useState<string[]>([]);
+  const [overflowTags, setOverflowTags] = useState<string[]>([]);
   // Ref to the container holding tags
   const tagsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -51,15 +54,15 @@ export function TagsDisplay() {
   const [groupTags, setGroupTags] = useState<string[]>([]);
 
   // Window size tracking
-  // const [winWidth, setWidth] = useState(window.innerWidth);
+  const [winWidth, setWidth] = useState(window.innerWidth);
 
-  function updateOverflowIndex() {
+  function updateOverflowIndex(allTags: string[]) {
     // Calculate total width of tags to determine if overflow menu is needed for each app
     if (tagsContainerRef.current) {
       let totalWidth = 0;
       let newIndex = -1;
-      for (let i = 0; i < sortedTags.length; i++) {
-        const tagWidth = document.getElementById(`tag-${sortedTags[i]}`)?.offsetWidth || 0;
+      for (let i = 0; i < allTags.length; i++) {
+        const tagWidth = 100;
         // if exceeds width limit
         if (totalWidth + tagWidth > (window.innerWidth / 3)) {
           newIndex = i;
@@ -71,6 +74,8 @@ export function TagsDisplay() {
       }
       if (newIndex != overflowIndex) setOverflowIndex(newIndex);
     }
+    setSortedTags(allTags);
+    setIsLoaded(true);
   }
 
   useEffect(() => {
@@ -93,24 +98,23 @@ export function TagsDisplay() {
     });
     allTags = Array.from(new Set(allTags));
     allTags.sort((a, b) => freqCounter[b] - freqCounter[a]); // Sort in descending order
-    setSortedTags(allTags);
 
-    updateOverflowIndex();
+    updateOverflowIndex(allTags);
   }, [insights]);
 
 
-  // useEffect(() => {
-  //   updateOverflowIndex();
-  // }, [winWidth]);
+  useEffect(() => {
+    updateOverflowIndex(sortedTags);
+  }, [winWidth]);
 
-  // // Update the window size
-  // const updateDimensions = () => {
-  //   setWidth(window.innerWidth);
-  // };
-  // useEffect(() => {
-  //   window.addEventListener('resize', updateDimensions);
-  //   return () => window.removeEventListener('resize', updateDimensions);
-  // }, []);
+  // Update the window size
+  const updateDimensions = () => {
+    setWidth(window.innerWidth);
+  };
+  useEffect(() => {
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
 
 
   // Map all sage colors to hex
@@ -124,8 +128,10 @@ export function TagsDisplay() {
   };
 
   // Separate tags into two lists
-  const visibleTags = overflowIndex === -1 ? sortedTags : sortedTags.slice(0, overflowIndex);
-  const overflowTags = overflowIndex === -1 ? [] : sortedTags.slice(overflowIndex);
+  useEffect(() => {
+    setVisibleTags(overflowIndex === -1 ? sortedTags : sortedTags.slice(0, overflowIndex));
+    setOverflowTags(overflowIndex === -1 ? [] : sortedTags.slice(overflowIndex));
+  }, [overflowIndex, sortedTags]);
 
   // Group apps given specified tags
   const groupApps = (tagName: string) => {
@@ -170,7 +176,7 @@ export function TagsDisplay() {
 
   return (
     <HStack spacing={2} ref={tagsContainerRef}>
-      {visibleTags.map((tag, index) => (
+      {isLoaded && (visibleTags.map((tag, index) => (
         <Tag
           id={`tag-${tag}`}
           size="sm"
@@ -194,8 +200,8 @@ export function TagsDisplay() {
           }}
           />
         </Tag>
-      ))}
-      {overflowTags.length > 0 && (
+      )))}
+      {isLoaded && overflowTags.length > 0 && (
         <Box>
           <Tooltip
             placement="top"
