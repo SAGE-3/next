@@ -91,7 +91,7 @@ import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from '
  * Users can create rooms and board and join other rooms as members
  * @returns JSX.Element
  */
-export function HomePage() {
+export function NewHomePage() {
   // Media Query
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
@@ -753,7 +753,7 @@ export function HomePage() {
           )}
 
           <Box pt="2" px="2">
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for multiple boards'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
               <Box
                 h="40px"
                 display="flex"
@@ -761,12 +761,14 @@ export function HomePage() {
                 alignItems={'center'}
                 transition="all 0.5s"
                 borderRadius={buttonRadius}
+                onClick={() => {
+                  toHome();
+                  setSelectedRoom(undefined);
+                }}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
-                onClick={handleCreateRoomClick}
-                ref={createRoomRef}
               >
-                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
+                <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="lg">Home</Text>
               </Box>
             </Tooltip>
 
@@ -831,186 +833,79 @@ export function HomePage() {
             }}
           >
             <VStack spacing={0} align="stretch">
-              <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
-                <AccordionItem border="none" ref={activeBoardsRef}>
-                  <AccordionButton borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
-                  <AccordionPanel p="0">
-                    <VStack align="stretch" gap="0">
-                      {boards
-                        .filter(boardActiveFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .sort((a, b) => {
-                          // Sorted by alpha then user count
-                          const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
-                          const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
-                          return userCountB - userCountA;
-                        })
-                        .map((board) => {
-                          return (
-                            <BoardSidebarRow
-                              key={'tooltip_active' + board._id}
-                              board={board}
-                              isSelected={board._id === selectedBoard?._id}
-                              onClick={() => handleBoardClickFromSubMenu(board)}
-                              onDoubleClick={() => handleBoardDoubleClick(board)}
-                            />
-                          );
-                        })}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-
-                <AccordionItem border="none" ref={starredBoardsRef}>
-                  <AccordionButton borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Your favorite rooms'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
-
-                  <AccordionPanel p="0">
-                    <VStack align="stretch" gap="0">
-                      {boards
-                        .filter(boardStarredFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((board) => {
-                          const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                          const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                          return (
-                            <BoardSidebarRow
-                              key={'tooltip_starred' + board._id}
-                              board={board}
-                              isSelected={board._id === selectedBoard?._id}
-                              onClick={() => handleBoardClickFromSubMenu(board)}
-                              onDoubleClick={() => handleBoardDoubleClick(board)}
-                            />
-                          );
-                        })}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-                <AccordionItem border="none" ref={recentBoardsRef}>
-                  <AccordionButton pl="2" borderRadius={buttonRadius} _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Your recently visited rooms (limit to 10)'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
-
-                  <AccordionPanel p={0}>
-                    <VStack align="stretch" gap="0">
-                      {boards
-                        .filter(recentBoardsFilter)
-                        .sort((boardA, boardB) => {
-                          // Sort by most recent
-                          const indexOfA = recentBoards.indexOf(boardA._id);
-                          const indexOfB = recentBoards.indexOf(boardB._id);
-                          return indexOfA - indexOfB;
-                        })
-                        .map((board) => {
-                          return (
-                            <BoardSidebarRow
-                              key={'tooltip_recent' + board._id}
-                              board={board}
-                              isSelected={board._id === selectedBoard?._id}
-                              onClick={() => handleBoardClickFromSubMenu(board)}
-                              onDoubleClick={() => handleBoardDoubleClick(board)}
-                            />
-                          );
-                        })}
-                      {boards.filter(recentBoardsFilter).length > 0 && (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="left"
-                          transition="all 0.5s"
-                          borderRadius="6"
-                          pl="48px"
-                          height="28px"
-                          color="red.400"
-                          fontWeight={'bold'}
-                          onClick={clearRecentBoardsModalOnOpen}
-                          _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
+              <Box
+                display="flex"
+                flex="1"
+                alignItems="left"
+                borderRadius={buttonRadius}
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                p="2"
+              >
+                <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
+              </Box>
+              <Box
+                display="flex"
+                flex="1"
+                alignItems="left"
+                borderRadius={buttonRadius}
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                p="2"
+              >
+                <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
+              </Box>
+              <Box
+                display="flex"
+                flex="1"
+                alignItems="left"
+                borderRadius={buttonRadius}
+                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                p="2"
+              >
+                <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
+              </Box>
+              <Box mt="6" pl="2">
+                <Box pl="2">Joined Rooms</Box>
+                <Box>
+                  {rooms
+                    .filter(roomMemberFilter)
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                    .map((room) => {
+                      return (
+                        <Tooltip
+                          key={'tooltip_room' + room._id}
+                          openDelay={400}
+                          hasArrow
+                          placement="top"
+                          label={`Description ${room.data.description}`}
                         >
-                          <Text fontSize="md" pl="2">
-                            Clear Recents Boards
-                          </Text>
-                        </Box>
-                      )}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
+                          <Box
+                            borderRadius="6"
+                            key={room._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md" pl="2">
+                                {room.data.name}
+                              </Text>
+                            </Box>
 
-                <AccordionItem border="none" ref={roomsRef}>
-                  <AccordionButton
-                    borderRadius={buttonRadius}
-                    _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                    transition={'all 0.5s'}
-                    pl="2"
-                  >
-                    <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
-                      <Box display="flex" flex="1" alignItems="left">
-                        <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
-                      </Box>
-                    </Tooltip>
-                    <AccordionIcon />
-                  </AccordionButton>
-
-                  <AccordionPanel p="0">
-                    <VStack align="stretch" gap="0">
-                      {rooms
-                        .filter(roomMemberFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((room) => {
-                          return (
-                            <Tooltip
-                              key={'tooltip_room' + room._id}
-                              openDelay={400}
-                              hasArrow
-                              placement="top"
-                              label={`Description ${room.data.description}`}
-                            >
-                              <Box
-                                borderRadius="6"
-                                key={room._id}
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                transition="all 0.5s"
-                                pl="48px"
-                                height="28px"
-                                backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
-                                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                                onClick={() => handleRoomClick(room)}
-                              >
-                                <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                  <Text fontSize="md" pl="2">
-                                    {room.data.name}
-                                  </Text>
-                                </Box>
-
-                                <Text fontSize="xs" pr="4" color={subTextColor}>
-                                  {room.data.ownerId === userId ? 'Owner' : 'Member'}
-                                </Text>
-                              </Box>
-                            </Tooltip>
-                          );
-                        })}
-                    </VStack>
-                  </AccordionPanel>
-                </AccordionItem>
-              </Accordion>
+                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                              {room.data.ownerId === userId ? 'Owner' : 'Member'}
+                            </Text>
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                </Box>
+              </Box>
             </VStack>
           </Box>
         </Box>
@@ -1354,50 +1249,6 @@ export function HomePage() {
                   </HStack>
                 ) : (
                   <Text p="3">No recent boards.</Text>
-                )}
-              </Box>
-            </Box>
-            <Box>
-              <Text my="3" fontWeight="bold">
-                Starred Boards
-              </Text>
-              <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
-                {savedBoards.length > 0 ? (
-                  <HStack
-                    gap="3"
-                    width="100%"
-                    overflow="auto"
-                    height="fit-content"
-                    py="5"
-                    px="2"
-                    css={{
-                      '&::-webkit-scrollbar': {
-                        background: 'transparent',
-                        height: '10px',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: scrollBarColor,
-                        borderRadius: '48px',
-                      },
-                    }}
-                  >
-                    {boards
-                      .filter(boardStarredFilter)
-                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => (
-                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                          <BoardCard
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                          />
-                        </Box>
-                      ))}
-                  </HStack>
-                ) : (
-                  <Text p="3">No starred boards.</Text>
                 )}
               </Box>
             </Box>

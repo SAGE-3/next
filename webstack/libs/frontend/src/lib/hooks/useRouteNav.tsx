@@ -19,7 +19,7 @@ export function useRouteNav() {
 
   function toHome(roomId?: string) {
     if (roomId) {
-      navigate(`/home/${roomId}`);
+      navigate(`/home/room/${roomId}`);
     } else {
       navigate('/home');
     }
