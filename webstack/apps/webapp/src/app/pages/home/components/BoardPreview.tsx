@@ -5,18 +5,16 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useState, useEffect } from 'react';
-import { Box, Text, Icon, useColorModeValue, Tooltip } from '@chakra-ui/react';
+
+import { useState, useEffect, useRef } from 'react';
+import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
 import { APIHttp, useHexColor } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
 import { App, AppName } from '@sage3/applications/schema';
 
-/* App component for BoardLink */
-
 export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
-  // Apps
   const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
   const [boardWidth, setBoardWidth] = useState(0);
   const [boardHeight, setBoardHeight] = useState(0);
@@ -24,7 +22,8 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   const [appsY, setAppsY] = useState(0);
   const [mapScale, setMapScale] = useState(1);
 
-  // Color
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
   const boardColor = useHexColor(props.board.data.color);
   const appBorderColorValue = useColorModeValue('gray.700', 'gray.200');
   const appBorderColor = useHexColor(appBorderColorValue);
@@ -32,6 +31,8 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
     `linear-gradient(172deg, #fafafa, #fbfbfb, #eeeeee)`,
     `linear-gradient(172deg, #2e2e2e, #313131, #292929)`
   );
+
+  const PADDING = 2; // Padding in pixels
 
   async function updateAppInfo() {
     const res = await APIHttp.QUERY<App>('/apps', { boardId: props.board._id });
@@ -50,7 +51,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       const width = Math.max(...appsRight) - Math.min(...appsLeft);
       const height = Math.max(...appsBottom) - Math.min(...appsTop);
 
-      const mapScale = Math.min(props.width / width, props.height / height) * 0.85;
+      const mapScale = Math.min((props.width - 2 * PADDING) / width, (props.height - 2 * PADDING) / height) * 0.85;
       const x = Math.min(...appsLeft);
       const y = Math.min(...appsTop);
 
@@ -67,6 +68,38 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
     updateAppInfo();
   }, [props.board._id]);
 
+  useEffect(() => {
+    if (canvasRef.current && appInfo.length > 0) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        const dpr = window.devicePixelRatio || 1;
+        const canvasWidth = boardWidth + 2 * PADDING;
+        const canvasHeight = boardHeight + 2 * PADDING;
+        canvas.width = canvasWidth * dpr;
+        canvas.height = canvasHeight * dpr;
+        canvas.style.width = `${canvasWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.fillStyle = boardColor;
+        ctx.strokeStyle = appBorderColor;
+        ctx.lineWidth = 1;
+
+        appInfo.forEach((app) => {
+          const x = (app.position.x - appsX) * mapScale + PADDING;
+          const y = (app.position.y - appsY) * mapScale + PADDING;
+          const width = app.size.width * mapScale;
+          const height = app.size.height * mapScale;
+
+          ctx.fillRect(x, y, width, height);
+          ctx.strokeRect(x, y, width, height);
+        });
+      }
+    }
+  }, [appInfo, boardColor, appBorderColor, mapScale, appsX, appsY, boardWidth, boardHeight]);
+
   return (
     <Box
       width={`${props.width}px`}
@@ -75,7 +108,6 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       borderRadius="xl"
       background={linearBGColor}
       p="2"
-      // border={`1px solid ${!props.isSelected ? 'lightgray' : boardColor}`}
       display="flex"
       alignItems="center"
       justifyContent="center"
@@ -98,26 +130,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
           />
         </>
       ) : appInfo.length > 0 ? (
-        <Box position="relative" height={boardHeight} width={boardWidth}>
-          {appInfo.map((app) => {
-            return (
-              <Box
-                backgroundColor={boardColor}
-                position="absolute"
-                left={(app.position.x - appsX) * mapScale + 'px'}
-                top={(app.position.y - appsY) * mapScale + 'px'}
-                width={app.size.width * mapScale + 'px'}
-                height={app.size.height * mapScale + 'px'}
-                transition={'all .5s'}
-                borderWidth="1px"
-                borderStyle="solid"
-                borderColor={appBorderColor}
-                borderRadius="sm"
-                key={app.id}
-              ></Box>
-            );
-          })}
-        </Box>
+        <canvas ref={canvasRef} style={{ width: `${boardWidth + 2 * PADDING}px`, height: `${boardHeight + 2 * PADDING}px` }} />
       ) : (
         <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
           No Opened Applications
