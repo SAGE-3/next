@@ -84,6 +84,7 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
+import { getSvgPathFromPoints } from 'tldraw';
 
 /**
  * Home page for SAGE3
@@ -763,7 +764,7 @@ export function NewHomePage() {
                 borderRadius={buttonRadius}
                 onClick={() => {
                   toHome();
-                  setSelectedRoom(undefined);
+                  handleLeaveRoom();
                 }}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
@@ -1251,22 +1252,59 @@ export function NewHomePage() {
                   <Text p="3">No recent boards.</Text>
                 )}
               </Box>
+
+              <Box>
+                <Text>Available Rooms</Text>
+                <Button onClick={handleCreateRoomClick}>+ new</Button>
+                <Box height="100%">
+                  {rooms
+                    .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                    .map((room) => {
+                      return (
+                        <Tooltip
+                          key={'tooltip_room' + room._id}
+                          openDelay={400}
+                          hasArrow
+                          placement="top"
+                          label={`Description ${room.data.description}`}
+                        >
+                          <Box
+                            borderRadius="6"
+                            key={room._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            pl="48px"
+                            height="28px"
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md" pl="2">
+                                {room.data.name}
+                              </Text>
+                            </Box>
+
+                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                              {room.data.ownerId === userId ||
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId)
+                                ? room.data.ownerId === userId
+                                  ? 'Owner'
+                                  : 'Member'
+                                : 'Join'}
+                            </Text>
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                </Box>
+              </Box>
             </Box>
           </Box>
         </Box>
       )}
-      {/* <Image
-        position="absolute"
-        right="2"
-        bottom="2"
-        src={imageUrl}
-        height="30px"
-        style={{ opacity: 0.7 }}
-        alt="sage3"
-        userSelect={'auto'}
-        draggable={false}
-        display={isLargerThan800 ? 'flex' : 'none'}
-      /> */}
     </Box>
   );
 }
