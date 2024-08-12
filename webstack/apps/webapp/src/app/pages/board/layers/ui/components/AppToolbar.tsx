@@ -222,7 +222,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
   const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
-  const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of invalid tag syntax
+  const [inputAlert, setInputAlert] = useState<string>(''); // alert users of input errors
   const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
   const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
   const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
@@ -420,11 +420,55 @@ export function AppToolbar(props: AppToolbarProps) {
       100% { transform: translateX(0); }
     `;
 
-    // Update input value state when input changes
+    // Update state on input change and validate
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      // prevent spaces while editing a tag
-      if (oldTag == '' || !event.target.value.includes(' ')) {
+      let isValid = true;
+
+      // Input contains delimiter
+      if (event.target.value.includes(delimiter)) {
+        setInputAlert('Colon ":" is not permitted.');
+        isValid = false;
+      }
+
+      // Add tag mode
+      if (oldTag == '') {
+        // Split tags by space and remove empty strings
+        const newTags = event.target.value.split(' ').filter(tag => tag.trim() !== '');
+
+        // Add up to 5 tags at once
+        if (newTags.length > 5) {
+          setInputAlert("A maximum of 5 tags can be added at once.");
+          isValid = false;
+        }
+        // Max 20 characters per tag
+        newTags.forEach((tag) => {
+          if (tag.length > 20) {
+            setInputAlert("Tags must be 20 characters or less.");
+            isValid = false;
+          }
+        });
+      }
+      // Edit tag mode
+      else {
+        // Prevent spaces while editing a tag
+        if (event.target.value.includes(' ')) {
+          setInputAlert("Tag cannot contain spaces.");
+          isValid = false;
+        }
+        if (event.target.value.length > 20) {
+          setInputAlert("Tag must be 20 characters or less.");
+          isValid = false;
+        }
+      }
+
+      // Only update input value if user input is valid
+      if (isValid) {
         setInputValue(event.target.value);
+        setInputAlert('');
+      }
+      else {
+        setInvalidTagAnimation(true);
+        setTimeout(() => setInvalidTagAnimation(false), 500);
       }
     };
 
@@ -437,13 +481,13 @@ export function AppToolbar(props: AppToolbarProps) {
     };
 
     // Show modal for adding a new tag
-    const handleAddTag = () => {
+    const openAddModal = () => {
       setOldTag('');
       setIsModalOpen(true);
     };
 
     // Show modal for editing a tag
-    const handleEditTag = (tag: string) => {
+    const openEditModal = (tag: string) => {
       setOldTag(tag);
       setInputValue(tag.split(delimiter)[0]);
       setTagColor(tag.split(delimiter)[1] as SAGEColors);
@@ -454,22 +498,13 @@ export function AppToolbar(props: AppToolbarProps) {
     const handleCloseModal = () => {
       setIsModalOpen(false);
       setInputValue('');
-      setIsInvalidTag(false);
       setInvalidTagAnimation(false);
     };
 
-    // Handle adding a new tag from the modal
+    // Handle adding or editing a new tag from the modal
     const handleTagFromModal = () => {
-      // Check for invalid tags
-      if (inputValue.includes(delimiter)) {
-        setIsInvalidTag(true);
-
-        setInvalidTagAnimation(true);
-        setTimeout(() => setInvalidTagAnimation(false), 500);
-
-        return;
-      }
-      setIsInvalidTag(false);
+      // Remove input alert errors
+      setInputAlert('');
 
       if (oldTag === '') { // add mode
         // Split tags by space and remove empty strings
@@ -550,7 +585,7 @@ export function AppToolbar(props: AppToolbarProps) {
             cursor="pointer"
             fontSize="12px"
             colorScheme={tag.split(delimiter)[1]}
-            onClick={() => handleEditTag(tag)}
+            onClick={() => openEditModal(tag)}
           >
             <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
             <TagCloseButton m={0} onClick={(e) => {
@@ -603,7 +638,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       cursor="pointer"
                       fontSize="12px"
                       colorScheme={tag.split(delimiter)[1]}
-                      onClick={() => handleEditTag(tag)}
+                      onClick={() => openEditModal(tag)}
                     >
                       <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
                       <TagCloseButton m={0} onClick={(e) => {
@@ -625,11 +660,11 @@ export function AppToolbar(props: AppToolbarProps) {
           openDelay={400}
           label="Add tag"
         >
-          <Button onClick={handleAddTag} size="xs" p={0} width="30px">
+          <Button onClick={openAddModal} size="xs" p={0} width="30px">
             <MdAddCircleOutline size="14px" />
           </Button>
         </Tooltip>
-        {/* Modal for adding a new tag */}
+        {/* Modal for adding or editing a new tag */}
         {isModalOpen && (
           <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
             <ModalOverlay />
@@ -653,11 +688,10 @@ export function AppToolbar(props: AppToolbarProps) {
                   autoFocus
                 />
                 <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
-                {isInvalidTag && (
-                  <Alert status="error" mt={5} width="360px" variant="left-accent">
+                {inputAlert !== '' && (
+                  <Alert status="warning" mt={5} width="360px" variant="left-accent">
                     <AlertIcon />
-                    <AlertTitle>Error!</AlertTitle>
-                    <AlertDescription>Invalid characters used.</AlertDescription>
+                    <AlertDescription>{inputAlert}</AlertDescription>
                   </Alert>
                 )}
               </ModalBody>
