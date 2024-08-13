@@ -27,7 +27,7 @@ type TagFrequency = Record<string, number>;
 
 export function TagsDisplay() {
   // UI Store
-  const { setSelectedAppsIds, setSelectedTag } = useUIStore((state) => state);
+  const { selectedAppsIds, setSelectedAppsIds, setSelectedTag } = useUIStore((state) => state);
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const updateBatchInsight = useInsightStore((state) => state.updateBatch);
@@ -116,7 +116,6 @@ export function TagsDisplay() {
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-
   // Map all sage colors to hex
   let colorMap: Record<SAGEColors, string> = {} as Record<SAGEColors, string>;
   colors.forEach((c) => {
@@ -151,6 +150,13 @@ export function TagsDisplay() {
     setSelectedAppsIds(appIds);
   };
 
+  useEffect(() => {
+    // Deselect board tags when apps are deselected
+    if (selectedAppsIds.length === 0) {
+      groupTags.length = 0;
+    }
+  }, [selectedAppsIds]);
+
   // Highlight all apps with the specified tag
   const highlightApps = (tagName: string) => {
     setSelectedTag(tagName);
@@ -174,6 +180,16 @@ export function TagsDisplay() {
     updateBatchInsight(updates);
   };
 
+  // If the tag exceeds 10 characters, truncate the string
+  const truncateStr = (str: string) => {
+    const tagName = str.split(delimiter)[0];
+    const maxLen = 10;
+    if (groupTags.includes(str)) { // show entire string if tag is selected
+      return tagName;
+    }
+    return tagName.length > maxLen ? tagName.substring(0, maxLen) + '...' : tagName;
+  }
+
   return (
     <HStack spacing={2} ref={tagsContainerRef}>
       {isLoaded && (visibleTags.map((tag, index) => (
@@ -193,7 +209,7 @@ export function TagsDisplay() {
           onMouseEnter={() => highlightApps(tag)}
           onMouseLeave={unhighlightApps}
         >
-          <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+          <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
           <TagCloseButton m={0} onClick={(e) => {
             e.stopPropagation();
             handleDeleteTag(tag);
@@ -250,7 +266,7 @@ export function TagsDisplay() {
                     onMouseEnter={() => highlightApps(tag)}
                     onMouseLeave={unhighlightApps}
                   >
-                    <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+                    <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
                     <TagCloseButton m={0} onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteTag(tag);

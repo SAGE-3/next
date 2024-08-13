@@ -572,6 +572,11 @@ export function AppToolbar(props: AppToolbarProps) {
       setTagColor(color as SAGEColors);
     }
 
+    const truncateStr = (str: string) => {
+      const maxLen = 10;
+      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
+    }
+
     return (
       <HStack spacing={1} ref={tagsContainerRef}>
         {/* Main list of tags */}
@@ -587,7 +592,7 @@ export function AppToolbar(props: AppToolbarProps) {
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => openEditModal(tag)}
           >
-            <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+            <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
             <TagCloseButton m={0} onClick={(e) => {
               e.stopPropagation();
               handleDeleteTag(tag);
@@ -640,7 +645,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       colorScheme={tag.split(delimiter)[1]}
                       onClick={() => openEditModal(tag)}
                     >
-                      <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
+                      <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
                       <TagCloseButton m={0} onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteTag(tag);
