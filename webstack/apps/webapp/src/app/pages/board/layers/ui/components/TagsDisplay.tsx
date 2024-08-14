@@ -237,7 +237,7 @@ export function TagsDisplay() {
           {isOverflowOpen && (
             <Box
               position="absolute"
-              top="110%"
+              bottom="110%"
               right={0}
               bg={overflowBg}
               borderWidth="1px"
