@@ -1,0 +1,12 @@
+
+{
+  "description": "Create apps the meet the requirement defined in a user query",
+  "prefix": "Create a SAGE3 app (widget) to reflect the user's query. Make sure not to include tags in the newly created apps unless specifically mentioned in the query. Execute the code without prompting the user for more info; if the code is ambigous, then terminate by calling \"CompleteOrEscalate\". The new widget should be positioned to avoid overlap with other apps listed in current_apps while minimizing empty space.",
+  "input_variables": [
+    "current_apps",
+    "query"
+  ],
+  "suffix": "current_apps: {current_apps}\nquery: {query}\n"
+}
+
+

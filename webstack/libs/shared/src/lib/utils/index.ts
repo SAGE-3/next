@@ -8,3 +8,4 @@
 
 export * from './gen-id';
 export * from './mime-utils';
+export * from './fuzzy-search';

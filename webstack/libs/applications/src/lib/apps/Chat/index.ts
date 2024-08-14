@@ -17,6 +17,7 @@ export const schema = z.object({
   previousQ: z.string(),
   previousA: z.string(),
   context: z.string(),
+  token: z.string(),
   messages: z
     .object({
       id: z.string(),
@@ -35,6 +36,7 @@ export const init: Partial<state> = {
   previousQ: '',
   previousA: '',
   context: '',
+  token: '',
   messages: [
     {
       id: 'starting',
@@ -42,7 +44,7 @@ export const init: Partial<state> = {
       creationDate: Date.now(),
       userName: '',
       query: '',
-      response: `Hi I am Geppetto! Ask me anything when starting with @G?`,
+      response: 'I am SAGE AI! Ask me anything or chat with people in the board',
       userId: '',
     },
   ],

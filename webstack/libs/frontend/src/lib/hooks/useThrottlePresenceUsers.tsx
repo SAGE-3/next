@@ -13,7 +13,7 @@ import { Presence, User } from '@sage3/shared/types';
 
 import { usePresenceStore, useUsersStore } from '../stores';
 
-type UserAndPresence = { presence: Presence; user: User };
+export type UserAndPresence = { presence: Presence; user: User };
 
 /**
  * Throttle hook for the apps store to reduce the amount of updates to react

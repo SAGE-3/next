@@ -16,12 +16,16 @@ import { z } from 'zod';
 export const schema = z.object({
   jupyterURL: z.string(),
   notebook: z.string(),
+  zoom: z.number(),
+  kernel: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: state = {
-  jupyterURL: 'http://localhost',
+  jupyterURL: '',
   notebook: '',
+  zoom: 1,
+  kernel: '',
 };
 
 export const name = 'JupyterLab';

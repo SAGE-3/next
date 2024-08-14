@@ -55,8 +55,8 @@ export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
       new Strategy(
         cilongconfig,
         async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: VerifyCallback) => {
-          const displayName = profile.displayName;
           const email = profile.emails ? profile.emails[0].value : '';
+          const displayName = profile.displayName ? profile.displayName : email.split('@')[0];
           const picture = profile.photos ? profile.photos[0].value : '';
           const extras = {
             displayName: displayName ?? '',

@@ -15,9 +15,11 @@ import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFVie
 import { state as HCDPState, name as HCDPName } from './apps/HCDP';
 import { state as IFrameState, name as IFrameName } from './apps/IFrame';
 import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
+import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
 import { state as MapGLState, name as MapGLName } from './apps/MapGL';
+import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
 import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
@@ -27,12 +29,14 @@ import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SeerState, name as SeerName } from './apps/Seer';
 import { state as SensorOverviewState, name as SensorOverviewName } from './apps/SensorOverview';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
+import { state as TLDrawState, name as TLDrawName } from './apps/TLDraw';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
+import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
 
 
 export type AppState =
@@ -52,9 +56,11 @@ export type AppState =
   | HCDPState
   | IFrameState
   | ImageViewerState
+  | JupyterLabState
   | LeafLetState
   | LinkerState
   | MapGLState
+  | NotepadState
   | PDFResultState
   | PDFViewerState
   | PluginAppState
@@ -64,12 +70,14 @@ export type AppState =
   | SeerState
   | SensorOverviewState
   | StickieState
+  | TLDrawState
   | TwilioScreenshareState
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState;
+  | WebviewState
+  | CalculatorState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName | typeof CalculatorName;

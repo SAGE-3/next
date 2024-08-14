@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
@@ -15,9 +16,11 @@ import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
 import { name as ImageViewerName } from './apps/ImageViewer';
+import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapGLName } from './apps/MapGL';
+import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
@@ -27,12 +30,14 @@ import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
+import { name as TLDrawName } from './apps/TLDraw';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
+import { name as CalculatorName } from './apps/Calculator';
 
 
 import AIPane from './apps/AIPane/AIPane';
@@ -50,9 +55,11 @@ import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
+import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import MapGL from './apps/MapGL/MapGL';
+import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
@@ -62,14 +69,15 @@ import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
+import TLDraw from './apps/TLDraw/TLDraw';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
+import Calculator from './apps/Calculator/Calculator';
 import React from 'react';
-import { App, AppGroup } from './schema';
 
 
 export const Applications = {
@@ -88,9 +96,11 @@ export const Applications = {
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent, GroupedToolbarComponent: HCDP.GroupedToolbarComponent },
   [IFrameName]: { AppComponent: React.memo(IFrame.AppComponent), ToolbarComponent: IFrame.ToolbarComponent, GroupedToolbarComponent: IFrame.GroupedToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent, GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent },
+  [JupyterLabName]: { AppComponent: React.memo(JupyterLab.AppComponent), ToolbarComponent: JupyterLab.ToolbarComponent, GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent },
   [LeafLetName]: { AppComponent: React.memo(LeafLet.AppComponent), ToolbarComponent: LeafLet.ToolbarComponent, GroupedToolbarComponent: LeafLet.GroupedToolbarComponent },
   [LinkerName]: { AppComponent: React.memo(Linker.AppComponent), ToolbarComponent: Linker.ToolbarComponent, GroupedToolbarComponent: Linker.GroupedToolbarComponent },
   [MapGLName]: { AppComponent: React.memo(MapGL.AppComponent), ToolbarComponent: MapGL.ToolbarComponent, GroupedToolbarComponent: MapGL.GroupedToolbarComponent },
+  [NotepadName]: { AppComponent: React.memo(Notepad.AppComponent), ToolbarComponent: Notepad.ToolbarComponent, GroupedToolbarComponent: Notepad.GroupedToolbarComponent },
   [PDFResultName]: { AppComponent: React.memo(PDFResult.AppComponent), ToolbarComponent: PDFResult.ToolbarComponent, GroupedToolbarComponent: PDFResult.GroupedToolbarComponent },
   [PDFViewerName]: { AppComponent: React.memo(PDFViewer.AppComponent), ToolbarComponent: PDFViewer.ToolbarComponent, GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent },
   [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
@@ -100,12 +110,14 @@ export const Applications = {
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent, GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent, GroupedToolbarComponent: Stickie.GroupedToolbarComponent },
+  [TLDrawName]: { AppComponent: React.memo(TLDraw.AppComponent), ToolbarComponent: TLDraw.ToolbarComponent, GroupedToolbarComponent: TLDraw.GroupedToolbarComponent },
   [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent, GroupedToolbarComponent: TwilioScreenshare.GroupedToolbarComponent },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent, GroupedToolbarComponent: VegaLite.GroupedToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent, GroupedToolbarComponent: VegaLiteViewer.GroupedToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
+  [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';

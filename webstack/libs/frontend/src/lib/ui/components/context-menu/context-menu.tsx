@@ -9,10 +9,10 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
-import './style.scss';
 import { useUIStore } from '../../../stores';
-
 import ContextMenuHandler from './ContextMenuHandler';
+
+import './style.scss';
 
 /**
  * Convert a touch position to a mouse position
@@ -34,6 +34,14 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
   }
 
   return position;
+}
+
+/**
+ * Check if the device is a touch device using CSS media queries
+ * @returns boolean
+ */
+function isTouchDevice(): boolean {
+  return window.matchMedia('(any-pointer: coarse)').matches;
 }
 
 /**
@@ -79,7 +87,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         return;
       }
       // Check if right div ID is clicked
-      if (event.target.id === props.divId) {
+      if (event.target.id === props.divId && !isTouchDevice()) {
         event.preventDefault();
         event.stopPropagation();
         // Not Great but works for now
@@ -111,8 +119,10 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       } else {
         if (event.type === 'touchstart' && showContextMenu) {
           if (event.target.id === 'board' || event.target.id === '') {
-            setTimeout(() => setShowContextMenu(false));
+            setTimeout(() => setShowContextMenu(false), 400);
           }
+        } else if (event.type === 'touchend' && showContextMenu) {
+          document.removeEventListener('touchmove', ctx.onTouchMove);
         }
       }
     });
@@ -120,19 +130,23 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
-    // document.addEventListener('touchstart', ctx.onTouchStart);
-    // document.addEventListener('touchcancel', ctx.onTouchCancel);
-    // document.addEventListener('touchend', ctx.onTouchEnd);
-    // document.addEventListener('touchmove', ctx.onTouchMove);
+    if (isTouchDevice()) {
+      document.addEventListener('touchstart', ctx.onTouchStart);
+      document.addEventListener('touchcancel', ctx.onTouchCancel);
+      document.addEventListener('touchend', ctx.onTouchEnd);
+      document.addEventListener('touchmove', ctx.onTouchMove);
+    }
 
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
-      // document.removeEventListener('touchstart', ctx.onTouchStart);
-      // document.removeEventListener('touchcancel', ctx.onTouchCancel);
-      // document.removeEventListener('touchend', ctx.onTouchEnd);
-      // document.removeEventListener('touchmove', ctx.onTouchMove);
+      if (isTouchDevice()) {
+        document.removeEventListener('touchstart', ctx.onTouchStart);
+        document.removeEventListener('touchcancel', ctx.onTouchCancel);
+        document.removeEventListener('touchend', ctx.onTouchEnd);
+        document.removeEventListener('touchmove', ctx.onTouchMove);
+      }
     };
   }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 

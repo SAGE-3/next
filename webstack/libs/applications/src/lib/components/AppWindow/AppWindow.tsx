@@ -11,7 +11,7 @@ import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
@@ -72,6 +72,14 @@ export function AppWindow(props: WindowProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
+
+  // Tag Highlight
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const { selectedTag } = useUIStore(state => state);
+  const myInsights = insights.find(el => props.app._id == el.data.app_id);
+  const myLabels = myInsights ? myInsights.data.labels : [];
+  const isHighlight = myLabels.includes(selectedTag);
 
   // Lasso Information
   const lassoMode = useUIStore((state) => state.lassoMode);
@@ -392,6 +400,8 @@ export function AppWindow(props: WindowProps) {
         selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
+        background={background}
+        isHighlight={isHighlight}
       />
 
       {/* The Application */}

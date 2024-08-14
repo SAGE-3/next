@@ -43,6 +43,16 @@ const defaultBookmarks = [
     id: genId(),
     url: 'https://pele.sage3.app',
   },
+  {
+    name: 'JetStream',
+    id: genId(),
+    url: 'https://jetsage3.cis230038.projects.jetstream-cloud.org',
+  },
+  {
+    name: 'Virgina Tech',
+    id: genId(),
+    url: 'https://sage3.cs.vt.edu',
+  },
 ];
 store.get('bookmarks', defaultBookmarks);
 

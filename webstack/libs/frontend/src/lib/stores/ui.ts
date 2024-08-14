@@ -63,6 +63,10 @@ interface UIState {
   setSavedSelectedAppsIds: () => void;
   clearSavedSelectedAppsIds: () => void;
 
+  //Tags
+  selectedTag: string;
+  setSelectedTag: (value: string) => void;
+
   // whiteboard
   whiteboardMode: DrawingMode;
   clearMarkers: boolean;
@@ -338,6 +342,9 @@ export const useUIStore = create<UIState>()((set, get) => ({
   toggleInputType: () => {
     set((state) => ({ ...state, inputType: state.inputType === 'mouse' ? 'touch' : 'mouse' }));
   },
+
+  selectedTag: '',
+  setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
 }));
 
 /**

@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdApps, MdMouse, MdTouchApp } from 'react-icons/md';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, HStack, IconButton } from '@chakra-ui/react';
+import { MdMouse, MdTouchApp, MdRemoveRedEye } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -32,6 +32,8 @@ import {
   HotkeysEvent,
   useUserSettings,
   useUser,
+  useHexColor,
+  EditVisibilityModal,
 } from '@sage3/frontend';
 
 import {
@@ -50,6 +52,7 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  TagsDisplay,
 } from './components';
 
 type UILayerProps = {
@@ -66,6 +69,9 @@ export function UILayer(props: UILayerProps) {
   // Settings
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  // Colors
+  const tealColorMode = useColorModeValue('teal.500', 'teal.200');
+  const teal = useHexColor(tealColorMode);
 
   // UI Store
   const inputType = useUIStore((state) => state.inputType);
@@ -104,10 +110,16 @@ export function UILayer(props: UILayerProps) {
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
 
   // Alfred Modal
-  const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // Presence settings modal
+  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+
+  const handlePresenceSettingsOpen = () => {
+    visibilityOnOpen();
+  };
 
   /**
    * Clear the board confirmed
@@ -225,12 +237,6 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
-  // Zoom to the saved selected apps
-  const goToSavedSelectedApps = () => {
-    if (savedSelectedAppsIds.length < 1) return;
-    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
-  };
-
   // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
     setWhiteboardMode('none');
@@ -242,16 +248,46 @@ export function UILayer(props: UILayerProps) {
   // Open Alfred
   useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
     // Open the window
-    alredOnOpen();
+    alfredOnOpen();
     return false;
   });
 
   return (
     <>
+      {/* Presence settings modal dialog */}
+      <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
+
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
-        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-      </Box>
+      <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
+        {!showUI && (
+          <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <IconButton
+              borderRadius="md"
+              h="auto"
+              p={0}
+              mx={-2}
+              justifyContent="center"
+              aria-label={'Presence'}
+              icon={<MdRemoveRedEye size="24px" />}
+              background={'transparent'}
+              colorScheme="gray"
+              transition={'all 0.2s'}
+              opacity={0.5}
+              variant="ghost"
+              onClick={handlePresenceSettingsOpen}
+              isDisabled={false}
+              _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
+            />
+          </Tooltip>
+        )}
+
+        {/* The Corner SAGE3 Image Bottom Right */}
+        {showUI && (
+          <Box opacity={0.7} userSelect={'none'}>
+            <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
+          </Box>
+        )}
+      </HStack>
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
@@ -293,11 +329,6 @@ export function UILayer(props: UILayerProps) {
           </Tooltip> */}
         </Box>
       </Box>
-
-      {/* Buttons Middle Bottom */}
-      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
-        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
-      </Box> */}
 
       {/* ServerName Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
@@ -346,6 +377,11 @@ export function UILayer(props: UILayerProps) {
 
       {/* Presence Follow Component. Doesnt Render Anything */}
       <PresenceFollow />
+
+      {/* Display a list of all tags */}
+      <Box position="absolute" right="170" top="1">
+        <TagsDisplay />
+      </Box>
     </>
   );
 }
