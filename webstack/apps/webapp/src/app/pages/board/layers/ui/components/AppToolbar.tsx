@@ -42,7 +42,6 @@ import {
   useToast,
   Alert,
   AlertIcon,
-  AlertTitle,
   AlertDescription,
 } from '@chakra-ui/react';
 import {
@@ -232,6 +231,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const [visibleTags, setVisibleTags] = useState<string[]>([]);
   const [overflowTags, setOverflowTags] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
+  const { isOpen: isDeleteTagOpen, onOpen: onDeleteTagOpen, onClose: onDeleteTagClose } = useDisclosure(); // for delete tag modal
+  const [tagToDelete, setTagToDelete] = useState<string>(''); // store tagname to be deleted
   const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
   const [inputAlert, setInputAlert] = useState<string>(''); // alert users of input errors
@@ -483,11 +484,14 @@ export function AppToolbar(props: AppToolbarProps) {
     };
 
     // Delete a tag
-    const handleDeleteTag = (tagName: string) => {
-      const newTags = tags.filter((tag) => tag !== tagName);
+    const handleDeleteTag = () => {
+      const newTags = tags.filter((tag) => tag !== tagToDelete);
       if (app) {
         updateInsight(app._id, { labels: newTags });
       }
+
+      // Close delete tag modal
+      onDeleteTagClose();
     };
 
     // Show modal for adding a new tag
@@ -605,7 +609,8 @@ export function AppToolbar(props: AppToolbarProps) {
               m={0}
               onClick={(e) => {
                 e.stopPropagation();
-                handleDeleteTag(tag);
+                setTagToDelete(tag);
+                onDeleteTagOpen();
               }}
             />
           </Tag>
@@ -651,7 +656,8 @@ export function AppToolbar(props: AppToolbarProps) {
                         m={0}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteTag(tag);
+                          setTagToDelete(tag);
+                          onDeleteTagOpen();
                         }}
                       />
                     </Tag>
@@ -707,6 +713,19 @@ export function AppToolbar(props: AppToolbarProps) {
             </ModalContent>
           </Modal>
         )}
+        {/* Delete tag confirmation */}
+        <ConfirmModal
+          isOpen={isDeleteTagOpen}
+          onClose={onDeleteTagClose}
+          onConfirm={handleDeleteTag}
+          title="Delete this Tag"
+          message="Are you sure you want to delete this tag from this app?"
+          cancelText="Cancel"
+          confirmText="Delete"
+          cancelColor="green"
+          confirmColor="red"
+          size="lg"
+        />
       </HStack>
     );
   }

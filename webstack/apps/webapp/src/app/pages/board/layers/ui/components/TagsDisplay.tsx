@@ -7,11 +7,11 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Tag, TagLabel, TagCloseButton, Box, VStack, Button, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import { Tag, TagLabel, TagCloseButton, Box, VStack, Button, Tooltip, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 import { colors, SAGEColors } from '@sage3/shared';
-import { useUIStore, useInsightStore, useHexColor, useUserSettings } from '@sage3/frontend';
+import { useUIStore, useInsightStore, useHexColor, useUserSettings, ConfirmModal } from '@sage3/frontend';
 
 type TagFrequency = Record<string, number>;
 
@@ -26,6 +26,10 @@ export function TagsDisplay() {
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
   const showTags = settings.showTags;
+
+  // Delete tag confirmation modal
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [tagToDelete, setTagToDelete] = useState<string>('');
 
   // Semantic to separate a tag's string name from color
   const delimiter = ':';
@@ -160,7 +164,9 @@ export function TagsDisplay() {
   };
 
   // Delete tag from all associated apps
-  const handleDeleteTag = (tagName: string) => {
+  const handleDeleteTag = () => {
+    const tagName = tagToDelete;
+    
     // Collect all the updates
     const updates = insights
       .filter((insight) => insight.data.labels.some((label) => label.includes(tagName)))
@@ -171,6 +177,9 @@ export function TagsDisplay() {
 
     // Perform batch update
     updateBatchInsight(updates);
+
+    // Close delete tag modal
+    onClose();
   };
 
   // If the tag exceeds 10 characters, truncate the string
@@ -230,7 +239,8 @@ export function TagsDisplay() {
                       m={0}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteTag(tag);
+                        setTagToDelete(tag);
+                        onOpen();
                       }}
                     />
                   </Tag>
@@ -263,11 +273,24 @@ export function TagsDisplay() {
               m={0}
               onClick={(e) => {
                 e.stopPropagation();
-                handleDeleteTag(tag);
+                setTagToDelete(tag);
+                onOpen();
               }}
             />
           </Tag>
         ))}
+        <ConfirmModal
+          isOpen={isOpen}
+          onClose={onClose}
+          onConfirm={handleDeleteTag}
+          title="Delete this Tag"
+          message="Are you sure you want to delete this tag from all apps?"
+          cancelText="Cancel"
+          confirmText="Delete"
+          cancelColor="green"
+          confirmColor="red"
+          size="lg"
+        />
     </VStack>
   );
 }
