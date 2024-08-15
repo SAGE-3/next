@@ -286,8 +286,8 @@ export function Background(props: BackgroundProps) {
               for (let i = 0; i < num; i++) {
                 const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
                 if (res) {
-                  batch.push(res);
-                  xpos += res.size.width + 10;
+                  batch.push(...(res as AppSchema[]));
+                  xpos += (res[0] as AppSchema).size.width + 10;
                 }
               }
               createBatch(batch);

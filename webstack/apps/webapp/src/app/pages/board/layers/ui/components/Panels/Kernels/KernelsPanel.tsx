@@ -64,8 +64,13 @@ export function KernelsPanel(props: KernelsPanelProps) {
 
   // Filter out this board's kernels and boards this user has access to
   const filterAndSetMyKernels = (kernels: KernelInfo[]) => {
-    const filteredKernels = kernels.filter((kernel) => kernel.board === props.boardId && hasKernelAccess(kernel));
-    setMyKernels(filteredKernels);
+    if (kernels.length > 0) {
+      console.log('kernels', kernels);
+      const filteredKernels = kernels?.filter((kernel) => kernel.board === props.boardId && hasKernelAccess(kernel));
+      setMyKernels(filteredKernels);
+    } else {
+      setMyKernels([]);
+    }
   };
 
   /**

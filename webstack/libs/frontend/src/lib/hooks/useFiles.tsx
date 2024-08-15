@@ -87,7 +87,7 @@ type UseFiles = {
     yDrop: number,
     roomId: string,
     boardId: string
-  ) => Promise<AppSchema | null>;
+  ) => Promise<AppSchema[] | AppSchema[][] | null>;
   uploadInProgress: boolean;
 };
 
@@ -189,8 +189,8 @@ export function useFiles(): UseFiles {
               } else {
                 const res = await openAppForFile(a._id, a.data.mimetype, xpos, configDrop.yDrop, configDrop.roomId, configDrop.boardId);
                 if (res) {
-                  batch.push(res);
-                  xpos += res.size.width + 10;
+                  batch.push(...(res as AppSchema[]));
+                  xpos += res[0].size.width + 10;
                 }
               }
             }
@@ -322,13 +322,13 @@ export function useFiles(): UseFiles {
     yDrop: number,
     roomId: string,
     boardId: string
-  ): Promise<AppSchema | null> {
+  ): Promise<AppSchema[] | null> {
     if (!user) return null;
     const w = 400;
     if (isGeoTiff(fileType)) {
       for (const a of assets) {
         if (a._id === fileID) {
-          return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+          return [setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID })];
         }
       }
     } else if (isFileURL(fileType)) {
@@ -352,7 +352,7 @@ export function useFiles(): UseFiles {
               const words = line.split('=');
               // the URL
               const goto = words[1].trim();
-              return setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto });
+              return [setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto })];
             }
           }
           return null;
@@ -375,8 +375,18 @@ export function useFiles(): UseFiles {
           // Get Language from mimetype
           const lang = mimeToCode(a.data.mimetype);
           // Create a note from the text
-          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
-            { content: text, language: lang, filename: a.data.originalfilename });
+          return [
+            setupApp(
+              'CodeEditor',
+              'CodeEditor',
+              xDrop,
+              yDrop,
+              roomId,
+              boardId,
+              { w: 850, h: 400 },
+              { content: text, language: lang, filename: a.data.originalfilename }
+            ),
+          ];
         }
       }
     } else if (isGIF(fileType)) {
@@ -386,16 +396,7 @@ export function useFiles(): UseFiles {
           const extras = a.data.derived as ExtraImageType;
           const imw = w;
           const imh = w / (extras.aspectRatio || 1);
-          return setupApp(
-            a.data.originalfilename,
-            'ImageViewer',
-            xDrop,
-            yDrop,
-            roomId,
-            boardId,
-            { w: imw, h: imh },
-            { assetid: fileID }
-          );
+          return [setupApp(a.data.originalfilename, 'ImageViewer', xDrop, yDrop, roomId, boardId, { w: imw, h: imh }, { assetid: fileID })];
         }
       }
     } else if (isImage(fileType)) {
@@ -416,7 +417,7 @@ export function useFiles(): UseFiles {
               const metadata = await response.json();
               // Check if it is a GeoTiff
               if (metadata && metadata.GeoTiffVersion) {
-                return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+                return [setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID })];
               }
             }
           }
@@ -426,16 +427,18 @@ export function useFiles(): UseFiles {
       for (const a of assets) {
         if (a._id === fileID) {
           const extras = a.data.derived as ExtraImageType;
-          return setupApp(
-            a.data.originalfilename,
-            'ImageViewer',
-            xDrop,
-            yDrop,
-            roomId,
-            boardId,
-            { w: w, h: w / (extras.aspectRatio || 1) },
-            { assetid: fileID }
-          );
+          return [
+            setupApp(
+              a.data.originalfilename,
+              'ImageViewer',
+              xDrop,
+              yDrop,
+              roomId,
+              boardId,
+              { w: w, h: w / (extras.aspectRatio || 1) },
+              { assetid: fileID }
+            ),
+          ];
         }
       }
     } else if (isVideo(fileType)) {
@@ -451,17 +454,17 @@ export function useFiles(): UseFiles {
           } else {
             vw = Math.round(vh * ar);
           }
-          return setupApp('', 'VideoViewer', xDrop, yDrop, roomId, boardId, { w: vw, h: vh }, { assetid: fileID });
+          return [setupApp('', 'VideoViewer', xDrop, yDrop, roomId, boardId, { w: vw, h: vh }, { assetid: fileID })];
         }
       }
     } else if (isCSV(fileType)) {
-      return setupApp('', 'CSVViewer', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+      return [setupApp('', 'CSVViewer', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID })];
     } else if (isDZI(fileType)) {
-      return setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+      return [setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID })];
     } else if (isGLTF(fileType)) {
-      return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
+      return [setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID })];
     } else if (isGeoJSON(fileType)) {
-      return setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+      return [setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID })];
     } else if (isMD(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
@@ -476,7 +479,7 @@ export function useFiles(): UseFiles {
           });
           const text = await response.text();
           // Create a note from the text
-          return setupApp(user.data.name, 'Stickie', xDrop, yDrop, roomId, boardId, { w: 400, h: 420 }, { text: text });
+          return [setupApp(user.data.name, 'Stickie', xDrop, yDrop, roomId, boardId, { w: 400, h: 420 }, { text: text })];
         }
       }
     } else if (isPython(fileType)) {
@@ -493,11 +496,11 @@ export function useFiles(): UseFiles {
           });
           const text = await response.text();
           // Create a note from the text
-          return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
+          return [setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text })];
         }
       }
     } else if (isPythonNotebook(fileType)) {
-      console.log('Jupyter> drag notebook')
+      console.log('Jupyter> drag notebook');
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
@@ -531,7 +534,7 @@ export function useFiles(): UseFiles {
             const res = await response.json();
             console.log('Jupyter> notebook created', res);
             // Create a note from the json
-            return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
+            return [setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename })];
           }
         }
       }
@@ -549,7 +552,7 @@ export function useFiles(): UseFiles {
           });
           const spec = await response.json();
           // Create a vis from the json spec
-          return setupApp('', 'VegaLite', xDrop, yDrop, roomId, boardId, { w: 500, h: 600 }, { spec: JSON.stringify(spec, null, 2) });
+          return [setupApp('', 'VegaLite', xDrop, yDrop, roomId, boardId, { w: 500, h: 600 }, { spec: JSON.stringify(spec, null, 2) })];
         }
       }
     } else if (isPDF(fileType)) {
@@ -564,7 +567,30 @@ export function useFiles(): UseFiles {
             // First image of the page
             aspectRatio = page[0].width / page[0].height;
           }
-          return setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID });
+
+          const originalfilename = a.data.originalfilename;
+
+          const pdfExtractionUrl = 'http://localhost:8081/extract_basic_info';
+
+          console.log('originalfilename', originalfilename);
+          const pdfExtraction = await fetch(pdfExtractionUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              paper: originalfilename,
+            }),
+          });
+
+          const pdfExtractionResult = await pdfExtraction.json();
+          const text = pdfExtractionResult.response;
+          console.log('pdfExtractionResult>', pdfExtractionResult);
+
+          return [
+            setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID }),
+            setupApp('', 'Stickie', xDrop, yDrop - 400, roomId, boardId, { w: 400, h: 400 }, { text: text }),
+          ];
         }
       }
     }

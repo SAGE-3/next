@@ -17,10 +17,11 @@
 import * as express from 'express';
 import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
+import * as fs from 'fs';
 
 // Lib Imports
 import { SBAuthSchema } from '@sage3/sagebase';
-import { getFileType } from '@sage3/shared';
+import { getFileType, isPDF } from '@sage3/shared';
 // Local storage
 import { uploadMiddleware } from '../../../connectors/upload-connector';
 // Asset model
@@ -54,14 +55,38 @@ export function uploadHandler(req: express.Request, res: express.Response) {
       }>;
     };
 
+    // console.log('req>', req);
+
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
 
     // Send message to clients
     MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
 
+    const pdfSummarizerUploadUrl = 'http://localhost:8081/upload_pdfs/';
     // Do something with the files
     for await (const elt of files) {
+      // if it's a pdf Upload PDF to Llamaindex agent
+      if (isPDF(elt.mimetype ?? getFileType(elt.originalname))) {
+        try {
+          const blob = new Blob([fs.readFileSync(elt.path)], { type: 'application/pdf' });
+          const fd = new FormData();
+          // console.log('file', elt);
+          // console.log('type of file>', typeof elt);
+          // console.log("file contents>", fs.readFileSync(elt.path))
+          fd.append('files', blob, elt.originalname);
+          const uploadPdfRes = await fetch(pdfSummarizerUploadUrl, {
+            method: 'POST',
+            body: fd,
+          });
+
+          const result = await uploadPdfRes.json();
+          console.log('result>', result);
+        } catch (e) {
+          console.log('error>', e);
+        }
+      }
+
       elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
       // Normalize mime types using the mime package
