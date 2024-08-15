@@ -35,7 +35,7 @@
     "@turf/bbox": "^6.5.0",
     "@turf/center": "^6.5.0",
     "ansi-to-react": "^6.1.6",
-    "axios": "^1.6.5",
+    "axios": "^1.7.4",
     "bullmq": "^3.12.0",
     "canvas": "^2.11.2",
     "chakra-dayzed-datepicker": "^0.2.10",
