@@ -56,8 +56,15 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
   const initialRef = useRef(null);
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
-      returnFocusOnClose={false} initialFocusRef={initialRef} size="sm">
+    <Modal
+      isCentered
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      blockScrollOnMount={false}
+      returnFocusOnClose={false}
+      initialFocusRef={initialRef}
+      size="sm"
+    >
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl" pb="0">
@@ -96,7 +103,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
             <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
           </FormControl>
           <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
-            <FormLabel htmlFor="hide-tags" mb="0" ml="4">
+            <FormLabel htmlFor="hide-tags" mb="0">
               Tags
               <InfoTooltip label={'Show/Hide SAGE3 tags. Must enable User Interface.'} />
             </FormLabel>
@@ -104,7 +111,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
           </FormControl>
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef} >
+          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
             Restore Default Settings
           </Button>
         </ModalFooter>

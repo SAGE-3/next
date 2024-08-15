@@ -7,16 +7,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import {
-  Tag,
-  TagLabel,
-  TagCloseButton,
-  Box,
-  VStack,
-  Button,
-  Tooltip,
-  useColorModeValue,
-} from '@chakra-ui/react';
+import { Tag, TagLabel, TagCloseButton, Box, VStack, Button, Tooltip, useColorModeValue } from '@chakra-ui/react';
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 import { colors, SAGEColors } from '@sage3/shared';
@@ -37,7 +28,7 @@ export function TagsDisplay() {
   const showTags = settings.showTags;
 
   // Semantic to separate a tag's string name from color
-  const delimiter = ":";
+  const delimiter = ':';
 
   // Tag names are sorted from most to least frequent
   const [sortedTags, setSortedTags] = useState<string[]>([]);
@@ -68,7 +59,7 @@ export function TagsDisplay() {
       for (let i = 0; i < allTags.length; i++) {
         const tagWidth = 100;
         // if exceeds width limit
-        if (totalWidth + tagWidth > (window.innerWidth / 3)) {
+        if (totalWidth + tagWidth > window.innerWidth / 3) {
           newIndex = i;
           break;
         } else {
@@ -85,12 +76,11 @@ export function TagsDisplay() {
   useEffect(() => {
     // Keep track of frequency of all tags
     const freqCounter: TagFrequency = {};
-    insights.forEach(insight => {
-      insight.data.labels.forEach(tag => {
+    insights.forEach((insight) => {
+      insight.data.labels.forEach((tag) => {
         if (freqCounter[tag]) {
           freqCounter[tag] += 1;
-        }
-        else {
+        } else {
           freqCounter[tag] = 1;
         }
       });
@@ -105,7 +95,6 @@ export function TagsDisplay() {
 
     updateOverflowIndex(allTags);
   }, [insights]);
-
 
   useEffect(() => {
     updateOverflowIndex(sortedTags);
@@ -140,15 +129,15 @@ export function TagsDisplay() {
   const groupApps = (tagName: string) => {
     // Update groupTags and get the updated tags
     const updatedTags = groupTags.includes(tagName)
-      ? groupTags.filter(tag => tag !== tagName)  // Remove tagName if it exists
-      : [...groupTags, tagName];  // Add tagName if it doesn't exist
+      ? groupTags.filter((tag) => tag !== tagName) // Remove tagName if it exists
+      : [...groupTags, tagName]; // Add tagName if it doesn't exist
 
     setGroupTags(updatedTags);
 
     // Get all app ids with the updated set of tags
     const appIds = insights
-      .filter(insight => updatedTags.some(tag => insight.data.labels.includes(tag)))  // At least one tag exists in labels
-      .map(insight => insight._id);
+      .filter((insight) => updatedTags.some((tag) => insight.data.labels.includes(tag))) // At least one tag exists in labels
+      .map((insight) => insight._id);
 
     // Update selection of apps
     setSelectedAppsIds(appIds);
@@ -164,20 +153,20 @@ export function TagsDisplay() {
   // Highlight all apps with the specified tag
   const highlightApps = (tagName: string) => {
     setSelectedTag(tagName);
-  }
+  };
   // Remove highlight around apps
   const unhighlightApps = () => {
     setSelectedTag('');
-  }
+  };
 
   // Delete tag from all associated apps
   const handleDeleteTag = (tagName: string) => {
     // Collect all the updates
     const updates = insights
-      .filter(insight => insight.data.labels.some(label => label.includes(tagName)))
-      .map(insight => ({
+      .filter((insight) => insight.data.labels.some((label) => label.includes(tagName)))
+      .map((insight) => ({
         id: insight._id,
-        updates: { labels: insight.data.labels.filter(label => !label.includes(tagName)) }
+        updates: { labels: insight.data.labels.filter((label) => !label.includes(tagName)) },
       }));
 
     // Perform batch update
@@ -188,27 +177,19 @@ export function TagsDisplay() {
   const truncateStr = (str: string) => {
     const tagName = str.split(delimiter)[0];
     const maxLen = 10;
-    if (groupTags.includes(str)) { // show entire string if tag is selected
+    if (groupTags.includes(str)) {
+      // show entire string if tag is selected
       return tagName;
     }
     return tagName.length > maxLen ? tagName.substring(0, maxLen) + '...' : tagName;
-  }
+  };
 
   return (
     <VStack spacing={2} align="flex-start" ref={tagsContainerRef} display={showUI && showTags ? 'flex' : 'none'}>
       {isLoaded && overflowTags.length > 0 && (
         <Box>
-          <Tooltip
-            placement="top"
-            hasArrow={true}
-            openDelay={400}
-            label="See more tags"
-          >
-            <Button
-              size="xs"
-              cursor="pointer"
-              onClick={() => setIsOverflowOpen(!isOverflowOpen)}
-            >
+          <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags.' : 'Show more tags.'}>
+            <Button size="xs" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
               {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
             </Button>
           </Tooltip>
@@ -245,10 +226,12 @@ export function TagsDisplay() {
                     onMouseLeave={unhighlightApps}
                   >
                     <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
-                    <TagCloseButton m={0} onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteTag(tag);
-                    }}
+                    <TagCloseButton
+                      m={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag);
+                      }}
                     />
                   </Tag>
                 ))}
@@ -257,31 +240,34 @@ export function TagsDisplay() {
           )}
         </Box>
       )}
-      {isLoaded && (visibleTags.map((tag, index) => (
-        <Tag
-          id={`tag-${tag}`}
-          size="sm"
-          key={index}
-          borderRadius="md"
-          border="solid 2px"
-          borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
-          variant="solid"
-          cursor="pointer"
-          fontSize="12px"
-          color={groupTags.includes(tag) ? 'black' : 'white'}
-          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
-          onClick={() => groupApps(tag)}
-          onMouseEnter={() => highlightApps(tag)}
-          onMouseLeave={unhighlightApps}
-        >
-          <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
-          <TagCloseButton m={0} onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteTag(tag);
-          }}
-          />
-        </Tag>
-      )))}
+      {isLoaded &&
+        visibleTags.map((tag, index) => (
+          <Tag
+            id={`tag-${tag}`}
+            size="sm"
+            key={index}
+            borderRadius="md"
+            border="solid 2px"
+            borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
+            variant="solid"
+            cursor="pointer"
+            fontSize="12px"
+            color={groupTags.includes(tag) ? 'black' : 'white'}
+            bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
+            onClick={() => groupApps(tag)}
+            onMouseEnter={() => highlightApps(tag)}
+            onMouseLeave={unhighlightApps}
+          >
+            <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
+            <TagCloseButton
+              m={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteTag(tag);
+              }}
+            />
+          </Tag>
+        ))}
     </VStack>
   );
 }
