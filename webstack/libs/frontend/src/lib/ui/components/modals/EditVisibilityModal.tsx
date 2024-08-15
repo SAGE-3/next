@@ -43,6 +43,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
+    toggleShowTags,
     restoreDefaultSettings,
   } = useUserSettings();
 
@@ -50,6 +51,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
   const showViewports = userSettings.showViewports;
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
+  const showTags = userSettings.showTags;
 
   const initialRef = useRef(null);
 
@@ -92,6 +94,13 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
               <InfoTooltip label={'Show/Hide SAGE3 menus and buttons.'} />
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
+          </FormControl>
+          <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
+            <FormLabel htmlFor="hide-tags" mb="0" ml="4">
+              Tags
+              <InfoTooltip label={'Show/Hide SAGE3 tags. Must enable User Interface.'} />
+            </FormLabel>
+            <Switch id="other-viewports" colorScheme="teal" isChecked={showTags} onChange={toggleShowTags} isDisabled={!showUI} />
           </FormControl>
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>

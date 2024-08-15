@@ -8,7 +8,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import {
-  HStack,
   Tag,
   TagLabel,
   TagCloseButton,
@@ -21,7 +20,7 @@ import {
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 import { colors, SAGEColors } from '@sage3/shared';
-import { useUIStore, useInsightStore, useHexColor, } from '@sage3/frontend';
+import { useUIStore, useInsightStore, useHexColor, useUserSettings } from '@sage3/frontend';
 
 type TagFrequency = Record<string, number>;
 
@@ -31,6 +30,11 @@ export function TagsDisplay() {
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const updateBatchInsight = useInsightStore((state) => state.updateBatch);
+
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+  const showTags = settings.showTags;
 
   // Semantic to separate a tag's string name from color
   const delimiter = ":";
@@ -191,7 +195,7 @@ export function TagsDisplay() {
   }
 
   return (
-    <VStack spacing={2} align="flex-start" ref={tagsContainerRef}>
+    <VStack spacing={2} align="flex-start" ref={tagsContainerRef} display={showUI && showTags ? 'flex' : 'none'}>
       {isLoaded && overflowTags.length > 0 && (
         <Box>
           <Tooltip

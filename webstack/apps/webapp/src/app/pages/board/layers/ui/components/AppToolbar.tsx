@@ -103,6 +103,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Settings
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  const showTags = settings.showTags;
 
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -896,7 +897,7 @@ export function AppToolbar(props: AppToolbarProps) {
             >
               {app?.data.type}
             </Text>
-            <Box display="flex" pl="1">
+            <Box display={showTags ? "flex" : "none"} pl="1">
               {getAppTags()}
             </Box>
           </Box>
