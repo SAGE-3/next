@@ -191,32 +191,7 @@ export function TagsDisplay() {
   }
 
   return (
-    <HStack spacing={2} ref={tagsContainerRef}>
-      {isLoaded && (visibleTags.map((tag, index) => (
-        <Tag
-          id={`tag-${tag}`}
-          size="sm"
-          key={index}
-          borderRadius="md"
-          border="solid 2px"
-          borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
-          variant="solid"
-          cursor="pointer"
-          fontSize="12px"
-          color={groupTags.includes(tag) ? 'black' : 'white'}
-          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
-          onClick={() => groupApps(tag)}
-          onMouseEnter={() => highlightApps(tag)}
-          onMouseLeave={unhighlightApps}
-        >
-          <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
-          <TagCloseButton m={0} onClick={(e) => {
-            e.stopPropagation();
-            handleDeleteTag(tag);
-          }}
-          />
-        </Tag>
-      )))}
+    <VStack spacing={2} align="flex-start" ref={tagsContainerRef}>
       {isLoaded && overflowTags.length > 0 && (
         <Box>
           <Tooltip
@@ -237,13 +212,12 @@ export function TagsDisplay() {
           {isOverflowOpen && (
             <Box
               position="absolute"
-              bottom="110%"
-              right={0}
+              bottom="100%"
               bg={overflowBg}
               borderWidth="1px"
               boxShadow="md"
               minWidth="200px"
-              maxHeight="500px"
+              maxHeight="300px"
               overflowY="auto"
               borderRadius="md"
               p={3}
@@ -279,6 +253,31 @@ export function TagsDisplay() {
           )}
         </Box>
       )}
-    </HStack>
+      {isLoaded && (visibleTags.map((tag, index) => (
+        <Tag
+          id={`tag-${tag}`}
+          size="sm"
+          key={index}
+          borderRadius="md"
+          border="solid 2px"
+          borderColor={tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
+          variant="solid"
+          cursor="pointer"
+          fontSize="12px"
+          color={groupTags.includes(tag) ? 'black' : 'white'}
+          bgColor={groupTags.includes(tag) && tag.split(delimiter)[1] ? getTagColor(tag.split(delimiter)[1]) : 'gray'}
+          onClick={() => groupApps(tag)}
+          onMouseEnter={() => highlightApps(tag)}
+          onMouseLeave={unhighlightApps}
+        >
+          <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
+          <TagCloseButton m={0} onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteTag(tag);
+          }}
+          />
+        </Tag>
+      )))}
+    </VStack>
   );
 }
