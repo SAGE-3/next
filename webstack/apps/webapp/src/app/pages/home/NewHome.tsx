@@ -96,7 +96,7 @@ export function NewHomePage() {
   // Media Query
   const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
-  const { toHome } = useRouteNav();
+  const { toHome, toQuickAccess } = useRouteNav();
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -144,6 +144,7 @@ export function NewHomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+  const [selectedQuickAccess, setSelectedQuickAccess] = useState<'active' | 'starred' | 'recent' | undefined>(undefined);
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -513,6 +514,17 @@ export function NewHomePage() {
     }
   }
 
+  function handleQuickAccessClick(quickAccess: 'active' | 'starred' | 'recent') {
+    if (quickAccess !== selectedQuickAccess) {
+      setSelectedQuickAccess(quickAccess);
+      toQuickAccess(quickAccess);
+    } else {
+      setSelectedQuickAccess(undefined);
+      toHome();
+    }
+    console.log('quickAccess', quickAccess);
+  }
+
   // Clear the filters only when selecting from navigation sidebar
   function handleBoardClickFromSubMenu(board: Board) {
     setBoardSearch('');
@@ -839,7 +851,11 @@ export function NewHomePage() {
                 flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
+                bg={selectedQuickAccess === 'active' ? hightlightGray : ''}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                onClick={() => {
+                  handleQuickAccessClick('active');
+                }}
                 p="2"
               >
                 <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
@@ -849,6 +865,10 @@ export function NewHomePage() {
                 flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
+                bg={selectedQuickAccess === 'starred' ? hightlightGray : ''}
+                onClick={() => {
+                  handleQuickAccessClick('starred');
+                }}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 p="2"
               >
@@ -859,7 +879,11 @@ export function NewHomePage() {
                 flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
+                bg={selectedQuickAccess === 'recent' ? hightlightGray : ''}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                onClick={() => {
+                  handleQuickAccessClick('recent');
+                }}
                 p="2"
               >
                 <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>

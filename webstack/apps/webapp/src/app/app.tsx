@@ -123,6 +123,16 @@ export function App() {
                     }
                   />
                   <Route
+                    path="/home/:quickAccess"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <NewHomePage />
+                        </ProtectedUserRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
+                  <Route
                     path="/home"
                     element={
                       <ProtectedAuthRoute>
