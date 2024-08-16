@@ -11,7 +11,7 @@ import { Tag, TagLabel, TagCloseButton, Box, VStack, Button, Tooltip, useColorMo
 import { MdExpandMore, MdExpandLess } from 'react-icons/md';
 
 import { colors, SAGEColors } from '@sage3/shared';
-import { useUIStore, useInsightStore, useHexColor, useUserSettings, ConfirmModal } from '@sage3/frontend';
+import { useUIStore, useInsightStore, useHexColor, useUserSettings, ConfirmModal, truncateWithEllipsis } from '@sage3/frontend';
 
 type TagFrequency = Record<string, number>;
 
@@ -53,22 +53,22 @@ export function TagsDisplay() {
   const [groupTags, setGroupTags] = useState<string[]>([]);
 
   // Window size tracking
-  const [winWidth, setWidth] = useState(window.innerWidth);
+  const [winHeight, setHeight] = useState(window.innerHeight);
 
   function updateOverflowIndex(allTags: string[]) {
-    // Calculate total width of tags to determine if overflow menu is needed for each app
+    // Calculate total height of tags to determine if overflow menu is needed for each app
     if (tagsContainerRef.current) {
-      let totalWidth = 0;
+      let totalHeight = 0;
       let newIndex = -1;
       for (let i = 0; i < allTags.length; i++) {
-        const tagWidth = 100;
-        // if exceeds width limit
-        if (totalWidth + tagWidth > window.innerWidth / 3) {
+        const tagHeight = 32;
+        // if exceeds width limit: a little less than half of the window height
+        if (totalHeight + tagHeight > window.innerHeight / 2.1) {
           newIndex = i;
           break;
         } else {
           // if exceeds width limit
-          totalWidth += tagWidth;
+          totalHeight += tagHeight;
         }
       }
       if (newIndex != overflowIndex) setOverflowIndex(newIndex);
@@ -102,11 +102,11 @@ export function TagsDisplay() {
 
   useEffect(() => {
     updateOverflowIndex(sortedTags);
-  }, [winWidth]);
+  }, [winHeight]);
 
   // Update the window size
   const updateDimensions = () => {
-    setWidth(window.innerWidth);
+    setHeight(window.innerHeight);
   };
   useEffect(() => {
     window.addEventListener('resize', updateDimensions);
@@ -166,7 +166,7 @@ export function TagsDisplay() {
   // Delete tag from all associated apps
   const handleDeleteTag = () => {
     const tagName = tagToDelete;
-    
+
     // Collect all the updates
     const updates = insights
       .filter((insight) => insight.data.labels.some((label) => label.includes(tagName)))
@@ -190,7 +190,7 @@ export function TagsDisplay() {
       // show entire string if tag is selected
       return tagName;
     }
-    return tagName.length > maxLen ? tagName.substring(0, maxLen) + '...' : tagName;
+    return truncateWithEllipsis(tagName, maxLen);
   };
 
   return (
@@ -279,18 +279,20 @@ export function TagsDisplay() {
             />
           </Tag>
         ))}
-        <ConfirmModal
-          isOpen={isOpen}
-          onClose={onClose}
-          onConfirm={handleDeleteTag}
-          title="Delete this Tag"
-          message="Are you sure you want to delete this tag from all apps?"
-          cancelText="Cancel"
-          confirmText="Delete"
-          cancelColor="green"
-          confirmColor="red"
-          size="lg"
-        />
+
+      {/* Delete tag confirmation modal */}
+      <ConfirmModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleDeleteTag}
+        title="Delete this Tag"
+        message="Are you sure you want to delete this tag from all apps?"
+        cancelText="Cancel"
+        confirmText="Delete"
+        cancelColor="green"
+        confirmColor="red"
+        size="lg"
+      />
     </VStack>
   );
 }

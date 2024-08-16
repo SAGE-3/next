@@ -911,7 +911,7 @@ export function AppToolbar(props: AppToolbarProps) {
               fontWeight="bold"
               h={'auto'}
               userSelect={'none'}
-              // className="handle"
+            // className="handle"
             >
               {app?.data.type}
             </Text>
