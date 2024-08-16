@@ -7,20 +7,13 @@
  */
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import { MdHelpOutline, MdNetworkCheck, MdRemoveRedEye, MdSearch } from 'react-icons/md';
-import { PiGaugeBold } from 'react-icons/pi';
+import { MdHelpOutline, MdNetworkCheck } from 'react-icons/md';
+import { PiGaugeBold } from "react-icons/pi";
 
 import {
-  HelpModal,
-  useHexColor,
-  useNetworkState,
-  Alfred,
-  EditVisibilityModal,
-  useUserSettings,
-  usePressureObserver,
-  PressureState,
+  useHexColor, useNetworkState, EditVisibilityModal, useUserSettings,
+  usePressureObserver, PressureState
 } from '@sage3/frontend';
-import { useParams } from 'react-router';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -35,8 +28,6 @@ export function Clock(props: ClockProps) {
 
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
-
-  const { boardId, roomId } = useParams();
 
   // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -63,14 +54,8 @@ export function Clock(props: ClockProps) {
   const [cpucolor, setCPUcolor] = useState(onlineColor);
   const [cpulabel, setCPUlabel] = useState('nominal');
 
-  // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
-
-  // Alfred modal
-  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
-
   // Presence settings modal
-  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
+  const { isOpen: visibilityIsOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Update the time on an interval every 30secs
   useEffect(() => {
@@ -115,17 +100,7 @@ export function Clock(props: ClockProps) {
     }
   }, [pressure]);
 
-  const handleHelpOpen = () => {
-    helpOnOpen();
-  };
 
-  const handleAlfredOpen = () => {
-    alfredOnOpen();
-  };
-
-  const handlePresenceSettingsOpen = () => {
-    visibilityOnOpen();
-  };
 
   return (
     <Box
@@ -135,83 +110,13 @@ export function Clock(props: ClockProps) {
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"
-      pr={2}
+      pr={1}
       pl={1}
       justifyContent="right"
       alignItems={'center'}
     >
-      {/* Help Modal */}
-      {isBoard && <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>}
-      {/* Alfred modal dialog */}
-      {isBoard && boardId && roomId && <Alfred boardId={boardId} roomId={roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />}
-
       {/* Presence settings modal dialog */}
       {isBoard && <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />}
-
-      {isBoard && (
-        <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            mr={-2}
-            justifyContent="center"
-            aria-label={'Presence'}
-            icon={<MdRemoveRedEye size="24px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={handlePresenceSettingsOpen}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
-
-      {isBoard && showUI && (
-        <Tooltip label={'Search'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            m={0}
-            justifyContent="center"
-            aria-label={'Search'}
-            icon={<MdSearch size="22px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={handleAlfredOpen}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
-      {isBoard && showUI && (
-        <Tooltip label={'UI Cheatsheet'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            m={-2}
-            justifyContent="center"
-            aria-label={'Network status'}
-            icon={<MdHelpOutline size="22px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={handleHelpOpen}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
 
       {!isBoard && (
         <Tooltip label={'Restart the guided tour'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
@@ -243,10 +148,11 @@ export function Clock(props: ClockProps) {
             h="auto"
             p={0}
             mr={-2}
+            bottom="1px"
             fontSize="lg"
             justifyContent="center"
             aria-label={'Network status'}
-            icon={<MdNetworkCheck size="24px" color={netcolor} />}
+            icon={<MdNetworkCheck size="22px" color={netcolor} />}
             background={'transparent'}
             color={netcolor}
             transition={'all 0.2s'}
@@ -264,11 +170,12 @@ export function Clock(props: ClockProps) {
             borderRadius="md"
             h="auto"
             p={0}
-            m={0}
+            m={-1}
+            bottom="1px"
             fontSize="lg"
             justifyContent="center"
             aria-label={'CPU pressure'}
-            icon={<PiGaugeBold size="24px" color={cpucolor} />}
+            icon={<PiGaugeBold size="22px" color={cpucolor} />}
             background={'transparent'}
             color={cpucolor}
             transition={'all 0.2s'}
@@ -281,7 +188,8 @@ export function Clock(props: ClockProps) {
       )}
 
       {isBoard && showUI && (
-        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor}
+          userSelect="none" whiteSpace="nowrap" mx={1}>
           {time}
         </Text>
       )}

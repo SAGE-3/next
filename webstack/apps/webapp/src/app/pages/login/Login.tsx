@@ -95,7 +95,7 @@ export function LoginPage() {
       {thisIsElectron ? (
         <Box left="2" bottom="2" position="absolute">
           <Button colorScheme="teal" size="sm" onClick={goToLanding}>
-            Server List
+            Hub List
           </Button>
         </Box>
       ) : (
