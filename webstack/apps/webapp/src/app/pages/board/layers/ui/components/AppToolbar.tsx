@@ -604,15 +604,19 @@ export function AppToolbar(props: AppToolbarProps) {
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => openEditModal(tag)}
           >
-            <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
-            <TagCloseButton
-              m={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                setTagToDelete(tag);
-                onDeleteTagOpen();
-              }}
-            />
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
+              <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
+              <TagCloseButton
+                m={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTagToDelete(tag);
+                  onDeleteTagOpen();
+                }}
+              />
+            </Tooltip>
           </Tag>
         ))}
         {/* Menu for overflow tags */}

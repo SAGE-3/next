@@ -268,17 +268,22 @@ export function TagsDisplay() {
             onMouseEnter={() => highlightApps(tag)}
             onMouseLeave={unhighlightApps}
           >
-            <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
-            <TagCloseButton
-              m={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                setTagToDelete(tag);
-                onOpen();
-              }}
-            />
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={`Select all the applications with tag: ${tag}`}>
+              <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={`Delete this tag in all applications: ${tag}`}>
+              <TagCloseButton
+                m={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTagToDelete(tag);
+                  onOpen();
+                }}
+              />
+            </Tooltip>
           </Tag>
-        ))}
+        ))
+      }
 
       {/* Delete tag confirmation modal */}
       <ConfirmModal
