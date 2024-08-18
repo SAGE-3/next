@@ -15,7 +15,6 @@ import {
   Box,
   useColorModeValue,
   Text,
-  Image,
   useDisclosure,
   Icon,
   useToast,
@@ -26,11 +25,6 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
   Tooltip,
   Menu,
   MenuButton,
@@ -45,6 +39,8 @@ import {
   IconButton,
   ButtonGroup,
   HStack,
+  Grid,
+  GridItem,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -486,6 +482,7 @@ export function NewHomePage() {
     if (room) {
       // If the room is already selected, deselect it
       room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
+      setSelectedQuickAccess(undefined);
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
       // update the URL, helps with history
@@ -516,9 +513,11 @@ export function NewHomePage() {
 
   function handleQuickAccessClick(quickAccess: 'active' | 'starred' | 'recent') {
     if (quickAccess !== selectedQuickAccess) {
+      setSelectedRoom(undefined);
       setSelectedQuickAccess(quickAccess);
       toQuickAccess(quickAccess);
     } else {
+      setSelectedRoom(undefined);
       setSelectedQuickAccess(undefined);
       toHome();
     }
@@ -616,6 +615,20 @@ export function NewHomePage() {
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
+  console.log(
+    boards
+      .filter(boardActiveFilter)
+      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+      .sort((a, b) => {
+        // Sorted by alpha then user count
+        const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
+        const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+        return userCountB - userCountA;
+      })
+      .map((board) => {
+        return board.data.name, board.data.roomId;
+      })
+  );
   return (
     // Main Container
     <Box display="flex" width="100svw" height="100svh" alignItems="center" p="3" backgroundColor={mainBackgroundColor} ref={introRef}>
@@ -777,6 +790,7 @@ export function NewHomePage() {
                 onClick={() => {
                   toHome();
                   handleLeaveRoom();
+                  setSelectedQuickAccess(undefined);
                 }}
                 _hover={{ backgroundColor: teal, cursor: 'pointer' }}
                 pl="2"
@@ -850,9 +864,10 @@ export function NewHomePage() {
                 display="flex"
                 flex="1"
                 alignItems="left"
+                transition="all 0.5s"
                 borderRadius={buttonRadius}
                 bg={selectedQuickAccess === 'active' ? hightlightGray : ''}
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={() => {
                   handleQuickAccessClick('active');
                 }}
@@ -865,11 +880,12 @@ export function NewHomePage() {
                 flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
+                transition="all 0.5s"
                 bg={selectedQuickAccess === 'starred' ? hightlightGray : ''}
                 onClick={() => {
                   handleQuickAccessClick('starred');
                 }}
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 p="2"
               >
                 <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
@@ -879,8 +895,9 @@ export function NewHomePage() {
                 flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
+                transition="all 0.5s"
                 bg={selectedQuickAccess === 'recent' ? hightlightGray : ''}
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={() => {
                   handleQuickAccessClick('recent');
                 }}
@@ -940,9 +957,129 @@ export function NewHomePage() {
           <MainButton config={config}></MainButton>
         </Box>
       </Box>
+      {selectedQuickAccess && (
+        <Box
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          backgroundColor={sidebarBackgroundColor}
+          maxHeight="100svh"
+          height="100%"
+          borderRadius={cardRadius}
+          marginLeft="3"
+          // overflow="hidden"
+          pt={4}
+          pr={4}
+          pb={4}
+          pl={6}
+        >
+          {selectedQuickAccess === 'active' && (
+            <Grid gap="3" templateColumns="repeat(auto-fill, minmax(300px, 1fr))">
+              {boards
+                .filter(boardActiveFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                .sort((a, b) => {
+                  // Sorted by alpha then user count
+                  const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
+                  const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                  return userCountB - userCountA;
+                })
+                .map((board) => {
+                  return (
+                    <GridItem key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                      <BoardCard
+                        board={board}
+                        onClick={() => handleBoardClick(board)}
+                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                        selected={selectedBoard ? selectedBoard._id === board._id : false}
+                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                      />
+                    </GridItem>
+                  );
+                })}
+            </Grid>
+          )}
+          {selectedQuickAccess === 'starred' && (
+            <Grid gap="3" templateColumns="repeat(auto-fill, minmax(300px, 1fr))">
+              {boards
+                .filter(boardStarredFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                .map((board) => {
+                  return (
+                    <GridItem key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                      <BoardCard
+                        board={board}
+                        onClick={() => handleBoardClick(board)}
+                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                        selected={selectedBoard ? selectedBoard._id === board._id : false}
+                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                      />
+                    </GridItem>
+                  );
+                })}
+            </Grid>
+          )}
+          {selectedQuickAccess === 'recent' && (
+            <Box height="full" display="flex" flexDir="column" justifyContent="space-between">
+              <Box display="flex" flexDir="column">
+                <Text fontSize="xx-large" fontWeight="bold">
+                  Recent Boards
+                </Text>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mt="4">
+                  <ButtonGroup size="md" isAttached variant="outline">
+                    <IconButton
+                      aria-label="Board List View"
+                      colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                      onClick={() => {
+                        setBoardListView('list');
+                      }}
+                      icon={<MdList />}
+                    />
+                    <IconButton
+                      aria-label="Board Grid View"
+                      colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
+                      onClick={() => {
+                        setBoardListView('grid');
+                      }}
+                      icon={<MdGridView />}
+                    />
+                  </ButtonGroup>
 
-      {/* Main Content */}
-      {selectedRoom ? (
+                  <InputGroup size="md" width="415px" my="1">
+                    <InputLeftElement pointerEvents="none">
+                      <MdSearch />
+                    </InputLeftElement>
+                    <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                  </InputGroup>
+                </Box>
+              </Box>
+              <Box h="80%" overflow="auto">
+                <Box display="flex" flexWrap="wrap" p="2">
+                  {boards
+                    .filter(recentBoardsFilter)
+                    .filter((board) => boardSearchFilter(board))
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                    .map((board) => {
+                      return (
+                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined} h="fit-content" m="2">
+                          <BoardCard
+                            board={board}
+                            onClick={() => handleBoardClick(board)}
+                            selected={selectedBoard ? selectedBoard._id === board._id : false}
+                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                          />
+                        </Box>
+                      );
+                    })}
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Selected Room */}
+      {selectedRoom && (
         <Box
           display="flex"
           flex="1"
@@ -1190,7 +1327,10 @@ export function NewHomePage() {
             </Tabs>
           </Box>
         </Box>
-      ) : (
+      )}
+
+      {/* Home when room or quick access are not selected */}
+      {!selectedRoom && !selectedQuickAccess && (
         <Box
           display="flex"
           flex="1"
