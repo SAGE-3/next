@@ -13,6 +13,7 @@ type UserSettings = {
   showViewports: boolean;
   showAppTitles: boolean;
   showUI: boolean;
+  showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
 };
 
@@ -21,6 +22,7 @@ const defaultSettings: UserSettings = {
   showViewports: true,
   showAppTitles: false,
   showUI: true,
+  showTags: false,
   selectedBoardListView: 'list',
 };
 
@@ -32,18 +34,20 @@ type UserSettingsContextType = {
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
   toggleShowUI: () => void;
+  toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
   restoreDefaultSettings: () => void;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => {},
-  toggleShowViewports: () => {},
-  toggleShowAppTitles: () => {},
-  toggleShowUI: () => {},
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
-  restoreDefaultSettings: () => {},
+  toggleShowCursors: () => { },
+  toggleShowViewports: () => { },
+  toggleShowAppTitles: () => { },
+  toggleShowUI: () => { },
+  toggleShowTags: () => { },
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  restoreDefaultSettings: () => { },
 });
 
 /**
@@ -122,6 +126,15 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
+  const toggleShowTags = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.showTags = !prev.showTags;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
   const setBoardListView = useCallback(
     (value: UserSettings['selectedBoardListView']) => {
       setSettings((prev) => {
@@ -147,6 +160,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowViewports,
         toggleShowAppTitles,
         toggleShowUI,
+        toggleShowTags,
         setBoardListView,
         restoreDefaultSettings,
       }}
