@@ -975,50 +975,46 @@ export function NewHomePage() {
           pl={6}
         >
           {selectedQuickAccess === 'active' && (
-            <Grid gap="3" templateColumns="repeat(auto-fill, minmax(300px, 1fr))">
-              {boards
+            <QuickAccessPage
+              title="Active Boards"
+              icon={MdPerson}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
                 .filter(boardActiveFilter)
+                .filter(boardSearchFilter)
                 .sort((a, b) => a.data.name.localeCompare(b.data.name))
                 .sort((a, b) => {
                   // Sorted by alpha then user count
                   const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
                   const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
                   return userCountB - userCountA;
-                })
-                .map((board) => {
-                  return (
-                    <GridItem key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                      <BoardCard
-                        board={board}
-                        onClick={() => handleBoardClick(board)}
-                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                        selected={selectedBoard ? selectedBoard._id === board._id : false}
-                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                      />
-                    </GridItem>
-                  );
                 })}
-            </Grid>
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
           )}
           {selectedQuickAccess === 'starred' && (
-            <Grid gap="3" templateColumns="repeat(auto-fill, minmax(300px, 1fr))">
-              {boards
+            <QuickAccessPage
+              title="Starred Boards"
+              icon={MdStarOutline}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
                 .filter(boardStarredFilter)
-                .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                .map((board) => {
-                  return (
-                    <GridItem key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                      <BoardCard
-                        board={board}
-                        onClick={() => handleBoardClick(board)}
-                        // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                        selected={selectedBoard ? selectedBoard._id === board._id : false}
-                        usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                      />
-                    </GridItem>
-                  );
-                })}
-            </Grid>
+                .filter(boardSearchFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))}
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
           )}
           {selectedQuickAccess === 'recent' && (
             <QuickAccessPage
