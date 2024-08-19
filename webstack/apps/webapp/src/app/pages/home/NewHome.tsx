@@ -81,6 +81,7 @@ import {
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
 import { getSvgPathFromPoints } from 'tldraw';
+import QuickAccessPage from './components/quick-access/QuickAccessPage';
 
 /**
  * Home page for SAGE3
@@ -1020,60 +1021,22 @@ export function NewHomePage() {
             </Grid>
           )}
           {selectedQuickAccess === 'recent' && (
-            <Box height="full" display="flex" flexDir="column" justifyContent="space-between">
-              <Box display="flex" flexDir="column">
-                <Text fontSize="xx-large" fontWeight="bold">
-                  Recent Boards
-                </Text>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mt="4">
-                  <ButtonGroup size="md" isAttached variant="outline">
-                    <IconButton
-                      aria-label="Board List View"
-                      colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
-                      onClick={() => {
-                        setBoardListView('list');
-                      }}
-                      icon={<MdList />}
-                    />
-                    <IconButton
-                      aria-label="Board Grid View"
-                      colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
-                      onClick={() => {
-                        setBoardListView('grid');
-                      }}
-                      icon={<MdGridView />}
-                    />
-                  </ButtonGroup>
-
-                  <InputGroup size="md" width="415px" my="1">
-                    <InputLeftElement pointerEvents="none">
-                      <MdSearch />
-                    </InputLeftElement>
-                    <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                  </InputGroup>
-                </Box>
-              </Box>
-              <Box h="80%" overflow="auto">
-                <Box display="flex" flexWrap="wrap" p="2">
-                  {boards
-                    .filter(recentBoardsFilter)
-                    .filter((board) => boardSearchFilter(board))
-                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                    .map((board) => {
-                      return (
-                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined} h="fit-content" m="2">
-                          <BoardCard
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                          />
-                        </Box>
-                      );
-                    })}
-                </Box>
-              </Box>
-            </Box>
+            <QuickAccessPage
+              title="Recent Boards"
+              icon={IoMdTime}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
+                .filter(recentBoardsFilter)
+                .filter(boardSearchFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))}
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
           )}
         </Box>
       )}
