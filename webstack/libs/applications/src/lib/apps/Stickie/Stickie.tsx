@@ -93,16 +93,6 @@ function AppComponent(props: App): JSX.Element {
   // Use Yjs
   const { yApps } = useYjs();
 
-  // Check if there's no tags, then add the color as a tag
-  useEffect(() => {
-    // Check tags
-    const mine = useInsightStore.getState().insights.find((el) => el._id === props._id);
-    if (!mine) {
-      useInsightStore.getState().update(props._id, { labels: [s.color + ':' + s.color] });
-    }
-  }, []);
-
-
   // Update local fontsize value with value from the server
   useEffect(() => {
     setFontSize(s.fontSize);

@@ -11,13 +11,6 @@ import { Box, useColorModeValue, Tooltip, IconButton, Image, Text, ButtonGroup, 
 
 import { MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore, MdOutlineResetTv } from 'react-icons/md';
 
-// Icons for file types
-import {
-  MdOutlineImage, MdOndemandVideo, MdOutlineStickyNote2
-} from 'react-icons/md';
-import { FaPython } from 'react-icons/fa';
-import { AiOutlineFilePdf, AiOutlinePython } from "react-icons/ai";
-
 import {
   ConfirmModal,
   useAbility,
