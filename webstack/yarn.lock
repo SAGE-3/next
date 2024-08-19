@@ -4472,17 +4472,17 @@
     "@testing-library/dom" "^8.5.0"
     "@types/react-dom" "^18.0.0"
 
-"@tldraw/editor@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/editor/-/editor-2.4.1.tgz#28a43b2e54f76dc0bdc39ad6f280719949edd2eb"
-  integrity sha512-3/ti+qJWkak4jlP/jmHTd/2PK8amYLyPyb6GuCCtjMhKsCHOlEHc3BIdzdx3ldIE3cAAx7qYHS328RcWituB0Q==
+"@tldraw/editor@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/editor/-/editor-2.4.4.tgz#ff72dae2dc8a11d85afb5954a003dcd1029e135d"
+  integrity sha512-q9VavfOIcqVhTrVPhziWKOv6b5Mkj7x1zaGRmWEKJhCWEWZ/TMpVma4S7nLhRu/nlu5H4pKCDQ9FKqY7JIAnYA==
   dependencies:
-    "@tldraw/state" "2.4.1"
-    "@tldraw/state-react" "2.4.1"
-    "@tldraw/store" "2.4.1"
-    "@tldraw/tlschema" "2.4.1"
-    "@tldraw/utils" "2.4.1"
-    "@tldraw/validate" "2.4.1"
+    "@tldraw/state" "2.4.4"
+    "@tldraw/state-react" "2.4.4"
+    "@tldraw/store" "2.4.4"
+    "@tldraw/tlschema" "2.4.4"
+    "@tldraw/utils" "2.4.4"
+    "@tldraw/validate" "2.4.4"
     "@types/core-js" "^2.5.5"
     "@use-gesture/react" "^10.2.27"
     classnames "^2.3.2"
@@ -4492,53 +4492,53 @@
     is-plain-object "^5.0.0"
     nanoid "4.0.2"
 
-"@tldraw/state-react@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/state-react/-/state-react-2.4.1.tgz#fcb79d0e8a2633449e90b577cae139d629f0ee54"
-  integrity sha512-K9PL2N/9e9cbbgx9H+yq1EOehNUpjXOItapEDewMF4UJT0r6EjRXTdfdUoL6O+EYabfQuDGTR67pLbfbTDfEbw==
+"@tldraw/state-react@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/state-react/-/state-react-2.4.4.tgz#48ad223851103dce474c72ae733d2283cd10f409"
+  integrity sha512-lUAtcmSymYsVJurCIWoQizHfaCQi/KjKe5Z+qSWXJkzAQvGY79EHYO0pCgZ9qnToeIue3/k1rrFAlKzZqor1uw==
   dependencies:
-    "@tldraw/state" "2.4.1"
+    "@tldraw/state" "2.4.4"
 
-"@tldraw/state@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/state/-/state-2.4.1.tgz#715e39950faecddae8d0bf9f26af268287a76e46"
-  integrity sha512-yaNkHr3yCf+F3txpYD+50UaPvM7fQIFX+Q9XMWwKjEjDnNOEjynOxn7Ehct9hgv8FyCVLihNVVNSItn90/Zctg==
+"@tldraw/state@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/state/-/state-2.4.4.tgz#f38bb8d66bda9a75053dbc9354e2276b85b8749d"
+  integrity sha512-bCgBu3QX2Kpv8hUqSyfwrzS+Y4ieAVYqNqxCNqcdbx2IwR8dYDD1Oc8VabTzIbodPVNc7KfytZdXFonSfAip8w==
 
-"@tldraw/store@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/store/-/store-2.4.1.tgz#17fef611709be76d5f0493c11a211a688e8b7ad4"
-  integrity sha512-dSpeUZN94JOzvevAX5bRnZpiDI/Klv+dzJkzGDp2T++tDN4O+HjQ5HfaTfsy02XgduOLK4REQKL+9lXn2NWxCg==
+"@tldraw/store@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/store/-/store-2.4.4.tgz#5fffcc367a4097d0b74c469c9761c40106c5a4ef"
+  integrity sha512-WA5iVu/pxfk/6WQ/p60anNywfIdseViiuKXgWmShXjzVopx8PFsDkPmfDnlFk5mBy4v9ESLftIpHaN0N0Kq9+A==
   dependencies:
-    "@tldraw/state" "2.4.1"
-    "@tldraw/utils" "2.4.1"
+    "@tldraw/state" "2.4.4"
+    "@tldraw/utils" "2.4.4"
     lodash.isequal "^4.5.0"
     nanoid "4.0.2"
 
-"@tldraw/tlschema@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/tlschema/-/tlschema-2.4.1.tgz#1bd3cb9f1e651b1910a0e9ec4b19539a22adca63"
-  integrity sha512-zMs+3MUBqf8rlN1Ras0Ck6lB2xq8sHvU5NZrY18wsB3iK9e6SBLcy9WT+JNA433BuvTFbONo2sbIa4GPcXNkhg==
+"@tldraw/tlschema@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/tlschema/-/tlschema-2.4.4.tgz#b4e501cd6d269b9ef667e93fb55414377e37bc79"
+  integrity sha512-cJmYJzfeeggy7xe7En+KwOqNDBw3yRQ8K3b05aP308GDOnsoBC6LIA8FowW3gi4G8i4Aaix3kGDW5LcXmTpeOg==
   dependencies:
-    "@tldraw/state" "2.4.1"
-    "@tldraw/store" "2.4.1"
-    "@tldraw/utils" "2.4.1"
-    "@tldraw/validate" "2.4.1"
+    "@tldraw/state" "2.4.4"
+    "@tldraw/store" "2.4.4"
+    "@tldraw/utils" "2.4.4"
+    "@tldraw/validate" "2.4.4"
     nanoid "4.0.2"
 
-"@tldraw/utils@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/utils/-/utils-2.4.1.tgz#4354ad8a8dc55fb818abe6139cc6173eb38a6670"
-  integrity sha512-FtHnoy/Aj8Q9hyX5ud+uE9W0vxpo+Yrzr/GT+weQHSCzjt7gkQQvKbHizu8ykksCuS/wuzehGWM4LGrDtbGdzg==
+"@tldraw/utils@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/utils/-/utils-2.4.4.tgz#70ed6d6a20e5dfda28504f4b0bec2be10482dde8"
+  integrity sha512-rFYDB0R6pnHsFmnpd/ElglUmrRgQOTyFqd4BFc89y9MbpR9iWgkEx7kBW4d4xYEylEAZnrwhdTQPKIWM3fVyCw==
   dependencies:
     lodash.throttle "^4.1.1"
     lodash.uniq "^4.5.0"
 
-"@tldraw/validate@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@tldraw/validate/-/validate-2.4.1.tgz#cbc8ed28176e1c5f1fe507f4ff971deb9cf7700f"
-  integrity sha512-PaWM6L5jvxeglqz/BLte7+Nhne9db1dFRnJS9Ts+ka7EvhqPvble9jWOk/HhSHhB25QeqBeo0Re5MCBtib3H1w==
+"@tldraw/validate@2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@tldraw/validate/-/validate-2.4.4.tgz#9d75513bce39660d5af3a0d5804b6aede161518d"
+  integrity sha512-6fwcAMbNFDMdCv1s7ftx01IEU0i6E4LGJVkP7gssPGT71HskYshUA42tE1Ga8FF+Bnzv2qoz6xQZyJCSQltr1g==
   dependencies:
-    "@tldraw/utils" "2.4.1"
+    "@tldraw/utils" "2.4.4"
 
 "@tootallnate/once@2":
   version "2.0.0"
@@ -15637,10 +15637,10 @@ tinyqueue@^2.0.3:
   resolved "https://registry.yarnpkg.com/tinyqueue/-/tinyqueue-2.0.3.tgz#64d8492ebf39e7801d7bd34062e29b45b2035f08"
   integrity sha512-ppJZNDuKGgxzkHihX8v9v9G5f+18gzaTfrukGrq6ueg0lmH4nqVnA2IPG0AEH3jKEk2GRJCUhDoqpoiw3PHLBA==
 
-tldraw@^2.3.0:
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/tldraw/-/tldraw-2.4.1.tgz#657ae55dc73b14f427472026827a5c93113ace2c"
-  integrity sha512-oo07//cQZ5W7ovheiw30KOwawrQryLYnTD/8QwzaF/Bgqf4Oz0RmrOMLVd1R3pJzx1RsS7ArloyWS2Aae6p2Vw==
+tldraw@2.4.4:
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/tldraw/-/tldraw-2.4.4.tgz#69fc9b2e961a274840767975d31fe41a2db95565"
+  integrity sha512-7Ggb5qljQwm+JxY0wOSa9gYtLFXBuy2xRdvTBoKQf/NF2TemxipmXumrjpOE7vDifDfVjG/hUiqacrruqjXnow==
   dependencies:
     "@radix-ui/react-alert-dialog" "^1.0.5"
     "@radix-ui/react-context-menu" "^2.1.5"
@@ -15650,8 +15650,8 @@ tldraw@^2.3.0:
     "@radix-ui/react-select" "^1.2.0"
     "@radix-ui/react-slider" "^1.1.0"
     "@radix-ui/react-toast" "^1.1.1"
-    "@tldraw/editor" "2.4.1"
-    "@tldraw/store" "2.4.1"
+    "@tldraw/editor" "2.4.4"
+    "@tldraw/store" "2.4.4"
     canvas-size "^1.2.6"
     classnames "^2.3.2"
     hotkeys-js "^3.11.2"
