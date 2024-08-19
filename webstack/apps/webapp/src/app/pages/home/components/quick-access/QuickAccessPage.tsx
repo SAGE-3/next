@@ -4,6 +4,7 @@ import { MdList, MdGridView, MdSearch } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { BoardCard } from '../BoardCard';
 import { Board, Presence } from '@sage3/shared/types';
+import { BoardRow } from '../BoardRow';
 
 interface QuickAccessProps {
   title: string;
@@ -71,12 +72,22 @@ const QuickAccessPage = ({
           {filteredBoards &&
             filteredBoards.map((board) => (
               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined} h="fit-content">
-                <BoardCard
-                  board={board}
-                  onClick={() => handleBoardClick(board)}
-                  selected={selectedBoard ? selectedBoard._id === board._id : false}
-                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                />
+                {boardListView === 'grid' ? (
+                  <BoardCard
+                    board={board}
+                    onClick={() => handleBoardClick(board)}
+                    selected={selectedBoard ? selectedBoard._id === board._id : false}
+                    usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                  />
+                ) : (
+                  <BoardRow
+                    key={board._id}
+                    board={board}
+                    onClick={() => handleBoardClick(board)}
+                    selected={selectedBoard ? selectedBoard._id === board._id : false}
+                    usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                  />
+                )}
               </Box>
             ))}
         </Box>
