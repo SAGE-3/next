@@ -35,13 +35,21 @@ export interface NavProps {
 export function NavigationPanel(props: NavProps) {
   // App Store
   const apps = useThrottleApps(250);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  // Board Store
-  // const updateBoard = useBoardStore((state) => state.update);
+
   // UI Store
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const boardLocked = useUIStore((state) => state.boardLocked);
+  const lockBoard = useUIStore((state) => state.lockBoard);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const zoomIn = useUIStore((state) => state.zoomIn);
+  const zoomOut = useUIStore((state) => state.zoomOut);
+  const setScale = useUIStore((state) => state.setScale);
+  const resetZoom = useUIStore((state) => state.resetZoom);
   const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
+  const userViewport = useUIStore((state) => state.viewport);
+
+  // Scale
   const scale = useThrottleScale(250);
-  const { boardLocked, lockBoard, setBoardPosition, zoomIn, zoomOut, setScale, resetZoom } = useUIStore((state) => state);
   const formattedScale = `${Math.floor(scale * 100)}%`;
 
   // User viewport
@@ -54,10 +62,6 @@ export function NavigationPanel(props: NavProps) {
   // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
   const userViewportBGColor = useColorModeValue('#00000022', '#ffffff44');
-  const userViewport = useUIStore((state) => state.viewport);
-
-  // Clear board modal
-  // const { isOpen: organizeIsOpen, onOpen: organizeOnOpen, onClose: organizeOnClose } = useDisclosure();
 
   const backgroundColor = useColorModeValue('gray.100', 'gray.600');
   const borderColor = 'teal.500'; // useColorModeValue('teal.500', 'teal.500');
@@ -184,7 +188,7 @@ export function NavigationPanel(props: NavProps) {
                   return (
                     <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                       <Box
-                        backgroundColor={app.data.type === "Stickie" ? app.data.state.color + '.400' : borderColor}
+                        backgroundColor={app.data.type === 'Stickie' ? app.data.state.color + '.400' : borderColor}
                         position="absolute"
                         left={(app.data.position.x - appsX) * mapScale + 'px'}
                         top={(app.data.position.y - appsY) * mapScale + 'px'}

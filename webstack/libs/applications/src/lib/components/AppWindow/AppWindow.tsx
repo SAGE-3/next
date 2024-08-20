@@ -11,7 +11,16 @@ import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleApps, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useKeyPress,
+  useHexColor,
+  useThrottleApps,
+  useThrottleScale,
+  useAbility,
+  useInsightStore,
+} from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
@@ -65,6 +74,7 @@ export function AppWindow(props: WindowProps) {
   const savedSelectedApps = useUIStore((state) => state.savedSelectedAppsIds);
   const isSavedSelected = savedSelectedApps.includes(props.app._id);
   const viewport = useUIStore((state) => state.viewport);
+  const selectedTag = useUIStore((state) => state.selectedTag);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -76,8 +86,7 @@ export function AppWindow(props: WindowProps) {
   // Tag Highlight
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
-  const { selectedTag } = useUIStore(state => state);
-  const myInsights = insights.find(el => props.app._id == el.data.app_id);
+  const myInsights = insights.find((el) => props.app._id == el.data.app_id);
   const myLabels = myInsights ? myInsights.data.labels : [];
   const isHighlight = myLabels.includes(selectedTag);
 

@@ -8,7 +8,6 @@
 
 // React Imports
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {

@@ -34,7 +34,8 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const createApp = useAppStore((state) => state.create);
 
   // Board Position
-  const { scale, boardPosition } = useUIStore((state) => state);
+  const scale = useUIStore((state) => state.scale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // User
   const { user } = useUser();

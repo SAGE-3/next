@@ -13,7 +13,7 @@ import { useParams } from 'react-router';
 import { Button, useToast } from '@chakra-ui/react';
 
 // Sage
-import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore, useUIStore } from '@sage3/frontend';
 
 export function PresenceFollow() {
   // BoardId
@@ -23,10 +23,15 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const { setBoardPosition, setScale } = useUIStore((state) => state);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
 
   // Presences
-  const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
+  const presences = usePresenceStore((state) => state.presences);
+  const following = usePresenceStore((state) => state.following);
+  const setFollowing = usePresenceStore((state) => state.setFollowing);
+  const updatePresence = usePresenceStore((state) => state.update);
+
   const users = useUsersStore((state) => state.users);
 
   // Toast Info

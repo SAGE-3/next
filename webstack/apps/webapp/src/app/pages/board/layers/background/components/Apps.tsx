@@ -55,7 +55,8 @@ export function Apps() {
   const createApp = useAppStore((state) => state.create);
 
   // Fitapps
-  const { fitAllApps, fitApps } = useUIStore((state) => state);
+  const fitAllApps = useUIStore((state) => state.fitAllApps);
+  const fitApps = useUIStore((state) => state.fitApps);
 
   // Position board when entering board
   useEffect(() => {
