@@ -131,7 +131,11 @@ export function HomePage() {
 
   // User and Presence Store
   const { users, subscribeToUsers } = useUsersStore((state) => state);
-  const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
+
+  // Presence
+  const partialPrescences = usePresenceStore((state) => state.partialPrescences);
+  const updatePresence = usePresenceStore((state) => state.update);
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
 
   // Settings
   const { setBoardListView, settings } = useUserSettings();
@@ -361,7 +365,7 @@ export function HomePage() {
 
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
-    const userCount = presences.filter((p) => p.data.boardId === board._id).length;
+    const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
 
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
@@ -870,8 +874,8 @@ export function HomePage() {
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .sort((a, b) => {
                         // Sorted by alpha then user count
-                        const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
-                        const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                        const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
+                        const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
                         return userCountB - userCountA;
                       })
                       .map((board) => {
@@ -904,19 +908,15 @@ export function HomePage() {
                     {boards
                       .filter(boardStarredFilter)
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => {
-                        const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                        const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                        return (
-                          <BoardSidebarRow
-                            key={'tooltip_starred' + board._id}
-                            board={board}
-                            isSelected={board._id === selectedBoard?._id}
-                            onClick={() => handleBoardClickFromSubMenu(board)}
-                            onDoubleClick={() => handleBoardDoubleClick(board)}
-                          />
-                        );
-                      })}
+                      .map((board) => (
+                        <BoardSidebarRow
+                          key={'tooltip_starred' + board._id}
+                          board={board}
+                          isSelected={board._id === selectedBoard?._id}
+                          onClick={() => handleBoardClickFromSubMenu(board)}
+                          onDoubleClick={() => handleBoardDoubleClick(board)}
+                        />
+                      ))}
                   </VStack>
                 </AccordionPanel>
               </AccordionItem>
@@ -1150,7 +1150,7 @@ export function HomePage() {
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}
@@ -1188,7 +1188,7 @@ export function HomePage() {
                                   board={board}
                                   onClick={() => handleBoardClick(board)}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
                                 />
                               </Box>
                             ))}
