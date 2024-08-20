@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, ButtonGroup, IconButton, InputGroup, InputLeftElement, Input, Icon } from '@chakra-ui/react';
+import { Box, ButtonGroup, IconButton, InputGroup, InputLeftElement, Input, Icon, useColorModeValue } from '@chakra-ui/react';
+import { useHexColor } from '@sage3/frontend';
 import { MdList, MdGridView, MdSearch } from 'react-icons/md';
 import { IconType } from 'react-icons';
 import { BoardCard } from '../BoardCard';
@@ -33,13 +34,16 @@ const QuickAccessPage = ({
   presences,
   scrollToBoardRef,
 }: QuickAccessProps) => {
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
+
   return (
     <Box height="full" display="flex" flexDir="column" gap="8">
-      <Box display="flex" flexDir="column" p="2">
+      <Box display="flex" flexDir="column">
         <Box fontSize="xx-large" fontWeight="bold" display="flex" alignItems="center" gap="2">
           <Icon as={icon} /> {title}
         </Box>
-        <Box display="flex" alignItems="center" mt="2" gap="3">
+        <Box display="flex" alignItems="center" mt="2" gap="2">
           <ButtonGroup size="md" isAttached variant="outline">
             <IconButton
               aria-label="Board List View"
@@ -68,7 +72,21 @@ const QuickAccessPage = ({
         </Box>
       </Box>
 
-      <Box h="100%" overflow="auto">
+      <Box
+        h="100%"
+        mb="2"
+        overflow="auto"
+        css={{
+          '&::-webkit-scrollbar': {
+            background: 'transparent',
+            width: '5px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: scrollBarColor,
+            borderRadius: '48px',
+          },
+        }}
+      >
         <Box display="flex" flexDir={boardListView === 'list' ? 'column' : 'row'} flexWrap="wrap" p="2" gap="2">
           {filteredBoards &&
             filteredBoards.map((board) => (
