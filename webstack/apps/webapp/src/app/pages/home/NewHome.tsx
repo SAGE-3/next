@@ -860,7 +860,7 @@ export function NewHomePage() {
               },
             }}
           >
-            <VStack spacing={0} align="stretch">
+            <VStack spacing={0} align="stretch" gap="2px">
               <Box
                 display="flex"
                 flex="1"
