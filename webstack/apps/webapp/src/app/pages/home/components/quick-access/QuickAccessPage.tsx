@@ -34,12 +34,12 @@ const QuickAccessPage = ({
   scrollToBoardRef,
 }: QuickAccessProps) => {
   return (
-    <Box height="full" display="flex" flexDir="column" justifyContent="space-between">
+    <Box height="full" display="flex" flexDir="column" gap="8">
       <Box display="flex" flexDir="column" p="2">
         <Box fontSize="xx-large" fontWeight="bold" display="flex" alignItems="center" gap="2">
           <Icon as={icon} /> {title}
         </Box>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mt="4">
+        <Box display="flex" alignItems="center" mt="2" gap="3">
           <ButtonGroup size="md" isAttached variant="outline">
             <IconButton
               aria-label="Board List View"
@@ -67,8 +67,9 @@ const QuickAccessPage = ({
           </InputGroup>
         </Box>
       </Box>
-      <Box h="80%" overflow="auto">
-        <Box display="flex" flexWrap="wrap" p="2" gap="2">
+
+      <Box h="100%" overflow="auto">
+        <Box display="flex" flexDir={boardListView === 'list' ? 'column' : 'row'} flexWrap="wrap" p="2" gap="2">
           {filteredBoards &&
             filteredBoards.map((board) => (
               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined} h="fit-content">
