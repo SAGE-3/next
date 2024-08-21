@@ -256,7 +256,7 @@ type PasswordModalProps = {
   room: Room;
 };
 
-function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
+export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // Reference to the input field

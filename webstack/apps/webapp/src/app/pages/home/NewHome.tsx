@@ -41,13 +41,14 @@ import {
   HStack,
   Grid,
   GridItem,
+  Tag,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline, MdGridView, MdList } from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline, MdGridView, MdList, MdLock } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
@@ -79,9 +80,10 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, BoardSidebarRow } from './components';
 import { getSvgPathFromPoints } from 'tldraw';
 import QuickAccessPage from './components/quick-access/QuickAccessPage';
+import { set } from 'date-fns';
 
 /**
  * Home page for SAGE3
@@ -108,6 +110,7 @@ export function NewHomePage() {
   // User Information
   const { user, clearRecentBoards } = useUser();
   const userId = user ? user._id : '';
+  const userColor = user ? useHexColor(user.data.color) : useHexColor('teal');
   // const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
@@ -141,7 +144,9 @@ export function NewHomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+  const [roomSearch, setRoomSearch] = useState<string>('');
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<'active' | 'starred' | 'recent' | undefined>(undefined);
+  const [passwordProtectedRoom, setPasswordProtectedRoom] = useState<Room | undefined>(undefined);
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -166,6 +171,10 @@ export function NewHomePage() {
   const subTextColor = useHexColor(subTextValue);
   const homeSectionValue = useColorModeValue('gray.100', '#393939');
   const homeSectionColor = useHexColor(homeSectionValue);
+  const availableRoomsBgColorValue = useColorModeValue('#ffffff', `gray.800`);
+  const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
+  const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
+  const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
   // const { toggleColorMode, colorMode } = useColorMode();
 
   // Styling
@@ -185,6 +194,11 @@ export function NewHomePage() {
     isOpen: clearRecentBoardsModalIsOpen,
     onOpen: clearRecentBoardsModalOnOpen,
     onClose: clearRecentBoardsModalOnClose,
+  } = useDisclosure();
+  const {
+    isOpen: passwordJoinRoomModalIsOpen,
+    onOpen: passwordJoinRoomModalOnOpen,
+    onClose: passwordJoinRoomModalOnClose,
   } = useDisclosure();
 
   // Permissions
@@ -396,6 +410,10 @@ export function NewHomePage() {
 
   const boardSearchFilter = (board: Board) => {
     return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
+
+  const roomSearchFilter = (room: Room) => {
+    return fuzzySearch(room.data.name + ' ' + room.data.description, roomSearch);
   };
 
   // Check to see if the user is the owner but not a member in weird cases
@@ -616,20 +634,14 @@ export function NewHomePage() {
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
-  console.log(
-    boards
-      .filter(boardActiveFilter)
-      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-      .sort((a, b) => {
-        // Sorted by alpha then user count
-        const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
-        const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
-        return userCountB - userCountA;
-      })
-      .map((board) => {
-        return board.data.name, board.data.roomId;
-      })
-  );
+  // Handle password modal
+  useEffect(() => {
+    if (passwordProtectedRoom) {
+      passwordJoinRoomModalOnOpen();
+    }
+    console.log('rerendering');
+  }, [passwordProtectedRoom]);
+
   return (
     // Main Container
     <Box display="flex" width="100svw" height="100svh" alignItems="center" p="3" backgroundColor={mainBackgroundColor} ref={introRef}>
@@ -707,6 +719,18 @@ export function NewHomePage() {
         onConfirm={handleClearRecentBoards}
       />
 
+      {/* Confirmation Dialog to join a password protected room */}
+      {passwordProtectedRoom && (
+        <PasswordJoinRoomModal
+          isOpen={passwordJoinRoomModalIsOpen}
+          onClose={() => {
+            passwordJoinRoomModalOnClose();
+            setPasswordProtectedRoom(undefined);
+          }}
+          room={passwordProtectedRoom}
+        />
+      )}
+
       {/* Sidebar Drawer */}
       <Box
         // backgroundColor={sidebarBackgroundColor}
@@ -736,7 +760,8 @@ export function NewHomePage() {
                   textOverflow="ellipsis"
                   fontSize="3xl"
                   fontWeight={'bold'}
-                  _hover={{ cursor: 'pointer', backgroundColor: teal }}
+                  bg={teal}
+                  _hover={{ cursor: 'pointer', opacity: 0.9 }}
                 >
                   <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
                     <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
@@ -767,7 +792,8 @@ export function NewHomePage() {
             <Box
               px="4"
               py="2"
-              // borderBottom={`solid ${dividerColor} 1px`}
+              bg={teal}
+              borderRadius={cardRadius}
               whiteSpace="nowrap"
               overflow="hidden"
               textOverflow="ellipsis"
@@ -788,13 +814,12 @@ export function NewHomePage() {
                 alignItems={'center'}
                 transition="all 0.5s"
                 borderRadius={buttonRadius}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={() => {
                   toHome();
                   handleLeaveRoom();
                   setSelectedQuickAccess(undefined);
                 }}
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
               >
                 <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="lg">Home</Text>
               </Box>
@@ -808,8 +833,7 @@ export function NewHomePage() {
                 alignItems={'center'}
                 transition="all 0.5s"
                 borderRadius={buttonRadius}
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={handleRoomSearchClick}
                 ref={searchRoomsRef}
               >
@@ -824,9 +848,8 @@ export function NewHomePage() {
                 justifyContent={'left'}
                 alignItems={'center'}
                 transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
                 borderRadius={buttonRadius}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={enterBoardByURLModalOnOpen}
                 ref={enterBoardByURLRef}
               >
@@ -1297,7 +1320,6 @@ export function NewHomePage() {
       {!selectedRoom && !selectedQuickAccess && (
         <Box
           display="flex"
-          flex="1"
           flexDirection="column"
           backgroundColor={sidebarBackgroundColor}
           maxHeight="100svh"
@@ -1312,6 +1334,7 @@ export function NewHomePage() {
             display="flex"
             flexDir="column"
             overflow="auto"
+            height="100%"
             px="6"
             css={{
               '&::-webkit-scrollbar': {
@@ -1332,7 +1355,7 @@ export function NewHomePage() {
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
             </Text>
             {/* Recents and Starred Boards */}
-            <Box borderRadius={cardRadius} py="3">
+            <Box borderRadius={cardRadius} py="3" height="100%">
               <Text fontWeight="bold" mb="3">
                 Recent Boards
               </Text>
@@ -1381,50 +1404,99 @@ export function NewHomePage() {
                 )}
               </Box>
 
-              <Box>
-                <Text>Available Rooms</Text>
-                <Button onClick={handleCreateRoomClick}>+ new</Button>
-                <Box height="100%">
+              <Box mt="6" mb="3" height="100%">
+                <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
+                  <Text fontWeight="bold">Available Rooms</Text>
+                  <Box display="flex" justifyContent="center" alignItems="center" gap="2">
+                    <InputGroup size="xs" width="415px" my="1">
+                      <InputLeftElement pointerEvents="none">
+                        <MdSearch />
+                      </InputLeftElement>
+                      <Input placeholder="Search Rooms" value={roomSearch} onChange={(e) => setRoomSearch(e.target.value)} />
+                    </InputGroup>
+                    <Button onClick={handleCreateRoomClick} size="xs">
+                      <Icon as={MdAdd} mr="1" />
+                      Create Room
+                    </Button>
+                  </Box>
+                </Box>
+                <Box>
                   {rooms
                     .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
+                    .filter(roomSearchFilter)
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
                     .map((room) => {
                       return (
-                        <Tooltip
-                          key={'tooltip_room' + room._id}
-                          openDelay={400}
-                          hasArrow
-                          placement="top"
-                          label={`Description ${room.data.description}`}
+                        <Box
+                          borderRadius="6"
+                          bg={availableRoomsBgColor}
+                          border="1px"
+                          borderColor={availableRoomsBorderColor}
+                          my="1"
+                          p="1"
+                          key={room._id}
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          transition="all 0.5s"
+                          height="28px"
+                          _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                          onClick={() => handleRoomClick(room)}
                         >
-                          <Box
-                            borderRadius="6"
-                            key={room._id}
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                            onClick={() => handleRoomClick(room)}
-                          >
-                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                              <Text fontSize="md" pl="2">
-                                {room.data.name}
-                              </Text>
-                            </Box>
-
-                            <Text fontSize="xs" pr="4" color={subTextColor}>
-                              {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId)
-                                ? room.data.ownerId === userId
-                                  ? 'Owner'
-                                  : 'Member'
-                                : 'Join'}
+                          <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                            <Text fontSize="md" pl="2">
+                              {room.data.name}
                             </Text>
                           </Box>
-                        </Tooltip>
+
+                          <Text fontSize="xs" color={subTextColor}>
+                            {room.data.ownerId === userId ||
+                            members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              room.data.ownerId === userId ? (
+                                <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
+                                  Owner
+                                </Tag>
+                              ) : (
+                                <Tag size="sm" width="100px" textAlign="center" display="flex" justifyContent="center" colorScheme="yellow">
+                                  Member
+                                </Tag>
+                              )
+                            ) : (
+                              <Button
+                                size="xs"
+                                height="20px"
+                                width="100px"
+                                zIndex="10"
+                                colorScheme="teal"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (room.data.ownerId === userId) {
+                                    return;
+                                  }
+                                  // if it is a private room, open the password modal
+                                  if (room.data.isPrivate) {
+                                    if (!passwordProtectedRoom) {
+                                      setPasswordProtectedRoom(room);
+                                    } else {
+                                      setPasswordProtectedRoom(undefined);
+                                    }
+                                  } else {
+                                    joinRoomMembership(room._id);
+                                    toast({
+                                      title: `You have successfully joined ${room.data.name}`,
+                                      status: 'success',
+                                      duration: 4 * 1000,
+                                      isClosable: true,
+                                    });
+                                  }
+                                }}
+                              >
+                                <Box mr="1">Join</Box>
+                                {room.data.isPrivate && <MdLock />}
+                              </Button>
+                            )}
+                          </Text>
+                        </Box>
                       );
                     })}
                 </Box>

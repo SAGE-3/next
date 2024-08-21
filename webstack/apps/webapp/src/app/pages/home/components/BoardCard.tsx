@@ -23,7 +23,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
-  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColorValue = useColorModeValue('gray.100', 'gray.700');
   const baseBorderColor = useHexColor(baseBorderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
