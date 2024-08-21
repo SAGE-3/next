@@ -281,12 +281,12 @@ export function NewHomePage() {
           : 'This shows the current SAGE3 server.',
         disableBeacon: true,
       },
-      {
-        target: createRoomRef.current!,
-        title: 'Create Rooms',
-        content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
-        disableBeacon: true,
-      },
+      // {
+      //   target: createRoomRef.current!,
+      //   title: 'Create Rooms',
+      //   content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
+      //   disableBeacon: true,
+      // },
       {
         target: searchRoomsRef.current!,
         title: 'Search for Rooms',
@@ -875,7 +875,7 @@ export function NewHomePage() {
             <VStack align="stretch" gap="2px" height="100%">
               <Box
                 display="flex"
-                // flex="1"
+                ref={activeBoardsRef}
                 alignItems="left"
                 transition="all 0.5s"
                 borderRadius={buttonRadius}
@@ -890,7 +890,7 @@ export function NewHomePage() {
               </Box>
               <Box
                 display="flex"
-                // flex="1"
+                ref={starredBoardsRef}
                 alignItems="left"
                 borderRadius={buttonRadius}
                 transition="all 0.5s"
@@ -905,7 +905,7 @@ export function NewHomePage() {
               </Box>
               <Box
                 display="flex"
-                // flex="1"
+                ref={recentBoardsRef}
                 alignItems="left"
                 borderRadius={buttonRadius}
                 transition="all 0.5s"
@@ -922,6 +922,7 @@ export function NewHomePage() {
                 Joined Rooms
               </Box>
               <Box
+                ref={roomsRef}
                 height="100%"
                 overflow="auto"
                 css={{
@@ -1348,9 +1349,10 @@ export function NewHomePage() {
             }}
           >
             {/* The clock Top Right */}
-            <Box ref={clockRef} w="full" ml="0">
+            <Box alignSelf="end" ref={clockRef} w="fit-content">
               <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
             </Box>
+
             <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
             </Text>
@@ -1404,7 +1406,7 @@ export function NewHomePage() {
                 )}
               </Box>
 
-              <Box mt="6" mb="3" height="100%">
+              <Box mt="6" mb="3">
                 <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
                   <Text fontWeight="bold">Available Rooms</Text>
                   <Box display="flex" justifyContent="center" alignItems="center" gap="2">
@@ -1414,10 +1416,12 @@ export function NewHomePage() {
                       </InputLeftElement>
                       <Input placeholder="Search Rooms" value={roomSearch} onChange={(e) => setRoomSearch(e.target.value)} />
                     </InputGroup>
-                    <Button onClick={handleCreateRoomClick} size="xs">
-                      <Icon as={MdAdd} mr="1" />
-                      Create Room
-                    </Button>
+                    <Box ref={createRoomRef}>
+                      <Button onClick={handleCreateRoomClick} size="xs">
+                        <Icon as={MdAdd} mr="1" />
+                        Create Room
+                      </Button>
+                    </Box>
                   </Box>
                 </Box>
                 <Box>
