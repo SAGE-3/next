@@ -32,7 +32,6 @@ import {
 import { OpenConfiguration } from '@sage3/shared/types';
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
-import { NewHomePage } from './pages/home/NewHome';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -117,7 +116,7 @@ export function App() {
                     element={
                       <ProtectedAuthRoute>
                         <ProtectedUserRoute>
-                          <NewHomePage />
+                          <HomePage />
                         </ProtectedUserRoute>
                       </ProtectedAuthRoute>
                     }
@@ -127,7 +126,7 @@ export function App() {
                     element={
                       <ProtectedAuthRoute>
                         <ProtectedUserRoute>
-                          <NewHomePage />
+                          <HomePage />
                         </ProtectedUserRoute>
                       </ProtectedAuthRoute>
                     }
@@ -137,7 +136,7 @@ export function App() {
                     element={
                       <ProtectedAuthRoute>
                         <ProtectedUserRoute>
-                          <NewHomePage />
+                          <HomePage />
                         </ProtectedUserRoute>
                       </ProtectedAuthRoute>
                     }
