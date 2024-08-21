@@ -844,26 +844,15 @@ export function NewHomePage() {
             justifyItems="start"
             flex="1"
             height="100%"
-            overflowY="auto"
-            overflowX="hidden"
+            // overflowY="auto"
+            // overflowX="hidden"
             px="3"
-            // backgroundColor={sidebarBackgroundColor}
             borderRadius={cardRadius}
-            css={{
-              '&::-webkit-scrollbar': {
-                background: 'transparent',
-                width: '5px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: scrollBarColor,
-                borderRadius: '48px',
-              },
-            }}
           >
-            <VStack spacing={0} align="stretch" gap="2px">
+            <VStack align="stretch" gap="2px" height="100%">
               <Box
                 display="flex"
-                flex="1"
+                // flex="1"
                 alignItems="left"
                 transition="all 0.5s"
                 borderRadius={buttonRadius}
@@ -878,7 +867,7 @@ export function NewHomePage() {
               </Box>
               <Box
                 display="flex"
-                flex="1"
+                // flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
                 transition="all 0.5s"
@@ -893,7 +882,7 @@ export function NewHomePage() {
               </Box>
               <Box
                 display="flex"
-                flex="1"
+                // flex="1"
                 alignItems="left"
                 borderRadius={buttonRadius}
                 transition="all 0.5s"
@@ -906,9 +895,24 @@ export function NewHomePage() {
               >
                 <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
               </Box>
-              <Box mt="6" pl="2">
-                <Box pl="2">Joined Rooms</Box>
-                <Box>
+              <Box mt="6" pl="4" mb="2" fontSize="md">
+                Joined Rooms
+              </Box>
+              <Box
+                height="100%"
+                overflow="auto"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    background: 'transparent',
+                    width: '5px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: scrollBarColor,
+                    borderRadius: '48px',
+                  },
+                }}
+              >
+                <Box height="60%" mr="2">
                   {rooms
                     .filter(roomMemberFilter)
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
@@ -928,8 +932,9 @@ export function NewHomePage() {
                             alignItems="center"
                             justifyContent="space-between"
                             transition="all 0.5s"
-                            pl="48px"
+                            pl="40px"
                             height="28px"
+                            my="1px"
                             backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
                             _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                             onClick={() => handleRoomClick(room)}
