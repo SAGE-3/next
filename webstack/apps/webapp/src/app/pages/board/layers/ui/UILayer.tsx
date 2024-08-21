@@ -76,9 +76,11 @@ export function UILayer(props: UILayerProps) {
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
-    (state) => state
-  );
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
+  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);

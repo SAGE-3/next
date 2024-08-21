@@ -128,7 +128,7 @@ export function MainButton(props: MainButtonProps) {
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   // Boards
-  const { boards } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
   boards.sort((a, b) => a.data.name.localeCompare(b.data.name));
   const { boardId } = useParams();
   const bgColorName = useColorModeValue('blackAlpha.300', 'whiteAlpha.200');

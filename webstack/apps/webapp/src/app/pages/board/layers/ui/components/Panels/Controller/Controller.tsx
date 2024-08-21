@@ -41,7 +41,9 @@ export function Controller(props: ControllerProps) {
   const canCreateKernels = useAbility('create', 'kernels');
 
   // Panel Store
-  const { updatePanel, getPanel, bringPanelForward } = usePanelStore((state) => state);
+  const updatePanel = usePanelStore((state) => state.updatePanel);
+  const getPanel = usePanelStore((state) => state.getPanel);
+  const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
 
   const annotations = getPanel('annotations');
   const applications = getPanel('applications');

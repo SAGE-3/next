@@ -51,7 +51,13 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const toast = useToast();
 
   // Kernel Store
-  const { kernels, fetchKernels, deleteKernel, restartKernel, apiStatus, keepChecking, stopChecking } = useKernelStore((state) => state);
+  const kernels = useKernelStore((state) => state.kernels);
+  const fetchKernels = useKernelStore((state) => state.fetchKernels);
+  const deleteKernel = useKernelStore((state) => state.deleteKernel);
+  const restartKernel = useKernelStore((state) => state.restartKernel);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const keepChecking = useKernelStore((state) => state.keepChecking);
+  const stopChecking = useKernelStore((state) => state.stopChecking);
 
   // Local kernel state
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);

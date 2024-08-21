@@ -116,20 +116,21 @@ export function HomePage() {
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Room Store
-  const {
-    rooms,
-    members,
-    subscribeToAllRooms: subscribeToRooms,
-    fetched: roomsFetched,
-    leaveRoomMembership,
-    joinRoomMembership,
-  } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
+  const members = useRoomStore((state) => state.members);
+  const subscribeToRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  const roomsFetched = useRoomStore((state) => state.fetched);
+  const leaveRoomMembership = useRoomStore((state) => state.leaveRoomMembership);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards, update: updateBoard } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
+  const subscribeToBoards = useBoardStore((state) => state.subscribeToAllBoards);
+  const updateBoard = useBoardStore((state) => state.update);
 
   // User and Presence Store
-  const { users, subscribeToUsers } = useUsersStore((state) => state);
+  const users = useUsersStore((state) => state.users);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   // Presence
   const partialPrescences = usePresenceStore((state) => state.partialPrescences);

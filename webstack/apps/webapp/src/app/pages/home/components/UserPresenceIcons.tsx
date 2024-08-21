@@ -18,7 +18,7 @@ export function UserPresenceIcons(
   >
 ) {
   const { usersPresent, maxUsersDisplayed, anonymousNames, ...boxProps } = props;
-  const { users } = useUsersStore((state) => state);
+  const users = useUsersStore((state) => state.users);
 
   return (
     <Box {...boxProps}>
