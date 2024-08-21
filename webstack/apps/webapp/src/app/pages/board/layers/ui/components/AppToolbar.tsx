@@ -42,10 +42,20 @@ import {
   useToast,
   Alert,
   AlertIcon,
-  AlertTitle,
   AlertDescription,
 } from '@chakra-ui/react';
-import { MdClose, MdCopyAll, MdInfoOutline, MdZoomOutMap, MdLock, MdLockOpen, MdTv, MdAddCircleOutline, MdExpandMore, MdExpandLess } from 'react-icons/md';
+import {
+  MdClose,
+  MdCopyAll,
+  MdInfoOutline,
+  MdZoomOutMap,
+  MdLock,
+  MdLockOpen,
+  MdTv,
+  MdAddCircleOutline,
+  MdExpandMore,
+  MdExpandLess,
+} from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
@@ -72,7 +82,7 @@ type AppToolbarProps = {
   roomId: string;
 };
 
-type TagFrequency = Record<string, number>
+type TagFrequency = Record<string, number>;
 
 /**
  * AppToolbar Component
@@ -103,6 +113,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Settings
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  const showTags = settings.showTags;
 
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -217,14 +228,16 @@ export function AppToolbar(props: AppToolbarProps) {
   }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
 
   // Hooks for getAppTags()
-  const [tagFrequency, setTagFrequency] = useState<TagFrequency>({}); // store tag label and associated frequency
-  const [overflowIndex, setOverflowIndex] = useState<number>(-1); // store the first index of the tag at which overflow occurs
+  const [visibleTags, setVisibleTags] = useState<string[]>([]);
+  const [overflowTags, setOverflowTags] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // state for Add Tag modal visibility
+  const { isOpen: isDeleteTagOpen, onOpen: onDeleteTagOpen, onClose: onDeleteTagClose } = useDisclosure(); // for delete tag modal
+  const [tagToDelete, setTagToDelete] = useState<string>(''); // store tagname to be deleted
   const [oldTag, setOldTag] = useState<string>(''); // store previous tag before editing
   const [inputValue, setInputValue] = useState<string>(''); // state of input box for adding tags
-  const [isInvalidTag, setIsInvalidTag] = useState<boolean>(false); // display message of invalid tag syntax
+  const [inputAlert, setInputAlert] = useState<string>(''); // alert users of input errors
   const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false); // state of shake animation for invalid input
-  const [tagColor, setTagColor] = useState<SAGEColors>("teal"); // store current color of the ColorPicker
+  const [tagColor, setTagColor] = useState<SAGEColors>('teal'); // store current color of the ColorPicker
   const tagsContainerRef = useRef<HTMLDivElement>(null); // ref to the container holding tags
   const [isOverflowOpen, setIsOverflowOpen] = useState<boolean>(false); // manage overflow menu visibility
   const overflowBg = useColorModeValue('gray.50', 'gray.700'); // overflow menu colors based on light/dark mode
@@ -232,18 +245,16 @@ export function AppToolbar(props: AppToolbarProps) {
 
   useEffect(() => {
     // Keep track of frequency of all tags
-    const freqCounter: TagFrequency = {};
-    insights.forEach(insight => {
-      insight.data.labels.forEach(tag => {
-        if (freqCounter[tag]) {
-          freqCounter[tag] += 1;
-        }
-        else {
-          freqCounter[tag] = 1;
+    const tagFrequency: TagFrequency = {};
+    insights.forEach((insight) => {
+      insight.data.labels.forEach((tag) => {
+        if (tagFrequency[tag]) {
+          tagFrequency[tag] += 1;
+        } else {
+          tagFrequency[tag] = 1;
         }
       });
     });
-    setTagFrequency(freqCounter);
 
     // Set current app's tags in sorted order
     if (insights && insights.length > 0 && app) {
@@ -256,27 +267,17 @@ export function AppToolbar(props: AppToolbarProps) {
         const sorted = appTags.slice().sort((a, b) => {
           return tagFrequency[b] - tagFrequency[a]; // Sort in descending order
         });
-
         setTags(sorted);
         setInputLabel(sorted.join(' '));
       }
     }
-
-    // Calculate total width of tags to determine if overflow menu is needed for each app
-    if (tagsContainerRef.current) {
-      let totalWidth = 0;
-      for (let i = 0; i < tags.length; i++) {
-        const tagWidth = document.getElementById(`tag-${tags[i]}`)?.offsetWidth || 0;
-        if (totalWidth + tagWidth > 300) { // if exceeds width limit
-          setOverflowIndex(i);
-          break;
-        }
-        else {
-          totalWidth += tagWidth; // otherwise, add to total width
-        }
-      }
-    }
   }, [insights, app]);
+
+  // Separate tags into two lists
+  useEffect(() => {
+    setVisibleTags(tags.slice(0, 3));
+    setOverflowTags(tags.slice(3));
+  }, [tags]);
 
   function moveToApp() {
     if (!app) return;
@@ -420,7 +421,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   function getAppTags() {
     // Semantic to separate a tag's string name from color
-    const delimiter = ":";
+    const delimiter = ':';
 
     // Define the invalid input shake animation
     const shakeAnimation = keyframes`
@@ -431,34 +432,76 @@ export function AppToolbar(props: AppToolbarProps) {
       100% { transform: translateX(0); }
     `;
 
-    // Separate tags into two lists
-    const visibleTags = overflowIndex === -1 ? tags : tags.slice(0, overflowIndex);
-    const overflowTags = overflowIndex === -1 ? [] : tags.slice(overflowIndex);
-
-    // Update input value state when input changes
+    // Update state on input change and validate
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      // prevent spaces while editing a tag
-      if (oldTag == '' || !event.target.value.includes(' ')) {
+      let isValid = true;
+
+      // Input contains delimiter
+      if (event.target.value.includes(delimiter)) {
+        setInputAlert('Colon ":" is not permitted.');
+        isValid = false;
+      }
+
+      // Add tag mode
+      if (oldTag == '') {
+        // Split tags by space and remove empty strings
+        const newTags = event.target.value.split(' ').filter((tag) => tag.trim() !== '');
+
+        // Add up to 5 tags at once
+        if (newTags.length > 5) {
+          setInputAlert('A maximum of 5 tags can be added at once.');
+          isValid = false;
+        }
+        // Max 20 characters per tag
+        newTags.forEach((tag) => {
+          if (tag.length > 20) {
+            setInputAlert('Tags must be 20 characters or less.');
+            isValid = false;
+          }
+        });
+      }
+      // Edit tag mode
+      else {
+        // Prevent spaces while editing a tag
+        if (event.target.value.includes(' ')) {
+          setInputAlert('Tag cannot contain spaces.');
+          isValid = false;
+        }
+        if (event.target.value.length > 20) {
+          setInputAlert('Tag must be 20 characters or less.');
+          isValid = false;
+        }
+      }
+
+      // Only update input value if user input is valid
+      if (isValid) {
         setInputValue(event.target.value);
+        setInputAlert('');
+      } else {
+        setInvalidTagAnimation(true);
+        setTimeout(() => setInvalidTagAnimation(false), 500);
       }
     };
 
     // Delete a tag
-    const handleDeleteTag = (tagName: string) => {
-      const newTags = tags.filter((tag) => tag !== tagName);
+    const handleDeleteTag = () => {
+      const newTags = tags.filter((tag) => tag !== tagToDelete);
       if (app) {
         updateInsight(app._id, { labels: newTags });
       }
+
+      // Close delete tag modal
+      onDeleteTagClose();
     };
 
     // Show modal for adding a new tag
-    const handleAddTag = () => {
+    const openAddModal = () => {
       setOldTag('');
       setIsModalOpen(true);
     };
 
     // Show modal for editing a tag
-    const handleEditTag = (tag: string) => {
+    const openEditModal = (tag: string) => {
       setOldTag(tag);
       setInputValue(tag.split(delimiter)[0]);
       setTagColor(tag.split(delimiter)[1] as SAGEColors);
@@ -469,30 +512,22 @@ export function AppToolbar(props: AppToolbarProps) {
     const handleCloseModal = () => {
       setIsModalOpen(false);
       setInputValue('');
-      setIsInvalidTag(false);
       setInvalidTagAnimation(false);
     };
 
-    // Handle adding a new tag from the modal
+    // Handle adding or editing a new tag from the modal
     const handleTagFromModal = () => {
-      // Check for invalid tags
-      if (inputValue.includes(delimiter)) {
-        setIsInvalidTag(true);
+      // Remove input alert errors
+      setInputAlert('');
 
-        setInvalidTagAnimation(true);
-        setTimeout(() => setInvalidTagAnimation(false), 500);
-
-        return;
-      }
-      setIsInvalidTag(false);
-
-      if (oldTag === '') { // add mode
+      if (oldTag === '') {
+        // add mode
         // Split tags by space and remove empty strings
-        const newTags = inputValue.split(' ').filter(tag => tag.trim() !== '');
+        const newTags = inputValue.split(' ').filter((tag) => tag.trim() !== '');
         // Append the color of the tag
         const coloredTags = newTags.map((tag) => tag + delimiter + tagColor);
         // Filter out tags already in the list and ensure uniqueness
-        const uniqueNewTags = Array.from(new Set(coloredTags.filter(tag => !tags.includes(tag))));
+        const uniqueNewTags = Array.from(new Set(coloredTags.filter((tag) => !tags.includes(tag))));
 
         if (uniqueNewTags.length > 0) {
           const updatedTags = [...tags, ...uniqueNewTags];
@@ -506,16 +541,15 @@ export function AppToolbar(props: AppToolbarProps) {
           setInputValue('');
           // Close the modal after adding the tag
           setIsModalOpen(false);
-        }
-        else {
+        } else {
           toast({
             title: 'No New Tags To Add',
             status: 'warning',
             duration: 3000,
           });
         }
-      }
-      else { // edit mode
+      } else {
+        // edit mode
         const newTag = inputValue + delimiter + tagColor;
 
         if (inputValue === '') {
@@ -524,15 +558,13 @@ export function AppToolbar(props: AppToolbarProps) {
             status: 'warning',
             duration: 3000,
           });
-        }
-        else if (tags.includes(newTag)) {
+        } else if (tags.includes(newTag)) {
           toast({
             title: 'App Already Has This Tag',
             status: 'warning',
             duration: 3000,
           });
-        }
-        else {
+        } else {
           const updatedTags = tags.filter((tag) => tag !== oldTag); // remove old tag
           if (app) updateInsight(app._id, { labels: [...updatedTags, newTag] });
 
@@ -550,7 +582,12 @@ export function AppToolbar(props: AppToolbarProps) {
 
     const handleColorChange = (color: string) => {
       setTagColor(color as SAGEColors);
-    }
+    };
+
+    const truncateStr = (str: string) => {
+      const maxLen = 10;
+      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
+    };
 
     return (
       <HStack spacing={1} ref={tagsContainerRef}>
@@ -565,30 +602,28 @@ export function AppToolbar(props: AppToolbarProps) {
             cursor="pointer"
             fontSize="12px"
             colorScheme={tag.split(delimiter)[1]}
-            onClick={() => handleEditTag(tag)}
+            onClick={() => openEditModal(tag)}
           >
-            <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
-            <TagCloseButton m={0} onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteTag(tag);
-            }}
-            />
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
+              <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+            </Tooltip>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
+              <TagCloseButton
+                m={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTagToDelete(tag);
+                  onDeleteTagOpen();
+                }}
+              />
+            </Tooltip>
           </Tag>
         ))}
         {/* Menu for overflow tags */}
         {overflowTags.length > 0 && (
           <Box>
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              openDelay={400}
-              label="See more tags"
-            >
-              <Button
-                size="xs"
-                cursor="pointer"
-                onClick={() => setIsOverflowOpen(!isOverflowOpen)}
-              >
+            <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags.' : 'Show more tags.'}>
+              <Button size="xs" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
                 {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
               </Button>
             </Tooltip>
@@ -618,13 +653,16 @@ export function AppToolbar(props: AppToolbarProps) {
                       cursor="pointer"
                       fontSize="12px"
                       colorScheme={tag.split(delimiter)[1]}
-                      onClick={() => handleEditTag(tag)}
+                      onClick={() => openEditModal(tag)}
                     >
-                      <TagLabel m={0}>{tag.split(delimiter)[0]}</TagLabel>
-                      <TagCloseButton m={0} onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTag(tag);
-                      }}
+                      <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+                      <TagCloseButton
+                        m={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTagToDelete(tag);
+                          onDeleteTagOpen();
+                        }}
                       />
                     </Tag>
                   ))}
@@ -634,30 +672,23 @@ export function AppToolbar(props: AppToolbarProps) {
           </Box>
         )}
         {/* Button to add tag */}
-        <Tooltip
-          placement="top"
-          hasArrow={true}
-          openDelay={400}
-          label="Add tag"
-        >
-          <Button onClick={handleAddTag} size="xs" p={0} width="30px">
+        <Tooltip placement="top" hasArrow={true} openDelay={400} label="Add tag">
+          <Button onClick={openAddModal} size="xs" p={0} width="30px">
             <MdAddCircleOutline size="14px" />
           </Button>
         </Tooltip>
-        {/* Modal for adding a new tag */}
+        {/* Modal for adding or editing a new tag */}
         {isModalOpen && (
           <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
             <ModalOverlay />
             <ModalContent sx={{ maxW: '410px' }}>
-              <ModalHeader>
-                {oldTag === '' ? "Add Tag" : "Edit Tag"}
-              </ModalHeader>
+              <ModalHeader>{oldTag === '' ? 'Add Tag' : 'Edit Tag'}</ModalHeader>
               <ModalCloseButton />
               <ModalBody>
                 <Input
                   width="360px"
                   mb={5}
-                  placeholder={oldTag === '' ? "Enter tags separated by spaces" : ''}
+                  placeholder={oldTag === '' ? 'Enter tags separated by spaces' : ''}
                   _placeholder={{ opacity: 1, color: 'gray.400' }}
                   value={inputValue}
                   onChange={handleInputChange}
@@ -668,21 +699,37 @@ export function AppToolbar(props: AppToolbarProps) {
                   autoFocus
                 />
                 <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
-                {isInvalidTag && (
-                  <Alert status="error" mt={5} width="360px" variant="left-accent">
+                {inputAlert !== '' && (
+                  <Alert status="warning" mt={5} width="360px" variant="left-accent">
                     <AlertIcon />
-                    <AlertTitle>Error!</AlertTitle>
-                    <AlertDescription>Invalid characters used.</AlertDescription>
+                    <AlertDescription>{inputAlert}</AlertDescription>
                   </Alert>
                 )}
               </ModalBody>
               <ModalFooter>
-                <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>{oldTag === '' ? "Add" : "Save"}</Button>
-                <Button colorScheme="red" onClick={handleCloseModal} width="80px">Cancel</Button>
+                <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>
+                  {oldTag === '' ? 'Add' : 'Save'}
+                </Button>
+                <Button colorScheme="red" onClick={handleCloseModal} width="80px">
+                  Cancel
+                </Button>
               </ModalFooter>
             </ModalContent>
           </Modal>
         )}
+        {/* Delete tag confirmation */}
+        <ConfirmModal
+          isOpen={isDeleteTagOpen}
+          onClose={onDeleteTagClose}
+          onConfirm={handleDeleteTag}
+          title="Delete this Tag"
+          message="Are you sure you want to delete this tag from this app?"
+          cancelText="Cancel"
+          confirmText="Delete"
+          cancelColor="green"
+          confirmColor="red"
+          size="lg"
+        />
       </HStack>
     );
   }
@@ -757,24 +804,6 @@ export function AppToolbar(props: AppToolbarProps) {
                         </ListItem>
                         <ListItem>
                           <b>Created</b>: {when}
-                        </ListItem>
-                        <ListItem whiteSpace={'nowrap'}>
-                          <b>Tags</b>:{' '}
-                          <Input
-                            width="300px"
-                            m={0}
-                            p={0}
-                            size="xs"
-                            variant="filled"
-                            value={inputLabel}
-                            placeholder="Enter tags here separated by spaces"
-                            _placeholder={{ opacity: 1, color: 'gray.400' }}
-                            focusBorderColor="gray.500"
-                            onChange={handleChange}
-                            onKeyDown={(e) => {
-                              onSubmit(e, onClose);
-                            }}
-                          />
                         </ListItem>
                       </UnorderedList>
                     </PopoverBody>
@@ -890,7 +919,7 @@ export function AppToolbar(props: AppToolbarProps) {
             >
               {app?.data.type}
             </Text>
-            <Box display="flex" pl="1">
+            <Box display={showTags ? 'flex' : 'none'} pl="1">
               {getAppTags()}
             </Box>
           </Box>
