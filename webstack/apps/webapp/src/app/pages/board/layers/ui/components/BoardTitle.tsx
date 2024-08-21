@@ -19,13 +19,12 @@ type BoardTitleProps = {
 
 // The title of the board which includes the servername, room name, and board name
 export function BoardTitle(props: BoardTitleProps) {
-  const title = `${props.config?.serverName} / ${
-    (props.room?.data.name ? props.room.data.name : '') + ' / ' + (props.board?.data.name ? props.board.data.name : '')
-  }`;
+  const title = `${props.config?.serverName} / ${(props.room?.data.name ? props.room.data.name : '') + ' / ' + (props.board?.data.name ? props.board.data.name : '')
+    }`;
 
   const textColor = useColorModeValue('gray.800', 'gray.50');
   const textColorHex = useHexColor(textColor);
-  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
+  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
 
   return (
     <Box

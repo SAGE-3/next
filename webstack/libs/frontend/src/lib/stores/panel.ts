@@ -1,4 +1,3 @@
-import { isMac } from './../../../../shared/src/lib/utils/platform-checker';
 /**
  * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech

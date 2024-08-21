@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast, border } from '@chakra-ui/react';
-import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast } from '@chakra-ui/react';
+import { MdLock, MdStar, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
@@ -19,13 +19,13 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   const toast = useToast();
 
   // const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
+  // const boardColor = props.board.data.color;
   const backgroundColorValue = useColorModeValue('#ffffff', `gray.800`);
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
   const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
   const baseBorderColor = useHexColor(baseBorderColorValue);
-  const boardColor = props.board.data.color;
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
 

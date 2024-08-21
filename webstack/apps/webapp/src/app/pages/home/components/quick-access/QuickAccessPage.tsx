@@ -1,10 +1,19 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
 import React from 'react';
 import { Box, ButtonGroup, IconButton, InputGroup, InputLeftElement, Input, Icon, useColorModeValue } from '@chakra-ui/react';
-import { useHexColor } from '@sage3/frontend';
-import { MdList, MdGridView, MdSearch } from 'react-icons/md';
 import { IconType } from 'react-icons';
-import { BoardCard } from '../BoardCard';
+import { MdList, MdGridView, MdSearch } from 'react-icons/md';
+
+import { useHexColor } from '@sage3/frontend';
 import { Board, Presence } from '@sage3/shared/types';
+
+import { BoardCard } from '../BoardCard';
 import { BoardRow } from '../BoardRow';
 
 interface QuickAccessProps {

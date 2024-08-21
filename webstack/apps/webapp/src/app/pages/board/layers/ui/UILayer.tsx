@@ -35,7 +35,6 @@ import {
   useUserSettings,
   useHexColor,
   EditVisibilityModal,
-  isElectron,
 } from '@sage3/frontend';
 
 import {

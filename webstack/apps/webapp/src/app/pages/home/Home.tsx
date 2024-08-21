@@ -8,7 +8,6 @@
 
 // React Imports
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {
@@ -80,10 +79,8 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, BoardSidebarRow } from './components';
-import { getSvgPathFromPoints } from 'tldraw';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal } from './components';
 import QuickAccessPage from './components/quick-access/QuickAccessPage';
-import { set } from 'date-fns';
 
 /**
  * Home page for SAGE3
@@ -93,7 +90,7 @@ import { set } from 'date-fns';
  */
 export function HomePage() {
   // Media Query
-  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
+  // const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
 
   const { toHome, toQuickAccess } = useRouteNav();
 
@@ -110,7 +107,7 @@ export function HomePage() {
   // User Information
   const { user, clearRecentBoards } = useUser();
   const userId = user ? user._id : '';
-  const userColor = user ? useHexColor(user.data.color) : useHexColor('teal');
+  // const userColor = user ? useHexColor(user.data.color) : useHexColor('teal');
   // const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
@@ -753,7 +750,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}>
@@ -1469,7 +1466,7 @@ export function HomePage() {
 
                           <Text fontSize="xs" color={subTextColor}>
                             {room.data.ownerId === userId ||
-                            members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                               room.data.ownerId === userId ? (
                                 <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                   Owner

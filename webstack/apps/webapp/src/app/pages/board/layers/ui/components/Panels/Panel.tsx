@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore, useUserSettings } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -71,7 +71,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
+  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>

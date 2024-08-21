@@ -10,9 +10,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
+import { App, AppName } from '@sage3/applications/schema';
 import { APIHttp, useHexColor } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
-import { App, AppName } from '@sage3/applications/schema';
 
 export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
   const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
