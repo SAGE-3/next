@@ -213,10 +213,12 @@ export function NewHomePage() {
 
   // Joyride Refs
   const introRef = useRef<HTMLDivElement>(null);
+  const homeRef = useRef<HTMLDivElement>(null);
+  const homeBtnRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
   const serverNameRef = useRef<HTMLDivElement>(null);
-  const createRoomRef = useRef<HTMLDivElement>(null);
+  const createRoomRef = useRef<HTMLButtonElement>(null);
   const searchRoomsRef = useRef<HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
@@ -268,6 +270,11 @@ export function NewHomePage() {
         placement: 'center',
       },
       {
+        target: homeRef.current!,
+        title: 'Home',
+        content: 'This is the Home Page. From here, you can access recent boards, create rooms, and search for rooms',
+      },
+      {
         target: mainButtonRef.current!,
         title: 'Main Menu',
         content: 'This is the Main Menu Button. From here, you can update your profile, change theme, find users, and logout.',
@@ -280,6 +287,11 @@ export function NewHomePage() {
           ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
           : 'This shows the current SAGE3 server.',
         disableBeacon: true,
+      },
+      {
+        target: homeBtnRef.current!,
+        title: 'Home Button',
+        content: 'Clicking this button will take you back to the Home Page.',
       },
       // {
       //   target: createRoomRef.current!,
@@ -300,13 +312,6 @@ export function NewHomePage() {
         disableBeacon: true,
       },
       {
-        target: roomsRef.current!,
-        title: 'Your Rooms',
-        content:
-          'Rooms you are the owner of or a member of will appear here. Click a name to enter the room. If you dont have any room listed, you can create a new one or search for existing ones above.',
-        disableBeacon: true,
-      },
-      {
         target: activeBoardsRef.current!,
         title: 'Active Boards',
         content: 'Boards with active users on them will appear here.',
@@ -324,6 +329,13 @@ export function NewHomePage() {
         title: 'Recent Boards',
         content:
           'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
+      },
+      {
+        target: roomsRef.current!,
+        title: 'Your Rooms',
+        content:
+          'Rooms you are the owner of or a member of will appear here. Click a name to enter the room. If you dont have any room listed, you can create a new one or search for existing ones above.',
+        disableBeacon: true,
       },
       {
         target: clockRef.current!,
@@ -808,6 +820,7 @@ export function NewHomePage() {
           <Box pt="2" px="2">
             <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
               <Box
+                ref={homeBtnRef}
                 h="40px"
                 display="flex"
                 justifyContent={'left'}
@@ -919,7 +932,7 @@ export function NewHomePage() {
                 <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
               </Box>
               <Box mt="6" pl="4" mb="2" fontSize="md">
-                Joined Rooms
+                Your Rooms
               </Box>
               <Box
                 ref={roomsRef}
@@ -1320,6 +1333,7 @@ export function NewHomePage() {
       {/* Home when room or quick access are not selected */}
       {!selectedRoom && !selectedQuickAccess && (
         <Box
+          ref={homeRef}
           display="flex"
           flexDirection="column"
           backgroundColor={sidebarBackgroundColor}
@@ -1416,12 +1430,12 @@ export function NewHomePage() {
                       </InputLeftElement>
                       <Input placeholder="Search Rooms" value={roomSearch} onChange={(e) => setRoomSearch(e.target.value)} />
                     </InputGroup>
-                    <Box ref={createRoomRef}>
-                      <Button onClick={handleCreateRoomClick} size="xs">
-                        <Icon as={MdAdd} mr="1" />
-                        Create Room
-                      </Button>
-                    </Box>
+                    {/* <Box ref={createRoomRef}> */}
+                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="xs">
+                      <Icon as={MdAdd} mr="1" />
+                      Create Room
+                    </Button>
+                    {/* </Box> */}
                   </Box>
                 </Box>
                 <Box>
