@@ -17,7 +17,7 @@ export interface PluginProps {
 }
 
 /**
- * Panel to show all the Server's plugins and allow the users to create new apps from them
+ * Panel to show all the Hub's plugins and allow the users to create new apps from them
  * @param props
  * @returns
  */

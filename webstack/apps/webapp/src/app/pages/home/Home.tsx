@@ -100,7 +100,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<{ name: string; id: string; url: string }[]>([]);
+  const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -199,7 +199,7 @@ export function HomePage() {
   const introRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
-  const serverNameRef = useRef<HTMLDivElement>(null);
+  const hubNameRef = useRef<HTMLDivElement>(null);
   const createRoomRef = useRef<HTMLDivElement>(null);
   const searchRoomsRef = useRef<HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
@@ -258,11 +258,11 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: serverNameRef.current!,
-        title: electron ? 'Servers' : 'Server',
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
         content: electron
-          ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
-          : 'This shows the current SAGE3 server.',
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
         disableBeacon: true,
       },
       {
@@ -432,8 +432,8 @@ export function HomePage() {
   };
 
   const getBookmarks = () => {
-    window.electron.on('get-servers-response', async (servers: any) => {
-      setServers(servers);
+    window.electron.on('get-servers-response', async (hubs: any) => {
+      setHubs(hubs);
     });
     window.electron.send('get-servers-request');
   };
@@ -675,8 +675,8 @@ export function HomePage() {
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
       >
-        {servers.length > 0 ? (
-          <Box ref={serverNameRef}>
+        {hubs.length > 0 ? (
+          <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
@@ -701,15 +701,15 @@ export function HomePage() {
                 </Box>
               </MenuButton>
               <MenuList width={'350px'}>
-                {servers.map((server) => {
+                {hubs.map((hub) => {
                   return (
                     <MenuItem
-                      key={server.id}
+                      key={hub.id}
                       onClick={() => {
-                        window.location.href = server.url;
+                        window.location.href = hub.url;
                       }}
                     >
-                      {server.name}
+                      {hub.name}
                     </MenuItem>
                   );
                 })}
@@ -724,7 +724,7 @@ export function HomePage() {
             whiteSpace="nowrap"
             overflow="hidden"
             textOverflow="ellipsis"
-            ref={serverNameRef}
+            ref={hubNameRef}
           >
             <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
               {config.serverName}
@@ -767,7 +767,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this hub'}>
               <Box
                 h="40px"
                 display="flex"
