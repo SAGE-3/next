@@ -27,6 +27,7 @@ import {
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppState } from '@sage3/applications/schema';
+import React from 'react';
 
 // Renders all the apps
 export function Apps() {
@@ -203,7 +204,7 @@ export function Apps() {
   // Keep the throttlefunc reference
   const pasteApp = useCallback(pasteAppThrottle, []);
 
-  // // Create a new app from the clipboard
+  // Create a new app from the clipboard
   useHotkeys(
     'v',
     (evt) => {
@@ -277,7 +278,7 @@ export function Apps() {
     <>
       {/* Apps array */}
       {apps.map((app) => {
-        return <AppRender key={app._id} app={app} />;
+        return <AppRenderMemo key={app._id} app={app} />;
       })}
     </>
   );
@@ -322,3 +323,6 @@ function AppRender(props: { app: App }) {
     </>
   );
 }
+
+// Memo AppRender Component
+const AppRenderMemo = React.memo(AppRender);
