@@ -12,7 +12,7 @@ import { create } from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
-import { Board } from '@sage3/shared/types';
+import { Board, Position } from '@sage3/shared/types';
 // App intial Values
 import { initialValues } from '@sage3/applications/initialValues';
 import { SAGE3Ability } from '@sage3/shared';
@@ -24,6 +24,7 @@ interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
   fetched: boolean;
+  updateLocalPosition: (id: string, position: Position) => Promise<boolean>;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
@@ -48,6 +49,15 @@ const AppStore = create<Applications>()((set, get) => {
     apps: [],
     error: null,
     fetched: false,
+
+    updateLocalPosition: async (id: string, position: Position) => {
+      const app = get().apps.find((a) => a._id === id);
+      if (!app) return false;
+      // Apply the delta
+      app.data.position = position;
+      set({ apps: [...get().apps] });
+      return true;
+    },
     clearError: () => {
       set({ error: null });
     },

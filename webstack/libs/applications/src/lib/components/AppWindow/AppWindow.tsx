@@ -34,6 +34,8 @@ const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
 
+const selectedAppsSnapshot = [] as { id: string; position: Position; pinned: boolean }[];
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
@@ -55,7 +57,8 @@ export function AppWindow(props: WindowProps) {
   const canResize = useAbility('resize', 'apps');
 
   // App Store
-  const apps = useThrottleApps(250);
+  const apps = useAppStore((state) => state.apps);
+  const updateLocalPosition = useAppStore((state) => state.updateLocalPosition);
   const update = useAppStore((state) => state.update);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
@@ -90,10 +93,7 @@ export function AppWindow(props: WindowProps) {
 
   // Lasso Information
   const lassoMode = useUIStore((state) => state.lassoMode);
-  const deltaPosition = useUIStore((state) => state.deltaPos);
-  const setDeltaPosition = useUIStore((state) => state.setDeltaPostion);
   const isGrouped = selectedApps.includes(props.app._id);
-  const isGroupLeader = props.app._id == deltaPosition.id;
 
   // Local state
   const [pos, setPos] = useState({ x: props.app.data.position.x, y: props.app.data.position.y });
@@ -149,17 +149,6 @@ export function AppWindow(props: WindowProps) {
     }
   }, [storeError]);
 
-  // Lasso Group Delta Change
-  useMemo(() => {
-    // If the delta position changes, update the local state if you are grouped and not the leader
-    if (isGrouped && !isGroupLeader) {
-      if (props.app.data.pinned) return;
-      const x = props.app.data.position.x + deltaPosition.p.x;
-      const y = props.app.data.position.y + deltaPosition.p.y;
-      setPos({ x, y });
-    }
-  }, [deltaPosition.p.x, deltaPosition.p.y]);
-
   // If size or position change, update the local state.
   useEffect(() => {
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
@@ -169,17 +158,33 @@ export function AppWindow(props: WindowProps) {
   // Handle when the window starts to drag
   function handleDragStart() {
     setAppDragging(true);
+    setAppWasDragged(false);
     bringForward();
-    setDeltaPosition({ x: 0, y: 0, z: 0 }, props.app._id);
+    if (isGrouped) {
+      selectedAppsSnapshot.length = 0;
+      selectedApps.forEach((appId) => {
+        const app = apps.find((el) => el._id == appId);
+        if (!app) return;
+        selectedAppsSnapshot.push({ id: appId, position: app.data.position, pinned: app.data.pinned });
+      });
+    }
   }
 
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
     setAppWasDragged(true);
-    if (isGrouped && isGroupLeader) {
+    if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
-      setDeltaPosition({ x: dx, y: dy, z: 0 }, props.app._id);
+      selectedApps.forEach((appId) => {
+        if (appId === props.app._id) return;
+        if (selectedAppsSnapshot.length === 0) return;
+        const app = selectedAppsSnapshot.find((el) => el.id == appId);
+        if (!app || app.pinned) return;
+        const px = app.position.x + dx;
+        const py = app.position.y + dy;
+        updateLocalPosition(appId, { x: px, y: py, z: 0 });
+      });
     }
   }
 
@@ -196,21 +201,20 @@ export function AppWindow(props: WindowProps) {
     setAppDragging(false);
 
     // Update the position of the app in the server and all the other apps in the group
-    // If the app is grouped and the leader, update all the apps in the group
-    if (isGrouped && isGroupLeader) {
+    if (isGrouped) {
       // Array of update to batch at once
       const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
       // Iterate through all the selected apps
       selectedApps.forEach((appId) => {
-        const app = apps.find((el) => el._id == appId);
-        if (!app || app.data.pinned) return;
-        const p = app.data.position;
-        ps.push({ id: appId, updates: { position: { x: p.x + dx, y: p.y + dy, z: p.z } } });
+        if (selectedAppsSnapshot.length === 0) return;
+        const app = selectedAppsSnapshot.find((el) => el.id == appId);
+        if (!app || app.pinned) return;
+        const px = app.position.x + dx;
+        const py = app.position.y + dy;
+        ps.push({ id: appId, updates: { position: { x: px, y: py, z: 0 } } });
       });
       // Update all the apps at once
       updateBatch(ps);
-      // Reset the delta position
-      setDeltaPosition({ x: dx, y: dy, z: 0 }, '');
     } else {
       update(props.app._id, {
         position: {

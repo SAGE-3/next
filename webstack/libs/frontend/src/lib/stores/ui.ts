@@ -48,8 +48,6 @@ interface UIState {
   // Selected Apps
   selectedAppsIds: string[];
   selectedAppsSnapshot: { [id: string]: Position };
-  deltaPos: { p: Position; id: string };
-  setDeltaPostion: (position: Position, id: string) => void;
   setSelectedAppsIds: (appId: string[]) => void;
   setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
@@ -231,8 +229,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   setroomlistShowFavorites: (show: boolean) => set((state) => ({ ...state, roomlistShowFavorites: show })),
 
-  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
-  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
   setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds, savedSelectedAppsIds: appIds })),
   setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
     snapshot = structuredClone(snapshot);
@@ -337,7 +333,7 @@ export const useUIStore = create<UIState>()((set, get) => ({
   },
 
   selectedTag: '',
-  setSelectedTag: (value: string) => set((state) => ({...state, selectedTag: value })),
+  setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
 }));
 
 /**
