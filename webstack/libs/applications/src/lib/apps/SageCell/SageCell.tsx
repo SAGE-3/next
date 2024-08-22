@@ -78,6 +78,7 @@ import {
   useYjs,
   serverTime,
   YjsRoomConnection,
+  useThrottleScale,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -138,7 +139,7 @@ function AppComponent(props: App): JSX.Element {
   const boardId = props.data.boardId;
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const { uiToBoard } = useCursorBoardPosition();
 
   // Local state

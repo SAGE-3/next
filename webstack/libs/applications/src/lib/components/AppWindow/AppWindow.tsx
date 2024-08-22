@@ -71,8 +71,6 @@ export function AppWindow(props: WindowProps) {
   const setAppDragging = useUIStore((state) => state.setAppDragging);
   const incZ = useUIStore((state) => state.incZ);
   const gridSize = useUIStore((state) => state.gridSize);
-  const savedSelectedApps = useUIStore((state) => state.savedSelectedAppsIds);
-  const isSavedSelected = savedSelectedApps.includes(props.app._id);
   const viewport = useUIStore((state) => state.viewport);
   const selectedTag = useUIStore((state) => state.selectedTag);
 
@@ -402,7 +400,6 @@ export function AppWindow(props: WindowProps) {
         size={size}
         selected={selected}
         isGrouped={isGrouped}
-        isSavedSelected={isSavedSelected}
         dragging={!appDragging && props.app.data.dragging}
         borderWidth={borderWidth}
         borderColor={borderColor}

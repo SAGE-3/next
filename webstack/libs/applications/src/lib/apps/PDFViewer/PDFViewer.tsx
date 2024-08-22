@@ -381,6 +381,8 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
+  // console.log('PDFViewer ToolbarComponent', props.data);
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">

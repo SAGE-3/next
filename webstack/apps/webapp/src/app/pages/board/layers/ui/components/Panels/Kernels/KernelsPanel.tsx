@@ -11,7 +11,7 @@ import { Tooltip, Box, Text, useToast, Flex, IconButton, Divider, useDisclosure,
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
-import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useUIStore, useUser } from '@sage3/frontend';
+import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
 // App imports
@@ -34,7 +34,7 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const createApp = useAppStore((state) => state.create);
 
   // Board Position
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const boardPosition = useUIStore((state) => state.boardPosition);
 
   // User

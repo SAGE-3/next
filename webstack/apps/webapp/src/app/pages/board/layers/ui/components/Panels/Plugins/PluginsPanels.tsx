@@ -7,7 +7,7 @@
  */
 
 import { useColorModeValue, VStack, Tooltip, Box, Badge, Text } from '@chakra-ui/react';
-import { useAppStore, usePluginStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { format } from 'date-fns';
 import { ButtonPanel, Panel } from '../Panel';
 
@@ -33,7 +33,7 @@ export function PluginsPanel(props: PluginProps) {
 
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
 
   // Create a new app from a plugin
