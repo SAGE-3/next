@@ -24,7 +24,7 @@ interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
   fetched: boolean;
-  updateLocalPosition: (id: string, position: Position) => Promise<boolean>;
+  updateLocalPosition: (updates: { id: string; position: Position }[]) => Promise<boolean>;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
@@ -49,12 +49,15 @@ const AppStore = create<Applications>()((set, get) => {
     apps: [],
     error: null,
     fetched: false,
-
-    updateLocalPosition: async (id: string, position: Position) => {
-      const app = get().apps.find((a) => a._id === id);
-      if (!app) return false;
-      // Apply the delta
-      app.data.position = position;
+    updateLocalPosition: async (updates: { id: string; position: Position }[]) => {
+      updates.forEach((u) => {
+        const { id, position } = u;
+        // Find the app
+        const app = get().apps.find((a) => a._id === id);
+        if (!app) return;
+        // Apply the delta
+        app.data.position = position;
+      });
       set({ apps: [...get().apps] });
       return true;
     },

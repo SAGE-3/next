@@ -9,18 +9,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
-import { DraggableData, Position, ResizableDelta, Rnd, RndDragEvent } from 'react-rnd';
+import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 
-import {
-  useAppStore,
-  useUIStore,
-  useKeyPress,
-  useHexColor,
-  useThrottleApps,
-  useThrottleScale,
-  useAbility,
-  useInsightStore,
-} from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
@@ -176,6 +167,7 @@ export function AppWindow(props: WindowProps) {
     if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
+      const updates = [] as { id: string; position: { x: number; y: number; z: number } }[];
       selectedApps.forEach((appId) => {
         if (appId === props.app._id) return;
         if (selectedAppsSnapshot.length === 0) return;
@@ -183,8 +175,9 @@ export function AppWindow(props: WindowProps) {
         if (!app || app.pinned) return;
         const px = app.position.x + dx;
         const py = app.position.y + dy;
-        updateLocalPosition(appId, { x: px, y: py, z: 0 });
+        updates.push({ id: appId, position: { x: px, y: py, z: 0 } });
       });
+      updateLocalPosition(updates);
     }
   }
 
