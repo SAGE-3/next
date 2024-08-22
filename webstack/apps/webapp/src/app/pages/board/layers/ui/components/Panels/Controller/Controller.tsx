@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Stack, useToast, Button,
+  Stack, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
   PopoverCloseButton, PopoverHeader,
   useDisclosure, VStack, StackDirection,
@@ -44,15 +44,17 @@ export function Controller(props: ControllerProps) {
   const updatePanel = usePanelStore((state) => state.updatePanel);
   const getPanel = usePanelStore((state) => state.getPanel);
   const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
+  // This makes sure to get up to date panels
+  const panels = usePanelStore((state) => state.panels);
 
-  const annotations = getPanel('annotations');
-  const applications = getPanel('applications');
-  const assets = getPanel('assets');
-  const navigation = getPanel('navigation');
-  const users = getPanel('users');
-  const plugins = getPanel('plugins');
-  const kernels = getPanel('kernels');
-  const main = getPanel("controller")!; // not undefined
+  const annotations = panels.find((el) => el.name === 'annotations');
+  const applications = panels.find((el) => el.name === 'applications');
+  const assets = panels.find((el) => el.name === 'assets');
+  const navigation = panels.find((el) => el.name === 'navigation');
+  const users = panels.find((el) => el.name === 'users');
+  const plugins = panels.find((el) => el.name === 'plugins');
+  const kernels = panels.find((el) => el.name === 'kernels');
+  const main = panels.find((el) => el.name === 'controller')!; // not undefined
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
@@ -65,22 +67,6 @@ export function Controller(props: ControllerProps) {
       toHome(props.roomId);
     }
   }
-
-  // Copy the board id to the clipboard
-  const toast = useToast();
-
-  // const handleCopyId = async () => {
-  //   if (navigator.clipboard) {
-  //     await navigator.clipboard.writeText(props.boardId);
-  //     toast({
-  //       title: 'Success',
-  //       description: `BoardID Copied to Clipboard`,
-  //       duration: 3000,
-  //       isClosable: true,
-  //       status: 'success',
-  //     });
-  //   }
-  // };
 
   // Show the various panels
   const handleShowPanel = (panel: PanelUI | undefined) => {
