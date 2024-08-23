@@ -167,7 +167,9 @@ export function AppWindow(props: WindowProps) {
 
   // When the window is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
-    setAppWasDragged(true);
+    if (!appWasDragged) {
+      setAppWasDragged(true);
+    }
     if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
