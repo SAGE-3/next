@@ -6,10 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
-  HStack, useToast, Button, Text,
+  Stack, useToast, Button,
   Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverHeader, PopoverAnchor, useDisclosure, VStack,
+  PopoverCloseButton, PopoverHeader,
+  useDisclosure, VStack, StackDirection,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -26,6 +28,8 @@ export interface ControllerProps {
 }
 
 export function Controller(props: ControllerProps) {
+  // Orientation
+  const [direction, setDirection] = useState<StackDirection>('row');
   // Rooms Store
   const rooms = useRoomStore((state) => state.rooms);
   const room = rooms.find((el) => el._id === props.roomId);
@@ -46,6 +50,7 @@ export function Controller(props: ControllerProps) {
   const users = getPanel('users');
   const plugins = getPanel('plugins');
   const kernels = getPanel('kernels');
+  const main = getPanel("controller")!; // not undefined
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
@@ -61,50 +66,118 @@ export function Controller(props: ControllerProps) {
 
   // Copy the board id to the clipboard
   const toast = useToast();
-  const handleCopyId = async () => {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(props.boardId);
-      toast({
-        title: 'Success',
-        description: `BoardID Copied to Clipboard`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
-    }
-  };
+
+  // const handleCopyId = async () => {
+  //   if (navigator.clipboard) {
+  //     await navigator.clipboard.writeText(props.boardId);
+  //     toast({
+  //       title: 'Success',
+  //       description: `BoardID Copied to Clipboard`,
+  //       duration: 3000,
+  //       isClosable: true,
+  //       status: 'success',
+  //     });
+  //   }
+  // };
 
   // Show the various panels
   const handleShowPanel = (panel: PanelUI | undefined) => {
     if (!panel) return;
     let position;
-    if (panel.stuck === StuckTypes.None) {
-      const controller = getPanel('controller');
-      if (controller) {
-        position = { ...controller.position };
-        position.y = position.y + 85;
+    const controller = getPanel('controller');
+    if (controller) {
+      position = { ...controller.position };
+      if (controller.stuck === StuckTypes.None) {
+        if (direction === 'row') {
+          position.y = position.y + 60;
+        } else {
+          position.x = position.x + 90;
+        }
+      } else if (controller.stuck === StuckTypes.Right) {
+        let offset = 0;
+        panel.name === 'users' && (offset = 160);
+        panel.name === 'applications' && (offset = 200);
+        panel.name === 'plugins' && (offset = 240);
+        panel.name === 'kernels' && (offset = 720);
+        panel.name === 'assets' && (offset = 820);
+        panel.name === 'navigation' && (offset = 335);
+        panel.name === 'annotations' && (offset = 610);
+        position.x = position.x - offset;
+      } else if (controller.stuck === StuckTypes.Left) {
+        position.x = position.x + 95;
+      } else if (controller.stuck === StuckTypes.Top || controller.stuck === StuckTypes.TopRight ||
+        controller.stuck === StuckTypes.TopLeft
+      ) {
+        position.y = position.y + 60;
+      } else if (controller.stuck === StuckTypes.Bottom || controller.stuck === StuckTypes.BottomRight
+        || controller.stuck === StuckTypes.BottomLeft
+      ) {
+        let offset = 0;
+        panel.name === 'users' && (offset = 90);
+        panel.name === 'applications' && (offset = 350);
+        panel.name === 'plugins' && (offset = 90);
+        panel.name === 'kernels' && (offset = 140);
+        panel.name === 'assets' && (offset = 320);
+        panel.name === 'navigation' && (offset = 195);
+        panel.name === 'annotations' && (offset = 155);
+        position.y = position.y - offset;
       }
+
     }
-    position ? updatePanel(panel.name, { show: !panel.show, position }) : updatePanel(panel.name, { show: !panel.show });
+    if (position) {
+      updatePanel(panel.name, { show: !panel.show, position });
+    } else {
+      updatePanel(panel.name, { show: !panel.show });
+    }
     bringPanelForward(panel.name);
   };
 
   // Popover for long press
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
+  // Track the stuck state of the main panel to change the orientation of the panel
+  useEffect(() => {
+    if (main.stuck === StuckTypes.Left || main.stuck === StuckTypes.Right) {
+      setDirection('column');
+      // Adjust the position of the main panel if it is stuck to the right
+      if (main.stuck === StuckTypes.Right) {
+        if (main.position.x < window.innerWidth) {
+          updatePanel(main.name, { position: { x: window.innerWidth - 95, y: main.position.y } });
+        }
+      }
+    } else if (main.stuck === StuckTypes.Bottom || main.stuck === StuckTypes.Top) {
+      setDirection('row');
+      if (main.stuck === StuckTypes.Bottom) {
+        // Adjust the position of the main panel if it is stuck to the bottom
+        if (main.position.y < window.innerHeight) {
+          updatePanel(main.name, { position: { x: main.position.x, y: window.innerHeight - 60 } });
+        }
+      }
+    }
+  }, [main.stuck]);
+
   return (
-    <Panel name="controller" title={'Main Menu'} width={430} showClose={false} titleDblClick={handleCopyId}>
-      <HStack w="100%">
+    <Panel name="controller" title="" width={430} showClose={false} showMinimize={false}>
+      <Stack w="100%" direction={direction}>
         <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
           <IconButtonPanel
             icon={<MdArrowBack />}
             isActive={false}
             onClick={handleHomeClick}
             onLongPress={popOnOpen}
-            description={`Back to ${room?.data.name} (Long-press for more options)`}
+            description={`Back to ${room?.data.name} (Right-click for more options)`}
           />
-          <PopoverContent fontSize={'sm'} width={"200px"} style={{ top: 70, left: 35 }}>
+          <PopoverContent fontSize={'sm'} width={"200px"}
+            top={
+              main.stuck === StuckTypes.Bottom ? "-100px" :
+                main.stuck === StuckTypes.Top ? "60px" : "0px"
+            } left={
+              main.stuck === StuckTypes.Left ? "90px" :
+                main.stuck === StuckTypes.Right ? "-205px" : "50px"
+            }>
             <PopoverArrow />
+            <PopoverCloseButton />
+            <PopoverHeader>Navigate</PopoverHeader>
             <PopoverBody userSelect={"text"}>
               <VStack display={"block"}>
                 <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
@@ -159,7 +232,7 @@ export function Controller(props: ControllerProps) {
           isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
         />
-      </HStack>
+      </Stack>
     </Panel>
   );
 }

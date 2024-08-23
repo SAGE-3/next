@@ -23,7 +23,7 @@ const defaultWindowState = {
   x: 0,
   y: 0,
   width: 1280,
-  height: 720,
+  height: 800,
 };
 store.get('window-state', defaultWindowState);
 store.get('clean', false);

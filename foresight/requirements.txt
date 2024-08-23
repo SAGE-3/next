@@ -1,26 +1,15 @@
-#ipython~=8.5.0
-#jupyter_client
-#requests~=2.28.1
-# websockets~=10.3
-httpx~=0.23.0
-pydantic~=1.10.2
-pandas
-redis
-pytest
-funcx~=1.0.3
-ws4py
-#python_on_whales
-#dropbox # needed to upload files to public server when in devel mode
-websocket-client
-schedule
-pyarrow
+httpx
 rectpack
 networkx
 graphviz
-pdfx==1.4.1
-arxiv==1.4.2
-PyExifTool==0.5.4
-treelib==1.6.1
-crossrefapi==1.5.0
-PyPDF2==2.11.2
+
+pydantic>=2
+websocket-client
+redis
+requests
+ws4py
+
 celery~=5.2.2
+requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
+numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability

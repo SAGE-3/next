@@ -39,6 +39,11 @@
     "url": "http://fastapi:8000"
   },
 
+  // Feedback URL
+  "feedback": {
+    "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
+  },
+
  // External Services
   "services": {
     "twilio": {
@@ -54,6 +59,14 @@
       "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
       "model": "gpt-3.5-turbo"
+    },
+    "chat": {
+      "url": "https://arcade.evl.uic.edu/llama",
+      "model": "llama3",
+      // "url": "https://compaasgold03.evl.uic.edu",
+      // "model": "llama2",
+      "max_tokens": 2048,
+      "apiKey": ""
     },
     "codellama": {
       "url": "https://arcade.evl.uic.edu/codellama",

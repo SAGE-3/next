@@ -324,7 +324,7 @@ export function isMD(mimeType: string): boolean {
  * @returns {boolean}
  */
 export function isPython(mimeType: string): boolean {
-  return mimeType === 'application/python';
+  return mimeType === 'application/python' || mimeType === 'text/x-python-script';
 }
 
 /**
@@ -353,7 +353,7 @@ export function isValid(mimeType: string): boolean {
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
-    // isPythonNotebook(mimeType) ||
+    isPythonNotebook(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
     isJSON(mimeType) ||

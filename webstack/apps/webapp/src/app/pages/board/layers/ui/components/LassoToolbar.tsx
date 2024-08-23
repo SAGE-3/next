@@ -26,9 +26,21 @@ import {
   MenuGroup,
   MenuDivider,
   useToast,
+  Input,
+  keyframes,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from '@chakra-ui/react';
 
-import { MdDownload, MdSaveAlt, MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion } from 'react-icons/md';
+import { MdDownload, MdSaveAlt, MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion, MdAddCircleOutline } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
@@ -46,9 +58,13 @@ import {
   apiUrls,
   useAssetStore,
   downloadFile,
+  useInsightStore,
+  useUserSettings,
+  ColorPicker,
 } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
+import { SAGEColors } from '@sage3/shared';
 import { Board } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
 
@@ -80,6 +96,10 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const fitApps = useUIStore((state) => state.fitApps);
   const [showLasso, setShowLasso] = useState(lassoApps.length > 0);
 
+  // Insight Store
+  const insights = useInsightStore((state) => state.insights);
+  const updateInsight = useInsightStore((state) => state.update);
+
   // Position
   const { boardCursor } = useCursorBoardPosition();
 
@@ -102,6 +122,11 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const canMoveApp = useAbility('move', 'apps');
   const canPin = useAbility('pin', 'apps');
   const canDownload = useAbility('download', 'assets');
+
+  // Settings
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+  const showTags = settings.showTags;
 
   // Submenu for duplicating to another board
   const hoverColorMode = useColorModeValue('gray.100', 'whiteAlpha.100');
@@ -182,6 +207,119 @@ export function LassoToolbar(props: LassoToolbarProps) {
   // Duplicate all the selected apps to a different board
   const duplicateToBoard = (board: Board) => {
     duplicate(lassoApps, board);
+  };
+
+  // Semantic to separate a tag's string name from color
+  const delimiter = ':';
+  // State for Add Tag modal visibility
+  const { isOpen: isModalOpen, onClose: onModalClose, onOpen: onModalOpen } = useDisclosure();
+  // State of input box for adding tags
+  const [inputValue, setInputValue] = useState<string>('');
+  // Alert users of input errors
+  const [inputAlert, setInputAlert] = useState<string>('');
+  // State of shake animation for invalid input
+  const [invalidTagAnimation, setInvalidTagAnimation] = useState<boolean>(false);
+  // Store current color of the ColorPicker
+  const [tagColor, setTagColor] = useState<SAGEColors>('teal');
+  // Define the invalid input shake animation
+  const shakeAnimation = keyframes`
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    50% { transform: translateX(10px); }
+    75% { transform: translateX(-10px); }
+    100% { transform: translateX(0); }
+  `;
+
+  // Handle adding new tags from the modal
+  const handleTagFromModal = () => {
+    // Remove input alert errors
+    setInputAlert('');
+
+    // True if tags added successfully, false otherwise
+    let success = false;
+
+    // Split tags by space and remove empty strings
+    const newTags = inputValue.split(' ').filter((tag) => tag.trim() !== '');
+    // Append the color of the tag
+    const coloredTags = newTags.map((tag) => tag + delimiter + tagColor);
+
+    lassoApps.forEach((appId) => {
+      // For each lassoed app, find its tags
+      const tags = insights.find((app) => app._id === appId)?.data.labels || [];
+
+      // Filter out tags already in the list and ensure uniqueness
+      const uniqueNewTags = Array.from(new Set(coloredTags.filter((tag) => !tags.includes(tag))));
+
+      if (uniqueNewTags.length > 0) {
+        const updatedTags = [...tags, ...uniqueNewTags];
+        updateInsight(appId, { labels: updatedTags });
+        success = true;
+      }
+    });
+
+    if (success) {
+      toast({
+        title: 'New Tags Successfully Added',
+        status: 'success',
+        duration: 3000,
+      });
+      setInputValue('');
+      // Close the modal after adding the tag
+      onModalClose();
+    } else {
+      toast({
+        title: 'No New Tags To Add',
+        status: 'warning',
+        duration: 3000,
+      });
+    }
+  };
+
+  // Close modal and clear input value
+  const handleCloseModal = () => {
+    onModalClose();
+    setInputValue('');
+    setInvalidTagAnimation(false);
+  };
+
+  // Update state on input change and validate
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let isValid = true;
+
+    // Input contains delimiter
+    if (event.target.value.includes(delimiter)) {
+      setInputAlert('Colon ":" is not permitted.');
+      isValid = false;
+    }
+
+    // Split tags by space and remove empty strings
+    const newTags = event.target.value.split(' ').filter((tag) => tag.trim() !== '');
+
+    // Add up to 5 tags at once
+    if (newTags.length > 5) {
+      setInputAlert('A maximum of 5 tags can be added at once.');
+      isValid = false;
+    }
+    // Max 20 characters per tag
+    newTags.forEach((tag) => {
+      if (tag.length > 20) {
+        setInputAlert('Tags must be 20 characters or less.');
+        isValid = false;
+      }
+    });
+
+    // Only update input value if user input is valid
+    if (isValid) {
+      setInputValue(event.target.value);
+      setInputAlert('');
+    } else {
+      setInvalidTagAnimation(true);
+      setTimeout(() => setInvalidTagAnimation(false), 500);
+    }
+  };
+
+  const handleColorChange = (color: string) => {
+    setTagColor(color as SAGEColors);
   };
 
   /**
@@ -463,6 +601,47 @@ for b in bits:
                         })}
                       </MenuList>
                     </Menu>
+                    <MenuItem display={showUI && showTags ? 'flex' : 'none'} onClick={onModalOpen} icon={<MdAddCircleOutline />} py="0" m="0">
+                      Add Tags to Apps
+                    </MenuItem>
+                    {/* Modal for adding new tags */}
+                    <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
+                      <ModalOverlay />
+                      <ModalContent sx={{ maxW: '410px' }}>
+                        <ModalHeader>Add Tags</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                          <Input
+                            width="360px"
+                            mb={5}
+                            placeholder={'Enter tags separated by spaces'}
+                            _placeholder={{ opacity: 1, color: 'gray.400' }}
+                            value={inputValue}
+                            onChange={handleInputChange}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleTagFromModal();
+                            }}
+                            animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
+                            autoFocus
+                          />
+                          <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
+                          {inputAlert !== '' && (
+                            <Alert status="warning" mt={5} width="360px" variant="left-accent">
+                              <AlertIcon />
+                              <AlertDescription>{inputAlert}</AlertDescription>
+                            </Alert>
+                          )}
+                        </ModalBody>
+                        <ModalFooter>
+                          <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>
+                            Add
+                          </Button>
+                          <Button colorScheme="red" onClick={handleCloseModal} width="80px">
+                            Cancel
+                          </Button>
+                        </ModalFooter>
+                      </ModalContent>
+                    </Modal>
                   </MenuGroup>
 
                   <MenuDivider />
