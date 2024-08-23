@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, MouseEvent } from 'react';
 import { useParams } from 'react-router';
 
 // Chakra UI
-import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack, Fade } from '@chakra-ui/react';
 // Icons
 import {
   MdFileDownload,
@@ -23,11 +23,13 @@ import {
   MdSkipNext,
   MdNavigateNext,
   MdNavigateBefore,
+  MdArrowBack,
+  MdArrowForward,
 } from 'react-icons/md';
 import { BsFiletypePdf } from 'react-icons/bs';
 
 // Utility functions from SAGE3
-import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore } from '@sage3/frontend';
+import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore, useHexColor } from '@sage3/frontend';
 import { Asset, ExtraPDFType } from '@sage3/shared/types';
 
 // App components
@@ -53,6 +55,8 @@ function AppComponent(props: App): JSX.Element {
   const [processing, setProcessing] = useState(false);
   // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const backgroundColor = useHexColor('gray.400');
+  const [navigating, setNavigating] = useState("");
 
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
@@ -120,6 +124,7 @@ function AppComponent(props: App): JSX.Element {
           const newTitle = file.data.originalfilename + pageInfo;
           if (newTitle !== props.data.title) {
             update(props._id, { title: newTitle });
+            setNavigating("");
           }
         }
       }
@@ -166,11 +171,13 @@ function AppComponent(props: App): JSX.Element {
       evt.stopPropagation();
       switch (evt.key) {
         case 'ArrowRight':
-        case 'ArrowDown': {
+        case 'ArrowDown':
+        case ' ': {
           // Next page
           if (s.currentPage === s.numPages - s.displayPages) return;
           const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
           updateState(props._id, { currentPage: newpage });
+          setNavigating("forward");
           break;
         }
         case 'ArrowLeft':
@@ -179,16 +186,21 @@ function AppComponent(props: App): JSX.Element {
           if (s.currentPage === 0) return;
           const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
           updateState(props._id, { currentPage: newpage });
+          setNavigating("backward");
           break;
         }
         case '1': {
           // Go to first page
+          if (s.currentPage === 0) return;
           updateState(props._id, { currentPage: 0 });
+          setNavigating("backward");
           break;
         }
         case '0': {
           // Go to last page
+          if (s.currentPage === (s.numPages - s.displayPages)) return;
           updateState(props._id, { currentPage: s.numPages - s.displayPages });
+          setNavigating("forward");
           break;
         }
         case '-': {
@@ -240,6 +252,51 @@ function AppComponent(props: App): JSX.Element {
     [s, file, props.data.position]
   );
 
+  function ondblclick(event: MouseEvent) {
+    if (divRef.current) {
+      // Get the size of the div
+      const bbox = divRef.current.getBoundingClientRect();
+      // Convert click position to [0,1]
+      const px = (event.clientX - bbox.left) / bbox.width;
+      if (px > 0.4) {
+        // Click right side: Next page
+        if (s.currentPage === s.numPages - s.displayPages) return;
+        const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
+        updateState(props._id, { currentPage: newpage });
+        setNavigating("forward");
+      } else {
+        // Click left side: Previous page
+        if (s.currentPage === 0) return;
+        const newpage = s.currentPage - 1 >= 0 ? s.currentPage - 1 : 0;
+        updateState(props._id, { currentPage: newpage });
+        setNavigating("backward");
+      }
+    }
+  }
+
+  let lastEvent = 0;
+  let actionEvent: number | null = null;
+
+  function ontouchend(event: React.TouchEvent<HTMLDivElement>) {
+    const now = new Date().getTime();
+    const lastTouch = lastEvent || now + 1;
+    const delta = now - lastTouch;
+    if (actionEvent) window.clearTimeout(actionEvent);
+    if (delta < 500 && delta > 0) {
+      // Click right side: Next page
+      if (s.currentPage === s.numPages - s.displayPages) return;
+      const newpage = s.currentPage + 1 < s.numPages ? s.currentPage + 1 : s.numPages - s.displayPages;
+      updateState(props._id, { currentPage: newpage });
+      setNavigating("forward");
+    } else {
+      lastEvent = now;
+      actionEvent = window.setTimeout(function () {
+        if (actionEvent) window.clearTimeout(actionEvent);
+      }, 500, [event]);
+    }
+    lastEvent = now;
+  }
+
   // Attach/detach event handler from the div
   useEffect(() => {
     const div = divRef.current;
@@ -261,24 +318,72 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={BsFiletypePdf}>
-      <HStack
-        roundedBottom="md"
-        bg="whiteAlpha.700"
-        width="100%"
-        height="100%"
-        // setting for keyboard handler
-        ref={divRef}
-        tabIndex={1}
-      >
-        {urls
-          .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
-          .map((url, idx) => (
-            <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
-              <img src={url} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
-            </Box>
-          ))}
-      </HStack>
-    </AppWindow>
+      <Box m={0} p={0} width="100%" height="100%">
+
+        <Fade in={navigating === "forward"} transition={{ exit: { duration: 0.5 } }} unmountOnExit={true}>
+          <Box
+            m={0} p={0}
+            position="absolute"
+            left={0}
+            top={0}
+            width={props.data.size.width}
+            height={props.data.size.height}
+            pointerEvents={'none'}
+            userSelect={'none'}
+            justifyContent={'center'}
+            alignItems={'center'}
+            display={'flex'}
+            gap={0}
+            color={backgroundColor}
+            opacity={0.6}
+            fontSize={Math.min(props.data.size.width, props.data.size.height) / 2}
+          >
+            <MdArrowForward stroke="white" strokeWidth={0.1} />
+          </Box>
+        </Fade>
+        <Fade in={navigating === "backward"} transition={{ exit: { duration: 0.5 } }} unmountOnExit={true}>
+          <Box
+            m={0} p={0}
+            position="absolute"
+            left={0}
+            top={0}
+            width={props.data.size.width}
+            height={props.data.size.height}
+            pointerEvents={'none'}
+            userSelect={'none'}
+            zIndex={999999999}
+            justifyContent={'center'}
+            alignItems={'center'}
+            display={'flex'}
+            color={backgroundColor}
+            opacity={0.6}
+            fontSize={Math.min(props.data.size.width, props.data.size.height) / 2}
+          >
+            <MdArrowBack stroke="white" strokeWidth={0.1} />
+          </Box>
+        </Fade>
+
+        <HStack
+          roundedBottom="md"
+          bg="whiteAlpha.700"
+          width="100%"
+          height="100%"
+          // setting for keyboard handler
+          ref={divRef}
+          tabIndex={1}
+          onDoubleClick={ondblclick}
+          onTouchEnd={ontouchend}
+        >
+          {urls
+            .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
+            .map((url, idx) => (
+              <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
+                <img src={url} style={{ userSelect: 'none' }} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
+              </Box>
+            ))}
+        </HStack>
+      </Box>
+    </AppWindow >
   );
 }
 
@@ -296,7 +401,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspectRatio] = useState(1);
   // User information
-  const { user } = useUser();
+  // const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -372,14 +477,14 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   // Analyze the PDF
-  function analyzePDF() {
-    if (file && user) {
-      updateState(props._id, {
-        client: user._id,
-        executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
-      });
-    }
-  }
+  // function analyzePDF() {
+  //   if (file && user) {
+  //     updateState(props._id, {
+  //       client: user._id,
+  //       executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
+  //     });
+  //   }
+  // }
 
   // console.log('PDFViewer ToolbarComponent', props.data);
 
