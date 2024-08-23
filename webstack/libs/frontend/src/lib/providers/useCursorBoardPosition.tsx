@@ -43,12 +43,13 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   const handleCursorUpdate = useCallback((ev: MouseEvent) => setClientCursor({ x: ev.clientX, y: ev.clientY }), []);
 
   useEffect(() => {
+    console.log('what');
     window.addEventListener('mousemove', handleCursorUpdate);
     return () => window.removeEventListener('mousemove', handleCursorUpdate);
   }, [handleCursorUpdate]);
 
   // Throttle the Update
-  const throttleUpdate = throttle(100, (cx: number, cy: number, bx: number, by: number) => {
+  const throttleUpdate = throttle(250, (cx: number, cy: number, bx: number, by: number) => {
     setCursor({ x: cx, y: cy });
     setBoardCursor({
       x: bx,
@@ -59,18 +60,18 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   // Keep the throttlefunc reference
   const throttleUpdateFunc = useCallback(throttleUpdate, []);
 
+  useEffect(() => {
+    const boardX = Math.floor(clientCursor.x / scale - boardPosition.x);
+    const boardY = Math.floor(clientCursor.y / scale - boardPosition.y);
+    throttleUpdateFunc(clientCursor.x, clientCursor.y, boardX, boardY);
+  }, [boardPosition.x, boardPosition.y, scale, clientCursor.x, clientCursor.y, throttleUpdateFunc]);
+
   const uiToBoard = useCallback(
     (x: number, y: number) => {
       return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
     },
     [boardPosition.x, boardPosition.y, scale]
   );
-
-  useEffect(() => {
-    const boardX = Math.floor(clientCursor.x / scale - boardPosition.x);
-    const boardY = Math.floor(clientCursor.y / scale - boardPosition.y);
-    throttleUpdateFunc(clientCursor.x, clientCursor.y, boardX, boardY);
-  }, [boardPosition.x, boardPosition.y, scale, clientCursor.x, clientCursor.y, throttleUpdateFunc]);
 
   return (
     <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>

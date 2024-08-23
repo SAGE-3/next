@@ -11,11 +11,11 @@ import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore, AppDragUpdate } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { App, AppSchema } from '../../schema';
+import { App } from '../../schema';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
@@ -24,8 +24,6 @@ const APP_MIN_WIDTH = 200;
 const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
-
-const selectedAppsSnapshot = [] as AppDragUpdate[];
 
 type WindowProps = {
   app: App;
@@ -48,10 +46,9 @@ export function AppWindow(props: WindowProps) {
   const canResize = useAbility('resize', 'apps');
 
   // App Store
-  const apps = useAppStore((state) => state.apps);
-  const updateLocalPositions = useAppStore((state) => state.updateLocalPositions);
   const update = useAppStore((state) => state.update);
-  const updateBatch = useAppStore((state) => state.updateBatch);
+  const updateAppLocationByDelta = useAppStore((state) => state.updateAppLocationByDelta);
+  const bringForward = useAppStore((state) => state.bringForward);
 
   // Error Display Handling
   const storeError = useAppStore((state) => state.error);
@@ -67,6 +64,8 @@ export function AppWindow(props: WindowProps) {
   const gridSize = useUIStore((state) => state.gridSize);
   const viewport = useUIStore((state) => state.viewport);
   const selectedTag = useUIStore((state) => state.selectedTag);
+  const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
+  const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -146,18 +145,23 @@ export function AppWindow(props: WindowProps) {
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y]);
 
+  // Local state for dragging multiple apps
+  useEffect(() => {
+    if (localDeltaMove) {
+      const dx = localDeltaMove.x;
+      const dy = localDeltaMove.y;
+      setPos({ x: props.app.data.position.x + dx, y: props.app.data.position.y + dy });
+    }
+  }, [localDeltaMove]);
+
   // Handle when the window starts to drag
   function handleDragStart() {
     setAppDragging(true);
     setAppWasDragged(false);
-    bringForward();
+    handleBringAppForward();
     if (isGrouped) {
-      selectedAppsSnapshot.length = 0;
-      selectedApps.forEach((appId) => {
-        const app = apps.find((el) => el._id == appId);
-        if (!app || app.data.pinned) return;
-        selectedAppsSnapshot.push({ id: appId, x: app.data.position.x, y: app.data.position.y });
-      });
+      const selectedAppIds = selectedApps.filter((appId) => appId !== props.app._id);
+      setLocalDeltaMove({ x: 0, y: 0 }, selectedAppIds);
     }
   }
 
@@ -167,15 +171,8 @@ export function AppWindow(props: WindowProps) {
     if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
-      const updates = [] as AppDragUpdate[];
-      selectedApps.forEach((appId) => {
-        if (appId === props.app._id) return;
-        if (selectedAppsSnapshot.length === 0) return;
-        const app = selectedAppsSnapshot.find((el) => el.id == appId);
-        if (!app) return;
-        updates.push({ id: appId, x: app.x + dx, y: app.y + dy });
-      });
-      updateLocalPositions(updates);
+      const selectedAppIds = selectedApps.filter((appId) => appId !== props.app._id);
+      setLocalDeltaMove({ x: dx, y: dy }, selectedAppIds);
     }
   }
 
@@ -190,22 +187,10 @@ export function AppWindow(props: WindowProps) {
 
     setPos({ x, y });
     setAppDragging(false);
-
     // Update the position of the app in the server and all the other apps in the group
     if (isGrouped) {
-      // Array of update to batch at once
-      const ps: Array<{ id: string; updates: Partial<AppSchema> }> = [];
-      // Iterate through all the selected apps
-      selectedApps.forEach((appId) => {
-        if (selectedAppsSnapshot.length === 0) return;
-        const app = selectedAppsSnapshot.find((el) => el.id == appId);
-        if (!app) return;
-        const px = app.x + dx;
-        const py = app.y + dy;
-        ps.push({ id: appId, updates: { position: { x: px, y: py, z: 0 } } });
-      });
-      // Update all the apps at once
-      updateBatch(ps);
+      updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
+      setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
       update(props.app._id, {
         position: {
@@ -220,7 +205,7 @@ export function AppWindow(props: WindowProps) {
   // Handle when the window starts to resize
   function handleResizeStart() {
     setAppDragging(true);
-    bringForward();
+    handleBringAppForward();
   }
 
   // Handle when the app is resizing
@@ -276,7 +261,7 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
-    bringForward();
+    handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
@@ -287,7 +272,7 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppTouchStart(e: PointerEvent) {
     e.stopPropagation();
-    bringForward();
+    handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) {
       setAppWasDragged(false);
@@ -302,16 +287,8 @@ export function AppWindow(props: WindowProps) {
     setAppWasDragged(true);
   }
 
-  // Bring the app forward
-  function bringForward() {
-    if (!props.lockToBackground) {
-      // Raise down all the other apps, if needed
-      apps.forEach((a) => {
-        if (a.data.raised && props.app._id !== a._id) update(a._id, { raised: false });
-      });
-      // Bring to front function
-      if (!props.app.data.raised) update(props.app._id, { raised: true });
-    }
+  function handleBringAppForward() {
+    bringForward(props.app._id);
   }
 
   useEffect(() => {

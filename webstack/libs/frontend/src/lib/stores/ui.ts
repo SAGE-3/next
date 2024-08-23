@@ -112,6 +112,11 @@ interface UIState {
   fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
+
+  deltaLocalMove: {
+    [appId: string]: { x: number; y: number };
+  };
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
 }
 
 /**
@@ -334,6 +339,14 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   selectedTag: '',
   setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
+  deltaLocalMove: {},
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => {
+    const newLocalMove = {} as { [appId: string]: { x: number; y: number } };
+    appIds.forEach((appId) => {
+      newLocalMove[appId] = delta;
+    });
+    set((state) => ({ ...state, deltaLocalMove: newLocalMove }));
+  },
 }));
 
 /**
