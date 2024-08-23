@@ -11,7 +11,7 @@ import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore, AppDragUpdate } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
@@ -25,7 +25,7 @@ const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
 
-const selectedAppsSnapshot = [] as { id: string; position: Position; pinned: boolean }[];
+const selectedAppsSnapshot = [] as AppDragUpdate[];
 
 type WindowProps = {
   app: App;
@@ -49,7 +49,7 @@ export function AppWindow(props: WindowProps) {
 
   // App Store
   const apps = useAppStore((state) => state.apps);
-  const updateLocalPosition = useAppStore((state) => state.updateLocalPosition);
+  const updateLocalPositions = useAppStore((state) => state.updateLocalPositions);
   const update = useAppStore((state) => state.update);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
@@ -155,8 +155,8 @@ export function AppWindow(props: WindowProps) {
       selectedAppsSnapshot.length = 0;
       selectedApps.forEach((appId) => {
         const app = apps.find((el) => el._id == appId);
-        if (!app) return;
-        selectedAppsSnapshot.push({ id: appId, position: app.data.position, pinned: app.data.pinned });
+        if (!app || app.data.pinned) return;
+        selectedAppsSnapshot.push({ id: appId, x: app.data.position.x, y: app.data.position.y });
       });
     }
   }
@@ -167,17 +167,15 @@ export function AppWindow(props: WindowProps) {
     if (isGrouped) {
       const dx = data.x - props.app.data.position.x;
       const dy = data.y - props.app.data.position.y;
-      const updates = [] as { id: string; position: { x: number; y: number; z: number } }[];
+      const updates = [] as AppDragUpdate[];
       selectedApps.forEach((appId) => {
         if (appId === props.app._id) return;
         if (selectedAppsSnapshot.length === 0) return;
         const app = selectedAppsSnapshot.find((el) => el.id == appId);
-        if (!app || app.pinned) return;
-        const px = app.position.x + dx;
-        const py = app.position.y + dy;
-        updates.push({ id: appId, position: { x: px, y: py, z: 0 } });
+        if (!app) return;
+        updates.push({ id: appId, x: app.x + dx, y: app.y + dy });
       });
-      updateLocalPosition(updates);
+      updateLocalPositions(updates);
     }
   }
 
@@ -201,9 +199,9 @@ export function AppWindow(props: WindowProps) {
       selectedApps.forEach((appId) => {
         if (selectedAppsSnapshot.length === 0) return;
         const app = selectedAppsSnapshot.find((el) => el.id == appId);
-        if (!app || app.pinned) return;
-        const px = app.position.x + dx;
-        const py = app.position.y + dy;
+        if (!app) return;
+        const px = app.x + dx;
+        const py = app.y + dy;
         ps.push({ id: appId, updates: { position: { x: px, y: py, z: 0 } } });
       });
       // Update all the apps at once

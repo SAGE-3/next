@@ -12,7 +12,7 @@ import { create } from 'zustand';
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 import { AppState, AppSchema, App } from '@sage3/applications/schema';
-import { Board, Position } from '@sage3/shared/types';
+import { Board } from '@sage3/shared/types';
 // App intial Values
 import { initialValues } from '@sage3/applications/initialValues';
 import { SAGE3Ability } from '@sage3/shared';
@@ -20,11 +20,13 @@ import { SAGE3Ability } from '@sage3/shared';
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
 
+export type AppDragUpdate = { id: string; x: number; y: number };
+
 interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
   fetched: boolean;
-  updateLocalPosition: (updates: { id: string; position: Position }[]) => Promise<boolean>;
+  updateLocalPositions: (updates: AppDragUpdate[]) => Promise<boolean>;
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
@@ -49,14 +51,14 @@ const AppStore = create<Applications>()((set, get) => {
     apps: [],
     error: null,
     fetched: false,
-    updateLocalPosition: async (updates: { id: string; position: Position }[]) => {
+    updateLocalPositions: async (updates: AppDragUpdate[]) => {
       updates.forEach((u) => {
-        const { id, position } = u;
+        const { id, x, y } = u;
         // Find the app
         const app = get().apps.find((a) => a._id === id);
         if (!app) return;
         // Apply the delta
-        app.data.position = position;
+        app.data.position = { x, y, z: 0 };
       });
       set({ apps: [...get().apps] });
       return true;
