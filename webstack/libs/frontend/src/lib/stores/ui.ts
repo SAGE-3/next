@@ -29,7 +29,6 @@ interface UIState {
   scale: number;
   boardWidth: number;
   boardHeight: number;
-  gridSize: number;
   zIndex: number;
 
   boardPosition: { x: number; y: number };
@@ -97,7 +96,6 @@ interface UIState {
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
   setAppDragging: (dragging: boolean) => void;
-  setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   incZ: () => void;
   resetZIndex: () => void;
@@ -127,7 +125,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
   boardHeight: 3000000, // It was like the div scaleing became to large
   selectedBoardId: '',
-  gridSize: 1,
   zIndex: 1,
   boardDragging: false,
   appDragging: false,
@@ -224,7 +221,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
   setAppDragging: (dragging: boolean) => set((state) => ({ ...state, appDragging: dragging })),
-  setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),

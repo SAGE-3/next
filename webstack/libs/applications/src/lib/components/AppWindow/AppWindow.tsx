@@ -61,7 +61,6 @@ export function AppWindow(props: WindowProps) {
   const appDragging = useUIStore((state) => state.appDragging);
   const setAppDragging = useUIStore((state) => state.setAppDragging);
   const incZ = useUIStore((state) => state.incZ);
-  const gridSize = useUIStore((state) => state.gridSize);
   const viewport = useUIStore((state) => state.viewport);
   const selectedTag = useUIStore((state) => state.selectedTag);
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
@@ -180,27 +179,18 @@ export function AppWindow(props: WindowProps) {
 
   // Handle when the app is finished being dragged
   function handleDragStop(_e: RndDragEvent, data: DraggableData) {
-    let x = data.x;
-    let y = data.y;
-    x = Math.round(x / gridSize) * gridSize;
-    y = Math.round(y / gridSize) * gridSize;
-    const dx = x - props.app.data.position.x;
-    const dy = y - props.app.data.position.y;
-
+    const x = data.x;
+    const y = data.y;
     setPos({ x, y });
     setAppDragging(false);
     // Update the position of the app in the server and all the other apps in the group
     if (isGrouped) {
+      const dx = data.x - props.app.data.position.x;
+      const dy = data.y - props.app.data.position.y;
       updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
       setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
-      update(props.app._id, {
-        position: {
-          x,
-          y,
-          z: props.app.data.position.z,
-        },
-      });
+      update(props.app._id, { position: { x, y, z: props.app.data.position.z, } });
     }
   }
 
@@ -362,9 +352,6 @@ export function AppWindow(props: WindowProps) {
       maxHeight={APP_MAX_HEIGHT}
       // Scaling of the board
       scale={scale}
-      // resize and move snapping to grid
-      resizeGrid={[gridSize, gridSize]}
-      dragGrid={[gridSize, gridSize]}
     >
       {/* Title Above app, not when dragging the board */}
       {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
