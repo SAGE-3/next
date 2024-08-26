@@ -40,7 +40,7 @@ interface Applications {
   duplicateApps: (appIds: string[], board?: Board) => Promise<void>;
 
   bringForward(appId: string): void;
-  updateAppLocationByDelta: (delta: { x: number; y: number }, appIds: string[]) => Promise<boolean>;
+  updateAppLocationByDelta: (delta: { x: number; y: number }, appIds: string[]) => Promise<void>;
 }
 
 /**
@@ -314,19 +314,15 @@ const AppStore = create<Applications>()((set, get) => {
       get().updateBatch(updates);
     },
     updateAppLocationByDelta: async (delta: { x: number; y: number }, appIds: string[]) => {
-      const updates = appIds.map((id) => {
+      // Collect all the apps that are not pinned
+      const updates = appIds.reduce<{ id: string; updates: Partial<AppSchema> }[]>((accc, id) => {
         const app = get().apps.find((a) => a._id === id);
-        if (!app) return null;
-        if (app.data.pinned) return null;
-        return { id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } };
-      }) as { id: string; updates: Partial<AppSchema> }[];
-      get().updateBatch(
-        updates.filter((u) => u !== null) as {
-          id: string;
-          updates: Partial<AppSchema>;
-        }[]
-      );
-      return true;
+        if (app && !app.data.pinned)
+          accc.push({ id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } });
+        return accc;
+      }, []);
+      // Send the updates
+      get().updateBatch(updates);
     },
   };
 });
