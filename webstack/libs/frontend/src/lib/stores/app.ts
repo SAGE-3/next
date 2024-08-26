@@ -315,11 +315,11 @@ const AppStore = create<Applications>()((set, get) => {
     },
     updateAppLocationByDelta: async (delta: { x: number; y: number }, appIds: string[]) => {
       // Collect all the apps that are not pinned
-      const updates = appIds.reduce<{ id: string; updates: Partial<AppSchema> }[]>((accc, id) => {
+      const updates = appIds.reduce<{ id: string; updates: Partial<AppSchema> }[]>((acc, id) => {
         const app = get().apps.find((a) => a._id === id);
         if (app && !app.data.pinned)
-          accc.push({ id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } });
-        return accc;
+          acc.push({ id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } });
+        return acc;
       }, []);
       // Send the updates
       get().updateBatch(updates);
