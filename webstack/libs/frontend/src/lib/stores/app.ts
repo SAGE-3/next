@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -316,10 +316,16 @@ const AppStore = create<Applications>()((set, get) => {
     updateAppLocationByDelta: async (delta: { x: number; y: number }, appIds: string[]) => {
       const updates = appIds.map((id) => {
         const app = get().apps.find((a) => a._id === id);
-        if (!app) return;
+        if (!app) return null;
+        if (app.data.pinned) return null;
         return { id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } };
       }) as { id: string; updates: Partial<AppSchema> }[];
-      get().updateBatch(updates);
+      get().updateBatch(
+        updates.filter((u) => u !== null) as {
+          id: string;
+          updates: Partial<AppSchema>;
+        }[]
+      );
       return true;
     },
   };

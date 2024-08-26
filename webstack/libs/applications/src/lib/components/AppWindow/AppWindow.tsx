@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -147,12 +147,12 @@ export function AppWindow(props: WindowProps) {
 
   // Local state for dragging multiple apps
   useEffect(() => {
-    if (localDeltaMove) {
+    if (localDeltaMove && props.app.data.pinned === false) {
       const dx = localDeltaMove.x;
       const dy = localDeltaMove.y;
       setPos({ x: props.app.data.position.x + dx, y: props.app.data.position.y + dy });
     }
-  }, [localDeltaMove]);
+  }, [localDeltaMove, props.app.data.pinned]);
 
   // Handle when the window starts to drag
   function handleDragStart() {

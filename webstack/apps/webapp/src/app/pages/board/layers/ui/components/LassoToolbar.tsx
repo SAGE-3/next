@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -40,7 +40,19 @@ import {
   AlertDescription,
 } from '@chakra-ui/react';
 
-import { MdDownload, MdSaveAlt, MdCopyAll, MdSend, MdZoomOutMap, MdChat, MdMenu, MdPinDrop, MdAutoAwesomeMosaic, MdAutoAwesomeMotion, MdAddCircleOutline } from 'react-icons/md';
+import {
+  MdDownload,
+  MdSaveAlt,
+  MdCopyAll,
+  MdSend,
+  MdZoomOutMap,
+  MdChat,
+  MdMenu,
+  MdPinDrop,
+  MdAutoAwesomeMosaic,
+  MdAutoAwesomeMotion,
+  MdAddCircleOutline,
+} from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
@@ -88,7 +100,6 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const deleteApp = useAppStore((state) => state.delete);
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
-  const update = useAppStore((state) => state.update);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
   // UI Store
@@ -330,11 +341,10 @@ export function LassoToolbar(props: LassoToolbarProps) {
     const filename = boardName + '.s3json';
     const selectedapps = useUIStore.getState().savedSelectedAppsIds;
     // Use selected apps if any or all apps
-    const apps = selectedapps.length > 0 ?
-      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
-      : useAppStore.getState().apps;
+    const apps =
+      selectedapps.length > 0 ? useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id)) : useAppStore.getState().apps;
     const namespace = useConfigStore.getState().config.namespace;
-    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+    const assets = apps.reduce<{ id: string; url: string; filename: string }[]>(function (arr, app) {
       if (app.data.state.assetid) {
         // Generate a public URL of the file
         const token = uuidv5(app.data.state.assetid, namespace);
@@ -349,12 +359,12 @@ export function LassoToolbar(props: LassoToolbarProps) {
     // Data structure to save
     const savedapps = apps.map((app) => {
       // making sure apps have the right state
-      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state, } } };
+      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state } } };
     });
     const session = {
       assets: assets,
       apps: savedapps, // apps,
-    }
+    };
     const payload = JSON.stringify(session, null, 2);
     const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
     // Trigger the download
@@ -441,7 +451,7 @@ for b in bits:
         app: el,
         bbox: [el.data.position.x, el.data.position.y, el.data.position.x + el.data.size.width, el.data.position.y + el.data.size.height],
         area: el.data.size.width * el.data.size.height,
-      }
+      };
     });
     // sort by size
     boxes.sort((a, b) => b.area - a.area);
@@ -455,8 +465,11 @@ for b in bits:
     const center = [padding / 2 + (minx + maxx) / 2, padding / 2 + (miny + maxy) / 2];
 
     const data = boxes.map((el) => ({
-      w: el.app.data.size.width + padding, h: el.app.data.size.height + padding,
-      id: el.app._id, x: 0, y: 0
+      w: el.app.data.size.width + padding,
+      h: el.app.data.size.height + padding,
+      id: el.app._id,
+      x: 0,
+      y: 0,
     }));
 
     // Array of update to batch at once
@@ -495,8 +508,8 @@ for b in bits:
         y: y,
         bbox: [x, y, x + w, y + h],
         area: w * h,
-        fit: { x: 0, y: 0 }
-      }
+        fit: { x: 0, y: 0 },
+      };
     });
     // Sort by size
     boxes.sort((a, b) => b.area - a.area);
@@ -583,7 +596,9 @@ for b in bits:
                     {/* Submenu */}
                     <Menu isOpen={sendToBoardSubmenuOpen} placement="right-end" onClose={closeSendToBoardSubmenu}>
                       <MenuButton
-                        as={MenuItem} py="0" m="0"
+                        as={MenuItem}
+                        py="0"
+                        m="0"
                         isDisabled={!canCreateApp}
                         onClick={toggleSendToBoardSubmenu}
                         icon={<MdSend />}
@@ -601,7 +616,13 @@ for b in bits:
                         })}
                       </MenuList>
                     </Menu>
-                    <MenuItem display={showUI && showTags ? 'flex' : 'none'} onClick={onModalOpen} icon={<MdAddCircleOutline />} py="0" m="0">
+                    <MenuItem
+                      display={showUI && showTags ? 'flex' : 'none'}
+                      onClick={onModalOpen}
+                      icon={<MdAddCircleOutline />}
+                      py="0"
+                      m="0"
+                    >
                       Add Tags to Apps
                     </MenuItem>
                     {/* Modal for adding new tags */}
@@ -700,9 +721,8 @@ for b in bits:
               </Tooltip>
             </Box>
           </Box>
-        </Box >
-      )
-      }
+        </Box>
+      )}
 
       <ConfirmModal
         isOpen={deleteIsOpen}
@@ -722,10 +742,9 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
-
   fit: function (blocks: any[]) {
     var n,
       node,
@@ -736,15 +755,13 @@ GrowingPacker.prototype = {
     this.root = { x: 0, y: 0, w: w, h: h };
     for (n = 0; n < len; n++) {
       block = blocks[n];
-      if ((node = this.findNode(this.root, block.w, block.h)))
-        block.fit = this.splitNode(node, block.w, block.h);
+      if ((node = this.findNode(this.root, block.w, block.h))) block.fit = this.splitNode(node, block.w, block.h);
       else block.fit = this.growNode(block.w, block.h);
     }
   },
 
   findNode: function (root: any, w: number, h: number) {
-    if (root.used)
-      return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
+    if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
     else if (w <= root.w && h <= root.h) return root;
     else return null;
   },
@@ -800,4 +817,3 @@ GrowingPacker.prototype = {
     else return null;
   },
 };
-
