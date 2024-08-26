@@ -42,8 +42,8 @@ export function useCursorBoardPosition() {
 }
 
 // Interval to update the cursor position within react provider
-let updateCursorInterval = null as null | NodeJS.Timeout;
-let updateBoardCursorInterval = null as null | NodeJS.Timeout;
+let updateCursorInterval = null as null | number;
+let updateBoardCursorInterval = null as null | number;
 const updateFrequency = 100;
 
 export function CursorBoardPositionProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
@@ -54,7 +54,7 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
 
   // Update the cursor position useEffect
   useEffect(() => {
-    updateCursorInterval = setInterval(() => {
+    updateCursorInterval = window.setInterval(() => {
       // Check if the cursor is value changed
       if (GLOBAL_CURSOR.x === cursor.x && GLOBAL_CURSOR.y === cursor.y) {
         return;
@@ -66,14 +66,14 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     }, updateFrequency);
     return () => {
       if (updateCursorInterval) {
-        clearInterval(updateCursorInterval);
+        window.clearInterval(updateCursorInterval);
       }
     };
   }, []);
 
   // Update the board cursor position
   useEffect(() => {
-    updateBoardCursorInterval = setInterval(() => {
+    updateBoardCursorInterval = window.setInterval(() => {
       const boardX = Math.floor(GLOBAL_CURSOR.x / scale - boardPosition.x);
       const boardY = Math.floor(GLOBAL_CURSOR.y / scale - boardPosition.y);
       setBoardCursor({ x: boardX, y: boardY });
