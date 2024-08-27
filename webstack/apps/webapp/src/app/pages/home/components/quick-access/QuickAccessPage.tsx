@@ -84,7 +84,8 @@ const QuickAccessPage = ({
       <Box
         h="100%"
         mb="2"
-        overflow="auto"
+        overflowY="auto"
+        overflowX="hidden"
         css={{
           '&::-webkit-scrollbar': {
             background: 'transparent',

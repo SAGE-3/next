@@ -73,6 +73,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
+        // prevent blurry canvas with dpr
         const dpr = window.devicePixelRatio || 1;
         const canvasWidth = boardWidth + 2 * PADDING;
         const canvasHeight = boardHeight + 2 * PADDING;

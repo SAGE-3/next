@@ -107,8 +107,8 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
         onClick={handleEnterBoard}
         borderRadius="xl"
         boxSizing="border-box"
-        width="400px"
         height="300px"
+        // aspectRatio="1"
         transition={'all 0.2s ease-in-out'}
         cursor="pointer"
         border={`solid 2px ${props.selected ? borderColor : baseBorderColor}`}

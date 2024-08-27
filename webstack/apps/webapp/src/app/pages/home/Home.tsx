@@ -1345,7 +1345,8 @@ export function HomePage() {
           <Box
             display="flex"
             flexDir="column"
-            overflow="auto"
+            overflowX="hidden"
+            overflowY="auto"
             height="100%"
             px="6"
             css={{
