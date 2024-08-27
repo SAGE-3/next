@@ -9,4 +9,3 @@
 export * from './ColorPicker';
 export * from './MainButton';
 export * from './Clock';
-export * from './FunctionButtons';

@@ -8,7 +8,15 @@
 
 import { useCallback, useEffect, useState, createContext, useContext } from 'react';
 import { useUIStore } from '../stores';
-import { throttle } from 'throttle-debounce';
+
+const GLOBAL_CURSOR = { x: 0, y: 0 };
+
+function handleCursorUpdate(event: MouseEvent) {
+  GLOBAL_CURSOR.x = event.clientX;
+  GLOBAL_CURSOR.y = event.clientY;
+}
+
+window.addEventListener('mousemove', handleCursorUpdate);
 
 type CursorBoardPositionContextType = {
   boardCursor: { x: number; y: number };
@@ -17,11 +25,11 @@ type CursorBoardPositionContextType = {
 };
 
 const CursorBoardPositionContext = createContext({
+  cursor: { x: 0, y: 0 },
   boardCursor: { x: 0, y: 0 },
   uiToBoard: (x: number, y: number) => {
     return { x: 0, y: 0 };
   },
-  cursor: { x: 0, y: 0 },
 } as CursorBoardPositionContextType);
 
 /**
@@ -33,31 +41,49 @@ export function useCursorBoardPosition() {
   return useContext(CursorBoardPositionContext);
 }
 
+// Interval to update the cursor position within react provider
+let updateCursorInterval = null as null | number;
+let updateBoardCursorInterval = null as null | number;
+const updateFrequency = 100;
+
 export function CursorBoardPositionProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
   const [boardCursor, setBoardCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [cursor, setCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
 
-  const [clientCursor, setClientCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const handleCursorUpdate = useCallback((ev: MouseEvent) => setClientCursor({ x: ev.clientX, y: ev.clientY }), []);
-
+  // Update the cursor position useEffect
   useEffect(() => {
-    window.addEventListener('mousemove', handleCursorUpdate);
-    return () => window.removeEventListener('mousemove', handleCursorUpdate);
-  }, [handleCursorUpdate]);
+    updateCursorInterval = window.setInterval(() => {
+      // Check if the cursor is value changed
+      if (GLOBAL_CURSOR.x === cursor.x && GLOBAL_CURSOR.y === cursor.y) {
+        return;
+      }
+      setCursor({
+        x: GLOBAL_CURSOR.x,
+        y: GLOBAL_CURSOR.y,
+      });
+    }, updateFrequency);
+    return () => {
+      if (updateCursorInterval) {
+        window.clearInterval(updateCursorInterval);
+      }
+    };
+  }, []);
 
-  // Throttle the Update
-  const throttleUpdate = throttle(100, (cx: number, cy: number, bx: number, by: number) => {
-    setCursor({ x: cx, y: cy });
-    setBoardCursor({
-      x: bx,
-      y: by,
-    });
-  });
-
-  // Keep the throttlefunc reference
-  const throttleUpdateFunc = useCallback(throttleUpdate, []);
+  // Update the board cursor position
+  useEffect(() => {
+    updateBoardCursorInterval = window.setInterval(() => {
+      const boardX = Math.floor(GLOBAL_CURSOR.x / scale - boardPosition.x);
+      const boardY = Math.floor(GLOBAL_CURSOR.y / scale - boardPosition.y);
+      setBoardCursor({ x: boardX, y: boardY });
+    }, updateFrequency);
+    return () => {
+      if (updateBoardCursorInterval) {
+        clearInterval(updateBoardCursorInterval);
+      }
+    };
+  }, [boardPosition.x, boardPosition.y, scale]);
 
   const uiToBoard = useCallback(
     (x: number, y: number) => {
@@ -65,12 +91,6 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     },
     [boardPosition.x, boardPosition.y, scale]
   );
-
-  useEffect(() => {
-    const boardX = Math.floor(clientCursor.x / scale - boardPosition.x);
-    const boardY = Math.floor(clientCursor.y / scale - boardPosition.y);
-    throttleUpdateFunc(clientCursor.x, clientCursor.y, boardX, boardY);
-  }, [boardPosition.x, boardPosition.y, scale, clientCursor.x, clientCursor.y, throttleUpdateFunc]);
 
   return (
     <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>

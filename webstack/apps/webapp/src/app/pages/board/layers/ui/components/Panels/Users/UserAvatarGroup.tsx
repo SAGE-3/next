@@ -24,10 +24,11 @@ function usePresenceViewport(myId: string) {
   // BoardId
   const { boardId } = useParams();
   // UI Store
-  const { setBoardPosition, setScale } = useUIStore((state) => state);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
 
   // Presences
-  const { update: updatePresence } = usePresenceStore((state) => state);
+  const updatePresence = usePresenceStore((state) => state.update);
 
   // Toast Info
   const infoToast = useToast({ id: 'infoToast-viewport' });
@@ -94,7 +95,9 @@ function usePresenceFollow(myId: string) {
   const { boardId } = useParams();
 
   // Presences
-  const { update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
+  const updatePresence = usePresenceStore((state) => state.update);
+  const following = usePresenceStore((state) => state.following);
+  const setFollowing = usePresenceStore((state) => state.setFollowing);
 
   // Follow a user
   const followUser = useCallback(

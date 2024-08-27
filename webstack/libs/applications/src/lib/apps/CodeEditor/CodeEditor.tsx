@@ -87,7 +87,7 @@ const useStore = create<CodeStore>()((set) => ({
 function AppComponent(props: App): JSX.Element {
   // SAGE state
   const s = props.data.state as AppState;
-  const { updateState } = useAppStore((state) => state);
+  const updateState = useAppStore((state) => state.updateState);
 
   // User
   const { user } = useUser();
@@ -225,7 +225,8 @@ function ToolbarComponent(props: App): JSX.Element {
   // Save Confirmation  Modal
   const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
   // State
-  const { update, updateState } = useAppStore((state) => state);
+  const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
   // Editor in Store

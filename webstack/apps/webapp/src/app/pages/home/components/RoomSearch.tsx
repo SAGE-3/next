@@ -61,7 +61,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   const { user } = useUser();
 
   // Room Store
-  const { rooms } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
 
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,7 +164,8 @@ function RoomRow(props: RoomRowProps) {
   );
 
   // Room Store
-  const { joinRoomMembership, members } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
+  const members = useRoomStore((state) => state.members);
 
   // Password disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -272,7 +273,7 @@ function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   };
 
   // Room Store
-  const { joinRoomMembership } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {

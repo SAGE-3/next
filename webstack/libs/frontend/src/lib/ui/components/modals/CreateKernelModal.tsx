@@ -48,7 +48,10 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
   const { user } = useUser();
 
   // Kernel Store
-  const { kernelTypes, apiStatus, createKernel } = useKernelStore((state) => state);
+  const kernelTypes = useKernelStore((state) => state.kernelTypes);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const createKernel = useKernelStore((state) => state.createKernel);
+
   const kernelTypeFilter = (kernel: string) => availableKernelTypes.includes(kernel);
 
   // Toast

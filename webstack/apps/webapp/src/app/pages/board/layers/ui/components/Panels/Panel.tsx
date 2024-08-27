@@ -11,7 +11,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore, useUserSettings } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -71,7 +71,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
 
   return (
     <Box>
@@ -92,8 +92,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
-        // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
+          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
+          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -336,14 +336,16 @@ export function Panel(props: PanelProps) {
 
               <Box display="flex" flexWrap={'nowrap'}>
                 {!panel.minimized ? (
-                  props.showMinimize ? <IconButton
-                    size="xs"
-                    icon={<MdExpandLess size="24px" />}
-                    aria-label="show less"
-                    onClick={handleMinimizeClick}
-                    mx="1"
-                    cursor="pointer"
-                  /> : null
+                  props.showMinimize ? (
+                    <IconButton
+                      size="xs"
+                      icon={<MdExpandLess size="24px" />}
+                      aria-label="show less"
+                      onClick={handleMinimizeClick}
+                      mx="1"
+                      cursor="pointer"
+                    />
+                  ) : null
                 ) : (
                   <IconButton
                     size="xs"
@@ -405,8 +407,11 @@ const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
           event.target.addEventListener('touchend', preventDefault, { passive: false });
           target.current = event.target;
         }
-      }
-      timeout.current = setTimeout(() => { callback(event); preventTouchClick(); }, delay);
+      };
+      timeout.current = setTimeout(() => {
+        callback(event);
+        preventTouchClick();
+      }, delay);
     },
     [callback, delay, isPreventDefault]
   );

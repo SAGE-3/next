@@ -33,7 +33,7 @@ export function Viewports(props: ViewportProps) {
         const viewport = u.presence.data.viewport;
         const isWall = u.user.data.userType === 'wall';
         return (
-          <UserViewportMemo
+          <UserViewport
             key={'viewport-' + u.user._id}
             isWall={isWall}
             name={name}
@@ -98,5 +98,3 @@ function UserViewport(props: UserViewportProps) {
     </Box>
   );
 }
-
-const UserViewportMemo = React.memo(UserViewport);

@@ -31,7 +31,7 @@ interface BoardInformationProps {
 
 export function BoardInformationModal(props: BoardInformationProps): JSX.Element {
   // Stores
-  const { users } = useUsersStore((state) => state);
+  const users = useUsersStore((state) => state.users);
 
   const [name, setName] = useState<string>(props.board.data.name);
   const [description, setDescription] = useState<string>(props.board.data.description);

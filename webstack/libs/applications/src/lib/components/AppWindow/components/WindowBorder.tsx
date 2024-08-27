@@ -17,7 +17,6 @@ type WindowBorderProps = {
   borderColor: string;
   selectColor: string;
   borderRadius: number;
-  isSavedSelected: boolean;
   background: boolean;
   isHighlight: boolean;
 };
@@ -48,7 +47,7 @@ export function WindowBorder(props: WindowBorderProps) {
       borderRadius={borderRadius}
       opacity={isGrouped || dragging ? 0.6 : 1}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
-      background={selected || isGrouped  || highight ? selectColor : borderColor}
+      background={selected || isGrouped || highight ? selectColor : borderColor}
       pointerEvents={'none'}
     ></Box>
   );
