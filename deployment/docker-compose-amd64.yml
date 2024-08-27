@@ -1,6 +1,6 @@
 services:
   redis-server:
-    image: "redis/redis-stack-server:latest"
+    image: "redis/redis-stack-server:7.4.0-v0"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf

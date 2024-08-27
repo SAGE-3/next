@@ -58,7 +58,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Boards
-  const { boards } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
 
   const [isListed, setIsListed] = useState(props.room.data.isListed);

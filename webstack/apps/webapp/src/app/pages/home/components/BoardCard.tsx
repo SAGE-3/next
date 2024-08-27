@@ -6,15 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, useDisclosure, Tooltip, useToast, Icon } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, useDisclosure, Tooltip, useToast, Icon, Fade } from '@chakra-ui/react';
 import { MdStar, MdLink, MdStarOutline, MdSettings, MdInfo, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
-import { Board, Presence } from '@sage3/shared/types';
+import { Board, PresencePartial } from '@sage3/shared/types';
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
 
-export function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: Presence[] }) {
+export function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: PresencePartial[] }) {
   const { user, saveBoard, removeBoard } = useUser();
 
   const toast = useToast();

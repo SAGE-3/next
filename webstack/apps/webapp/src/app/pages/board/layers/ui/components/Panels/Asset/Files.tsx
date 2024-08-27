@@ -33,7 +33,7 @@ import {
 
 import { getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
-import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile } from '@sage3/frontend';
+import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile, useThrottleScale } from '@sage3/frontend';
 
 import { RowFile } from './RowFile';
 import { FileEntry } from '@sage3/shared/types';
@@ -73,7 +73,7 @@ export function Files(props: FilesProps): JSX.Element {
   const [searchTerm, setSearchTerm] = useState<string>('');
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   // How to create some applications
   const createBatch = useAppStore((state) => state.createBatch);
 
@@ -502,7 +502,7 @@ export function Files(props: FilesProps): JSX.Element {
           totalCount={filesList.length}
           onKeyDown={onKeyboard}
           // Content of the table
-          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
+          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} scale={scale} />}
         />
       </VStack>
 

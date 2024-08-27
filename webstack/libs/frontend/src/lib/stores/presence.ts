@@ -47,16 +47,24 @@ const PresenceStore = create<PresenceState>()((set, get) => {
     setFollowing: (id: string) => {
       set({ following: id });
     },
-    setPartialPresence: (presences: Presence[]) => {
-      const partialPrescences = presences.map((p) => {
-        // Neat trick to remove cursor and viewport from the data
-        const { cursor, viewport, ...partial } = p.data;
-        return { ...p, data: partial } as PresencePartial;
+    setPartialPresence: (updatedPresences: Presence[]) => {
+      // Update PartialPresences only if the user data has updated. Ignore viewport and cursor
+      const dataUpdate = updatedPresences.map((p) => {
+        const { viewport, cursor, ...partial } = p.data;
+        return partial;
       });
-      // Check if an elements in the array changed
-      // If it did, then update the state
-
-      set({ partialPrescences });
+      const currentData = get().partialPrescences.map((p) => {
+        return p.data;
+      });
+      // Check if the data has changed
+      if (JSON.stringify(dataUpdate) !== JSON.stringify(currentData)) {
+        const partialPrescences = updatedPresences.map((p) => {
+          const { viewport, cursor, ...partial } = p.data;
+          return { ...p, data: partial };
+        });
+        set({ partialPrescences });
+      }
+      return;
     },
     clearError: () => {
       set({ error: null });

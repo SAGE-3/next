@@ -678,45 +678,43 @@ export function AppToolbar(props: AppToolbarProps) {
           </Button>
         </Tooltip>
         {/* Modal for adding or editing a new tag */}
-        {isModalOpen && (
-          <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
-            <ModalOverlay />
-            <ModalContent sx={{ maxW: '410px' }}>
-              <ModalHeader>{oldTag === '' ? 'Add Tag' : 'Edit Tag'}</ModalHeader>
-              <ModalCloseButton />
-              <ModalBody>
-                <Input
-                  width="360px"
-                  mb={5}
-                  placeholder={oldTag === '' ? 'Enter tags separated by spaces' : ''}
-                  _placeholder={{ opacity: 1, color: 'gray.400' }}
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleTagFromModal();
-                  }}
-                  animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
-                  autoFocus
-                />
-                <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
-                {inputAlert !== '' && (
-                  <Alert status="warning" mt={5} width="360px" variant="left-accent">
-                    <AlertIcon />
-                    <AlertDescription>{inputAlert}</AlertDescription>
-                  </Alert>
-                )}
-              </ModalBody>
-              <ModalFooter>
-                <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>
-                  {oldTag === '' ? 'Add' : 'Save'}
-                </Button>
-                <Button colorScheme="red" onClick={handleCloseModal} width="80px">
-                  Cancel
-                </Button>
-              </ModalFooter>
-            </ModalContent>
-          </Modal>
-        )}
+        <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
+          <ModalOverlay />
+          <ModalContent sx={{ maxW: '410px' }}>
+            <ModalHeader>{oldTag === '' ? 'Add Tag' : 'Edit Tag'}</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <Input
+                width="360px"
+                mb={5}
+                placeholder={oldTag === '' ? 'Enter tags separated by spaces' : ''}
+                _placeholder={{ opacity: 1, color: 'gray.400' }}
+                value={inputValue}
+                onChange={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleTagFromModal();
+                }}
+                animation={invalidTagAnimation ? `${shakeAnimation} 0.5s ease-in-out` : 'none'}
+                autoFocus
+              />
+              <ColorPicker onChange={handleColorChange} selectedColor={tagColor as SAGEColors} />
+              {inputAlert !== '' && (
+                <Alert status="warning" mt={5} width="360px" variant="left-accent">
+                  <AlertIcon />
+                  <AlertDescription>{inputAlert}</AlertDescription>
+                </Alert>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button colorScheme="green" onClick={handleTagFromModal} width="80px" mr={3}>
+                {oldTag === '' ? 'Add' : 'Save'}
+              </Button>
+              <Button colorScheme="red" onClick={handleCloseModal} width="80px">
+                Cancel
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
         {/* Delete tag confirmation */}
         <ConfirmModal
           isOpen={isDeleteTagOpen}
