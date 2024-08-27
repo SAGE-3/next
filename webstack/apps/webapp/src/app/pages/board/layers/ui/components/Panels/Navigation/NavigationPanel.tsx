@@ -7,14 +7,17 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip, IconButton, Image, Text, ButtonGroup, AbsoluteCenter } from '@chakra-ui/react';
-
-import { MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore, MdOutlineResetTv } from 'react-icons/md';
+import { Box, useColorModeValue, Tooltip, IconButton, Text, ButtonGroup } from '@chakra-ui/react';
 
 import {
-  ConfirmModal,
+  MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore,
+  MdOutlineResetTv, MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat
+} from 'react-icons/md';
+import { BsFiletypePdf } from 'react-icons/bs';
+import { FaPython } from 'react-icons/fa';
+
+import {
   useAbility,
-  useBoardStore,
   useThrottleScale,
   useThrottleApps,
   useHexColor,
@@ -32,10 +35,21 @@ export interface NavProps {
   boardId: string;
 }
 
+// Icons for the minimap
+const appIcons = {
+  "ImageViewer": <MdImage />,
+  "PDFViewer": <BsFiletypePdf />,
+  "Stickie": <MdOutlineStickyNote2 />,
+  "SageCell": <FaPython />,
+  "VideoViewer": <MdMovie />,
+  "Chat": <MdChat />,
+};
+type AppIconsKey = keyof typeof appIcons;
+const appIconsDefined = Object.keys(appIcons) as AppIconsKey[];
+
 export function NavigationPanel(props: NavProps) {
   // App Store
   const apps = useThrottleApps(250);
-
   // UI Store
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const boardLocked = useUIStore((state) => state.boardLocked);
@@ -128,42 +142,8 @@ export function NavigationPanel(props: NavProps) {
     setScale(zoom);
   };
 
-  // Organize board using python function
-  // function organizeApps() {
-  //   // get presence of current user for its viewport
-
-  //   // Trigger the smart function
-  //   updateBoard(props.boardId, {
-  //     executeInfo: {
-  //       executeFunc: 'reorganize_layout',
-  //       params: {
-  //         viewport_position: userViewport.position,
-  //         viewport_size: userViewport.size,
-  //         by: 'app_type',
-  //         mode: 'tiles',
-  //       },
-  //     },
-  //   });
-  // }
-
-  // Result the confirmation modal
-  // const onOrganizeConfirm = () => {
-  //   organizeApps();
-  //   organizeOnClose();
-  // };
-
   return (
     <>
-      {/* Organize board dialog */}
-
-      {/* <ConfirmModal
-        title="Organize the Board"
-        message="Are you sure you want to automatically organize the applications?"
-        onConfirm={onOrganizeConfirm}
-        onClose={organizeOnClose}
-        isOpen={organizeIsOpen}
-      /> */}
-
       <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
         <Box alignItems="center" display="flex">
           <Box
@@ -195,24 +175,24 @@ export function NavigationPanel(props: NavProps) {
                         width={app.data.size.width * mapScale + 'px'}
                         height={app.data.size.height * mapScale + 'px'}
                         transition={'all .5s'}
-                        _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
                         onClick={() => moveToApp(app)}
                         borderWidth="1px"
                         borderStyle="solid"
                         borderColor={appBorderColor}
                         borderRadius="sm"
                         cursor="pointer"
+                        justifyContent={'center'}
+                        alignItems={'center'}
+                        display={'flex'}
+                        fontSize={Math.min(app.data.size.width * mapScale, app.data.size.height * mapScale) / 1.5}
+                        _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
                       >
-                        {/* {app.data.type === "ImageViewer" ?
-                          <AbsoluteCenter axis="both"><MdOutlineImage /> </AbsoluteCenter> : null}
-                        {app.data.type === "PDFViewer" ?
-                          <AbsoluteCenter axis="both"><AiOutlineFilePdf /> </AbsoluteCenter> : null}
-                        {app.data.type === "Stickie" ?
-                          <AbsoluteCenter axis="both"><MdOutlineStickyNote2 /> </AbsoluteCenter> : null}
-                        {app.data.type === "SageCell" ?
-                          <AbsoluteCenter axis="both"><AiOutlinePython /> </AbsoluteCenter> : null}
-                        {app.data.type === "VideoViewer" ?
-                          <AbsoluteCenter axis="both"><MdOndemandVideo /> </AbsoluteCenter> : null} */}
+                        {
+                          // Pick an app icon
+                          appIconsDefined.includes(app.data.type as AppIconsKey) ?
+                            appIcons[app.data.type as AppIconsKey] :
+                            <MdWindow />
+                        }
                       </Box>
                     </Tooltip>
                   );
