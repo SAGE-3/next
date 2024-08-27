@@ -72,6 +72,7 @@ const languageExtensions = [
   { name: 'cpp', extension: 'cpp' },
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
+  { name: 'r', extension: 'r' },
 ];
 interface CodeStore {
   editor: { [key: string]: editor.IStandaloneCodeEditor };

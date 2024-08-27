@@ -12,7 +12,7 @@ import * as mime from 'mime';
 import hljs from 'highlight.js';
 
 hljs.configure({
-  languages: ['json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp'],
+  languages: ['json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp', 'r'],
 });
 
 // Define extra MIME types
@@ -27,6 +27,7 @@ mime.define(
     'text/x-c': ['hpp', 'hxx', 'c++', 'h++'], // adding to ["c","cc","cxx","cpp","h","hh","dic"]
     'text/x-csharp': ['cs', 'csharp'],
     'application/typescript': ['ts'],
+    'application/r': ['r'],
   },
   true // force
 );
@@ -66,6 +67,7 @@ export function isCode(mimeType: string): boolean {
     'text/yaml',
     'application/javascript',
     'application/typescript',
+    'application/r',
   ];
   return formats.includes(mimeType);
 }
@@ -93,6 +95,8 @@ export function mimeToCode(code: string) {
       return 'yaml';
     case 'application/typescript':
       return 'typescript';
+    case 'application/r':
+      return 'r';
     default:
       return result;
   }
