@@ -144,7 +144,7 @@ export function AiRouter(): express.Router {
         res.status(200).json(response);
       } else if (model === openai.name) {
         // Query OpenAI with the input
-        const response = await openai.query(input);
+        const response = await openai.code(prompt, input);
         // Return the response
         res.status(200).json(response);
       } else {
