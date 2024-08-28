@@ -37,7 +37,7 @@ export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: s
         isOpen={delConfirmIsOpen}
         onClose={delConfirmOnClose}
         onConfirm={handleRemoveUser}
-        title="Remove User"
+        title="Remove Member"
         message={`Are you sure you want to remove ${props.user.data.name} `}
         cancelText="Cancel"
         confirmText="Remove"
@@ -83,7 +83,7 @@ export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: s
           </Box>
         </Box>
         {props.currUserIsOwner && (
-          <Tooltip label="Remove User" aria-label="Remove User">
+          <Tooltip label="Remove Member" aria-label="Remove Member">
             <Box display="flex" alignItems={'right'}>
               <IconButton
                 size="sm"
