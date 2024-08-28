@@ -45,7 +45,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const { user } = useUser();
   const createRoom = useRoomStore((state) => state.create);
-  const { rooms, joinRoomMembership } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');

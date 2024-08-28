@@ -9,7 +9,9 @@
 import { SAGE3Collection } from '../generics';
 import { WebSocket } from 'ws';
 import { PresenceSchema } from '@sage3/shared/types';
-import { SBDocument } from '@sage3/sagebase';
+
+// Dictionary to keep track of users if they sign in multiple times
+const userPresenceDict = {} as { [key: string]: SAGEPresence[] };
 
 /**
  * Class to help with the management of presence of users connected to the server.
@@ -28,12 +30,12 @@ export class SAGEPresence {
 
     this._socket.on('close', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      this.setOffline();
+      this.onDisconnect();
     });
 
     this._socket.on('error', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      this.setOffline();
+      this.onDisconnect();
     });
   }
 
@@ -41,23 +43,35 @@ export class SAGEPresence {
   // We need async init call since a constructor can not be async.
   public async init() {
     const check = await this.checkPresence();
-    if (check) {
-      this.setOnline();
-    } else {
+    if (!check) {
       this.addPresence();
+    }
+    this.addToDict();
+  }
+
+  // On Close handler
+  private async onDisconnect() {
+    this.removeFromDict();
+    // If the user's array in the dict is empty, remove the user from the presence collection
+    if (userPresenceDict[this._userId].length === 0) {
+      this.removePresence();
     }
   }
 
-  // Helper function to set user to 'online'.
-  private async setOnline(): Promise<SBDocument<PresenceSchema> | undefined> {
-    const res = await this._collection.update(this._userId, this._userId, { status: 'online' });
-    return res;
+  // Add to the dict
+  public async addToDict() {
+    userPresenceDict[this._userId] = userPresenceDict[this._userId] ? [...userPresenceDict[this._userId], this] : [this];
   }
 
-  // Helper function to set user to 'offline'.
-  private async setOffline(): Promise<SBDocument<PresenceSchema> | undefined> {
-    const res = await this._collection.update(this._userId, this._userId, { status: 'offline' });
-    return res;
+  // Remove from the dict
+  private async removeFromDict() {
+    userPresenceDict[this._userId] = userPresenceDict[this._userId].filter((presence) => presence !== this);
+  }
+
+  // Check if the user's presence already exists
+  private async checkPresence(): Promise<boolean> {
+    const check = await this._collection.get(this._userId);
+    return check !== null;
   }
 
   // Helper function to add the user's presence to the collection
@@ -75,12 +89,6 @@ export class SAGEPresence {
     } as PresenceSchema;
     const res = await this._collection.add(presence, this._userId, this._userId);
     return res !== undefined;
-  }
-
-  // Check if the user's presence already exists
-  private async checkPresence(): Promise<boolean> {
-    const check = await this._collection.get(this._userId);
-    return check !== null;
   }
 
   // Remove the doc from the presence collection when the user goes offline

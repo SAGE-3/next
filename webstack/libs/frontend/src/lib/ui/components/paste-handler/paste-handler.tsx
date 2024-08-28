@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { isValidURL, setupApp, processContentURL, truncateWithEllipsis, useFiles } from '@sage3/frontend';
+import { isValidURL, setupApp, processContentURL, useFiles } from '@sage3/frontend';
 import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
 import { stringContainsCode } from '@sage3/shared';
 

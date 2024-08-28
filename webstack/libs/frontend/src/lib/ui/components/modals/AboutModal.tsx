@@ -90,7 +90,7 @@ export function AboutModal(props: AboutModalProps): JSX.Element {
               <Box fontWeight={'bold'}>Authors</Box>
               <Box fontWeight={'bold'}>License</Box>
               <Box fontWeight={'bold'}>Client Version</Box>
-              <Box fontWeight={'bold'}>Server Version</Box>
+              <Box fontWeight={'bold'}>Hub Version</Box>
               <Box fontWeight={'bold'}>Website</Box>
             </Box>
             <Box display="flex" flexDir="column" textAlign={'left'} width="100%">

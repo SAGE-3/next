@@ -486,6 +486,8 @@ function ToolbarComponent(props: App): JSX.Element {
   //   }
   // }
 
+  // console.log('PDFViewer ToolbarComponent', props.data);
+
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -601,7 +603,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * @returns JSX.Element | null
  */
 const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
-  const { updateStateBatch } = useAppStore((state) => state);
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   const handleAddPage = () => {
     // Array of update to batch at once

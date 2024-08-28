@@ -8,7 +8,6 @@
 
 // React Imports
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {
@@ -101,7 +100,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<{ name: string; id: string; url: string }[]>([]);
+  const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -117,21 +116,26 @@ export function HomePage() {
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Room Store
-  const {
-    rooms,
-    members,
-    subscribeToAllRooms: subscribeToRooms,
-    fetched: roomsFetched,
-    leaveRoomMembership,
-    joinRoomMembership,
-  } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
+  const members = useRoomStore((state) => state.members);
+  const subscribeToRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  const roomsFetched = useRoomStore((state) => state.fetched);
+  const leaveRoomMembership = useRoomStore((state) => state.leaveRoomMembership);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards, update: updateBoard } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
+  const subscribeToBoards = useBoardStore((state) => state.subscribeToAllBoards);
+  const updateBoard = useBoardStore((state) => state.update);
 
   // User and Presence Store
-  const { users, subscribeToUsers } = useUsersStore((state) => state);
-  const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
+  const users = useUsersStore((state) => state.users);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // Presence
+  const partialPrescences = usePresenceStore((state) => state.partialPrescences);
+  const updatePresence = usePresenceStore((state) => state.update);
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
 
   // Settings
   const { setBoardListView, settings } = useUserSettings();
@@ -195,7 +199,7 @@ export function HomePage() {
   const introRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
-  const serverNameRef = useRef<HTMLDivElement>(null);
+  const hubNameRef = useRef<HTMLDivElement>(null);
   const createRoomRef = useRef<HTMLDivElement>(null);
   const searchRoomsRef = useRef<HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
@@ -254,11 +258,11 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: serverNameRef.current!,
-        title: electron ? 'Servers' : 'Server',
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
         content: electron
-          ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
-          : 'This shows the current SAGE3 server.',
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
         disableBeacon: true,
       },
       {
@@ -361,7 +365,7 @@ export function HomePage() {
 
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
-    const userCount = presences.filter((p) => p.data.boardId === board._id).length;
+    const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
 
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
@@ -428,8 +432,8 @@ export function HomePage() {
   };
 
   const getBookmarks = () => {
-    window.electron.on('get-servers-response', async (servers: any) => {
-      setServers(servers);
+    window.electron.on('get-servers-response', async (hubs: any) => {
+      setHubs(hubs);
     });
     window.electron.send('get-servers-request');
   };
@@ -671,8 +675,8 @@ export function HomePage() {
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
       >
-        {servers.length > 0 ? (
-          <Box ref={serverNameRef}>
+        {hubs.length > 0 ? (
+          <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
@@ -697,15 +701,15 @@ export function HomePage() {
                 </Box>
               </MenuButton>
               <MenuList width={'350px'}>
-                {servers.map((server) => {
+                {hubs.map((hub) => {
                   return (
                     <MenuItem
-                      key={server.id}
+                      key={hub.id}
                       onClick={() => {
-                        window.location.href = server.url;
+                        window.location.href = hub.url;
                       }}
                     >
-                      {server.name}
+                      {hub.name}
                     </MenuItem>
                   );
                 })}
@@ -720,7 +724,7 @@ export function HomePage() {
             whiteSpace="nowrap"
             overflow="hidden"
             textOverflow="ellipsis"
-            ref={serverNameRef}
+            ref={hubNameRef}
           >
             <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
               {config.serverName}
@@ -763,7 +767,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this hub'}>
               <Box
                 h="40px"
                 display="flex"
@@ -870,8 +874,8 @@ export function HomePage() {
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
                       .sort((a, b) => {
                         // Sorted by alpha then user count
-                        const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
-                        const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                        const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
+                        const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
                         return userCountB - userCountA;
                       })
                       .map((board) => {
@@ -904,19 +908,15 @@ export function HomePage() {
                     {boards
                       .filter(boardStarredFilter)
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => {
-                        const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                        const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                        return (
-                          <BoardSidebarRow
-                            key={'tooltip_starred' + board._id}
-                            board={board}
-                            isSelected={board._id === selectedBoard?._id}
-                            onClick={() => handleBoardClickFromSubMenu(board)}
-                            onDoubleClick={() => handleBoardDoubleClick(board)}
-                          />
-                        );
-                      })}
+                      .map((board) => (
+                        <BoardSidebarRow
+                          key={'tooltip_starred' + board._id}
+                          board={board}
+                          isSelected={board._id === selectedBoard?._id}
+                          onClick={() => handleBoardClickFromSubMenu(board)}
+                          onDoubleClick={() => handleBoardDoubleClick(board)}
+                        />
+                      ))}
                   </VStack>
                 </AccordionPanel>
               </AccordionItem>
@@ -1150,7 +1150,7 @@ export function HomePage() {
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}
@@ -1188,7 +1188,7 @@ export function HomePage() {
                                   board={board}
                                   onClick={() => handleBoardClick(board)}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
                                 />
                               </Box>
                             ))}

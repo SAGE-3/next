@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -24,6 +24,7 @@ interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
   fetched: boolean;
+
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
   createBatch: (newApps: AppSchema[]) => Promise<any>;
@@ -37,6 +38,9 @@ interface Applications {
   fetchBoardApps: (boardId: AppSchema['boardId']) => Promise<App[] | undefined>;
 
   duplicateApps: (appIds: string[], board?: Board) => Promise<void>;
+
+  bringForward(appId: string): void;
+  updateAppLocationByDelta: (delta: { x: number; y: number }, appIds: string[]) => Promise<void>;
 }
 
 /**
@@ -48,6 +52,7 @@ const AppStore = create<Applications>()((set, get) => {
     apps: [],
     error: null,
     fetched: false,
+
     clearError: () => {
       set({ error: null });
     },
@@ -297,6 +302,27 @@ const AppStore = create<Applications>()((set, get) => {
       } else {
         return undefined;
       }
+    },
+    bringForward: (appId: string) => {
+      const apps = get().apps;
+      const updates = [] as { id: string; updates: Partial<AppSchema> }[];
+      // Raise down all the other apps, if needed
+      apps.forEach((a) => {
+        if (a.data.raised && a._id !== appId) updates.push({ id: a._id, updates: { raised: false } });
+      });
+      updates.push({ id: appId, updates: { raised: true } });
+      get().updateBatch(updates);
+    },
+    updateAppLocationByDelta: async (delta: { x: number; y: number }, appIds: string[]) => {
+      // Collect all the apps that are not pinned
+      const updates = appIds.reduce<{ id: string; updates: Partial<AppSchema> }[]>((acc, id) => {
+        const app = get().apps.find((a) => a._id === id);
+        if (app && !app.data.pinned)
+          acc.push({ id, updates: { position: { x: app.data.position.x + delta.x, y: app.data.position.y + delta.y, z: 0 } } });
+        return acc;
+      }, []);
+      // Send the updates
+      get().updateBatch(updates);
     },
   };
 });

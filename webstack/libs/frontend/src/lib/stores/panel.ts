@@ -120,7 +120,7 @@ export const usePanelStore = create<UIState>()((set, get) => ({
     if (i >= 0) {
       const panel = z.splice(i, 1);
       z.push(panel[0]);
-      set((state) => ({ ...state, panelZ: z }));
+      set({ panels: z });
     }
   },
 }));

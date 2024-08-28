@@ -17,7 +17,10 @@ type TagFrequency = Record<string, number>;
 
 export function TagsDisplay() {
   // UI Store
-  const { selectedAppsIds, setSelectedAppsIds, setSelectedTag } = useUIStore((state) => state);
+  const selectedAppsIds = useUIStore((state) => state.selectedAppsIds);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const setSelectedTag = useUIStore((state) => state.setSelectedTag);
+
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const updateBatchInsight = useInsightStore((state) => state.updateBatch);
@@ -268,10 +271,22 @@ export function TagsDisplay() {
             onMouseEnter={() => highlightApps(tag)}
             onMouseLeave={unhighlightApps}
           >
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={`Select all the applications with tag: ${tag}`}>
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              maxWidth={'fit-content'}
+              label={`Select all the applications with tag: ${tag}`}
+            >
               <TagLabel m={0}>{truncateStr(tag)}</TagLabel>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={`Delete this tag in all applications: ${tag}`}>
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              maxWidth={'fit-content'}
+              label={`Delete this tag in all applications: ${tag}`}
+            >
               <TagCloseButton
                 m={0}
                 onClick={(e) => {
@@ -282,8 +297,7 @@ export function TagsDisplay() {
               />
             </Tooltip>
           </Tag>
-        ))
-      }
+        ))}
 
       {/* Delete tag confirmation modal */}
       <ConfirmModal

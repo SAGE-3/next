@@ -73,7 +73,9 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   const { user } = useUser();
 
   // List of user's plugins
-  const { plugins, delete: deletePlugin, upload } = usePluginStore((state) => state);
+  const plugins = usePluginStore((state) => state.plugins);
+  const deletePlugin = usePluginStore((state) => state.delete);
+  const upload = usePluginStore((state) => state.upload);
   const userPlugins = plugins.filter((p) => p.data.ownerId === user?._id);
 
   // UI
