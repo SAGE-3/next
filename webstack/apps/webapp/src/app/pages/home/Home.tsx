@@ -388,8 +388,9 @@ export function HomePage() {
   const membersFilter = (user: User): boolean => {
     if (!selectedRoom) return false;
     const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+    const isYourself = user._id === userId;
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    return isMember;
+    return isMember && !isYourself;
   };
 
   const boardSearchFilter = (board: Board) => {
@@ -586,6 +587,19 @@ export function HomePage() {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
+
+  // Handle when the members list changes. Maybe the user was removed from the room
+  useEffect(() => {
+    // Check if is still a member of the room
+    if (selectedRoom) {
+      const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+      const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+      if (!isMember) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+    }
+  }, [members]);
 
   return (
     // Main Container
@@ -1216,9 +1230,19 @@ export function HomePage() {
                         },
                       }}
                     >
-                      {users.filter(membersFilter).map((user) => {
-                        return <UserRow key={user._id} user={user} />;
-                      })}
+                      {users
+                        .filter(membersFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((u) => {
+                          return (
+                            <UserRow
+                              key={u._id}
+                              user={u}
+                              currUserIsOwner={selectedRoom.data.ownerId === user?._id}
+                              roomId={selectedRoom._id}
+                            />
+                          );
+                        })}
                     </VStack>
                   </Box>
                 </TabPanel>
