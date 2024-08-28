@@ -67,9 +67,10 @@
       "apiKey": ""
     },
     "codellama": {
-      "url": "https://arcade.evl.uic.edu/codellama",
+      "url": "https://arcade.evl.uic.edu/llama31_8bf",
+      "model": "meta/llama-3.1-8b-instruct",
       "apiKey": "",
-      "max_tokens": 400
+      "max_tokens": 1000
     },
     "yolo": {
       "url": "https://arcade.evl.uic.edu/yolov8",

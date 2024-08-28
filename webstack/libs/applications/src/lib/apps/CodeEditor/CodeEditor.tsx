@@ -58,7 +58,7 @@ import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
 import { create } from 'zustand';
-import { generateRequest } from './ai-request-generator';
+import { generateRequest, generateSystemPrompt } from './ai-request-generator';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -340,6 +340,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
     const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'refactor'),
       input: generateRequest(s.language, selectionText, 'refactor'),
       model: selectedModel,
     } as AiQueryRequest;
@@ -368,6 +369,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
     const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'explain'),
       input: generateRequest(s.language, selectionText, 'explain'),
       model: selectedModel,
     } as AiQueryRequest;
@@ -400,14 +402,15 @@ function ToolbarComponent(props: App): JSX.Element {
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
     const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'comment'),
       input: generateRequest(s.language, selectionText, 'comment'),
       model: selectedModel,
     } as AiQueryRequest;
     const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
-      // Remove all instances of ``` from generated_text
-      const cleanedText = result.output.replace(/```/g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
+      // Remove all instances of ``` from generated text
+      const cleanedText = result.output.replace(/```.*/g, '');
+      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
     }
   }
 
@@ -420,14 +423,15 @@ function ToolbarComponent(props: App): JSX.Element {
     const selectionText = editor.getModel()?.getValueInRange(selection);
     if (!selectionText) return;
     const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'generate'),
       input: generateRequest(s.language, selectionText, 'generate'),
       model: selectedModel,
     } as AiQueryRequest;
     const result = await AiAPI.code.query(queryRequest);
     if (result.success && result.output) {
-      // Remove all instances of ``` from generated_text
-      const cleanedText = result.output.replace(/```/g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
+      // Remove all instances of ``` from generated text
+      const cleanedText = result.output.replace(/```.*/g, '');
+      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
     }
   }
 
@@ -441,9 +445,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-            '.' +
-            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+          '.' +
+          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"

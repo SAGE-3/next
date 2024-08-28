@@ -133,13 +133,13 @@ export function AiRouter(): express.Router {
   // Post a explain code request
   router.post('/code_query', async (req, res) => {
     // Get the request parameters
-    const { input, model } = req.body;
+    const { input, prompt, model } = req.body;
 
     // Try/catch block to handle errors
     try {
       if (model === codeLlama.name) {
         // Query Llama with the input
-        const response = await codeLlama.query(input);
+        const response = await codeLlama.code(prompt, input);
         // Return the response
         res.status(200).json(response);
       } else if (model === openai.name) {
