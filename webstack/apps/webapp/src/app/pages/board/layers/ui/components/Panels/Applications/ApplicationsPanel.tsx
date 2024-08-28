@@ -77,6 +77,9 @@ export function ApplicationsPanel(props: ApplicationProps) {
     } else if (appName === 'Calculator') {
       w = 260;
       h = 369;
+    } else if (appName === 'Chat') {
+      w = 800;
+      h = 420;
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;

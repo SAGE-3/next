@@ -118,8 +118,8 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-    const width = 600;
-    const height = 400;
+    const width = 820;
+    const height = 420;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
       title: 'Chat',

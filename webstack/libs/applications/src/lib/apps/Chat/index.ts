@@ -44,7 +44,7 @@ export const init: Partial<state> = {
       creationDate: Date.now(),
       userName: '',
       query: '',
-      response: 'I am SAGE AI! Ask me anything or chat with people in the board',
+      response: 'I am SAGE AI! Ask me anything by directing the question to me (or @S), or chat with people in the board',
       userId: '',
     },
   ],
