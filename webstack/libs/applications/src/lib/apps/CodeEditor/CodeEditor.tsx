@@ -32,7 +32,7 @@ import { format as dateFormat } from 'date-fns/format';
 
 // Import Monaco Editor
 import Editor, { OnMount } from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
+import { editor, Range } from 'monaco-editor';
 
 // Sage3 Imports
 import {
@@ -59,6 +59,7 @@ import { MonacoBinding } from 'y-monaco';
 // CodeEditor API
 import { create } from 'zustand';
 import { generateRequest, generateSystemPrompt } from './ai-request-generator';
+import e from 'express';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -418,9 +419,17 @@ function ToolbarComponent(props: App): JSX.Element {
   async function generate() {
     if (!editor) return;
     const selection = editor.getSelection();
-    // Get the line before the selection
     if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
+    let selectionText;
+    if (selection.isEmpty()) {
+      // Get the whole document
+      selectionText = editor.getModel()?.getValue();
+    } else {
+      // Get the selected text
+      selectionText = editor.getModel()?.getValueInRange(selection);
+      // Comment out the selected text
+      editor.trigger('comment', 'editor.action.commentLine', null);
+    }
     if (!selectionText) return;
     const queryRequest = {
       prompt: generateSystemPrompt(s.language, selectionText, 'generate'),
@@ -431,7 +440,38 @@ function ToolbarComponent(props: App): JSX.Element {
     if (result.success && result.output) {
       // Remove all instances of ``` from generated text
       const cleanedText = result.output.replace(/```.*/g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
+      // Get the current cursor position
+      const position = editor.getPosition();
+      if (!position) return;
+      if (selection.isEmpty()) {
+        // Add the code after the current cursor position
+        // Create a new position right after the current cursor position
+        const newPosition = {
+          lineNumber: position.lineNumber,
+          column: position.column
+        };
+        // The text to append
+        const textToAppend = "\n" + cleanedText.trim();
+        // Execute the edit to insert the text
+        editor.executeEdits('my-source', [{
+          range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+          text: textToAppend,
+          forceMoveMarkers: true
+        }]);
+      } else {
+        // editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
+        // Create a new position right after the current cursor position
+        const newPosition = {
+          lineNumber: position.lineNumber + 1,
+          column: position.column
+        };
+        // Execute the edit to insert the text
+        editor.executeEdits('my-source', [{
+          range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+          text: cleanedText.trim(),
+          forceMoveMarkers: true
+        }]);
+      }
     }
   }
 
