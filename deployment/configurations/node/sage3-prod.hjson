@@ -57,14 +57,13 @@
     "openai": {
       // API Key
       "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
-      "model": "gpt-3.5-turbo"
+      // Model name: gpt-3.5-turbo, gpt-4, gpt-4o-mini, ...
+      // "model": "gpt-3.5-turbo"
+      "model": "gpt-4o-mini"
     },
     "chat": {
       "url": "https://arcade.evl.uic.edu/llama",
       "model": "llama3",
-      // "url": "https://compaasgold03.evl.uic.edu",
-      // "model": "llama2",
       "max_tokens": 2048,
       "apiKey": ""
     },
