@@ -1166,6 +1166,7 @@ export function HomePage() {
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
@@ -1205,6 +1206,7 @@ export function HomePage() {
                                 <BoardRow
                                   key={board._id}
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}

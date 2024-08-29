@@ -10,11 +10,20 @@ import { useColorModeValue, IconButton, Box, useDisclosure, Tooltip, useToast, I
 import { MdStar, MdLink, MdStarOutline, MdSettings, MdInfo, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
-import { Board, PresencePartial } from '@sage3/shared/types';
+import { Board, PresencePartial, Room } from '@sage3/shared/types';
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
 
-export function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: PresencePartial[] }) {
+// Board Card Props
+interface BoardCardProps {
+  board: Board;
+  room: Room;
+  selected: boolean;
+  onClick: (board: Board) => void;
+  usersPresent: PresencePartial[];
+}
+
+export function BoardCard(props: BoardCardProps) {
   const { user, saveBoard, removeBoard } = useUser();
 
   const toast = useToast();
@@ -29,6 +38,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
   const isYourBoard = user?._id == props.board._createdBy;
+  const isRoomOwner = user?._id == props.room._createdBy;
 
   const grayedOutColorValue = useColorModeValue('gray.100', 'gray.700');
   const grayedOutColor = useHexColor(grayedOutColorValue);
@@ -160,15 +170,15 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
             </Box>
           </Tooltip>
 
-          <Tooltip placement="top" hasArrow={true} isDisabled={!isYourBoard} label={'Edit board settings'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} isDisabled={!isYourBoard && !isRoomOwner} label={'Edit board settings'} openDelay={400}>
             <IconButton
               size="sm"
               variant={'ghost'}
-              color={isYourBoard ? borderColor : grayedOutColor}
+              color={isYourBoard || isRoomOwner ? borderColor : grayedOutColor}
               aria-label="favorite-board"
               fontSize="xl"
               onClick={handleSettings}
-              isDisabled={!isYourBoard}
+              isDisabled={!isYourBoard && !isRoomOwner}
               onDoubleClick={handleBlockDoubleClick}
               icon={<MdSettings />}
             ></IconButton>
