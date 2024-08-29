@@ -37,8 +37,8 @@ export interface PanelUI {
 
 interface UIState {
   // Panels
-  panels: PanelUI[];
-  getPanel: (name: PanelNames) => PanelUI | undefined;
+  panels: { [name: string]: PanelUI };
+  zOrder: PanelNames[];
   updatePanel: (name: PanelNames, updates: Partial<PanelUI>) => void;
   bringPanelForward: (panel: PanelNames) => void;
 }
@@ -47,81 +47,79 @@ interface UIState {
  * The UIStore.
  */
 export const usePanelStore = create<UIState>()((set, get) => ({
-  panels: [
-    {
+  panels: {
+    applications: {
       position: { x: 5, y: 105 },
       name: 'applications',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    assets: {
       position: { x: 5, y: 105 },
       name: 'assets',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    navigation: {
       position: { x: 5, y: 105 },
       name: 'navigation',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    annotations: {
       position: { x: 5, y: 105 },
       name: 'annotations',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    users: {
       position: { x: 5, y: 105 },
       name: 'users',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    controller: {
       position: { x: 5, y: 35 },
       name: 'controller',
       stuck: StuckTypes.Left,
       minimized: false,
       show: true,
     },
-    {
+    plugins: {
       position: { x: 5, y: 105 },
       name: 'plugins',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-    {
+    kernels: {
       position: { x: 5, y: 105 },
       name: 'kernels',
       stuck: StuckTypes.None,
       minimized: false,
       show: false,
     },
-  ],
-  getPanel: (name: PanelNames) => get().panels.find((el) => el.name === name),
+  },
+  zOrder: ['applications', 'assets', 'users', 'navigation', 'controller', 'annotations', 'plugins', 'kernels'],
   updatePanel: (name: PanelNames, updates: Partial<PanelUI>) => {
-    const panels = [...get().panels];
-    const idx = panels.findIndex((el) => el.name === name);
-    if (idx > -1) {
-      panels[idx] = { ...panels[idx], ...updates };
+    const panel = get().panels[name];
+    if (panel) {
+      set({ panels: { ...get().panels, [name]: { ...panel, ...updates } } });
     }
-    set({ panels: panels });
   },
   bringPanelForward: (name: PanelNames) => {
-    const z = get().panels;
-    const i = z.findIndex((el) => el.name === name);
-    if (i >= 0) {
-      const panel = z.splice(i, 1);
-      z.push(panel[0]);
-      set({ panels: z });
+    const zOrder = get().zOrder;
+    const idx = zOrder.findIndex((el) => el === name);
+    if (idx > -1) {
+      zOrder.splice(idx, 1);
+      zOrder.push(name);
     }
+    set({ zOrder: zOrder });
   },
 }));
 
