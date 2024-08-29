@@ -47,6 +47,7 @@ export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: s
         background={linearBGColor}
         p="1"
         px="2"
+        width="100%"
         display="flex"
         justifyContent={'space-between'}
         alignItems={'center'}

@@ -146,6 +146,7 @@ export function HomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+  const [membersSearch, setMembersSearch] = useState<string>('');
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -395,6 +396,10 @@ export function HomePage() {
 
   const boardSearchFilter = (board: Board) => {
     return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
+
+  const membersSearchFilter = (user: User) => {
+    return fuzzySearch(user.data.name + ' ' + user.data.email, membersSearch);
   };
 
   // Check to see if the user is the owner but not a member in weird cases
@@ -1230,8 +1235,15 @@ export function HomePage() {
                         },
                       }}
                     >
+                      <InputGroup size="md" width="415px" my="1">
+                        <InputLeftElement pointerEvents="none">
+                          <MdSearch />
+                        </InputLeftElement>
+                        <Input placeholder="Search Members" value={membersSearch} onChange={(e) => setMembersSearch(e.target.value)} />
+                      </InputGroup>
                       {users
                         .filter(membersFilter)
+                        .filter(membersSearchFilter)
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((u) => {
                           return (
