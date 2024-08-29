@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, Tooltip, useDisclosure } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, Text, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import { ConfirmModal, useHexColor, useRoomStore } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 import { MdClose, MdPerson } from 'react-icons/md';
@@ -37,9 +37,19 @@ export function UserRow(props: UserRowProps) {
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
+  // Toast
+  const toast = useToast();
+
   // Remove the user from the room
-  const handleRemoveUser = () => {
-    removeUserRoomMembership(props.roomId, props.user._id);
+  const handleRemoveUser = async () => {
+    const response = await removeUserRoomMembership(props.roomId, props.user._id);
+    toast({
+      title: response ? 'Member Removed' : 'Error',
+      description: response ? 'The member has been removed from the room.' : 'Failed to remove the member from the room.',
+      status: response ? 'success' : 'error',
+      duration: 5000,
+      isClosable: true,
+    });
   };
 
   return (

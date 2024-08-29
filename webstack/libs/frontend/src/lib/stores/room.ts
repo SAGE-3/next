@@ -25,7 +25,7 @@ interface RoomState {
   members: RoomMembers[];
   joinRoomMembership: (roomId: string) => Promise<void>;
   leaveRoomMembership: (roomId: string) => Promise<void>;
-  removeUserRoomMembership: (roomId: string, userId: string) => Promise<void>;
+  removeUserRoomMembership: (roomId: string, userId: string) => Promise<boolean>;
   clearError: () => void;
   create: (newRoom: RoomSchema) => Promise<Room | undefined>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
@@ -97,7 +97,7 @@ const RoomStore = create<RoomState>()((set, get) => {
     },
     removeUserRoomMembership: async (roomId: string, userId: string) => {
       const response = await APIHttp.POST<any>(`/roommembers/remove`, { roomId, userId });
-      console.log(response);
+      return response.success;
     },
     clearError: () => {
       set({ error: null });
