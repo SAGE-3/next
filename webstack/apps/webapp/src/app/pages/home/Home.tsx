@@ -1217,10 +1217,11 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
-                  <Box display="flex" width="800px">
+                  <Box display="flex" width="400px">
                     <VStack
                       gap="3"
                       pr="2"
+                      width="100%"
                       style={{ height: 'calc(100svh - 340px)' }}
                       overflowY="scroll"
                       alignContent="left"
@@ -1235,7 +1236,7 @@ export function HomePage() {
                         },
                       }}
                     >
-                      <InputGroup size="md" width="415px" my="1">
+                      <InputGroup size="md" width="100%" my="1">
                         <InputLeftElement pointerEvents="none">
                           <MdSearch />
                         </InputLeftElement>
@@ -1246,12 +1247,14 @@ export function HomePage() {
                         .filter(membersSearchFilter)
                         .sort((a, b) => a.data.name.localeCompare(b.data.name))
                         .map((u) => {
+                          const online = partialPrescences.find((p) => p.data.userId === u._id);
                           return (
                             <UserRow
                               key={u._id}
                               user={u}
                               currUserIsOwner={selectedRoom.data.ownerId === user?._id}
                               roomId={selectedRoom._id}
+                              online={online ? true : false}
                             />
                           );
                         })}

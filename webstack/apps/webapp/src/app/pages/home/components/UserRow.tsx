@@ -11,14 +11,25 @@ import { ConfirmModal, useHexColor, useRoomStore } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
 import { MdClose, MdPerson } from 'react-icons/md';
 
-export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: string }) {
-  const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
-  const borderColor = useHexColor(borderColorValue);
+// User Row Props
+interface UserRowProps {
+  user: User;
+  currUserIsOwner: boolean;
+  roomId: string;
+  online: boolean;
+}
 
+export function UserRow(props: UserRowProps) {
   const { removeUserRoomMembership } = useRoomStore();
 
-  const online = useHexColor('teal');
+  const isOnline = props.online;
+
+  // Colors
+  const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
+  const online = useHexColor(borderColorValue);
   const offline = useHexColor('gray.700');
+
+  const color = isOnline ? online : offline;
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
     `linear-gradient(178deg, #303030, #252525, #262626)`
@@ -53,19 +64,12 @@ export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: s
         alignItems={'center'}
         borderRadius="md"
         boxSizing="border-box"
-        border={`solid 1px ${borderColor}`}
-        borderLeft={`solid 8px ${borderColor}`}
+        border={`solid 1px ${color}`}
+        borderLeft={`solid 8px ${color}`}
         transition={'all 0.2s ease-in-out'}
       >
         <Box display="flex" alignItems={'left'}>
-          <IconButton
-            size="md"
-            variant={'ghost'}
-            aria-label="enter-board"
-            fontSize="4xl"
-            color={borderColor}
-            icon={<MdPerson />}
-          ></IconButton>
+          <IconButton size="md" variant={'ghost'} aria-label="enter-board" fontSize="4xl" color={color} icon={<MdPerson />}></IconButton>
           <Box display="flex" flexDir="column" ml="2">
             <Text
               fontSize="sm"
@@ -91,7 +95,7 @@ export function UserRow(props: { user: User; currUserIsOwner: boolean; roomId: s
                 variant={'ghost'}
                 aria-label="enter-board"
                 fontSize="xl"
-                color={borderColor}
+                color={color}
                 onClick={delConfirmOnOpen}
                 icon={<MdClose />}
               />
