@@ -220,7 +220,6 @@ export function Apps() {
   useHotkeys(
     'z',
     (evt) => {
-      console.log(evt);
       if (boardCursor && apps.length > 0 && !appDragging) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
