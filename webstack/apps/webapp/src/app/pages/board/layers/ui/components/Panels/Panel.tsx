@@ -71,7 +71,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
+  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
@@ -92,8 +92,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
-          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
+          onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
+        // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -122,7 +122,7 @@ export function Panel(props: PanelProps) {
   // Panel Store
   const panel = usePanelStore((state) => state.panels[props.name]);
   if (!panel) return null;
-  const panels = usePanelStore((state) => state.panels);
+  // const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
   const zIndex = usePanelStore((state) => state.zOrder.indexOf(props.name));
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);

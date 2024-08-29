@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, useDisclosure, Tooltip, useToast, Icon, Fade } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, useDisclosure, Tooltip, useToast, Icon } from '@chakra-ui/react';
 import { MdStar, MdLink, MdStarOutline, MdSettings, MdInfo, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';

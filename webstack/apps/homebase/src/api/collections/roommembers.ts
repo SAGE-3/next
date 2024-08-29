@@ -19,9 +19,8 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
     const router = sageRouter<RoomMembersSchema>(this);
 
     router.post('/join', async ({ body, user }, res) => {
-      // console.log('Joining room', body);
       let doc = null;
-      const userId = (user as any).id;
+      const userId = user.id;
       const roomId = body.roomId;
 
       if (userId && roomId) {
@@ -43,7 +42,7 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
 
     router.post('/leave', async ({ body, user }, res) => {
       let doc = null;
-      const userId = (user as any).id;
+      const userId = user.id;
       const roomId = body.roomId;
       if (userId && roomId) {
         // Get the current doc if it exists
@@ -70,7 +69,7 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
         if (currentDoc) {
           // Check if the user making the request is the owner of the room
           const room = await RoomsCollection.get(roomId);
-          if (room && room?.data.ownerId !== (user as any).id) {
+          if (room && room?.data.ownerId !== user.id) {
             res.status(500).send({ success: false, message: 'You are not the owner of the room.' });
             return;
           }
