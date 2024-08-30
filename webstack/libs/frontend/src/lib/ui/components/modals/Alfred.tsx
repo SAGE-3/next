@@ -55,6 +55,7 @@ import {
   setupAppForFile,
   downloadFile,
   apiUrls,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -75,9 +76,10 @@ const MaxElements = 12;
 export function Alfred(props: props) {
   // Configuration information
   const config = useConfigStore((state) => state.config);
-  // UI
-  const displayUI = useUIStore((state) => state.displayUI);
-  const hideUI = useUIStore((state) => state.hideUI);
+
+  // User Settings
+  const { toggleShowUI } = useUserSettings();
+
   // chakra color mode
   const { colorMode, toggleColorMode } = useColorMode();
   const toast = useToast();
@@ -97,6 +99,9 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
+    let w = 400;
+    let h = 400;
+
     const state = {} as AppState;
     // Check if the app is enabled in the config
     if (appName === 'SageCell' && config.features && !config.features.apps.includes('SageCell')) return;
@@ -105,7 +110,10 @@ export function Alfred(props: props) {
     } else {
       state.accessId = accessId;
     }
-
+    if (appName === 'Calculator') {
+      w = 260;
+      h = 369;
+    }
     // Get around  the center of the board
     const bx = useUIStore.getState().boardPosition.x;
     const by = useUIStore.getState().boardPosition.y;
@@ -118,7 +126,7 @@ export function Alfred(props: props) {
       roomId: props.roomId,
       boardId: props.boardId,
       position: { x: x - 200, y: y - 200, z: 0 },
-      size: { width: 400, height: 400, depth: 0 },
+      size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
       state: { ...(initialValues[appName] as AppState), ...state },
@@ -131,13 +139,12 @@ export function Alfred(props: props) {
   const saveBoard = (name: string) => {
     const selectedapps = useUIStore.getState().savedSelectedAppsIds;
     // Use selected apps if any or all apps
-    const apps = selectedapps.length > 0 ?
-      useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id))
-      : useAppStore.getState().apps;
+    const apps =
+      selectedapps.length > 0 ? useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id)) : useAppStore.getState().apps;
     let filename = name || 'board.s3json';
     if (!filename.endsWith('.s3json')) filename += '.s3json';
     const namespace = useConfigStore.getState().config.namespace;
-    const assets = apps.reduce<{ id: string, url: string, filename: string }[]>(function (arr, app) {
+    const assets = apps.reduce<{ id: string; url: string; filename: string }[]>(function (arr, app) {
       if (app.data.state.assetid) {
         // Generate a public URL of the file
         const token = uuidv5(app.data.state.assetid, namespace);
@@ -152,12 +159,12 @@ export function Alfred(props: props) {
     // Data structure to save
     const savedapps = apps.map((app) => {
       // making sure apps have the right state
-      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state, } } };
+      return { ...app, data: { ...app.data, state: { ...initialValues[app.data.type], ...app.data.state } } };
     });
     const session = {
       assets: assets,
       apps: savedapps, // apps,
-    }
+    };
     const payload = JSON.stringify(session, null, 2);
     const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
     // Trigger the download
@@ -245,14 +252,12 @@ export function Alfred(props: props) {
           dragging: false,
           pinned: false,
         });
+      } else if (terms[0] === 'calc' || terms[0] === 'calculator') {
+        newApplication('Calculator');
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
         newApplication('SageCell');
-      } else if (terms[0] === 'showui') {
-        // Show all the UI elements
-        displayUI();
-      } else if (terms[0] === 'hideui') {
-        // Hide all the UI elements
-        hideUI();
+      } else if (terms[0] === 'toggleui') {
+        toggleShowUI();
       } else if (terms[0] === 'light') {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
@@ -541,6 +546,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                   </ListItem>
                   <ListItem>
                     <b>light</b> : Switch to light mode
+                  </ListItem>
+                  <ListItem>
+                    <b>calc</b> : Open the calculator app
                   </ListItem>
                   <ListItem>
                     <b>dark</b> : Switch to dark mode

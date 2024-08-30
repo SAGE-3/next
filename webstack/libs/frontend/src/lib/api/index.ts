@@ -7,10 +7,11 @@
  */
 
 import { App } from '@sage3/applications/schema';
-import { Asset, Board, Message, Plugin, Presence, Room, User, Insight, RoomMembers } from '@sage3/shared/types';
+import { Asset, Board, Message, Plugin, Presence, Room, User, Insight, RoomMembers, Annotation } from '@sage3/shared/types';
 
 export * from './http/index';
 export * from './ws/api-socket';
 export * from './fastapi/fastapi';
+export * from './ai';
 
-export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User | Insight | RoomMembers;
+export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User | Insight | RoomMembers | Annotation;

@@ -68,8 +68,8 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
     setboardURL('');
     // Give user some feedback
     toast({
-      title: 'Invalid Board ID',
-      description: 'This link is invalid.',
+      title: 'Invalid Board Reference',
+      description: 'This link or ID is invalid.',
       duration: 3000,
       isClosable: true,
       status: 'error',
@@ -80,18 +80,42 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
   const handleSubmit = async () => {
     // Update local state
     setSubmitStatus('submitted');
-
-    // Check if the URL is valid
-    // Check if it starts with sage3
-    if (!boardUrl.startsWith('sage3://')) {
-      // Invalid URL
-      // Reset local state
+    // Clean up the string
+    const useUrl = boardUrl.trim();
+    // Is it a valid ID: 11 characters long and has a dash in the middle
+    const isID = useUrl.length === 11 && (useUrl.split('-').length === 2);
+    if (isID) {
+      // Fetch board from the server
+      const response = await fetch(apiUrls.boards.getBoards());
+      const results = (await response.json()) as { success: boolean; data: Board[] };
+      // Check the data we got back
+      if (results.success) {
+        // Get the data
+        const board = results.data.find((board) => board.data.code === useUrl);
+        if (board) {
+          // Update local state
+          setSubmitStatus('success');
+          // Set Board
+          setBoard(board);
+          setSubmitStatus('pending');
+          changeBoardOnOpen();
+        }
+        else {
+          invalidURLReset();
+          return;
+        }
+      } else {
+        invalidURLReset();
+        return;
+      }
+    } else if (!useUrl.startsWith('sage3://')) {
+      // Invalid URL: reset local state
       invalidURLReset();
       return;
     } else {
-      // Lets Process the URL
+      // Lets Process the URL: starts with sage3
       // Remove sage3://
-      const url = new URL(boardUrl.replace('sage3://', 'https://'));
+      const url = new URL(useUrl.replace('sage3://', 'https://'));
       // Get the hostname
       const hostname = url.hostname;
       // Get the boardId
@@ -168,11 +192,11 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
       <ConfirmModal
         isOpen={differentServerIsOpen}
         onClose={cancelReset}
-        title={'Different Server'}
+        title={'Different Hub'}
         cancelText={'Cancel'}
         confirmText="Confirm"
         confirmColor="green"
-        message={`This board exists on a different server. Are you sure you want to leave this server?`}
+        message={`This board exists on a different hub. Are you sure you want to leave this hub?`}
         onConfirm={differentServerConfirm}
       />
 
@@ -189,19 +213,19 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
 
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Enter Board by URL</ModalHeader>
+        <ModalHeader>Join Board with ID or URL</ModalHeader>
         <ModalBody mb="2">
           {submitStatus === 'pending' ? (
             <Box mx={2} width="500px">
               <form onSubmit={handleSubmit}>
                 <InputGroup>
-                  <InputLeftAddon children="URL" />
+                  <InputLeftAddon children="Board" />
                   <Input
                     value={boardUrl}
                     onChange={handleInputChange}
                     onSubmit={handleSubmit}
                     fontSize="sm"
-                    placeholder="Enter URL"
+                    placeholder="Board ID or URL"
                     spellCheck={false}
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                   />

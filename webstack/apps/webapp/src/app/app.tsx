@@ -15,8 +15,19 @@ import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
 
 // SAGE3
 import {
-  theme, UserProvider, useUser, AuthProvider, useAuth, CheckUrlForBoardId,
-  SocketAPI, useHexColor, useData, CursorBoardPositionProvider, apiUrls
+  theme,
+  UserProvider,
+  useUser,
+  AuthProvider,
+  useAuth,
+  CheckUrlForBoardId,
+  SocketAPI,
+  useHexColor,
+  useData,
+  CursorBoardPositionProvider,
+  apiUrls,
+  UserSettingsProvider,
+  YjsProvider,
 } from '@sage3/frontend';
 import { OpenConfiguration } from '@sage3/shared/types';
 // Pages
@@ -82,85 +93,89 @@ export function App() {
 
   return (
     <ChakraProvider theme={theme}>
-      <AuthProvider>
-        <UserProvider>
-          {status ? (
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
+      <UserSettingsProvider>
+        <AuthProvider>
+          <UserProvider>
+            {status ? (
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
 
-              <Route
-                path="/createuser"
-                element={
-                  <ProtectedAuthRoute>
-                    <AccountPage />
-                  </ProtectedAuthRoute>
-                }
-              />
-              <Route
-                path="/home/:roomId"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <HomePage />
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
-              <Route
-                path="/home"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <HomePage />
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
+                <Route
+                  path="/createuser"
+                  element={
+                    <ProtectedAuthRoute>
+                      <AccountPage />
+                    </ProtectedAuthRoute>
+                  }
+                />
+                <Route
+                  path="/home/:roomId"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <HomePage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
+                <Route
+                  path="/home"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <HomePage />
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
 
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedAdminRoute>
-                      <AdminPage />
-                    </ProtectedAdminRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedAdminRoute>
+                        <AdminPage />
+                      </ProtectedAdminRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
 
-              <Route
-                path="/board/:roomId/:boardId"
-                element={
-                  <ProtectedAuthRoute>
-                    <ProtectedUserRoute>
-                      <CursorBoardPositionProvider>
-                        <BoardPage />
-                      </CursorBoardPositionProvider>
-                    </ProtectedUserRoute>
-                  </ProtectedAuthRoute>
-                }
-              />
-            </Routes>
-          ) : (
-            <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
-              <Box width="100%" maxWidth="1200px">
-                <Text fontSize="7xl" pb="0">
-                  SAGE3
-                </Text>
+                <Route
+                  path="/board/:roomId/:boardId"
+                  element={
+                    <ProtectedAuthRoute>
+                      <ProtectedUserRoute>
+                        <CursorBoardPositionProvider>
+                          <YjsProvider>
+                            <BoardPage />
+                          </YjsProvider>
+                        </CursorBoardPositionProvider>
+                      </ProtectedUserRoute>
+                    </ProtectedAuthRoute>
+                  }
+                />
+              </Routes>
+            ) : (
+              <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
+                <Box width="100%" maxWidth="1200px">
+                  <Text fontSize="7xl" pb="0">
+                    SAGE3
+                  </Text>
 
-                <Text fontSize="3xl" color={color} mb="5">
-                  Lost connection to server.
-                </Text>
-                <Button onClick={() => window.location.reload()} colorScheme="green" size="lg">
-                  Try to reconnect
-                </Button>
+                  <Text fontSize="3xl" color={color} mb="5">
+                    Lost connection to server.
+                  </Text>
+                  <Button onClick={() => window.location.reload()} colorScheme="green" size="lg">
+                    Try to reconnect
+                  </Button>
+                </Box>
               </Box>
-            </Box>
-          )}
-        </UserProvider>
-      </AuthProvider>
+            )}
+          </UserProvider>
+        </AuthProvider>
+      </UserSettingsProvider>
     </ChakraProvider>
   );
 }

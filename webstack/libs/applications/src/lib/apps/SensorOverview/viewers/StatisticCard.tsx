@@ -12,7 +12,6 @@ import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 import { AppState } from '@sage3/applications/schema';
 
 import variableUnits from '../data/variableUnits';
-import { getFormattedTimePeriod } from '../SensorOverview';
 import { VariableProps } from '../types/types';
 
 // Calculate the average of all the numbers
@@ -258,9 +257,9 @@ const Content = (props: {
 
   useEffect(() => {
     if (props.size.width < props.size.height) {
-      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
+      setScaleToFontSize(props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 15);
     } else {
-      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10);
+      setScaleToFontSize(props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 15);
     }
   }, [JSON.stringify(props.size), JSON.stringify(props.stationNames)]);
 
@@ -289,8 +288,8 @@ const Content = (props: {
         border={`${scaleToFontSize / 100}px solid grey`}
         pl="1"
         pt="1"
-        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
-        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 15}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 15}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}
@@ -338,7 +337,7 @@ const Content = (props: {
                 border={`${scaleToFontSize / 100}px solid grey`}
                 style={{ backgroundColor: colorMode === 'light' ? '#f1f1f1' : '#2A2A2A' }}
               >
-                <Text>{getFormattedTimePeriod(props.timePeriod)}</Text>
+                <Text>{props.timePeriod}</Text>
                 <Box mt={scaleToFontSize / 25} display="flex" flexDir="row" justifyContent="space-between">
                   <Box>
                     <Text>Low</Text>

@@ -22,12 +22,13 @@ import {
   MdOpenInNew,
   MdCopyAll,
   MdFileUpload,
+  MdWeb,
 } from 'react-icons/md';
 import { FaEyeSlash } from 'react-icons/fa';
 
 import { create } from 'zustand';
 
-import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls, useUIStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
@@ -38,17 +39,17 @@ import { isElectron } from './util';
 import { WebviewTag } from 'electron';
 
 interface WebviewStore {
-  title: { [key: string]: string },
-  setTitle: (id: string, title: string) => void,
+  title: { [key: string]: string };
+  setTitle: (id: string, title: string) => void;
 
-  mute: { [key: string]: boolean },
-  setMute: (id: string, mute: boolean) => void,
+  mute: { [key: string]: boolean };
+  setMute: (id: string, mute: boolean) => void;
 
-  view: { [key: string]: WebviewTag },
-  setView: (id: string, view: WebviewTag) => void,
+  view: { [key: string]: WebviewTag };
+  setView: (id: string, view: WebviewTag) => void;
 
-  localURL: { [key: string]: string },
-  setLocalURL: (id: string, url: string) => void
+  localURL: { [key: string]: string };
+  setLocalURL: (id: string, url: string) => void;
 }
 
 export const useStore = create<WebviewStore>()((set) => ({
@@ -80,6 +81,9 @@ function AppComponent(props: App): JSX.Element {
   const mute = useStore((state) => state.mute[props._id]);
   const setMute = useStore((state) => state.setMute);
   const createApp = useAppStore((state) => state.create);
+
+  // UI
+  const boardDragging = useUIStore((state) => state.boardDragging);
 
   // User and board info
   const { boardId, roomId } = useParams();
@@ -311,10 +315,11 @@ function AppComponent(props: App): JSX.Element {
     height: props.data.size.height + 'px',
     objectFit: 'contain',
     background: 'white',
+    visibility: boardDragging ? 'hidden' : 'visible',
   };
 
   return (
-    <AppWindow app={props}>
+    <AppWindow app={props} hideBackgroundIcon={MdWeb}>
       {isElectron() ? (
         <div>
           {/* button */}
@@ -461,43 +466,46 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
-  const saveInAssetManager = useCallback((val: string) => {
-    // save URL in asset manager
-    if (!val.endsWith('.url')) {
-      val += '.url';
-    }
-    // Generate the content of the file
-    const content = `[InternetShortcut]\nURL=${viewURL}\n`;
-    // Save the code in the asset manager
-    if (roomId) {
-      // Create a form to upload the file
-      const fd = new FormData();
-      const codefile = new File([new Blob([content])], val);
-      fd.append('files', codefile);
-      // Add fields to the upload form
-      fd.append('room', roomId);
-      // Upload with a POST request
-      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
-        .catch((error: Error) => {
-          toast({
-            title: 'Upload',
-            description: 'Upload failed: ' + error.message,
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
+  const saveInAssetManager = useCallback(
+    (val: string) => {
+      // save URL in asset manager
+      if (!val.endsWith('.url')) {
+        val += '.url';
+      }
+      // Generate the content of the file
+      const content = `[InternetShortcut]\nURL=${viewURL}\n`;
+      // Save the code in the asset manager
+      if (roomId) {
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([content])], val);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
           });
-        })
-        .finally(() => {
-          toast({
-            title: 'Upload',
-            description: 'Upload complete',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  }, [viewURL, roomId]);
+      }
+    },
+    [viewURL, roomId]
+  );
 
   return (
     <HStack>
@@ -578,13 +586,16 @@ function ToolbarComponent(props: App): JSX.Element {
           </ButtonGroup>
 
           <ConfirmValueModal
-            isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={saveInAssetManager}
-            title="Save URL in Asset Manager" message="Select a file name:"
+            isOpen={saveIsOpen}
+            onClose={saveOnClose}
+            onConfirm={saveInAssetManager}
+            title="Save URL in Asset Manager"
+            message="Select a file name:"
             initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
-            cancelText="Cancel" confirmText="Save"
+            cancelText="Cancel"
+            confirmText="Save"
             confirmColor="green"
           />
-
         </>
       ) : (
         <>
@@ -608,6 +619,8 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

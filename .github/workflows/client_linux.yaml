@@ -21,16 +21,16 @@ jobs:
     runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Build
-        run: npx electron-packager ./ --platform=linux --arch=x64 --icon=s3.icns --overwrite
+        run: npx electron-packager ./ --platform=linux --arch=x64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team"
       - name: Chmod
         run: chmod +x SAGE3-linux-x64/SAGE3
       - name: Readme
@@ -38,7 +38,7 @@ jobs:
         working-directory: webstack/clients/electron
       - name: Tar files
         run: tar -cvf SAGE3-linux-x64.tar SAGE3-linux-x64
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: SAGE3-linux-client-ubuntu-20.04
           path: webstack/clients/electron/SAGE3-linux-x64

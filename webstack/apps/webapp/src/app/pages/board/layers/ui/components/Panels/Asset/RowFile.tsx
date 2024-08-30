@@ -35,8 +35,17 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf, MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2 } from 'react-icons/md';
+import {
+  MdJavascript,
+  MdOutlineLink,
+  MdOutlineMap,
+  MdOutlinePictureAsPdf,
+  MdOutlineImage,
+  MdOutlineFilePresent,
+  MdOndemandVideo,
+} from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
+import { LuFileCode, LuFileJson } from 'react-icons/lu';
 
 import {
   humanFileSize,
@@ -61,6 +70,7 @@ export type RowFileProps = {
   file: FileEntry;
   clickCB: (p: FileEntry, shift: boolean, modif: boolean) => void;
   dragCB: (e: React.DragEvent<HTMLDivElement>) => void;
+  scale: number;
 };
 
 /**
@@ -70,7 +80,7 @@ export type RowFileProps = {
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
+export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
   const { auth } = useAuth();
@@ -94,8 +104,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
-
-  const scale = useUIStore((state) => state.scale);
 
   // Abilities
   const canCreateApp = useAbility('create', 'apps');
@@ -207,6 +215,18 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
     switch (type) {
       case 'url':
         return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+      case 'json':
+        return <LuFileJson style={{ color: 'white' }} size={'20px'} />;
+      case 'yaml':
+      case 'ts':
+      case 'html':
+      case 'css':
+      case 'cpp':
+      case 'c':
+      case 'java':
+        return <LuFileCode style={{ color: 'white' }} size={'20px'} />;
+      case 'js':
+        return <MdJavascript style={{ color: 'yellow' }} size={'20px'} />;
       case 'py':
         return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
@@ -223,8 +243,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
       case 'qt':
         return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-      case 'json':
-        return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
       default:
         return <MdOutlineFilePresent size={'20px'} />;
     }

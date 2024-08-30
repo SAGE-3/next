@@ -28,17 +28,19 @@ import {
   isGLTF,
   isGIF,
   isFileURL,
-  isPythonNotebook,
   isTiff,
   isSessionFile,
+  isCode,
+  isPythonNotebook,
+  mimeToCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
-import { GetConfiguration, apiUrls } from '../config';
-import { useAssetStore, useAppStore, useUIStore } from '../stores';
+import { apiUrls } from '../config';
 import { useUser } from '../providers';
+import { useAssetStore, useAppStore, useUIStore, useConfigStore } from '../stores';
 
 /**
  * Setup data structure to open an application
@@ -132,7 +134,7 @@ export function useFiles(): UseFiles {
                 });
                 const session = await response.json();
                 const apps = session.apps as App[];
-                const newassets = session.assets as { id: string, url: string, filename: string }[];
+                const newassets = session.assets as { id: string; url: string; filename: string }[];
                 let xmin = useUIStore.getState().boardWidth;
                 let ymin = useUIStore.getState().boardHeight;
                 for (const app of apps) {
@@ -170,9 +172,9 @@ export function useFiles(): UseFiles {
                     roomId: configDrop.roomId,
                     boardId: configDrop.boardId,
                     position: {
-                      x: (app.data.position.x - xmin) + configDrop.xDrop,
-                      y: (app.data.position.y - ymin) + configDrop.yDrop,
-                      z: 0
+                      x: app.data.position.x - xmin + configDrop.xDrop,
+                      y: app.data.position.y - ymin + configDrop.yDrop,
+                      z: 0,
                     },
                     size: app.data.size,
                     rotation: app.data.rotation,
@@ -350,23 +352,40 @@ export function useFiles(): UseFiles {
               const words = line.split('=');
               // the URL
               const goto = words[1].trim();
-              return setupApp(
-                goto,
-                'WebpageLink',
-                xDrop - 200, yDrop - 200,
-                roomId, boardId,
-                { w: w, h: w },
-                { url: goto }
-              );
+              return setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto });
             }
           }
           return null;
+        }
+      }
+    } else if (isCode(fileType)) {
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'text/plain',
+              Accept: 'text/plain',
+            },
+          });
+          // Get the content of the file
+          const text = await response.text();
+          // Get Language from mimetype
+          const lang = mimeToCode(a.data.mimetype);
+          // Create a note from the text
+          return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
+            { content: text, language: lang, filename: a.data.originalfilename });
         }
       }
     } else if (isGIF(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {
         if (a._id === fileID) {
+          const extras = a.data.derived as ExtraImageType;
+          const imw = w;
+          const imh = w / (extras.aspectRatio || 1);
           return setupApp(
             a.data.originalfilename,
             'ImageViewer',
@@ -374,8 +393,8 @@ export function useFiles(): UseFiles {
             yDrop,
             roomId,
             boardId,
-            { w: w, h: w },
-            { assetid: apiUrls.assets.getAssetById(a.data.file) }
+            { w: imw, h: imh },
+            { assetid: fileID }
           );
         }
       }
@@ -477,43 +496,45 @@ export function useFiles(): UseFiles {
           return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
         }
       }
-      // } else if (isPythonNotebook(fileType)) {
-      //   // Look for the file in the asset store
-      //   for (const a of assets) {
-      //     if (a._id === fileID) {
-      //       const localurl = apiUrls.assets.getAssetById(a.data.file);
-      //       // Get the content of the file
-      //       const response = await fetch(localurl, {
-      //         headers: {
-      //           'Content-Type': 'application/json',
-      //           Accept: 'application/json',
-      //         },
-      //       });
-      //       const json = await response.json();
-      //       // Create a notebook file in Jupyter with the content of the file
-      //       const conf = await GetConfiguration();
-      //       if (conf.token) {
-      //         // Create a new notebook
-      //         const base = `http://${window.location.hostname}:8888`;
-      //         // Talk to the jupyter server API
-      //         const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
-      //         const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-      //         // Create a new notebook
-      //         const response = await fetch(j_url, {
-      //           method: 'PUT',
-      //           headers: {
-      //             'Content-Type': 'application/json',
-      //             Authorization: 'Token ' + conf.token,
-      //           },
-      //           body: JSON.stringify(payload),
-      //         });
-      //         const res = await response.json();
-      //         console.log('Jupyter> notebook created', res);
-      //         // Create a note from the json
-      //         return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
-      //       }
-      //     }
-      //   }
+    } else if (isPythonNotebook(fileType)) {
+      console.log('Jupyter> drag notebook')
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          });
+          const json = await response.json();
+          // Create a notebook file in Jupyter with the content of the file
+          const conf = useConfigStore.getState().config;
+          // const conf = await GetConfiguration();
+          if (conf.token) {
+            // Create a new notebook
+            const base = `http://${window.location.hostname}:8888`;
+            // Talk to the jupyter server API
+            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
+            const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+            // Create a new notebook
+            const response = await fetch(j_url, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Token ' + conf.token,
+              },
+              body: JSON.stringify(payload),
+            });
+            const res = await response.json();
+            console.log('Jupyter> notebook created', res);
+            // Create a note from the json
+            return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
+          }
+        }
+      }
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {

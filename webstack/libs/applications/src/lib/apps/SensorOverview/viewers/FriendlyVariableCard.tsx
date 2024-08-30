@@ -282,8 +282,8 @@ const Content = (props: {
         border={`${scaleToFontSize / 100}px solid grey`}
         pl="1"
         pt="1"
-        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
-        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 1}
+        w={props.size.width / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
+        h={props.size.height / Math.ceil(Math.sqrt(props.stationNames.length)) - 10}
         // bgColor={`${props.variable.color}`}
 
         style={{ backgroundColor: colorMode === 'light' ? '#fff' : '#222' }}

@@ -7,7 +7,7 @@
  */
 
 const fs = require('fs');
-var electron_notarize = require('electron-notarize');
+var electron_notarize = require('@electron/notarize');
 
 async function GO() {
   console.log('Starting');

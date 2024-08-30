@@ -1,0 +1,32 @@
+{
+  "prefix": "Extract the name from the following greeting:",
+  "input_variables": [
+    "greeting"
+  ],
+  "partial_variables": {
+    "format_instructions": "{FORMAT_INSTRUCTIONS_PLACEHOLDER}"
+  },
+  "examples_info": {
+      "examples_template": "greeting: {example_greeting}\nname: {example_name}```json",
+    "examples_data": [
+      {
+        "example_greeting": "Hello, my name is John.",
+        "example_name": "John"
+      },
+      {
+        "example_greeting": "Yo, I'm Sarah.",
+        "example_name": "Sarah"
+      },
+      {
+        "example_greeting": "Hey, I'm Alex.",
+        "example_name": "Alex"
+      }
+
+    ],
+    "example_separator": "\n\n"
+  },
+  "suffix": "greeting: {greeting}\n```json",
+  "parser": "test_output_parser"
+}
+
+

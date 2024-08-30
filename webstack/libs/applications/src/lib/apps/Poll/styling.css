@@ -1,0 +1,297 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2023.poll- All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.poll-  The full license is in
+ * the file LICENSE, distributed as part of this software.poll-
+ */
+
+/* General styles for the poll container */
+.poll-p-4 {
+  padding: 16px;
+}
+
+.poll-overflow-y-auto {
+  overflow-y: auto;
+}
+
+.poll-h-max {
+  height: 100%;
+}
+
+.poll-border {
+  border: 1px solid #ccc;
+}
+
+.poll-rounded {
+  border-radius: 5px;
+}
+
+.poll-shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.poll-mb-4 {
+  margin-bottom: 16px;
+}
+
+/* Styles for the poll question */
+.poll-text-lg {
+  font-size: 1poll-25rem;
+  /* 20px */
+}
+
+.poll-font-bold {
+  font-weight: bold;
+}
+
+.poll-bg-blue-500 {
+  background-color: #4299e1;
+  color: white;
+}
+
+.poll-bg-blue-600:hover {
+  background-color: #3182ce;
+}
+
+.poll-bg-green-500 {
+  background-color: #48bb78;
+  color: white;
+}
+
+.poll-bg-green-600:hover {
+  background-color: #38a169;
+}
+
+/* Input styles */
+.poll-input-text {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Progress bar styles */
+.poll-bg-gray-200 {
+  background-color: #edf2f7;
+}
+
+.poll-h-4 {
+  height: 16px;
+}
+
+/* Label styles with improved visibility for dark mode */
+.poll-label {
+  color: #f0f0f0;
+  /* Light color for visibility on dark backgrounds */
+  font-size: 0.875rem;
+  /* 14px */
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.poll-border-bottom {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ccc;
+}
+
+.poll-inline-block {
+  display: inline-block;
+}
+
+.poll-border-top {
+  padding-top: 16px;
+  border-top: 1px solid #ccc;
+}
+
+.poll-grid-container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  /* First column takes up the majority of space */
+  align-items: center;
+  /* Align items vertically */
+  gap: 16px;
+  /* Space between grid items */
+  margin-bottom: 16px;
+}
+
+.poll-w-full {
+  width: 100%;
+}
+
+.poll-poll-list {
+  display: grid;
+  grid-template-columns: 3fr 3fr 1fr auto;
+  /* Adjust the fractions as needed */
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.poll-edit-button {
+  padding: 4px 8px;
+  /* Smaller padding for a smaller button */
+  font-size: 0.875rem;
+  /* Smaller font size */
+  text-align: right;
+  /* Align text to the right */
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.poll-grayscale {
+  filter: grayscale(100%);
+  /* Makes the emoji black and white */
+}
+
+.poll-edit-button:hover {
+  background-color: #3182ce;
+}
+
+/* Light Theme Styles */
+@media (prefers-color-scheme: light) {
+  /* Override styles for light mode */
+  .poll-label,
+  .poll-input-text,
+  .poll-light-mode .poll-label,
+  .poll-light-mode .poll-input {
+    color: #4a5568;
+    /* Dark color for better visibility in light mode */
+  }
+
+  /* Override background and text colors for light mode */
+  .poll-bg-blue-500 {
+    background-color: #3182ce;
+  }
+
+  .poll-bg-green-500 {
+    background-color: #38a169;
+  }
+
+  .poll-bg-gray-200 {
+    background-color: #f7fafc;
+  }
+
+  .poll-bg-red-500 {
+    background-color: #fc8181;
+  }
+
+  .poll-bg-red-500 {
+    background-color: #f56565;
+    color: black;
+  }
+
+  .poll-bg-red-600:hover {
+    background-color: #c53030;
+  }
+}
+
+/* Input styles specific to NewPollForm */
+.poll-input-text.poll-focus\:border-blue-500:focus {
+  border-color: #4299e1;
+}
+
+.poll-input-text.poll-focus\:outline-none:focus {
+  outline: none;
+}
+
+/* Spacing and layout for option input groups */
+.poll-mb-3 {
+  margin-bottom: 12px;
+}
+
+.poll-flex {
+  display: flex;
+  align-items: center;
+}
+
+.poll-gap-4 {
+  gap: 16px;
+}
+
+.poll-nowrap {
+  white-space: nowrap;
+}
+
+.poll-bg-red-600:hover {
+  background-color: #c53030;
+}
+
+.poll-py-2 {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Flex container for buttons at the bottom */
+.poll-flex.poll-justify-between {
+  justify-content: space-between;
+}
+
+.poll-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.poll-modal {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+.poll-modal-message {
+  margin-bottom: 20px;
+}
+.poll-modal-actions {
+  display: flex;
+  justify-content: space-around;
+}
+.poll-modal-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.poll-confirm {
+  background-color: #4caf50;
+  color: white;
+}
+.poll-cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .poll-modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+  .poll-modal {
+    background-color: #222;
+    color: #ddd;
+  }
+  .poll-confirm {
+    background-color: #5a9;
+  }
+  .poll-cancel {
+    background-color: #d44;
+  }
+}
+
+.poll-w-100 {
+  width: 100px;
+}
+
+.poll-button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

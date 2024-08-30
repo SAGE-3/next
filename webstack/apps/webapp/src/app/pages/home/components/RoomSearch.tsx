@@ -61,7 +61,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   const { user } = useUser();
 
   // Room Store
-  const { rooms } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
 
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,7 +164,8 @@ function RoomRow(props: RoomRowProps) {
   );
 
   // Room Store
-  const { joinRoomMembership, members } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
+  const members = useRoomStore((state) => state.members);
 
   // Password disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -173,6 +174,9 @@ function RoomRow(props: RoomRowProps) {
   const roomMember = members.find((roomMember) => roomMember.data.roomId === props.room._id);
   const isMember = roomMember ? roomMember.data.members.includes(userId) : false;
   const isOwner = props.room.data.ownerId === userId;
+
+  // Is password protected
+  const isPasswordProtected = props.room.data.isPrivate;
 
   // Toast
   const toast = useToast();
@@ -183,7 +187,7 @@ function RoomRow(props: RoomRowProps) {
       return;
     }
     // Check Password
-    if (props.room.data.privatePin) {
+    if (isPasswordProtected) {
       onOpen();
     } else {
       // Join Room
@@ -237,7 +241,7 @@ function RoomRow(props: RoomRowProps) {
               onClick={handleMembershipClick}
             >
               <Box mr="1">Join</Box>
-              {props.room.data.privatePin && <MdLock />}
+              {isPasswordProtected && <MdLock />}
             </Button>
           )}
         </Box>
@@ -269,7 +273,7 @@ function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   };
 
   // Room Store
-  const { joinRoomMembership } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {

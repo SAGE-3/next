@@ -7,10 +7,13 @@
  */
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import { MdHelpOutline, MdNetworkCheck, MdSearch } from 'react-icons/md';
+import { MdHelpOutline, MdNetworkCheck } from 'react-icons/md';
+import { PiGaugeBold } from "react-icons/pi";
 
-import { HelpModal, useHexColor, useNetworkState, Alfred } from '@sage3/frontend';
-import { useParams } from 'react-router';
+import {
+  useHexColor, useNetworkState, EditVisibilityModal, useUserSettings,
+  usePressureObserver, PressureState
+} from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -23,7 +26,8 @@ type ClockProps = {
 export function Clock(props: ClockProps) {
   const isBoard = props.isBoard ? props.isBoard : false;
 
-  const { boardId, roomId } = useParams();
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
 
   // State of the current time
   const [time, setTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -45,11 +49,13 @@ export function Clock(props: ClockProps) {
   const [netcolor, setNetcolor] = useState(onlineColor);
   const [netlabel, setNetlabel] = useState('online');
 
-  // Help modal
-  const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
+  // Pressure Observer
+  const pressure = usePressureObserver();
+  const [cpucolor, setCPUcolor] = useState(onlineColor);
+  const [cpulabel, setCPUlabel] = useState('nominal');
 
-  // Alfred modal
-  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // Presence settings modal
+  const { isOpen: visibilityIsOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Update the time on an interval every 30secs
   useEffect(() => {
@@ -79,13 +85,22 @@ export function Clock(props: ClockProps) {
     }
   }, [networkStatus]);
 
-  const handleHelpOpen = () => {
-    helpOnOpen();
-  };
+  useEffect(() => {
+    if (pressure) {
+      if (pressure.state === PressureState.nominal) {
+        setCPUcolor(onlineColor);
+      } else if (pressure.state === PressureState.fair) {
+        setCPUcolor(midtierColor);
+      } else if (pressure.state === PressureState.serious) {
+        setCPUcolor(lowtierColor);
+      } else if (pressure.state === PressureState.critical) {
+        setCPUcolor(offlineColor);
+      }
+      setCPUlabel(pressure.state.toString());
+    }
+  }, [pressure]);
 
-  const handleAlfredOpen = () => {
-    alfredOnOpen();
-  };
+
 
   return (
     <Box
@@ -94,67 +109,22 @@ export function Clock(props: ClockProps) {
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"
-      pr={2}
+      pr={1}
       pl={1}
       justifyContent="right"
       alignItems={'center'}
     >
-      {/* Help Modal */}
-      {isBoard && <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>}
-      {/* Alfred modal dialog */}
-      {isBoard && boardId && roomId && <Alfred boardId={boardId} roomId={roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />}
-
-      {isBoard && (
-        <Tooltip label={'Search'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            m={0}
-            justifyContent="center"
-            aria-label={'Network status'}
-            icon={<MdSearch size="22px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={handleAlfredOpen}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
-      {isBoard && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            m={-2}
-            justifyContent="center"
-            aria-label={'Network status'}
-            icon={<MdHelpOutline size="22px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={handleHelpOpen}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
+      {/* Presence settings modal dialog */}
+      {isBoard && <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />}
 
       {!isBoard && (
-        <Tooltip label={'Help'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+        <Tooltip label={'Restart the guided tour'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
             h="auto"
             p={0}
             pb={'1px'}
-            mr="-2"
+            mr="-1"
             justifyContent="center"
             aria-label={'Network status'}
             icon={<MdHelpOutline size="22px" />}
@@ -170,30 +140,64 @@ export function Clock(props: ClockProps) {
         </Tooltip>
       )}
 
-      <Tooltip label={'Network status: ' + netlabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-        <IconButton
-          borderRadius="md"
-          h="auto"
-          p={0}
-          m={0}
-          fontSize="lg"
-          justifyContent="center"
-          aria-label={'Network status'}
-          icon={<MdNetworkCheck size="24px" color={netcolor} />}
-          background={'transparent'}
-          color={netcolor}
-          transition={'all 0.2s'}
-          opacity={0.75}
-          variant="ghost"
-          // onClick={props.onClick}
-          isDisabled={false}
-          _hover={{ color: netcolor, opacity: 1, transform: 'scale(1.15)' }}
-        />
-      </Tooltip>
+      {isBoard && showUI && (
+        <Tooltip label={'Network status: ' + netlabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <IconButton
+            borderRadius="md"
+            h="auto"
+            p={0}
+            mr={-2}
+            bottom="1px"
+            fontSize="lg"
+            justifyContent="center"
+            aria-label={'Network status'}
+            icon={<MdNetworkCheck size="22px" color={netcolor} />}
+            background={'transparent'}
+            color={netcolor}
+            transition={'all 0.2s'}
+            opacity={0.75}
+            variant="ghost"
+            isDisabled={false}
+            _hover={{ color: netcolor, opacity: 1, transform: 'scale(1.15)' }}
+          />
+        </Tooltip>
+      )}
 
-      <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
-        {time}
-      </Text>
+      {isBoard && showUI && (
+        <Tooltip label={'CPU load: ' + cpulabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <IconButton
+            borderRadius="md"
+            h="auto"
+            p={0}
+            m={-1}
+            bottom="1px"
+            fontSize="lg"
+            justifyContent="center"
+            aria-label={'CPU pressure'}
+            icon={<PiGaugeBold size="22px" color={cpucolor} />}
+            background={'transparent'}
+            color={cpucolor}
+            transition={'all 0.2s'}
+            opacity={0.75}
+            variant="ghost"
+            isDisabled={false}
+            _hover={{ color: cpucolor, opacity: 1, transform: 'scale(1.15)' }}
+          />
+        </Tooltip>
+      )}
+
+      {isBoard && showUI && (
+        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor}
+          userSelect="none" whiteSpace="nowrap" mx={1}>
+          {time}
+        </Text>
+      )}
+
+      {!isBoard && (
+        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap">
+          {time}
+        </Text>
+      )}
     </Box>
   );
 }

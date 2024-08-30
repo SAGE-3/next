@@ -19,6 +19,6 @@ npx electron-osx-sign --type=development --signature-flags=library --hardened-ru
   --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist \
   SAGE3-darwin-arm64/SAGE3.app
 
-# node notarize_luc.js
+node notarize_arm64.js
 
 npx electron-installer-dmg SAGE3-darwin-arm64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg --icon=s3.icns --background=images/background.png --overwrite --iconSize=100 --title="SAGE3 Installer"

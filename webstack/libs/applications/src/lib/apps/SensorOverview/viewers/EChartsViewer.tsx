@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -23,7 +24,7 @@ const EChartsViewer = (props: {
 
   timeSinceLastUpdate?: string;
   stationMetadata?: any;
-  size?: { width: number; height: number; depth: number };
+  size: { width: number; height: number; depth: number };
 }) => {
   // HTML element reference
   const chartRef = useRef<any>(null);
@@ -80,7 +81,8 @@ const EChartsViewer = (props: {
         colorMode,
         props.startDate,
         props.stationMetadata,
-        props.widget.timePeriod
+        props.widget.timePeriod,
+        props.size
       );
 
       setChartOptions(options);
@@ -88,7 +90,7 @@ const EChartsViewer = (props: {
     if (props.isLoaded) {
       callToChartMangaer();
     }
-  }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode]);
+  }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode, JSON.stringify(props.size)]);
 
   return (
     <>

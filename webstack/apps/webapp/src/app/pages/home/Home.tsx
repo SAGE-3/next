@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -8,7 +8,6 @@
 
 // React Imports
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {
@@ -38,18 +37,24 @@ import {
   MenuList,
   Link,
   useMediaQuery,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Flex,
+  IconButton,
+  ButtonGroup,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline } from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline, MdGridView, MdList } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
-import { SAGE3Ability } from '@sage3/shared';
+import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
 import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
@@ -70,13 +75,13 @@ import {
   EnterBoardModal,
   ConfirmModal,
   MainButton,
-  copyBoardUrlToClipboard,
   Clock,
   isElectron,
+  useUserSettings,
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
 
 /**
  * Home page for SAGE3
@@ -86,9 +91,8 @@ import { UserRow, BoardRow, RoomSearchModal, BoardPreview } from './components';
  */
 export function HomePage() {
   // Media Query
-  const [isLargerThan800] = useMediaQuery('(min-width: 800px)')
-  // URL Params
-  const { roomId, boardId } = useParams();
+  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
+
   const { toHome } = useRouteNav();
 
   // Configuration information
@@ -96,7 +100,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<{ name: string; id: string; url: string }[]>([]);
+  const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -112,26 +116,40 @@ export function HomePage() {
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Room Store
-  const {
-    rooms,
-    members,
-    subscribeToAllRooms: subscribeToRooms,
-    fetched: roomsFetched,
-    leaveRoomMembership,
-    joinRoomMembership,
-  } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
+  const members = useRoomStore((state) => state.members);
+  const subscribeToRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  const roomsFetched = useRoomStore((state) => state.fetched);
+  const leaveRoomMembership = useRoomStore((state) => state.leaveRoomMembership);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
+  const subscribeToBoards = useBoardStore((state) => state.subscribeToAllBoards);
+  const updateBoard = useBoardStore((state) => state.update);
 
   // User and Presence Store
-  const { users, subscribeToUsers } = useUsersStore((state) => state);
-  const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
+  const users = useUsersStore((state) => state.users);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // Presence
+  const partialPrescences = usePresenceStore((state) => state.partialPrescences);
+  const updatePresence = usePresenceStore((state) => state.update);
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
+
+  // Settings
+  const { setBoardListView, settings } = useUserSettings();
+  const boardListView = settings.selectedBoardListView;
 
   // User Selected Room, Board, and User
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
+  const [boardSearch, setBoardSearch] = useState<string>('');
+  const [membersSearch, setMembersSearch] = useState<string>('');
+
+  // Selected Board Ref
+  const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
 
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
@@ -149,6 +167,8 @@ export function HomePage() {
   const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
+  const subTextValue = useColorModeValue('gray.700', 'gray.300');
+  const subTextColor = useHexColor(subTextValue);
   // const { toggleColorMode, colorMode } = useColorMode();
 
   // Modals Disclosures
@@ -180,14 +200,14 @@ export function HomePage() {
   const introRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
-  const serverNameRef = useRef<HTMLDivElement>(null);
+  const hubNameRef = useRef<HTMLDivElement>(null);
   const createRoomRef = useRef<HTMLDivElement>(null);
   const searchRoomsRef = useRef<HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
+  const activeBoardsRef = useRef<HTMLDivElement>(null);
   const starredBoardsRef = useRef<HTMLDivElement>(null);
   const recentBoardsRef = useRef<HTMLDivElement>(null);
-
   const joyrideRef = useRef<Joyride>(null);
 
   // Joyride Callback Handler
@@ -239,11 +259,11 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: serverNameRef.current!,
-        title: electron ? 'Servers' : 'Server',
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
         content: electron
-          ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
-          : 'This shows the current SAGE3 server.',
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
         disableBeacon: true,
       },
       {
@@ -272,6 +292,12 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
+        target: activeBoardsRef.current!,
+        title: 'Active Boards',
+        content: 'Boards with active users on them will appear here.',
+        disableBeacon: true,
+      },
+      {
         target: starredBoardsRef.current!,
         title: 'Starred Boards',
         content:
@@ -286,9 +312,9 @@ export function HomePage() {
       },
       {
         target: clockRef.current!,
-        title: 'Clock',
+        title: 'Clock and more',
         content:
-          'Your local time is displayed here, along with your network status and a help button. The help button will restart this tour.',
+          'Your local time is displayed here, with the help button. While in a board, it also displays performance and network status, help, search and settings buttons.',
       },
       {
         target: introRef.current!,
@@ -318,6 +344,11 @@ export function HomePage() {
     localStorage.setItem('s3_intro_done', 'false');
   };
 
+  const handleBoardDoubleClick = (board: Board) => {
+    setSelectedBoard(board);
+    enterBoardModalOnOpen();
+  };
+
   // Load the steps when the component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
@@ -332,6 +363,15 @@ export function HomePage() {
     const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
     return isMember || isOwner;
   };
+
+  const boardActiveFilter = (board: Board): boolean => {
+    const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
+    const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
+
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    return isMember && userCount > 0;
+  };
+
   const boardStarredFilter = (board: Board): boolean => {
     const isSaved = savedBoards.includes(board._id);
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
@@ -349,8 +389,17 @@ export function HomePage() {
   const membersFilter = (user: User): boolean => {
     if (!selectedRoom) return false;
     const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+    const isYourself = user._id === userId;
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    return isMember;
+    return isMember && !isYourself;
+  };
+
+  const boardSearchFilter = (board: Board) => {
+    return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
+
+  const membersSearchFilter = (user: User) => {
+    return fuzzySearch(user.data.name + ' ' + user.data.email, membersSearch);
   };
 
   // Check to see if the user is the owner but not a member in weird cases
@@ -389,8 +438,8 @@ export function HomePage() {
   };
 
   const getBookmarks = () => {
-    window.electron.on('get-servers-response', async (servers: any) => {
-      setServers(servers);
+    window.electron.on('get-servers-response', async (hubs: any) => {
+      setHubs(hubs);
     });
     window.electron.send('get-servers-request');
   };
@@ -417,7 +466,21 @@ export function HomePage() {
       const roomId = selectedRoom ? selectedRoom._id : '';
       updatePresence(userId, { roomId });
     }
+    setBoardSearch('');
   }, [selectedRoom]);
+
+  // Scroll selected board into view
+  useEffect(() => {
+    if (scrollToBoardRef?.current) {
+      const rect = scrollToBoardRef.current.getBoundingClientRect();
+      if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) - 50)) {
+        scrollToBoardRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: rect.top < 350 ? 'start' : 'end',
+        });
+      }
+    }
+  }, [scrollToBoardRef?.current]);
 
   // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
@@ -440,39 +503,23 @@ export function HomePage() {
       const room = rooms.find((r) => r._id === board.data.roomId);
       setSelectedRoom(room);
       setSelectedUser(undefined);
+
+      // Fixing data model: adding the board code
+      if (!board.data.code) {
+        const newCode = generateReadableID();
+        updateBoard(board._id, { code: newCode });
+      }
     } else {
       setSelectedBoard(undefined);
       setSelectedUser(undefined);
     }
   }
 
-  // Copy a sharable link to the user's os clipboard
-  const handleCopyLink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Check if there is a selected board
-    if (!selectedBoard) {
-      toast({
-        title: 'No board selected',
-        description: 'Please select a board to copy a link to',
-        duration: 3000,
-        isClosable: true,
-        status: 'error',
-      });
-      return;
-    } else {
-      const roomId = selectedBoard.data.roomId;
-      const boardId = selectedBoard._id;
-      // make it a sage3:// protocol link
-      copyBoardUrlToClipboard(roomId, boardId);
-      toast({
-        title: 'Success',
-        description: `Sharable Board link copied to clipboard.`,
-        duration: 3000,
-        isClosable: true,
-        status: 'success',
-      });
-    }
-  };
+  // Clear the filters only when selecting from navigation sidebar
+  function handleBoardClickFromSubMenu(board: Board) {
+    setBoardSearch('');
+    handleBoardClick(board);
+  }
 
   // Handle when the user wnats to leave a room membership
   const handleLeaveRoomMembership = () => {
@@ -481,6 +528,26 @@ export function HomePage() {
       leaveRoomMembership(selectedRoom._id);
       handleLeaveRoom();
       leaveRoomModalOnClose();
+    }
+  };
+
+  // Handle Join room membership
+  const handleJoinRoomMembership = (room: Room) => {
+    if (canJoin) {
+      joinRoomMembership(room._id);
+      toast({
+        title: `You have successfully joined ${room.data.name}`,
+        status: 'success',
+        duration: 4 * 1000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'You do not have permission to join rooms',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
     }
   };
 
@@ -526,27 +593,18 @@ export function HomePage() {
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
-  // To handle the case where the user is redirected to the home page from a board
+  // Handle when the members list changes. Maybe the user was removed from the room
   useEffect(() => {
-    // Get the RoomId from the URL
-    if (roomId) {
-      // Find room
-      const room = rooms.find((r) => r._id === roomId);
-      // If the room exists, select it
-      if (room) {
-        setSelectedRoom(room);
-        // Get the BoardId from the URL
-        if (boardId) {
-          // Find board
-          const board = boards.find((b) => b._id === boardId);
-          // If the board exists, select it
-          if (board) {
-            setSelectedBoard(board);
-          }
-        }
+    // Check if is still a member of the room
+    if (selectedRoom) {
+      const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+      const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+      if (!isMember) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
       }
     }
-  }, [roomsFetched]);
+  }, [members]);
 
   return (
     // Main Container
@@ -568,7 +626,7 @@ export function HomePage() {
           },
         }}
       />
-      {/* Check if the user wanted to join a board through a URL */}
+      {/* Check if the user wanted to join a board through a URL / ID */}
       <JoinBoardCheck />
       {/* Modal to create a room */}
       <CreateRoomModal isOpen={createRoomModalIsOpen} onClose={createRoomModalOnClose} />
@@ -621,23 +679,23 @@ export function HomePage() {
         cancelText={'Cancel'}
         confirmText="Clear"
         confirmColor="red"
-        message={`Are you sure you want to clear your recent boards?`}
+        message={'Are you sure you want to clear your recent boards?'}
         onConfirm={handleClearRecentBoards}
       />
 
       {/* Sidebar Drawer */}
       <Box
         backgroundColor={sidebarBackgroundColor}
-        width="400px"
-        minWidth="400px"
+        width="350px"
+        minWidth="350px"
         transition="width 0.5s"
         height="100svh"
         display="flex"
         flexDirection="column"
         borderRight={`solid ${dividerColor} 1px`}
       >
-        {servers.length > 0 ? (
-          <Box ref={serverNameRef}>
+        {hubs.length > 0 ? (
+          <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
               <MenuButton
                 as={Box}
@@ -661,16 +719,16 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'400px'}>
-                {servers.map((server) => {
+              <MenuList width={'350px'}>
+                {hubs.map((hub) => {
                   return (
                     <MenuItem
-                      key={server.id}
+                      key={hub.id}
                       onClick={() => {
-                        window.location.href = server.url;
+                        window.location.href = hub.url;
                       }}
                     >
-                      {server.name}
+                      {hub.name}
                     </MenuItem>
                   );
                 })}
@@ -685,7 +743,7 @@ export function HomePage() {
             whiteSpace="nowrap"
             overflow="hidden"
             textOverflow="ellipsis"
-            ref={serverNameRef}
+            ref={hubNameRef}
           >
             <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
               {config.serverName}
@@ -728,7 +786,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this hub'}>
               <Box
                 h="40px"
                 display="flex"
@@ -744,7 +802,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using a shared URL'}>
+            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
               <Box
                 h="40px"
                 display="flex"
@@ -756,16 +814,16 @@ export function HomePage() {
                 onClick={enterBoardByURLModalOnOpen}
                 ref={enterBoardByURLRef}
               >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Enter Board by URL</Text>
+                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
               </Box>
             </Tooltip>
 
             <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
 
-            <Accordion defaultIndex={[0, 1, 2]} allowMultiple>
+            <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
               <AccordionItem border="none" ref={roomsRef}>
                 <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'The rooms you are a part of'}>
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
                     <Box display="flex" flex="1" alignItems="left">
                       <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
                     </Box>
@@ -785,7 +843,7 @@ export function HomePage() {
                             openDelay={400}
                             hasArrow
                             placement="top"
-                            label={`Description: ${room.data.description}`}
+                            label={`Description ${room.data.description}`}
                           >
                             <Box
                               key={room._id}
@@ -800,14 +858,54 @@ export function HomePage() {
                               onClick={() => handleRoomClick(room)}
                             >
                               <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                <Text fontSize="md">{room.data.name}</Text>
+                                <Text fontSize="md" pl="2">
+                                  {room.data.name}
+                                </Text>
                               </Box>
 
-                              <Text fontSize="xs" pr="4">
+                              <Text fontSize="xs" pr="4" color={subTextColor}>
                                 {room.data.ownerId === userId ? 'Owner' : 'Member'}
                               </Text>
                             </Box>
                           </Tooltip>
+                        );
+                      })}
+                  </VStack>
+                </AccordionPanel>
+              </AccordionItem>
+
+              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
+              {/* <Divider/> */}
+
+              <AccordionItem border="none" ref={activeBoardsRef}>
+                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
+                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
+                    <Box display="flex" flex="1" alignItems="left">
+                      <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
+                    </Box>
+                  </Tooltip>
+                  <AccordionIcon />
+                </AccordionButton>
+                <AccordionPanel p="0">
+                  <VStack align="stretch" gap="0">
+                    {boards
+                      .filter(boardActiveFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .sort((a, b) => {
+                        // Sorted by alpha then user count
+                        const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
+                        const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
+                        return userCountB - userCountA;
+                      })
+                      .map((board) => {
+                        return (
+                          <BoardSidebarRow
+                            key={'tooltip_active' + board._id}
+                            board={board}
+                            isSelected={board._id === selectedBoard?._id}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
+                            onDoubleClick={() => handleBoardDoubleClick(board)}
+                          />
                         );
                       })}
                   </VStack>
@@ -829,40 +927,15 @@ export function HomePage() {
                     {boards
                       .filter(boardStarredFilter)
                       .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => {
-                        const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                        const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                        return (
-                          <Tooltip
-                            key={'tooltip_starred' + board._id}
-                            openDelay={400}
-                            hasArrow
-                            placement="top"
-                            label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
-                          >
-                            <Box
-                              key={board._id}
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              transition="all 0.5s"
-                              pl="48px"
-                              height="28px"
-                              backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                              _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                              onClick={() => handleBoardClick(board)}
-                            >
-                              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                <Text fontSize="md">{board.data.name}</Text>
-                              </Box>
-                              <Box pr="5" display="flex" alignItems="center">
-                                <Text fontSize="sm">{userCount}</Text>
-                                <MdPerson></MdPerson>
-                              </Box>
-                            </Box>
-                          </Tooltip>
-                        );
-                      })}
+                      .map((board) => (
+                        <BoardSidebarRow
+                          key={'tooltip_starred' + board._id}
+                          board={board}
+                          isSelected={board._id === selectedBoard?._id}
+                          onClick={() => handleBoardClickFromSubMenu(board)}
+                          onDoubleClick={() => handleBoardDoubleClick(board)}
+                        />
+                      ))}
                   </VStack>
                 </AccordionPanel>
               </AccordionItem>
@@ -878,40 +951,25 @@ export function HomePage() {
 
                 <AccordionPanel p={0}>
                   <VStack align="stretch" gap="0">
-                    {boards.filter(recentBoardsFilter).map((board) => {
-                      const userCount = presences.filter((p) => p.data.boardId === board._id).length;
-                      const roomName = rooms.find((r) => r._id === board.data.roomId)?.data.name;
-                      return (
-                        <Tooltip
-                          key={'tooltip_recent' + board._id}
-                          openDelay={400}
-                          hasArrow
-                          placement="top"
-                          label={`Board in '${roomName}' - ${userCount ? userCount : 'No'} ${userCount > 1 ? 'users' : 'user'}`}
-                        >
-                          <Box
-                            key={board._id}
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            transition="all 0.5s"
-                            pl="48px"
-                            height="28px"
-                            backgroundColor={board._id === selectedBoard?._id ? hightlightGrayValue : ''}
-                            onClick={() => handleBoardClick(board)}
-                            _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                          >
-                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                              <Text fontSize="md">{board.data.name}</Text>
-                            </Box>
-                            <Box pr="5" display="flex" alignItems="center">
-                              <Text fontSize="sm">{userCount}</Text>
-                              <MdPerson></MdPerson>
-                            </Box>
-                          </Box>
-                        </Tooltip>
-                      );
-                    })}
+                    {boards
+                      .filter(recentBoardsFilter)
+                      .sort((boardA, boardB) => {
+                        // Sort by most recent
+                        const indexOfA = recentBoards.indexOf(boardA._id);
+                        const indexOfB = recentBoards.indexOf(boardB._id);
+                        return indexOfA - indexOfB;
+                      })
+                      .map((board) => {
+                        return (
+                          <BoardSidebarRow
+                            key={'tooltip_recent' + board._id}
+                            board={board}
+                            isSelected={board._id === selectedBoard?._id}
+                            onClick={() => handleBoardClickFromSubMenu(board)}
+                            onDoubleClick={() => handleBoardDoubleClick(board)}
+                          />
+                        );
+                      })}
                     {boards.filter(recentBoardsFilter).length > 0 && (
                       <Box
                         display="flex"
@@ -925,7 +983,9 @@ export function HomePage() {
                         onClick={clearRecentBoardsModalOnOpen}
                         _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
                       >
-                        <Text fontSize="md">Clear Recents Boards</Text>
+                        <Text fontSize="md" pl="2">
+                          Clear Recents Boards
+                        </Text>
                       </Box>
                     )}
                   </VStack>
@@ -946,7 +1006,7 @@ export function HomePage() {
           backgroundColor={mainBackgroundColor}
           maxHeight="100svh"
           height="100svh"
-          overflow="hidden"
+          // overflow="hidden"
           pt={4}
           pr={4}
           pb={4}
@@ -963,9 +1023,9 @@ export function HomePage() {
                 {selectedRoom?.data.description}
               </Text>
 
-              <Text>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
+              <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
 
-              <Text>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
+              <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
                 <Tooltip label={'Create a new board in this room'} openDelay={400} hasArrow placement="top">
                   <Button
@@ -1005,21 +1065,27 @@ export function HomePage() {
                   placement="top"
                 >
                   <Button
-                    colorScheme="red"
+                    colorScheme={rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'red' : 'teal'}
                     variant="outline"
                     size="sm"
                     width="120px"
-                    onClick={leaveRoomModalOnOpen}
+                    onClick={() => {
+                      if (rooms.filter(roomMemberFilter).includes(selectedRoom)) {
+                        leaveRoomModalOnOpen();
+                      } else {
+                        handleJoinRoomMembership(selectedRoom);
+                      }
+                    }}
                     isDisabled={selectedRoom.data.ownerId === userId}
                   >
-                    Unjoin Room
+                    {rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'Unjoin' : 'Join'}
                   </Button>
                 </Tooltip>
               </Box>
             </VStack>
           </Box>
 
-          <Box width="100%" overflow="hidden" height="100%">
+          <Box width="100%" height="100%">
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>Boards</Tab>
@@ -1033,92 +1099,131 @@ export function HomePage() {
               </TabList>
 
               <TabPanels>
-                <TabPanel>
-                  <Box display="flex" gap="4" overflow="hidden">
-                    <VStack
-                      gap="3"
-                      pr="2"
-                      style={{ height: 'calc(100svh - 270px)' }}
-                      overflowY="scroll"
-                      minWidth="420px"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          width: '5px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {boards
-                        .filter((board) => board.data.roomId === selectedRoom?._id)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((board) => (
-                          <BoardRow
-                            key={board._id}
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                <TabPanel px="0">
+                  <Box display="flex" gap="4">
+                    <Flex gap="4" flexDirection="column">
+                      <Flex align="center" gap="2" justify="flex-start" mx="4">
+                        <ButtonGroup size="md" isAttached variant="outline">
+                          <IconButton
+                            aria-label="Board List View"
+                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('list');
+                            }}
+                            icon={<MdList />}
                           />
-                        ))}
-                    </VStack>
-                    <Box width="800px" minHeight="200px" px="2">
-                      {selectedBoard && (
-                        <VStack gap="0" align="stretch">
-                          <Text fontSize="3xl" fontWeight="bold">
-                            {selectedBoard.data.name}
-                          </Text>
-                          <Text fontSize="lg" fontWeight={'normal'}>
-                            {selectedBoard?.data.description}
-                          </Text>
-                          <Text>Created by {users.find((u) => u._id === selectedBoard.data.ownerId)?.data.name}</Text>
-                          <Text>Created on {new Date(selectedBoard._createdAt).toLocaleDateString()}</Text>
-                          <Box mt="2" borderRadius="md" as="button" onClick={enterBoardModalOnOpen}>
-                            <BoardPreview board={selectedBoard} width={316} height={177} />
-                          </Box>
-                          <Box display="flex" my="2" gap={2}>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={enterBoardModalOnOpen}
-                            >
-                              Enter Board
-                            </Button>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={handleCopyLink}
-                            >
-                              Copy Link
-                            </Button>
-                            <Button
-                              colorScheme={selectedBoard.data.color}
-                              variant="outline"
-                              size="sm"
-                              width="100px"
-                              onClick={editBoardModalOnOpen}
-                              isDisabled={selectedBoard.data.ownerId !== userId}
-                            >
-                              Settings
-                            </Button>
-                          </Box>
+                          <IconButton
+                            aria-label="Board Grid View"
+                            colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('grid');
+                            }}
+                            icon={<MdGridView />}
+                          />
+                        </ButtonGroup>
+
+                        <InputGroup size="md" width="415px" my="1">
+                          <InputLeftElement pointerEvents="none">
+                            <MdSearch />
+                          </InputLeftElement>
+                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                        </InputGroup>
+                      </Flex>
+                      {/* <Divider /> */}
+                      {boardListView == 'grid' && (
+                        <Flex
+                          gap="4"
+                          p="4"
+                          display="flex"
+                          flexWrap="wrap"
+                          justifyContent="left"
+                          style={{
+                            maxHeight: 'calc(100vh - 360px)',
+                            width: '100%',
+                            maxWidth: '2200px',
+                          }}
+                          margin="0 auto"
+                          overflowY="scroll"
+                          overflowX="hidden"
+                          pt="2"
+                          minWidth="420px"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              width: '5px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter((board) => board.data.roomId === selectedRoom?._id)
+                            .filter((board) => boardSearchFilter(board))
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  room={selectedRoom}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </Flex>
+                      )}
+
+                      {boardListView == 'list' && (
+                        <VStack
+                          gap="3"
+                          alignItems="left"
+                          pl="4"
+                          style={{ height: 'calc(100svh - 360px)' }}
+                          overflowY="scroll"
+                          overflowX="hidden"
+                          minWidth="420px"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              width: '5px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter((board) => board.data.roomId === selectedRoom?._id)
+                            .filter((board) => boardSearchFilter(board))
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardRow
+                                  key={board._id}
+                                  board={board}
+                                  room={selectedRoom}
+                                  onClick={() => handleBoardClick(board)}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
+                                />
+                              </Box>
+                            ))}
                         </VStack>
                       )}
-                    </Box>
+                    </Flex>
                   </Box>
                 </TabPanel>
-                <TabPanel>
-                  <Box display="flex" width="800px">
+                <TabPanel px="0">
+                  <Box display="flex" width="400px">
                     <VStack
                       gap="3"
                       pr="2"
+                      width="100%"
                       style={{ height: 'calc(100svh - 340px)' }}
                       overflowY="scroll"
                       alignContent="left"
@@ -1133,9 +1238,28 @@ export function HomePage() {
                         },
                       }}
                     >
-                      {users.filter(membersFilter).map((user) => {
-                        return <UserRow key={user._id} user={user} />;
-                      })}
+                      <InputGroup size="md" width="100%" my="1">
+                        <InputLeftElement pointerEvents="none">
+                          <MdSearch />
+                        </InputLeftElement>
+                        <Input placeholder="Search Members" value={membersSearch} onChange={(e) => setMembersSearch(e.target.value)} />
+                      </InputGroup>
+                      {users
+                        .filter(membersFilter)
+                        .filter(membersSearchFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((u) => {
+                          const online = partialPrescences.find((p) => p.data.userId === u._id);
+                          return (
+                            <UserRow
+                              key={u._id}
+                              user={u}
+                              currUserIsOwner={selectedRoom.data.ownerId === user?._id}
+                              roomId={selectedRoom._id}
+                              online={online ? true : false}
+                            />
+                          );
+                        })}
                     </VStack>
                   </Box>
                 </TabPanel>
@@ -1157,9 +1281,7 @@ export function HomePage() {
         display={isLargerThan800 ? 'flex' : 'none'}
       />
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef}
-        display={isLargerThan800 ? 'flex' : 'none'}
-      >
+      <Box position="absolute" right="1" top="1" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
         <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
       </Box>
     </Box>

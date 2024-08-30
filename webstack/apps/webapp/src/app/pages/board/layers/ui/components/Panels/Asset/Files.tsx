@@ -33,13 +33,14 @@ import {
 
 import { getExtension } from '@sage3/shared';
 import { AppSchema } from '@sage3/applications/schema';
-import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile } from '@sage3/frontend';
+import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile, useThrottleScale } from '@sage3/frontend';
 
 import { RowFile } from './RowFile';
 import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];
+  setSelection: (ids: string[]) => void;
 }
 
 type sortOrder = 'file' | 'owner' | 'type' | 'modified' | 'added' | 'size';
@@ -53,6 +54,7 @@ export function Files(props: FilesProps): JSX.Element {
 
   // The data list
   const [filesList, setList] = useState(props.files);
+  const [updated, setUpdated] = useState(false);
   // Room and board
   const { boardId, roomId } = useParams();
   if (!boardId || !roomId) return <></>;
@@ -71,7 +73,7 @@ export function Files(props: FilesProps): JSX.Element {
   const [searchTerm, setSearchTerm] = useState<string>('');
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   // How to create some applications
   const createBatch = useAppStore((state) => state.createBatch);
 
@@ -85,6 +87,14 @@ export function Files(props: FilesProps): JSX.Element {
     // Scroll to the top
     virtuoso.current?.scrollToIndex({ index: 0 });
   }, [props.files]);
+
+  // Track the selection updates
+  useEffect(() => {
+    if (updated) {
+      props.setSelection(filesList.filter((k) => k.selected).map((k) => k.id));
+      setUpdated(false);
+    }
+  }, [updated]);
 
   // Create the column headers. Add arrows indicating sorting.
   let headerFile, headerType, headerModified, headerAdded, headerSize, headerOwner;
@@ -352,6 +362,7 @@ export function Files(props: FilesProps): JSX.Element {
       });
       return newList;
     });
+    setUpdated(true);
   };
 
   const dragCB = (e: React.DragEvent<HTMLDivElement>) => {
@@ -434,6 +445,7 @@ export function Files(props: FilesProps): JSX.Element {
         lotsOnOpen();
       }
     }
+    setUpdated(true);
   };
 
   return (
@@ -490,7 +502,7 @@ export function Files(props: FilesProps): JSX.Element {
           totalCount={filesList.length}
           onKeyDown={onKeyboard}
           // Content of the table
-          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
+          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} scale={scale} />}
         />
       </VStack>
 

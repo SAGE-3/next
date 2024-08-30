@@ -92,9 +92,9 @@ async function startServer() {
 
   // Log Level
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))
-  const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'MESSAGE', 'PLUGINS', 'ROOMS', 'INSIGHT'];
+  const logCollections = ['APPS', 'ASSETS', 'BOARDS', 'PLUGINS', 'ROOMS'];
   // all: all logs are sent to fluentd
-  if (config.fluentd.databaseLevel === 'all') logCollections.push('USERS', 'PRESENCE');
+  if (config.fluentd.databaseLevel === 'all') logCollections.push('USERS', 'PRESENCE', 'MESSAGE', 'INSIGHT');
   // none: no logs are sent to fluentd
   if (config.fluentd.databaseLevel === 'none') logCollections.length = 0;
   const sbLogConfig = {
@@ -125,7 +125,7 @@ async function startServer() {
   await loadCollections();
 
   // Twilio Setup
-  const screenShareTimeLimit = 3600 * 2 * 1000; // 2 hour
+  const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
   const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
   app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
@@ -184,6 +184,7 @@ async function startServer() {
   });
 
   // Websocket API for YJS
+  // It handles disconnects so no need to handle on close
   yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
     YUtils.setupWSConnection(socket, _request, args);
   });

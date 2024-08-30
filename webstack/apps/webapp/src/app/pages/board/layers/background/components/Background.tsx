@@ -152,18 +152,17 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'copy';
   }
 
-  const newApp = (type: AppName, x: number, y: number) => {
+  const newApp = (type: AppName, w: number, h: number, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
     } else {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w, h }));
     }
   };
 
   // Drop event
   async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-
     if (!user) return;
 
     if (!canDrop) {
@@ -250,6 +249,19 @@ export function Background(props: BackgroundProps) {
         // if no files were dropped, create an application
         const appName = event.dataTransfer.getData('app') as AppName;
         if (appName) {
+          // Setup initial size
+          let w = 600;
+          let h = 400;
+          if (appName === 'SageCell') {
+            w = 650;
+            h = 400;
+          } else if (appName === 'Calculator') {
+            w = 260;
+            h = 369;
+          } else if (appName === 'Chat') {
+            w = 800;
+            h = 420;
+          }
           // if a specific app was setup, create it
           const appstatestr = event.dataTransfer.getData('app_state');
           if (appstatestr) {
@@ -259,7 +271,7 @@ export function Background(props: BackgroundProps) {
               roomId: props.roomId,
               boardId: props.boardId,
               position: { x: xdrop, y: ydrop, z: 0 },
-              size: { width: 600, height: 400, depth: 0 },
+              size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: appName,
               state: { ...(initialValues[appName] as AppState), ...appstate },
@@ -269,7 +281,7 @@ export function Background(props: BackgroundProps) {
             };
             createApp(newState);
           } else {
-            newApp(appName, xdrop, ydrop);
+            newApp(appName, w, h, xdrop, ydrop);
           }
         } else {
           // Get information from the drop
@@ -355,17 +367,23 @@ export function Background(props: BackgroundProps) {
     { dependencies: [selectedAppId] }
   );
 
+  // Throttle stickie hotkey event
+  const throttleStickieCreation = throttle(1000, (x: number, y: number) => {
+    if (!user) return;
+    createApp(
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
+    );
+  });
+  const throttleStickieCreationRef = useCallback(throttleStickieCreation, [user]);
+
   // Stickies Shortcut
   useHotkeys(
     'shift+s',
     (event: KeyboardEvent): void | boolean => {
-      if (!user) return;
+      event.stopPropagation();
       const x = boardCursor.x;
       const y = boardCursor.y;
-      createApp(
-        setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
-      );
-
+      throttleStickieCreationRef(x, y);
       // Returning false stops the event and prevents default browser events
       return false;
     },
@@ -377,11 +395,11 @@ export function Background(props: BackgroundProps) {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
 
-    if (isShiftPressed) {
-      document.onselectstart = function () {
-        return false;
-      };
-    }
+    // if (isShiftPressed) {
+    //   document.onselectstart = function () {
+    //     return false;
+    //   };
+    // }
 
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
@@ -411,16 +429,7 @@ export function Background(props: BackgroundProps) {
       h = 720;
     }
     createApp(
-      setupApp(
-        'Webview',
-        'Webview',
-        dropPosition.x,
-        dropPosition.y,
-        props.roomId,
-        props.boardId,
-        { w: w, h: h },
-        { webviewurl: final_url }
-      )
+      setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
     );
     popOnClose();
   };
@@ -616,12 +625,12 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
  * @param {string} file
  * @returns {Promise<{w: number, h: number}>}
  */
-function getImageDimensionsFromBase64(file: string): Promise<{ w: number, h: number }> {
+function getImageDimensionsFromBase64(file: string): Promise<{ w: number; h: number }> {
   return new Promise(function (resolved, rejected) {
-    var i = new Image()
+    var i = new Image();
     i.onload = function () {
-      resolved({ w: i.width, h: i.height })
+      resolved({ w: i.width, h: i.height });
     };
-    i.src = file
-  })
+    i.src = file;
+  });
 }

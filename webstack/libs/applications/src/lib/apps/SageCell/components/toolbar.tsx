@@ -12,11 +12,17 @@ import { useParams } from 'react-router';
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow, MdStop } from 'react-icons/md';
 // Date manipulation (for filename)
-import dateFormat from 'date-fns/format';
+import { format } from 'date-fns/format';
 
 import {
-  downloadFile, useAppStore, useUser, useKernelStore, CreateKernelModal, useAbility,
-  ConfirmValueModal, apiUrls,
+  downloadFile,
+  useAppStore,
+  useUser,
+  useKernelStore,
+  CreateKernelModal,
+  useAbility,
+  ConfirmValueModal,
+  apiUrls,
 } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
@@ -60,7 +66,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   const toast = useToast();
 
   // Kernel Store
-  const { apiStatus, kernels } = useKernelStore((state) => state);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const kernels = useKernelStore((state) => state.kernels);
 
   // Filter out this board's kernels and boards this user has access to
   const filterMyKernels = (kernels: KernelInfo[]) => {
@@ -133,7 +140,7 @@ export function ToolbarComponent(props: App): JSX.Element {
    */
   const downloadPy = (): void => {
     // Current date
-    const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss');
+    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s.code);
     // Make a filename with username and date
@@ -157,41 +164,44 @@ export function ToolbarComponent(props: App): JSX.Element {
     setDrawer(props._id, true);
   };
 
-  const handleSave = useCallback((val: string) => {
-    // save cell code in asset manager
-    if (!val.endsWith('.py')) {
-      val += '.py';
-    }
-    // Save the code in the asset manager
-    if (roomId) {
-      // Create a form to upload the file
-      const fd = new FormData();
-      const codefile = new File([new Blob([s.code])], val);
-      fd.append('files', codefile);
-      // Add fields to the upload form
-      fd.append('room', roomId);
-      // Upload with a POST request
-      fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
-        .catch((error: Error) => {
-          toast({
-            title: 'Upload',
-            description: 'Upload failed: ' + error.message,
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
+  const handleSave = useCallback(
+    (val: string) => {
+      // save cell code in asset manager
+      if (!val.endsWith('.py')) {
+        val += '.py';
+      }
+      // Save the code in the asset manager
+      if (roomId) {
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([s.code])], val);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
           });
-        })
-        .finally(() => {
-          toast({
-            title: 'Upload',
-            description: 'Upload complete',
-            status: 'info',
-            duration: 4000,
-            isClosable: true,
-          });
-        });
-    }
-  }, [s.code, roomId]);
+      }
+    },
+    [s.code, roomId]
+  );
 
   const setExecuteTrue = () => {
     // Set the flag to execute the cell
@@ -237,7 +247,13 @@ export function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Execute'} openDelay={400}>
-          <Button isDisabled={!selectedKernel || !canExecuteCode} onClick={setExecuteTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+          >
             <MdPlayArrow />
           </Button>
         </Tooltip>
@@ -290,15 +306,18 @@ export function ToolbarComponent(props: App): JSX.Element {
 
       {/* Modals */}
       <HelpModal isOpen={helpIsOpen} onClose={helpOnClose} />
-      <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+      {isOpen && <CreateKernelModal isOpen={isOpen} onClose={onClose} />}
       <ConfirmValueModal
-        isOpen={saveIsOpen} onClose={saveOnClose} onConfirm={handleSave}
-        title="Save Code in Asset Manager" message="Select a file name:"
-        initiaValue={'sagecell-' + dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
-        cancelText="Cancel" confirmText="Save"
+        isOpen={saveIsOpen}
+        onClose={saveOnClose}
+        onConfirm={handleSave}
+        title="Save Code in Asset Manager"
+        message="Select a file name:"
+        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
+        cancelText="Cancel"
+        confirmText="Save"
         confirmColor="green"
       />
-
     </HStack>
   );
 }
@@ -320,10 +339,11 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const canCreateKernels = useAbility('create', 'kernels');
 
   // Kernel Store
-  const { apiStatus, kernels } = useKernelStore((state) => state);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const kernels = useKernelStore((state) => state.kernels);
 
   // App Store
-  const { updateStateBatch } = useAppStore((state) => state);
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   // Access
   const [access, setAccess] = useState<boolean>(true); // Default true, it will be updated later
@@ -458,7 +478,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       )}
 
       {/* Execute all selected cells */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal" >
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
           <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
@@ -488,7 +508,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <CreateKernelModal isOpen={isOpen} onClose={onClose} />
+      {isOpen && <CreateKernelModal isOpen={isOpen} onClose={onClose} />}
     </HStack>
   );
 };

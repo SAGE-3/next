@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-const longPressDuration = 500;
+const longPressDuration = 400;
 
 export default class ContextMenuHandler {
   longPressCountdown: number | undefined;

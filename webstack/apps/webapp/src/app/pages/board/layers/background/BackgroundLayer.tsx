@@ -43,7 +43,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Drag start of the board
   function handleDragBoardStart() {
-    setBoardDragging(true);
+    // setBoardDragging(true);
     if (selectedApp) {
       setSelectedApp('');
     }
@@ -53,6 +53,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   function handleDragging() {
     if (!boardDrag) {
       setBoardDrag(true);
+      // on the first move, set the board to dragging
+      setBoardDragging(true);
     }
   }
 
@@ -95,7 +97,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* The board's apps */}
         <Apps />
         {/*Whiteboard */}
-        <Whiteboard />
+        <Whiteboard boardId={props.boardId} />
         {/*Lasso */}
         {canLasso && lassoMode && <Lasso boardId={props.boardId} />}
         {/* Presence of the users */}

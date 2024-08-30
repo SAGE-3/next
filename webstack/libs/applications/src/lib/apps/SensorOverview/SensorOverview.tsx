@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
@@ -6,7 +7,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 // React Imports
 import {
   Box,
@@ -30,9 +31,11 @@ import {
   Heading,
   Checkbox,
   Portal,
+  Switch,
 } from '@chakra-ui/react';
 
-import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow } from 'react-icons/md';
+import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-icons/md';
+import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
 import { useAppStore } from '@sage3/frontend';
@@ -55,16 +58,48 @@ import MapGL from './MapGL';
 // Styling
 import './styling.css';
 
-export const getFormattedTimePeriod = (timePeriod: string) => {
+const convertToStringFormat = (date: string) => {
+  const year = date.substring(0, 4);
+  const month = date.substring(4, 6);
+  const day = date.substring(6, 8);
+  switch (month) {
+    case '01':
+      return `Jan ${day}, ${year}`;
+    case '02':
+      return `Feb ${day}, ${year}`;
+    case '03':
+      return `Mar ${day}, ${year}`;
+    case '04':
+      return `Apr ${day}, ${year}`;
+    case '05':
+      return `May ${day}, ${year}`;
+    case '06':
+      return `Jun ${day}, ${year}`;
+    case '07':
+      return `Jul ${day}, ${year}`;
+    case '08':
+      return `Aug ${day}, ${year}`;
+    case '09':
+      return `Sep ${day}, ${year}`;
+    case '10':
+      return `Oct ${day}, ${year}`;
+    case '11':
+      return `Nov ${day}, ${year}`;
+    case '12':
+      return `Dec ${day}, ${year}`;
+    default:
+      return `${month}/${day}/${year}`;
+  }
+};
+
+const resolveTimePeriod = (timePeriod: string) => {
   switch (timePeriod) {
-    case 'previous24Hours':
-      return '24 hours';
-    case 'previous1Week':
-      return '1 week';
-    case 'previous1Month':
-      return '1 month';
-    case 'previous1Year':
-      return '1 year';
+    case '24 hours':
+      return 1440;
+    case '1 week':
+      return 10080;
+    case '1 month':
+      return 43200;
     default:
       return 'Custom date range';
   }
@@ -137,51 +172,57 @@ function AppComponent(props: App): JSX.Element {
   }, [lastUpdate]);
 
   useEffect(() => {
-    const fetchStationData = async () => {
-      setIsLoaded(false);
-      let tmpStationMetadata: any = [];
-      let url = '';
-      if (props.data.state.widget.visualizationType === 'variableCard') {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-          s.stationNames
-        )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-          new Date()
-        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      } else {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-          props.data.state.widget.startDate
-        }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      }
-
-      const response = await fetch(url);
-      const sensor = await response.json();
-      if (sensor) {
-        const sensorData = sensor['STATION'];
-        tmpStationMetadata = sensorData;
-      }
-
-      const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
-      availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
-      availableVariableNames.push('Elevation & Current Temperature');
-
-      updateState(props._id, { availableVariableNames: availableVariableNames });
-      setStationMetadata(tmpStationMetadata);
-      setIsLoaded(true);
-    };
-    fetchStationData().catch((err) => {
-      fetchStationData();
-      console.log(err);
-    });
     const interval = setInterval(
       () => {
-        fetchStationData();
-        setLastUpdate(Date.now());
+        if (s.widget.liveData) {
+          fetchStationData();
+          setLastUpdate(Date.now());
+        }
       },
-      60 * 10000
+
+      60 * 1000
       //10 minutes
     );
+
+    fetchStationData();
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
+
+  const fetchStationData = async () => {
+    setIsLoaded(false);
+    let tmpStationMetadata: any = [];
+    let url = '';
+
+    if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
+        s.widget.timePeriod
+      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
+      //   s.widget.timePeriod
+      // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    } else if (!s.widget.liveData) {
+      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+        s.widget.startDate
+      }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    }
+
+    const response = await fetch(url);
+    const sensor = await response.json();
+
+    if (sensor) {
+      const sensorData = sensor['STATION'];
+      tmpStationMetadata = sensorData;
+      console.log(sensorData);
+    }
+    const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
+    availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+    availableVariableNames.push('Elevation & Current Temperature');
+
+    updateState(props._id, { availableVariableNames: availableVariableNames });
+    setStationMetadata(tmpStationMetadata);
+
+    setIsLoaded(true);
+  };
 
   const handleLockAspectRatio = () => {
     const visualizationType = s.widget.visualizationType;
@@ -212,7 +253,7 @@ function AppComponent(props: App): JSX.Element {
 
   const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
     const widget = { ...props.data.state.widget, visualizationType: visualizationType };
-    const app = await createApp({
+    await createApp({
       title: 'Hawaii Mesonet',
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
@@ -248,8 +289,12 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
+  const duplicateMenuBackground = useColorModeValue('gray.50', 'gray.800');
+  const duplicateMenuItems = useColorModeValue('gray.100', 'gray.700');
+  const duplicateHoverMenuItem = useColorModeValue('rgb(178, 216, 243)', 'cyan.600');
+
   return (
-    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()}>
+    <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()} hideBackgroundIcon={MdSensors}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         <Box position="absolute" top="50%" right="1rem" zIndex={999}>
           <Button
@@ -275,16 +320,18 @@ function AppComponent(props: App): JSX.Element {
                 top={`${buttonPosition.top}px`}
                 left={`${buttonPosition.left}px`}
                 // bg="blue.200"
-                borderRadius="md"
+                borderRadius="lg"
                 p={4}
-                boxShadow="md"
                 zIndex={1}
-                className="selectableList"
+                border={'solid 1px grey'}
+                borderLeft={'solid #60CDBA 3px'}
+                bg={duplicateMenuBackground}
                 transform={`scale(0.9) translateY(-${buttonPosition.top / 4}px)`}
                 transformOrigin={'top left'}
+                shadow={'xl'}
               >
                 {/* Content of the opened div */}
-                <Box ml="0.4rem">Duplicate as:</Box>
+                <Text fontWeight={'bold'}>Duplicate as:</Text>
                 {/* <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip"> */}
                 {checkAvailableVisualizations(s.widget.yAxisNames[0]).map(
                   (visualization: { value: string; name: string }, index: number) => {
@@ -295,6 +342,9 @@ function AppComponent(props: App): JSX.Element {
                           handleDuplicateVisualizationsAs(visualization.value);
                         }}
                         className="selectableListItem"
+                        backgroundColor={duplicateMenuItems}
+                        border={'grey solid 2px'}
+                        _hover={{ backgroundColor: duplicateHoverMenuItem }}
                       >
                         {visualization.name}
                       </Text>
@@ -413,13 +463,25 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
+const convertFormattedTimeToDateTime = (formattedTime: string) => {
+  const year = Number(formattedTime.substring(0, 4));
+  const month = Number(formattedTime.substring(4, 6));
+  const day = Number(formattedTime.substring(6, 8));
+  const hour = Number(formattedTime.substring(8, 10));
+  const minute = Number(formattedTime.substring(10, 12));
+  return new Date(year, month - 1, day, hour, minute);
+};
+
 /* App toolbar component for the app Sensor Overview */
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const createApp = useAppStore((state) => state.create);
 
   const updateState = useAppStore((state) => state.updateState);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([
+    convertFormattedTimeToDateTime(s.widget.startDate),
+    convertFormattedTimeToDateTime(s.widget.endDate),
+  ]);
 
   const [stationMetadata, setStationMetadata] = useState([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -431,18 +493,34 @@ function ToolbarComponent(props: App): JSX.Element {
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
   const stationNameRef = useRef<any>(s.stationNames);
+
+  useEffect(() => {
+    if (selectedDates.length === 2) {
+      if (selectedDates[0] instanceof Date && selectedDates[1] instanceof Date) {
+        const startDate = convertToFormattedDateTime(selectedDates[0]);
+        const endDate = convertToFormattedDateTime(selectedDates[1]);
+        updateState(props._id, { widget: { ...s.widget, startDate: startDate, endDate: endDate } });
+      }
+    }
+  }, [selectedDates]);
+
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
       const stationNames = stationData.map((station) => station.name);
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        stationNames
-      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-
+      if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
+          s.stationNames
+        )}&showemptystations=1&recent=${resolveTimePeriod(
+          s.widget.timePeriod
+        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      } else if (!s.widget.liveData) {
+        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${
+          s.widget.startDate
+        }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      }
       const response = await fetch(url);
       const sensor = await response.json();
       if (sensor) {
@@ -458,80 +536,6 @@ function ToolbarComponent(props: App): JSX.Element {
       console.log(err);
     });
   }, []);
-
-  const handleVisualizeAllVariables = async () => {
-    let url = '';
-    if (props.data.state.widget.visualizationType === 'variableCard') {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-        s.stationNames
-      )}&showemptystations=1&start=${getFormattedDateTime24HoursBefore()}&end=${convertToFormattedDateTime(
-        new Date()
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    } else {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-        props.data.state.widget.startDate
-      }&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    }
-
-    const response = await fetch(url);
-    const sensor = await response.json();
-    if (sensor) {
-      const observations = sensor['STATION'][0]['OBSERVATIONS'];
-      let properties = Object.getOwnPropertyNames(observations);
-      let row = 0;
-      let visualizationSize = { height: 1800, width: 1800 };
-      const isLineBarScatterStationMetadataVis =
-        props.data.state.widget.visualizationType === 'line' ||
-        props.data.state.widget.visualizationType === 'bar' ||
-        props.data.state.widget.visualizationType === 'scatter' ||
-        props.data.state.widget.visualizationType === 'stationMetadata';
-
-      const isStatisticsCard = props.data.state.widget.visualizationType === 'statisticCard';
-      if (isLineBarScatterStationMetadataVis) {
-        visualizationSize = { height: 1200, width: 2000 };
-      } else if (isStatisticsCard) {
-        visualizationSize = { height: 1200, width: 1800 };
-      }
-      properties = properties.filter((property) => property !== 'date_time');
-      properties = properties.filter((property) => property !== 'wind_cardinal_direction_1d');
-      for (let i = 0; i < properties.length; i++) {
-        if (i % 3 === 0) row++;
-
-        const widget = props.data.state.widget;
-        widget.yAxisNames[0] = properties[i];
-        const app = await createApp({
-          title: 'Hawaii Mesonet',
-          roomId: props.data.roomId!,
-          boardId: props.data.boardId!,
-          position: {
-            x: props.data.position.x + visualizationSize.width * (i % 3),
-            y: props.data.position.y + visualizationSize.height * row,
-            z: 0,
-          },
-          size: {
-            width: visualizationSize.width,
-            height: visualizationSize.height,
-            depth: 0,
-          },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Hawaii Mesonet',
-          state: {
-            sensorData: {},
-            stationNames: props.data.state.stationNames,
-            listOfStationNames: s.stationNames[0],
-            location: [-157.816, 21.297],
-            zoom: 8,
-            baseLayer: 'OpenStreetMap',
-            overlay: true,
-            widget: widget,
-          },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
-      }
-    }
-  };
 
   const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const variable = event.target.value;
@@ -556,19 +560,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleSelectDateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const timePeriod = e.target.value;
     switch (timePeriod) {
-      case 'previous24Hours':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: 'previous24Hours' } });
+      case '24 hours':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime24HoursBefore(), timePeriod: '24 hours' } });
         break;
-      case 'previous1Week':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1WeekBefore(), timePeriod: 'previous1Week' } });
+      case '1 week':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1WeekBefore(), timePeriod: '1 week' } });
 
         break;
-      case 'previous1Month':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: 'previous1Month' } });
-
-        break;
-      case 'previous1Year':
-        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1YearBefore(), timePeriod: 'previous1Year' } });
+      case '1 month':
+        updateState(props._id, { widget: { ...s.widget, startDate: getFormattedDateTime1MonthBefore(), timePeriod: '1 month' } });
 
         break;
       default:
@@ -580,7 +580,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleFilterOn = (attributeName: string) => {
     const isFirstTime = isSortedOn.name !== attributeName || isSortedOn.direction === 'ascending';
     const isSecondTime = isSortedOn.name === attributeName && isSortedOn.direction === 'descending';
-    const isThirdTime = isSortedOn.name === attributeName && isSortedOn.direction === 'ascending';
     if (isFirstTime) {
       const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
@@ -644,12 +643,21 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { stationNames: tmpSelectedStations });
   };
 
+  const handleChangeLiveData = (val: ChangeEvent<HTMLInputElement>) => {
+    const checked = val.target.checked;
+    if (checked) {
+      updateState(props._id, { widget: { ...s.widget, liveData: checked, timePeriod: '24 hours' } });
+    } else {
+      const customDateRange = convertToStringFormat(s.widget.startDate) + ' - ' + convertToStringFormat(s.widget.endDate);
+      updateState(props._id, { widget: { ...s.widget, liveData: checked, timePeriod: customDateRange } });
+    }
+  };
+
   return (
     <>
       <Button mr="1rem" size="xs" onClick={onOpen}>
         Select Stations
       </Button>
-
       <Modal size="xl" isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent maxH="60rem" maxW="60rem">
@@ -759,27 +767,38 @@ function ToolbarComponent(props: App): JSX.Element {
         </ModalContent>
       </Modal>
       <Divider border={'1px'} size={'2xl'} orientation="vertical" />
+      <Text fontSize={'sm'} mx="1rem">
+        Live Data
+      </Text>
+      <Switch colorScheme={'green'} isChecked={s.widget.liveData} onChange={handleChangeLiveData} />
+      {s.widget.liveData ? (
+        <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
+          <Select
+            mx="1rem"
+            size="xs"
+            w="10rem"
+            placeholder={'Select time period'}
+            value={s.widget.timePeriod}
+            onChange={handleSelectDateChange}
+          >
+            <option value={'24 hours'}>24 hours</option>
+            <option value={'1 week'}>1 week</option>
+            <option value={'1 month'}>1 month</option>
+          </Select>
+        </Tooltip>
+      ) : (
+        <RangeDatepicker
+          propsConfigs={{ inputProps: { size: 'xs', width: '10rem', ml: '1rem' } }}
+          selectedDates={selectedDates}
+          onDateChange={setSelectedDates}
+        />
+      )}
 
-      <Tooltip label={'Select a time period for this visualization'} aria-label="A tooltip">
-        <Select
-          mx="1rem"
-          size="xs"
-          w="10rem"
-          placeholder={'Select time period'}
-          value={s.widget.timePeriod}
-          onChange={handleSelectDateChange}
-        >
-          <option value={'previous24Hours'}>24 hours</option>
-          <option value={'previous1Week'}>1 week</option>
-          <option value={'previous1Month'}>1 month</option>
-          <option value={'previous1Year'}>1 year</option>
-        </Select>
-      </Tooltip>
       {/* <Text mx="1rem">OR</Text> */}
       {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
         <Input
           w="10rem"
-          mr="1rem"
+
           size="xs"
           onChange={handleDateChange}
           value={convertToChakraDateTime(s.widget.startDate)}
@@ -790,17 +809,9 @@ function ToolbarComponent(props: App): JSX.Element {
           // }
         />
       </Tooltip> */}
-      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
-        <Select
-          size="xs"
-          mx="1rem"
-          w="10rem"
-          placeholder={'Select Variable'}
-          value={s.widget.yAxisNames[0]}
-          onChange={handleChangeVariable}
-        >
+        <Select size="xs" w="10rem" placeholder={'Select Variable'} value={s.widget.yAxisNames[0]} onChange={handleChangeVariable}>
           {s.availableVariableNames.map((name: string, index: number) => {
             return (
               <option key={index} value={name}>
@@ -810,13 +821,11 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
-      <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip">
         <Select
           size="xs"
           w="10rem"
-          ml="1rem"
           placeholder={'Select Visualization Type'}
           value={s.widget.visualizationType}
           onChange={handleVisualizationTypeChange}
@@ -877,6 +886,9 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
 
   const handleVisualizationChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
+    props.apps.forEach((app: App) => {
+      updateState(app._id, { widget: { ...app.data.state.widget, visualizationType: value } });
+    });
   };
 
   const availableVisualizations = (): any => {
@@ -884,6 +896,7 @@ const GroupedToolbarComponent = (props: { apps: App[] }) => {
     for (let i = 0; i < props.apps.length; i++) {
       availableVis.push(checkAvailableVisualizations(props.apps[i].data.state.widget.yAxisNames[0]));
     }
+
     return findDuplicateElementsInArrayObjects(...availableVis);
   };
 
@@ -926,6 +939,7 @@ export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 // Will return an array of variables that are common between all stations
 function findDuplicateElementsInArrayObjects(...arrays: any) {
   const elementCount: any = [];
+  const duplicates = [];
   arrays.forEach((array: any[]) => {
     array.forEach((element) => {
       let found = false;
@@ -941,14 +955,13 @@ function findDuplicateElementsInArrayObjects(...arrays: any) {
       }
     });
   });
-  const duplicates = [];
+
   for (let i = 0; i < elementCount.length; i++) {
     if (elementCount[i].count === arrays.length) {
-      duplicates.push(elementCount.element);
+      duplicates.push(elementCount[i].element);
     }
   }
-
-  return [];
+  return duplicates;
 }
 
 // This function is used to only display common variables between all stations
@@ -990,9 +1003,45 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 20.79532,
+    lon: -156.35991,
+    name: '042HI',
+    selected: false,
+  },
+  {
     lat: 20.7579,
     lon: -156.32,
     name: '001HI',
+    selected: false,
+  },
+  {
+    lat: 20.7458,
+    lon: -156.4306,
+    name: '039HI',
+    selected: false,
+  },
+  {
+    lat: 20.89072,
+    lon: -156.65493,
+    name: '036HI',
+    selected: false,
+  },
+  // {
+  //   lat: 20.64422,
+  //   lon: -156.342056,
+  //   name: '028HI',
+  //   selected: false, // this station has no observations
+  // },
+  {
+    lat: 20.63395,
+    lon: -156.27389,
+    name: '019HI',
+    selected: false,
+  },
+  {
+    lat: 20.644215,
+    lon: -156.284703,
+    name: '032HI',
     selected: false,
   },
   {
@@ -1001,12 +1050,7 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     name: '002HI',
     selected: false,
   },
-  {
-    lat: 20.64422,
-    lon: -156.342056,
-    name: '028HI',
-    selected: false,
-  },
+
   {
     lat: 20.7382,
     lon: -156.2458,
@@ -1017,6 +1061,85 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     lat: 20.7104,
     lon: -156.2567,
     name: '003HI',
+    selected: false,
+  },
+  {
+    lat: 20.7736,
+    lon: -156.2223,
+    name: '020HI',
+    selected: false,
+  },
+  {
+    lat: 20.7195,
+    lon: -156.00236,
+    name: '023HI',
+    selected: false,
+  },
+  {
+    lat: 19.415215,
+    lon: -155.238394,
+    name: '004HI',
+    selected: false,
+  },
+  {
+    lat: 19.6061748,
+    lon: -155.051523,
+    name: '033HI',
+    selected: false,
+  },
+  {
+    lat: 19.845036,
+    lon: -155.362586,
+    name: '022HI',
+    selected: false,
+  },
+  {
+    lat: 19.8343,
+    lon: -155.1224,
+    name: '021HI',
+    selected: false,
+  },
+  {
+    lat: 19.7064,
+    lon: -155.1874,
+    name: '040HI',
+    selected: false,
+  },
+  {
+    lat: 19.1689,
+    lon: -155.5704,
+    name: '018HI',
+    selected: false,
+  },
+  {
+    lat: 19.6687,
+    lon: -155.9575,
+    name: '029HI',
+    selected: false,
+  },
+  {
+    lat: 19.77241,
+    lon: -155.83118,
+    name: '034HI',
+    selected: false,
+  },
+  {
+    lat: 19.2068247,
+    lon: -155.81098,
+    name: '035HI',
+    selected: false,
+  },
+  {
+    lat: 20.12283,
+    lon: -155.749328,
+    name: '025HI',
+    selected: false,
+  },
+
+  {
+    lat: 20.019528,
+    lon: -155.677085,
+    name: '027HI',
     selected: false,
   },
   {
@@ -1056,102 +1179,6 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    selected: false,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    selected: false,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    selected: false,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    selected: false,
-  },
-  {
-    lat: 20.63395,
-    lon: -156.27389,
-    name: '019HI',
-    selected: false,
-  },
-  {
-    lat: 20.644215,
-    lon: -156.284703,
-    name: '032HI',
-    selected: false,
-  },
-  {
-    lat: 20.7736,
-    lon: -156.2223,
-    name: '020HI',
-    selected: false,
-  },
-  {
-    lat: 20.7195,
-    lon: -156.00236,
-    name: '023HI',
-    selected: false,
-  },
-  {
-    lat: 19.6061748,
-    lon: -155.051523,
-    name: '033HI',
-    selected: false,
-  },
-  {
-    lat: 19.845036,
-    lon: -155.362586,
-    name: '022HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.6687,
-    lon: -155.9575, //missing a negative here in tom's website
-    name: '029HI',
-    selected: false,
-  },
-  {
-    lat: 19.1689,
-    lon: -155.5704,
-    name: '018HI',
-    selected: false,
-  },
-  {
-    lat: 20.12283,
-    lon: -155.749328,
-    name: '025HI',
-    selected: false,
-  },
-  {
-    lat: 20.019528,
-    lon: -155.677085,
-    name: '027HI',
-    selected: false,
-  },
-  {
     lat: 21.145283,
     lon: -156.729459,
     name: '030HI',
@@ -1164,21 +1191,60 @@ export const stationData: { lat: number; lon: number; name: string; selected: bo
     selected: false,
   },
   {
+    lat: 21.333,
+    lon: -157.8025,
+    name: '011HI',
+    selected: false,
+  },
+  {
+    lat: 21.3391,
+    lon: -157.8369,
+    name: '012HI',
+    selected: false,
+  },
+  {
+    lat: 21.3467,
+    lon: -157.8364,
+    name: '037HI',
+    selected: false,
+  },
+  {
+    lat: 21.3376,
+    lon: -157.8409,
+    name: '038HI',
+    selected: false,
+  },
+
+  {
+    lat: 21.506875,
+    lon: -158.145114,
+    name: '03HI',
+    selected: false,
+  },
+  {
     lat: 21.506875,
     lon: -158.145114,
     name: '026HI',
     selected: false,
   },
+
+  {
+    lat: 22.2026,
+    lon: -159.5188,
+    name: '014HI',
+    selected: false,
+  },
+  {
+    lat: 22.1975,
+    lon: -159.421,
+    name: '015HI',
+    selected: false,
+  },
+
   {
     lat: 22.2198,
     lon: -159.57525,
     name: '024HI',
-    selected: false,
-  },
-  {
-    lat: 20.89072,
-    lon: -156.65493,
-    name: '036HI',
     selected: false,
   },
 ];

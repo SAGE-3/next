@@ -36,11 +36,27 @@ export const apiUrls = {
     upload: '/api/plugins/upload',
   },
   boards: {
+    getBoards: () => `/api/boards`,
     getBoard: (id: string) => `/api/boards/${id}`,
   },
   misc: {
     getTime: '/api/time',
     getInfo: '/api/info',
     nlp: '/api/nlp',
+  },
+  ai: {
+    chat: {
+      status: '/api/ai/chat_status',
+      query: '/api/ai/chat_query',
+    },
+    code: {
+      status: '/api/ai/code_status',
+      query: '/api/ai/code_query',
+    },
+    image: {
+      status: '/api/ai/image_status',
+      labels: '/api/ai/image_to_labels',
+      image: '/api/ai/image_to_image',
+    },
   },
 };

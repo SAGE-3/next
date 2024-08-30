@@ -55,7 +55,7 @@ export function createApp(assetPath: string): express.Express {
       // Content-Security-Policy
       contentSecurityPolicy: false,
       // Strict-Transport-Security
-      hsts: false,
+      hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
     })

@@ -52,6 +52,7 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  const members = useRoomStore((state) => state.members);
 
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -65,7 +66,6 @@ export function BoardPage() {
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
   // Insights
-  const insights = useInsightStore((state) => state.insights);
   const subToInsight = useInsightStore((state) => state.subscribe);
   const unsubToInsight = useInsightStore((state) => state.unsubscribe);
 
@@ -77,8 +77,7 @@ export function BoardPage() {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLButtonElement>(null);
 
-  // Plugin Listener
-  // Listens to updates from plugin apps and sends them to the AppStore
+  // Plugin Listener: updates from plugin apps and sends them to the AppStore
   usePluginListener();
 
   // UI Message
@@ -106,6 +105,23 @@ export function BoardPage() {
     onClose();
     logout();
   }
+
+  // If you are removed as a member from the room this board belongs to, redict to the homepage
+  useEffect(() => {
+    if (!user) return;
+    const roomMembership = members.find((m) => m.data.roomId === roomId);
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+    if (!isMember) {
+      toast({
+        title: 'Room Membership Revoked',
+        description: `Your membership to this room has been revoked by the room's owner.`,
+        status: 'error',
+        duration: 5000,
+        isClosable: false,
+      });
+      toHome();
+    }
+  }, [members, user]);
 
   // Scroll detection
   useEffect(() => {

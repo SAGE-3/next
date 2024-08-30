@@ -39,7 +39,11 @@
     "url": "http://127.0.0.1:8000"
   },
 
-
+  // Feedback URL
+  "feedback": {
+    "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
+  },
+  
   // External Services
   "services": {
     "twilio": {
@@ -52,9 +56,26 @@
     },
     "openai": {
       // API Key
-      "apiKey": "XXXX",
+      "apiKey": "",
       // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
-      "model": "gpt-3.5-turbo"
+      // "model": "gpt-3.5-turbo"
+      "model": "gpt-4o-mini"
+    },
+    "chat": {
+      "url": "https://arcade.evl.uic.edu/llama",
+      "model": "llama3",
+      "max_tokens": 2048,
+      "apiKey": ""
+    },
+    "codellama": {
+      "url": "https://arcade.evl.uic.edu/llama31_8bf",
+      "model": "meta/llama-3.1-8b-instruct",
+      "apiKey": "",
+      "max_tokens": 1000
+    },
+    "yolo": {
+      "url": "https://arcade.evl.uic.edu/yolov8",
+      "apiKey": ""
     }
   },
 
@@ -62,13 +83,13 @@
   "features": {
     // Enable Plugins
     "plugins": true,
-    // Which Apps to enable.  Available Apps: 
-    //  ChartMaker, LeafLet, Notepad, SageCell, Stickie, Screenshare, Webview
+    // Which Apps to enable
     "apps": [
       "Chat",
       "ChartMaker",
       "MapGL",
       "Notepad",
+      "Poll",
       "SageCell",
       "Stickie",
       "Screenshare",

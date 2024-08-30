@@ -7,19 +7,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Button, useColorModeValue, VStack, Text, Checkbox, useColorMode, HStack } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack } from '@chakra-ui/react';
 
-import { initialValues } from '@sage3/applications/initialValues';
-import {
-  useAppStore,
-  useUIStore,
-  useUser,
-  useRouteNav,
-  useCursorBoardPosition,
-  usePanelStore,
-  useConfigStore,
-} from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
 
 // Development or production
@@ -30,11 +22,7 @@ type ContextProps = {
   boardId: string;
   clearBoard: () => void;
   showAllApps: () => void;
-  downloadBoard: () => void;
 };
-
-// State of the checkboxes in context menu: grid ui
-const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
   // Configuration information
@@ -71,46 +59,17 @@ export function BoardContextMenu(props: ContextProps) {
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
-  const setGridSize = useUIStore((state) => state.setGridSize);
-  const flipUI = useUIStore((state) => state.flipUI);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
-  const showAppTitle = useUIStore((state) => state.showAppTitle);
-  const showPresence = useUIStore((state) => state.showPresence);
-  const toggleTitle = useUIStore((state) => state.toggleTitle);
-  const togglePresence = useUIStore((state) => state.togglePresence);
+
   const { uiToBoard } = useCursorBoardPosition();
 
   // UI Menu position setters
   const updatePanel = usePanelStore((state) => state.updatePanel);
 
-  // State of the checkboxes in context menu: grid ui
-  const [radios, setRadios] = useState(savedRadios);
-
   // Theme
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const panelBackground = useColorModeValue('gray.50', 'gray.700');
   const shadowColor = useColorModeValue('#00000050', '#00000080');
-
-  // Enable/disable the grid
-  const onGridChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.checked;
-    if (val) {
-      setGridSize(50);
-    } else {
-      setGridSize(1);
-    }
-    setRadios((_prev) => [val, radios[1]]);
-    savedRadios[0] = val;
-  };
-
-  // Show/hide the UI
-  const onUIChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    flipUI();
-    const val = e.target.checked;
-    setRadios((_prev) => [radios[0], val]);
-    savedRadios[1] = val;
-  };
   const { colorMode, toggleColorMode } = useColorMode();
 
   /**
@@ -159,8 +118,8 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-    const width = 600;
-    const height = 400;
+    const width = 820;
+    const height = 420;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
       title: 'Chat',
@@ -178,7 +137,7 @@ export function BoardContextMenu(props: ContextProps) {
   };
 
   return (
-    <VStack
+    <Box
       whiteSpace={'nowrap'}
       boxShadow={`4px 4px 10px 0px ${shadowColor}`}
       p="2"
@@ -188,8 +147,8 @@ export function BoardContextMenu(props: ContextProps) {
       w={'100%'}
     >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'100%'}>
-          <Text className="header" color={textColor} fontSize={18} h={'auto'} cursor="move" userSelect={'none'} fontWeight="bold">
+        <VStack w={'125px'}>
+          <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Actions
           </Text>
 
@@ -259,25 +218,11 @@ export function BoardContextMenu(props: ContextProps) {
           >
             Show all Apps
           </Button>
-
-          {/* <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.downloadBoard}
-          >
-            Download Opened Assets
-          </Button> */}
         </VStack>
 
-        <VStack w={'100%'}>
-          <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
-            Quick Apps
+        <VStack w={'125px'}>
+          <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+            Apps
           </Text>
 
           <Button
@@ -354,74 +299,7 @@ export function BoardContextMenu(props: ContextProps) {
             Webview
           </Button>
         </VStack>
-
-        <VStack w={'100%'}>
-          <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} cursor="move" userSelect={'none'}>
-            Options
-          </Text>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="auto"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => {
-              resetBoardPosition();
-            }}
-          >
-            Reset View
-          </Button>
-
-          <Checkbox
-            w={'100%'}
-            size={'sm'}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isChecked={radios[0]}
-            onChange={onGridChange}
-          >
-            Snap to Grid
-          </Checkbox>
-          <Checkbox
-            w={'100%'}
-            size={'sm'}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isChecked={radios[1]}
-            onChange={onUIChange}
-          >
-            Show Interface
-          </Checkbox>
-          <Checkbox
-            w={'100%'}
-            size={'sm'}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isChecked={showPresence}
-            onChange={togglePresence}
-          >
-            Show Presence
-          </Checkbox>
-          <Checkbox
-            w={'100%'}
-            size={'sm'}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isChecked={showAppTitle}
-            onChange={toggleTitle}
-          >
-            Show App Titles
-          </Checkbox>
-        </VStack>
       </HStack>
-    </VStack>
+    </Box>
   );
 }

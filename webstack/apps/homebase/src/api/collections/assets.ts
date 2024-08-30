@@ -15,12 +15,13 @@
 
 // Node modules
 import * as fs from 'fs';
+import * as path from 'path';
 
 // Express web server framework
 import * as express from 'express';
 
 // SAGE3 modules
-import { AssetSchema, ExtraVideoType } from '@sage3/shared/types';
+import { AssetSchema, ExtraVideoType, ExtraImageType } from '@sage3/shared/types';
 import { getStaticAssetUrl, SAGE3Collection, sageRouter } from '@sage3/backend';
 import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
@@ -109,7 +110,24 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     } else if (!isNaN(Date.parse(exif.FileModifyDate))) {
       realDate = new Date(exif.FileModifyDate);
     }
-    if ((isImage(fileType) && !isGIF(fileType)) || isPDF(fileType)) {
+    if (isGIF(fileType)) {
+      const imgWidth = exif['ImageWidth'] || 400;
+      const imgHeight = exif['ImageHeight'] || 400;
+      const imageData: ExtraImageType = {
+        filename: path.join(config.public, file),
+        url: getStaticAssetUrl(file),
+        fullSize: getStaticAssetUrl(file),
+        width: imgWidth,
+        height: imgHeight,
+        aspectRatio: imgWidth / imgHeight,
+        sizes: [],
+      };
+      return {
+        dateCreated: realDate.toISOString(),
+        derived: imageData,
+        metadata: t1.result,
+      };
+    } else if (isImage(fileType) || isPDF(fileType)) {
       // image or pdf processed
       return {
         dateCreated: realDate.toISOString(),
@@ -135,13 +153,20 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
         // save the image aspect ratio
         aspectRatio: imgWidth / imgHeight,
         // video metadata
-        duration: exif['Duration'] || '',
+        duration: exif['TrackDuration'] || exif['MediaDuration'] || exif['Duration'] || '',
         birate: exif['AvgBitrate'] || '',
         framerate: exif['VideoFrameRate'] || 0,
         compressor: exif['CompressorName'] || exif['CompressorID'] || '',
         audioFormat: exif['AudioFormat'] || '',
         rotation: rotation,
       };
+      // Fix video duration if it's object with Scale and Value properties
+      if (!derived.duration && typeof exif['Duration'] !== 'string') {
+        if (exif['Duration'].Scale && exif['Duration'].Value) {
+          const value = exif['Duration'].Value * exif['Duration'].Scale;
+          derived.duration = value.toFixed(2);
+        }
+      }
       return {
         dateCreated: realDate.toISOString(),
         metadata: t1.result,
