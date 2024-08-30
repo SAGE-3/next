@@ -71,7 +71,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => {}));
+  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
@@ -92,8 +92,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
-          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
+          onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
+        // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -120,12 +120,11 @@ export type PanelProps = {
  */
 export function Panel(props: PanelProps) {
   // Panel Store
-  const getPanel = usePanelStore((state) => state.getPanel);
-  const panel = getPanel(props.name);
+  const panel = usePanelStore((state) => state.panels[props.name]);
   if (!panel) return null;
-  const panels = usePanelStore((state) => state.panels);
+  // const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
-  const zIndex = panels.findIndex((el) => el.name == panel.name);
+  const zIndex = usePanelStore((state) => state.zOrder.indexOf(props.name));
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
@@ -227,13 +226,14 @@ export function Panel(props: PanelProps) {
   };
 
   // Handle a drag start of the panel
-  const handleDragStart = () => {
+  const handleDragStart = (e: any) => {
+    e.stopPropagation();
     bringPanelForward(props.name);
   };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    updatePanel(panel.name, { position: { x: data.x, y: data.y } });
+    update({ position: { x: data.x, y: data.y } });
     if (ref.current) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
