@@ -4,6 +4,7 @@ import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
+import { name as CalculatorName } from './apps/Calculator';
 import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
@@ -13,6 +14,7 @@ import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
+import { name as GuruName } from './apps/Guru';
 import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
 import { name as ImageViewerName } from './apps/ImageViewer';
@@ -37,12 +39,12 @@ import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
-import { name as CalculatorName } from './apps/Calculator';
 
 
 import AIPane from './apps/AIPane/AIPane';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
+import Calculator from './apps/Calculator/Calculator';
 import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
@@ -52,6 +54,7 @@ import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
+import Guru from './apps/Guru/Guru';
 import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
@@ -76,7 +79,6 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
-import Calculator from './apps/Calculator/Calculator';
 import React from 'react';
 
 
@@ -84,6 +86,7 @@ export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent, GroupedToolbarComponent: AIPane.GroupedToolbarComponent },
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
+  [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },
   [ChartGeneratorName]: { AppComponent: React.memo(ChartGenerator.AppComponent), ToolbarComponent: ChartGenerator.ToolbarComponent, GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent },
   [ChatName]: { AppComponent: React.memo(Chat.AppComponent), ToolbarComponent: Chat.ToolbarComponent, GroupedToolbarComponent: Chat.GroupedToolbarComponent },
   [ClockName]: { AppComponent: React.memo(Clock.AppComponent), ToolbarComponent: Clock.ToolbarComponent, GroupedToolbarComponent: Clock.GroupedToolbarComponent },
@@ -93,6 +96,7 @@ export const Applications = {
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent, GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent },
   [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent, GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent, GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent },
+  [GuruName]: { AppComponent: React.memo(Guru.AppComponent), ToolbarComponent: Guru.ToolbarComponent, GroupedToolbarComponent: Guru.GroupedToolbarComponent },
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent, GroupedToolbarComponent: HCDP.GroupedToolbarComponent },
   [IFrameName]: { AppComponent: React.memo(IFrame.AppComponent), ToolbarComponent: IFrame.ToolbarComponent, GroupedToolbarComponent: IFrame.GroupedToolbarComponent },
   [ImageViewerName]: { AppComponent: React.memo(ImageViewer.AppComponent), ToolbarComponent: ImageViewer.ToolbarComponent, GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent },
@@ -117,7 +121,6 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-  [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';

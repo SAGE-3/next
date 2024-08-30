@@ -589,7 +589,7 @@ export function useFiles(): UseFiles {
 
           return [
             setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID }),
-            setupApp('', 'Stickie', xDrop, yDrop - 400, roomId, boardId, { w: 400, h: 400 }, { text: text }),
+            setupApp('', 'Stickie', xDrop, yDrop - 400, roomId, boardId, { w: 400, h: 400 }, { text: text, fontSize: 16 }),
           ];
         }
       }
