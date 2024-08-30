@@ -81,7 +81,7 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, AssetList } from './components';
 
 /**
  * Home page for SAGE3
@@ -1072,7 +1072,7 @@ export function HomePage() {
                 <Tab>Boards</Tab>
                 <Tab>Members</Tab>
                 <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Assets</Tab>
+                  <Tab>Assets</Tab>
                 </Tooltip>
                 <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
                   <Tab isDisabled={true}>Chat</Tab>
@@ -1221,6 +1221,9 @@ export function HomePage() {
                       })}
                     </VStack>
                   </Box>
+                </TabPanel>
+                <TabPanel px="0">
+                  <AssetList room={selectedRoom}></AssetList>
                 </TabPanel>
               </TabPanels>
             </Tabs>

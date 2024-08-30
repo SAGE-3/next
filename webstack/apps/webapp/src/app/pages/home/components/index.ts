@@ -12,3 +12,4 @@ export * from './BoardCard';
 export * from './RoomSearch';
 export * from './BoardPreview';
 export * from './BoardSidebarRow';
+export * from './AssetList';
