@@ -7,21 +7,18 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useColorModeValue, Box, Text, VStack, Input, InputGroup, InputLeftElement, Button, Grid, HStack } from '@chakra-ui/react';
 import {
-  useColorModeValue,
-  IconButton,
-  Box,
-  Text,
-  VStack,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Button,
-  Grid,
-  HStack,
-} from '@chakra-ui/react';
-import { apiUrls, useAssetStore, useConfigStore, useHexColor, useUsersStore } from '@sage3/frontend';
-import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage } from '@sage3/shared';
+  apiUrls,
+  AssetHTTPService,
+  downloadFile,
+  humanFileSize,
+  useAssetStore,
+  useConfigStore,
+  useHexColor,
+  useUsersStore,
+} from '@sage3/frontend';
+import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode } from '@sage3/shared';
 import { Asset, FileEntry, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 
 import { FaPython } from 'react-icons/fa';
@@ -36,6 +33,7 @@ import {
   MdOutlinePictureAsPdf,
   MdSearch,
 } from 'react-icons/md';
+import { Editor } from '@monaco-editor/react';
 
 // List of Assets
 export function AssetList(props: { room: Room }) {
@@ -57,8 +55,8 @@ export function AssetList(props: { room: Room }) {
   }, [allAssets, users, props.room]);
 
   return (
-    <Box display="flex" flexDir="row" width="800px">
-      <VStack gap="2">
+    <Box display="flex" flexDir="row" p="2" border="solid 2px white">
+      <VStack gap="2" overflowX="hidden" overflowY="scroll" height="100%" border="solid red 1px">
         {/* File Search */}
         <InputGroup size="md" width="100%" my="1">
           <InputLeftElement pointerEvents="none">
@@ -110,6 +108,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
       transition={'all 0.2s ease-in-out'}
       onClick={props.onClick}
       cursor="pointer"
+      overflow={'hidden'}
     >
       <Box display="flex" alignItems={'center'}>
         {/* Chakra Icon */}
@@ -144,7 +143,7 @@ function AssetPreview(props: { asset: Asset }) {
   const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
   const type = selectedAsset.data.mimetype;
-  const size = formatSize(selectedAsset.data.size);
+  const size = humanFileSize(selectedAsset.data.size);
   const [PreviewElement, setPreviewElement] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
@@ -154,6 +153,15 @@ function AssetPreview(props: { asset: Asset }) {
     };
     getPreview();
   }, [props.asset._id]);
+
+  function downloadAsset() {
+    const fileURL = apiUrls.assets.getAssetById(props.asset.data.file);
+    downloadFile(fileURL, filename);
+  }
+
+  function deleteAsset() {
+    AssetHTTPService.del(props.asset._id);
+  }
 
   return (
     <Box width={width + 'px'} display="flex" flexDirection="column" p={2} ml={4}>
@@ -184,10 +192,10 @@ function AssetPreview(props: { asset: Asset }) {
 
       {/* Third Area: Actions */}
       <HStack gap="2">
-        <Button colorScheme="teal" size="sm" mt={2} width="200px" variant="outline">
+        <Button colorScheme="teal" size="sm" mt={2} width="200px" variant="outline" onClick={downloadAsset}>
           Download
         </Button>
-        <Button colorScheme="red" size="sm" mt={2} width="200px" variant="outline">
+        <Button colorScheme="red" size="sm" mt={2} width="200px" variant="outline" onClick={deleteAsset}>
           Delete
         </Button>
         {/* Add more actions as needed */}
@@ -265,21 +273,54 @@ const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> =
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
     const response = await fetch(fileURL);
-    const text = await response.text();
-    // return text area with text
-    return <textarea style={{ width: width + 'px', height: '400px' }} readOnly={true} value={text} />;
+    const code = await response.text();
+    const language = mimeToCode(type);
+    console.log(language);
+    return CodeViewer({ code, language });
   } else {
     return <Text>Preview not available</Text>;
-
   }
 };
 
-const formatSize = (sizeInBytes: number): string => {
-  if (sizeInBytes >= 1024 * 1024) {
-    return (sizeInBytes / (1024 * 1024)).toFixed(2) + ' MB';
-  } else if (sizeInBytes >= 1024) {
-    return (sizeInBytes / 1024).toFixed(2) + ' KB';
-  } else {
-    return sizeInBytes + ' Bytes';
-  }
-};
+// A Monaco editor view only component that just shows the code provided in props
+export function CodeViewer(props: { code: string; language: string }) {
+  // Styling
+  return (
+    <Editor
+      value={props.code}
+      height={'500px'}
+      language={props.language}
+      theme={'vs-dark'}
+      options={{
+        readOnly: true,
+        fontSize: 14,
+        contextmenu: false,
+        minimap: { enabled: false },
+        lineNumbers: 'on',
+        lineNumbersMinChars: 5,
+        overviewRulerBorder: false,
+        overviewRulerLanes: 0,
+        quickSuggestions: false,
+        glyphMargin: false,
+        wordWrap: 'on',
+        lineDecorationsWidth: 0,
+        scrollBeyondLastLine: false,
+        wordWrapColumn: 80,
+        wrappingStrategy: 'simple',
+        renderLineHighlight: 'line',
+        renderLineHighlightOnlyWhenFocus: true,
+        fontFamily: "'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'monospace'",
+        scrollbar: {
+          useShadows: true,
+          verticalHasArrows: true,
+          horizontalHasArrows: true,
+          vertical: 'auto',
+          horizontal: 'auto',
+          verticalScrollbarSize: 18,
+          horizontalScrollbarSize: 18,
+          arrowSize: 30,
+        },
+      }}
+    />
+  );
+}
