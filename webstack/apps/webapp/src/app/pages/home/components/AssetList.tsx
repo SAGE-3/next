@@ -6,8 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, VStack, Input, InputGroup, InputLeftElement, Button, Grid } from '@chakra-ui/react';
-import { apiUrls, useAssetStore, useHexColor, useUsersStore } from '@sage3/frontend';
+import {
+  useColorModeValue,
+  IconButton,
+  Box,
+  Text,
+  VStack,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Button,
+  Grid,
+  HStack,
+} from '@chakra-ui/react';
+import { apiUrls, useAssetStore, useConfigStore, useHexColor, useUsersStore } from '@sage3/frontend';
 import { fuzzySearch, getExtension } from '@sage3/shared';
 import { Asset, FileEntry, Room } from '@sage3/shared/types';
 import { useEffect, useState } from 'react';
@@ -23,6 +35,9 @@ import {
   MdOutlinePictureAsPdf,
   MdSearch,
 } from 'react-icons/md';
+
+// UUID generator
+import { v5 as uuidv5 } from 'uuid';
 
 // List of Assets
 export function AssetList(props: { room: Room }) {
@@ -129,49 +144,69 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 
 function AssetPreview(props: { asset: Asset }) {
   const selectedAsset = props.asset;
-
+  const width = 500;
   const filename = selectedAsset.data.originalfilename;
+  const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
   const type = filename.split('.').pop();
   const size = formatSize(selectedAsset.data.size);
+  const extension = filename.split('.').pop();
+  const [PreviewElement, setPreviewElement] = useState<JSX.Element | null>(null);
+
+  useEffect(() => {
+    const getPreview = async () => {
+      // Get the namespace UUID of the server
+      const namespace = useConfigStore.getState().config.namespace;
+      // Generate a public URL of the file
+      const token = uuidv5(props.asset._id, namespace);
+      const publicUrl = window.location.origin + apiUrls.assets.getPublicURL(props.asset._id, token);
+
+      const Preview = await whichPreview(props.asset, extension ? extension : '', width, publicUrl);
+      setPreviewElement(Preview);
+    };
+    getPreview();
+  }, [props.asset._id]);
 
   return (
-    <Box width="400px" display="flex" flexDirection="column" p={2} ml={4}>
+    <Box width={width + 'px'} display="flex" flexDirection="column" p={2} ml={4}>
       {/* First Area: Meta Data */}
       <Box mb={2}>
         <Grid templateColumns="repeat(2, 1fr)" gap={2}>
-          {/* Name */}
-          <Text fontWeight="bold">Filename:</Text>
+          {/* File Name */}
+          <Text fontWeight="bold">File Name</Text>
           <Text>{filename}</Text>
 
+          {/* Date Created */}
+          <Text fontWeight="bold">Date Created</Text>
+          <Text>{dateCreated}</Text>
+
           {/* Date Added */}
-          <Text fontWeight="bold">Date Added:</Text>
+          <Text fontWeight="bold">Date Added</Text>
           <Text>{dateAdded}</Text>
 
           {/* Type */}
-          <Text fontWeight="bold">Type:</Text>
+          <Text fontWeight="bold">Type</Text>
           <Text>{type}</Text>
 
           {/* Size */}
-          <Text fontWeight="bold">Size:</Text>
+          <Text fontWeight="bold">Size</Text>
           <Text>{size}</Text>
         </Grid>
       </Box>
 
-      {/* Second Area: Preview */}
-      <Box mb={2}>
-        <Text fontWeight="bold">Preview:</Text>
-
-        {/* Add additional preview logic for other types as needed */}
-      </Box>
-
       {/* Third Area: Actions */}
-      <Box>
-        <Button colorScheme="teal" size="sm" mt={2}>
+      <HStack gap="2">
+        <Button colorScheme="teal" size="sm" mt={2} width="200px" variant="outline">
           Download
         </Button>
+        <Button colorScheme="red" size="sm" mt={2} width="200px" variant="outline">
+          Delete
+        </Button>
         {/* Add more actions as needed */}
-      </Box>
+      </HStack>
+
+      {/* Second Area: Preview */}
+      <Box mt={2}>{PreviewElement}</Box>
     </Box>
   );
 }
@@ -215,11 +250,33 @@ const whichIcon = (type: string) => {
   }
 };
 
-const whichPreview = (file: FileEntry, extension: string, fileURL?: string) => {
+const whichPreview = async (asset: Asset, extension: string, width: number, fileURL?: string): Promise<JSX.Element> => {
   switch (extension) {
     case 'jpeg':
+    case 'png':
+    case 'gif':
     case 'jpg':
-      return <img src={fileURL} alt={file.originalfilename} style={{ width: '100%' }} />;
+      return <img src={fileURL} alt={asset.data.originalfilename} style={{ width }} />;
+    case 'mp4':
+    case 'qt':
+      return <video src={fileURL} controls style={{ width }} />;
+    case 'pdf':
+      return <Text>Preview not available</Text>;
+    case 'yaml':
+    case 'ts':
+    case 'html':
+    case 'css':
+    case 'cpp':
+    case 'c':
+    case 'java':
+    case 'r':
+      // Download text file
+      if (!fileURL) return <Text>Preview not available</Text>;
+      const response = await fetch(fileURL);
+      const text = await response.text();
+      // return text area with text
+      return <textarea style={{ width: width + 'px', height: '400px' }}>{text}</textarea>;
+
     default:
       return <Text>Preview not available</Text>;
   }
