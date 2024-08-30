@@ -92,6 +92,14 @@ interface UIState {
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
+  // Alternative Mouse Modes
+  primaryActionMode: "lasso" | "grab"
+  setPrimaryActionMode: (mode: "lasso" | "grab") => void
+  togglePrimaryActionMode: () => void
+  // Position Syncronization Information
+  boardSynced: boolean, // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
+  setBoardSynced: (synced: boolean) => void,
+
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
@@ -143,6 +151,11 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
+  primaryActionMode: 'lasso',
+  setPrimaryActionMode: (mode: "lasso" | "grab") => set((state) => ({ ...state, leftClickMode: mode })),
+  togglePrimaryActionMode: () => set((state) => ({ ...state, primaryActionMode: state.primaryActionMode === 'lasso' ? 'grab' : 'lasso' })),
+  boardSynced: true,
+  setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },

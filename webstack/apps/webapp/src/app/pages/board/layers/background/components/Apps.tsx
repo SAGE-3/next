@@ -54,6 +54,7 @@ export function Apps() {
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  const boardSynced = useUIStore((state) => state.boardSynced);
 
   // Cursor Position
   const { boardCursor } = useCursorBoardPosition();
@@ -209,9 +210,19 @@ export function Apps() {
   useHotkeys(
     'v',
     (evt) => {
-      evt.preventDefault();
-      evt.stopPropagation();
-      pasteApp(boardCursor);
+      if (boardSynced) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        pasteApp(boardCursor); 
+      }
+      else {
+        toast({
+          title: 'Pasting app while panning or zooming is not supported',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        })
+      }
     },
     { dependencies: [] }
   );

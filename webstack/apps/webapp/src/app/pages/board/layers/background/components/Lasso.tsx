@@ -31,6 +31,7 @@ export function Lasso(props: LassoProps) {
 
   // Lasso mode apps & Selected apps
   const lassoMode = useUIStore((state) => state.lassoMode);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 
@@ -48,43 +49,67 @@ export function Lasso(props: LassoProps) {
   // Key press
   const spacebarPressed = useKeyPress(' ');
 
-  useEffect(() => {
-    // Handle if let go shift before mouse up, clear the rectangle
-    if (!lassoMode && mousedown === true) {
-      mouseUp();
-    }
-  }, [lassoMode]);
+  // useEffect(() => {
+  //   // Handle if let go shift before mouse up, clear the rectangle
+  //   if (!lassoMode && mousedown === true) {
+  //     mouseUp();
+  //   }
+  // }, [lassoMode]);
 
   // Get initial position
-  const mouseDown = (ev: any) => {
-    const position = uiToBoard(ev.clientX, ev.clientY);
+  const lassoStart = (x: number, y: number) => {
+    const position = uiToBoard(x, y);
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
     set_mousey(position.y);
     setMouseDown(true);
+    setLassoMode(true);
   };
 
-  const mouseUp = () => {
+  const lassoEnd = () => {
     setMouseDown(false);
+    setLassoMode(false);
     // Deselect all aps
     if (!isDragging) {
       clearSelectedApps();
     }
     setIsDragging(false);
+    // setLassoMode(false);
   };
 
   // Get last position
-  const mouseMove = (ev: any) => {
-    const position = uiToBoard(ev.clientX, ev.clientY);
+  const lassoMove = (x: number, y: number) => {
+    const position = uiToBoard(x, y);
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
   };
 
+  // Mouse Behaviours
+  const mouseDown = (ev: any) => {
+    // if (selectedAppId === '' && ev.button === 0) {
+    // setLassoMode(true);
+    // }
+    if (ev.button == 0) {
+      lassoStart(ev.clientX, ev.clientY)
+    }
+  };
+
+  const mouseUp = () => {
+    // setLassoMode(false);
+    lassoEnd()
+  };
+
+  const mouseMove = (ev: any) => {
+    if (ev.button == 0 && mousedown) {
+      lassoMove(ev.clientX, ev.clientY)
+    }
+  };
   return (
     <>
-      <div className="canvas-container" style={{ pointerEvents: lassoMode && !spacebarPressed ? 'auto' : 'none' }}>
+      {/* lassoMode &&  */}
+      <div className="canvas-container" style={{ pointerEvents: !spacebarPressed ? 'auto' : 'none' }}>
         <svg
           className="canvas-layer"
           style={{
@@ -93,8 +118,8 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            zIndex: 2000,
-            cursor: 'crosshair',
+            // zIndex: 2000,
+            // cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}

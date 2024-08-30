@@ -7,7 +7,7 @@
  */
 
 import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
-import { MdRemoveRedEye } from 'react-icons/md';
+import { MdBackHand, MdMouse, MdRemoveRedEye, MdTouchApp } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -33,6 +33,7 @@ import {
   useUserSettings,
   useHexColor,
   EditVisibilityModal,
+  useUser,
 } from '@sage3/frontend';
 
 import {
@@ -53,6 +54,7 @@ import {
   KernelsPanel,
   TagsDisplay,
 } from './components';
+import { FaMousePointer } from 'react-icons/fa';
 
 type UILayerProps = {
   boardId: string;
@@ -70,6 +72,9 @@ export function UILayer(props: UILayerProps) {
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
 
+  // User
+  const { user } = useUser();
+
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
@@ -79,6 +84,8 @@ export function UILayer(props: UILayerProps) {
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
+  const primaryActionMode = useUIStore((state) => state.primaryActionMode);
+  const togglePrimaryActionMode = useUIStore((state) => state.togglePrimaryActionMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -300,6 +307,16 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
+          <Tooltip label={primaryActionMode === 'lasso' ? 'Click to Lasso' : 'Click to Grab'}>
+            <IconButton
+              size="sm"
+              colorScheme={user?.data.color || 'gray'}
+              icon={primaryActionMode === 'lasso' ? <FaMousePointer /> : <MdBackHand />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={togglePrimaryActionMode}
+            ></IconButton>
+          </Tooltip>
         </Box>
       </Box>
 

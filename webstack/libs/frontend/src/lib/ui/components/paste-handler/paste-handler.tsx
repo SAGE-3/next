@@ -39,6 +39,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const createApp = useAppStore((state) => state.create);
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const boardSynced = useUIStore((state) => state.boardSynced);
   const [validURL, setValidURL] = useState('');
   // Popover
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
@@ -50,6 +51,19 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     if (!user) return;
 
     const pasteHandlerBoard = (event: ClipboardEvent) => {
+      // Paste inhibitor to prevent pasting while in drag mode, to prevent positioning errors.
+      // To have an optimized drag/pan, we implemented a local positioning state in the Background Layer.
+      // After a few ms, the local positioning state will sync with the global (zustand useUIStore); in which we will allow pasting after the sync.
+      if (!boardSynced) {
+        toast({
+          title: 'Pasting while panning or zooming is not supported',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        })
+        return;
+      }
+
       // get the target element and make sure it is the background board
       const elt = event.target as HTMLElement;
       if (elt.tagName === 'INPUT' || elt.tagName === 'TEXTAREA') return;
