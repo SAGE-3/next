@@ -23,9 +23,9 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // Presences
   const presences = usePresenceStore((state) => state.presences);
@@ -112,8 +112,8 @@ export function PresenceFollow() {
     const myPresence = presences.find((el) => el._id === user?._id);
     if (!myPresence) return;
 
-    console.log('myPresence', myPresence.data.viewport.position.x,
-      myPresence.data.viewport.position.y);
+    ////////////////////////////////////////
+    // Move the board from the remote user
     if (true) {
       const vx = -myPresence.data.viewport.position.x;
       const vy = -myPresence.data.viewport.position.y;
@@ -127,10 +127,10 @@ export function PresenceFollow() {
       const cx = vcx + ww / s / 2;
       const cy = vcy + wh / s / 2;
       if (cx !== boardPosition.x || cy !== boardPosition.y) {
-        console.log('I moved')
         setBoardPosition({ x: cx, y: cy });
       }
     }
+    ////////////////////////////////////////
 
     // Check if I am following someone
     const target = myPresence.data.following;
