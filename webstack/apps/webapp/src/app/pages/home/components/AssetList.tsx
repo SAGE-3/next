@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   useColorModeValue,
   IconButton,
@@ -20,9 +21,9 @@ import {
   HStack,
 } from '@chakra-ui/react';
 import { apiUrls, useAssetStore, useConfigStore, useHexColor, useUsersStore } from '@sage3/frontend';
-import { fuzzySearch, getExtension } from '@sage3/shared';
-import { Asset, FileEntry, Room } from '@sage3/shared/types';
-import { useEffect, useState } from 'react';
+import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage } from '@sage3/shared';
+import { Asset, FileEntry, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
+
 import { FaPython } from 'react-icons/fa';
 import { LuFileJson, LuFileCode } from 'react-icons/lu';
 import {
@@ -36,17 +37,11 @@ import {
   MdSearch,
 } from 'react-icons/md';
 
-// UUID generator
-import { v5 as uuidv5 } from 'uuid';
-
 // List of Assets
 export function AssetList(props: { room: Room }) {
   const allAssets = useAssetStore((state) => state.assets);
-
   const [assets, setAssets] = useState<Asset[]>([]);
-
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-
   const [assetSearch, setAssetSearch] = useState('');
 
   const users = useUsersStore((state) => state.users);
@@ -72,7 +67,7 @@ export function AssetList(props: { room: Room }) {
           <Input placeholder="Search Files" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
         </InputGroup>
         {assets.filter(assetSearchFilter).map((a) => (
-          <AssetListItem asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
+          <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
         ))}
       </VStack>
       <Box px="25px">{selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}</Box>
@@ -148,20 +143,13 @@ function AssetPreview(props: { asset: Asset }) {
   const filename = selectedAsset.data.originalfilename;
   const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
-  const type = filename.split('.').pop();
+  const type = selectedAsset.data.mimetype;
   const size = formatSize(selectedAsset.data.size);
-  const extension = filename.split('.').pop();
   const [PreviewElement, setPreviewElement] = useState<JSX.Element | null>(null);
 
   useEffect(() => {
     const getPreview = async () => {
-      // Get the namespace UUID of the server
-      const namespace = useConfigStore.getState().config.namespace;
-      // Generate a public URL of the file
-      const token = uuidv5(props.asset._id, namespace);
-      const publicUrl = window.location.origin + apiUrls.assets.getPublicURL(props.asset._id, token);
-
-      const Preview = await whichPreview(props.asset, extension ? extension : '', width, publicUrl);
+      const Preview = await whichPreview(props.asset, width);
       setPreviewElement(Preview);
     };
     getPreview();
@@ -250,35 +238,39 @@ const whichIcon = (type: string) => {
   }
 };
 
-const whichPreview = async (asset: Asset, extension: string, width: number, fileURL?: string): Promise<JSX.Element> => {
-  switch (extension) {
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'jpg':
-      return <img src={fileURL} alt={asset.data.originalfilename} style={{ width }} />;
-    case 'mp4':
-    case 'qt':
-      return <video src={fileURL} controls style={{ width }} />;
-    case 'pdf':
-      return <Text>Preview not available</Text>;
-    case 'yaml':
-    case 'ts':
-    case 'html':
-    case 'css':
-    case 'cpp':
-    case 'c':
-    case 'java':
-    case 'r':
-      // Download text file
-      if (!fileURL) return <Text>Preview not available</Text>;
-      const response = await fetch(fileURL);
-      const text = await response.text();
-      // return text area with text
-      return <textarea style={{ width: width + 'px', height: '400px' }}>{text}</textarea>;
+const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> => {
+  const type = asset.data.mimetype;
+  if (isVideo(type)) {
+    const extras = asset.data.derived as ExtraVideoType;
+    const videoURL = extras.url;
+    return <video src={videoURL} controls muted={true} loop style={{ width }} />;
+  } else if (isImage(type)) {
+    const extras = asset.data.derived as ExtraImageType;
+    let imageURL;
+    for (let i = 0; i < extras.sizes.length; i++) {
+      if (extras.sizes[i].width > width) {
+        // Choose the first image that is larger than the preview width
+        imageURL = extras.sizes[i].url;
+        break;
+      }
+    }
+    if (!imageURL) {
+      // If no image is larger than the preview width, choose the largest image
+      imageURL = extras.sizes[extras.sizes.length - 1].url;
+    }
+    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
+  } else if (isPDF(type)) {
+    return <Text>Preview not available</Text>;
+  } else if (isCode(type)) {
+    // Download text file
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    const response = await fetch(fileURL);
+    const text = await response.text();
+    // return text area with text
+    return <textarea style={{ width: width + 'px', height: '400px' }} readOnly={true} value={text} />;
+  } else {
+    return <Text>Preview not available</Text>;
 
-    default:
-      return <Text>Preview not available</Text>;
   }
 };
 
