@@ -9,12 +9,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
 
-import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAuth, useAbility } from '@sage3/frontend';
+import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAbility } from '@sage3/frontend';
 
+import { FileEntry } from '@sage3/shared/types';
 import { Panel } from '../Panel';
 import { Files } from './Files';
-import { FileEntry } from '@sage3/shared/types';
-import { set } from 'date-fns';
 
 type AssetsPanelProps = {
   boardId: string;

@@ -138,7 +138,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 
 function AssetPreview(props: { asset: Asset }) {
   const selectedAsset = props.asset;
-  const width = 500;
+  const width = 600;
   const filename = selectedAsset.data.originalfilename;
   const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
@@ -148,7 +148,7 @@ function AssetPreview(props: { asset: Asset }) {
 
   useEffect(() => {
     const getPreview = async () => {
-      const Preview = await whichPreview(props.asset, width);
+      const Preview = await whichPreview(props.asset, 500);
       setPreviewElement(Preview);
     };
     getPreview();
@@ -167,9 +167,9 @@ function AssetPreview(props: { asset: Asset }) {
     <Box width={width + 'px'} display="flex" flexDirection="column" p={2} ml={4}>
       {/* First Area: Meta Data */}
       <Box mb={2}>
-        <Grid templateColumns="repeat(2, 1fr)" gap={2}>
+        <Grid templateColumns="150px 1fr" gap={2}>
           {/* File Name */}
-          <Text fontWeight="bold">File Name</Text>
+          <Text fontWeight="bold">Filename</Text>
           <Text>{filename}</Text>
 
           {/* Date Created */}
@@ -251,24 +251,44 @@ const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> =
   if (isVideo(type)) {
     const extras = asset.data.derived as ExtraVideoType;
     const videoURL = extras.url;
-    return <video src={videoURL} controls muted={true} loop style={{ width }} />;
+    return <video src={videoURL} controls muted={true} autoPlay={true} loop style={{ width }} />;
   } else if (isImage(type)) {
-    const extras = asset.data.derived as ExtraImageType;
     let imageURL;
-    for (let i = 0; i < extras.sizes.length; i++) {
-      if (extras.sizes[i].width > width) {
+    if (isGIF(type)) {
+      // GIFs are not processed by the backend, so we use the original file
+      imageURL = apiUrls.assets.getAssetById(asset.data.file);
+    } else {
+      const extras = asset.data.derived as ExtraImageType;
+      for (let i = 0; i < extras.sizes.length; i++) {
+        if (extras.sizes[i].width > width) {
+          // Choose the first image that is larger than the preview width
+          imageURL = extras.sizes[i].url;
+          break;
+        }
+      }
+      if (!imageURL) {
+        // If no image is larger than the preview width, choose the largest image
+        imageURL = extras.sizes[extras.sizes.length - 1].url;
+      }
+    }
+    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
+  } else if (isPDF(type)) {
+    const pages = asset.data.derived as ExtraPDFType;
+    const numPages = pages.length;
+    const firstPage = pages[0];
+    let imageURL;
+    for (let i = 0; i < firstPage.length; i++) {
+      if (firstPage[i].size > width) {
         // Choose the first image that is larger than the preview width
-        imageURL = extras.sizes[i].url;
+        imageURL = firstPage[i].url;
         break;
       }
     }
     if (!imageURL) {
       // If no image is larger than the preview width, choose the largest image
-      imageURL = extras.sizes[extras.sizes.length - 1].url;
+      imageURL = firstPage[firstPage.length - 1].url;
     }
     return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
-  } else if (isPDF(type)) {
-    return <Text>Preview not available</Text>;
   } else if (isCode(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
@@ -288,6 +308,7 @@ export function CodeViewer(props: { code: string; language: string }) {
   return (
     <Editor
       value={props.code}
+      width={'500px'}
       height={'500px'}
       language={props.language}
       theme={'vs-dark'}
