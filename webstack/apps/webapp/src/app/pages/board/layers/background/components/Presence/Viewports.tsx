@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
 import { DraggableData, Position, Rnd, RndDragEvent } from 'react-rnd';
 
-import { useHexColor, useThrottleScale, usePresenceStore } from '@sage3/frontend';
+import { useHexColor, useThrottleScale, usePresenceStore, useAuth } from '@sage3/frontend';
 import { PresenceSchema } from '@sage3/shared/types';
 
 import { Awareness } from './PresenceComponent';
@@ -64,6 +64,10 @@ function UserViewport(props: UserViewportProps) {
   // If this is not a wall usertype, then we don't render the viewport
   if (!props.isWall) return null;
 
+  // Get the user auth information
+  const { auth } = useAuth();
+  const [isGuest, setIsGuest] = useState(true);
+
   // UI settings
   const color = useHexColor(props.color);
   const titleBarHeight = 28 / props.scale;
@@ -79,12 +83,18 @@ function UserViewport(props: UserViewportProps) {
 
   const updatePresence = usePresenceStore((state) => state.update);
 
+  // Are you a guest?
+  useEffect(() => {
+    if (auth) {
+      setIsGuest(auth.provider === 'guest');
+    }
+  }, [auth]);
+
   // If size or position change, update the local state.
   useEffect(() => {
     setPos({ x: props.viewport.position.x, y: props.viewport.position.y });
     setPos2({ x: props.viewport.position.x, y: props.viewport.position.y });
   }, [props.viewport.position.x, props.viewport.position.y]);
-
 
   // Handle when the viewport starts to drag
   function handleDragStart(_e: RndDragEvent, data: DraggableData) {
@@ -109,6 +119,7 @@ function UserViewport(props: UserViewportProps) {
     });
   }
 
+
   return (
     <>
       <Rnd
@@ -118,7 +129,7 @@ function UserViewport(props: UserViewportProps) {
         onDrag={handleDrag}
         onDragStop={handleDragStop}
         enableResizing={false}
-        disableDragging={false}
+        disableDragging={isGuest}
         lockAspectRatio={true}
         scale={props.scale}
         style={{
