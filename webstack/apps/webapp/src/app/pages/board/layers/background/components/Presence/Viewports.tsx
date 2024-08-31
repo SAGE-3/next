@@ -136,6 +136,7 @@ function UserViewport(props: UserViewportProps) {
           borderRadius: borderRadius,
           background: `linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`,
           zIndex: 3000,
+          opacity: 0.65,
         }}
       >
         <Text align={"center"} fontSize={fontSize + 'px'} textColor={textColor} userSelect={"none"}>
