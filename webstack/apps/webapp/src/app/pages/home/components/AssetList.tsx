@@ -7,19 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useColorModeValue, Box, Text, VStack, Input, InputGroup, InputLeftElement, Button, Grid, HStack } from '@chakra-ui/react';
-import {
-  apiUrls,
-  AssetHTTPService,
-  downloadFile,
-  humanFileSize,
-  useAssetStore,
-  useConfigStore,
-  useHexColor,
-  useUsersStore,
-} from '@sage3/frontend';
-import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode } from '@sage3/shared';
-import { Asset, FileEntry, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
+import { useColorModeValue, Box, Text, VStack, Input, InputGroup, InputLeftElement, Button, Grid, HStack, Link } from '@chakra-ui/react';
+import { Editor } from '@monaco-editor/react';
 
 import { FaPython } from 'react-icons/fa';
 import { LuFileJson, LuFileCode } from 'react-icons/lu';
@@ -33,7 +22,30 @@ import {
   MdOutlinePictureAsPdf,
   MdSearch,
 } from 'react-icons/md';
-import { Editor } from '@monaco-editor/react';
+
+import {
+  apiUrls,
+  AssetHTTPService,
+  downloadFile,
+  humanFileSize,
+  useAssetStore,
+  isElectron,
+  useHexColor,
+  useUsersStore,
+} from '@sage3/frontend';
+import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode, isGeoJSON, isFileURL, isJSON, isPython } from '@sage3/shared';
+import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
+
+
+// Compare filenames case independent
+function sortAsset(a: Asset, b: Asset) {
+  const namea = a.data.originalfilename.toLowerCase();
+  const nameb = b.data.originalfilename.toLowerCase();
+  if (namea < nameb) return -1;
+  if (namea > nameb) return 1;
+  return 0;
+};
+
 
 // List of Assets
 export function AssetList(props: { room: Room }) {
@@ -56,7 +68,7 @@ export function AssetList(props: { room: Room }) {
 
   return (
     <Box display="flex" flexDir="row" p="2" border="solid 2px white">
-      <VStack gap="2" overflowX="hidden" overflowY="scroll" height="100%" border="solid red 1px">
+      <VStack gap="2" overflowX="hidden" height="100%" minWidth="520px">
         {/* File Search */}
         <InputGroup size="md" width="100%" my="1">
           <InputLeftElement pointerEvents="none">
@@ -64,9 +76,11 @@ export function AssetList(props: { room: Room }) {
           </InputLeftElement>
           <Input placeholder="Search Files" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
         </InputGroup>
-        {assets.filter(assetSearchFilter).map((a) => (
-          <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
-        ))}
+        <Box width="520px" height="650px" overflowY="scroll">
+          {assets.filter(assetSearchFilter).sort(sortAsset).map((a) => (
+            <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
+          ))}
+        </Box>
       </VStack>
       <Box px="25px">{selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}</Box>
     </Box>
@@ -87,9 +101,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
   );
 
   const name = props.asset.data.originalfilename;
-  // Get extension from the name
-  const extension = name.split('.').pop();
-  const icon = whichIcon(extension || '');
+  const icon = whichIcon(props.asset.data.mimetype);
   const dateCreated = new Date(props.asset.data.dateCreated).toLocaleDateString();
 
   return (
@@ -97,6 +109,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
       background={linearBGColor}
       p="1"
       px="2"
+      mb="1"
       width="500px"
       display="flex"
       justifyContent={'space-between'}
@@ -123,7 +136,6 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
             overflow={'hidden'}
             whiteSpace={'nowrap'}
             textOverflow={'ellipsis'}
-            width=""
           >
             {name}
           </Text>
@@ -136,6 +148,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
   );
 }
 
+// Asset Preview
 function AssetPreview(props: { asset: Asset }) {
   const selectedAsset = props.asset;
   const width = 600;
@@ -145,14 +158,15 @@ function AssetPreview(props: { asset: Asset }) {
   const type = selectedAsset.data.mimetype;
   const size = humanFileSize(selectedAsset.data.size);
   const [PreviewElement, setPreviewElement] = useState<JSX.Element | null>(null);
+  const theme = useColorModeValue('vs', 'vs-dark');
 
   useEffect(() => {
     const getPreview = async () => {
-      const Preview = await whichPreview(props.asset, 500);
+      const Preview = await whichPreview(props.asset, 500, theme);
       setPreviewElement(Preview);
     };
     getPreview();
-  }, [props.asset._id]);
+  }, [props.asset._id, theme]);
 
   function downloadAsset() {
     const fileURL = apiUrls.assets.getAssetById(props.asset.data.file);
@@ -207,46 +221,35 @@ function AssetPreview(props: { asset: Asset }) {
   );
 }
 
-// pick an icon based on file type (extension string)
+// Pick an icon based on file type
 const whichIcon = (type: string) => {
-  switch (type) {
-    case 'url':
-      return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
-    case 'json':
-      return <LuFileJson style={{ color: 'white' }} size={'20px'} />;
-    case 'yaml':
-    case 'ts':
-    case 'html':
-    case 'css':
-    case 'cpp':
-    case 'c':
-    case 'java':
-    case 'r':
-      return <LuFileCode style={{ color: 'white' }} size={'20px'} />;
-    case 'js':
+  if (isFileURL(type)) {
+    return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+  } else if (isGeoJSON(type)) {
+    return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
+  } else if (isJSON(type)) {
+    return <LuFileJson style={{ color: 'cyan' }} size={'20px'} />;
+  } else if (isPython(type)) {
+    return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
+  } else if (isCode(type)) {
+    if (type === 'application/javascript' || type === 'text/javascript') {
       return <MdJavascript style={{ color: 'yellow' }} size={'20px'} />;
-    case 'py':
-      return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
-    case 'pdf':
-      return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-      return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
-    case 'geotiff':
-    case 'geojson':
-      return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
-    case 'mp4':
-    case 'qt':
-      return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-    case 'qt':
-      return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-    default:
-      return <MdOutlineFilePresent size={'20px'} />;
+    } else {
+      return <LuFileCode style={{ color: 'tomato' }} size={'20px'} />;
+    }
+  } else if (isVideo(type)) {
+    return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
+  } else if (isImage(type)) {
+    return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+  } else if (isPDF(type)) {
+    return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+  } else {
+    return <MdOutlineFilePresent size={'20px'} />;
   }
 };
 
-const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> => {
+// Generate a preview based on the file type
+const whichPreview = async (asset: Asset, width: number, theme: string): Promise<JSX.Element> => {
   const type = asset.data.mimetype;
   if (isVideo(type)) {
     const extras = asset.data.derived as ExtraVideoType;
@@ -274,7 +277,6 @@ const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> =
     return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
   } else if (isPDF(type)) {
     const pages = asset.data.derived as ExtraPDFType;
-    const numPages = pages.length;
     const firstPage = pages[0];
     let imageURL;
     for (let i = 0; i < firstPage.length; i++) {
@@ -289,21 +291,49 @@ const whichPreview = async (asset: Asset, width: number): Promise<JSX.Element> =
       imageURL = firstPage[firstPage.length - 1].url;
     }
     return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
-  } else if (isCode(type)) {
+  } else if (isCode(type) || isGeoJSON(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
     const response = await fetch(fileURL);
     const code = await response.text();
     const language = mimeToCode(type);
-    console.log(language);
-    return CodeViewer({ code, language });
-  } else {
-    return <Text>Preview not available</Text>;
+    return CodeViewer({ code, language, theme });
+  } else if (isFileURL(type)) {
+    // Download text file
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    const response = await fetch(fileURL);
+    const text = await response.text();
+    const lines = text.split('\n');
+    let goto;
+    for (const line of lines) {
+      // look for a line starting with URL=
+      if (line.startsWith('URL')) {
+        const words = line.split('=');
+        // the URL
+        goto = words[1].trim();
+      }
+    }
+    if (goto) {
+      return <Text>URL: <Link href={goto} isExternal={true} onClick={(evt) => {
+        evt.preventDefault();
+        openExternalURL(goto);
+      }}>{goto}</Link></Text>;
+    }
   }
+  return <Text>Preview not available</Text>;
 };
 
+// Open an external URL
+function openExternalURL(goto: string) {
+  if (isElectron()) {
+    window.electron.send('open-external-url', { url: goto });
+  } else {
+    window.open(goto, '_blank');
+  }
+}
+
 // A Monaco editor view only component that just shows the code provided in props
-export function CodeViewer(props: { code: string; language: string }) {
+function CodeViewer(props: { code: string; language: string; theme: string }) {
   // Styling
   return (
     <Editor
@@ -311,7 +341,7 @@ export function CodeViewer(props: { code: string; language: string }) {
       width={'500px'}
       height={'500px'}
       language={props.language}
-      theme={'vs-dark'}
+      theme={props.theme}
       options={{
         readOnly: true,
         fontSize: 14,
