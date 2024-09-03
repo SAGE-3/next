@@ -36,7 +36,6 @@ import {
 import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode, isGeoJSON, isFileURL, isJSON, isPython } from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 
-
 // Compare filenames case independent
 function sortAsset(a: Asset, b: Asset) {
   const namea = a.data.originalfilename.toLowerCase();
@@ -44,8 +43,7 @@ function sortAsset(a: Asset, b: Asset) {
   if (namea < nameb) return -1;
   if (namea > nameb) return 1;
   return 0;
-};
-
+}
 
 // List of Assets
 export function AssetList(props: { room: Room }) {
@@ -67,8 +65,8 @@ export function AssetList(props: { room: Room }) {
   }, [allAssets, users, props.room]);
 
   return (
-    <Box display="flex" flexDir="row" p="2" border="solid 2px white">
-      <VStack gap="2" overflowX="hidden" height="100%" minWidth="520px">
+    <Box display="flex" flexDir="row" p="2">
+      <VStack gap="2" overflowX="hidden" minWidth="500px">
         {/* File Search */}
         <InputGroup size="md" width="100%" my="1">
           <InputLeftElement pointerEvents="none">
@@ -76,13 +74,18 @@ export function AssetList(props: { room: Room }) {
           </InputLeftElement>
           <Input placeholder="Search Files" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
         </InputGroup>
-        <Box width="520px" height="650px" overflowY="scroll">
-          {assets.filter(assetSearchFilter).sort(sortAsset).map((a) => (
-            <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
-          ))}
+        <Box width="100%" display="flex" flexDir="column" overflowY={'scroll'}>
+          {assets
+            .filter(assetSearchFilter)
+            .sort(sortAsset)
+            .map((a) => (
+              <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
+            ))}
         </Box>
       </VStack>
-      <Box px="25px">{selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}</Box>
+      <Box px="25px" flex="1">
+        {selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}
+      </Box>
     </Box>
   );
 }
@@ -93,7 +96,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
   const gray = useHexColor(grayColorValue);
   const teal = useHexColor('teal');
 
-  const color = props.selected ? teal : gray;
+  const color = props.selected ? teal : 'gray';
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
@@ -110,13 +113,13 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
       p="1"
       px="2"
       mb="1"
-      width="500px"
+      width="calc(100% - 6px)"
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid 1px ${color}`}
+      border={`solid 1px ${props.selected ? color : 'transparent'}`}
       borderLeft={`solid 8px ${color}`}
       transition={'all 0.2s ease-in-out'}
       onClick={props.onClick}
@@ -129,14 +132,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
           {icon}
         </Box>
         <Box display="flex" flexDir="column">
-          <Text
-            fontSize="xs"
-            fontWeight="bold"
-            textAlign="left"
-            overflow={'hidden'}
-            whiteSpace={'nowrap'}
-            textOverflow={'ellipsis'}
-          >
+          <Text fontSize="xs" fontWeight="bold" textAlign="left" overflow={'hidden'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>
             {name}
           </Text>
           <Text fontSize="xs" color={'gray.500'}>
@@ -151,7 +147,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 // Asset Preview
 function AssetPreview(props: { asset: Asset }) {
   const selectedAsset = props.asset;
-  const width = 600;
+  const width = 500;
   const filename = selectedAsset.data.originalfilename;
   const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
@@ -204,19 +200,21 @@ function AssetPreview(props: { asset: Asset }) {
         </Grid>
       </Box>
 
-      {/* Third Area: Actions */}
-      <HStack gap="2">
-        <Button colorScheme="teal" size="sm" mt={2} width="200px" variant="outline" onClick={downloadAsset}>
+      {/* Second Area: Actions */}
+      <HStack gap="2" width="100%" justifyContent="space-between">
+        <Button colorScheme="teal" size="sm" mt={2} width="100%" variant="outline" onClick={downloadAsset}>
           Download
         </Button>
-        <Button colorScheme="red" size="sm" mt={2} width="200px" variant="outline" onClick={deleteAsset}>
+        <Button colorScheme="red" size="sm" mt={2} width="100%" variant="outline" onClick={deleteAsset}>
           Delete
         </Button>
         {/* Add more actions as needed */}
       </HStack>
 
-      {/* Second Area: Preview */}
-      <Box mt={2}>{PreviewElement}</Box>
+      {/* Third Area: Preview */}
+      <Box mt={2} flexGrow="1" overflow={'hidden'} display="flex">
+        {PreviewElement}
+      </Box>
     </Box>
   );
 }
@@ -314,10 +312,21 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       }
     }
     if (goto) {
-      return <Text>URL: <Link href={goto} isExternal={true} onClick={(evt) => {
-        evt.preventDefault();
-        openExternalURL(goto);
-      }}>{goto}</Link></Text>;
+      return (
+        <Text>
+          URL:{' '}
+          <Link
+            href={goto}
+            isExternal={true}
+            onClick={(evt) => {
+              evt.preventDefault();
+              openExternalURL(goto);
+            }}
+          >
+            {goto}
+          </Link>
+        </Text>
+      );
     }
   }
   return <Text>Preview not available</Text>;
@@ -338,8 +347,8 @@ function CodeViewer(props: { code: string; language: string; theme: string }) {
   return (
     <Editor
       value={props.code}
-      width={'500px'}
-      height={'500px'}
+      width={'100%'}
+      height="500px"
       language={props.language}
       theme={props.theme}
       options={{

@@ -78,6 +78,7 @@ import {
   Clock,
   isElectron,
   useUserSettings,
+  useAssetStore,
 } from '@sage3/frontend';
 
 // Home Page Components
@@ -131,6 +132,9 @@ export function HomePage() {
   // User and Presence Store
   const users = useUsersStore((state) => state.users);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // Assets Store
+  const subcribeToAssets = useAssetStore((state) => state.subscribe);
 
   // Presence
   const partialPrescences = usePresenceStore((state) => state.partialPrescences);
@@ -448,7 +452,7 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
-
+    subcribeToAssets();
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -1005,7 +1009,8 @@ export function HomePage() {
           flexDirection="column"
           backgroundColor={mainBackgroundColor}
           maxHeight="100svh"
-          height="100svh"
+          height="100%"
+          border="solid green 1px"
           // overflow="hidden"
           pt={4}
           pr={4}
@@ -1085,20 +1090,15 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" height="100%">
+          <Box width="100%" flexGrow={1}>
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>Boards</Tab>
                 <Tab>Members</Tab>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab>Assets</Tab>
-                </Tooltip>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Chat</Tab>
-                </Tooltip>
+                <Tab>Assets</Tab>
               </TabList>
 
-              <TabPanels>
+              <TabPanels height="100%">
                 <TabPanel px="0">
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
@@ -1263,7 +1263,7 @@ export function HomePage() {
                     </VStack>
                   </Box>
                 </TabPanel>
-                <TabPanel px="0">
+                <TabPanel px="0" display="flex">
                   <AssetList room={selectedRoom}></AssetList>
                 </TabPanel>
               </TabPanels>
