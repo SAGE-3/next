@@ -332,7 +332,13 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
+
+      {/* I believe this is an alright solution for now; consider making a any(divIds) === true */}
       <ContextMenu divId="board">
+        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
+      </ContextMenu>
+
+      <ContextMenu divId="lasso">
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 

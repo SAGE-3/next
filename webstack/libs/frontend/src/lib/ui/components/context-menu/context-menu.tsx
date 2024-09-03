@@ -72,6 +72,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
       event.preventDefault();
       // Check if right div ID is clicked
       // if (event.target.id === props.divId && !isTouchDevice()) {
+
       if (event.target.id === props.divId) {
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();

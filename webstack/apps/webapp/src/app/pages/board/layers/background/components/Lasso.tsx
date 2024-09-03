@@ -111,6 +111,7 @@ export function Lasso(props: LassoProps) {
       {/* lassoMode &&  */}
       <div className="canvas-container" style={{ pointerEvents: !spacebarPressed ? 'auto' : 'none' }}>
         <svg
+          id="lasso"
           className="canvas-layer"
           style={{
             position: 'absolute',
