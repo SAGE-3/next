@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import { DraggableEvent } from 'react-draggable';
@@ -48,6 +48,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
 
   const [lastTouch, setLastTouch] = useState([{x:0, y:0}, {x:0, y:0}]);
+
+  // The fabled isMac const
+  const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), [])
 
 
   // const movementAltMode = useKeyPress(' ');
@@ -180,8 +183,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       else{
         // Flip axis for mouse scroll wheel users
         setLocalBoardPosition(prev => ({ 
-          x: prev.x - (event.shiftKey ? event.deltaY : event.deltaX) / prev.scale, 
-          y: prev.y - (event.shiftKey ? event.deltaX : event.deltaY) / prev.scale,
+          x: prev.x - ((!isMac && event.shiftKey) ? event.deltaY : event.deltaX) / prev.scale, 
+          y: prev.y - ((!isMac && event.shiftKey) ? event.deltaX : event.deltaY) / prev.scale,
           scale: prev.scale  }));
       }
     };
@@ -220,7 +223,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('wheel', handleMove);
     };
-  }, [selectedApp, primaryActionMode]); //haveLasso
+  }, [selectedApp, primaryActionMode, boardLocked]); //haveLasso
 
 
   // Movement with Page Zoom Inhibitors (For Touch Screen)
@@ -350,7 +353,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     return () => {
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [selectedApp, primaryActionMode]);
+  }, [selectedApp, primaryActionMode, boardLocked]);
   // Bulk of Movement Code Ends Here
 
 

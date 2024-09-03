@@ -93,6 +93,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
+      console.log(type)
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
@@ -100,7 +101,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setTimeout(() => setShowContextMenu(true));
       } else {
         if (event.type === 'touchstart' && showContextMenu) {
-          if (event.target.id === 'board' || event.target.id === '') {
+          if (event.target.id === props.divId || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false), 400);
           }
         } else if (event.type === 'touchend' && showContextMenu) {
