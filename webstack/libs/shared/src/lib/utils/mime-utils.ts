@@ -23,6 +23,7 @@ mime.define(
     'application/python': ['py'],
     'application/url': ['url'],
     'application/sage3': ['s3json'],
+    'application/jsoncanvas': ['canvas'],
     'application/x-geotiff': ['geotiff'],
     'text/x-c': ['hpp', 'hxx', 'c++', 'h++'], // adding to ["c","cc","cxx","cpp","h","hh","dic"]
     'text/x-csharp': ['cs', 'csharp'],
@@ -144,8 +145,11 @@ export function isFileURL(mimeType: string): boolean {
  * @param {string} mimeType
  * @returns {boolean}
  */
-export function isSessionFile(mimeType: string): boolean {
+export function isSessionFileSAGE3(mimeType: string): boolean {
   return mimeType === 'application/sage3';
+}
+export function isSessionFileCanvas(mimeType: string): boolean {
+  return mimeType === 'application/jsoncanvas';
 }
 
 /**
@@ -351,7 +355,8 @@ export function isGLTF(mimeType: string): boolean {
  */
 export function isValid(mimeType: string): boolean {
   return (
-    isSessionFile(mimeType) ||
+    isSessionFileSAGE3(mimeType) ||
+    isSessionFileCanvas(mimeType) ||
     isGeoTiff(mimeType) ||
     isFileURL(mimeType) ||
     isImage(mimeType) ||

@@ -40,6 +40,7 @@ import {
   MdInfoOutline,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
+import { z } from 'zod';
 
 import {
   processContentURL,
@@ -70,6 +71,41 @@ type props = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+// JSONCanvas schema
+const JSONCanvasBaseSchema = z.object({
+  id: z.string(),
+  type: z.enum(['text', 'file', 'link', 'group']),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  color: z.string().optional(),  // "1" to "6" and "#FF0000" format
+  properties: z.any().optional(),
+});
+type JSONCanvasBaseNode = z.infer<typeof JSONCanvasBaseSchema>;
+
+const TextElementSchema = z.object({ type: z.literal('text'), text: z.string() });
+type TextElement = z.infer<typeof TextElementSchema>;
+type JSONCanvasTextNode = JSONCanvasBaseNode & TextElement;
+
+interface IDictionary {
+  [index: string]: string;
+}
+
+const colors: IDictionary = {
+  green: '#60CC8D',
+  blue: '#5AB2D3',
+  gray: '#969696',
+  orange: '#F69637',
+  purple: '#7D78B4',
+  yellow: '#FFB92E',
+  red: '#EA6343',
+  cyan: '#58D5D5',
+  teal: '#60CDBA',
+  pink: '#DB5296',
+};
+
 
 const MaxElements = 12;
 
@@ -136,7 +172,7 @@ export function Alfred(props: props) {
     });
   };
 
-  const saveBoard = (name: string) => {
+  const saveBoardS3JSON = (name: string) => {
     const selectedapps = useUIStore.getState().savedSelectedAppsIds;
     // Use selected apps if any or all apps
     const apps =
@@ -178,6 +214,69 @@ export function Alfred(props: props) {
       isClosable: true,
     });
   };
+
+  const saveBoardCanvasJSON = (name: string) => {
+    const selectedapps = useUIStore.getState().savedSelectedAppsIds;
+    // Use selected apps if any or all apps
+    const apps =
+      selectedapps.length > 0 ? useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id)) : useAppStore.getState().apps;
+    let filename = name || 'board.canvas';
+    if (!filename.endsWith('.canvas')) filename += '.canvas';
+
+    let x1 = useUIStore.getState().boardWidth;
+    let x2 = 0;
+    let y1 = useUIStore.getState().boardHeight;
+    let y2 = 0;
+    // Bounding box for all applications
+    apps.forEach((a) => {
+      const p = a.data.position;
+      const s = a.data.size;
+      if (p.x < x1) x1 = p.x;
+      if (p.x > x2) x2 = p.x;
+      if (p.y < y1) y1 = p.y;
+      if (p.y > y2) y2 = p.y;
+
+      if (p.x + s.width > x2) x2 = p.x + s.width;
+      if (p.y + s.height > y2) y2 = p.y + s.height;
+    });
+
+    // Data structure to save
+    const savedapps = apps.reduce<JSONCanvasTextNode[]>((arr, app) => {
+      if (app.data.type === 'Stickie') {
+        // making sure apps have the right state
+        arr.push({
+          id: app._id,
+          type: 'text',
+          x: app.data.position.x - x1,
+          y: app.data.position.y - y1,
+          width: app.data.size.width,
+          height: app.data.size.height,
+          color: colors[app.data.state.color] || '#FF0000',
+          text: `<p style="font-size: ${app.data.state.fontSize}px; font-family: Arial, Helvetica, sans-serif;">` + app.data.state.text + `</p>`,
+          properties: { ...app.data.state },
+        });
+      }
+      return arr;
+    }, []);
+    const session = {
+      // assets: assets,
+      nodes: savedapps,
+      edges: [],
+    };
+    const payload = JSON.stringify(session, null, 2);
+    const jsonurl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(payload);
+    // Trigger the download
+    downloadFile(jsonurl, filename);
+    // Success message
+    toast({
+      title: 'Board saved',
+      description: apps.length + ' apps saved to ' + filename,
+      status: 'info',
+      duration: 4000,
+      isClosable: true,
+    });
+  };
+
 
   // Alfred quick bar response
   const alfredAction = useCallback(
@@ -263,7 +362,9 @@ export function Alfred(props: props) {
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
       } else if (terms[0] === 'save') {
-        saveBoard(terms[1]);
+        saveBoardS3JSON(terms[1]);
+      } else if (terms[0] === 'savecanvas') {
+        saveBoardCanvasJSON(terms[1]);
       } else if (terms[0] === 'tag') {
         // search apps with tags
         const tags = terms.slice(1);
