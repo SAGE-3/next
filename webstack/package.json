@@ -204,7 +204,7 @@
     "jsonc-eslint-parser": "^2.3.0",
     "node-loader": "^1.0.2",
     "nx": "14.8.8",
-    "prettier": "2.8.8",
+    "prettier": "^3.1.0",
     "react-refresh": "^0.14.0",
     "rimraf": "^3.0.2",
     "simple-zustand-devtools": "^1.1.0",
