@@ -50,7 +50,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const [lastTouch, setLastTouch] = useState([{x:0, y:0}, {x:0, y:0}]);
 
 
-  const movementAltMode = useKeyPress(' ');
+  // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // There is a major bug with Rnd, where dragging/ while zooming or immedately thereafter
@@ -152,18 +152,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         Math.max(prev.scale - step * prev.scale, MinZoom))
     });
   }
-
-  const localZoomInDeltaCalcOnly = (d: number, prevScale: number) => {
-    const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-    const scale = Math.min(prevScale + step * prevScale, MaxZoom)
-    return scale
-  }
-  const localZoomOutDeltaCalcOnly = (d: number, prevScale: number) => {
-    const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
-    const scale = Math.min(prevScale + step * prevScale, MinZoom)
-    return scale
-  }
-
 
   // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
   useEffect(() => {    
@@ -271,10 +259,21 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       //   validClasses.some(className => (t.target as HTMLElement).classList.contains(className))
       // );
       // ^^^^^^^^^^^^
-      const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('canvas-layer'));
-      if (!allTouchesAreOnValidClasses) {
-        return
+      
+      if (primaryActionMode === "grab") {
+        const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('board-handle'));
+        if (!allTouchesAreOnValidClasses) {
+          return
+        }
       }
+      // else if (primaryActionMode === "lasso") {
+      else {
+        const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('canvas-layer'));
+        if (!allTouchesAreOnValidClasses) {
+          return
+        }
+      }
+
 
       // if (event.touches.length === 1) {
       //  // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
@@ -351,27 +350,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     return () => {
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, [selectedApp, movementAltMode]);
+  }, [selectedApp, primaryActionMode]);
   // Bulk of Movement Code Ends Here
-
-
-
-
-
-  // useEffect(() => {
-  //   // Touch Screen
-  //   const handleTouchMove = (event: TouchEvent) => {
-  //     event.preventDefault();
-  //     event.stopPropagation();
-  //     event.stopImmediatePropagation();
-  //   }
-
-  //   window.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-  //   return () => {
-  //     window.removeEventListener('touchmove', handleTouchMove);
-  //   };
-  // }, [selectedApp, movementAltMode]);
 
 
   // On a drag stop of the board. Set the board position locally.

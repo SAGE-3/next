@@ -307,7 +307,7 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Tooltip label={primaryActionMode === 'lasso' ? 'Click to Lasso' : 'Click to Grab'}>
+          <Tooltip label={primaryActionMode === 'lasso' ? 'Click to Change to Grab Mode' : 'Click to Change to Lasso Mode'}>
             <IconButton
               size="sm"
               colorScheme={user?.data.color || 'gray'}
