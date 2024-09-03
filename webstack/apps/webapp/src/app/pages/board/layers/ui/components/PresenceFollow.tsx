@@ -23,9 +23,10 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
   const boardPosition = useUIStore((state) => state.boardPosition);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const scale = useUIStore((state) => state.scale);
+  const setScale = useUIStore((state) => state.setScale);
 
   // Presences
   const presences = usePresenceStore((state) => state.presences);
@@ -114,21 +115,22 @@ export function PresenceFollow() {
 
     ////////////////////////////////////////
     // Move the board from the remote user
-    if (true) {
-      const vx = -myPresence.data.viewport.position.x;
-      const vy = -myPresence.data.viewport.position.y;
-      const vw = -myPresence.data.viewport.size.width;
-      const vh = -myPresence.data.viewport.size.height;
-      const vcx = vx + vw / 2;
-      const vcy = vy + vh / 2;
-      const ww = window.innerWidth;
-      const wh = window.innerHeight;
-      const s = Math.min(ww / -vw, wh / -vh);
-      const cx = vcx + ww / s / 2;
-      const cy = vcy + wh / s / 2;
-      if (cx !== boardPosition.x || cy !== boardPosition.y) {
-        setBoardPosition({ x: cx, y: cy });
-      }
+    const vx = -myPresence.data.viewport.position.x;
+    const vy = -myPresence.data.viewport.position.y;
+    const vw = -myPresence.data.viewport.size.width;
+    const vh = -myPresence.data.viewport.size.height;
+    const vcx = vx + vw / 2;
+    const vcy = vy + vh / 2;
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+    const s = Math.min(ww / -vw, wh / -vh);
+    const cx = vcx + ww / s / 2;
+    const cy = vcy + wh / s / 2;
+    if (cx !== boardPosition.x || cy !== boardPosition.y) {
+      setBoardPosition({ x: cx, y: cy });
+    }
+    if (s !== scale) {
+      setScale(s);
     }
     ////////////////////////////////////////
 

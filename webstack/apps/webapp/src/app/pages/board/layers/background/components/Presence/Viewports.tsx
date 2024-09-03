@@ -8,10 +8,10 @@
 
 import { useState, useEffect } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
-import { DraggableData, Position, Rnd, RndDragEvent } from 'react-rnd';
+import { DraggableData, Rnd, RndDragEvent } from 'react-rnd';
 
 import { useHexColor, useThrottleScale, usePresenceStore, useAuth } from '@sage3/frontend';
-import { PresenceSchema } from '@sage3/shared/types';
+import { PresenceSchema, Position, Size } from '@sage3/shared/types';
 
 import { Awareness } from './PresenceComponent';
 
@@ -19,6 +19,10 @@ type ViewportProps = {
   users: Awareness[];
   rate: number;
 };
+
+// Refine the types used in the Viewport
+type Position2D = Omit<Position, 'z'>;
+type Size2D = Omit<Size, 'depth'>;
 
 export function Viewports(props: ViewportProps) {
   // UI Scale
@@ -77,9 +81,10 @@ function UserViewport(props: UserViewportProps) {
   const textColor = useColorModeValue('white', 'black');
 
   // Position of the title bar being dragged
-  const [pos, setPos] = useState<Position>({ x: props.viewport.position.x, y: props.viewport.position.y });
+  const [pos, setPos] = useState<Position2D>({ x: props.viewport.position.x, y: props.viewport.position.y });
   // Position of the box below, to make it interactive
-  const [pos2, setPos2] = useState<Position>({ x: props.viewport.position.x, y: props.viewport.position.y });
+  const [pos2, setPos2] = useState<Position2D>({ x: props.viewport.position.x, y: props.viewport.position.y });
+  const [size2, setSize2] = useState<Size2D>({ width: props.viewport.size.width, height: props.viewport.size.height });
 
   const updatePresence = usePresenceStore((state) => state.update);
 
@@ -90,16 +95,15 @@ function UserViewport(props: UserViewportProps) {
     }
   }, [auth]);
 
-  // If size or position change, update the local state.
+  // If size or position change, update the local states.
   useEffect(() => {
     setPos({ x: props.viewport.position.x, y: props.viewport.position.y });
     setPos2({ x: props.viewport.position.x, y: props.viewport.position.y });
   }, [props.viewport.position.x, props.viewport.position.y]);
+  useEffect(() => {
+    setSize2({ width: props.viewport.size.width, height: props.viewport.size.height });
+  }, [props.viewport.size.width, props.viewport.size.height]);
 
-  // Handle when the viewport starts to drag
-  function handleDragStart(_e: RndDragEvent, data: DraggableData) {
-    // nothing yet
-  }
   // When the viewport is being dragged
   function handleDrag(_e: RndDragEvent, data: DraggableData) {
     // Update the box position to make it interactive
@@ -119,13 +123,38 @@ function UserViewport(props: UserViewportProps) {
     });
   }
 
+  // When the viewport is being resized
+  function handleResizeStart(_e: RndDragEvent, data: DraggableData) {
+    setSize2((state) => ({ width: props.viewport.size.width, height: props.viewport.size.height }));
+  }
+  function handleResize(_e: RndDragEvent, data: DraggableData) {
+    // Update the box position to make it interactive, keep aspect ratio
+    const ar = props.viewport.size.width / props.viewport.size.height;
+    const newW = data.x - pos2.x + titleBarHeight;
+    const newH = newW / ar;
+    setSize2((state) => ({ width: newW, height: newH }));
+  }
+  // Handle when the viewport is finished being dragged
+  function handleResizeStop(_e: RndDragEvent, data: DraggableData) {
+    setSize2((state) => ({ width: size2.width, height: size2.height }));
+    // Update the remote presence
+    updatePresence(props.userId, {
+      status: 'online',
+      userId: props.userId,
+      viewport: {
+        position: { x: props.viewport.position.x, y: props.viewport.position.y, z: props.viewport.position.z },
+        size: { width: size2.width, height: size2.height, depth: props.viewport.size.depth }
+      }
+    });
+  }
+
 
   return (
     <>
+      {/* Titlebar */}
       <Rnd
-        size={{ width: props.viewport.size.width, height: titleBarHeight }}
+        size={{ width: size2.width, height: titleBarHeight }}
         position={{ x: pos.x, y: pos.y - titleBarHeight }}
-        onDragStart={handleDragStart}
         onDrag={handleDrag}
         onDragStop={handleDragStop}
         enableResizing={false}
@@ -134,7 +163,7 @@ function UserViewport(props: UserViewportProps) {
         scale={props.scale}
         style={{
           borderRadius: borderRadius,
-          background: `linear-gradient(180deg, ${color} ${titleBarHeight}px, transparent ${titleBarHeight}px, transparent 100%)`,
+          background: color,
           zIndex: 3000,
           opacity: 0.65,
         }}
@@ -144,14 +173,37 @@ function UserViewport(props: UserViewportProps) {
         </Text>
       </Rnd >
 
+      {/* Corner */}
+      <Rnd
+        size={{ width: titleBarHeight, height: titleBarHeight }}
+        position={{
+          x: pos2.x + size2.width - titleBarHeight,
+          y: pos2.y + size2.height - titleBarHeight,
+        }}
+        onDragStart={handleResizeStart}
+        onDrag={handleResize}
+        onDragStop={handleResizeStop}
+        enableResizing={false}
+        disableDragging={isGuest}
+        lockAspectRatio={true}
+        scale={props.scale}
+        style={{
+          borderRadius: borderRadius,
+          background: color,
+          zIndex: 3000,
+          opacity: 0.65,
+        }}
+      />
+
+      {/* Box */}
       <Box
         position="absolute"
         pointerEvents="none"
-        // Update  the position to be below the title bar
+        // Update the position to be below the title bar
         left={pos2.x}
         top={pos2.y}
-        width={props.viewport.size.width}
-        height={props.viewport.size.height}
+        width={size2.width}
+        height={size2.height}
         borderStyle="solid"
         borderWidth={borderWidth}
         borderColor={color}
