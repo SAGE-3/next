@@ -15,7 +15,6 @@ import { DraggableData, Rnd } from 'react-rnd';
 import { useUIStore, useAbility, useKeyPress } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
-import { T } from 'tldraw';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -42,12 +41,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   const setBoardSynced = useUIStore((state) => state.setBoardSynced);
   const setScale = useUIStore((state) => state.setScale)
-  
+
 
   // Local States with Delayed Syncing to useUIStore
-  const [localBoardPosition, setLocalBoardPosition] = useState({x:0, y:0, scale:0});
+  const [localBoardPosition, setLocalBoardPosition] = useState({ x: 0, y: 0, scale: 0 });
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
-  const [lastTouch, setLastTouch] = useState([{x:0, y:0}, {x:0, y:0}]);
+  const [lastTouch, setLastTouch] = useState([{ x: 0, y: 0 }, { x: 0, y: 0 }]);
   const [startedDragOnBoard, setStartedDragOnBoard] = useState(false); // Used to differentiate between board drag and app deselect
 
   // The fabled isMac const
@@ -63,7 +62,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Note that this will not fix the + - zoom hotkeys and this is only targeted to band-aid fix
   // the point where the highest frequency of this issue will occur (e.g. the new movement scheme)
   const movementZoomSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   // Local State
   const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
 
@@ -100,7 +99,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Forward boardPosition to localBoardPosition
   useEffect(() => {
-    setLocalBoardPosition({x:boardPosition.x, y:boardPosition.y, scale: scale})
+    setLocalBoardPosition({ x: boardPosition.x, y: boardPosition.y, scale: scale })
   }, [boardPosition.x, boardPosition.y, scale]);
 
   // Forwards synced information to uiStore
@@ -126,8 +125,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // Additional wait time as bandaid-fix to Rnd drag issue
       movementZoomSafetyTimeoutRef.current = setTimeout(() => {
         setLocalSynced(true);
-      },100)
-    }, 250);  
+      }, 100)
+    }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
   // boardDragging
 
@@ -136,23 +135,23 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const MinZoom = 0.1;
   const MaxZoom = 3;
 
-  const localZoomInDelta = (d: number, cursor: {x: number, y: number}) => {
+  const localZoomInDelta = (d: number, cursor: { x: number, y: number }) => {
     const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
     setLocalBoardPosition(prev => {
       return zoomOnLocationNewPosition(
-        {x: prev.x, y: prev.y}, 
-        {x: cursor.x, y: cursor.y}, 
-        prev.scale, 
+        { x: prev.x, y: prev.y },
+        { x: cursor.x, y: cursor.y },
+        prev.scale,
         Math.min(prev.scale + step * prev.scale, MaxZoom))
     });
   }
-  const localZoomOutDelta = (d: number, cursor: {x: number, y: number}) => {
+  const localZoomOutDelta = (d: number, cursor: { x: number, y: number }) => {
     const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
     setLocalBoardPosition(prev => {
       return zoomOnLocationNewPosition(
-        {x: prev.x, y: prev.y}, 
-        {x: cursor.x, y: cursor.y}, 
-        prev.scale, 
+        { x: prev.x, y: prev.y },
+        { x: cursor.x, y: cursor.y },
+        prev.scale,
         Math.max(prev.scale - step * prev.scale, MinZoom))
     });
   }
@@ -173,7 +172,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }, []);
 
   // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
-  useEffect(() => {    
+  useEffect(() => {
     // Mouse & Touchpad
     const handleMove = (event: WheelEvent) => {
       if (event.ctrlKey) { event.preventDefault() }
@@ -205,28 +204,30 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           }
         }
         // Transversal/Panning
-        else{
+        else {
           // Flip axis for mouse scroll wheel users
-          setLocalBoardPosition(prev => ({ 
-            x: prev.x - ((!isMac && event.shiftKey) ? event.deltaY : event.deltaX) / prev.scale, 
+          setLocalBoardPosition(prev => ({
+            x: prev.x - ((!isMac && event.shiftKey) ? event.deltaY : event.deltaX) / prev.scale,
             y: prev.y - ((!isMac && event.shiftKey) ? event.deltaX : event.deltaY) / prev.scale,
-            scale: prev.scale  }));
+            scale: prev.scale
+          }));
         }
         return prev
       })
 
     };
-    
+
     // Mouse
     const handleMouseMove = (event: MouseEvent) => {
       if (boardLocked) { return }
       if (selectedApp) { return }
       // || haveLasso
       const move = () => {
-        setLocalBoardPosition(prev => ({ 
-          x: prev.x + (event.movementX * 1) / prev.scale, 
+        setLocalBoardPosition(prev => ({
+          x: prev.x + (event.movementX * 1) / prev.scale,
           y: prev.y + (event.movementY * 1) / prev.scale,
-          scale: prev.scale }));
+          scale: prev.scale
+        }));
 
         event.stopPropagation()
         event.preventDefault()
@@ -264,14 +265,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (event.touches.length >= 1 && event.touches.length <= 5) {
         // event.preventDefault();
         const validIDSet = new Set(["board", "lasso"]);
-        const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch => 
+        const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch =>
           validIDSet.has((touch.target as HTMLElement).id)
         );
 
         setStartedDragOnBoard(allTouchesAreOnValidID)
 
         setLastTouch(Array.from(event.touches).map((touch, index) => {
-          return {x: touch.clientX, y: touch.clientY}
+          return { x: touch.clientX, y: touch.clientY }
         }))
       }
     }
@@ -299,7 +300,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       //   validClasses.some(className => (t.target as HTMLElement).classList.contains(className))
       // );
       // ^^^^^^^^^^^^
-      
+
       // if (primaryActionMode === "grab") {
       //   // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('board-handle'));
       //   const allTouchesAreOnValidID = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).id === "board")
@@ -325,16 +326,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           setLastTouch(prev => {
             const delta0X = prev[0].x - event.touches[0].clientX
             const delta0Y = prev[0].y - event.touches[0].clientY
-            
+
             setLocalBoardPosition(prevBoard => {
               return ({
                 x: prevBoard.x - delta0X / prevBoard.scale,
                 y: prevBoard.y - delta0Y / prevBoard.scale,
                 scale: prevBoard.scale
-              })});
+              })
+            });
             // }
             return ([
-              {x:event.touches[0].clientX, y:event.touches[0].clientY}
+              { x: event.touches[0].clientX, y: event.touches[0].clientY }
             ])
           });
         }
@@ -342,45 +344,46 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           setLastTouch(prev => {
             const delta0X = prev[0].x - event.touches[0].clientX
             const delta0Y = prev[0].y - event.touches[0].clientY
-  
+
             const delta1X = prev[1].x - event.touches[1].clientX
             const delta1Y = prev[1].y - event.touches[1].clientY
-  
+
             // Pan
             const avgDeltaX = (delta0X + delta1X) / 2;
             const avgDeltaY = (delta0Y + delta1Y) / 2;
-  
+
             // Zoom
-            const prevDistance = magnitude({x:prev[0].x, y:prev[0].y}, {x:prev[1].x, y:prev[1].y}); // Store this calc in mem so we dont have to recalc again...
-            const distance = magnitude({x: event.touches[0].clientX, y: event.touches[0].clientY}, {x: event.touches[1].clientX, y: event.touches[1].clientY});
+            const prevDistance = magnitude({ x: prev[0].x, y: prev[0].y }, { x: prev[1].x, y: prev[1].y }); // Store this calc in mem so we dont have to recalc again...
+            const distance = magnitude({ x: event.touches[0].clientX, y: event.touches[0].clientY }, { x: event.touches[1].clientX, y: event.touches[1].clientY });
             // const prevDistance = Math.sqrt(Math.pow(prev[0].x - prev[1].x, 2) + Math.pow(prev[0].y - prev[1].y, 2));
             // const distance = Math.sqrt(Math.pow(event.touches[0].clientX - event.touches[1].clientX, 2) + Math.pow(event.touches[0].clientY - event.touches[1].clientY, 2));
-  
+
             const zoomDelta = prevDistance - distance;
             const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
-  
+
             // console.log(Math.abs(zoomDelta), (Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2))
-  
+
             // if (Math.abs(zoomDelta) > ((Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2)) + 2) {
             if (prevDistance > 0) {
               if (zoomDelta < 0) {
-                localZoomInDelta(zoomDelta, {x: avgX, y: avgY});
+                localZoomInDelta(zoomDelta, { x: avgX, y: avgY });
               } else if (zoomDelta > 0) {
-                localZoomOutDelta(zoomDelta, {x: avgX, y: avgY});
+                localZoomOutDelta(zoomDelta, { x: avgX, y: avgY });
               }
             }
-  
+
             setLocalBoardPosition(prevBoard => {
               return ({
                 x: prevBoard.x - avgDeltaX / prevBoard.scale,
                 y: prevBoard.y - avgDeltaY / prevBoard.scale,
                 scale: prevBoard.scale
-              })});
-  
+              })
+            });
+
             return ([
-              {x:event.touches[0].clientX, y:event.touches[0].clientY},
-              {x:event.touches[1].clientX, y:event.touches[1].clientY}
+              { x: event.touches[0].clientX, y: event.touches[0].clientY },
+              { x: event.touches[1].clientX, y: event.touches[1].clientY }
             ])
           });
         }
@@ -435,14 +438,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         // disableDragging={boardLocked}
         disableDragging={true}
 
-        // onTouchStart={handleTouchStart}
-        // onTouchMove={handleTouchMove}
-        // onPointerDown={onPointerDown}
-        // onPointerMove={onPointerMove}
-        // onPointerUp={onPointerUp}
-        // onPointerCancel={onPointerUp}
-        // onPointerOut={onPointerUp}
-        // onPointerLeave={onPointerUp}
+      // onTouchStart={handleTouchStart}
+      // onTouchMove={handleTouchMove}
+      // onPointerDown={onPointerDown}
+      // onPointerMove={onPointerMove}
+      // onPointerUp={onPointerUp}
+      // onPointerCancel={onPointerUp}
+      // onPointerOut={onPointerUp}
+      // onPointerLeave={onPointerUp}
       >
         {/* The board's apps */}
         <Apps />
@@ -480,7 +483,7 @@ function zoomOnLocationNewPosition(
   return { x, y, scale };
 }
 
-function magnitude(a: {x: number, y: number}, b: {x: number, y: number}) {
+function magnitude(a: { x: number, y: number }, b: { x: number, y: number }) {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   return Math.sqrt((dx * dx) + (dy * dy));
