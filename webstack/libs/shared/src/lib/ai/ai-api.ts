@@ -10,7 +10,6 @@
 export type AiQueryRequest = {
   input: string;
   model: string;
-  prompt?: string;
   max_new_tokens?: number;
   app_id?: string;
 };
@@ -35,4 +34,20 @@ export type AiJSONQueryResponse = {
 
 export type AiStatusResponse = {
   onlineModels: any[];
+};
+
+export type AgentQueryType = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  id: string;
+  user: string;
+  location: string;
+  q: string;
+  model: string;
+};
+
+export type AgentQueryResponse = {
+  id: string;
+  r: string;
+  success: boolean;
+  actions?: any[];
 };

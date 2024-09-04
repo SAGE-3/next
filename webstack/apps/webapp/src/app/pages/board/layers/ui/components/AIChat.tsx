@@ -14,10 +14,7 @@ import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, use
 import { MdSend, MdSettings } from 'react-icons/md';
 
 import { useUIStore, AiAPI, useHexColor, useUser, useAppStore, useConfigStore } from '@sage3/frontend';
-import {
-  // AgentQueryType, 
-  genId
-} from '@sage3/shared';
+import { AgentQueryType, genId } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -73,68 +70,68 @@ export function AIChat() {
   }, [user]);
 
   const newMessage = async (new_input: string) => {
-    // if (!user) return;
-    // if (!roomId) return;
-    // if (!boardId) return;
-    // // Generate a unique id for the query
-    // const id = genId();
-    // // Build the query
-    // const question: AgentQueryType = {
-    //   ctx: {
-    //     prompt: context || '',
-    //     pos: position, roomId, boardId
-    //   }, id: id,
-    //   user: username,
-    //   location: location,
-    //   q: new_input,
-    //   model: selectedModel,
-    // };
-    // if (new_input === 'summary') {
-    //   // Invoke the agent
-    //   const response = await AiAPI.agents.summary(question);
-    //   setIsWorking(false);
-    //   if (response.success) {
-    //     // Store the agent's response
-    //     setResponse(response.r);
-    //     // Get the propose actions
-    //     if (response.actions) {
-    //       setActions(response.actions);
-    //     }
-    //     // Increase the position
-    //     setPosition([position[0] + (400 + 20), position[1]]);
-    //   } else {
-    //     toast({
-    //       title: 'Error',
-    //       description: response.r || 'Error sending query to the agent. Please try again.',
-    //       status: 'error',
-    //       duration: 4000,
-    //       isClosable: true,
-    //     });
-    //   }
-    // } else {
-    //   // Invoke the agent
-    //   const response = await AiAPI.agents.ask(question);
-    //   setIsWorking(false);
-    //   if (response.success) {
-    //     // Store the agent's response
-    //     setResponse(response.r);
-    //     // Get the propose actions
-    //     if (response.actions) {
-    //       setActions(response.actions);
-    //     }
-    //     // Increase the position
-    //     setPosition([position[0] + (400 + 20), position[1]]);
-    //   } else {
-    //     toast({
-    //       title: 'Error',
-    //       description: response.r || 'Error sending query to the agent. Please try again.',
-    //       status: 'error',
-    //       duration: 4000,
-    //       isClosable: true,
-    //     });
-    //   }
+    if (!user) return;
+    if (!roomId) return;
+    if (!boardId) return;
+    // Generate a unique id for the query
+    const id = genId();
+    // Build the query
+    const question: AgentQueryType = {
+      ctx: {
+        prompt: context || '',
+        pos: position, roomId, boardId
+      }, id: id,
+      user: username,
+      location: location,
+      q: new_input,
+      model: selectedModel,
+    };
+    if (new_input === 'summary') {
+      // Invoke the agent
+      const response = await AiAPI.agents.summary(question);
+      setIsWorking(false);
+      if (response.success) {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      } else {
+        toast({
+          title: 'Error',
+          description: response.r || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      }
+    } else {
+      // Invoke the agent
+      const response = await AiAPI.agents.ask(question);
+      setIsWorking(false);
+      if (response.success) {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      } else {
+        toast({
+          title: 'Error',
+          description: response.r || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      }
 
-    // }
+    }
   };
 
   const sendMessage = async () => {

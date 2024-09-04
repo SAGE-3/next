@@ -45,8 +45,10 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
-  // FastAPI
-  fastapi: { url: string };
+  // Python server for jupyter kernels
+  kernels: { url: string };
+  // Python server for agents
+  agents: { url: string };
 
   // Feedback server
   feedback: { url: string };
@@ -96,6 +98,7 @@ export type OpenConfiguration = Pick<
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
+  chat: ServerConfiguration['services']['chat'];
 };
 
 /**
@@ -154,6 +157,14 @@ export interface TwilioConfiguration {
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
+}
+
+// AI Chat Configuration
+export interface AIChatConfiguration {
+  url: string;
+  model: string; // LLM model
+  apiKey: string; // API Key
+  max_tokens: number;
 }
 
 // AI Chat Configuration
