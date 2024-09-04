@@ -120,7 +120,7 @@ export function Lasso(props: LassoProps) {
             left: 0,
             top: 0,
             // zIndex: 2000,
-            // cursor: 'crosshair',
+            cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
