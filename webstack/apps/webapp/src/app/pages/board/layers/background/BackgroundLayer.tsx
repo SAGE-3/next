@@ -14,7 +14,7 @@ import { DraggableData, Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, useKeyPress } from '@sage3/frontend';
 
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -470,6 +470,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
+
+        {/* Rnd Safety to Mitigate app click dissapear issue when using new movement scheme */}
+        <RndSafety />
       </Rnd>
     </Box>
   );

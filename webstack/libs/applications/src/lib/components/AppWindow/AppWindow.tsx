@@ -66,6 +66,7 @@ export function AppWindow(props: WindowProps) {
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
   const boardSynced = useUIStore((state) => state.boardSynced)
+  const rndSafeToAction = useUIStore((state) => state.rndSafeToAction)
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -120,23 +121,6 @@ export function AppWindow(props: WindowProps) {
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
-
-  const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
-  const [ rndSafeToAction, setRndSafeToAction ] = useState<boolean>(true)
-
-  // Mitiage/ Bandaid fix using delays to handle disappearing apps
-  // Obvious caviat with this is that it runs in every app window D:
-  useEffect(() => {
-    setRndSafeToAction(false)
-
-    if (rndSafeToActionTimeoutRef.current !== null) {
-      clearTimeout(rndSafeToActionTimeoutRef.current);
-    }
-
-    rndSafeToActionTimeoutRef.current = setTimeout(() => {
-      setRndSafeToAction(true)
-    }, 100);
-  }, [boardSynced])
   
 
   // Track the app store errors
