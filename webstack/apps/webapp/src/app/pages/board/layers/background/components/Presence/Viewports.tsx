@@ -79,6 +79,7 @@ function UserViewport(props: UserViewportProps) {
   const borderRadius = 6 / props.scale;
   const borderWidth = 3 / props.scale;
   const textColor = useColorModeValue('white', 'black');
+  const opacity = 0.55;
 
   // Position of the title bar being dragged
   const [pos, setPos] = useState<Position2D>({ x: props.viewport.position.x, y: props.viewport.position.y });
@@ -118,8 +119,8 @@ function UserViewport(props: UserViewportProps) {
       userId: props.userId,
       viewport: {
         position: { x: data.x, y: data.y + titleBarHeight, z: props.viewport.position.z },
-        size: props.viewport.size
-      }
+        size: props.viewport.size,
+      },
     });
   }
 
@@ -143,11 +144,10 @@ function UserViewport(props: UserViewportProps) {
       userId: props.userId,
       viewport: {
         position: { x: props.viewport.position.x, y: props.viewport.position.y, z: props.viewport.position.z },
-        size: { width: size2.width, height: size2.height, depth: props.viewport.size.depth }
-      }
+        size: { width: size2.width, height: size2.height, depth: props.viewport.size.depth },
+      },
     });
   }
-
 
   return (
     <>
@@ -162,16 +162,16 @@ function UserViewport(props: UserViewportProps) {
         lockAspectRatio={true}
         scale={props.scale}
         style={{
-          borderRadius: borderRadius,
+          borderRadius: `${borderRadius}px ${borderRadius}px 0px 0px`,
           background: color,
           zIndex: 3000,
-          opacity: 0.65,
+          opacity: opacity,
         }}
       >
-        <Text align={"center"} fontSize={fontSize + 'px'} textColor={textColor} userSelect={"none"}>
+        <Text align={'center'} fontSize={fontSize + 'px'} textColor={textColor} userSelect={'none'}>
           Viewport for {props.name}
         </Text>
-      </Rnd >
+      </Rnd>
 
       {/* Corner */}
       <Rnd
@@ -188,10 +188,11 @@ function UserViewport(props: UserViewportProps) {
         lockAspectRatio={true}
         scale={props.scale}
         style={{
-          borderRadius: borderRadius,
+          borderRadius: `${borderRadius}px 0px 0px 0px`,
           background: color,
           zIndex: 3000,
-          opacity: 0.65,
+          opacity: opacity,
+          cursor: 'nwse-resize',
         }}
       />
 
@@ -207,11 +208,10 @@ function UserViewport(props: UserViewportProps) {
         borderStyle="solid"
         borderWidth={borderWidth}
         borderColor={color}
-        opacity={0.65}
-        borderRadius={borderRadius}
+        opacity={opacity}
+        borderRadius={`0px 0px ${borderRadius}px ${borderRadius}px `}
         zIndex={3000}
       />
-
     </>
   );
 }
