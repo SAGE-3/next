@@ -105,7 +105,7 @@ export function Background(props: BackgroundProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
-  
+
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
@@ -536,10 +536,10 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
+      cursor={"grab"}
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
@@ -547,22 +547,22 @@ export function Background(props: BackgroundProps) {
       // onTouchStart={(ev) => {
       //   setSelectedApp('')
       // }}
-      
+
       // onScroll={(evt) => {
       //   evt.stopPropagation();
       // }}
       // onMouseDown={handleMouseDown}
       // onMouseUp={handleMouseUp}
-      
+
       onClick={handleDeselect}
-      // onWheel={onWheelEvent}
-      // Zoom touch events
-      // onPointerDown={onPointerDown}
-      // onPointerMove={onPointerMove}
-      // onPointerUp={onPointerUp}
-      // onPointerCancel={onPointerUp}
-      // onPointerOut={onPointerUp}
-      // onPointerLeave={onPointerUp}
+    // onWheel={onWheelEvent}
+    // Zoom touch events
+    // onPointerDown={onPointerDown}
+    // onPointerMove={onPointerMove}
+    // onPointerUp={onPointerUp}
+    // onPointerCancel={onPointerUp}
+    // onPointerOut={onPointerUp}
+    // onPointerLeave={onPointerUp}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 
