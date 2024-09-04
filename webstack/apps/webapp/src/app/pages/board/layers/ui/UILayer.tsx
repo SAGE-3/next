@@ -353,7 +353,7 @@ export function UILayer(props: UILayerProps) {
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
 
-      {/* Presence Follow Component. Doesnt Render Anything */}
+      {/* Presence Follow Component: Does not render anything */}
       <PresenceFollow />
 
       {/* Display a list of all tags */}
