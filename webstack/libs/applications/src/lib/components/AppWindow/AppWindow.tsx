@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
@@ -120,6 +120,24 @@ export function AppWindow(props: WindowProps) {
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
+
+  const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
+  const [ rndSafeToAction, setRndSafeToAction ] = useState<boolean>(true)
+
+  // Mitiage/ Bandaid fix using delays to handle disappearing apps
+  // Obvious caviat with this is that it runs in every app window D:
+  useEffect(() => {
+    setRndSafeToAction(false)
+
+    if (rndSafeToActionTimeoutRef.current !== null) {
+      clearTimeout(rndSafeToActionTimeoutRef.current);
+    }
+
+    rndSafeToActionTimeoutRef.current = setTimeout(() => {
+      setRndSafeToAction(true)
+    }, 100);
+  }, [boardSynced])
+  
 
   // Track the app store errors
   useEffect(() => {
@@ -333,7 +351,7 @@ export function AppWindow(props: WindowProps) {
       enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // || selectedApps.length > 0) Temporary solution to fix resize while drag, selectedApps.length !== 0 || 
       
       // !boardSync is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !boardSynced}
+      disableDragging={!canMove || isPinned || (!boardSynced && !rndSafeToAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
