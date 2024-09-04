@@ -1010,7 +1010,7 @@ export function HomePage() {
           backgroundColor={mainBackgroundColor}
           maxHeight="100svh"
           height="100%"
-          border="solid green 1px"
+          // border="solid green 1px"
           // overflow="hidden"
           pt={4}
           pr={4}

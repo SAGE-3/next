@@ -100,7 +100,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 
   const linearBGColor = useColorModeValue(
     `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
+    `linear-gradient(178deg, #303030, #252525, #262626)`,
   );
 
   const name = props.asset.data.originalfilename;
@@ -252,7 +252,7 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
   if (isVideo(type)) {
     const extras = asset.data.derived as ExtraVideoType;
     const videoURL = extras.url;
-    return <video src={videoURL} controls muted={true} autoPlay={true} loop style={{ width }} />;
+    return <video src={videoURL} controls muted={true} autoPlay={true} loop style={{ width, borderRadius: '16px' }} />;
   } else if (isImage(type)) {
     let imageURL;
     if (isGIF(type)) {
@@ -272,7 +272,7 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
         imageURL = extras.sizes[extras.sizes.length - 1].url;
       }
     }
-    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
+    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width, borderRadius: '16px' }} />;
   } else if (isPDF(type)) {
     const pages = asset.data.derived as ExtraPDFType;
     const firstPage = pages[0];
@@ -288,7 +288,7 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       // If no image is larger than the preview width, choose the largest image
       imageURL = firstPage[firstPage.length - 1].url;
     }
-    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width }} />;
+    return <img src={imageURL} alt={asset.data.originalfilename} style={{ width, borderRadius: '16px' }} />;
   } else if (isCode(type) || isGeoJSON(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
