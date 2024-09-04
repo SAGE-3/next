@@ -44,7 +44,7 @@ const PluginStore = create<PluginState>()((set, get) => {
       if (!SAGE3Ability.canCurrentUser('delete', 'plugins')) return;
       await APIHttp.DELETE('/plugins/remove/' + id);
     },
-    upload: async (file: File, name: string, description: string, username: string) => {
+    upload: async (file: File, name: string, description: string, username: string, rooms?: string[]) => {
       if (!SAGE3Ability.canCurrentUser('create', 'plugins')) return;
       // Uploaded with a Form object
       const fd = new FormData();
@@ -52,6 +52,7 @@ const PluginStore = create<PluginState>()((set, get) => {
       fd.append('description', description);
       fd.append('name', name);
       fd.append('username', username);
+      fd.append('rooms', JSON.stringify(rooms));
       const res = await fetch(apiUrls.plugins.upload, {
         method: 'POST',
         body: fd,

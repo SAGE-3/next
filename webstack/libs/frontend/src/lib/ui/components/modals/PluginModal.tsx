@@ -31,13 +31,18 @@ import {
   useDisclosure,
   useColorModeValue,
   Spinner,
+  Checkbox,
+  CheckboxGroup,
+  Grid,
+  GridItem,
 } from '@chakra-ui/react';
 
 import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 'react-icons/md';
-import { ConfirmModal, useHexColor, usePluginStore, useUser } from '@sage3/frontend';
+import { ConfirmModal, useHexColor, usePluginStore, useRoomStore, useUser } from '@sage3/frontend';
 
 import { format } from 'date-fns';
 import { isZip } from '@sage3/shared';
+import { Room } from '@sage3/shared/types';
 
 interface PluginUploadModalProps {
   isOpen: boolean;
@@ -62,6 +67,8 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   const [input, setInput] = useState<File[]>([]);
   const [description, setDescription] = useState<string>('');
   const [name, setName] = useState<string>('');
+  const [allRooms, setAllRooms] = useState<boolean>(false);
+  const [rooms, setRooms] = useState<string[]>([]);
 
   // Uploading Status
   const [uploading, setUploading] = useState<boolean>(false);
@@ -71,6 +78,10 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   // User
   const { user } = useUser();
+
+  // Get the user's rooms
+  const availableRooms = useRoomStore((state) => state.rooms);
+  const members = useRoomStore((state) => state.members);
 
   // List of user's plugins
   const plugins = usePluginStore((state) => state.plugins);
@@ -85,6 +96,33 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
   // Toast
   const toast = useToast();
 
+  // Filter and sort
+  const roomMemberFilter = (room: Room): boolean => {
+    if (!user) return false;
+    const userId = user._id;
+    const roomMembership = members.find((m) => m.data.roomId === room._id);
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+    const isOwner = room.data.ownerId === userId;
+    return isMember || isOwner;
+  };
+  const roomsSort = (a: Room, b: Room): number => {
+    if (a.data.name < b.data.name) {
+      return -1;
+    }
+    if (a.data.name > b.data.name) {
+      return 1;
+    }
+    return 0;
+  };
+
+  const handleRoomClick = (room: Room) => {
+    if (rooms.includes(room._id)) {
+      setRooms(rooms.filter((r) => r !== room._id));
+    } else {
+      setRooms([...rooms, room._id]);
+    }
+  };
+
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
@@ -96,6 +134,7 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
 
   // Perform the actual upload
   const handleUpload = async () => {
+    console.log(rooms);
     // Check for required fields
     if (input[0] && user && name && description) {
       // Check file extension is a ZIP file
@@ -267,7 +306,6 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                   />
                   <br />
                 </InputGroup>
-
                 <FormHelperText mb="2">Plugin Name (only letters and numbers, maximum 20 characters)</FormHelperText>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
@@ -286,7 +324,6 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                     onChange={handleNameChange}
                   />
                 </InputGroup>
-
                 <FormHelperText mb="2">Plugin Description (maximum 40 characters)</FormHelperText>
                 <InputGroup>
                   <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
@@ -304,6 +341,58 @@ export function PluginModal(props: PluginUploadModalProps): JSX.Element {
                     onChange={handleDescriptionChange}
                   />
                 </InputGroup>
+
+                <FormHelperText mb="2">Plugin Room Availability</FormHelperText>
+                {/* Check box to select all rooms, if not then show the checkboxgroup */}
+                <Box display="flex" width="100%" justifyContent={'left'} mb="2">
+                  {' '}
+                  <Checkbox
+                    isChecked={allRooms}
+                    onChange={(e) => setAllRooms(e.target.checked)}
+                    size="md"
+                    fontWeight={'bold'}
+                    colorScheme="teal"
+                  >
+                    All Rooms
+                  </Checkbox>
+                </Box>
+
+                {/* Room Selection if not availabe everywhere */}
+                {!allRooms && (
+                  <Grid templateColumns="repeat(3, 1fr)" gap={2}>
+                    {availableRooms
+                      .filter(roomMemberFilter)
+                      .sort(roomsSort)
+                      .map((room) => {
+                        const selected = rooms.includes(room._id);
+                        const color = useHexColor('teal');
+                        return (
+                          <GridItem colSpan={1} key={room._id}>
+                            <Box
+                              onClick={() => handleRoomClick(room)}
+                              height="40px"
+                              width="170px"
+                              border={`solid 2px ${selected ? color : 'gray'}`}
+                              borderRadius={'md'}
+                              whiteSpace={'none'}
+                              overflow={'hidden'}
+                              textOverflow={'ellipsis'}
+                              display="flex"
+                              flexDir={'column'}
+                              alignItems="center"
+                              justifyContent="center"
+                              cursor="pointer"
+                              px="4px"
+                            >
+                              <Text userSelect={'none'}>{room.data.name}</Text>
+                            </Box>
+                          </GridItem>
+                        );
+                      })}
+
+                    <GridItem colSpan={3}></GridItem>
+                  </Grid>
+                )}
               </FormControl>
             )}
           </ModalBody>
