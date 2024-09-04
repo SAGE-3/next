@@ -131,7 +131,7 @@ function UserViewport(props: UserViewportProps) {
   function handleResize(_e: RndDragEvent, data: DraggableData) {
     // Update the box position to make it interactive, keep aspect ratio
     const ar = props.viewport.size.width / props.viewport.size.height;
-    const newW = data.x - pos2.x + titleBarHeight;
+    const newW = Math.max(data.x - pos2.x + titleBarHeight, 400); // Limit the width to 400px minimum
     const newH = newW / ar;
     setSize2((state) => ({ width: newW, height: newH }));
   }
@@ -168,7 +168,7 @@ function UserViewport(props: UserViewportProps) {
           opacity: opacity,
         }}
       >
-        <Text align={'center'} fontSize={fontSize + 'px'} textColor={textColor} userSelect={'none'}>
+        <Text align={'center'} fontSize={fontSize + 'px'} textColor={textColor} userSelect={'none'} noOfLines={1}>
           Viewport for {props.name}
         </Text>
       </Rnd>
@@ -188,7 +188,7 @@ function UserViewport(props: UserViewportProps) {
         lockAspectRatio={true}
         scale={props.scale}
         style={{
-          borderRadius: `${borderRadius}px 0px 0px 0px`,
+          borderRadius: `${borderRadius}px 0px ${borderRadius}px 0px`,
           background: color,
           zIndex: 3000,
           opacity: opacity,
