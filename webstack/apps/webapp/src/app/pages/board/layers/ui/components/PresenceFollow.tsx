@@ -23,7 +23,9 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
+  const boardPosition = useUIStore((state) => state.boardPosition);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const scale = useUIStore((state) => state.scale);
   const setScale = useUIStore((state) => state.setScale);
 
   // Presences
@@ -105,10 +107,35 @@ export function PresenceFollow() {
     setViewport(goToViewport);
   }, [myPresence?.data.goToViewport, user]);
 
+  useEffect(() => {
+    if (!myPresence) return;
+    // If I am a wall, allow movement from the remote user
+    if (user?.data.userType === 'wall') {
+      const vx = -myPresence.data.viewport.position.x;
+      const vy = -myPresence.data.viewport.position.y;
+      const vw = -myPresence.data.viewport.size.width;
+      const vh = -myPresence.data.viewport.size.height;
+      const vcx = vx + vw / 2;
+      const vcy = vy + vh / 2;
+      const ww = window.innerWidth;
+      const wh = window.innerHeight;
+      const s = Math.min(ww / -vw, wh / -vh);
+      const cx = vcx + ww / s / 2;
+      const cy = vcy + wh / s / 2;
+      if (cx !== boardPosition.x || cy !== boardPosition.y) {
+        setBoardPosition({ x: cx, y: cy });
+      }
+      if (isFinite(s) && s !== scale) {
+        setScale(s);
+      }
+    }
+  }, [
+    myPresence?.data.viewport.position.x, myPresence?.data.viewport.position.y,
+    myPresence?.data.viewport.size.width, myPresence?.data.viewport.size.height,
+  ]);
+
   // Check if I am following someone
   useEffect(() => {
-    // Check for my presence
-    const myPresence = presences.find((el) => el._id === user?._id);
     if (!myPresence) return;
 
     // Check if I am following someone
