@@ -47,7 +47,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const [localBoardPosition, setLocalBoardPosition] = useState({ x: 0, y: 0, scale: 0 });
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
   const [lastTouch, setLastTouch] = useState([{ x: 0, y: 0 }, { x: 0, y: 0 }]);
-  const [startedDragOnBoard, setStartedDragOnBoard] = useState(false); // Used to differentiate between board drag and app deselect
+  const [startedDragOn, setStartedDragOn] = useState<"board" | "app" | "other">("other"); // Used to differentiate between board drag and app deselect
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), [])
@@ -156,13 +156,26 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     });
   }
 
+  const draggedOnCheck = (event: any) => {
+    const target = event.target as HTMLElement
+    // Target.id was done because of the following assumption:
+    // Using ids is faster than using classList.contains(...)
+    if ([target.id === 'board', target.id === 'lasso', target.id === 'whiteboard'].some(condition => condition))
+    { 
+      setStartedDragOn("board") 
+    }
+    else if (target.classList.contains('handle')) { 
+      setStartedDragOn("app") 
+    }
+    else {
+      setStartedDragOn("other")
+    }
+  }
 
   // Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      const validTarget = [target.id === 'board', target.id === 'lasso', target.classList.contains('handle')].some(condition => condition);
-      setStartedDragOnBoard(validTarget)
+      draggedOnCheck(event)
     }
 
     window.addEventListener('mousedown', handleMouseStart, { passive: false });
@@ -184,16 +197,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced(prev => {
         if (prev) {
-          const target = event.target as HTMLElement
-          const validTarget = [target.id === 'board', target.id === 'lasso', target.classList.contains('handle')].some(condition => condition);
-          setStartedDragOnBoard(validTarget)
+          draggedOnCheck(event)
         }
         return prev
       })
 
 
-      setStartedDragOnBoard(prev => {
-        if (!prev) { return prev }
+      setStartedDragOn(draggedOn => {
+        if (draggedOn === "other") { return draggedOn }
         // Zooming
         if (event.ctrlKey || event.metaKey) {
           const cursor = { x: event.clientX, y: event.clientY };
@@ -212,7 +223,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             scale: prev.scale
           }));
         }
-        return prev
+        return draggedOn
       })
 
     };
@@ -233,18 +244,16 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         event.preventDefault()
       }
 
-      setStartedDragOnBoard(prev => {
-        if (!prev) { return prev }
+      setStartedDragOn(draggedOn => {
         // Tranversal/Panning
-        if (primaryActionMode === "grab" && event.buttons & 1) {
+        if (primaryActionMode === "grab" && event.buttons & 1 && draggedOn === "board") {
           move()
         }
-        else if (event.buttons & 4) {
+        else if (event.buttons & 4 && (draggedOn === "app" || draggedOn === "board")) {
           // 1.333333333 @ zoomLvl 75%
           move()
         }
-
-        return prev
+        return draggedOn
       })
     };
 
@@ -264,12 +273,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const handleTouchStart = (event: TouchEvent) => {
       if (event.touches.length >= 1 && event.touches.length <= 5) {
         // event.preventDefault();
-        const validIDSet = new Set(["board", "lasso"]);
-        const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch =>
+        const validIDSet = new Set(["board", "lasso"]); // Do not add whiteboard here
+        const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch => 
           validIDSet.has((touch.target as HTMLElement).id)
         );
 
-        setStartedDragOnBoard(allTouchesAreOnValidID)
+        // could also be app, but we ignore that case or touch users
+        setStartedDragOn(draggedOn => allTouchesAreOnValidID ? "board" : "other")
 
         setLastTouch(Array.from(event.touches).map((touch, index) => {
           return { x: touch.clientX, y: touch.clientY }
@@ -317,8 +327,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       //   }
       // }
 
-      setStartedDragOnBoard(prev => {
-        if (!prev) { return prev }
+      setStartedDragOn(draggedOn => {
+        if (draggedOn === "other") { return draggedOn }
         // if (event.touches.length === 1) {
         //  // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
         // }
@@ -387,7 +397,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             ])
           });
         }
-        return prev
+        return draggedOn
       })
     }
 

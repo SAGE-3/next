@@ -317,6 +317,7 @@ export function Whiteboard(props: WhiteboardProps) {
       }}
     >
       <svg
+        id="whiteboard"
         className="canvas-layer"
         style={{
           position: 'absolute',
