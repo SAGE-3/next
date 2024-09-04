@@ -15,6 +15,7 @@ import { DraggableData, Rnd } from 'react-rnd';
 import { useUIStore, useAbility, useKeyPress } from '@sage3/frontend';
 
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent } from './components';
+import { T } from 'tldraw';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -46,8 +47,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Local States with Delayed Syncing to useUIStore
   const [localBoardPosition, setLocalBoardPosition] = useState({x:0, y:0, scale:0});
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
-
   const [lastTouch, setLastTouch] = useState([{x:0, y:0}, {x:0, y:0}]);
+  const [startedDragOnBoard, setStartedDragOnBoard] = useState(false); // Used to differentiate between board drag and app deselect
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), [])
@@ -156,37 +157,64 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     });
   }
 
+
+  // Make sure the initial mouse click is on a valid surface
+  useEffect(() => {
+    const handleMouseStart = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      const validTarget = [target.id === 'board', target.id === 'lasso', target.classList.contains('handle')].some(condition => condition);
+      setStartedDragOnBoard(validTarget)
+    }
+
+    window.addEventListener('mousedown', handleMouseStart, { passive: false });
+    return () => {
+      window.removeEventListener('mousedown', handleMouseStart);
+    };
+  }, []);
+
   // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
   useEffect(() => {    
     // Mouse & Touchpad
     const handleMove = (event: WheelEvent) => {
+      if (event.ctrlKey) { event.preventDefault() }
       if (boardLocked) { return }
-      if (selectedApp) {
-        if (event.ctrlKey) {
-          event.preventDefault();
-        }
-        return
-      }
+      if (selectedApp) { return }
 
-      // Zooming
-      if (event.ctrlKey || event.metaKey) {
-        const cursor = { x: event.clientX, y: event.clientY };
-        if (event.deltaY < 0) {
-          localZoomInDelta(event.deltaY, cursor);
-        } else if (event.deltaY > 0) {
-          localZoomOutDelta(event.deltaY, cursor);
+      // This is a workable solution to having this calcuation done on a psudeo init-like behaviour
+      // Note that if someone is wheeling on the board and then quickly wheels on a panel, the board will move
+      // until the user stops giving input and then the proper behaviour will resume
+      setLocalSynced(prev => {
+        if (prev) {
+          const target = event.target as HTMLElement
+          const validTarget = [target.id === 'board', target.id === 'lasso', target.classList.contains('handle')].some(condition => condition);
+          setStartedDragOnBoard(validTarget)
         }
-       
-        event.preventDefault();
-      }
-      // Transversal/Panning
-      else{
-        // Flip axis for mouse scroll wheel users
-        setLocalBoardPosition(prev => ({ 
-          x: prev.x - ((!isMac && event.shiftKey) ? event.deltaY : event.deltaX) / prev.scale, 
-          y: prev.y - ((!isMac && event.shiftKey) ? event.deltaX : event.deltaY) / prev.scale,
-          scale: prev.scale  }));
-      }
+        return prev
+      })
+
+
+      setStartedDragOnBoard(prev => {
+        if (!prev) { return prev }
+        // Zooming
+        if (event.ctrlKey || event.metaKey) {
+          const cursor = { x: event.clientX, y: event.clientY };
+          if (event.deltaY < 0) {
+            localZoomInDelta(event.deltaY, cursor);
+          } else if (event.deltaY > 0) {
+            localZoomOutDelta(event.deltaY, cursor);
+          }
+        }
+        // Transversal/Panning
+        else{
+          // Flip axis for mouse scroll wheel users
+          setLocalBoardPosition(prev => ({ 
+            x: prev.x - ((!isMac && event.shiftKey) ? event.deltaY : event.deltaX) / prev.scale, 
+            y: prev.y - ((!isMac && event.shiftKey) ? event.deltaX : event.deltaY) / prev.scale,
+            scale: prev.scale  }));
+        }
+        return prev
+      })
+
     };
     
     // Mouse
@@ -204,16 +232,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         event.preventDefault()
       }
 
-      // Tranversal/Panning
-      if (primaryActionMode === "grab" && event.buttons & 1) {
-        const validTarget = (event.target as HTMLElement).classList.contains('board-handle');
-        if (!validTarget) { return }
-        move()
-      }
-      else if (event.buttons & 4) {
-        // 1.333333333 @ zoomLvl 75%
-        move()
-      }
+      setStartedDragOnBoard(prev => {
+        if (!prev) { return prev }
+        // Tranversal/Panning
+        if (primaryActionMode === "grab" && event.buttons & 1) {
+          move()
+        }
+        else if (event.buttons & 4) {
+          // 1.333333333 @ zoomLvl 75%
+          move()
+        }
+
+        return prev
+      })
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: false });
@@ -232,6 +263,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const handleTouchStart = (event: TouchEvent) => {
       if (event.touches.length >= 1 && event.touches.length <= 5) {
         // event.preventDefault();
+        const validIDSet = new Set(["board", "lasso"]);
+        const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch => 
+          validIDSet.has((touch.target as HTMLElement).id)
+        );
+
+        setStartedDragOnBoard(allTouchesAreOnValidID)
 
         setLastTouch(Array.from(event.touches).map((touch, index) => {
           return {x: touch.clientX, y: touch.clientY}
@@ -263,88 +300,92 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // );
       // ^^^^^^^^^^^^
       
-      if (primaryActionMode === "grab") {
-        const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('board-handle'));
-        if (!allTouchesAreOnValidClasses) {
-          return
-        }
-      }
-      // else if (primaryActionMode === "lasso") {
-      else {
-        const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('canvas-layer'));
-        if (!allTouchesAreOnValidClasses) {
-          return
-        }
-      }
-
-
-      // if (event.touches.length === 1) {
-      //  // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
+      // if (primaryActionMode === "grab") {
+      //   // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('board-handle'));
+      //   const allTouchesAreOnValidID = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).id === "board")
+      //   if (!allTouchesAreOnValidID) {
+      //     return
+      //   }
+      // }
+      // // else if (primaryActionMode === "lasso") {
+      // else {
+      //   // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('canvas-layer'));
+      //   const allTouchesAreOnValidID = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).id === "lasso")
+      //   if (!allTouchesAreOnValidID) {
+      //     return
+      //   }
       // }
 
-      if (event.touches.length === 1) {
-        setLastTouch(prev => {
-          const delta0X = prev[0].x - event.touches[0].clientX
-          const delta0Y = prev[0].y - event.touches[0].clientY
-          
-          setLocalBoardPosition(prevBoard => {
-            return ({
-              x: prevBoard.x - delta0X / prevBoard.scale,
-              y: prevBoard.y - delta0Y / prevBoard.scale,
-              scale: prevBoard.scale
-            })});
-          // }
-          return ([
-            {x:event.touches[0].clientX, y:event.touches[0].clientY}
-          ])
-        });
-      }
-      else if (event.touches.length === 2) {
-        setLastTouch(prev => {
-          const delta0X = prev[0].x - event.touches[0].clientX
-          const delta0Y = prev[0].y - event.touches[0].clientY
-
-          const delta1X = prev[1].x - event.touches[1].clientX
-          const delta1Y = prev[1].y - event.touches[1].clientY
-
-          // Pan
-          const avgDeltaX = (delta0X + delta1X) / 2;
-          const avgDeltaY = (delta0Y + delta1Y) / 2;
-
-          // Zoom
-          const prevDistance = magnitude({x:prev[0].x, y:prev[0].y}, {x:prev[1].x, y:prev[1].y}); // Store this calc in mem so we dont have to recalc again...
-          const distance = magnitude({x: event.touches[0].clientX, y: event.touches[0].clientY}, {x: event.touches[1].clientX, y: event.touches[1].clientY});
-          // const prevDistance = Math.sqrt(Math.pow(prev[0].x - prev[1].x, 2) + Math.pow(prev[0].y - prev[1].y, 2));
-          // const distance = Math.sqrt(Math.pow(event.touches[0].clientX - event.touches[1].clientX, 2) + Math.pow(event.touches[0].clientY - event.touches[1].clientY, 2));
-
-          const zoomDelta = prevDistance - distance;
-          const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
-          const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
-
-          // console.log(Math.abs(zoomDelta), (Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2))
-
-          // if (Math.abs(zoomDelta) > ((Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2)) + 2) {
-          if (prevDistance > 0) {
-            if (zoomDelta < 0) {
-              localZoomInDelta(zoomDelta, {x: avgX, y: avgY});
-            } else if (zoomDelta > 0) {
-              localZoomOutDelta(zoomDelta, {x: avgX, y: avgY});
+      setStartedDragOnBoard(prev => {
+        if (!prev) { return prev }
+        // if (event.touches.length === 1) {
+        //  // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
+        // }
+        if (event.touches.length === 1) {
+          setLastTouch(prev => {
+            const delta0X = prev[0].x - event.touches[0].clientX
+            const delta0Y = prev[0].y - event.touches[0].clientY
+            
+            setLocalBoardPosition(prevBoard => {
+              return ({
+                x: prevBoard.x - delta0X / prevBoard.scale,
+                y: prevBoard.y - delta0Y / prevBoard.scale,
+                scale: prevBoard.scale
+              })});
+            // }
+            return ([
+              {x:event.touches[0].clientX, y:event.touches[0].clientY}
+            ])
+          });
+        }
+        else if (event.touches.length === 2) {
+          setLastTouch(prev => {
+            const delta0X = prev[0].x - event.touches[0].clientX
+            const delta0Y = prev[0].y - event.touches[0].clientY
+  
+            const delta1X = prev[1].x - event.touches[1].clientX
+            const delta1Y = prev[1].y - event.touches[1].clientY
+  
+            // Pan
+            const avgDeltaX = (delta0X + delta1X) / 2;
+            const avgDeltaY = (delta0Y + delta1Y) / 2;
+  
+            // Zoom
+            const prevDistance = magnitude({x:prev[0].x, y:prev[0].y}, {x:prev[1].x, y:prev[1].y}); // Store this calc in mem so we dont have to recalc again...
+            const distance = magnitude({x: event.touches[0].clientX, y: event.touches[0].clientY}, {x: event.touches[1].clientX, y: event.touches[1].clientY});
+            // const prevDistance = Math.sqrt(Math.pow(prev[0].x - prev[1].x, 2) + Math.pow(prev[0].y - prev[1].y, 2));
+            // const distance = Math.sqrt(Math.pow(event.touches[0].clientX - event.touches[1].clientX, 2) + Math.pow(event.touches[0].clientY - event.touches[1].clientY, 2));
+  
+            const zoomDelta = prevDistance - distance;
+            const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+            const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+  
+            // console.log(Math.abs(zoomDelta), (Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2))
+  
+            // if (Math.abs(zoomDelta) > ((Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2)) + 2) {
+            if (prevDistance > 0) {
+              if (zoomDelta < 0) {
+                localZoomInDelta(zoomDelta, {x: avgX, y: avgY});
+              } else if (zoomDelta > 0) {
+                localZoomOutDelta(zoomDelta, {x: avgX, y: avgY});
+              }
             }
-          }
-
-          setLocalBoardPosition(prevBoard => {
-            return ({
-              x: prevBoard.x - avgDeltaX / prevBoard.scale,
-              y: prevBoard.y - avgDeltaY / prevBoard.scale,
-              scale: prevBoard.scale
-            })});
-
-          return ([
-            {x:event.touches[0].clientX, y:event.touches[0].clientY},
-            {x:event.touches[1].clientX, y:event.touches[1].clientY}
-          ])
-        });
-      }
+  
+            setLocalBoardPosition(prevBoard => {
+              return ({
+                x: prevBoard.x - avgDeltaX / prevBoard.scale,
+                y: prevBoard.y - avgDeltaY / prevBoard.scale,
+                scale: prevBoard.scale
+              })});
+  
+            return ([
+              {x:event.touches[0].clientX, y:event.touches[0].clientY},
+              {x:event.touches[1].clientX, y:event.touches[1].clientY}
+            ])
+          });
+        }
+        return prev
+      })
     }
 
 
