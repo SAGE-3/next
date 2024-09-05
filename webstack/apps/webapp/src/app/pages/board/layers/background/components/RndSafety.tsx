@@ -11,19 +11,13 @@ import { useEffect, useRef } from 'react';
 // SAGE Imports
 import { useUIStore } from '@sage3/frontend';
 
-
+// Mitiage/ Bandaid fix using delays to handle disappearing apps
 // Tried to put this inside of UI store, but didn't seem to work....
 export const RndSafety = () => {
   const boardSynced = useUIStore((state) => state.boardSynced)
-  const rndSafeToAction = useUIStore((state) => state.rndSafeToAction)
   const setRndSafeToAction = useUIStore((state) => state.setRndSafeToAction)
 
   const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
-
-  // Mitiage/ Bandaid fix using delays to handle disappearing apps
-  useEffect(() => {
-    console.log(rndSafeToAction)
-  }, [rndSafeToAction])
 
   useEffect(() => {
     setRndSafeToAction(false)

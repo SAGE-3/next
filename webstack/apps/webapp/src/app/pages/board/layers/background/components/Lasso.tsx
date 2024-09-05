@@ -106,6 +106,28 @@ export function Lasso(props: LassoProps) {
       lassoMove(ev.clientX, ev.clientY)
     }
   };
+
+  // Touch Behaviours
+  const touchDown = (ev: any) => {
+    if (ev.touches.length === 1) {
+      lassoStart(ev.touches[0].clientX, ev.touches[0].clientY)
+    }
+  };
+
+  const touchUp = () => {
+    // setLassoMode(false);
+    lassoEnd()
+  };
+
+  const touchMove = (ev: any) => {
+    if (ev.touches.length === 1) {
+      lassoMove(ev.touches[0].clientX, ev.touches[0].clientY)
+    }
+    else {
+      lassoEnd()
+    }
+  };
+
   return (
     <>
       {/* lassoMode &&  */}
@@ -125,6 +147,10 @@ export function Lasso(props: LassoProps) {
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}
+
+          onTouchStart={touchDown}
+          onTouchEnd={touchUp}
+          onTouchMove={touchMove}
         >
           {mousedown ? (
             <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
