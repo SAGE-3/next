@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react';
 // SAGE Imports
 import { useUIStore } from '@sage3/frontend';
 
-// Mitiage/ Bandaid fix using delays to handle disappearing apps
+// Mitiage/ Bandaid fix using delays to handle disappearing apps during scaling/zooming events
 // Tried to put this inside of UI store, but didn't seem to work....
 
 // If the bug occurs during re-rendering, it may be ideal to have a delayed start to 

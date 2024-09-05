@@ -87,11 +87,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       console.log("no movement detected");
       setBoardPosition({ x: localBoardPosition.x, y: localBoardPosition.y });
       setScale(localBoardPosition.scale);
-      // setLocalSynced(true);
-      // Additional wait time as bandaid-fix to Rnd drag issue
+      
+      // This secondary delay may not be strickly neccessary as we also have rndSafety.tsx
       movementZoomSafetyTimeoutRef.current = setTimeout(() => {
         setLocalSynced(true);
-      }, 100)
+      }, 0)
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
   // boardDragging
