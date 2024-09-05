@@ -87,7 +87,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       console.log("no movement detected");
       setBoardPosition({ x: localBoardPosition.x, y: localBoardPosition.y });
       setScale(localBoardPosition.scale);
-      
+
       // This secondary delay may not be strickly neccessary as we also have rndSafety.tsx
       movementZoomSafetyTimeoutRef.current = setTimeout(() => {
         setLocalSynced(true);
@@ -303,7 +303,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         if (draggedOn === "other" || draggedOn === "app") { return draggedOn }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
-          if (primaryActionMode === "grab") {
+          if (primaryActionMode === "grab" && draggedOn !== "board-actions") {
             setLastTouch(prev => {
               const delta0X = prev[0].x - event.touches[0].clientX
               const delta0Y = prev[0].y - event.touches[0].clientY
