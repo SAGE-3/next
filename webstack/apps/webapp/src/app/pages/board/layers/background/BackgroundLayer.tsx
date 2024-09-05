@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import { DraggableEvent } from 'react-draggable';
@@ -29,14 +29,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const setBoardDragging = useUIStore((state) => state.setBoardDragging);
   const boardLocked = useUIStore((state) => state.boardLocked);
-  const lassoMode = useUIStore((state) => state.lassoMode);
   const primaryActionMode = useUIStore((state) => state.primaryActionMode);
 
   const setBoardSynced = useUIStore((state) => state.setBoardSynced);
@@ -54,12 +50,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // There is a major bug with Rnd, where dragging/ while zooming or immedately thereafter
-  // Will either move or vanish the appWindow.  We introduce movementZoomSafetyTimeoutRef
-  // as a temporary solution to lock the ability to drag a second after the localZoom function occurs
-  // Note that this will not fix the + - zoom hotkeys and this is only targeted to band-aid fix
-  // the point where the highest frequency of this issue will occur (e.g. the new movement scheme)
   const movementZoomSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Bulk of Movement Code Starts Here
@@ -84,7 +74,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     setLocalSynced(false);
 
     movementTimeoutRef.current = setTimeout(() => {
-      console.log("no movement detected");
       setBoardPosition({ x: localBoardPosition.x, y: localBoardPosition.y });
       setScale(localBoardPosition.scale);
 
@@ -94,7 +83,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }, 0)
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
-  // boardDragging
 
   // You need to eventually sync this with useUIStore's values
   const WheelStepZoom = 0.008;

@@ -30,7 +30,7 @@ export function Lasso(props: LassoProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
 
   // Lasso mode apps & Selected apps
-  const lassoMode = useUIStore((state) => state.lassoMode);
+  // const lassoMode = useUIStore((state) => state.lassoMode);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
