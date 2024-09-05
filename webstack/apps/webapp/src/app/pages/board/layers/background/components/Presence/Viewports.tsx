@@ -120,6 +120,7 @@ function UserViewport(props: UserViewportProps) {
       viewport: {
         position: { x: data.x, y: data.y + titleBarHeight, z: props.viewport.position.z },
         size: props.viewport.size,
+        selfUpdate: false,
       },
     });
   }
@@ -145,6 +146,7 @@ function UserViewport(props: UserViewportProps) {
       viewport: {
         position: { x: props.viewport.position.x, y: props.viewport.position.y, z: props.viewport.position.z },
         size: { width: size2.width, height: size2.height, depth: props.viewport.size.depth },
+        selfUpdate: false,
       },
     });
   }
