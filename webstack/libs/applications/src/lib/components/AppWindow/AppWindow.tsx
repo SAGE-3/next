@@ -123,22 +123,22 @@ export function AppWindow(props: WindowProps) {
   const spacebarPressed = useKeyPress(' ');
   
   
-// Alternative Attempt to Fix AppWindow Disappearing
-  // const [ rndSafeToAction, setRndSafeToAction ] = useState<boolean>(false);
-  // const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
+// // Alternative Attempt to Fix AppWindow Disappearing
+// // This solution should work better if it was really a rerendering issue
+//   const rndSafeToActionRef = useRef(true);
+//   const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
 
-  // useEffect(() => {
-  //   console.log("RERENDER")
-  //   setRndSafeToAction(false)
+//   useEffect(() => {
+//     rndSafeToActionRef.current = false
 
-  //   if (rndSafeToActionTimeoutRef.current !== null) {
-  //     clearTimeout(rndSafeToActionTimeoutRef.current);
-  //   }
+//     if (rndSafeToActionTimeoutRef.current !== null) {
+//       clearTimeout(rndSafeToActionTimeoutRef.current);
+//     }
 
-  //   rndSafeToActionTimeoutRef.current = setTimeout(() => {
-  //     setRndSafeToAction(true)
-  //   }, 100);
-  // })
+//     rndSafeToActionTimeoutRef.current = setTimeout(() => {
+//       rndSafeToActionRef.current = true
+//     }, 100);
+//   })
 
   // Track the app store errors
   useEffect(() => {
