@@ -41,6 +41,7 @@ import {
   Grid,
   GridItem,
   Tag,
+  TabIndicator,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -750,7 +751,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}>
@@ -1368,55 +1369,159 @@ export function HomePage() {
             <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
             </Text>
-            {/* Recents and Starred Boards */}
+            {/* Recents boards */}
             <Box borderRadius={cardRadius} py="3" height="100%">
-              <Text fontWeight="bold" mb="3">
-                Recent Boards
-              </Text>
-              <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
-                {recentBoards.length > 0 ? (
-                  <HStack
-                    gap="3"
-                    width="100%"
-                    overflow="auto"
-                    height="fit-content"
-                    py="5"
-                    px="2"
-                    css={{
-                      '&::-webkit-scrollbar': {
-                        background: 'transparent',
-                        height: '10px',
-                      },
-                      '&::-webkit-scrollbar-thumb': {
-                        background: scrollBarColor,
-                        borderRadius: '48px',
-                      },
-                    }}
-                  >
-                    {boards
-                      .filter(recentBoardsFilter)
-                      .sort((boardA, boardB) => {
-                        // Sort by most recent
-                        const indexOfA = recentBoards.indexOf(boardA._id);
-                        const indexOfB = recentBoards.indexOf(boardB._id);
-                        return indexOfA - indexOfB;
-                      })
-                      .map((board) => (
-                        <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                          <BoardCard
-                            board={board}
-                            onClick={() => handleBoardClick(board)}
-                            // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                            selected={selectedBoard ? selectedBoard._id === board._id : false}
-                            usersPresent={presences.filter((p) => p.data.boardId === board._id)}
-                          />
-                        </Box>
-                      ))}
-                  </HStack>
-                ) : (
-                  <Text p="3">No recent boards.</Text>
-                )}
-              </Box>
+              <Tabs variant="unstyled" isLazy defaultIndex={0}>
+                <TabList>
+                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+                    Recent Boards
+                  </Tab>
+                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+                    Active Boards
+                  </Tab>
+                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+                    Starred Boards
+                  </Tab>
+                </TabList>
+
+                <TabPanels>
+                  <TabPanel px="0" py="4" id="Recent Boards">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
+                      {recentBoards.length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflow="auto"
+                          height="fit-content"
+                          py="5"
+                          px="2"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(recentBoardsFilter)
+                            .sort((boardA, boardB) => {
+                              // Sort by most recent
+                              const indexOfA = recentBoards.indexOf(boardA._id);
+                              const indexOfB = recentBoards.indexOf(boardB._id);
+                              return indexOfA - indexOfB;
+                            })
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3">No recent boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                  <TabPanel px="0" py="4" id="Active Boards">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {boards.filter(boardActiveFilter).length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflow="auto"
+                          height="fit-content"
+                          py="5"
+                          px="2"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(boardActiveFilter)
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .sort((a, b) => {
+                              // Sorted by alpha then user count
+                              const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
+                              const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                              return userCountB - userCountA;
+                            })
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3">No active boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                  <TabPanel px="0" py="4">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {recentBoards.length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflow="auto"
+                          height="fit-content"
+                          py="5"
+                          px="2"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(boardStarredFilter)
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3">No recent boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
 
               <Box mt="6" mb="3">
                 <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
@@ -1467,7 +1572,7 @@ export function HomePage() {
 
                           <Text fontSize="xs" color={subTextColor}>
                             {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                            members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                               room.data.ownerId === userId ? (
                                 <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                   Owner
