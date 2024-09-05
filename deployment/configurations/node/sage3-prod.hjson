@@ -34,10 +34,15 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
-  // Fastapi python server
-  "fastapi": {
-    "url": "http://fastapi:8000"
+  // Fastapi python server for kernels
+  "kernels": {
+    "url": "http://kernelserver:8000"
   },
+  // Fastapi python server for agents
+  "agents": {
+    "url": "http://seer:9999"
+  },
+
 
   // Feedback URL
   "feedback": {

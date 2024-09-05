@@ -62,14 +62,12 @@ export function IntelligencePane(props: SIProps) {
   };
 
   const setAIModel = (val: string) => {
-    console.log('AI Model> ', val);
     setSelectedModel(val);
     localStorage.setItem('s3_ai_model', val);
   };
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(function (location) {
-      console.log('LatLong> ', location);
       setLocation(location.coords.latitude + ',' + location.coords.longitude);
     });
 
@@ -111,7 +109,7 @@ export function IntelligencePane(props: SIProps) {
 
               <TabPanels>
                 <TabPanel>
-                  <AIChat />
+                  <AIChat model={selectedModel} />
                 </TabPanel>
                 <TabPanel>
                   <p>No notifcations</p>
@@ -123,13 +121,9 @@ export function IntelligencePane(props: SIProps) {
                       <Text fontSize="lg" mb={1} fontWeight={"bold"}>AI Models</Text>
                       <RadioGroup defaultValue={selectedModel} onChange={setAIModel}>
                         <Stack>
-                          {/* TODO */}
-                          {/*
                           <Radio value='chat' isDisabled={!config.chat.url}><b>Chat</b>: {config.chat.model} - {config.chat.url.substring(0, 12) + '•'.repeat(10)}</Radio>
                           <Radio value='openai' isDisabled={!config.openai.apiKey}><b>OpenAI</b>: {config.openai.model} - {config.openai.apiKey ? config.openai.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
                           </Radio>
-                          */}
-
                         </Stack>
                       </RadioGroup>
                     </VStack>

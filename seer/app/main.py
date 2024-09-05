@@ -60,9 +60,12 @@ if chat_server[-1] != "/":
     # add the trailing slash
     chat_server += "/"
 
+llm_llama = None
+llm_openai = None
+
 # LLM model using TGI interface
 if chat["url"] and chat["model"]:
-    llm_chat = HuggingFaceEndpoint(
+    llm_llama = HuggingFaceEndpoint(
         endpoint_url=chat_server,
         max_new_tokens=2048,
         stop_sequences=[
@@ -75,7 +78,6 @@ if chat["url"] and chat["model"]:
 
 if openai["apiKey"] and openai["model"]:
     llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
-
 
 # Prompt template for Llama3
 template = """
@@ -100,11 +102,17 @@ prompt = PromptTemplate.from_template(
 # Raises ValidationError if the input data cannot be parsed to form a valid model.
 output_parser = StrOutputParser()
 
+session_llama = None
+session_openai = None
+
 # Session : prompt building and then LLM
 if llm_openai:
     session_openai = prompt | llm_openai | output_parser
-if llm_chat:
-    session_chat = prompt | llm_chat | output_parser
+if llm_llama:
+    session_llama = prompt | llm_llama | output_parser
+
+if not session_llama and not session_openai:
+    raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
 # Pydantic models: Question, Answer, Context
 
@@ -151,46 +159,47 @@ async def ask_question(qq: Question):
     try:
         # Get the current date and time
         today = time.asctime()
-
+        session = None
         # Select the session
         if qq.model == "chat":
-            session = session_chat
+            session = session_llama
         elif qq.model == "openai":
             session = session_openai
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
         # Ask the question
-        response = await session.ainvoke(
-            {
-                "question": qq.q,
-                "username": qq.user,
-                "location": qq.location,
-                "date": today,
-            }
-        )
-        text = response
-        # Propose the answer to the user
-        action1 = json.dumps(
-            {
-                "type": "create_app",
-                "app": "Stickie",
-                "state": {"text": text, "fontSize": 24, "color": "purple"},
-                "data": {
-                    "title": "Answer",
-                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                    "size": {"width": 400, "height": 400, "depth": 0},
-                },
-            }
-        )
+        if session:
+            response = await session.ainvoke(
+                {
+                    "question": qq.q,
+                    "username": qq.user,
+                    "location": qq.location,
+                    "date": today,
+                }
+            )
+            text = response
+            # Propose the answer to the user
+            action1 = json.dumps(
+                {
+                    "type": "create_app",
+                    "app": "Stickie",
+                    "state": {"text": text, "fontSize": 24, "color": "purple"},
+                    "data": {
+                        "title": "Answer",
+                        "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                        "size": {"width": 400, "height": 400, "depth": 0},
+                    },
+                }
+            )
 
-        # Build the answer object
-        val = Answer(
-            id=qq.id,
-            r=text,
-            actions=[action1],
-        )
-        return val
+            # Build the answer object
+            val = Answer(
+                id=qq.id,
+                r=text,
+                actions=[action1],
+            )
+            return val
 
     except HTTPException as e:
         # Get the error message
@@ -206,64 +215,65 @@ async def summary(qq: Question):
     try:
         # Get the current date and time
         today = time.asctime()
-
+        session = None
         # Select the session
         if qq.model == "chat":
-            session = session_chat
+            session = session_llama
         elif qq.model == "openai":
             session = session_openai
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
-        # Collect all the stickies of the board
-        room_id = qq.ctx.roomId
-        board_id = qq.ctx.boardId
-        applist = ps3.get_apps(room_id, board_id)
-        whole_text = ""
-        for app_id, app in applist.items():
-            app_type = app.get("data", {}).get("type", None)
-            if app_type == "Stickie":
-                text = app.get("data", {}).get("state", {}).get("text")
-                whole_text += text + "\n"
-                logger.info("Stickie> " + text)
+        if session:
+            # Collect all the stickies of the board
+            room_id = qq.ctx.roomId
+            board_id = qq.ctx.boardId
+            applist = ps3.get_apps(room_id, board_id)
+            whole_text = ""
+            for app_id, app in applist.items():
+                app_type = app.get("data", {}).get("type", None)
+                if app_type == "Stickie":
+                    text = app.get("data", {}).get("state", {}).get("text")
+                    whole_text += text + "\n"
+                    logger.info("Stickie> " + text)
 
-        # Build the question
-        new_question = (
-            "First, summarize the following text concisely and then, offer your opinion on the topics addressed in the text:\n"
-            + whole_text
-        )
+            # Build the question
+            new_question = (
+                "First, summarize the following text concisely and then, offer your opinion on the topics addressed in the text:\n"
+                + whole_text
+            )
 
-        # Ask the question
-        response = await session.ainvoke(
-            {
-                "question": new_question,
-                "username": qq.user,
-                "location": qq.location,
-                "date": today,
-            }
-        )
-        text = response
-        # Propose the answer to the user
-        action1 = json.dumps(
-            {
-                "type": "create_app",
-                "app": "Stickie",
-                "state": {"text": text, "fontSize": 24, "color": "purple"},
-                "data": {
-                    "title": "Answer",
-                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                    "size": {"width": 400, "height": 400, "depth": 0},
-                },
-            }
-        )
+            # Ask the question
+            response = await session.ainvoke(
+                {
+                    "question": new_question,
+                    "username": qq.user,
+                    "location": qq.location,
+                    "date": today,
+                }
+            )
+            text = response
+            # Propose the answer to the user
+            action1 = json.dumps(
+                {
+                    "type": "create_app",
+                    "app": "Stickie",
+                    "state": {"text": text, "fontSize": 24, "color": "purple"},
+                    "data": {
+                        "title": "Answer",
+                        "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                        "size": {"width": 400, "height": 400, "depth": 0},
+                    },
+                }
+            )
 
-        # Build the answer object
-        val = Answer(
-            id=qq.id,
-            r=text,
-            actions=[action1],
-        )
-        return val
+            # Build the answer object
+            val = Answer(
+                id=qq.id,
+                r=text,
+                actions=[action1],
+            )
+            return val
 
     except HTTPException as e:
         # Get the error message

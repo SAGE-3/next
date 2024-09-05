@@ -51,6 +51,7 @@ export function ConfigRouter(): express.Router {
       token: token,
       admins: config.auth.admins || [],
       openai: config.services.openai || {},
+      chat: config.services.chat || {},
       feedback: config.feedback || {},
     } as OpenConfiguration;
     res.json(configuration);

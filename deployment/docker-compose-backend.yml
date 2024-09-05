@@ -20,8 +20,8 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-  fastapi:
-    image: "ghcr.io/mahdi-b/sagekernelserver:latest"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:arm64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -53,7 +53,7 @@ services:
       - "8888:8888"
     environment:
       - ENVIRONMENT=development
-      - SAGE3_SERVER=host.docker.internal
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"

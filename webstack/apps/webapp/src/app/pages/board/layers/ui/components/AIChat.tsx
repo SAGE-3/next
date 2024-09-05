@@ -20,7 +20,7 @@ import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 
 
-export function AIChat() {
+export function AIChat(props: { model: string }) {
   const { roomId, boardId } = useParams();
   const { user } = useUser();
 
@@ -50,7 +50,6 @@ export function AIChat() {
   const [position, setPosition] = useState([0, 0]);
   const [username, setUsername] = useState('');
   const [location, setLocation] = useState('');
-  const [selectedModel, setSelectedModel] = useState('chat');
   const [isWorking, setIsWorking] = useState(false);
 
   // Display some notifications
@@ -84,7 +83,7 @@ export function AIChat() {
       user: username,
       location: location,
       q: new_input,
-      model: selectedModel,
+      model: props.model,
     };
     if (new_input === 'summary') {
       // Invoke the agent
@@ -187,27 +186,11 @@ export function AIChat() {
         isClosable: true,
       });
     } else {
-      console.log('Paste> JSON is not valid');
+      console.log('Action> not valid');
     }
   };
 
   useEffect(() => {
-    // async function fetchStatus() {
-    //   const response = true;
-    //   console.log('Agent Status>', response);
-    // }
-    // fetchStatus();
-
-    // Look for a previously set model
-    const local = localStorage.getItem('s3_ai_model');
-    if (local) {
-      // If value previously set in IntelligencePane/Settings, use it
-      setSelectedModel(local);
-    } else {
-      // Otherwise, use openai if available, else chat
-      setSelectedModel(config.openai.apiKey ? 'openai' : 'chat');
-    }
-
     if (inputRef.current) {
       inputRef.current.focus();
     }

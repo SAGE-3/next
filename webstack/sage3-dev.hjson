@@ -61,9 +61,8 @@
     "openai": {
       // API Key
       "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
-      // "model": "gpt-3.5-turbo"
-      "model": "gpt-4o-mini"
+      // Model name: gpt-4o-mini, gpt-4, gpt-3.5-turbo, davinci, ...
+      "model": "gpt-3.5-turbo"
     },
     "chat": {
       "url": "https://arcade.evl.uic.edu/llama",

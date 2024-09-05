@@ -43,8 +43,8 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-  fastapi:
-    image: "ghcr.io/mahdi-b/sagekernelserver:amd64"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:amd64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -62,6 +62,24 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/heartbeat"]
       interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+  seer:
+    image: "ghcr.io/sage-3/seer:amd64"
+    ports:
+      - "127.0.0.1:9999:9999"
+    environment:
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
+      interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
