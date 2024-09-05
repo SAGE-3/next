@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 
 import { DraggableEvent } from 'react-draggable';
@@ -51,7 +51,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), [])
-
 
   // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -146,22 +145,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   const draggedOnTouchCheck = (event: TouchEvent) => {
     const checkValidIds = (validIds: string[]) => {
-      const validIDSet = new Set(validIds); // Do not add whiteboard here; needs fixing
-      const allTouchesAreOnValidID = Array.from(event.targetTouches).every(touch => 
-        validIDSet.has((touch.target as HTMLElement).id)
+      const allTouchesAreOnValidID = Array.from(event.touches).every(touch => 
+        validIds.includes((touch.target as HTMLElement).id)
       );
       return allTouchesAreOnValidID
     }
 
     const checkValidClassIfOnlyOneTouch = (className: string) => {
-      const allTouchesAreOnValidClass = Array.from(event.targetTouches).some(touch => 
+      const allTouchesAreOnValidClass = Array.from(event.touches).some(touch => 
         (touch.target as HTMLElement).classList.contains(className)
       );
       return allTouchesAreOnValidClass
     }
 
-    // Target.id was done because of the following assumption:
-    // Using ids is faster than using classList.contains(...)
     if (checkValidClassIfOnlyOneTouch('handle')) {
       setStartedDragOn("app") 
     }
@@ -275,15 +271,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Movement with Page Zoom Inhibitors (For Touch Screen)
   useEffect(() => {
-    // For keeping track of deltas (up to five fingers supported)
     const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length >= 1 && event.touches.length <= 5) {
+      console.log(event.touches.length)
+      if (event.touches.length >= 1) {
         draggedOnTouchCheck(event)
+
         setLastTouch(Array.from(event.touches).map((touch, index) => {
           return { x: touch.clientX, y: touch.clientY }
         }))
       }
     }
+
 
     window.addEventListener('touchstart', handleTouchStart, { passive: false });
     return () => {
