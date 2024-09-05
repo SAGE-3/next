@@ -109,6 +109,7 @@ export function PresenceFollow() {
 
   useEffect(() => {
     if (!myPresence) return;
+    if (myPresence.data.viewport.selfUpdate) return;
     // If I am a wall, allow movement from the remote user
     if (user?.data.userType === 'wall') {
       const vx = -myPresence.data.viewport.position.x;
@@ -130,8 +131,11 @@ export function PresenceFollow() {
       }
     }
   }, [
-    myPresence?.data.viewport.position.x, myPresence?.data.viewport.position.y,
-    myPresence?.data.viewport.size.width, myPresence?.data.viewport.size.height,
+    myPresence?.data.viewport.selfUpdate,
+    myPresence?.data.viewport.position.x,
+    myPresence?.data.viewport.position.y,
+    myPresence?.data.viewport.size.width,
+    myPresence?.data.viewport.size.height,
   ]);
 
   // Check if I am following someone
