@@ -122,6 +122,23 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
   
+  
+// Alternative Attempt to Fix AppWindow Disappearing
+  // const [ rndSafeToAction, setRndSafeToAction ] = useState<boolean>(false);
+  // const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
+
+  // useEffect(() => {
+  //   console.log("RERENDER")
+  //   setRndSafeToAction(false)
+
+  //   if (rndSafeToActionTimeoutRef.current !== null) {
+  //     clearTimeout(rndSafeToActionTimeoutRef.current);
+  //   }
+
+  //   rndSafeToActionTimeoutRef.current = setTimeout(() => {
+  //     setRndSafeToAction(true)
+  //   }, 100);
+  // })
 
   // Track the app store errors
   useEffect(() => {
