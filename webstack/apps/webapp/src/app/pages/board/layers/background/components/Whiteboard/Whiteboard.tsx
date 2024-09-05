@@ -55,6 +55,8 @@ export function Whiteboard(props: WhiteboardProps) {
   const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
@@ -88,7 +90,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc && canAnnotate) {
+      if (yLines && yDoc && canAnnotate && boardSynced) {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -112,7 +114,7 @@ export function Whiteboard(props: WhiteboardProps) {
         }
       }
     },
-    [yDoc, yLines, user, color, markerOpacity, markerSize]
+    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
   );
 
   useEffect(() => {
@@ -192,22 +194,31 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yAnnotations, props.boardId]);
 
   // On pointer move, update awareness and (if down) update the current line
-  const handlePointerMove = useCallback(
+  const draw = useCallback((x: number, y: number) => {
+    if (whiteboardMode === 'pen') {
+      const currentLine = rCurrentLine.current;
+      if (!currentLine) return;
+      const points = currentLine.get('points');
+      // Don't add the new point to the line
+      if (!points) return;
+      const point = getPoint(x, y);
+      points.push([...point]);
+    }
+  }, [rCurrentLine.current, whiteboardMode]);
+
+  const handlePointerMove =
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (whiteboardMode === 'pen') {
-        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-          const currentLine = rCurrentLine.current;
-          if (!currentLine) return;
-          const points = currentLine.get('points');
-          // Don't add the new point to the line
-          if (!points) return;
-          const point = getPoint(e.clientX, e.clientY);
-          points.push([...point]);
-        }
+      if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== "touch") {
+        draw(e.clientX, e.clientY)
       }
-    },
-    [rCurrentLine.current, whiteboardMode]
-  );
+    };
+
+  const handleTouchMove = 
+    (e: React.TouchEvent<SVGSVGElement>) => {
+      if (e.touches.length === 1) {
+        draw(e.touches[0].clientX, e.touches[0].clientY)
+      }
+    };
 
   // On pointer up, complete the current line
   const handlePointerUp = useCallback(
@@ -331,6 +342,8 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+
+        onTouchMove={handleTouchMove}
       >
         <g>
           {/* Lines */}
