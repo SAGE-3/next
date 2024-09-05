@@ -104,7 +104,8 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
           if (event.target.id === props.divId || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false), 400);
           }
-        } else if (event.type === 'touchend' && showContextMenu) {
+        }
+        else if (event.type === 'touchend' && showContextMenu) {
           document.removeEventListener('touchmove', ctx.onTouchMove);
         }
       }
@@ -113,23 +114,23 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('contextmenu', handleContextMenu);
 
     // Touch events
-    if (isTouchDevice()) {
-      document.addEventListener('touchstart', ctx.onTouchStart);
-      document.addEventListener('touchcancel', ctx.onTouchCancel);
-      document.addEventListener('touchend', ctx.onTouchEnd);
-      document.addEventListener('touchmove', ctx.onTouchMove);
-    }
+    // if (isTouchDevice()) {
+    //   document.addEventListener('touchstart', ctx.onTouchStart);
+    //   document.addEventListener('touchcancel', ctx.onTouchCancel);
+    //   document.addEventListener('touchend', ctx.onTouchEnd);
+    //   document.addEventListener('touchmove', ctx.onTouchMove);
+    // }
 
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
 
-      if (isTouchDevice()) {
-        document.removeEventListener('touchstart', ctx.onTouchStart);
-        document.removeEventListener('touchcancel', ctx.onTouchCancel);
-        document.removeEventListener('touchend', ctx.onTouchEnd);
-        document.removeEventListener('touchmove', ctx.onTouchMove);
-      }
+      // if (isTouchDevice()) {
+      //   document.removeEventListener('touchstart', ctx.onTouchStart);
+      //   document.removeEventListener('touchcancel', ctx.onTouchCancel);
+      //   document.removeEventListener('touchend', ctx.onTouchEnd);
+      //   document.removeEventListener('touchmove', ctx.onTouchMove);
+      // }
     };
   }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 

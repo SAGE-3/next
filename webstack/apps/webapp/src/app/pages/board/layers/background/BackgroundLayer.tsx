@@ -230,7 +230,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (boardLocked) { return }
       if (selectedApp) { return }
 
-      // This is a workable solution to having this calcuation done on a psudeo init-like behaviour
+      
+      // This is a workable solution to having this calcuation done on a psudeo init(first run)-like behaviour
       // Note that if someone is wheeling on the board and then quickly wheels on a panel, the board will move
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced(prev => {
@@ -332,30 +333,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // if (!boardLocked)
       if (boardLocked) { return }
       if (selectedApp) { return }
-
-      // This is expensive, but unforseen behaviours may require it in the future...
-      // vvvvvvvvvvvv
-      // const validClasses = ['board-handle', 'canvas-container', 'canvas-layer'];
-      // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => 
-      //   validClasses.some(className => (t.target as HTMLElement).classList.contains(className))
-      // );
-      // ^^^^^^^^^^^^
-
-      // if (primaryActionMode === "grab") {
-      //   // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('board-handle'));
-      //   const allTouchesAreOnValidID = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).id === "board")
-      //   if (!allTouchesAreOnValidID) {
-      //     return
-      //   }
-      // }
-      // // else if (primaryActionMode === "lasso") {
-      // else {
-      //   // const allTouchesAreOnValidClasses = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).classList.contains('canvas-layer'));
-      //   const allTouchesAreOnValidID = Array.from(event.targetTouches).every(t => (t.target as HTMLElement).id === "lasso")
-      //   if (!allTouchesAreOnValidID) {
-      //     return
-      //   }
-      // }
 
       setStartedDragOn(draggedOn => {
         if (draggedOn === "other" || draggedOn === "app") { return draggedOn }
