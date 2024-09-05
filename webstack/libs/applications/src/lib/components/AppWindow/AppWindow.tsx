@@ -122,23 +122,6 @@ export function AppWindow(props: WindowProps) {
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
   
-  
-// // Alternative Attempt to Fix AppWindow Disappearing
-// // This solution should work better if it was really a rerendering issue
-//   const rndSafeToActionRef = useRef(true);
-//   const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
-
-//   useEffect(() => {
-//     rndSafeToActionRef.current = false
-
-//     if (rndSafeToActionTimeoutRef.current !== null) {
-//       clearTimeout(rndSafeToActionTimeoutRef.current);
-//     }
-
-//     rndSafeToActionTimeoutRef.current = setTimeout(() => {
-//       rndSafeToActionRef.current = true
-//     }, 100);
-//   })
 
   // Track the app store errors
   useEffect(() => {
@@ -352,7 +335,7 @@ export function AppWindow(props: WindowProps) {
       enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // || selectedApps.length > 0) Temporary solution to fix resize while drag, selectedApps.length !== 0 || 
       
       // !boardSync is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || (!boardSynced && !rndSafeToAction)}
+      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeToAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -393,7 +376,7 @@ export function AppWindow(props: WindowProps) {
         background={background}
         isHighlight={isHighlight}
       />
-
+      
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}

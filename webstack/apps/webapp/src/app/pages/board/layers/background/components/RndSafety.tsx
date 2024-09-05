@@ -13,6 +13,10 @@ import { useUIStore } from '@sage3/frontend';
 
 // Mitiage/ Bandaid fix using delays to handle disappearing apps
 // Tried to put this inside of UI store, but didn't seem to work....
+
+// If the bug occurs during re-rendering, it may be ideal to have a delayed start to 
+// allow for drag inside the app window, granted it wont scale well with lots of applications,
+// but it guarantees all cases are caught
 export const RndSafety = () => {
   const boardSynced = useUIStore((state) => state.boardSynced)
   const setRndSafeToAction = useUIStore((state) => state.setRndSafeToAction)
