@@ -143,6 +143,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }
   }
 
+
   const draggedOnTouchCheck = (event: TouchEvent) => {
     const checkValidIds = (validIds: string[]) => {
       const validIDSet = new Set(validIds); // Do not add whiteboard here; needs fixing
@@ -152,8 +153,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       return allTouchesAreOnValidID
     }
 
-    const checkValidClass = (className: string) => {
-      const allTouchesAreOnValidClass = Array.from(event.targetTouches).every(touch => 
+    const checkValidClassIfOnlyOneTouch = (className: string) => {
+      const allTouchesAreOnValidClass = Array.from(event.targetTouches).some(touch => 
         (touch.target as HTMLElement).classList.contains(className)
       );
       return allTouchesAreOnValidClass
@@ -161,16 +162,16 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
     // Target.id was done because of the following assumption:
     // Using ids is faster than using classList.contains(...)
-    if (checkValidIds(["board"]))
+    if (checkValidClassIfOnlyOneTouch('handle')) {
+      setStartedDragOn("app") 
+    }
+    else if (checkValidIds(["board"]))
     { 
       setStartedDragOn("board") 
     }
     else if (checkValidIds(["lasso", "whiteboard"]))
     { 
       setStartedDragOn("board-actions") 
-    }
-    else if (checkValidClass('handle')) { 
-      setStartedDragOn("app") 
     }
     else {
       setStartedDragOn("other")
