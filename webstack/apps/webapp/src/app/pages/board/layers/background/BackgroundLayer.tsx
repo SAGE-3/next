@@ -63,40 +63,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // the point where the highest frequency of this issue will occur (e.g. the new movement scheme)
   const movementZoomSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Local State
-  const [boardDrag, setBoardDrag] = useState(false); // Used to differentiate between board drag and app deselect
-
-  // Drag start of the board
-  function handleDragBoardStart() {
-    // setBoardDragging(true);
-    if (selectedApp) {
-      setSelectedApp('');
-    }
-  }
-
-  // Handle Dragging
-  function handleDragging() {
-    if (!boardDrag) {
-      setBoardDrag(true);
-      // on the first move, set the board to dragging
-      setBoardDragging(true);
-    }
-  }
-
-
-
-
-
-
   // Bulk of Movement Code Starts Here
-
-  // // // Temporary! (Only to change cursor, find a better solution that will show the same effect for touch pad and mouse)
-  // useEffect(() => {
-  //   if (!selectedApp)
-  //     setBoardDragging(primaryActionMode === "grab")
-  //   // setBoardDrag(movementAltMode)
-  // }, [primaryActionMode, selectedApp]);
-
   // Forward boardPosition to localBoardPosition
   useEffect(() => {
     setLocalBoardPosition({ x: boardPosition.x, y: boardPosition.y, scale: scale })
@@ -230,7 +197,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (boardLocked) { return }
       if (selectedApp) { return }
 
-      
       // This is a workable solution to having this calcuation done on a psudeo init(first run)-like behaviour
       // Note that if someone is wheeling on the board and then quickly wheels on a panel, the board will move
       // until the user stops giving input and then the proper behaviour will resume
@@ -417,22 +383,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   }, [selectedApp, primaryActionMode, boardLocked]);
   // Bulk of Movement Code Ends Here
 
-
-  // On a drag stop of the board. Set the board position locally.
-  function handleDragBoardStop(event: DraggableEvent, data: DraggableData) {
-    const x = data.x;
-    const y = data.y;
-    setBoardPosition({ x, y });
-    setBoardDragging(false);
-    // If this was just a click, then deselect the app.
-    // If it was a drag, then don't deselect the app.
-    if (!boardDrag) {
-      setSelectedApp('');
-      clearSelectedApps();
-    }
-    setBoardDrag(false);
-  }
-
   return (
     <Box transform={`scale(${localBoardPosition.scale})`} transformOrigin={'top left'}>
       {/* Board. Uses lib react-rnd for drag events.
@@ -447,22 +397,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }}
         scale={localBoardPosition.scale}
         position={{ x: localBoardPosition.x, y: localBoardPosition.y }}
-        // onDragStart={handleDragBoardStart}
-        // onDrag={handleDragging}
-        // onDragStop={handleDragBoardStop}
         enableResizing={false}
         dragHandleClassName={'board-handle'}
-        // disableDragging={boardLocked}
         disableDragging={true}
-
-      // onTouchStart={handleTouchStart}
-      // onTouchMove={handleTouchMove}
-      // onPointerDown={onPointerDown}
-      // onPointerMove={onPointerMove}
-      // onPointerUp={onPointerUp}
-      // onPointerCancel={onPointerUp}
-      // onPointerOut={onPointerUp}
-      // onPointerLeave={onPointerUp}
       >
         {/* The board's apps */}
         <Apps />

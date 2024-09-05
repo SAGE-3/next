@@ -435,77 +435,6 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
 
-  // // Functions for zooming with touch events
-  // function remove_event(ev: any) {
-  //   // Remove this event from the target's cache
-  //   for (var i = 0; i < evCache.length; i++) {
-  //     if (evCache[i].pointerId == ev.pointerId) {
-  //       evCache.splice(i, 1);
-  //       break;
-  //     }
-  //   }
-  // }
-
-  // const onPointerDown = (ev: any) => {
-  //   evCache.push(ev);
-  // };
-
-  // /**
-  //  * This function implements a 2-pointer horizontal pinch/zoom gesture.
-  //  * If the distance between the two pointers has increased (zoom in),
-  //  * and if the distance is decreasing (zoom out)
-  //  *
-  //  * @param ev
-  //  */
-  // const onPointerMove = (ev: any) => {
-  //   // Find this event in the cache and update its record with this event
-  //   for (var i = 0; i < evCache.length; i++) {
-  //     if (ev.pointerId == evCache[i].pointerId) {
-  //       evCache[i] = ev;
-  //       break;
-  //     }
-  //   }
-
-  //   // If two pointers are down, check for pinch gestures
-  //   if (evCache.length == 2) {
-  //     // Calculate the distance between the two pointers
-  //     var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
-  //     if (prevDiff > 0) {
-  //       if (curDiff > prevDiff) {
-  //         // The distance between the two pointers has increased
-  //         zoomIn();
-  //       }
-  //       if (curDiff < prevDiff) {
-  //         // The distance between the two pointers has decreased
-  //         zoomOut();
-  //       }
-  //     }
-  //     // Cache the distance for the next move event
-  //     prevDiff = curDiff;
-  //   }
-  // };
-  // const onPointerUp = (ev: any) => {
-  //   // Remove this pointer from the cache
-  //   remove_event(ev);
-  //   // If the number of pointers down is less than two then reset diff tracker
-  //   if (evCache.length < 2) prevDiff = -1;
-  // };
-
-  // Throttle The wheel event
-  const throttleWheel = throttle(50, (evt: any) => {
-    evt.stopPropagation();
-    const cursor = { x: evt.clientX, y: evt.clientY };
-    if (evt.deltaY < 0) {
-      zoomInDelta(evt.deltaY, cursor);
-    } else if (evt.deltaY > 0) {
-      zoomOutDelta(evt.deltaY, cursor);
-    }
-  });
-  const throttleWheelRef = useCallback(throttleWheel, []);
-  const onWheelEvent = (ev: any) => {
-    throttleWheelRef(ev);
-  };
-
   // Deselect Application by clicking on board
   function handleDeselect() {
     // setBoardDragging(true);
@@ -520,16 +449,6 @@ export function Background(props: BackgroundProps) {
     // clearSavedSelectedAppsIds();
   }
 
-  // function handleMouseDown(ev: any) {
-  //   if (ev.button === 0) {
-  //     setLassoMode(true);
-  //   }
-  // }
-
-  // function handleMouseUp(ev: any) {
-  //   setLassoMode(false);
-  // }
-
   return (
     <Box
       className="board-handle"
@@ -543,26 +462,7 @@ export function Background(props: BackgroundProps) {
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
-      // Deselects Selected Apps for Touch Users
-      // onTouchStart={(ev) => {
-      //   setSelectedApp('')
-      // }}
-
-      // onScroll={(evt) => {
-      //   evt.stopPropagation();
-      // }}
-      // onMouseDown={handleMouseDown}
-      // onMouseUp={handleMouseUp}
-
       onClick={handleDeselect}
-    // onWheel={onWheelEvent}
-    // Zoom touch events
-    // onPointerDown={onPointerDown}
-    // onPointerMove={onPointerMove}
-    // onPointerUp={onPointerUp}
-    // onPointerCancel={onPointerUp}
-    // onPointerOut={onPointerUp}
-    // onPointerLeave={onPointerUp}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 
