@@ -63,7 +63,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const pluginName = req.body.name as string;
       const description = req.body.description as string;
       const username = req.body.username as string;
-      const rooms = req.body.rooms ? JSON.parse(req.body.rooms) : [];
+      const roomId = req.body.roomId ? req.body.roomId : '';
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {
@@ -132,7 +132,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           }
           // Update the database
           this.add(
-            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), rooms },
+            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), roomId },
             req.user.id,
           );
           removeUploadedFile();

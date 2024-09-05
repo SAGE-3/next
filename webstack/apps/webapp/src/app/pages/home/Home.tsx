@@ -1090,12 +1090,8 @@ export function HomePage() {
               <TabList>
                 <Tab>Boards</Tab>
                 <Tab>Members</Tab>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Assets</Tab>
-                </Tooltip>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Chat</Tab>
-                </Tooltip>
+                <Tab>Assets</Tab>
+                <Tab>Plugins</Tab>
               </TabList>
 
               <TabPanels>
@@ -1263,6 +1259,8 @@ export function HomePage() {
                     </VStack>
                   </Box>
                 </TabPanel>
+                <TabPanel px="0">Assets</TabPanel>
+                <TabPanel px="0">Plugins</TabPanel>
               </TabPanels>
             </Tabs>
           </Box>
