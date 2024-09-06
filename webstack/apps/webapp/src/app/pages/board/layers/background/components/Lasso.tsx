@@ -45,9 +45,6 @@ export function Lasso(props: LassoProps) {
   // State of cursor
   const [isDragging, setIsDragging] = useState(false);
 
-  // Key press
-  const spacebarPressed = useKeyPress(' ');
-
   // Get initial position
   const lassoStart = (x: number, y: number) => {
     const position = uiToBoard(x, y);
@@ -118,7 +115,7 @@ export function Lasso(props: LassoProps) {
   return (
     <>
       {/* lassoMode */}
-      <div className="canvas-container" style={{ pointerEvents: !spacebarPressed ? 'auto' : 'none' }}>
+      <div className="canvas-container">
         <svg
           id="lasso"
           className="canvas-layer"
