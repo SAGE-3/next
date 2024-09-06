@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
-import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom } from '@sage3/frontend';
+import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
 
 type BackgroundLayerProps = {
@@ -22,6 +22,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Abilities
   const canLasso = useAbility('lasso', 'apps');
 
+  // Settings
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode
+
   // UI store
   const scale = useUIStore((state) => state.scale);
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -30,8 +34,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardLocked = useUIStore((state) => state.boardLocked);
-  const primaryActionMode = useUIStore((state) => state.primaryActionMode);
-
   const setBoardSynced = useUIStore((state) => state.setBoardSynced);
   const setScale = useUIStore((state) => state.setScale)
 

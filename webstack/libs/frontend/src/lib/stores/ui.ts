@@ -91,11 +91,6 @@ interface UIState {
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
-  // Alternative Mouse Modes
-  primaryActionMode: 'lasso' | 'grab';
-  setPrimaryActionMode: (mode: 'lasso' | 'grab') => void;
-  togglePrimaryActionMode: () => void;
-
   // RndSafety: to fix appWindows from disappearing
   rndSafeForAction: boolean;
   setRndSafeForAction: (isSafe: boolean) => void;
@@ -155,9 +150,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
-  primaryActionMode: 'lasso',
-  setPrimaryActionMode: (mode: 'lasso' | 'grab') => set((state) => ({ ...state, leftClickMode: mode })),
-  togglePrimaryActionMode: () => set((state) => ({ ...state, primaryActionMode: state.primaryActionMode === 'lasso' ? 'grab' : 'lasso' })),
 
   rndSafeForAction: true,
   setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),

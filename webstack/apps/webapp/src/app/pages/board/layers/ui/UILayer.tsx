@@ -66,8 +66,10 @@ export function UILayer(props: UILayerProps) {
   const canLasso = useAbility('lasso', 'apps');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
+  const primaryActionMode = settings.primaryActionMode
+
   // Colors
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
@@ -84,8 +86,8 @@ export function UILayer(props: UILayerProps) {
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
-  const primaryActionMode = useUIStore((state) => state.primaryActionMode);
-  const togglePrimaryActionMode = useUIStore((state) => state.togglePrimaryActionMode);
+  // const primaryActionMode = useUIStore((state) => state.primaryActionMode);
+  // const togglePrimaryActionMode = useUIStore((state) => state.togglePrimaryActionMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -313,7 +315,7 @@ export function UILayer(props: UILayerProps) {
               icon={primaryActionMode === 'lasso' ? <LiaMousePointerSolid /> : <LiaHandPaperSolid />}
               fontSize="xl"
               aria-label={'input-type'}
-              onClick={togglePrimaryActionMode}
+              onClick={() => {setPrimaryActionMode(primaryActionMode === "lasso" ? "grab" : "lasso")}}
             ></IconButton>
           </Tooltip>
         </Box>

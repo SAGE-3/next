@@ -15,6 +15,7 @@ type UserSettings = {
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
+  primaryActionMode: 'lasso' | 'grab';
 };
 
 const defaultSettings: UserSettings = {
@@ -24,6 +25,7 @@ const defaultSettings: UserSettings = {
   showUI: true,
   showTags: false,
   selectedBoardListView: 'list',
+  primaryActionMode: 'lasso',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -36,6 +38,7 @@ type UserSettingsContextType = {
   toggleShowUI: () => void;
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => void;
   restoreDefaultSettings: () => void;
 };
 
@@ -47,6 +50,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowUI: () => { },
   toggleShowTags: () => { },
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
   restoreDefaultSettings: () => { },
 });
 
@@ -147,6 +151,18 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     [setSettings]
   );
 
+  const setPrimaryActionMode = useCallback(
+    (value: UserSettings['primaryActionMode']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.primaryActionMode = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
@@ -162,6 +178,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowUI,
         toggleShowTags,
         setBoardListView,
+        setPrimaryActionMode,
         restoreDefaultSettings,
       }}
     >
