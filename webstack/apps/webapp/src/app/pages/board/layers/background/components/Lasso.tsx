@@ -128,7 +128,9 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            cursor: 'crosshair',
+            // To keep in theme with other notable whiteboard applications,
+            // the cursor should remain a pointer
+            // cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}

@@ -443,6 +443,11 @@ export function Background(props: BackgroundProps) {
         }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       cursor={"grab"}
+      sx={{
+        '&:active': {
+          cursor: 'grabbing',
+        }
+      }}
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
