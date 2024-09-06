@@ -160,7 +160,7 @@ export const useUIStore = create<UIState>()((set, get) => ({
   togglePrimaryActionMode: () => set((state) => ({ ...state, primaryActionMode: state.primaryActionMode === 'lasso' ? 'grab' : 'lasso' })),
 
   rndSafeForAction: true,
-  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeToAction: isSafe })),
+  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),
 
   boardSynced: true,
   setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),

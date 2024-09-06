@@ -21,17 +21,17 @@ export const RndSafety = () => {
   const boardSynced = useUIStore((state) => state.boardSynced)
   const setRndSafeForAction = useUIStore((state) => state.setRndSafeForAction)
 
-  const rndSafeToActionTimeoutRef = useRef<number | null>(null)
+  const rndSafeForActionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     setRndSafeForAction(false)
 
     if (boardSynced) {
-      if (rndSafeToActionTimeoutRef.current !== null) {
-        window.clearTimeout(rndSafeToActionTimeoutRef.current);
+      if (rndSafeForActionTimeoutRef.current !== null) {
+        window.clearTimeout(rndSafeForActionTimeoutRef.current);
       }
 
-      rndSafeToActionTimeoutRef.current = window.setTimeout(() => {
+      rndSafeForActionTimeoutRef.current = window.setTimeout(() => {
         setRndSafeForAction(true)
       }, 100);
     }
