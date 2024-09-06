@@ -42,15 +42,17 @@ from langchain_huggingface import llms
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain.globals import set_debug, set_verbose
+from langchain_core.prompts import ChatPromptTemplate
 
 # Models
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_openai import ChatOpenAI
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 
 # set to debug the queries into langchain
-# set_debug(True)
-# set_verbose(True)
+set_debug(True)
+set_verbose(True)
 
 # Llama3 server at EVL
 #     "https://arcade.evl.uic.edu/llama/"
@@ -65,19 +67,30 @@ llm_openai = None
 
 # LLM model using TGI interface
 if chat["url"] and chat["model"]:
-    llm_llama = HuggingFaceEndpoint(
-        endpoint_url=chat_server,
+    # llm_llama = HuggingFaceEndpoint(
+    #     endpoint_url=chat_server,
+    #     max_new_tokens=2048,
+    #     stop_sequences=[
+    #         "<|start_header_id|>",
+    #         "<|end_header_id|>",
+    #         "<|eot_id|>",
+    #         "<|reserved_special_token",
+    #     ],
+    # )
+
+    # Long context model
+    llm_llama = ChatNVIDIA(
+        base_url="https://arcade.evl.uic.edu/llama31_8bf/v1",
+        model="meta/llama-3.1-8b-instruct",
         max_new_tokens=2048,
-        stop_sequences=[
-            "<|start_header_id|>",
-            "<|end_header_id|>",
-            "<|eot_id|>",
-            "<|reserved_special_token",
-        ],
     )
 
 if openai["apiKey"] and openai["model"]:
     llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
+
+# Templates
+sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
+human_template_str = "Answer: {question}"
 
 # Prompt template for Llama3
 template = """
@@ -90,11 +103,17 @@ template = """
   <|eot_id|>
   <|start_header_id|>assistant<|end_header_id|>
 """
-sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
-human_template_str = "Answer: {question}"
-# Building the template
-prompt = PromptTemplate.from_template(
-    template.format(system_prompt=sys_template_str, user_prompt=human_template_str)
+# Building the template with Llama3 HuggingFace
+# prompt = PromptTemplate.from_template(
+#     template.format(system_prompt=sys_template_str, user_prompt=human_template_str)
+# )
+
+# For OpenAI / Message API compatible models
+prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", sys_template_str),
+        ("user", human_template_str),
+    ]
 )
 
 # OutputParser that parses LLMResult into the top likely string.
@@ -137,6 +156,7 @@ class Question(BaseModel):
 class Answer(BaseModel):
     id: str  # question UUID v4
     r: str  # answer
+    success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
 
 
@@ -271,6 +291,7 @@ async def summary(qq: Question):
             val = Answer(
                 id=qq.id,
                 r=text,
+                success=True,
                 actions=[action1],
             )
             return val
