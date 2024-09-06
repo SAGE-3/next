@@ -9,25 +9,7 @@
 import { config } from 'apps/homebase/src/config';
 import * as express from 'express';
 
-// Request types matching Pydantic models: Question and Answer
-type QuestionType = {
-  ctx: string;
-  id: string;
-  user: string;
-  q: string;
-};
-type AnswerType = {
-  id: string;
-  r: string;
-  actions?: string[];
-};
-
-type AgentQueryResponse = AnswerType & { success: boolean };
-type AgentQueryType = QuestionType;
-type AgentStatusResponse = {
-  success: boolean;
-  error_message?: string;
-};
+import { AgentQueryType, AgentQueryResponse, AiQueryResponse } from '@sage3/shared';
 
 export function AgentRouter(): express.Router {
   const router = express.Router();
@@ -38,10 +20,10 @@ export function AgentRouter(): express.Router {
     // Ask the langchain if it is healthy
     const response = await session.health();
     if (response) {
-      const responseMessage: AgentStatusResponse = { success: true, error_message: '' };
+      const responseMessage: AiQueryResponse = { success: true, error_message: '' };
       res.status(200).json(responseMessage);
     } else {
-      const responseMessage: AgentStatusResponse = { success: true, error_message: 'LangChain is unhealthy' };
+      const responseMessage: AiQueryResponse = { success: true, error_message: 'LangChain is unhealthy' };
       res.status(500).json(responseMessage);
     }
   });
@@ -57,18 +39,20 @@ export function AgentRouter(): express.Router {
         res.status(200).json(response);
       } else {
         // Return an error message if the request fails
-        const responseMessage = { success: false, error_message: response.r } as AgentStatusResponse;
+        const responseMessage = { success: false, error_message: response.r } as AiQueryResponse;
         res.status(500).json(responseMessage);
       }
     } catch (error) {
       // Return an error message if the request fails
-      const responseMessage = { success: false, error_message: error.toString() } as AgentStatusResponse;
+      const responseMessage = { success: false, error_message: error.toString() } as AiQueryResponse;
       res.status(500).json(responseMessage);
     }
   });
 
   // Post a summary request
-  router.post('/summary', async ({ body }, res) => {
+  router.post('/summary', async (req, res) => {
+    const body: AgentQueryType = req.body;
+
     // Try/catch block to handle errors
     try {
       // Query langchain with the input
@@ -78,12 +62,12 @@ export function AgentRouter(): express.Router {
         res.status(200).json(response);
       } else {
         // Return an error message if the request fails
-        const responseMessage = { success: false, error_message: response.r } as AgentStatusResponse;
+        const responseMessage = { success: false, error_message: response.r } as AiQueryResponse;
         res.status(500).json(responseMessage);
       }
     } catch (error) {
       // Return an error message if the request fails
-      const responseMessage = { success: false, error_message: error.toString() } as AgentStatusResponse;
+      const responseMessage = { success: false, error_message: error.toString() } as AiQueryResponse;
       res.status(500).json(responseMessage);
     }
   });
@@ -132,13 +116,8 @@ export class LangChainModel extends AgentModel {
         body: JSON.stringify(request),
       });
       if (response.status == 200) {
-        const data: AnswerType = await response.json();
-        return {
-          success: true,
-          id: data.id,
-          r: data.r,
-          actions: data.actions,
-        };
+        const data: AgentQueryResponse = await response.json();
+        return data;
       } else {
         const error = await response.json();
         return {
@@ -164,13 +143,8 @@ export class LangChainModel extends AgentModel {
         body: JSON.stringify(request),
       });
       if (response.status == 200) {
-        const data: AnswerType = await response.json();
-        return {
-          success: true,
-          id: data.id,
-          r: data.r,
-          actions: data.actions,
-        };
+        const data: AgentQueryResponse = await response.json();
+        return data;
       } else {
         const error = await response.json();
         return {
