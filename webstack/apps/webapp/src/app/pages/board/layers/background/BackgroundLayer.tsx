@@ -272,6 +272,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
           if (primaryActionMode === "grab" && draggedOn !== "board-actions") {
             setLastTouch(prev => {
+              if (prev.length < 1) { return prev }
+              
               const delta0X = prev[0].x - event.touches[0].clientX
               const delta0Y = prev[0].y - event.touches[0].clientY
 
@@ -291,6 +293,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         else if (event.touches.length === 2) {
           setLastTouch(prev => {
+            if (prev.length < 2) { return prev }
+
             const delta0X = prev[0].x - event.touches[0].clientX
             const delta0Y = prev[0].y - event.touches[0].clientY
 
