@@ -313,7 +313,6 @@ export function AppWindow(props: WindowProps) {
   const hideApp = outsideView || boardDragging;
   const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
 
-  console.log(boardSynced, rndSafeForAction)
   return (
     <Rnd
       bounds="parent"
