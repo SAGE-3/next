@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { throttle } from 'throttle-debounce';
 import {
   Box,
   Button,
@@ -28,6 +27,7 @@ import {
   Portal,
   Center,
 } from '@chakra-ui/react';
+import { throttle } from 'throttle-debounce';
 
 import {
   useUIStore,
@@ -54,10 +54,6 @@ type BackgroundProps = {
   roomId: string;
   boardId: string;
 };
-
-// Global vars to cache event state
-const evCache = new Array();
-let prevDiff = -1;
 
 export function Background(props: BackgroundProps) {
   // display some notifications
@@ -395,13 +391,6 @@ export function Background(props: BackgroundProps) {
   useEffect(() => {
     // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
     if (selectedAppId !== '') return;
-
-    // if (isShiftPressed) {
-    //   document.onselectstart = function () {
-    //     return false;
-    //   };
-    // }
-
     setLassoMode(isShiftPressed);
   }, [isShiftPressed]);
 
@@ -437,7 +426,6 @@ export function Background(props: BackgroundProps) {
 
   // Deselect Application by clicking on board
   function handleDeselect() {
-    // setBoardDragging(true);
     if (selectedApp) {
       setSelectedApp('');
     }
@@ -445,8 +433,6 @@ export function Background(props: BackgroundProps) {
     if (setSelectedAppsIds.length > 0) {
       setSelectedAppsIds([]);
     }
-    // setWhiteboardMode('none');
-    // clearSavedSelectedAppsIds();
   }
 
   return (

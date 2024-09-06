@@ -55,7 +55,6 @@ import {
   KernelsPanel,
   TagsDisplay,
 } from './components';
-import { FaMousePointer } from 'react-icons/fa';
 
 type UILayerProps = {
   boardId: string;
@@ -131,7 +130,6 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    // apps.forEach((a) => deleteApp(a._id));
     const ids = apps.map((a) => a._id);
     deleteApp(ids);
     setClearAllMarkers(true);

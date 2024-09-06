@@ -8,12 +8,9 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
+import { Rnd } from 'react-rnd';
 
-import { DraggableEvent } from 'react-draggable';
-import { DraggableData, Rnd } from 'react-rnd';
-
-import { useUIStore, useAbility, useKeyPress } from '@sage3/frontend';
-
+import { useUIStore, useAbility } from '@sage3/frontend';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
 
 type BackgroundLayerProps = {
@@ -50,7 +47,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const movementZoomSafetyTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const movementZoomSafetyTimeoutRef = useRef<number | null>(null)
 
   // Bulk of Movement Code Starts Here
   // Forward boardPosition to localBoardPosition
@@ -69,7 +66,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       clearTimeout(movementTimeoutRef.current);
     }
     if (movementZoomSafetyTimeoutRef.current !== null) {
-      clearTimeout(movementZoomSafetyTimeoutRef.current);
+      window.clearTimeout(movementZoomSafetyTimeoutRef.current);
     }
     setLocalSynced(false);
 
@@ -78,7 +75,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setScale(localBoardPosition.scale);
 
       // This secondary delay may not be strickly neccessary as we also have rndSafety.tsx
-      movementZoomSafetyTimeoutRef.current = setTimeout(() => {
+      movementZoomSafetyTimeoutRef.current = window.setTimeout(() => {
         setLocalSynced(true);
       }, 0)
     }, 250);
@@ -112,50 +109,44 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   const draggedOnCheck = (event: any) => {
     const target = event.target as HTMLElement
-    // Target.id was done because of the following assumption:
-    // Using ids is faster than using classList.contains(...)
-    if (target.id === 'board')
-    { 
-      setStartedDragOn("board") 
+    // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
+    if (target.id === 'board') {
+      setStartedDragOn("board")
     }
-    else if ([target.id === 'lasso', target.id === 'whiteboard'].some(condition => condition))
-    { 
-      setStartedDragOn("board-actions") 
+    else if ([target.id === 'lasso', target.id === 'whiteboard'].some(condition => condition)) {
+      setStartedDragOn("board-actions")
     }
-    else if (target.classList.contains('handle')) { 
-      setStartedDragOn("app") 
+    else if (target.classList.contains('handle')) {
+      setStartedDragOn("app")
     }
     else {
       setStartedDragOn("other")
     }
   }
 
-
   const draggedOnTouchCheck = (event: TouchEvent) => {
     const checkValidIds = (validIds: string[]) => {
-      const allTouchesAreOnValidID = Array.from(event.touches).every(touch => 
+      const allTouchesAreOnValidID = Array.from(event.touches).every(touch =>
         validIds.includes((touch.target as HTMLElement).id)
       );
       return allTouchesAreOnValidID
     }
 
     const checkValidClassIfOnlyOneTouch = (className: string) => {
-      const allTouchesAreOnValidClass = Array.from(event.touches).some(touch => 
+      const allTouchesAreOnValidClass = Array.from(event.touches).some(touch =>
         (touch.target as HTMLElement).classList.contains(className)
       );
       return allTouchesAreOnValidClass
     }
 
     if (checkValidClassIfOnlyOneTouch('handle')) {
-      setStartedDragOn("app") 
+      setStartedDragOn("app")
     }
-    else if (checkValidIds(["board"]))
-    { 
-      setStartedDragOn("board") 
+    else if (checkValidIds(["board"])) {
+      setStartedDragOn("board")
     }
-    else if (checkValidIds(["lasso", "whiteboard"]))
-    { 
-      setStartedDragOn("board-actions") 
+    else if (checkValidIds(["lasso", "whiteboard"])) {
+      setStartedDragOn("board-actions")
     }
     else {
       setStartedDragOn("other")
@@ -191,7 +182,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         return prev
       })
-
 
       setStartedDragOn(draggedOn => {
         if (draggedOn === "other") { return draggedOn }
@@ -256,11 +246,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     };
   }, [selectedApp, primaryActionMode, boardLocked]); //haveLasso
 
-
   // Movement with Page Zoom Inhibitors (For Touch Screen)
   useEffect(() => {
     const handleTouchStart = (event: TouchEvent) => {
-      console.log(event.touches.length)
       if (event.touches.length >= 1) {
         draggedOnTouchCheck(event)
 
@@ -269,7 +257,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }))
       }
     }
-
 
     window.addEventListener('touchstart', handleTouchStart, { passive: false });
     return () => {
@@ -295,7 +282,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             setLastTouch(prev => {
               const delta0X = prev[0].x - event.touches[0].clientX
               const delta0Y = prev[0].y - event.touches[0].clientY
-  
+
               setLocalBoardPosition(prevBoard => {
                 return ({
                   x: prevBoard.x - delta0X / prevBoard.scale,
@@ -323,18 +310,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
             const avgDeltaY = (delta0Y + delta1Y) / 2;
 
             // Zoom
-            const prevDistance = magnitude({ x: prev[0].x, y: prev[0].y }, { x: prev[1].x, y: prev[1].y }); // Store this calc in mem so we dont have to recalc again...
+            const prevDistance = magnitude({ x: prev[0].x, y: prev[0].y }, { x: prev[1].x, y: prev[1].y });
             const distance = magnitude({ x: event.touches[0].clientX, y: event.touches[0].clientY }, { x: event.touches[1].clientX, y: event.touches[1].clientY });
-            // const prevDistance = Math.sqrt(Math.pow(prev[0].x - prev[1].x, 2) + Math.pow(prev[0].y - prev[1].y, 2));
-            // const distance = Math.sqrt(Math.pow(event.touches[0].clientX - event.touches[1].clientX, 2) + Math.pow(event.touches[0].clientY - event.touches[1].clientY, 2));
-
             const zoomDelta = prevDistance - distance;
             const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
 
-            // console.log(Math.abs(zoomDelta), (Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2))
-
-            // if (Math.abs(zoomDelta) > ((Math.abs(avgDeltaX) + Math.abs(avgDeltaY)/2)) + 2) {
             if (prevDistance > 0) {
               if (zoomDelta < 0) {
                 localZoomInDelta(zoomDelta, { x: avgX, y: avgY });
@@ -361,19 +342,16 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       })
     }
 
-
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     return () => {
       window.removeEventListener('touchmove', handleTouchMove);
     };
   }, [selectedApp, primaryActionMode, boardLocked]);
-  // Bulk of Movement Code Ends Here
 
   return (
     <Box transform={`scale(${localBoardPosition.scale})`} transformOrigin={'top left'}>
-      {/* Board. Uses lib react-rnd for drag events.
-       * Draggable Background below is the actual target for drag events.*/}
+      {/* Board. Uses lib react-rnd for drag events. Draggable Background below is the actual target for drag events.*/}
       <Rnd
         // Remember board position and size
         default={{
@@ -390,10 +368,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* The board's apps */}
         <Apps />
-        {/*Whiteboard */}
+        {/* Whiteboard */}
         <Whiteboard boardId={props.boardId} />
-        {/*Lasso */}
-        {/* {canLasso && lassoMode && <Lasso boardId={props.boardId} />} */}
+        {/* Lasso */}
         {canLasso && primaryActionMode === "lasso" && <Lasso boardId={props.boardId} />}
 
         {/* Presence of the users */}

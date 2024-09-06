@@ -30,7 +30,6 @@ export function Lasso(props: LassoProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
 
   // Lasso mode apps & Selected apps
-  // const lassoMode = useUIStore((state) => state.lassoMode);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
@@ -48,13 +47,6 @@ export function Lasso(props: LassoProps) {
 
   // Key press
   const spacebarPressed = useKeyPress(' ');
-
-  // useEffect(() => {
-  //   // Handle if let go shift before mouse up, clear the rectangle
-  //   if (!lassoMode && mousedown === true) {
-  //     mouseUp();
-  //   }
-  // }, [lassoMode]);
 
   // Get initial position
   const lassoStart = (x: number, y: number) => {
@@ -75,7 +67,6 @@ export function Lasso(props: LassoProps) {
       clearSelectedApps();
     }
     setIsDragging(false);
-    // setLassoMode(false);
   };
 
   // Get last position
@@ -88,16 +79,12 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Behaviours
   const mouseDown = (ev: any) => {
-    // if (selectedAppId === '' && ev.button === 0) {
-    // setLassoMode(true);
-    // }
     if (ev.button == 0) {
       lassoStart(ev.clientX, ev.clientY)
     }
   };
 
   const mouseUp = () => {
-    // setLassoMode(false);
     lassoEnd()
   };
 
@@ -130,7 +117,7 @@ export function Lasso(props: LassoProps) {
 
   return (
     <>
-      {/* lassoMode &&  */}
+      {/* lassoMode */}
       <div className="canvas-container" style={{ pointerEvents: !spacebarPressed ? 'auto' : 'none' }}>
         <svg
           id="lasso"
@@ -141,7 +128,6 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            // zIndex: 2000,
             cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}

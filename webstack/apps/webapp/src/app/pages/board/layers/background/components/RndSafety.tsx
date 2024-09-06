@@ -11,7 +11,7 @@ import { useEffect, useRef } from 'react';
 // SAGE Imports
 import { useUIStore } from '@sage3/frontend';
 
-// Mitiage/ Bandaid fix using delays to handle disappearing apps during scaling/zooming events
+// Fix to handle disappearing apps during scaling/zooming events
 // Tried to put this inside of UI store, but didn't seem to work....
 
 // If the bug occurs during re-rendering, it may be ideal to have a delayed start to 
@@ -21,17 +21,17 @@ export const RndSafety = () => {
   const boardSynced = useUIStore((state) => state.boardSynced)
   const setRndSafeToAction = useUIStore((state) => state.setRndSafeToAction)
 
-  const rndSafeToActionTimeoutRef = useRef<NodeJS.Timeout | null>(null) 
+  const rndSafeToActionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     setRndSafeToAction(false)
 
     if (boardSynced) {
       if (rndSafeToActionTimeoutRef.current !== null) {
-        clearTimeout(rndSafeToActionTimeoutRef.current);
+        window.clearTimeout(rndSafeToActionTimeoutRef.current);
       }
 
-      rndSafeToActionTimeoutRef.current = setTimeout(() => {
+      rndSafeToActionTimeoutRef.current = window.setTimeout(() => {
         setRndSafeToAction(true)
       }, 100);
     }

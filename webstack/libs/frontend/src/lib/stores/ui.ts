@@ -14,10 +14,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
-
 import { useAppStore } from './app';
-import { time } from 'console';
-import { useRef } from 'react';
 
 // Zoom limits, from 30% to 400%
 const MinZoom = 0.1;
@@ -95,17 +92,17 @@ interface UIState {
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
   // Alternative Mouse Modes
-  primaryActionMode: "lasso" | "grab"
-  setPrimaryActionMode: (mode: "lasso" | "grab") => void
-  togglePrimaryActionMode: () => void
+  primaryActionMode: 'lasso' | 'grab';
+  setPrimaryActionMode: (mode: 'lasso' | 'grab') => void;
+  togglePrimaryActionMode: () => void;
 
   // RndSafety: to fix appWindows from disappearing
-  rndSafeToAction: boolean,
-  setRndSafeToAction: (isSafe: boolean) => void,
+  rndSafeToAction: boolean;
+  setRndSafeToAction: (isSafe: boolean) => void;
 
   // Position Syncronization Information
-  boardSynced: boolean, // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
-  setBoardSynced: (synced: boolean) => void,
+  boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
+  setBoardSynced: (synced: boolean) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
@@ -159,7 +156,7 @@ export const useUIStore = create<UIState>()((set, get) => ({
   roomlistShowFavorites: true,
   selectedAppId: '',
   primaryActionMode: 'lasso',
-  setPrimaryActionMode: (mode: "lasso" | "grab") => set((state) => ({ ...state, leftClickMode: mode })),
+  setPrimaryActionMode: (mode: 'lasso' | 'grab') => set((state) => ({ ...state, leftClickMode: mode })),
   togglePrimaryActionMode: () => set((state) => ({ ...state, primaryActionMode: state.primaryActionMode === 'lasso' ? 'grab' : 'lasso' })),
 
   rndSafeToAction: true,

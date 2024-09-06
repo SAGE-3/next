@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -27,7 +27,6 @@ import {
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppState } from '@sage3/applications/schema';
-import React from 'react';
 
 // Renders all the apps
 export function Apps() {
@@ -213,7 +212,7 @@ export function Apps() {
       if (boardSynced) {
         evt.preventDefault();
         evt.stopPropagation();
-        pasteApp(boardCursor); 
+        pasteApp(boardCursor);
       }
       else {
         toast({

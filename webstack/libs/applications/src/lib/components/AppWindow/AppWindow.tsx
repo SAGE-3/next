@@ -6,18 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
-
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
+import { MdWindow } from 'react-icons/md';
+import { IconType } from 'react-icons/lib';
 
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 import { App } from '../../schema';
-import { MdWindow } from 'react-icons/md';
-import { IconType } from 'react-icons/lib';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -121,7 +120,6 @@ export function AppWindow(props: WindowProps) {
 
   // Detect if spacebar is held down to allow for board dragging through apps
   const spacebarPressed = useKeyPress(' ');
-  
 
   // Track the app store errors
   useEffect(() => {
@@ -333,7 +331,7 @@ export function AppWindow(props: WindowProps) {
       onPointerMove={handleAppTouchMove}
       // enableResizing={enableResize && canResize && !isPinned}
       enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // || selectedApps.length > 0) Temporary solution to fix resize while drag, selectedApps.length !== 0 || 
-      
+
       // !boardSync is a temporary solution to prevent the most common type of bug which is zooming followed by a click
       disableDragging={!canMove || isPinned || !(boardSynced && rndSafeToAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
@@ -376,7 +374,7 @@ export function AppWindow(props: WindowProps) {
         background={background}
         isHighlight={isHighlight}
       />
-      
+
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}
