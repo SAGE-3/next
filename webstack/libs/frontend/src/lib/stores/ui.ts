@@ -17,10 +17,10 @@ import { Position, Size } from '@sage3/shared/types';
 import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%
-const MinZoom = 0.1;
-const MaxZoom = 3;
+export const MinZoom = 0.1;
+export const MaxZoom = 3;
 // When using mouse wheel, repeated events
-const WheelStepZoom = 0.008;
+export const WheelStepZoom = 0.008;
 
 type DrawingMode = 'none' | 'pen' | 'eraser';
 
@@ -97,8 +97,8 @@ interface UIState {
   togglePrimaryActionMode: () => void;
 
   // RndSafety: to fix appWindows from disappearing
-  rndSafeToAction: boolean;
-  setRndSafeToAction: (isSafe: boolean) => void;
+  rndSafeForAction: boolean;
+  setRndSafeForAction: (isSafe: boolean) => void;
 
   // Position Syncronization Information
   boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
@@ -159,8 +159,8 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setPrimaryActionMode: (mode: 'lasso' | 'grab') => set((state) => ({ ...state, leftClickMode: mode })),
   togglePrimaryActionMode: () => set((state) => ({ ...state, primaryActionMode: state.primaryActionMode === 'lasso' ? 'grab' : 'lasso' })),
 
-  rndSafeToAction: true,
-  setRndSafeToAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeToAction: isSafe })),
+  rndSafeForAction: true,
+  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeToAction: isSafe })),
 
   boardSynced: true,
   setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),

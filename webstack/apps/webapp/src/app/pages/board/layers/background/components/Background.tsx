@@ -90,8 +90,6 @@ export function Background(props: BackgroundProps) {
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
-  // const zoomIn = useUIStore((state) => state.zoomIn);
-  // const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);

@@ -61,7 +61,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   const handleClick = useCallback(() => {
     // timeout to allow button click to fire before hiding menu
     if (showContextMenu) {
-      // setShowContextMenu(false);
       setTimeout(() => setShowContextMenu(false));
     }
   }, [showContextMenu]);
@@ -71,8 +70,6 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      // if (event.target.id === props.divId && !isTouchDevice()) {
-
       if (event.target.id === props.divId) {
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
@@ -113,24 +110,9 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
-    // Touch events
-    // if (isTouchDevice()) {
-    //   document.addEventListener('touchstart', ctx.onTouchStart);
-    //   document.addEventListener('touchcancel', ctx.onTouchCancel);
-    //   document.addEventListener('touchend', ctx.onTouchEnd);
-    //   document.addEventListener('touchmove', ctx.onTouchMove);
-    // }
-
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
-
-      // if (isTouchDevice()) {
-      //   document.removeEventListener('touchstart', ctx.onTouchStart);
-      //   document.removeEventListener('touchcancel', ctx.onTouchCancel);
-      //   document.removeEventListener('touchend', ctx.onTouchEnd);
-      //   document.removeEventListener('touchmove', ctx.onTouchMove);
-      // }
     };
   }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 

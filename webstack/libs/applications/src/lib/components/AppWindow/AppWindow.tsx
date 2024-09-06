@@ -65,7 +65,7 @@ export function AppWindow(props: WindowProps) {
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
   const boardSynced = useUIStore((state) => state.boardSynced)
-  const rndSafeToAction = useUIStore((state) => state.rndSafeToAction)
+  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction)
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -330,10 +330,10 @@ export function AppWindow(props: WindowProps) {
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
       // enableResizing={enableResize && canResize && !isPinned}
-      enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // || selectedApps.length > 0) Temporary solution to fix resize while drag, selectedApps.length !== 0 || 
+      enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // Temporary solution to fix resize while drag
 
-      // !boardSync is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeToAction)}
+      // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,

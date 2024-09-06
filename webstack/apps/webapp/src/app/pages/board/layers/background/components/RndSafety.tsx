@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -19,12 +19,12 @@ import { useUIStore } from '@sage3/frontend';
 // but it guarantees all cases are caught
 export const RndSafety = () => {
   const boardSynced = useUIStore((state) => state.boardSynced)
-  const setRndSafeToAction = useUIStore((state) => state.setRndSafeToAction)
+  const setRndSafeForAction = useUIStore((state) => state.setRndSafeForAction)
 
   const rndSafeToActionTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
-    setRndSafeToAction(false)
+    setRndSafeForAction(false)
 
     if (boardSynced) {
       if (rndSafeToActionTimeoutRef.current !== null) {
@@ -32,7 +32,7 @@ export const RndSafety = () => {
       }
 
       rndSafeToActionTimeoutRef.current = window.setTimeout(() => {
-        setRndSafeToAction(true)
+        setRndSafeForAction(true)
       }, 100);
     }
   }, [boardSynced])

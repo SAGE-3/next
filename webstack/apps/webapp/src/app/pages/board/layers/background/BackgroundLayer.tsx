@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
-import { useUIStore, useAbility } from '@sage3/frontend';
+import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom } from '@sage3/frontend';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
 
 type BackgroundLayerProps = {
@@ -39,8 +39,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Local States with Delayed Syncing to useUIStore
   const [localBoardPosition, setLocalBoardPosition] = useState({ x: 0, y: 0, scale: 0 });
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
-  const [lastTouch, setLastTouch] = useState([{ x: 0, y: 0 }, { x: 0, y: 0 }]);
-  const [startedDragOn, setStartedDragOn] = useState<"board" | "board-actions" | "app" | "other">("other"); // Used to differentiate between board drag and app deselect
+  const [, setLastTouch] = useState([{ x: 0, y: 0 }, { x: 0, y: 0 }]);
+  const [, setStartedDragOn] = useState<"board" | "board-actions" | "app" | "other">("other"); // Used to differentiate between board drag and app deselect
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), [])
@@ -80,11 +80,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }, 0)
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
-
-  // You need to eventually sync this with useUIStore's values
-  const WheelStepZoom = 0.008;
-  const MinZoom = 0.1;
-  const MaxZoom = 3;
 
   const localZoomInDelta = (d: number, cursor: { x: number, y: number }) => {
     const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
@@ -173,7 +168,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (boardLocked) { return }
       if (selectedApp) { return }
 
-      // This is a workable solution to having this calcuation done on a psudeo init(first run)-like behaviour
+      // This is a workable solution to have a psudeo onWheelStart-like behaviour
       // Note that if someone is wheeling on the board and then quickly wheels on a panel, the board will move
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced(prev => {
@@ -212,7 +207,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     const handleMouseMove = (event: MouseEvent) => {
       if (boardLocked) { return }
       if (selectedApp) { return }
-      // || haveLasso
       const move = () => {
         setLocalBoardPosition(prev => ({
           x: prev.x + (event.movementX * 1) / prev.scale,
@@ -230,7 +224,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           move()
         }
         else if (event.buttons & 4 && (draggedOn === "app" || draggedOn === "board" || draggedOn === "board-actions")) {
-          // 1.333333333 @ zoomLvl 75%
           move()
         }
         return draggedOn
@@ -244,7 +237,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('wheel', handleMove);
     };
-  }, [selectedApp, primaryActionMode, boardLocked]); //haveLasso
+  }, [selectedApp, primaryActionMode, boardLocked]);
 
   // Movement with Page Zoom Inhibitors (For Touch Screen)
   useEffect(() => {
@@ -270,7 +263,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       event.preventDefault();
       event.stopPropagation();
 
-      // if (!boardLocked)
       if (boardLocked) { return }
       if (selectedApp) { return }
 
