@@ -49,7 +49,7 @@ function isTouchDevice(): boolean {
  * @param props children divId
  * @returns JSX.Element
  */
-export const ContextMenu = (props: { children: JSX.Element; divId: string }) => {
+export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) => {
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -70,7 +70,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      if (event.target.id === props.divId) {
+      if (props.divIds.includes(event.target.id)) {
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
@@ -85,7 +85,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setTimeout(() => setShowContextMenu(true));
       }
     },
-    [setContextMenuPos, props.divId, setContextMenuPosition]
+    [setContextMenuPos, props.divIds, setContextMenuPosition]
   );
 
   useEffect(() => {
@@ -98,7 +98,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setTimeout(() => setShowContextMenu(true));
       } else {
         if (event.type === 'touchstart' && showContextMenu) {
-          if (event.target.id === props.divId || event.target.id === '') {
+          if (props.divIds.includes(event.target.id) || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false), 400);
           }
         }

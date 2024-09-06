@@ -333,11 +333,7 @@ export function UILayer(props: UILayerProps) {
 
 
       {/* I believe this is an alright solution for now; consider making a any(divIds) === true */}
-      <ContextMenu divId="board">
-        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
-      </ContextMenu>
-
-      <ContextMenu divId="lasso">
+      <ContextMenu divIds={["board", "lasso", "whiteboard"]}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
