@@ -8,7 +8,7 @@
 
 import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
 import { MdRemoveRedEye } from 'react-icons/md';
-import { LiaMousePointerSolid, LiaHandPointerSolid } from 'react-icons/lia';
+import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -310,7 +310,7 @@ export function UILayer(props: UILayerProps) {
             <IconButton
               size="sm"
               colorScheme={user?.data.color || 'gray'}
-              icon={primaryActionMode === 'lasso' ? <LiaMousePointerSolid /> : <LiaHandPointerSolid />}
+              icon={primaryActionMode === 'lasso' ? <LiaMousePointerSolid /> : <LiaHandPaperSolid />}
               fontSize="xl"
               aria-label={'input-type'}
               onClick={togglePrimaryActionMode}
