@@ -263,7 +263,7 @@ export function UILayer(props: UILayerProps) {
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
       {/* The Corner SAGE3 Image Bottom Right */}
-      <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
+      <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'} draggable={false}>
         {!showUI && (
           <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
             <IconButton
@@ -288,7 +288,7 @@ export function UILayer(props: UILayerProps) {
 
         {/* The Corner SAGE3 Image Bottom Right */}
         {showUI && (
-          <Box opacity={0.7} userSelect={'none'}>
+          <Box opacity={0.7} userSelect={'none'} draggable={false}>
             <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
           </Box>
         )}
