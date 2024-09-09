@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { Box, Button, ButtonGroup, Text, Tooltip } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip, VStack } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
 import { useAppStore } from '@sage3/frontend';
@@ -23,15 +23,14 @@ import './styling.css';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
 
   // Set size for the app
-  props.data.size.width = 500;
-  props.data.size.height = 205;
+  update(props._id, { size: { 'width': 1250, 'height': 630, 'depth': 0 } });
 
   // Local state for timer control
   const [total, setTotal] = useState<number>(s.total); // in seconds
-  const [isRunning, setIsRunning] = useState<boolean>(false);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -47,6 +46,10 @@ function AppComponent(props: App): JSX.Element {
       }
     };
   }, [intervalId]);
+  
+  useEffect(() => {
+    manageTimer();
+  }, [s.isRunning]);
 
   // Format numbers as hh:mm:ss
   const formatTime = (seconds: number): string => {
@@ -95,26 +98,29 @@ function AppComponent(props: App): JSX.Element {
     setTotal(total - 1);
   };
   
-  // Toggle start/stop timer
-  const toggleTimer = () => {
-    if (isRunning) {
-      setIsRunning(false);
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    } else {
-      setIsRunning(true);
+  // Manages the state of the timer, starting or stopping it based on the running state
+  const manageTimer = () => {
+    if (s.isRunning) {
       const id = setInterval(() => {
         setTotal((prevTotal) => prevTotal - 1 );
       }, 1000);
-  
+
       setIntervalId(id);
+    } else {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     }
+  };
+
+  // Updates the global running state of the timer
+  const setTimerRunning = () => {
+    updateState(props._id, { isRunning: !s.isRunning });
   };
 
   // Reset timer to 5 minutes
   const resetTimer = () => {
-    setIsRunning(false);
+    updateState(props._id, { isRunning: false });
     if (intervalId) {
       clearInterval(intervalId);
     }
@@ -124,57 +130,63 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} disableResize={true}>
       <>
-        <Text fontSize="6xl" align="center" color={total > -1 ? "default" : "red"}>{formatTime(total)}</Text>
+        <Text fontSize="300px" align="center" lineHeight="1.2" color={total > -1 ? "default" : "red"}>{formatTime(total)}</Text>
 
-        <Box display="flex" justifyContent="center">
-          <ButtonGroup isAttached size="sm" colorScheme="teal">
-            <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
-              <Button p={0} onClick={incrementHour}>
-                <MdAdd />
-              </Button>
-            </Tooltip>
-            <Tooltip placement="bottom" hasArrow={true} label={'-1 Hour'} openDelay={400}>
-              <Button p={0} onClick={decrementHour}>
-                <MdRemove />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
+        <VStack>
+          <Box display="flex" justifyContent="center">
+            <ButtonGroup isAttached colorScheme="teal">
+              <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementHour}>
+                  <MdAdd />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="bottom" hasArrow={true} label={'-1 Hour'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementHour}>
+                  <MdRemove />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
 
-          <Text fontSize="xl" display="inline" px="3px">:</Text>
+            <Text fontSize="5xl" display="inline" px="3px">:</Text>
 
-          <ButtonGroup isAttached size="sm" colorScheme="teal">
-            <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
-              <Button p={0} onClick={incrementMinute}>
-                <MdAdd />
-              </Button>
-            </Tooltip>
-            <Tooltip placement="bottom" hasArrow={true} label={'-1 Minute'} openDelay={400}>
-              <Button p={0} onClick={decrementMinute}>
-                <MdRemove />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
+            <ButtonGroup isAttached size="lg" colorScheme="teal">
+              <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementMinute}>
+                  <MdAdd />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="bottom" hasArrow={true} label={'-1 Minute'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementMinute}>
+                  <MdRemove />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
 
-          <Text fontSize="xl" display="inline" px="3px">:</Text>
+            <Text fontSize="5xl" display="inline" px="3px">:</Text>
 
-          <ButtonGroup isAttached size="sm" colorScheme="teal">
-            <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
-              <Button p={0} onClick={incrementSecond}>
-                <MdAdd />
-              </Button>
+            <ButtonGroup isAttached size="lg" colorScheme="teal">
+              <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementSecond}>
+                  <MdAdd />
+                </Button>
+              </Tooltip>
+              <Tooltip placement="bottom" hasArrow={true} label={'-1 Second'} openDelay={400}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementSecond}>
+                  <MdRemove />
+                </Button>
+              </Tooltip>
+            </ButtonGroup>
+          </Box>
+          
+          <Box display="flex" justifyContent="center" w="512px" mt={5}>
+            <Tooltip placement="bottom" hasArrow={true} label={s.isRunning ? 'Pause' : 'Start'} openDelay={400}>
+              <Button w="50%" h="80px" fontSize="40px" colorScheme="orange" onClick={setTimerRunning}>{s.isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
             </Tooltip>
-            <Tooltip placement="bottom" hasArrow={true} label={'-1 Second'} openDelay={400}>
-              <Button p={0} onClick={decrementSecond}>
-                <MdRemove />
-              </Button>
+            <Tooltip placement="bottom" hasArrow={true} label={'Reset'} openDelay={400}>
+              <Button w="50%" h="80px" fontSize="40px" ml={3} colorScheme="orange" onClick={resetTimer}><MdReplay /></Button>
             </Tooltip>
-          </ButtonGroup>
-        </Box>
-        
-        <Box display="flex" justifyContent="center" mt={5}>
-          <Button w="45%" size="sm" p={0} colorScheme="orange" onClick={toggleTimer}>{isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
-          <Button w="45%" size="sm" ml={1} p={0} colorScheme="orange" onClick={resetTimer}><MdReplay /></Button>
-        </Box>
+          </Box>
+        </VStack>
       </>
     </AppWindow>
   );
