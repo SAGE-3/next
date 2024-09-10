@@ -442,6 +442,8 @@ export function Background(props: BackgroundProps) {
       bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
         }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
+      userSelect={'none'}
+      draggable={false}
       cursor={"grab"}
       sx={{
         '&:active': {
