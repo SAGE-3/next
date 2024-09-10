@@ -86,8 +86,6 @@ export function UILayer(props: UILayerProps) {
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
-  // const primaryActionMode = useUIStore((state) => state.primaryActionMode);
-  // const togglePrimaryActionMode = useUIStore((state) => state.togglePrimaryActionMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -333,8 +331,6 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-
-      {/* I believe this is an alright solution for now; consider making a any(divIds) === true */}
       <ContextMenu divIds={["board", "lasso", "whiteboard"]}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
