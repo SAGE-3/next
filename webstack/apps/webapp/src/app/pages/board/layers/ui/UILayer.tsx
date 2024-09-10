@@ -258,7 +258,7 @@ export function UILayer(props: UILayerProps) {
   });
 
   return (
-    <div draggable={false}>
+    <>
       {/* Presence settings modal dialog */}
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
@@ -375,6 +375,6 @@ export function UILayer(props: UILayerProps) {
       <Box position="absolute" bottom="50" left="2">
         <TagsDisplay />
       </Box>
-    </div>
+    </>
   );
 }
