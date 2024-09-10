@@ -79,7 +79,7 @@ export function PresenceComponent(props: PresenceProps) {
   });
   const throttleViewportUpdate = throttle(MediumUpdateRate, (viewport: { position: Position; size: Size }) => {
     if (user) {
-      updatePresence(user?._id, { viewport });
+      updatePresence(user?._id, { viewport: { ...viewport, selfUpdate: true } });
     }
     setViewport(viewport.position, viewport.size);
   });
