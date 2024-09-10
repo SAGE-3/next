@@ -51,7 +51,7 @@ function sanitizeFilename(filename: string) {
  * @param props
  * @returns
  */
-export function PluginModal(props: PluginUploadModalProps): JSX.Element {
+export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
   // Form state
   const [input, setInput] = useState<File[]>([]);
   const [description, setDescription] = useState<string>('');

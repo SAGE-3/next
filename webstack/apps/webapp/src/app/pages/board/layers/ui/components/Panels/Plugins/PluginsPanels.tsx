@@ -7,12 +7,12 @@
  */
 
 import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure } from '@chakra-ui/react';
-import { PluginModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
+import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { format } from 'date-fns';
 import { ButtonPanel, Panel } from '../Panel';
 import { useParams } from 'react-router';
 
-export interface PluginProps {
+export interface PluginUploadProps {
   boardId: string;
   roomId: string;
 }
@@ -22,7 +22,7 @@ export interface PluginProps {
  * @param props
  * @returns
  */
-export function PluginsPanel(props: PluginProps) {
+export function PluginsPanel(props: PluginUploadProps) {
   // Plugin store. Sort them by name.
   const plugins = usePluginStore((state) => state.plugins);
   plugins.sort((a, b) => a.data.name.localeCompare(b.data.name));
@@ -31,9 +31,6 @@ export function PluginsPanel(props: PluginProps) {
   const createApp = useAppStore((state) => state.create);
   // User
   const { user } = useUser();
-
-  // Params
-  const { roomId } = useParams();
 
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
@@ -71,7 +68,7 @@ export function PluginsPanel(props: PluginProps) {
 
   return (
     <>
-      {roomId && <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} roomId={roomId} />}
+      <PluginUploadModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} roomId={props.roomId} />
 
       <Panel title={'Plugins'} name="plugins" width={0} showClose={false}>
         <VStack

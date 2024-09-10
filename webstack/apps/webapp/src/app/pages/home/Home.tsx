@@ -81,7 +81,7 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, PluginsList } from './components';
 
 /**
  * Home page for SAGE3
@@ -1260,7 +1260,9 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">Assets</TabPanel>
-                <TabPanel px="0">Plugins</TabPanel>
+                <TabPanel px="0">
+                  <PluginsList roomId={selectedRoom._id} />
+                </TabPanel>
               </TabPanels>
             </Tabs>
           </Box>

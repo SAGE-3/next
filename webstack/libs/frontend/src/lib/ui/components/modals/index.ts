@@ -9,7 +9,7 @@ export * from './EditRoomModal';
 export * from './EnterBoardModal';
 export * from './ConfirmModal';
 export * from './AboutModal';
-export * from './PluginModal';
+export * from './PluginUploadModal';
 export * from './UserSearchModal';
 export * from './CreateKernelModal';
 export * from './HelpModal';

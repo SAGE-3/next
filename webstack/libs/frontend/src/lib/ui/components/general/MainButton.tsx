@@ -57,7 +57,6 @@ import {
   AboutModal,
   copyBoardUrlToClipboard,
   useRouteNav,
-  PluginModal,
   useBoardStore,
   EnterBoardModal,
   useHexColor,
