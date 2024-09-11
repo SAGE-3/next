@@ -66,6 +66,7 @@
     "http-proxy-middleware": "^2.0.6",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
+    "ky": "^1.7.2",
     "leaflet": "^1.9.2",
     "maplibre-gl": "^4.6.0",
     "markdown-to-jsx": "^7.5.0",

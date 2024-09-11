@@ -51,8 +51,8 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 
 # set to debug the queries into langchain
-set_debug(True)
-set_verbose(True)
+# set_debug(True)
+# set_verbose(True)
 
 # Llama3 server at EVL
 #     "https://arcade.evl.uic.edu/llama/"
@@ -165,10 +165,10 @@ app = FastAPI(title="Seer", description="A LangChain proxy for SAGE3.", version=
 
 
 # API routes
-@app.get("/health")
+@app.get("/status")
 def read_root():
-    logger.info("health check")
-    return {"msg": "OK"}
+    logger.info("Status check")
+    return {"success": True}
 
 
 @app.post("/ask")

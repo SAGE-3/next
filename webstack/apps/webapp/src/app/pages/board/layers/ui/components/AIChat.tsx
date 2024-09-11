@@ -8,17 +8,71 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { useParams } from 'react-router';
+import ky, { HTTPError } from 'ky';
 
 import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, useToast, List, ListItem, ListIcon, Tooltip, Spinner } from '@chakra-ui/react';
 
 import { MdSend, MdSettings } from 'react-icons/md';
 
-import { useUIStore, AiAPI, useHexColor, useUser, useAppStore, useConfigStore } from '@sage3/frontend';
-import { AgentQueryType, genId } from '@sage3/shared';
+import { useUIStore, useHexColor, useUser, useAppStore, useConfigStore, apiUrls } from '@sage3/frontend';
+import { genId, AskRequest, AskResponse, SError, AgentRoutes, HealthRequest, HealthResponse } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 
+
+/**
+ * Makes the actual RPC call using ky library
+ * @param mth string endpoint name
+ * @param data object data to send
+ * @returns 
+ */
+const makeRpcPost = async (mth: string, data: object) => {
+  try {
+    const base = apiUrls.ai.agents.base;
+    const response = await ky.post<Response>(`${base}${mth}`, { json: data }).json();
+    return response;
+  } catch (e) {
+    const error = e as HTTPError<Response>;
+    if (error.name === 'HTTPError') {
+      const err: SError = await error.response.json();
+      return err;
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+const makeRpcGet = async (mth: string, data: object) => {
+  try {
+    const base = apiUrls.ai.agents.base;
+    const response = await ky.get<Response>(`${base}${mth}`).json();
+    return response;
+  } catch (e) {
+    const error = e as HTTPError<Response>;
+    if (error.name === 'HTTPError') {
+      const err: SError = await error.response.json();
+      return err;
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+
+/**
+ * Check the health of the agent server
+ * @param mth string endpoint name
+ * @param data SumRequest payload
+ * @returns 
+ */
+const callStatus = async (data: HealthRequest) => {
+  return makeRpcGet(AgentRoutes.status, data) as Promise<HealthResponse | SError>;
+};
+const callAsk = async (data: AskRequest) => {
+  return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;
+};
+const callSummary = async (data: AskRequest) => {
+  return makeRpcPost(AgentRoutes.summary, data) as Promise<AskResponse | SError>;
+};
 
 export function AIChat(props: { model: string }) {
   const { roomId, boardId } = useParams();
@@ -52,6 +106,8 @@ export function AIChat(props: { model: string }) {
   const [location, setLocation] = useState('');
   const [isWorking, setIsWorking] = useState(false);
 
+  const [status, setStatus] = useState(false);
+
   // Display some notifications
   const toast = useToast();
 
@@ -64,9 +120,19 @@ export function AIChat(props: { model: string }) {
       navigator.geolocation.getCurrentPosition(function (location) {
         setLocation(location.coords.latitude + ',' + location.coords.longitude);
       }, function (e) { console.log('Location> error', e); });
-
     }
   }, [user]);
+
+  useEffect(() => {
+    callStatus({}).then((res) => {
+      if ("message" in res) {
+        console.log('Health> error', res.message);
+      } else {
+        console.log('Health> ', res.success);
+        setStatus(true);
+      }
+    });
+  }, []);
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
@@ -75,7 +141,7 @@ export function AIChat(props: { model: string }) {
     // Generate a unique id for the query
     const id = genId();
     // Build the query
-    const question: AgentQueryType = {
+    const question: AskRequest = {
       ctx: {
         prompt: context || '',
         pos: position, roomId, boardId
@@ -87,9 +153,17 @@ export function AIChat(props: { model: string }) {
     };
     if (new_input === 'summary') {
       // Invoke the agent
-      const response = await AiAPI.agents.summary(question);
+      const response = await callSummary(question);
       setIsWorking(false);
-      if (response.success) {
+      if ('message' in response) {
+        toast({
+          title: 'Error',
+          description: response.message || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
         // Store the agent's response
         setResponse(response.r);
         // Get the propose actions
@@ -98,20 +172,21 @@ export function AIChat(props: { model: string }) {
         }
         // Increase the position
         setPosition([position[0] + (400 + 20), position[1]]);
-      } else {
-        toast({
-          title: 'Error',
-          description: response.r || 'Error sending query to the agent. Please try again.',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-        });
       }
     } else {
       // Invoke the agent
-      const response = await AiAPI.agents.ask(question);
+      // const response = await AiAPI.agents.ask(question);
+      const response = await callAsk(question);
       setIsWorking(false);
-      if (response.success) {
+      if ('message' in response) {
+        toast({
+          title: 'Error',
+          description: response.message || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
         // Store the agent's response
         setResponse(response.r);
         // Get the propose actions
@@ -120,14 +195,6 @@ export function AIChat(props: { model: string }) {
         }
         // Increase the position
         setPosition([position[0] + (400 + 20), position[1]]);
-      } else {
-        toast({
-          title: 'Error',
-          description: response.r || 'Error sending query to the agent. Please try again.',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-        });
       }
 
     }

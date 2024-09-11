@@ -60,6 +60,7 @@ export const apiUrls = {
       image: '/api/ai/image_to_image',
     },
     agents: {
+      base: '/api/agents',
       status: '/api/agents/status',
       ask: '/api/agents/ask',
       summary: '/api/agents/summary',
