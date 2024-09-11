@@ -119,7 +119,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
         <>
           <Icon
             aria-label="LockBoard"
-            fontSize="96px"
+            fontSize="60px"
             pointerEvents="none"
             color={boardColor}
             m="0"
@@ -129,11 +129,14 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
             textAlign={'center'}
             mb={2}
           />
+          <Text fontWeight="bold" fontSize="xl" color={boardColor}>
+            Private
+          </Text>
         </>
       ) : appInfo.length > 0 ? (
         <canvas ref={canvasRef} style={{ width: `${boardWidth + 2 * PADDING}px`, height: `${boardHeight + 2 * PADDING}px` }} />
       ) : (
-        <Text fontSize="2xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
+        <Text fontSize="xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>
           No Opened Applications
         </Text>
       )}

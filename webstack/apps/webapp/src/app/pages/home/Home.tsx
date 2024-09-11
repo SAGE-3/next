@@ -54,7 +54,7 @@ import { BiChevronDown } from 'react-icons/bi';
 
 // SAGE Imports
 import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
-import { Board, Room, User } from '@sage3/shared/types';
+import { Board, Insight, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
   useBoardStore,
@@ -77,6 +77,7 @@ import {
   Clock,
   isElectron,
   useUserSettings,
+  APIHttp,
 } from '@sage3/frontend';
 
 // Home Page Components
@@ -836,7 +837,7 @@ export function HomePage() {
               </Box>
             </Tooltip>
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+            {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
               <Box
                 h="40px"
                 display="flex"
@@ -850,7 +851,7 @@ export function HomePage() {
               >
                 <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
               </Box>
-            </Tooltip>
+            </Tooltip> */}
 
             <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
               <Box
@@ -884,7 +885,7 @@ export function HomePage() {
             borderRadius={cardRadius}
           >
             <VStack align="stretch" gap="2px" height="100%">
-              <Box
+              {/* <Box
                 display="flex"
                 ref={activeBoardsRef}
                 alignItems="left"
@@ -928,8 +929,8 @@ export function HomePage() {
                 p="2"
               >
                 <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-              </Box>
-              <Box mt="6" pl="4" mb="2" fontSize="md">
+              </Box> */}
+              <Box pl="4" mb="2" fontSize="md" fontWeight="bold">
                 Your Rooms
               </Box>
               <Box
@@ -998,6 +999,7 @@ export function HomePage() {
           <MainButton config={config}></MainButton>
         </Box>
       </Box>
+
       {selectedQuickAccess && (
         <Box
           display="flex"
@@ -1369,33 +1371,53 @@ export function HomePage() {
             <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
             </Text>
-            {/* Recents boards */}
-            <Box borderRadius={cardRadius} py="3" height="100%">
-              <Tabs variant="unstyled" isLazy defaultIndex={0}>
-                <TabList>
-                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+
+            <Box position="relative">
+              <InputGroup size="md" width="full" my="4">
+                <InputLeftElement pointerEvents="none">
+                  <MdSearch />
+                </InputLeftElement>
+                <Input
+                  placeholder="Search Rooms"
+                  _placeholder={{ opacity: 0.6, color: 'white' }}
+                  // value={roomSearch}
+                  // onChange={(e) => setRoomSearch(e.target.value)}
+                  roundedTop="2xl"
+                  roundedBottom="2xl"
+                />
+              </InputGroup>
+              {/* <Box position="absolute" zIndex="10000" mb="0" h="400px" w="full" bg="black" roundedBottom="2xl">
+                test
+              </Box> */}
+            </Box>
+            <Box borderRadius={cardRadius} height="100%">
+              <Tabs variant="unstyled" isLazy defaultIndex={0} bg={homeSectionColor} pt="3" borderRadius={cardRadius}>
+                <TabList px="5" h="30px">
+                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
                     Recent Boards
                   </Tab>
-                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
                     Active Boards
                   </Tab>
-                  <Tab _selected={{ bg: `${homeSectionColor}` }} borderRadius="lg">
+                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
                     Starred Boards
                   </Tab>
                 </TabList>
 
                 <TabPanels>
-                  <TabPanel px="0" py="4" id="Recent Boards">
+                  <TabPanel p="0" id="Recent Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
                       {recentBoards.length > 0 ? (
                         <HStack
                           gap="3"
                           width="100%"
-                          overflow="auto"
+                          overflowX="auto"
+                          overflowY="hidden"
                           height="fit-content"
-                          py="5"
                           px="2"
+                          pt="2"
+                          pb="4"
                           css={{
                             '&::-webkit-scrollbar': {
                               background: 'transparent',
@@ -1438,7 +1460,8 @@ export function HomePage() {
                         <HStack
                           gap="3"
                           width="100%"
-                          overflow="auto"
+                          overflowX="auto"
+                          overflowY="hidden"
                           height="fit-content"
                           py="5"
                           px="2"
@@ -1485,7 +1508,8 @@ export function HomePage() {
                         <HStack
                           gap="3"
                           width="100%"
-                          overflow="auto"
+                          overflowX="auto"
+                          overflowY="hidden"
                           height="fit-content"
                           py="5"
                           px="2"
@@ -1526,100 +1550,113 @@ export function HomePage() {
               <Box mt="6" mb="3">
                 <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
                   <Text fontWeight="bold">Available Rooms</Text>
-                  <Box display="flex" justifyContent="center" alignItems="center" gap="2">
-                    <InputGroup size="xs" width="415px" my="1">
+                </Box>
+                <Box p="4" bg={homeSectionColor} rounded="xl">
+                  <Box display="flex" alignItems="center" gap="2">
+                    <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
                       </InputLeftElement>
-                      <Input placeholder="Search Rooms" value={roomSearch} onChange={(e) => setRoomSearch(e.target.value)} />
+                      <Input
+                        placeholder="Search Rooms"
+                        _placeholder={{ opacity: 0.6, color: 'white' }}
+                        value={roomSearch}
+                        onChange={(e) => setRoomSearch(e.target.value)}
+                        rounded="md"
+                      />
                     </InputGroup>
                     {/* <Box ref={createRoomRef}> */}
-                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="xs">
+                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md">
                       <Icon as={MdAdd} mr="1" />
                       Create Room
                     </Button>
                     {/* </Box> */}
                   </Box>
-                </Box>
-                <Box>
-                  {rooms
-                    .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
-                    .filter(roomSearchFilter)
-                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                    .map((room) => {
-                      return (
-                        <Box
-                          borderRadius="6"
-                          bg={availableRoomsBgColor}
-                          border="1px"
-                          borderColor={availableRoomsBorderColor}
-                          my="1"
-                          p="1"
-                          key={room._id}
-                          display="flex"
-                          alignItems="center"
-                          justifyContent="space-between"
-                          transition="all 0.5s"
-                          height="28px"
-                          _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                          onClick={() => handleRoomClick(room)}
-                        >
-                          <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                            <Text fontSize="md" pl="2">
-                              {room.data.name}
+                  <Box>
+                    {rooms
+                      .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
+                      .filter(roomSearchFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((room) => {
+                        return (
+                          <Box
+                            borderRadius="lg"
+                            bg={availableRoomsBgColor}
+                            my="2"
+                            p="5"
+                            key={room._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            height="28px"
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                              <Text fontSize="md" pl="2">
+                                {room.data.name}
+                              </Text>
+                            </Box>
+
+                            <Text fontSize="xs" color={subTextColor}>
+                              {room.data.ownerId === userId ||
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                room.data.ownerId === userId ? (
+                                  <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
+                                    Owner
+                                  </Tag>
+                                ) : (
+                                  <Tag
+                                    size="sm"
+                                    width="100px"
+                                    textAlign="center"
+                                    display="flex"
+                                    justifyContent="center"
+                                    colorScheme="yellow"
+                                  >
+                                    Member
+                                  </Tag>
+                                )
+                              ) : (
+                                <Button
+                                  size="xs"
+                                  height="20px"
+                                  width="100px"
+                                  zIndex="10"
+                                  colorScheme="teal"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (room.data.ownerId === userId) {
+                                      return;
+                                    }
+                                    // if it is a private room, open the password modal
+                                    if (room.data.isPrivate) {
+                                      if (!passwordProtectedRoom) {
+                                        setPasswordProtectedRoom(room);
+                                      } else {
+                                        setPasswordProtectedRoom(undefined);
+                                      }
+                                    } else {
+                                      joinRoomMembership(room._id);
+                                      toast({
+                                        title: `You have successfully joined ${room.data.name}`,
+                                        status: 'success',
+                                        duration: 4 * 1000,
+                                        isClosable: true,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Box mr="1">Join</Box>
+                                  {room.data.isPrivate && <MdLock />}
+                                </Button>
+                              )}
                             </Text>
                           </Box>
-
-                          <Text fontSize="xs" color={subTextColor}>
-                            {room.data.ownerId === userId ||
-                            members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
-                              room.data.ownerId === userId ? (
-                                <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
-                                  Owner
-                                </Tag>
-                              ) : (
-                                <Tag size="sm" width="100px" textAlign="center" display="flex" justifyContent="center" colorScheme="yellow">
-                                  Member
-                                </Tag>
-                              )
-                            ) : (
-                              <Button
-                                size="xs"
-                                height="20px"
-                                width="100px"
-                                zIndex="10"
-                                colorScheme="teal"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (room.data.ownerId === userId) {
-                                    return;
-                                  }
-                                  // if it is a private room, open the password modal
-                                  if (room.data.isPrivate) {
-                                    if (!passwordProtectedRoom) {
-                                      setPasswordProtectedRoom(room);
-                                    } else {
-                                      setPasswordProtectedRoom(undefined);
-                                    }
-                                  } else {
-                                    joinRoomMembership(room._id);
-                                    toast({
-                                      title: `You have successfully joined ${room.data.name}`,
-                                      status: 'success',
-                                      duration: 4 * 1000,
-                                      isClosable: true,
-                                    });
-                                  }
-                                }}
-                              >
-                                <Box mr="1">Join</Box>
-                                {room.data.isPrivate && <MdLock />}
-                              </Button>
-                            )}
-                          </Text>
-                        </Box>
-                      );
-                    })}
+                        );
+                      })}
+                  </Box>
                 </Box>
               </Box>
             </Box>
