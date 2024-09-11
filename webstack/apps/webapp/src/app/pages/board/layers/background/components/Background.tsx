@@ -44,6 +44,7 @@ import {
   setupApp,
   useAbility,
   processContentURL,
+  useUserSettings,
 } from '@sage3/frontend';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -56,6 +57,8 @@ type BackgroundProps = {
 };
 
 export function Background(props: BackgroundProps) {
+  // Settings
+  const { settings, setPrimaryActionMode } = useUserSettings();
   // display some notifications
   const toast = useToast();
   // Handle to a toast
@@ -99,6 +102,7 @@ export function Background(props: BackgroundProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
+  const cachedPrimaryActionMode = useUIStore((state) => state.cachedPrimaryActionMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
@@ -159,8 +163,19 @@ export function Background(props: BackgroundProps) {
     }
   };
 
+
+  const handleDragEnd = useCallback(async (event: React.DragEvent<HTMLDivElement>) => {
+    if (cachedPrimaryActionMode) {
+      setPrimaryActionMode(cachedPrimaryActionMode)
+    }
+  }, [cachedPrimaryActionMode])
+
   // Drop event
-  async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
+  const OnDrop = useCallback(async (event: React.DragEvent<HTMLDivElement>) => {
+    if (cachedPrimaryActionMode) {
+      setPrimaryActionMode(cachedPrimaryActionMode)
+    }
+
     if (!user) return;
 
     if (!canDrop) {
@@ -297,7 +312,7 @@ export function Background(props: BackgroundProps) {
         }
       }
     }
-  }
+  }, [cachedPrimaryActionMode])
 
   // Question mark character for help
   useHotkeys(
@@ -453,6 +468,7 @@ export function Background(props: BackgroundProps) {
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
+      onDragLeave={handleDragEnd}
       onClick={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>

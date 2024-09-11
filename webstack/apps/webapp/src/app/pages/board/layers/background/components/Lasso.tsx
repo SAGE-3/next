@@ -36,6 +36,7 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const setCachedPrimaryActionMode = useUIStore((state) => state.setCachedPrimaryActionMode);
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
@@ -115,9 +116,11 @@ export function Lasso(props: LassoProps) {
     }
   };
 
+  // Turn off lasso layer when dragging stuff on board
   const preventDragDrop = (event: React.DragEvent<any>) => {
+    setCachedPrimaryActionMode(settings.primaryActionMode)
     setPrimaryActionMode("grab")
-    event.stopPropagation();
+    // event.stopPropagation();
   };
 
   return (

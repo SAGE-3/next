@@ -99,6 +99,10 @@ interface UIState {
   boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
   setBoardSynced: (synced: boolean) => void;
 
+  // Cache Cursor Type when dragging items on board
+  cachedPrimaryActionMode: "lasso" | "grab" | undefined;
+  setCachedPrimaryActionMode: (mode: "lasso" | "grab" | undefined) => void;
+
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
@@ -156,6 +160,9 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   boardSynced: true,
   setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
+
+  cachedPrimaryActionMode: undefined,
+  setCachedPrimaryActionMode: (mode: "lasso" | "grab" | undefined) => set((state) => ({ ...state, cachedPrimaryActionMode: mode })),
 
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
