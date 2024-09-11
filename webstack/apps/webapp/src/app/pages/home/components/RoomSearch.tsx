@@ -1,13 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- */
-
-/**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -160,7 +152,7 @@ function RoomRow(props: RoomRowProps) {
   const borderColor = useHexColor(borderColorValue);
   const linearBGColor = useColorModeValue(
     `linear-gradient(180deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`
+    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`,
   );
 
   // Room Store

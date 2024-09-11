@@ -24,6 +24,8 @@ const schema = z.object({
   name: z.string(),
   // Description of the plugin app
   description: z.string(),
+  // Rooms
+  roomId: z.string().optional(),
 });
 
 export type PluginSchema = z.infer<typeof schema>;
