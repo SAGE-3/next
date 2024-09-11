@@ -174,6 +174,9 @@ export function HomePage() {
   const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
   const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
   const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
+  const tabColorValue = useColorModeValue('gray.100', 'gray.600');
+  const tabColor = useHexColor(tabColorValue);
+
   // const { toggleColorMode, colorMode } = useColorMode();
 
   // Styling
@@ -1378,7 +1381,7 @@ export function HomePage() {
                   <MdSearch />
                 </InputLeftElement>
                 <Input
-                  placeholder="Search Rooms"
+                  placeholder="Search in SAGE3"
                   _placeholder={{ opacity: 0.6, color: 'white' }}
                   // value={roomSearch}
                   // onChange={(e) => setRoomSearch(e.target.value)}
@@ -1393,13 +1396,13 @@ export function HomePage() {
             <Box borderRadius={cardRadius} height="100%">
               <Tabs variant="unstyled" isLazy defaultIndex={0} bg={homeSectionColor} pt="3" borderRadius={cardRadius}>
                 <TabList px="5" h="30px">
-                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
                     Recent Boards
                   </Tab>
-                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
                     Active Boards
                   </Tab>
-                  <Tab _selected={{ bg: availableRoomsBgColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
                     Starred Boards
                   </Tab>
                 </TabList>

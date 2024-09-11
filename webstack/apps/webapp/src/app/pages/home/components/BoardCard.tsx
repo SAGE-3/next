@@ -147,15 +147,15 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
           _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         >
-          <Box gridArea="preview" position="relative" onClick={handleEnterBoard}>
+          <Box gridArea="preview" position="relative" onClick={handleEnterBoard} overflow="hidden">
             <Box display="flex">
-              <Box position="absolute" height={0} width="100%" zIndex={1} transform={'translate(5px, 180px)'}>
+              <Box position="absolute" height={0} width="100%" bottom="6">
                 <UserPresenceIcons
                   usersPresent={props.usersPresent}
                   maxUsersDisplayed={5}
                   anonymousNames={props.board.data.isPrivate}
                   overflow="hidden"
-                  width={200}
+                  width={150}
                   height={20}
                 />
               </Box>

@@ -35,7 +35,7 @@ function UserIcons(props: { users: User[], currentUser: Presence, anonymousNames
   const backgroundColor = useHexColor(backgroundColorValue);
   const name = props.anonymousNames ? undefined : user ? initials(user.data.name) : undefined;
   return <Avatar name={' '} color={"var(--chakra-colors-body-text)"} backgroundColor={backgroundColor} borderColor={"grey.400"}
-    textAlign="center" whiteSpace="nowrap">
+    textAlign="center" whiteSpace="nowrap" size="sm">
     {name}
   </Avatar>
 }
