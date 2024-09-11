@@ -7,12 +7,29 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useColorModeValue, Box, Text, VStack, Input, InputGroup, InputLeftElement, Button, Grid, HStack, Link } from '@chakra-ui/react';
+import {
+  useColorModeValue,
+  Box,
+  Text,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Button,
+  Grid,
+  HStack,
+  Link,
+  Tag,
+  IconButton,
+  VStack,
+  Tooltip,
+} from '@chakra-ui/react';
 import { Editor } from '@monaco-editor/react';
 
 import { FaPython } from 'react-icons/fa';
 import { LuFileJson, LuFileCode } from 'react-icons/lu';
 import {
+  MdAdd,
+  MdDownload,
   MdJavascript,
   MdOndemandVideo,
   MdOutlineFilePresent,
@@ -20,6 +37,7 @@ import {
   MdOutlineLink,
   MdOutlineMap,
   MdOutlinePictureAsPdf,
+  MdPerson,
   MdSearch,
 } from 'react-icons/md';
 
@@ -32,9 +50,11 @@ import {
   isElectron,
   useHexColor,
   useUsersStore,
+  useUser,
 } from '@sage3/frontend';
 import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode, isGeoJSON, isFileURL, isJSON, isPython } from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
+import { HiTrash } from 'react-icons/hi';
 
 // Compare filenames case independent
 function sortAsset(a: Asset, b: Asset) {
@@ -51,8 +71,17 @@ export function AssetList(props: { room: Room }) {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [assetSearch, setAssetSearch] = useState('');
+  const [showOnlyYours, setShowOnlyYours] = useState(false);
+  const handleShowOnlyYours = () => setShowOnlyYours(!showOnlyYours);
 
+  // User Info
   const users = useUsersStore((state) => state.users);
+  const { user } = useUser();
+
+  const filterAssets = (asset: Asset) => {
+    const filterYours = showOnlyYours ? asset.data.owner === user?._id : true;
+    return filterYours;
+  };
 
   const assetSearchFilter = (asset: Asset) => {
     const data = asset.data;
@@ -64,44 +93,84 @@ export function AssetList(props: { room: Room }) {
     setAssets(assets);
   }, [allAssets, users, props.room]);
 
+  function handleUpload() {
+    // Upload asset
+  }
+
   return (
-    <Box display="flex" flexDir="row" p="2">
-      <VStack gap="2" overflowX="hidden" minWidth="500px">
-        {/* File Search */}
-        <InputGroup size="md" width="100%" my="1">
-          <InputLeftElement pointerEvents="none">
-            <MdSearch />
-          </InputLeftElement>
-          <Input placeholder="Search Files" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
-        </InputGroup>
-        <Box width="100%" display="flex" flexDir="column" overflowY={'scroll'}>
+    <Box display="flex" gap="8">
+      <Box height="calc(100vh - 300px)" width="500px" overflowY="auto" overflowX="hidden">
+        <VStack width="100%" px="4" gap="3">
+          <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2">
+            {/* Upload Button */}
+            <Tooltip label="Add Plugin" aria-label="upload plugin" placement="top" hasArrow>
+              <IconButton
+                size="md"
+                variant={'outline'}
+                colorScheme={'teal'}
+                aria-label="plugin-upload"
+                fontSize="xl"
+                icon={<MdAdd />}
+                onClick={handleUpload}
+              ></IconButton>
+            </Tooltip>
+            {/* Search Input */}
+            <InputGroup size="md" width="100%" my="1">
+              <InputLeftElement pointerEvents="none">
+                <MdSearch />
+              </InputLeftElement>
+              <Input placeholder="Search Assets" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
+            </InputGroup>
+            {/* Filter Yours */}
+            <Tooltip label="Filter Yours" aria-label="filter your plugins" placement="top" hasArrow>
+              <IconButton
+                size="md"
+                variant="outline"
+                colorScheme={showOnlyYours ? 'teal' : 'gray'}
+                aria-label="filter-yours"
+                fontSize="xl"
+                icon={<MdPerson />}
+                onClick={handleShowOnlyYours}
+              ></IconButton>
+            </Tooltip>
+          </Box>
+
           {assets
+            .filter(filterAssets)
             .filter(assetSearchFilter)
             .sort(sortAsset)
             .map((a) => (
-              <AssetListItem key={a._id} asset={a} onClick={() => setSelectedAsset(a)} selected={a._id == selectedAsset?._id} />
+              <AssetListItem
+                key={a._id}
+                asset={a}
+                onClick={() => setSelectedAsset(a)}
+                selected={a._id == selectedAsset?._id}
+                isOwner={a.data.owner === user?._id}
+              />
             ))}
-        </Box>
-      </VStack>
-      <Box px="25px" flex="1">
-        {selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}
+        </VStack>
       </Box>
+      <Box flex="1">{selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}</Box>
     </Box>
   );
 }
 
+interface PluginItemProps {
+  asset: Asset;
+  selected: boolean;
+  isOwner: boolean;
+  onClick: () => void;
+}
+
 // Asset List Item
-function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boolean }) {
-  const grayColorValue = useColorModeValue('gray.700', 'gray.300');
-  const gray = useHexColor(grayColorValue);
-  const teal = useHexColor('teal');
+function AssetListItem(props: PluginItemProps) {
+  const backgroundColorValue = useColorModeValue('#ffffff', `gray.800`);
+  const backgroundColor = useHexColor(backgroundColorValue);
 
-  const color = props.selected ? teal : 'gray';
-
-  const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`,
-  );
+  const borderColorValue = useColorModeValue(`teal.600`, `teal.200`);
+  const borderColor = useHexColor(borderColorValue);
+  const subTextValue = useColorModeValue('gray.700', 'gray.300');
+  const subText = useHexColor(subTextValue);
 
   const name = props.asset.data.originalfilename;
   const icon = whichIcon(props.asset.data.mimetype);
@@ -109,36 +178,43 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 
   return (
     <Box
-      background={linearBGColor}
-      p="1"
+      background={backgroundColor}
+      p={props.selected ? '2' : '1'}
       px="2"
-      mb="1"
-      width="calc(100% - 6px)"
       display="flex"
       justifyContent={'space-between'}
       alignItems={'center'}
       borderRadius="md"
       boxSizing="border-box"
-      border={`solid 1px ${props.selected ? color : 'transparent'}`}
-      borderLeft={`solid 8px ${color}`}
+      width="100%"
+      height="56px"
+      border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
+      transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
+      _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
       transition={'all 0.2s ease-in-out'}
       onClick={props.onClick}
       cursor="pointer"
-      overflow={'hidden'}
     >
       <Box display="flex" alignItems={'center'}>
         {/* Chakra Icon */}
         <Box display="flex" alignItems={'center'} ml={1} mr={2}>
           {icon}
         </Box>
-        <Box display="flex" flexDir="column">
-          <Text fontSize="xs" fontWeight="bold" textAlign="left" overflow={'hidden'} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>
+        <Box display="flex" flexDir="column" maxWidth="350px">
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
             {name}
-          </Text>
-          <Text fontSize="xs" color={'gray.500'}>
+          </Box>
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subText}>
             {dateCreated}
-          </Text>
+          </Box>
         </Box>
+      </Box>
+      <Box display="flex" alignItems={'center'}>
+        {props.isOwner && (
+          <Tag colorScheme="teal" size="md">
+            Owner
+          </Tag>
+        )}
       </Box>
     </Box>
   );
@@ -147,7 +223,7 @@ function AssetListItem(props: { asset: Asset; onClick: () => void; selected: boo
 // Asset Preview
 function AssetPreview(props: { asset: Asset }) {
   const selectedAsset = props.asset;
-  const width = 500;
+
   const filename = selectedAsset.data.originalfilename;
   const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
   const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
@@ -174,45 +250,58 @@ function AssetPreview(props: { asset: Asset }) {
   }
 
   return (
-    <Box width={width + 'px'} display="flex" flexDirection="column" p={2} ml={4}>
+    <Box width={800 + 'px'} display="flex" flexDirection="column">
       {/* First Area: Meta Data */}
       <Box mb={2}>
-        <Grid templateColumns="150px 1fr" gap={2}>
-          {/* File Name */}
-          <Text fontWeight="bold">Filename</Text>
-          <Text>{filename}</Text>
-
-          {/* Date Created */}
-          <Text fontWeight="bold">Date Created</Text>
-          <Text>{dateCreated}</Text>
-
-          {/* Date Added */}
-          <Text fontWeight="bold">Date Added</Text>
-          <Text>{dateAdded}</Text>
-
-          {/* Type */}
-          <Text fontWeight="bold">Type</Text>
-          <Text>{type}</Text>
-
-          {/* Size */}
-          <Text fontWeight="bold">Size</Text>
-          <Text>{size}</Text>
-        </Grid>
+        <HStack gap="8" mb="4">
+          <VStack alignItems={'start'} fontWeight={'bold'}>
+            <Text>Filename</Text>
+            <Text>Date Created</Text>
+            <Text>Date Added</Text>
+            <Text>Type</Text>
+            <Text>Size</Text>
+          </VStack>
+          <VStack alignItems={'start'}>
+            <Text>{filename}</Text>
+            <Text>{dateCreated}</Text>
+            <Text>{dateAdded}</Text>
+            <Text>{type}</Text>
+            <Text>{size}</Text>
+          </VStack>
+        </HStack>
       </Box>
 
       {/* Second Area: Actions */}
-      <HStack gap="2" width="100%" justifyContent="space-between">
-        <Button colorScheme="teal" size="sm" mt={2} width="100%" variant="outline" onClick={downloadAsset}>
-          Download
-        </Button>
-        <Button colorScheme="red" size="sm" mt={2} width="100%" variant="outline" onClick={deleteAsset}>
-          Delete
-        </Button>
+      <HStack gap="2" mb={4} width="100%" justifyContent="start">
+        <Tooltip label="Download Asset" aria-label="download-asset" placement="top" hasArrow>
+          <IconButton
+            size="md"
+            variant={'outline'}
+            colorScheme={'teal'}
+            aria-label="favorite-board"
+            fontSize="xl"
+            icon={<MdDownload />}
+            // isDisabled={}
+            onClick={downloadAsset}
+          />
+        </Tooltip>
+        <Tooltip label="Delete Asset" aria-label="delete-asset" placement="top" hasArrow>
+          <IconButton
+            size="md"
+            variant={'outline'}
+            colorScheme={'red'}
+            aria-label="favorite-board"
+            fontSize="xl"
+            icon={<HiTrash />}
+            // isDisabled={!canDeleteSelectedPlugin}
+            onClick={deleteAsset}
+          />
+        </Tooltip>
         {/* Add more actions as needed */}
       </HStack>
 
       {/* Third Area: Preview */}
-      <Box mt={2} flexGrow="1" overflow={'hidden'} display="flex">
+      <Box flexGrow="1" overflow={'hidden'} display="flex">
         {PreviewElement}
       </Box>
     </Box>
