@@ -1394,21 +1394,28 @@ export function HomePage() {
               </Box> */}
             </Box>
             <Box borderRadius={cardRadius} height="100%">
-              <Tabs variant="unstyled" isLazy defaultIndex={0} bg={homeSectionColor} pt="3" borderRadius={cardRadius}>
+              <Tabs
+                variant="unstyled"
+                isLazy
+                defaultIndex={boards.filter(boardActiveFilter).length > 0 ? 1 : 0}
+                bg={homeSectionColor}
+                pt="3"
+                borderRadius={cardRadius}
+              >
                 <TabList px="5" h="30px">
-                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
                     Recent Boards
                   </Tab>
-                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
                     Active Boards
                   </Tab>
-                  <Tab _selected={{ bg: tabColor }} borderRadius="lg">
+                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
                     Starred Boards
                   </Tab>
                 </TabList>
 
                 <TabPanels>
-                  <TabPanel p="0" id="Recent Boards">
+                  <TabPanel px="0" pt="2" id="Recent Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
                       {recentBoards.length > 0 ? (
@@ -1457,7 +1464,7 @@ export function HomePage() {
                       )}
                     </Box>
                   </TabPanel>
-                  <TabPanel px="0" py="4" id="Active Boards">
+                  <TabPanel px="0" pt="2" id="Active Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {boards.filter(boardActiveFilter).length > 0 ? (
                         <HStack
@@ -1466,8 +1473,9 @@ export function HomePage() {
                           overflowX="auto"
                           overflowY="hidden"
                           height="fit-content"
-                          py="5"
                           px="2"
+                          pt="2"
+                          pb="4"
                           css={{
                             '&::-webkit-scrollbar': {
                               background: 'transparent',
@@ -1505,17 +1513,18 @@ export function HomePage() {
                       )}
                     </Box>
                   </TabPanel>
-                  <TabPanel px="0" py="4">
+                  <TabPanel px="0" pt="2" id="Starred Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
-                      {recentBoards.length > 0 ? (
+                      {boards.filter(boardStarredFilter).length > 0 ? (
                         <HStack
                           gap="3"
                           width="100%"
                           overflowX="auto"
                           overflowY="hidden"
                           height="fit-content"
-                          py="5"
                           px="2"
+                          pt="2"
+                          pb="4"
                           css={{
                             '&::-webkit-scrollbar': {
                               background: 'transparent',
@@ -1569,7 +1578,7 @@ export function HomePage() {
                       />
                     </InputGroup>
                     {/* <Box ref={createRoomRef}> */}
-                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md">
+                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor}>
                       <Icon as={MdAdd} mr="1" />
                       Create Room
                     </Button>
