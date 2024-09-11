@@ -24,7 +24,8 @@ export interface PluginUploadProps {
  */
 export function PluginsPanel(props: PluginUploadProps) {
   // Plugin store. Sort them by name.
-  const plugins = usePluginStore((state) => state.plugins);
+  const allPlugins = usePluginStore((state) => state.plugins);
+  const plugins = allPlugins.filter((plugin) => plugin.data.roomId === props.roomId);
   plugins.sort((a, b) => a.data.name.localeCompare(b.data.name));
 
   // App Store
