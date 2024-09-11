@@ -49,7 +49,19 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline, MdGridView, MdList } from 'react-icons/md';
+import {
+  MdAdd,
+  MdExitToApp,
+  MdHome,
+  MdPerson,
+  MdSearch,
+  MdStarOutline,
+  MdGridView,
+  MdList,
+  MdPeople,
+  MdBorderAll,
+  MdFolder,
+} from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
 
@@ -82,6 +94,7 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, PluginsList } from './components';
+import { HiPuzzle } from 'react-icons/hi';
 
 /**
  * Home page for SAGE3
@@ -1027,18 +1040,6 @@ export function HomePage() {
 
               <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
-                <Tooltip label={'Create a new board in this room'} openDelay={400} hasArrow placement="top">
-                  <Button
-                    colorScheme="teal"
-                    variant="outline"
-                    size="sm"
-                    width="120px"
-                    isDisabled={!canCreateBoards}
-                    onClick={createBoardModalOnOpen}
-                  >
-                    Create Board
-                  </Button>
-                </Tooltip>
                 <Tooltip
                   label={
                     selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
@@ -1088,10 +1089,18 @@ export function HomePage() {
           <Box width="100%" height="100%">
             <Tabs colorScheme="teal">
               <TabList>
-                <Tab>Boards</Tab>
-                <Tab>Members</Tab>
-                <Tab>Assets</Tab>
-                <Tab>Plugins</Tab>
+                <Tab>
+                  <Icon as={MdBorderAll} mr="1"></Icon>Boards
+                </Tab>
+                <Tab>
+                  <Icon as={MdPeople} mr="1"></Icon>Members
+                </Tab>
+                <Tab>
+                  <Icon as={MdFolder} mr="1"></Icon> Assets
+                </Tab>
+                <Tab>
+                  <Icon as={HiPuzzle} mr="1"></Icon>Plugins
+                </Tab>
               </TabList>
 
               <TabPanels>
@@ -1099,6 +1108,25 @@ export function HomePage() {
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
                       <Flex align="center" gap="2" justify="flex-start" mx="4">
+                        <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
+                          <IconButton
+                            size="md"
+                            variant={'outline'}
+                            colorScheme={'teal'}
+                            aria-label="favorite-board"
+                            fontSize="xl"
+                            onClick={createBoardModalOnOpen}
+                            isDisabled={!canCreateBoards}
+                            icon={<MdAdd />}
+                          ></IconButton>
+                        </Tooltip>
+
+                        <InputGroup size="md" width="365px" my="1">
+                          <InputLeftElement pointerEvents="none">
+                            <MdSearch />
+                          </InputLeftElement>
+                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                        </InputGroup>
                         <ButtonGroup size="md" isAttached variant="outline">
                           <IconButton
                             aria-label="Board List View"
@@ -1117,13 +1145,6 @@ export function HomePage() {
                             icon={<MdGridView />}
                           />
                         </ButtonGroup>
-
-                        <InputGroup size="md" width="415px" my="1">
-                          <InputLeftElement pointerEvents="none">
-                            <MdSearch />
-                          </InputLeftElement>
-                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                        </InputGroup>
                       </Flex>
                       {/* <Divider /> */}
                       {boardListView == 'grid' && (
@@ -1215,7 +1236,7 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
-                  <Box display="flex" width="400px">
+                  <Box display="flex" width="400px" pl="4">
                     <VStack
                       gap="3"
                       pr="2"
@@ -1261,7 +1282,7 @@ export function HomePage() {
                 </TabPanel>
                 <TabPanel px="0">Assets</TabPanel>
                 <TabPanel px="0">
-                  <PluginsList roomId={selectedRoom._id} />
+                  <PluginsList room={selectedRoom} />
                 </TabPanel>
               </TabPanels>
             </Tabs>
