@@ -63,11 +63,20 @@ export function Lasso(props: LassoProps) {
   const lassoEnd = () => {
     setMouseDown(false);
     setLassoMode(false);
-    // Deselect all aps
-    if (!isDragging) {
-      clearSelectedApps();
-    }
-    setIsDragging(false);
+    setIsDragging(wasDragging => {
+      if (!wasDragging) {
+        clearSelectedApps();
+      }
+      return false
+    })
+  };
+
+  const lassoEndTouch = () => {
+    setMouseDown(false);
+    setLassoMode(false);
+    setIsDragging(wasDragging => {
+      return false
+    })
   };
 
   // Get last position
@@ -93,6 +102,9 @@ export function Lasso(props: LassoProps) {
     if (ev.button == 0 && mousedown) {
       lassoMove(ev.clientX, ev.clientY)
     }
+    else if (ev.buttons === 4) {
+      setIsDragging(true) // Keep Current Lasso Selection
+    }
   };
 
   // Touch Behaviours
@@ -103,16 +115,18 @@ export function Lasso(props: LassoProps) {
   };
 
   const touchUp = () => {
-    // setLassoMode(false);
-    lassoEnd()
+    lassoEndTouch()
   };
 
   const touchMove = (ev: any) => {
     if (ev.touches.length === 1) {
       lassoMove(ev.touches[0].clientX, ev.touches[0].clientY)
     }
+    else if (ev.touches.length === 2) {
+      setIsDragging(true) // Keep Current Lasso Selection
+    }
     else {
-      lassoEnd()
+      // lassoEnd()
     }
   };
 
