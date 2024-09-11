@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import { useCursorBoardPosition, useHexColor, useKeyPress, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUserSettings } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
 
 type LassoProps = {
@@ -25,6 +25,9 @@ type BoxProps = {
 };
 
 export function Lasso(props: LassoProps) {
+  // Settings
+  const { settings, setPrimaryActionMode } = useUserSettings();
+  
   // Board state
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -112,6 +115,11 @@ export function Lasso(props: LassoProps) {
     }
   };
 
+  const preventDragDrop = (event: React.DragEvent<any>) => {
+    setPrimaryActionMode("grab")
+    event.stopPropagation();
+  };
+
   return (
     <>
       {/* lassoMode */}
@@ -136,6 +144,8 @@ export function Lasso(props: LassoProps) {
           onTouchStart={touchDown}
           onTouchEnd={touchUp}
           onTouchMove={touchMove}
+         
+          onDragEnter={preventDragDrop}
         >
           {mousedown ? (
             <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
