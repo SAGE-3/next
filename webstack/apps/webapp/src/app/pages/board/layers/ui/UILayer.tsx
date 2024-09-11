@@ -55,6 +55,7 @@ import {
   KernelsPanel,
   TagsDisplay,
 } from './components';
+import { BiPencil } from 'react-icons/bi';
 
 type UILayerProps = {
   boardId: string;
@@ -306,16 +307,44 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Tooltip label={primaryActionMode === 'lasso' ? 'Selection' : 'Grab (Panning Tool)'}>
-            <IconButton
-              size="sm"
-              colorScheme={user?.data.color || 'gray'}
-              icon={primaryActionMode === 'lasso' ? <LiaMousePointerSolid /> : <LiaHandPaperSolid />}
-              fontSize="xl"
-              aria-label={'input-type'}
-              onClick={() => {setPrimaryActionMode(primaryActionMode === "lasso" ? "grab" : "lasso")}}
-            ></IconButton>
-          </Tooltip>
+          <Box display="flex">
+            <Tooltip label={'Grab (Panning Tool)'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "grab" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<LiaHandPaperSolid />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                roundedLeft={'lg'}
+                roundedRight={'none'}
+                onClick={() => {setPrimaryActionMode("grab")}}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Selection'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<LiaMousePointerSolid />}
+                fontSize="xl"
+                roundedLeft={'none'}
+                roundedRight={'lg'}
+                aria-label={'input-type'}
+                onClick={() => {setPrimaryActionMode("lasso")}}
+              ></IconButton>
+            </Tooltip>
+            {/* <Tooltip label={'Annotations'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<BiPencil />}
+                fontSize="xl"
+                roundedLeft={'none'}
+                roundedRight={'lg'}
+                aria-label={'input-type'}
+                onClick={() => {setPrimaryActionMode("lasso")}}
+              ></IconButton>
+            </Tooltip> */}
+          </Box>
         </Box>
       </Box>
 
