@@ -7,7 +7,7 @@
  */
 
 // React Imports
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Chakra Iports
 import {
@@ -147,6 +147,10 @@ export function HomePage() {
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<'active' | 'starred' | 'recent' | undefined>(undefined);
   const [passwordProtectedRoom, setPasswordProtectedRoom] = useState<Room | undefined>(undefined);
 
+  // Searchbar
+  const [searchSage, setSearchSage] = useState<string>('');
+  const [isSearchSageFocused, setSearchSageFocused] = useState<boolean>(false);
+
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
 
@@ -176,6 +180,8 @@ export function HomePage() {
   const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
   const tabColorValue = useColorModeValue('gray.100', 'gray.600');
   const tabColor = useHexColor(tabColorValue);
+  const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
+  const searchBarColor = useHexColor(searchBarColorValue);
 
   // const { toggleColorMode, colorMode } = useColorMode();
 
@@ -430,6 +436,10 @@ export function HomePage() {
     return fuzzySearch(room.data.name + ' ' + room.data.description, roomSearch);
   };
 
+  const sageSearchFilter = (item: Board | Room) => {
+    return fuzzySearch(item.data.name + '' + item.data.description, searchSage);
+  };
+
   // Check to see if the user is the owner but not a member in weird cases
   useEffect(() => {
     if (roomsFetched) {
@@ -450,6 +460,19 @@ export function HomePage() {
       });
     }
   }, [roomsFetched]);
+
+  const roomAndBoards = useMemo(() => {
+    const filteredRooms = rooms.filter(roomMemberFilter);
+    const filteredRoomsIds = new Set(filteredRooms.map((room: Room) => room._id));
+    const boardsInJoinedRooms = boards.filter((board: Board) => {
+      console.log('filteredRoomIds');
+      return filteredRoomsIds.has(board.data.roomId);
+    });
+
+    return [...filteredRooms, ...boardsInJoinedRooms];
+  }, [rooms, boards]);
+
+  console.log('roomAndBoards', roomAndBoards);
 
   // Function to handle states for when a user clicks on create room
   const handleCreateRoomClick = () => {
@@ -1376,24 +1399,62 @@ export function HomePage() {
             </Text>
 
             <Box position="relative">
-              <InputGroup size="md" width="full" my="4">
+              <InputGroup size="md" width="full" mt="4">
                 <InputLeftElement pointerEvents="none">
                   <MdSearch />
                 </InputLeftElement>
                 <Input
                   placeholder="Search in SAGE3"
                   _placeholder={{ opacity: 0.6, color: 'white' }}
-                  // value={roomSearch}
-                  // onChange={(e) => setRoomSearch(e.target.value)}
+                  value={searchSage}
+                  onChange={(e) => setSearchSage(e.target.value)}
                   roundedTop="2xl"
-                  roundedBottom="2xl"
+                  _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+                  onFocus={() => {
+                    setSearchSageFocused(true);
+                  }}
+                  onBlur={() => {
+                    setSearchSageFocused(false);
+                  }}
+                  roundedBottom={`${searchSage.length > 0 && isSearchSageFocused ? 'none' : '2xl'}`}
                 />
               </InputGroup>
-              {/* <Box position="absolute" zIndex="10000" mb="0" h="400px" w="full" bg="black" roundedBottom="2xl">
-                test
-              </Box> */}
+              <Box
+                hidden={!(searchSage.length > 0) || !isSearchSageFocused}
+                position="absolute"
+                zIndex="10000"
+                mb="0"
+                h="400px"
+                w="full"
+                bg={searchBarColor}
+                roundedBottom="2xl"
+                p="3"
+                border="1px solid"
+                borderColor="inherit"
+                borderTop="none"
+                overflow="auto"
+              >
+                {roomAndBoards
+                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | Board) => {
+                      if ((item as Board).data.roomId) {
+                        return (
+                          <>
+                            <Box>
+                              BOARD: {item.data.name}, {item.data.description}
+                            </Box>
+                          </>
+                        );
+                      }
+                      return (
+                        <Box>
+                          ROOM: {item.data.name}, {item.data.description}
+                        </Box>
+                      );
+                    })
+                  : 'No results'}
+              </Box>
             </Box>
-            <Box borderRadius={cardRadius} height="100%">
+            <Box borderRadius={cardRadius} height="100%" mt="4">
               <Tabs
                 variant="unstyled"
                 isLazy
@@ -1578,8 +1639,8 @@ export function HomePage() {
                       />
                     </InputGroup>
                     {/* <Box ref={createRoomRef}> */}
-                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor}>
-                      <Icon as={MdAdd} mr="1" />
+                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
+                      <Icon as={MdAdd} mr="1" fontWeight="bold" />
                       Create Room
                     </Button>
                     {/* </Box> */}
