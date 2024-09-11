@@ -28,7 +28,7 @@ interface PluginState {
     name: string,
     description: string,
     username: string,
-    roomId: string,
+    roomId: string
   ) => Promise<{ success: boolean; message: string }>;
   subscribeToPlugins: () => Promise<void>;
   delete: (id: string) => Promise<void>;

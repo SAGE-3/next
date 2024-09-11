@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   Box,
   useColorModeValue,
@@ -20,12 +21,13 @@ import {
   Tooltip,
   Tag,
 } from '@chakra-ui/react';
-import { useHexColor, usePluginStore, ConfirmModal, useUser, PluginUploadModal, useAbility } from '@sage3/frontend';
-import { fuzzySearch } from '@sage3/shared';
-import { Plugin, Room } from '@sage3/shared/types';
-import { useEffect, useState } from 'react';
+
 import { HiTrash } from 'react-icons/hi';
 import { MdAdd, MdPerson, MdSearch } from 'react-icons/md';
+
+import { fuzzySearch } from '@sage3/shared';
+import { Plugin, Room } from '@sage3/shared/types';
+import { useHexColor, usePluginStore, ConfirmModal, useUser, PluginUploadModal, useAbility } from '@sage3/frontend';
 
 // PluginsList Props
 export interface PluginsListProps {
@@ -210,8 +212,8 @@ function PluginItem(props: PluginItemProps): JSX.Element {
   const borderColor = useHexColor(borderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
-  const grayedOutColorValue = useColorModeValue('gray.100', 'gray.700');
-  const grayedOutColor = useHexColor(grayedOutColorValue);
+  // const grayedOutColorValue = useColorModeValue('gray.100', 'gray.700');
+  // const grayedOutColor = useHexColor(grayedOutColorValue);
 
   return (
     <Box

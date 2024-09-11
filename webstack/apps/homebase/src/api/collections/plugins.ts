@@ -9,11 +9,10 @@
 import { PluginSchema } from '@sage3/shared/types';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
-import * as fs from 'fs';
 // Node modules
+import * as fs from 'fs';
 import * as multer from 'multer';
 import * as path from 'path';
-// import { v4 as getUUID } from 'uuid';
 
 import * as jszip from 'jszip';
 import { isZip } from '@sage3/shared';
@@ -133,7 +132,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           // Update the database
           this.add(
             { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), roomId },
-            req.user.id,
+            req.user.id
           );
           removeUploadedFile();
           res.status(200).send({ success: true, message: 'Plugin Uploaded' });

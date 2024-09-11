@@ -7,10 +7,11 @@
  */
 
 import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure } from '@chakra-ui/react';
-import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { format } from 'date-fns';
+
+import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { ButtonPanel, Panel } from '../Panel';
-import { useParams } from 'react-router';
+
 
 export interface PluginUploadProps {
   boardId: string;

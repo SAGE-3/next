@@ -64,6 +64,7 @@ import {
 } from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
+import { HiPuzzle } from 'react-icons/hi';
 
 // SAGE Imports
 import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
@@ -94,7 +95,6 @@ import {
 
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, PluginsList } from './components';
-import { HiPuzzle } from 'react-icons/hi';
 
 /**
  * Home page for SAGE3
