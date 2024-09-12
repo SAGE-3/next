@@ -24,6 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { Editor } from '@monaco-editor/react';
 
+import { HiTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 import { LuFileJson, LuFileCode } from 'react-icons/lu';
 import {
@@ -70,7 +71,6 @@ import {
   isText,
 } from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
-import { HiTrash } from 'react-icons/hi';
 
 // Compare filenames case independent
 function sortAsset(a: Asset, b: Asset) {
@@ -316,7 +316,7 @@ function AssetPreview(props: AssetPreviewProps) {
   }
 
   return (
-    <Box width={800 + 'px'} display="flex" flexDirection="column">
+    <Box width={'800px'} display="flex" flexDirection="column">
       {/* First Area: Meta Data */}
       <Box mb={2}>
         <HStack gap="8" mb="4">
@@ -349,7 +349,6 @@ function AssetPreview(props: AssetPreviewProps) {
             aria-label="favorite-board"
             fontSize="xl"
             icon={<MdDownload />}
-            // isDisabled={}
             onClick={downloadAsset}
           />
         </Tooltip>
@@ -423,11 +422,16 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       imageURL = apiUrls.assets.getAssetById(asset.data.file);
     } else {
       const extras = asset.data.derived as ExtraImageType;
-      for (let i = 0; i < extras.sizes.length; i++) {
-        if (extras.sizes[i].width > width) {
-          // Choose the first image that is larger than the preview width
-          imageURL = extras.sizes[i].url;
-          break;
+      if (extras.sizes.length === 0) {
+        // No multi-resolution images, use the original
+        imageURL = apiUrls.assets.getAssetById(asset.data.file);
+      } else {
+        for (let i = 0; i < extras.sizes.length; i++) {
+          if (extras.sizes[i].width > width) {
+            // Choose the first image that is larger than the preview width
+            imageURL = extras.sizes[i].url;
+            break;
+          }
         }
       }
       if (!imageURL) {
@@ -477,11 +481,11 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
     if (goto) {
       return (
         <Box width="400px" overflow="hidden">
-          <Text width="100%" fontSize="sm" mb="2" fontWeight={'bold'}>
-            {goto}
+          <Text width="100%" fontSize="md" mb="2" fontWeight={'bold'}>
+            URL: {goto}
           </Text>
           <Button onClick={() => openExternalURL(goto)} colorScheme="teal" size="sm">
-            Open External URL
+            Open in Browser
           </Button>
         </Box>
       );
@@ -498,7 +502,7 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       <textarea
         value={text}
         readOnly={true}
-        style={{ width: '600px', padding: '8px', height: '500px', resize: 'none', textWrap: 'nowrap' }}
+        style={{ width: '500px', padding: '8px', height: '500px', resize: 'none', textWrap: 'nowrap' }}
       />
     );
   }
@@ -520,7 +524,7 @@ function CodeViewer(props: { code: string; language: string; theme: string }) {
   return (
     <Editor
       value={props.code}
-      width={'100%'}
+      width="100%"
       height="500px"
       language={props.language}
       theme={props.theme}

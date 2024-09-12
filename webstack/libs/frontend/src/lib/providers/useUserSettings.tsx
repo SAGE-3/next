@@ -41,13 +41,13 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => {},
-  toggleShowViewports: () => {},
-  toggleShowAppTitles: () => {},
-  toggleShowUI: () => {},
-  toggleShowTags: () => {},
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
-  restoreDefaultSettings: () => {},
+  toggleShowCursors: () => { },
+  toggleShowViewports: () => { },
+  toggleShowAppTitles: () => { },
+  toggleShowUI: () => { },
+  toggleShowTags: () => { },
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  restoreDefaultSettings: () => { },
 });
 
 /**

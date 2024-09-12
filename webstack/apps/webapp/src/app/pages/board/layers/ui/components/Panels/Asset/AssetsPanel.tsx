@@ -38,7 +38,6 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   // Access the list of users
   const users = useUsersStore((state) => state.users);
-  // const { auth } = useAuth();
 
   // Ablities
   const canUpload = useAbility('upload', 'assets');
