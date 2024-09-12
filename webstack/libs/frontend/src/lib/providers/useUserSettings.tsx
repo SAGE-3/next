@@ -23,7 +23,7 @@ const defaultSettings: UserSettings = {
   showAppTitles: false,
   showUI: true,
   showTags: false,
-  selectedBoardListView: 'list',
+  selectedBoardListView: 'grid',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -41,13 +41,13 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => { },
-  toggleShowViewports: () => { },
-  toggleShowAppTitles: () => { },
-  toggleShowUI: () => { },
-  toggleShowTags: () => { },
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
-  restoreDefaultSettings: () => { },
+  toggleShowCursors: () => {},
+  toggleShowViewports: () => {},
+  toggleShowAppTitles: () => {},
+  toggleShowUI: () => {},
+  toggleShowTags: () => {},
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
+  restoreDefaultSettings: () => {},
 });
 
 /**

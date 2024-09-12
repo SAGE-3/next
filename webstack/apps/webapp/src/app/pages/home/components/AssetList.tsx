@@ -15,13 +15,12 @@ import {
   InputGroup,
   InputLeftElement,
   Button,
-  Grid,
   HStack,
-  Link,
   Tag,
   IconButton,
   VStack,
   Tooltip,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { Editor } from '@monaco-editor/react';
 
@@ -51,8 +50,25 @@ import {
   useHexColor,
   useUsersStore,
   useUser,
+  UploadModal,
+  formatDateAndTime,
+  ConfirmModal,
+  truncateWithEllipsis,
 } from '@sage3/frontend';
-import { fuzzySearch, isCode, isVideo, isGIF, isPDF, isImage, mimeToCode, isGeoJSON, isFileURL, isJSON, isPython } from '@sage3/shared';
+import {
+  fuzzySearch,
+  isCode,
+  isVideo,
+  isGIF,
+  isPDF,
+  isImage,
+  mimeToCode,
+  isGeoJSON,
+  isFileURL,
+  isJSON,
+  isPython,
+  isText,
+} from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 import { HiTrash } from 'react-icons/hi';
 
@@ -70,13 +86,19 @@ export function AssetList(props: { room: Room }) {
   const allAssets = useAssetStore((state) => state.assets);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedAssetAuthor, setSelectedAssetAuthor] = useState<string>('Unknown');
   const [assetSearch, setAssetSearch] = useState('');
   const [showOnlyYours, setShowOnlyYours] = useState(false);
   const handleShowOnlyYours = () => setShowOnlyYours(!showOnlyYours);
 
+  const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
+  const { isOpen: deleteIsOpen, onOpen: deleteOnOpen, onClose: deleteOnClose } = useDisclosure();
+
   // User Info
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
+  const isRoomOwner = user?._id == props.room._createdBy;
+  const canDeleteSelectedAsset = selectedAsset?.data.owner === user?._id || isRoomOwner;
 
   const filterAssets = (asset: Asset) => {
     const filterYours = showOnlyYours ? asset.data.owner === user?._id : true;
@@ -88,82 +110,117 @@ export function AssetList(props: { room: Room }) {
     return fuzzySearch(data.originalfilename, assetSearch);
   };
 
+  const handleAssetDelete = () => {
+    if (selectedAsset) {
+      AssetHTTPService.del(selectedAsset._id);
+      setSelectedAsset(null);
+    }
+    deleteOnClose();
+  };
+
+  const handleAssetClick = (asset: Asset) => {
+    setSelectedAsset(asset);
+    const author = users.find((u) => u._id === asset.data.owner);
+    setSelectedAssetAuthor(author?.data.name || 'Unknown');
+  };
+
   useEffect(() => {
     const assets = allAssets.filter((asset) => asset.data.room === props.room._id);
     setAssets(assets);
   }, [allAssets, users, props.room]);
 
-  function handleUpload() {
-    // Upload asset
-  }
-
   return (
     <Box display="flex" gap="8">
-      <Box height="calc(100vh - 300px)" width="500px" overflowY="auto" overflowX="hidden">
-        <VStack width="100%" px="4" gap="3">
-          <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2">
-            {/* Upload Button */}
-            <Tooltip label="Add Plugin" aria-label="upload plugin" placement="top" hasArrow>
-              <IconButton
-                size="md"
-                variant={'outline'}
-                colorScheme={'teal'}
-                aria-label="plugin-upload"
-                fontSize="xl"
-                icon={<MdAdd />}
-                onClick={handleUpload}
-              ></IconButton>
-            </Tooltip>
-            {/* Search Input */}
-            <InputGroup size="md" width="100%" my="1">
-              <InputLeftElement pointerEvents="none">
-                <MdSearch />
-              </InputLeftElement>
-              <Input placeholder="Search Assets" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
-            </InputGroup>
-            {/* Filter Yours */}
-            <Tooltip label="Filter Yours" aria-label="filter your plugins" placement="top" hasArrow>
-              <IconButton
-                size="md"
-                variant="outline"
-                colorScheme={showOnlyYours ? 'teal' : 'gray'}
-                aria-label="filter-yours"
-                fontSize="xl"
-                icon={<MdPerson />}
-                onClick={handleShowOnlyYours}
-              ></IconButton>
-            </Tooltip>
-          </Box>
+      {/* Upload dialog */}
+      <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
+      {/* Delete modal */}
+      <ConfirmModal
+        isOpen={deleteIsOpen}
+        onClose={deleteOnClose}
+        onConfirm={handleAssetDelete}
+        title={'Asset Delete'}
+        message={`Are you sure you want to delete ${selectedAsset?.data.originalfilename}?`}
+      />
+      <Box width="500px">
+        <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2" mb="3" px="2">
+          {/* Upload Button */}
+          <Tooltip label="Add Asset" aria-label="upload asset" placement="top" hasArrow>
+            <IconButton
+              size="md"
+              variant={'outline'}
+              colorScheme={'teal'}
+              aria-label="asset-upload"
+              fontSize="xl"
+              icon={<MdAdd />}
+              onClick={uploadOnOpen}
+            ></IconButton>
+          </Tooltip>
+          {/* Search Input */}
+          <InputGroup size="md" width="100%" my="1">
+            <InputLeftElement pointerEvents="none">
+              <MdSearch />
+            </InputLeftElement>
+            <Input placeholder="Search Assets" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
+          </InputGroup>
+          {/* Filter Yours */}
+          <Tooltip label="Filter Yours" aria-label="filter your assets" placement="top" hasArrow>
+            <IconButton
+              size="md"
+              variant="outline"
+              colorScheme={showOnlyYours ? 'teal' : 'gray'}
+              aria-label="filter-yours"
+              fontSize="xl"
+              icon={<MdPerson />}
+              onClick={handleShowOnlyYours}
+            ></IconButton>
+          </Tooltip>
+        </Box>
 
+        <VStack height="calc(100vh - 320px)" width="100%" gap="2" overflowY="auto" overflowX="hidden" px="2">
           {assets
             .filter(filterAssets)
             .filter(assetSearchFilter)
             .sort(sortAsset)
-            .map((a) => (
-              <AssetListItem
-                key={a._id}
-                asset={a}
-                onClick={() => setSelectedAsset(a)}
-                selected={a._id == selectedAsset?._id}
-                isOwner={a.data.owner === user?._id}
-              />
-            ))}
+            .map((a) => {
+              const author = users.find((u) => u._id === a.data.owner);
+              const authorName = author?.data.name || 'Unknown';
+              return (
+                <AssetListItem
+                  key={a._id}
+                  asset={a}
+                  authorName={authorName}
+                  onClick={() => handleAssetClick(a)}
+                  selected={a._id == selectedAsset?._id}
+                  isOwner={a.data.owner === user?._id}
+                />
+              );
+            })}
         </VStack>
       </Box>
-      <Box flex="1">{selectedAsset && <AssetPreview asset={selectedAsset}></AssetPreview>}</Box>
+      <Box flex="1">
+        {selectedAsset && (
+          <AssetPreview
+            asset={selectedAsset}
+            author={selectedAssetAuthor}
+            onDelete={deleteOnOpen}
+            canDelete={canDeleteSelectedAsset}
+          ></AssetPreview>
+        )}
+      </Box>
     </Box>
   );
 }
 
-interface PluginItemProps {
+interface AssetItemProps {
   asset: Asset;
   selected: boolean;
   isOwner: boolean;
+  authorName: string;
   onClick: () => void;
 }
 
 // Asset List Item
-function AssetListItem(props: PluginItemProps) {
+function AssetListItem(props: AssetItemProps) {
   const backgroundColorValue = useColorModeValue('#ffffff', `gray.800`);
   const backgroundColor = useHexColor(backgroundColorValue);
 
@@ -174,7 +231,8 @@ function AssetListItem(props: PluginItemProps) {
 
   const name = props.asset.data.originalfilename;
   const icon = whichIcon(props.asset.data.mimetype);
-  const dateCreated = new Date(props.asset.data.dateCreated).toLocaleDateString();
+  const dateCreated = formatDateAndTime(props.asset.data.dateCreated);
+  const author = truncateWithEllipsis(props.authorName, 10);
 
   return (
     <Box
@@ -187,7 +245,7 @@ function AssetListItem(props: PluginItemProps) {
       borderRadius="md"
       boxSizing="border-box"
       width="100%"
-      height="56px"
+      height="44px"
       border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
       transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
       _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
@@ -197,11 +255,11 @@ function AssetListItem(props: PluginItemProps) {
     >
       <Box display="flex" alignItems={'center'}>
         {/* Chakra Icon */}
-        <Box display="flex" alignItems={'center'} ml={1} mr={2}>
+        <Box display="flex" alignItems={'center'} ml={0} mr={2}>
           {icon}
         </Box>
-        <Box display="flex" flexDir="column" maxWidth="350px">
-          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+        <Box display="flex" flexDir="column" maxWidth="325px">
+          <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="sm" fontWeight={'bold'}>
             {name}
           </Box>
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subText}>
@@ -209,10 +267,14 @@ function AssetListItem(props: PluginItemProps) {
           </Box>
         </Box>
       </Box>
-      <Box display="flex" alignItems={'center'}>
-        {props.isOwner && (
-          <Tag colorScheme="teal" size="md">
+      <Box display="flex" width="80px">
+        {props.isOwner ? (
+          <Tag colorScheme="teal" size="sm" width="100%" justifyContent="center">
             Owner
+          </Tag>
+        ) : (
+          <Tag colorScheme="yellow" size="sm" whiteSpace="nowrap" overflow="hidden" justifyContent="start">
+            {author}
           </Tag>
         )}
       </Box>
@@ -220,15 +282,23 @@ function AssetListItem(props: PluginItemProps) {
   );
 }
 
+interface AssetPreviewProps {
+  asset: Asset;
+  canDelete: boolean;
+  author: string;
+  onDelete: () => void;
+}
+
 // Asset Preview
-function AssetPreview(props: { asset: Asset }) {
+function AssetPreview(props: AssetPreviewProps) {
   const selectedAsset = props.asset;
 
   const filename = selectedAsset.data.originalfilename;
-  const dateCreated = new Date(selectedAsset.data.dateCreated).toLocaleDateString();
-  const dateAdded = new Date(selectedAsset.data.dateAdded).toLocaleDateString();
+  const dateCreated = formatDateAndTime(selectedAsset.data.dateCreated);
+  const dateAdded = formatDateAndTime(selectedAsset.data.dateAdded);
   const type = selectedAsset.data.mimetype;
   const size = humanFileSize(selectedAsset.data.size);
+  const author = props.author;
   const [PreviewElement, setPreviewElement] = useState<JSX.Element | null>(null);
   const theme = useColorModeValue('vs', 'vs-dark');
 
@@ -245,10 +315,6 @@ function AssetPreview(props: { asset: Asset }) {
     downloadFile(fileURL, filename);
   }
 
-  function deleteAsset() {
-    AssetHTTPService.del(props.asset._id);
-  }
-
   return (
     <Box width={800 + 'px'} display="flex" flexDirection="column">
       {/* First Area: Meta Data */}
@@ -256,13 +322,15 @@ function AssetPreview(props: { asset: Asset }) {
         <HStack gap="8" mb="4">
           <VStack alignItems={'start'} fontWeight={'bold'}>
             <Text>Filename</Text>
-            <Text>Date Created</Text>
-            <Text>Date Added</Text>
+            <Text>Owner</Text>
+            <Text>Created</Text>
+            <Text>Uploaded</Text>
             <Text>Type</Text>
             <Text>Size</Text>
           </VStack>
           <VStack alignItems={'start'}>
             <Text>{filename}</Text>
+            <Text>{author}</Text>
             <Text>{dateCreated}</Text>
             <Text>{dateAdded}</Text>
             <Text>{type}</Text>
@@ -285,7 +353,13 @@ function AssetPreview(props: { asset: Asset }) {
             onClick={downloadAsset}
           />
         </Tooltip>
-        <Tooltip label="Delete Asset" aria-label="delete-asset" placement="top" hasArrow>
+        <Tooltip
+          label={props.canDelete ? 'Delete Asset' : 'Only the Asset owner and Room Owner can delete this asset.'}
+          aria-label="delete-asset"
+          placement="top"
+          hasArrow
+          textAlign={'center'}
+        >
           <IconButton
             size="md"
             variant={'outline'}
@@ -293,8 +367,8 @@ function AssetPreview(props: { asset: Asset }) {
             aria-label="favorite-board"
             fontSize="xl"
             icon={<HiTrash />}
-            // isDisabled={!canDeleteSelectedPlugin}
-            onClick={deleteAsset}
+            isDisabled={!props.canDelete}
+            onClick={props.onDelete}
           />
         </Tooltip>
         {/* Add more actions as needed */}
@@ -311,27 +385,27 @@ function AssetPreview(props: { asset: Asset }) {
 // Pick an icon based on file type
 const whichIcon = (type: string) => {
   if (isFileURL(type)) {
-    return <MdOutlineLink style={{ color: 'lightgreen' }} size={'20px'} />;
+    return <MdOutlineLink style={{ color: 'lightgreen' }} size={'24px'} />;
   } else if (isGeoJSON(type)) {
-    return <MdOutlineMap style={{ color: 'green' }} size={'20px'} />;
+    return <MdOutlineMap style={{ color: 'green' }} size={'24px'} />;
   } else if (isJSON(type)) {
-    return <LuFileJson style={{ color: 'cyan' }} size={'20px'} />;
+    return <LuFileJson style={{ color: 'cyan' }} size={'24px'} />;
   } else if (isPython(type)) {
-    return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
+    return <FaPython style={{ color: 'lightblue' }} size={'24px'} />;
   } else if (isCode(type)) {
     if (type === 'application/javascript' || type === 'text/javascript') {
-      return <MdJavascript style={{ color: 'yellow' }} size={'20px'} />;
+      return <MdJavascript style={{ color: 'yellow' }} size={'24px'} />;
     } else {
-      return <LuFileCode style={{ color: 'tomato' }} size={'20px'} />;
+      return <LuFileCode style={{ color: 'tomato' }} size={'24px'} />;
     }
   } else if (isVideo(type)) {
-    return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
+    return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'24px'} />;
   } else if (isImage(type)) {
-    return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
+    return <MdOutlineImage style={{ color: 'lightblue' }} size={'24px'} />;
   } else if (isPDF(type)) {
-    return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+    return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'24px'} />;
   } else {
-    return <MdOutlineFilePresent size={'20px'} />;
+    return <MdOutlineFilePresent size={'24px'} />;
   }
 };
 
@@ -402,21 +476,31 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
     }
     if (goto) {
       return (
-        <Text>
-          URL:{' '}
-          <Link
-            href={goto}
-            isExternal={true}
-            onClick={(evt) => {
-              evt.preventDefault();
-              openExternalURL(goto);
-            }}
-          >
+        <Box width="400px" overflow="hidden">
+          <Text width="100%" fontSize="sm" mb="2" fontWeight={'bold'}>
             {goto}
-          </Link>
-        </Text>
+          </Text>
+          <Button onClick={() => openExternalURL(goto)} colorScheme="teal" size="sm">
+            Open External URL
+          </Button>
+        </Box>
       );
+    } else {
+      return <Text>URL Preview not available</Text>;
     }
+  } else if (isText(type)) {
+    // Download text file
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    const response = await fetch(fileURL);
+    const text = await response.text();
+    // Show text in a nice non-editable text box
+    return (
+      <textarea
+        value={text}
+        readOnly={true}
+        style={{ width: '600px', padding: '8px', height: '500px', resize: 'none', textWrap: 'nowrap' }}
+      />
+    );
   }
   return <Text>Preview not available</Text>;
 };

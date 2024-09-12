@@ -156,7 +156,7 @@ export function HomePage() {
 
   // Settings
   const { setBoardListView, settings } = useUserSettings();
-  const boardListView = settings.selectedBoardListView;
+  const boardListView = settings.selectedBoardListView ? settings.selectedBoardListView : 'grid';
 
   // User Selected Room, Board, and User
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
@@ -1112,7 +1112,7 @@ export function HomePage() {
                 <TabPanel px="0">
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
-                      <Flex align="center" gap="2" justify="flex-start" mx="4">
+                      <Flex align="center" gap="2" justify="flex-start" mx="2">
                         <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
                           <IconButton
                             size="md"
@@ -1134,14 +1134,6 @@ export function HomePage() {
                         </InputGroup>
                         <ButtonGroup size="md" isAttached variant="outline">
                           <IconButton
-                            aria-label="Board List View"
-                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
-                            onClick={() => {
-                              setBoardListView('list');
-                            }}
-                            icon={<MdList />}
-                          />
-                          <IconButton
                             aria-label="Board Grid View"
                             colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
                             onClick={() => {
@@ -1149,13 +1141,21 @@ export function HomePage() {
                             }}
                             icon={<MdGridView />}
                           />
+                          <IconButton
+                            aria-label="Board List View"
+                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('list');
+                            }}
+                            icon={<MdList />}
+                          />
                         </ButtonGroup>
                       </Flex>
                       {/* <Divider /> */}
                       {boardListView == 'grid' && (
                         <Flex
                           gap="4"
-                          p="4"
+                          p="2"
                           display="flex"
                           flexWrap="wrap"
                           justifyContent="left"
@@ -1167,7 +1167,6 @@ export function HomePage() {
                           margin="0 auto"
                           overflowY="scroll"
                           overflowX="hidden"
-                          pt="2"
                           minWidth="420px"
                           css={{
                             '&::-webkit-scrollbar': {
@@ -1203,7 +1202,7 @@ export function HomePage() {
                         <VStack
                           gap="3"
                           alignItems="left"
-                          pl="4"
+                          px="2"
                           style={{ height: 'calc(100svh - 360px)' }}
                           overflowY="scroll"
                           overflowX="hidden"
