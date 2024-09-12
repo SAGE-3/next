@@ -43,6 +43,7 @@ import {
   Tag,
   TabIndicator,
   Divider,
+  useOutsideClick,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -85,6 +86,7 @@ import {
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal } from './components';
 import QuickAccessPage from './components/quick-access/QuickAccessPage';
 import { LuChevronsDownUp, LuChevronsUp, LuChevronsUpDown } from 'react-icons/lu';
+import SearchRow from './components/search/SearchRow';
 
 /**
  * Home page for SAGE3
@@ -152,6 +154,7 @@ export function HomePage() {
   // Searchbar
   const [searchSage, setSearchSage] = useState<string>('');
   const [isSearchSageFocused, setSearchSageFocused] = useState<boolean>(false);
+  const searchSageRef = useRef<null | HTMLDivElement>(null);
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -467,14 +470,16 @@ export function HomePage() {
     const filteredRooms = rooms.filter(roomMemberFilter);
     const filteredRoomsIds = new Set(filteredRooms.map((room: Room) => room._id));
     const boardsInJoinedRooms = boards.filter((board: Board) => {
-      console.log('filteredRoomIds');
       return filteredRoomsIds.has(board.data.roomId);
     });
 
     return [...filteredRooms, ...boardsInJoinedRooms];
   }, [rooms, boards]);
 
-  console.log('roomAndBoards', roomAndBoards);
+  useOutsideClick({
+    ref: searchSageRef,
+    handler: () => setSearchSageFocused(false),
+  });
 
   // Function to handle states for when a user clicks on create room
   const handleCreateRoomClick = () => {
@@ -1414,31 +1419,34 @@ export function HomePage() {
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
             </Text>
 
-            <Box position="relative">
-              <InputGroup size="md" width="full" mt="4">
+            <Box
+              mt="4"
+              position="relative"
+              onFocus={() => {
+                setSearchSageFocused(true);
+              }}
+              ref={searchSageRef}
+            >
+              <InputGroup size="md" width="full">
                 <InputLeftElement pointerEvents="none">
                   <MdSearch />
                 </InputLeftElement>
                 <Input
-                  placeholder="Search in SAGE3"
+                  placeholder="Search your rooms and boards"
                   _placeholder={{ opacity: 0.6, color: 'white' }}
                   value={searchSage}
                   onChange={(e) => setSearchSage(e.target.value)}
                   roundedTop="2xl"
                   _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
-                  onFocus={() => {
-                    setSearchSageFocused(true);
-                  }}
-                  onBlur={() => {
-                    setSearchSageFocused(false);
-                  }}
+                  bg={isSearchSageFocused ? searchBarColor : 'inherit'}
                   roundedBottom={`${searchSage.length > 0 && isSearchSageFocused ? 'none' : '2xl'}`}
                 />
               </InputGroup>
               <Box
                 hidden={!(searchSage.length > 0) || !isSearchSageFocused}
+                ref={searchSageRef}
                 position="absolute"
-                zIndex="10000"
+                zIndex="10"
                 mb="0"
                 h="400px"
                 w="full"
@@ -1450,24 +1458,21 @@ export function HomePage() {
                 borderTop="none"
                 overflow="auto"
               >
-                {roomAndBoards
+                {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
                   ? roomAndBoards.filter(sageSearchFilter).map((item: Room | Board) => {
                       if ((item as Board).data.roomId) {
-                        return (
-                          <>
-                            <Box>
-                              BOARD: {item.data.name}, {item.data.description}
-                            </Box>
-                          </>
-                        );
+                        return <SearchRow.Board board={item as Board} />;
                       }
                       return (
-                        <Box>
-                          ROOM: {item.data.name}, {item.data.description}
-                        </Box>
+                        <SearchRow.Room
+                          room={item as Room}
+                          clickHandler={() => {
+                            handleRoomClick(item as Room);
+                          }}
+                        />
                       );
                     })
-                  : 'No results'}
+                  : 'No results.'}
               </Box>
             </Box>
             <Box borderRadius={cardRadius} height="100%" mt="4">
