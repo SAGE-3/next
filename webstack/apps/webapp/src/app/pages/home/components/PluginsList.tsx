@@ -182,9 +182,9 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
                   icon={<HiTrash />}
                   isDisabled={!canDeleteSelectedPlugin}
                   onClick={deleteOnOpen}
-                >
-                  Delete
-                </IconButton>
+                />
+       
+        
               </Tooltip>
             </Box>
             <Box width="100%" height="500px" overflow="hidden" borderRadius="md">
