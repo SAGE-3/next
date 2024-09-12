@@ -1,11 +1,9 @@
 # python modules
-import os, json, time
+import json, time
 import logging
 from dotenv import load_dotenv
 
-# Models
-from pydantic import BaseModel, Json
-from typing import List, Any, NamedTuple
+from localtypes import Context, Question, Answer
 
 # Web API
 from fastapi import FastAPI, HTTPException
@@ -47,15 +45,20 @@ from langchain_core.prompts import ChatPromptTemplate
 # Models
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_openai import ChatOpenAI
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
+# Modules
+from app.chat import ChatAgent
+from app.summary import SummaryAgent
+
+
+# Instantiate each module's class
+chatAG = ChatAgent(logger, ps3)
+summaryAG = SummaryAgent(logger, ps3)
 
 # set to debug the queries into langchain
-# set_debug(True)
-# set_verbose(True)
+set_debug(True)
+set_verbose(True)
 
-# Llama3 server at EVL
-#     "https://arcade.evl.uic.edu/llama/"
 # Get the value from the SAGE3 server configuration
 chat_server = chat["url"]
 if chat_server[-1] != "/":
@@ -67,22 +70,15 @@ llm_openai = None
 
 # LLM model using TGI interface
 if chat["url"] and chat["model"]:
-    # llm_llama = HuggingFaceEndpoint(
-    #     endpoint_url=chat_server,
-    #     max_new_tokens=2048,
-    #     stop_sequences=[
-    #         "<|start_header_id|>",
-    #         "<|end_header_id|>",
-    #         "<|eot_id|>",
-    #         "<|reserved_special_token",
-    #     ],
-    # )
-
-    # Long context model
-    llm_llama = ChatNVIDIA(
-        base_url="https://arcade.evl.uic.edu/llama31_8bf/v1",
-        model="meta/llama-3.1-8b-instruct",
+    llm_llama = HuggingFaceEndpoint(
+        endpoint_url=chat_server,
         max_new_tokens=2048,
+        stop_sequences=[
+            "<|start_header_id|>",
+            "<|end_header_id|>",
+            "<|eot_id|>",
+            "<|reserved_special_token",
+        ],
     )
 
 if openai["apiKey"] and openai["model"]:
@@ -132,32 +128,6 @@ if llm_llama:
 
 if not session_llama and not session_openai:
     raise HTTPException(status_code=500, detail="Langchain> Model unknown")
-
-# Pydantic models: Question, Answer, Context
-
-
-# Previous prompt and position
-class Context(NamedTuple):
-    prompt: str  # previous prompt
-    pos: List[float]  # position in the board
-    roomId: str  # room ID
-    boardId: str  # board ID
-
-
-class Question(BaseModel):
-    ctx: Context  # context
-    id: str  # question UUID v4
-    q: str  # question
-    user: str  # user name
-    location: str  # location
-    model: str  # AI model: chat, openai
-
-
-class Answer(BaseModel):
-    id: str  # question UUID v4
-    r: str  # answer
-    success: bool = True  # success flag
-    actions: List[Json]  # actions to be performed
 
 
 # Web server
@@ -229,73 +199,10 @@ async def ask_question(qq: Question):
 
 @app.post("/summary")
 async def summary(qq: Question):
-    logger.info(
-        "Got summary> from " + qq.user + " from:" + qq.location + " using: " + qq.model
-    )
     try:
-        # Get the current date and time
-        today = time.asctime()
-        session = None
-        # Select the session
-        if qq.model == "chat":
-            session = session_llama
-        elif qq.model == "openai":
-            session = session_openai
-        else:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
-
-        if session:
-            # Collect all the stickies of the board
-            room_id = qq.ctx.roomId
-            board_id = qq.ctx.boardId
-            applist = ps3.get_apps(room_id, board_id)
-            whole_text = ""
-            for app_id, app in applist.items():
-                app_type = app.get("data", {}).get("type", None)
-                if app_type == "Stickie":
-                    text = app.get("data", {}).get("state", {}).get("text")
-                    whole_text += text + "\n"
-                    logger.info("Stickie> " + text)
-
-            # Build the question
-            new_question = (
-                "First, summarize the following text concisely and then, offer your opinion on the topics addressed in the text:\n"
-                + whole_text
-            )
-
-            # Ask the question
-            response = await session.ainvoke(
-                {
-                    "question": new_question,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                }
-            )
-            text = response
-            # Propose the answer to the user
-            action1 = json.dumps(
-                {
-                    "type": "create_app",
-                    "app": "Stickie",
-                    "state": {"text": text, "fontSize": 24, "color": "purple"},
-                    "data": {
-                        "title": "Answer",
-                        "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                        "size": {"width": 400, "height": 400, "depth": 0},
-                    },
-                }
-            )
-
-            # Build the answer object
-            val = Answer(
-                id=qq.id,
-                r=text,
-                success=True,
-                actions=[action1],
-            )
-            return val
-
+        # do the work
+        val = await summaryAG.process(qq)
+        return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
