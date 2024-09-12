@@ -88,12 +88,14 @@ class ChatAgent:
           <|start_header_id|>assistant<|end_header_id|>
         """
         # Building the template with Llama3 HuggingFace
-        # prompt = PromptTemplate.from_template(
-        #     template.format(system_prompt=sys_template_str, user_prompt=human_template_str)
-        # )
+        llama_prompt = PromptTemplate.from_template(
+            template.format(
+                system_prompt=sys_template_str, user_prompt=human_template_str
+            )
+        )
 
         # For OpenAI / Message API compatible models
-        prompt = ChatPromptTemplate.from_messages(
+        openai_prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", sys_template_str),
                 ("user", human_template_str),
@@ -110,9 +112,9 @@ class ChatAgent:
 
         # Session : prompt building and then LLM
         if llm_openai:
-            self.session_openai = prompt | llm_openai | output_parser
+            self.session_openai = openai_prompt | llm_openai | output_parser
         if llm_llama:
-            self.session_llama = prompt | llm_llama | output_parser
+            self.session_llama = llama_prompt | llm_llama | output_parser
 
         if not self.session_llama and not self.session_openai:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
