@@ -42,6 +42,7 @@ import {
   GridItem,
   Tag,
   TabIndicator,
+  Divider,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -83,6 +84,7 @@ import {
 // Home Page Components
 import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal } from './components';
 import QuickAccessPage from './components/quick-access/QuickAccessPage';
+import { LuChevronsDownUp, LuChevronsUp, LuChevronsUpDown } from 'react-icons/lu';
 
 /**
  * Home page for SAGE3
@@ -676,7 +678,6 @@ export function HomePage() {
     if (passwordProtectedRoom) {
       passwordJoinRoomModalOnOpen();
     }
-    console.log('rerendering');
   }, [passwordProtectedRoom]);
 
   return (
@@ -781,89 +782,58 @@ export function HomePage() {
         // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
-        <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}>
-          {servers.length > 0 ? (
-            <Box ref={serverNameRef}>
-              <Menu placement="bottom-end">
-                <MenuButton
-                  as={Box}
-                  px="4"
-                  py="2"
-                  width="100%"
-                  borderRadius={buttonRadius}
-                  // borderBottom={`solid ${dividerColor} 1px`}
-                  whiteSpace="nowrap"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  fontSize="3xl"
-                  fontWeight={'bold'}
-                  bg={teal}
-                  _hover={{ cursor: 'pointer', opacity: 0.9 }}
-                >
-                  <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
-                    <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                      {config.serverName}
-                    </Text>
-                    <Box pt="2">
-                      <BiChevronDown />
-                    </Box>
-                  </Box>
-                </MenuButton>
-                <MenuList width={'350px'}>
-                  {servers.map((server) => {
-                    return (
-                      <MenuItem
-                        key={server.id}
-                        onClick={() => {
-                          window.location.href = server.url;
-                        }}
-                      >
-                        {server.name}
-                      </MenuItem>
-                    );
-                  })}
-                </MenuList>
-              </Menu>
-            </Box>
-          ) : (
-            <Box
-              px="4"
-              py="2"
-              bg={teal}
-              borderRadius={cardRadius}
-              whiteSpace="nowrap"
-              overflow="hidden"
-              textOverflow="ellipsis"
-              ref={serverNameRef}
-            >
-              <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
-                {config.serverName}
-              </Text>
-            </Box>
-          )}
-
-          <Box pt="2" px="2">
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
-              <Box
-                ref={homeBtnRef}
-                h="40px"
+        {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
+        {servers.length > 0 ? (
+          <Box ref={serverNameRef}>
+            <Menu placement="bottom-end">
+              <MenuButton
+                marginTop="auto"
                 display="flex"
-                justifyContent={'left'}
+                as={Box}
+                backgroundColor={teal}
+                height="40px"
                 alignItems={'center'}
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={() => {
-                  toHome();
-                  handleLeaveRoom();
-                  setSelectedQuickAccess(undefined);
-                }}
+                justifyContent={'left'}
+                borderRadius="10"
+                width="100%"
+                transition={'all 0.5s'}
+                _hover={{ cursor: 'pointer' }}
               >
-                <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="lg">Home</Text>
-              </Box>
-            </Tooltip>
+                <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+                  <Text ml="2" fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                    {config.serverName}
+                  </Text>
+                  <Box pr="3" fontSize="24px">
+                    <LuChevronsUpDown />
+                  </Box>
+                </Box>
+              </MenuButton>
+              <MenuList width={'350px'}>
+                {servers.map((server) => {
+                  return (
+                    <MenuItem
+                      key={server.id}
+                      onClick={() => {
+                        window.location.href = server.url;
+                      }}
+                    >
+                      {server.name}
+                    </MenuItem>
+                  );
+                })}
+              </MenuList>
+            </Menu>
+          </Box>
+        ) : (
+          <Box bg={teal} borderRadius="10" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" ref={serverNameRef} height="40px">
+            <Text fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden" pl="2">
+              {config.serverName}
+            </Text>
+          </Box>
+        )}
 
-            {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
+        {/* <Box pt="2" px="2"> */}
+        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
               <Box
                 h="40px"
                 display="flex"
@@ -879,23 +849,23 @@ export function HomePage() {
               </Box>
             </Tooltip> */}
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={enterBoardByURLModalOnOpen}
-                ref={enterBoardByURLRef}
-              >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
-              </Box>
-            </Tooltip>
-          </Box>
-        </Box>
+        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+            <Box
+              h="40px"
+              display="flex"
+              justifyContent={'left'}
+              alignItems={'center'}
+              transition="all 0.5s"
+              borderRadius={buttonRadius}
+              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+              onClick={enterBoardByURLModalOnOpen}
+              ref={enterBoardByURLRef}
+            >
+              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
+            </Box>
+          </Tooltip> */}
+        {/* </Box> */}
+        {/* </Box> */}
 
         {/* Rooms and boards section */}
         <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="5" pb="5">
@@ -956,6 +926,49 @@ export function HomePage() {
               >
                 <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
               </Box> */}
+              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  pl="3"
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                  onClick={enterBoardByURLModalOnOpen}
+                  ref={enterBoardByURLRef}
+                >
+                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
+                  <Text fontSize="md" fontWeight="bold">
+                    Join Board
+                  </Text>
+                </Box>
+              </Tooltip>
+              <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
+                <Box
+                  ref={homeBtnRef}
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  pl="3"
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                  onClick={() => {
+                    toHome();
+                    handleLeaveRoom();
+                    setSelectedQuickAccess(undefined);
+                  }}
+                >
+                  <Icon as={MdHome} fontSize="24px" mr="2" />{' '}
+                  <Text fontSize="md" fontWeight="bold">
+                    Home
+                  </Text>
+                </Box>
+              </Tooltip>
+              <Divider my="2" />
               <Box pl="4" mb="2" fontSize="md" fontWeight="bold">
                 Your Rooms
               </Box>
@@ -974,7 +987,7 @@ export function HomePage() {
                   },
                 }}
               >
-                <Box height="60%" mr="2">
+                <Box height="60%" mr="2" ml="4">
                   {rooms
                     .filter(roomMemberFilter)
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
@@ -994,7 +1007,7 @@ export function HomePage() {
                             alignItems="center"
                             justifyContent="space-between"
                             transition="all 0.5s"
-                            pl="40px"
+                            pl="3"
                             height="28px"
                             my="1px"
                             backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
@@ -1362,6 +1375,7 @@ export function HomePage() {
           ref={homeRef}
           display="flex"
           flexDirection="column"
+          alignItems="center"
           backgroundColor={sidebarBackgroundColor}
           maxHeight="100svh"
           height="100%"
@@ -1388,6 +1402,8 @@ export function HomePage() {
                 borderRadius: '48px',
               },
             }}
+            w="full"
+            maxW="1600px"
           >
             {/* The clock Top Right */}
             <Box alignSelf="end" ref={clockRef} w="fit-content">
