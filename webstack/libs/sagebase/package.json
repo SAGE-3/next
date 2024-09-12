@@ -3,8 +3,8 @@
   "version": "0.4.2",
   "dependencies": {
     "connect-redis": "^7.1.1",
-    "express": "4.20.0",
-    "express-session": "^1.17.2",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
     "openid-client": "^5.1.6",
     "passport": "^0.6.0",
     "passport-google-oauth20": "^2.0.0",
