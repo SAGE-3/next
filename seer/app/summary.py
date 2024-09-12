@@ -2,7 +2,6 @@
 
 import json, time
 from logging import Logger
-from localtypes import Context, Question, Answer
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -11,6 +10,9 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
+
+# Typing for RPC
+from localtypes import Question, Answer
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
@@ -59,14 +61,6 @@ class SummaryAgent:
         )
         # Get the current date and time
         today = time.asctime()
-        session = None
-        # Select the session
-        # if qq.model == "chat":
-        #     session = session_llama
-        # elif qq.model == "openai":
-        #     session = session_openai
-        # else:
-        #     raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
         # Collect all the stickies of the board
         room_id = qq.ctx.roomId
