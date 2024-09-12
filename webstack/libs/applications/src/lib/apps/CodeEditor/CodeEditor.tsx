@@ -59,7 +59,6 @@ import { MonacoBinding } from 'y-monaco';
 // CodeEditor API
 import { create } from 'zustand';
 import { generateRequest, generateSystemPrompt } from './ai-request-generator';
-import e from 'express';
 
 const languageExtensions = [
   { name: 'json', extension: 'json' },
@@ -448,29 +447,33 @@ function ToolbarComponent(props: App): JSX.Element {
         // Create a new position right after the current cursor position
         const newPosition = {
           lineNumber: position.lineNumber,
-          column: position.column
+          column: position.column,
         };
         // The text to append
-        const textToAppend = "\n" + cleanedText.trim();
+        const textToAppend = '\n' + cleanedText.trim();
         // Execute the edit to insert the text
-        editor.executeEdits('my-source', [{
-          range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
-          text: textToAppend,
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('my-source', [
+          {
+            range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+            text: textToAppend,
+            forceMoveMarkers: true,
+          },
+        ]);
       } else {
         // editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
         // Create a new position right after the current cursor position
         const newPosition = {
           lineNumber: position.lineNumber + 1,
-          column: position.column
+          column: position.column,
         };
         // Execute the edit to insert the text
-        editor.executeEdits('my-source', [{
-          range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
-          text: cleanedText.trim(),
-          forceMoveMarkers: true
-        }]);
+        editor.executeEdits('my-source', [
+          {
+            range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+            text: cleanedText.trim(),
+            forceMoveMarkers: true,
+          },
+        ]);
       }
     }
   }

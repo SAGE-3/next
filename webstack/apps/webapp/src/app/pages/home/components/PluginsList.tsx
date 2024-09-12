@@ -27,7 +27,16 @@ import { MdAdd, MdPerson, MdSearch } from 'react-icons/md';
 
 import { fuzzySearch } from '@sage3/shared';
 import { Plugin, Room } from '@sage3/shared/types';
-import { useHexColor, usePluginStore, ConfirmModal, useUser, PluginUploadModal, useAbility } from '@sage3/frontend';
+import {
+  useHexColor,
+  usePluginStore,
+  ConfirmModal,
+  useUser,
+  PluginUploadModal,
+  useAbility,
+  formatDateAndTime,
+  truncateWithEllipsis,
+} from '@sage3/frontend';
 
 // PluginsList Props
 export interface PluginsListProps {
@@ -90,6 +99,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
 
   return (
     <Box display="flex" gap="8">
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={deleteIsOpen}
         onClose={deleteOnClose}
@@ -97,42 +107,42 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
         title={'Plugin Delete'}
         message={`Are you sure you want to delete ${selectedPlugin?.data.name}?`}
       />
+      {/* Plugin Upload Modal */}
       <PluginUploadModal roomId={props.room._id} isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose} />
-      <Box height="calc(100vh - 300px)" width="500px" overflowY="auto" overflowX="hidden">
-        <VStack width="100%" px="4" gap="3">
-          <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2">
-            <Tooltip label="Add Plugin" aria-label="upload plugin" placement="top" hasArrow>
-              <IconButton
-                size="md"
-                variant={'outline'}
-                colorScheme={'teal'}
-                aria-label="plugin-upload"
-                fontSize="xl"
-                icon={<MdAdd />}
-                isDisabled={!canUploadPlugin}
-                onClick={uploadOnOpen}
-              ></IconButton>
-            </Tooltip>
+      <Box width="500px">
+        <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2" mb="3" px="2">
+          <Tooltip label="Add Plugin" aria-label="upload plugin" placement="top" hasArrow>
+            <IconButton
+              size="md"
+              variant={'outline'}
+              colorScheme={'teal'}
+              aria-label="plugin-upload"
+              fontSize="xl"
+              icon={<MdAdd />}
+              isDisabled={!canUploadPlugin}
+              onClick={uploadOnOpen}
+            ></IconButton>
+          </Tooltip>
 
-            <InputGroup size="md" flex="1" my="1">
-              <InputLeftElement pointerEvents="none">
-                <MdSearch />
-              </InputLeftElement>
-              <Input placeholder="Search Plugins" value={pluginsSearch} onChange={(e) => setPluginsSearch(e.target.value)} />
-            </InputGroup>
-            <Tooltip label="Filter Yours" aria-label="filter your plugins" placement="top" hasArrow>
-              <IconButton
-                size="md"
-                variant="outline"
-                colorScheme={showOnlyYours ? 'teal' : 'gray'}
-                aria-label="filter-yours"
-                fontSize="xl"
-                icon={<MdPerson />}
-                onClick={handleShowOnlyYours}
-              ></IconButton>
-            </Tooltip>
-          </Box>
-
+          <InputGroup size="md" flex="1" my="1">
+            <InputLeftElement pointerEvents="none">
+              <MdSearch />
+            </InputLeftElement>
+            <Input placeholder="Search Plugins" value={pluginsSearch} onChange={(e) => setPluginsSearch(e.target.value)} />
+          </InputGroup>
+          <Tooltip label="Filter Yours" aria-label="filter your plugins" placement="top" hasArrow>
+            <IconButton
+              size="md"
+              variant="outline"
+              colorScheme={showOnlyYours ? 'teal' : 'gray'}
+              aria-label="filter-yours"
+              fontSize="xl"
+              icon={<MdPerson />}
+              onClick={handleShowOnlyYours}
+            ></IconButton>
+          </Tooltip>
+        </Box>
+        <VStack height="calc(100vh - 320px)" width="100%" gap="2" overflowY="auto" overflowX="hidden" px="2">
           {plugins
             .filter(filterPlugins)
             .filter(searchPluginsFilter)
@@ -149,20 +159,20 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
         </VStack>
       </Box>
       {selectedPlugin && (
-        <Box height="calc(100vh - 300px)" width="500px" overflowY="auto" overflowX="hidden">
+        <Box height="calc(100vh - 260px)" width="500px" overflowY="auto" overflowX="hidden">
           <Box height="100%" width="100%" display="flex" flexDir="column">
             <HStack gap="8" mb="4">
               <VStack alignItems={'start'} fontWeight={'bold'}>
                 <Text>Name</Text>
                 <Text>Description</Text>
-                <Text>Author</Text>
-                <Text>Uploaded At</Text>
+                <Text>Owner</Text>
+                <Text>Uploaded</Text>
               </VStack>
               <VStack alignItems={'left'}>
                 <Text textAlign={'left'}>{selectedPlugin.data.name}</Text>
                 <Text>{selectedPlugin.data.description}</Text>
                 <Text>{selectedPlugin.data.ownerName}</Text>
-                <Text>{getHumanReadableDate(selectedPlugin._createdAt)}</Text>
+                <Text>{formatDateAndTime(selectedPlugin._createdAt)}</Text>
               </VStack>
             </HStack>
             <Box minHeight="50px">
@@ -182,9 +192,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
                   icon={<HiTrash />}
                   isDisabled={!canDeleteSelectedPlugin}
                   onClick={deleteOnOpen}
-                >
-                  Delete
-                </IconButton>
+                />
               </Tooltip>
             </Box>
             <Box width="100%" height="500px" overflow="hidden" borderRadius="md">
@@ -212,9 +220,10 @@ function PluginItem(props: PluginItemProps): JSX.Element {
   const borderColor = useHexColor(borderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
-  // const grayedOutColorValue = useColorModeValue('gray.100', 'gray.700');
-  // const grayedOutColor = useHexColor(grayedOutColorValue);
 
+  const name = props.plugin.data.name;
+  const ownerName = truncateWithEllipsis(props.plugin.data.ownerName, 10);
+  const dateAdded = formatDateAndTime(props.plugin._createdAt);
   return (
     <Box
       background={backgroundColor}
@@ -226,7 +235,7 @@ function PluginItem(props: PluginItemProps): JSX.Element {
       borderRadius="md"
       boxSizing="border-box"
       width="100%"
-      height="56px"
+      height="44px"
       border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
       transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
       _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
@@ -234,30 +243,25 @@ function PluginItem(props: PluginItemProps): JSX.Element {
       onClick={() => props.onClick(props.plugin)}
       cursor="pointer"
     >
-      <Box display="flex" flexDir="column" maxWidth="260px">
-        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
-          {props.plugin.data.name}
+      <Box display="flex" flexDir="column" maxWidth="325px">
+        <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="sm" fontWeight={'bold'}>
+          {name}
         </Box>
         <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subText}>
-          {props.plugin.data.description}
+          {dateAdded}
         </Box>
       </Box>
-      <Box display="flex" alignItems={'center'}>
+      <Box display="flex" width="80px">
         {props.isOwner ? (
-          <Tag colorScheme="teal" size="md">
+          <Tag colorScheme="teal" size="sm" width="100%" justifyContent="center">
             Owner
           </Tag>
         ) : (
-          <Tag colorScheme="yellow" size="md">
-            {props.plugin.data.ownerName}
+          <Tag colorScheme="yellow" size="sm" whiteSpace="nowrap" overflow="hidden" justifyContent="start">
+            {ownerName}
           </Tag>
         )}
       </Box>
     </Box>
   );
-}
-
-// Human Readable Date from UTC Timestamp
-function getHumanReadableDate(utcTimestamp: number): string {
-  return new Date(utcTimestamp).toLocaleString();
 }

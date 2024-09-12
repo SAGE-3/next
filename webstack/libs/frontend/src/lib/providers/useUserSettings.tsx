@@ -23,7 +23,7 @@ const defaultSettings: UserSettings = {
   showAppTitles: false,
   showUI: true,
   showTags: false,
-  selectedBoardListView: 'list',
+  selectedBoardListView: 'grid',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';

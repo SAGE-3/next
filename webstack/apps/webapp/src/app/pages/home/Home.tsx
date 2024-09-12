@@ -91,10 +91,11 @@ import {
   Clock,
   isElectron,
   useUserSettings,
+  useAssetStore,
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, PluginsList } from './components';
+import { UserRow, BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, AssetList, PluginsList } from './components';
 
 /**
  * Home page for SAGE3
@@ -145,6 +146,9 @@ export function HomePage() {
   const users = useUsersStore((state) => state.users);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
 
+  // Assets Store
+  const subcribeToAssets = useAssetStore((state) => state.subscribe);
+
   // Presence
   const partialPrescences = usePresenceStore((state) => state.partialPrescences);
   const updatePresence = usePresenceStore((state) => state.update);
@@ -152,7 +156,7 @@ export function HomePage() {
 
   // Settings
   const { setBoardListView, settings } = useUserSettings();
-  const boardListView = settings.selectedBoardListView;
+  const boardListView = settings.selectedBoardListView ? settings.selectedBoardListView : 'grid';
 
   // User Selected Room, Board, and User
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
@@ -461,7 +465,7 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
-
+    subcribeToAssets();
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -1018,7 +1022,8 @@ export function HomePage() {
           flexDirection="column"
           backgroundColor={mainBackgroundColor}
           maxHeight="100svh"
-          height="100svh"
+          height="100%"
+          // border="solid green 1px"
           // overflow="hidden"
           pt={4}
           pr={4}
@@ -1086,7 +1091,7 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" height="100%">
+          <Box width="100%" flexGrow={1}>
             <Tabs colorScheme="teal">
               <TabList>
                 <Tab>
@@ -1103,11 +1108,11 @@ export function HomePage() {
                 </Tab>
               </TabList>
 
-              <TabPanels>
+              <TabPanels height="100%">
                 <TabPanel px="0">
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
-                      <Flex align="center" gap="2" justify="flex-start" mx="4">
+                      <Flex align="center" gap="2" justify="flex-start" mx="2">
                         <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
                           <IconButton
                             size="md"
@@ -1129,14 +1134,6 @@ export function HomePage() {
                         </InputGroup>
                         <ButtonGroup size="md" isAttached variant="outline">
                           <IconButton
-                            aria-label="Board List View"
-                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
-                            onClick={() => {
-                              setBoardListView('list');
-                            }}
-                            icon={<MdList />}
-                          />
-                          <IconButton
                             aria-label="Board Grid View"
                             colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
                             onClick={() => {
@@ -1144,13 +1141,21 @@ export function HomePage() {
                             }}
                             icon={<MdGridView />}
                           />
+                          <IconButton
+                            aria-label="Board List View"
+                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('list');
+                            }}
+                            icon={<MdList />}
+                          />
                         </ButtonGroup>
                       </Flex>
                       {/* <Divider /> */}
                       {boardListView == 'grid' && (
                         <Flex
                           gap="4"
-                          p="4"
+                          p="2"
                           display="flex"
                           flexWrap="wrap"
                           justifyContent="left"
@@ -1162,7 +1167,6 @@ export function HomePage() {
                           margin="0 auto"
                           overflowY="scroll"
                           overflowX="hidden"
-                          pt="2"
                           minWidth="420px"
                           css={{
                             '&::-webkit-scrollbar': {
@@ -1198,7 +1202,7 @@ export function HomePage() {
                         <VStack
                           gap="3"
                           alignItems="left"
-                          pl="4"
+                          px="2"
                           style={{ height: 'calc(100svh - 360px)' }}
                           overflowY="scroll"
                           overflowX="hidden"
@@ -1280,7 +1284,9 @@ export function HomePage() {
                     </VStack>
                   </Box>
                 </TabPanel>
-                <TabPanel px="0">Assets</TabPanel>
+                <TabPanel px="0" display="flex">
+                  <AssetList room={selectedRoom}></AssetList>
+                </TabPanel>
                 <TabPanel px="0">
                   <PluginsList room={selectedRoom} />
                 </TabPanel>

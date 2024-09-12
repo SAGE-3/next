@@ -90,6 +90,7 @@ export function mimeToCode(code: string) {
     case 'text/x-java-source':
       return 'java';
     case 'application/json':
+    case 'application/geo+json':
       return 'json';
     case 'text/yaml':
       return 'yaml';
