@@ -16,12 +16,14 @@ import { z } from 'zod';
 export const schema = z.object({
   total: z.number(),
   isRunning: z.boolean(),
+  isReset: z.boolean(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   total: 300,
   isRunning: false,
+  isReset: false,
 };
 
 export const name = 'Timer';

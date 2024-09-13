@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { Box, Button, ButtonGroup, Text, Tooltip, VStack } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
 import { useAppStore } from '@sage3/frontend';
@@ -27,7 +27,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   // Set size for the app
-  update(props._id, { size: { 'width': 1250, 'height': 630, 'depth': 0 } });
+  update(props._id, { size: { 'width': 1250, 'height': 670, 'depth': 0 } });
 
   // Local state for timer control
   const [total, setTotal] = useState<number>(s.total); // in seconds
@@ -39,6 +39,28 @@ function AppComponent(props: App): JSX.Element {
   }, [total]);
 
   useEffect(() => {
+    // Sync local state across clients when users manually adjust time (inc/dec/reset)
+    if (s.total !== total && !s.isRunning) {
+      setTotal(s.total);
+    }
+  }, [s.total]);
+  
+  useEffect(() => {
+    // Manages the countdown of the timer, starting or stopping based on the running state
+    if (s.isRunning) {
+      const id = setInterval(() => {
+        setTotal((prevTotal) => prevTotal - 1 );
+      }, 1000);
+
+      setIntervalId(id);
+    } else {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    }
+  }, [s.isRunning]);
+  
+  useEffect(() => {
     // Cleanup interval on component unmount
     return () => {
       if (intervalId) {
@@ -46,12 +68,8 @@ function AppComponent(props: App): JSX.Element {
       }
     };
   }, [intervalId]);
-  
-  useEffect(() => {
-    manageTimer();
-  }, [s.isRunning]);
 
-  // Format numbers as hh:mm:ss
+  // Format time as hh:mm:ss
   const formatTime = (seconds: number): string => {
     // Determine the sign and work with the absolute value for calculation
     const isNegative = seconds < 0;
@@ -70,47 +88,15 @@ function AppComponent(props: App): JSX.Element {
     // Construct the formatted time string
     const timeStr = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 
+    console.log('global ', s.total);
+    console.log('local ', total);
     // Add a negative sign if the time is negative
     return isNegative ? `-${timeStr}` : timeStr;
   };
 
-  const incrementHour = () => {
-    setTotal(total + 3600);
-  };
-
-  const decrementHour = () => {
-    setTotal(total - 3600);
-  };
-
-  const incrementMinute = () => {
-    setTotal(total + 60);
-  };
-
-  const decrementMinute = () => {
-    setTotal(total - 60);
-  };
-
-  const incrementSecond = () => {
-    setTotal(total + 1);
-  };
-
-  const decrementSecond = () => {
-    setTotal(total - 1);
-  };
-  
-  // Manages the state of the timer, starting or stopping it based on the running state
-  const manageTimer = () => {
-    if (s.isRunning) {
-      const id = setInterval(() => {
-        setTotal((prevTotal) => prevTotal - 1 );
-      }, 1000);
-
-      setIntervalId(id);
-    } else {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    }
+  // Increment or decrement the time by the given amount
+  const adjustTotal = (amount: number) => {
+    setTotal(total + amount);
   };
 
   // Updates the global running state of the timer
@@ -130,18 +116,23 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} disableResize={true}>
       <>
-        <Text fontSize="300px" align="center" lineHeight="1.2" color={total > -1 ? "default" : "red"}>{formatTime(total)}</Text>
+        <Text fontSize="300px" align="center" lineHeight="1.2" color={total > -1 ? "default" : "red"}>{formatTime(s.total)}</Text>
 
         <VStack>
+          <HStack display="flex" textAlign="center" spacing="15px">
+            <Box w="162px"><Text fontSize="xl" display="inline">Hour</Text></Box>
+            <Box w="162px"><Text fontSize="xl" display="inline">Minute</Text></Box>
+            <Box w="162px"><Text fontSize="xl" display="inline">Second</Text></Box>
+          </HStack>
           <Box display="flex" justifyContent="center">
             <ButtonGroup isAttached colorScheme="teal">
               <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementHour}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(3600)}>
                   <MdAdd />
                 </Button>
               </Tooltip>
               <Tooltip placement="bottom" hasArrow={true} label={'-1 Hour'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementHour}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-3600)}>
                   <MdRemove />
                 </Button>
               </Tooltip>
@@ -151,12 +142,12 @@ function AppComponent(props: App): JSX.Element {
 
             <ButtonGroup isAttached size="lg" colorScheme="teal">
               <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementMinute}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(60)}>
                   <MdAdd />
                 </Button>
               </Tooltip>
               <Tooltip placement="bottom" hasArrow={true} label={'-1 Minute'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementMinute}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-60)}>
                   <MdRemove />
                 </Button>
               </Tooltip>
@@ -166,12 +157,12 @@ function AppComponent(props: App): JSX.Element {
 
             <ButtonGroup isAttached size="lg" colorScheme="teal">
               <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={incrementSecond}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(1)}>
                   <MdAdd />
                 </Button>
               </Tooltip>
               <Tooltip placement="bottom" hasArrow={true} label={'-1 Second'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={decrementSecond}>
+                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-1)}>
                   <MdRemove />
                 </Button>
               </Tooltip>
