@@ -63,12 +63,9 @@ export function Lasso(props: LassoProps) {
   const lassoEnd = () => {
     setMouseDown(false);
     setLassoMode(false);
-    setIsDragging(wasDragging => {
-      if (!wasDragging) {
-        clearSelectedApps();
-      }
-      return false
-    })
+    if (!isDragging) {
+      clearSelectedApps();
+    }
   };
 
   const lassoEndTouch = () => {

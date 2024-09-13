@@ -101,7 +101,6 @@ export function Background(props: BackgroundProps) {
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
-  const setLassoMode = useUIStore((state) => state.setLassoMode);
   const cachedPrimaryActionMode = useUIStore((state) => state.cachedPrimaryActionMode);
 
   // Chakra Color Mode for grid color
@@ -400,12 +399,6 @@ export function Background(props: BackgroundProps) {
     // Depends on the cursor to get the correct position
     { dependencies: [] }
   );
-
-  useEffect(() => {
-    // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
-    if (selectedAppId !== '') return;
-    setLassoMode(isShiftPressed);
-  }, [isShiftPressed]);
 
   const createWeblink = () => {
     createApp(
