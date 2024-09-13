@@ -61,7 +61,6 @@ export function Lasso(props: LassoProps) {
   };
 
   const lassoEnd = () => {
-    console.log(isDragging)
     setMouseDown(false);
     setLassoMode(false);
     if (!isDragging) {
