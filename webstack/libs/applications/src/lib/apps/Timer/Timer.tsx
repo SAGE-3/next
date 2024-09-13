@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, zeroPad } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { App, AppGroup } from '../../schema';
@@ -27,11 +27,11 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   // Set size for the app
-  update(props._id, { size: { 'width': 1250, 'height': 670, 'depth': 0 } });
+  update(props._id, { size: { 'width': 900, 'height': 510, 'depth': 0 } });
 
   // Local state for timer control
   const [total, setTotal] = useState<number>(s.total); // in seconds
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [intervalId, setIntervalId] = useState<number | null>(null);
 
   useEffect(() => {
     // Update global state when local state changes
@@ -44,54 +44,52 @@ function AppComponent(props: App): JSX.Element {
       setTotal(s.total);
     }
   }, [s.total]);
-  
+
   useEffect(() => {
     // Manages the countdown of the timer, starting or stopping based on the running state
     if (s.isRunning) {
-      const id = setInterval(() => {
-        setTotal((prevTotal) => prevTotal - 1 );
+      const id = window.setInterval(() => {
+        setTotal((prevTotal) => prevTotal - 1);
       }, 1000);
 
       setIntervalId(id);
     } else {
       if (intervalId) {
-        clearInterval(intervalId);
+        window.clearInterval(intervalId);
       }
     }
   }, [s.isRunning]);
-  
+
   useEffect(() => {
     // Cleanup interval on component unmount
     return () => {
       if (intervalId) {
-        clearInterval(intervalId);
+        window.clearInterval(intervalId);
       }
     };
   }, [intervalId]);
 
   // Format time as hh:mm:ss
-  const formatTime = (seconds: number): string => {
+  const formatTime = (param: number) => {
     // Determine the sign and work with the absolute value for calculation
-    const isNegative = seconds < 0;
-    const absSeconds = Math.abs(seconds);
+    // const isNegative = param < 0;
+    const absSeconds = Math.abs(param);
 
     // Calculate hours, minutes, and seconds
     const hours = Math.floor(absSeconds / 3600);
     const minutes = Math.floor((absSeconds % 3600) / 60);
-    const secs = absSeconds % 60;
+    const seconds = absSeconds % 60;
 
     // Format the time components to always have two digits
-    const formattedHours = hours.toString().padStart(2, '0');
-    const formattedMinutes = minutes.toString().padStart(2, '0');
-    const formattedSeconds = secs.toString().padStart(2, '0');
+    const formattedHours = zeroPad(hours, 2);
+    const formattedMinutes = zeroPad(minutes, 2);
+    const formattedSeconds = zeroPad(seconds, 2);
 
     // Construct the formatted time string
     const timeStr = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 
-    console.log('global ', s.total);
-    console.log('local ', total);
     // Add a negative sign if the time is negative
-    return isNegative ? `-${timeStr}` : timeStr;
+    return timeStr;
   };
 
   // Increment or decrement the time by the given amount
@@ -108,21 +106,27 @@ function AppComponent(props: App): JSX.Element {
   const resetTimer = () => {
     updateState(props._id, { isRunning: false });
     if (intervalId) {
-      clearInterval(intervalId);
+      window.clearInterval(intervalId);
     }
-    setTotal(300);
+    setTotal(5 * 60);
   };
+
 
   return (
     <AppWindow app={props} disableResize={true}>
       <>
-        <Text fontSize="300px" align="center" lineHeight="1.2" color={total > -1 ? "default" : "red"}>{formatTime(s.total)}</Text>
+        <Text fontFamily={"monospace"} letterSpacing={-18} fontSize="200px" align="center" lineHeight="1.2"
+          color={total > -1 ? total < 60 ? "orange.600" : "green.600" : "red.600"}
+          animation={(total < 0) && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
+        >
+          {formatTime(s.total)}
+        </Text>
 
         <VStack>
           <HStack display="flex" textAlign="center" spacing="15px">
-            <Box w="162px"><Text fontSize="xl" display="inline">Hour</Text></Box>
-            <Box w="162px"><Text fontSize="xl" display="inline">Minute</Text></Box>
-            <Box w="162px"><Text fontSize="xl" display="inline">Second</Text></Box>
+            <Box w="162px"><Text fontSize="3xl" display="inline">Hour</Text></Box>
+            <Box w="162px"><Text fontSize="3xl" display="inline">Minute</Text></Box>
+            <Box w="162px"><Text fontSize="3xl" display="inline">Second</Text></Box>
           </HStack>
           <Box display="flex" justifyContent="center">
             <ButtonGroup isAttached colorScheme="teal">
@@ -168,7 +172,7 @@ function AppComponent(props: App): JSX.Element {
               </Tooltip>
             </ButtonGroup>
           </Box>
-          
+
           <Box display="flex" justifyContent="center" w="512px" mt={5}>
             <Tooltip placement="bottom" hasArrow={true} label={s.isRunning ? 'Pause' : 'Start'} openDelay={400}>
               <Button w="50%" h="80px" fontSize="40px" colorScheme="orange" onClick={setTimerRunning}>{s.isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
