@@ -69,6 +69,8 @@ import {
   isJSON,
   isPython,
   isText,
+  isMD,
+  isCSV,
 } from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 
@@ -93,6 +95,10 @@ export function AssetList(props: { room: Room }) {
 
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   const { isOpen: deleteIsOpen, onOpen: deleteOnOpen, onClose: deleteOnClose } = useDisclosure();
+
+  // Style Scrollbar
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
 
   // User Info
   const users = useUsersStore((state) => state.users);
@@ -176,7 +182,25 @@ export function AssetList(props: { room: Room }) {
           </Tooltip>
         </Box>
 
-        <VStack height="calc(100vh - 320px)" width="100%" gap="2" overflowY="auto" overflowX="hidden" px="2">
+        <VStack
+          height="calc(100vh - 320px)"
+          width="100%"
+          gap="2"
+          overflowY="auto"
+          overflowX="hidden"
+          px="2"
+          userSelect={'none'}
+          css={{
+            '&::-webkit-scrollbar': {
+              background: 'transparent',
+              width: '5px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: scrollBarColor,
+              borderRadius: '48px',
+            },
+          }}
+        >
           {assets
             .filter(filterAssets)
             .filter(assetSearchFilter)
@@ -232,7 +256,7 @@ function AssetListItem(props: AssetItemProps) {
   const name = props.asset.data.originalfilename;
   const icon = whichIcon(props.asset.data.mimetype);
   const dateCreated = formatDateAndTime(props.asset.data.dateCreated);
-  const author = truncateWithEllipsis(props.authorName, 10);
+  const author = truncateWithEllipsis(props.authorName, 9);
 
   return (
     <Box
@@ -248,7 +272,7 @@ function AssetListItem(props: AssetItemProps) {
       height="44px"
       border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
       transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
-      _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
+      _hover={{ border: `solid 1px ${borderColor}`, transform: 'scale(1.02)' }}
       transition={'all 0.2s ease-in-out'}
       onClick={props.onClick}
       cursor="pointer"
@@ -267,13 +291,13 @@ function AssetListItem(props: AssetItemProps) {
           </Box>
         </Box>
       </Box>
-      <Box display="flex" width="80px">
+      <Box display="flex" width="80px" minWidth="80px">
         {props.isOwner ? (
           <Tag colorScheme="teal" size="sm" width="100%" justifyContent="center">
             Owner
           </Tag>
         ) : (
-          <Tag colorScheme="yellow" size="sm" whiteSpace="nowrap" overflow="hidden" justifyContent="start">
+          <Tag colorScheme="yellow" size="sm" width="100%" whiteSpace="nowrap" overflow="hidden" justifyContent="center">
             {author}
           </Tag>
         )}
@@ -456,13 +480,19 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       imageURL = firstPage[firstPage.length - 1].url;
     }
     return <img src={imageURL} alt={asset.data.originalfilename} style={{ width, borderRadius: '16px' }} />;
-  } else if (isCode(type) || isGeoJSON(type)) {
+  } else if (isCode(type) || isGeoJSON(type) || isPython(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
     const response = await fetch(fileURL);
     const code = await response.text();
     const language = mimeToCode(type);
     return CodeViewer({ code, language, theme });
+  } else if (isCSV(type) || isMD(type) || isText(type)) {
+    // Download text file
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    const response = await fetch(fileURL);
+    const code = await response.text();
+    return CodeViewer({ code, language: 'plaintext', theme });
   } else if (isFileURL(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
@@ -492,19 +522,6 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
     } else {
       return <Text>URL Preview not available</Text>;
     }
-  } else if (isText(type)) {
-    // Download text file
-    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
-    const response = await fetch(fileURL);
-    const text = await response.text();
-    // Show text in a nice non-editable text box
-    return (
-      <textarea
-        value={text}
-        readOnly={true}
-        style={{ width: '500px', padding: '8px', height: '500px', resize: 'none', textWrap: 'nowrap' }}
-      />
-    );
   }
   return <Text>Preview not available</Text>;
 };

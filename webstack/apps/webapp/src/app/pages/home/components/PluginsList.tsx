@@ -66,6 +66,10 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
   const { isOpen: deleteIsOpen, onOpen: deleteOnOpen, onClose: deleteOnClose } = useDisclosure();
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
 
+  // Scrollbar Style
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
+
   function filterPlugins(plugin: Plugin) {
     const hasRoomId = plugin.data.roomId;
 
@@ -142,7 +146,25 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
             ></IconButton>
           </Tooltip>
         </Box>
-        <VStack height="calc(100vh - 320px)" width="100%" gap="2" overflowY="auto" overflowX="hidden" px="2">
+        <VStack
+          height="calc(100vh - 320px)"
+          width="100%"
+          gap="2"
+          overflowY="auto"
+          overflowX="hidden"
+          px="2"
+          userSelect={'none'}
+          css={{
+            '&::-webkit-scrollbar': {
+              background: 'transparent',
+              width: '5px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: scrollBarColor,
+              borderRadius: '48px',
+            },
+          }}
+        >
           {plugins
             .filter(filterPlugins)
             .filter(searchPluginsFilter)
@@ -222,7 +244,7 @@ function PluginItem(props: PluginItemProps): JSX.Element {
   const subText = useHexColor(subTextValue);
 
   const name = props.plugin.data.name;
-  const ownerName = truncateWithEllipsis(props.plugin.data.ownerName, 10);
+  const ownerName = truncateWithEllipsis(props.plugin.data.ownerName, 9);
   const dateAdded = formatDateAndTime(props.plugin._createdAt);
   return (
     <Box
@@ -257,7 +279,7 @@ function PluginItem(props: PluginItemProps): JSX.Element {
             Owner
           </Tag>
         ) : (
-          <Tag colorScheme="yellow" size="sm" whiteSpace="nowrap" overflow="hidden" justifyContent="start">
+          <Tag colorScheme="yellow" size="sm" width="100%" whiteSpace="nowrap" overflow="hidden" justifyContent="center">
             {ownerName}
           </Tag>
         )}
