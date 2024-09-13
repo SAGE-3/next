@@ -183,10 +183,12 @@ export function HomePage() {
   const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
   const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
   const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
-  const tabColorValue = useColorModeValue('gray.100', 'gray.600');
+  const tabColorValue = useColorModeValue('gray.300', 'gray.600');
   const tabColor = useHexColor(tabColorValue);
   const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
   const searchBarColor = useHexColor(searchBarColorValue);
+  const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
 
   // const { toggleColorMode, colorMode } = useColorMode();
 
@@ -468,12 +470,22 @@ export function HomePage() {
 
   const roomAndBoards = useMemo(() => {
     const filteredRooms = rooms.filter(roomMemberFilter);
-    const filteredRoomsIds = new Set(filteredRooms.map((room: Room) => room._id));
-    const boardsInJoinedRooms = boards.filter((board: Board) => {
-      return filteredRoomsIds.has(board.data.roomId);
+    const filteredRoomsIdsAndNames: { [key: string]: string } = {};
+
+    filteredRooms.forEach((room: Room) => {
+      filteredRoomsIdsAndNames[`${room._id}`] = room.data.name;
     });
 
-    return [...filteredRooms, ...boardsInJoinedRooms];
+    const boardsInJoinedRooms = boards.filter((board: Board) => {
+      return filteredRoomsIdsAndNames[`${board.data.roomId}`] !== undefined;
+    });
+
+    const roomsAssignedToBoards = boardsInJoinedRooms.map((board: Board) => ({
+      ...board,
+      roomName: filteredRoomsIdsAndNames[`${board.data.roomId}`],
+    }));
+
+    return [...filteredRooms, ...roomsAssignedToBoards];
   }, [rooms, boards]);
 
   useOutsideClick({
@@ -886,51 +898,6 @@ export function HomePage() {
             borderRadius={cardRadius}
           >
             <VStack align="stretch" gap="2px" height="100%">
-              {/* <Box
-                display="flex"
-                ref={activeBoardsRef}
-                alignItems="left"
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                bg={selectedQuickAccess === 'active' ? hightlightGray : ''}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={() => {
-                  handleQuickAccessClick('active');
-                }}
-                p="2"
-              >
-                <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
-              </Box>
-              <Box
-                display="flex"
-                ref={starredBoardsRef}
-                alignItems="left"
-                borderRadius={buttonRadius}
-                transition="all 0.5s"
-                bg={selectedQuickAccess === 'starred' ? hightlightGray : ''}
-                onClick={() => {
-                  handleQuickAccessClick('starred');
-                }}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                p="2"
-              >
-                <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
-              </Box>
-              <Box
-                display="flex"
-                ref={recentBoardsRef}
-                alignItems="left"
-                borderRadius={buttonRadius}
-                transition="all 0.5s"
-                bg={selectedQuickAccess === 'recent' ? hightlightGray : ''}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={() => {
-                  handleQuickAccessClick('recent');
-                }}
-                p="2"
-              >
-                <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-              </Box> */}
               <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
                 <Box
                   h="40px"
@@ -1044,7 +1011,8 @@ export function HomePage() {
         </Box>
       </Box>
 
-      {selectedQuickAccess && (
+      {/* Full pages for quick access, commented out for now */}
+      {/* {selectedQuickAccess && (
         <Box
           display="flex"
           flex="1"
@@ -1121,7 +1089,7 @@ export function HomePage() {
             />
           )}
         </Box>
-      )}
+      )} */}
 
       {/* Selected Room */}
       {selectedRoom && (
@@ -1433,7 +1401,7 @@ export function HomePage() {
                 </InputLeftElement>
                 <Input
                   placeholder="Search your rooms and boards"
-                  _placeholder={{ opacity: 0.6, color: 'white' }}
+                  _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
                   value={searchSage}
                   onChange={(e) => setSearchSage(e.target.value)}
                   roundedTop="2xl"
@@ -1459,9 +1427,10 @@ export function HomePage() {
                 overflow="auto"
               >
                 {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
-                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | Board) => {
-                      if ((item as Board).data.roomId) {
-                        return <SearchRow.Board board={item as Board} />;
+                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                      // If it's a board, get the room ID
+                      if ((item as Board & { roomName: string }).data.roomId) {
+                        return <SearchRow.Board board={item as Board & { roomName: string }} />;
                       }
                       return (
                         <SearchRow.Room
@@ -1472,7 +1441,7 @@ export function HomePage() {
                         />
                       );
                     })
-                  : 'No results.'}
+                  : 'No items match your search'}
               </Box>
             </Box>
             <Box borderRadius={cardRadius} height="100%" mt="4">
@@ -1653,7 +1622,9 @@ export function HomePage() {
                       </InputLeftElement>
                       <Input
                         placeholder="Search Rooms"
-                        _placeholder={{ opacity: 0.6, color: 'white' }}
+                        _placeholder={{ opacity: 0.6, color: searchPlaceholderColor }}
+                        _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+                        bg={isSearchSageFocused ? searchBarColor : 'inherit'}
                         value={roomSearch}
                         onChange={(e) => setRoomSearch(e.target.value)}
                         rounded="md"
