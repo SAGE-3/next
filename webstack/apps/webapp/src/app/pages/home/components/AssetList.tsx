@@ -270,7 +270,7 @@ function AssetListItem(props: AssetItemProps) {
       height="44px"
       border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
       transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
-      _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
+      _hover={{ border: `solid 1px ${borderColor}`, transform: 'scale(1.02)' }}
       transition={'all 0.2s ease-in-out'}
       onClick={props.onClick}
       cursor="pointer"
