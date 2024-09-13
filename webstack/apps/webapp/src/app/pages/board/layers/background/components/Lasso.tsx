@@ -61,19 +61,19 @@ export function Lasso(props: LassoProps) {
   };
 
   const lassoEnd = () => {
+    console.log(isDragging)
     setMouseDown(false);
     setLassoMode(false);
     if (!isDragging) {
       clearSelectedApps();
     }
+    setIsDragging(false)
   };
 
   const lassoEndTouch = () => {
     setMouseDown(false);
     setLassoMode(false);
-    setIsDragging(wasDragging => {
-      return false
-    })
+    setIsDragging(false)
   };
 
   // Get last position
