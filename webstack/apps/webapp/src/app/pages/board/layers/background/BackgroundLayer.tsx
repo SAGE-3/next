@@ -79,7 +79,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // This secondary delay may not be strickly neccessary as we also have rndSafety.tsx
       movementZoomSafetyTimeoutRef.current = window.setTimeout(() => {
         setLocalSynced(true);
-      }, 100)
+      }, 50)
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
 

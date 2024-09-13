@@ -33,7 +33,7 @@ export const RndSafety = () => {
 
       rndSafeForActionTimeoutRef.current = window.setTimeout(() => {
         setRndSafeForAction(true)
-      }, 100);
+      }, 200);
     }
   }, [boardSynced])
 
