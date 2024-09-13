@@ -69,6 +69,8 @@ import {
   isJSON,
   isPython,
   isText,
+  isMD,
+  isCSV,
 } from '@sage3/shared';
 import { Asset, Room, ExtraImageType, ExtraPDFType, ExtraVideoType } from '@sage3/shared/types';
 
@@ -478,13 +480,19 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
       imageURL = firstPage[firstPage.length - 1].url;
     }
     return <img src={imageURL} alt={asset.data.originalfilename} style={{ width, borderRadius: '16px' }} />;
-  } else if (isCode(type) || isGeoJSON(type)) {
+  } else if (isCode(type) || isGeoJSON(type) || isPython(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
     const response = await fetch(fileURL);
     const code = await response.text();
     const language = mimeToCode(type);
     return CodeViewer({ code, language, theme });
+  } else if (isCSV(type) || isMD(type) || isText(type)) {
+    // Download text file
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    const response = await fetch(fileURL);
+    const code = await response.text();
+    return CodeViewer({ code, language: 'plaintext', theme });
   } else if (isFileURL(type)) {
     // Download text file
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
@@ -514,19 +522,6 @@ const whichPreview = async (asset: Asset, width: number, theme: string): Promise
     } else {
       return <Text>URL Preview not available</Text>;
     }
-  } else if (isText(type)) {
-    // Download text file
-    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
-    const response = await fetch(fileURL);
-    const text = await response.text();
-    // Show text in a nice non-editable text box
-    return (
-      <textarea
-        value={text}
-        readOnly={true}
-        style={{ width: '500px', padding: '8px', height: '500px', resize: 'none', textWrap: 'nowrap' }}
-      />
-    );
   }
   return <Text>Preview not available</Text>;
 };
