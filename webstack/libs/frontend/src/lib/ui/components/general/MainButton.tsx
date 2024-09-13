@@ -67,6 +67,7 @@ import {
   HelpModal,
   EditVisibilityModal,
   Alfred,
+  truncateWithEllipsis,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -85,6 +86,8 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
+  const name = user ? truncateWithEllipsis(user.data.name, 25) : '';
+
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
 
@@ -229,7 +232,7 @@ export function MainButton(props: MainButtonProps) {
             leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
           >
             <Box textOverflow={'ellipsis'} overflow={'hidden'}>
-              {user ? user.data.name : ''}
+              {name}
             </Box>
           </MenuButton>
         ) : (
@@ -248,8 +251,8 @@ export function MainButton(props: MainButtonProps) {
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
               <Box display="flex">
                 <Icon as={MdPerson} fontSize="24px" mx="2" />
-                <Text fontSize="md" fontWeight={'bold'}>
-                  {user?.data.name}
+                <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
+                  {name}
                 </Text>
               </Box>
               <Box pr="3" fontSize="3xl">
@@ -366,7 +369,7 @@ export function MainButton(props: MainButtonProps) {
                               />
                             </Tooltip>
                           </MenuItem>
-                        ),
+                        )
                     )}
                   </MenuGroup>
                 </MenuList>

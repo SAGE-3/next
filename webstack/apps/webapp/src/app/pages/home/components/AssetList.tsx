@@ -94,6 +94,10 @@ export function AssetList(props: { room: Room }) {
   const { isOpen: uploadIsOpen, onOpen: uploadOnOpen, onClose: uploadOnClose } = useDisclosure();
   const { isOpen: deleteIsOpen, onOpen: deleteOnOpen, onClose: deleteOnClose } = useDisclosure();
 
+  // Style Scrollbar
+  const scrollBarValue = useColorModeValue('gray.300', '#666666');
+  const scrollBarColor = useHexColor(scrollBarValue);
+
   // User Info
   const users = useUsersStore((state) => state.users);
   const { user } = useUser();
@@ -176,7 +180,25 @@ export function AssetList(props: { room: Room }) {
           </Tooltip>
         </Box>
 
-        <VStack height="calc(100vh - 320px)" width="100%" gap="2" overflowY="auto" overflowX="hidden" px="2">
+        <VStack
+          height="calc(100vh - 320px)"
+          width="100%"
+          gap="2"
+          overflowY="auto"
+          overflowX="hidden"
+          px="2"
+          userSelect={'none'}
+          css={{
+            '&::-webkit-scrollbar': {
+              background: 'transparent',
+              width: '5px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: scrollBarColor,
+              borderRadius: '48px',
+            },
+          }}
+        >
           {assets
             .filter(filterAssets)
             .filter(assetSearchFilter)
@@ -232,7 +254,7 @@ function AssetListItem(props: AssetItemProps) {
   const name = props.asset.data.originalfilename;
   const icon = whichIcon(props.asset.data.mimetype);
   const dateCreated = formatDateAndTime(props.asset.data.dateCreated);
-  const author = truncateWithEllipsis(props.authorName, 10);
+  const author = truncateWithEllipsis(props.authorName, 9);
 
   return (
     <Box
@@ -267,13 +289,13 @@ function AssetListItem(props: AssetItemProps) {
           </Box>
         </Box>
       </Box>
-      <Box display="flex" width="80px">
+      <Box display="flex" width="80px" minWidth="80px">
         {props.isOwner ? (
           <Tag colorScheme="teal" size="sm" width="100%" justifyContent="center">
             Owner
           </Tag>
         ) : (
-          <Tag colorScheme="yellow" size="sm" whiteSpace="nowrap" overflow="hidden" justifyContent="start">
+          <Tag colorScheme="yellow" size="sm" width="100%" whiteSpace="nowrap" overflow="hidden" justifyContent="center">
             {author}
           </Tag>
         )}
