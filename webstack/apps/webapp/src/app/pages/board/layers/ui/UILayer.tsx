@@ -56,6 +56,7 @@ import {
   TagsDisplay,
 } from './components';
 import { BiPencil } from 'react-icons/bi';
+import { BsEraserFill } from 'react-icons/bs';
 
 type UILayerProps = {
   boardId: string;
@@ -335,13 +336,25 @@ export function UILayer(props: UILayerProps) {
             {/* <Tooltip label={'Annotations'}>
               <IconButton
                 size="sm"
-                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray') }
+                colorScheme={(primaryActionMode === "pen" ? (user?.data.color || 'teal') : 'gray') }
                 icon={<BiPencil />}
+                fontSize="xl"
+                roundedLeft={'none'}
+                roundedRight={'none'}
+                aria-label={'input-type'}
+                onClick={() => {setPrimaryActionMode("pen")}}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Eraser'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "eraser" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<BsEraserFill />}
                 fontSize="xl"
                 roundedLeft={'none'}
                 roundedRight={'lg'}
                 aria-label={'input-type'}
-                onClick={() => {setPrimaryActionMode("lasso")}}
+                onClick={() => {setPrimaryActionMode("eraser")}}
               ></IconButton>
             </Tooltip> */}
           </Box>

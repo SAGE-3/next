@@ -15,7 +15,7 @@ type UserSettings = {
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
-  primaryActionMode: 'lasso' | 'grab';
+  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
 };
 
 const defaultSettings: UserSettings = {
@@ -24,7 +24,7 @@ const defaultSettings: UserSettings = {
   showAppTitles: false,
   showUI: true,
   showTags: false,
-  selectedBoardListView: 'list',
+  selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
 };
 
