@@ -1621,10 +1621,10 @@ export function HomePage() {
                         <MdSearch />
                       </InputLeftElement>
                       <Input
-                        placeholder="Search Rooms"
+                        placeholder="Search available rooms"
                         _placeholder={{ opacity: 0.6, color: searchPlaceholderColor }}
                         _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
-                        bg={isSearchSageFocused ? searchBarColor : 'inherit'}
+                        // bg={isSearchSageFocused ? searchBarColor : 'inherit'}
                         value={roomSearch}
                         onChange={(e) => setRoomSearch(e.target.value)}
                         rounded="md"
