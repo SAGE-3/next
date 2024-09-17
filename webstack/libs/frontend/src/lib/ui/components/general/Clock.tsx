@@ -34,7 +34,7 @@ export function Clock(props: ClockProps) {
 
   // Colors
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
+  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
 
@@ -104,8 +104,9 @@ export function Clock(props: ClockProps) {
 
   return (
     <Box
+      sx={{ '-webkit-app-region': 'no-drag' }}
       borderRadius="md"
-      backgroundColor={backgroundColor}
+      backgroundColor={'transparent'}
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"

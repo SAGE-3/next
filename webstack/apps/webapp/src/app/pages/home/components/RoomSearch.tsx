@@ -152,7 +152,7 @@ function RoomRow(props: RoomRowProps) {
   const borderColor = useHexColor(borderColorValue);
   const linearBGColor = useColorModeValue(
     `linear-gradient(180deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`,
+    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`
   );
 
   // Room Store
@@ -249,7 +249,7 @@ type PasswordModalProps = {
   room: Room;
 };
 
-function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
+export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // Reference to the input field

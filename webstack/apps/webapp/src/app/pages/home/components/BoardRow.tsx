@@ -7,10 +7,10 @@
  */
 
 import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast } from '@chakra-ui/react';
-import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
+import { MdLock, MdStar, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
+import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 
 // Board Row Props
 interface BoardRowProps {
@@ -27,12 +27,12 @@ export function BoardRow(props: BoardRowProps) {
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
-  // const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
   const backgroundColorValue = useColorModeValue('#ffffff', `gray.800`);
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
-  // const boardColor = props.board.data.color;
+  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColor = useHexColor(baseBorderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
 
@@ -115,7 +115,7 @@ export function BoardRow(props: BoardRowProps) {
         boxSizing="border-box"
         width="500px"
         height="56px"
-        border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
+        border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
         transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
         _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         transition={'all 0.2s ease-in-out'}
