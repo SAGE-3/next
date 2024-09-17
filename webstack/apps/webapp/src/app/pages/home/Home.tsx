@@ -50,9 +50,23 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdPerson, MdSearch, MdStarOutline, MdGridView, MdList, MdLock } from 'react-icons/md';
+import {
+  MdAdd,
+  MdExitToApp,
+  MdHome,
+  MdPerson,
+  MdSearch,
+  MdStarOutline,
+  MdGridView,
+  MdList,
+  MdLock,
+  MdPeople,
+  MdBorderAll,
+  MdFolder,
+} from 'react-icons/md';
 import { IoMdTime } from 'react-icons/io';
 import { BiChevronDown } from 'react-icons/bi';
+import { HiPuzzle } from 'react-icons/hi';
 
 // SAGE Imports
 import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
@@ -80,10 +94,11 @@ import {
   isElectron,
   useUserSettings,
   APIHttp,
+  useAssetStore,
 } from '@sage3/frontend';
 
 // Home Page Components
-import { UserRow, BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal } from './components';
+import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import QuickAccessPage from './components/quick-access/QuickAccessPage';
 import { LuChevronsDownUp, LuChevronsUp, LuChevronsUpDown } from 'react-icons/lu';
 import SearchRow from './components/search/SearchRow';
@@ -105,7 +120,7 @@ export function HomePage() {
 
   // Electron
   const electron = isElectron();
-  const [servers, setServers] = useState<{ name: string; id: string; url: string }[]>([]);
+  const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
@@ -122,30 +137,37 @@ export function HomePage() {
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // Room Store
-  const {
-    rooms,
-    members,
-    subscribeToAllRooms: subscribeToRooms,
-    fetched: roomsFetched,
-    leaveRoomMembership,
-    joinRoomMembership,
-  } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
+  const members = useRoomStore((state) => state.members);
+  const subscribeToRooms = useRoomStore((state) => state.subscribeToAllRooms);
+  const roomsFetched = useRoomStore((state) => state.fetched);
+  const leaveRoomMembership = useRoomStore((state) => state.leaveRoomMembership);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Board Store
-  const { boards, subscribeToAllBoards: subscribeToBoards, update: updateBoard } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
+  const subscribeToBoards = useBoardStore((state) => state.subscribeToAllBoards);
+  const updateBoard = useBoardStore((state) => state.update);
 
   // User and Presence Store
-  const { users, subscribeToUsers } = useUsersStore((state) => state);
-  const { update: updatePresence, subscribe: subscribeToPresence, presences } = usePresenceStore((state) => state);
+  const users = useUsersStore((state) => state.users);
+  const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
+
+  // Assets Store
+  const subcribeToAssets = useAssetStore((state) => state.subscribe);
+
+  // Presence
+  const partialPrescences = usePresenceStore((state) => state.partialPrescences);
+  const updatePresence = usePresenceStore((state) => state.update);
+  const subscribeToPresence = usePresenceStore((state) => state.subscribe);
 
   // Settings
   const { setBoardListView, settings } = useUserSettings();
-  const boardListView = settings.selectedBoardListView;
+  const boardListView = settings.selectedBoardListView ? settings.selectedBoardListView : 'grid';
 
   // User Selected Room, Board, and User
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
-  const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
   const [roomSearch, setRoomSearch] = useState<string>('');
   const [selectedQuickAccess, setSelectedQuickAccess] = useState<'active' | 'starred' | 'recent' | undefined>(undefined);
@@ -231,7 +253,7 @@ export function HomePage() {
   const homeBtnRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
-  const serverNameRef = useRef<HTMLDivElement>(null);
+  const hubNameRef = useRef<HTMLDivElement>(null);
   const createRoomRef = useRef<HTMLButtonElement>(null);
   const searchSageRef = useRef<null | HTMLDivElement>(null);
   const searchInputRef = useRef<null | HTMLDivElement>(null);
@@ -296,11 +318,11 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: serverNameRef.current!,
-        title: electron ? 'Servers' : 'Server',
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
         content: electron
-          ? 'This shows the current SAGE3 server. You can change servers by clicking on the server name.'
-          : 'This shows the current SAGE3 server.',
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
         disableBeacon: true,
       },
       {
@@ -408,7 +430,7 @@ export function HomePage() {
 
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
-    const userCount = presences.filter((p) => p.data.boardId === board._id).length;
+    const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
 
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
@@ -426,13 +448,6 @@ export function HomePage() {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isRecent && isMember;
-  };
-
-  const membersFilter = (user: User): boolean => {
-    if (!selectedRoom) return false;
-    const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
-    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    return isMember;
   };
 
   const boardSearchFilter = (board: Board) => {
@@ -508,8 +523,8 @@ export function HomePage() {
   };
 
   const getBookmarks = () => {
-    window.electron.on('get-servers-response', async (servers: any) => {
-      setServers(servers);
+    window.electron.on('get-servers-response', async (hubs: any) => {
+      setHubs(hubs);
     });
     window.electron.send('get-servers-request');
   };
@@ -518,7 +533,7 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
-
+    subcribeToAssets();
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -559,7 +574,6 @@ export function HomePage() {
       room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
       setSelectedQuickAccess(undefined);
       setSelectedBoard(undefined);
-      setSelectedUser(undefined);
       // update the URL, helps with history
       toHome(room._id);
     } else {
@@ -573,7 +587,6 @@ export function HomePage() {
       setSelectedBoard(board);
       const room = rooms.find((r) => r._id === board.data.roomId);
       setSelectedRoom(room);
-      setSelectedUser(undefined);
 
       // Fixing data model: adding the board code
       if (!board.data.code) {
@@ -582,7 +595,6 @@ export function HomePage() {
       }
     } else {
       setSelectedBoard(undefined);
-      setSelectedUser(undefined);
     }
   }
 
@@ -647,7 +659,6 @@ export function HomePage() {
   function handleLeaveRoom() {
     setSelectedRoom(undefined);
     setSelectedBoard(undefined);
-    setSelectedUser(undefined);
   }
 
   // Function to handle when a use clicks on the room search button
@@ -696,6 +707,19 @@ export function HomePage() {
       passwordJoinRoomModalOnOpen();
     }
   }, [passwordProtectedRoom]);
+
+  // Handle when the members list changes. Maybe the user was removed from the room
+  useEffect(() => {
+    // Check if is still a member of the room
+    if (selectedRoom) {
+      const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+      const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+      if (!isMember) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+    }
+  }, [members]);
 
   return (
     // Main Container
@@ -801,8 +825,8 @@ export function HomePage() {
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
-        {servers.length > 0 ? (
-          <Box ref={serverNameRef}>
+        {hubs.length > 0 ? (
+          <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
               <MenuButton
                 marginTop="auto"
@@ -827,15 +851,15 @@ export function HomePage() {
                 </Box>
               </MenuButton>
               <MenuList width={'300px'}>
-                {servers.map((server) => {
+                {hubs.map((hub) => {
                   return (
                     <MenuItem
-                      key={server.id}
+                      key={hub.id}
                       onClick={() => {
-                        window.location.href = server.url;
+                        window.location.href = hub.url;
                       }}
                     >
-                      {server.name}
+                      {hub.name}
                     </MenuItem>
                   );
                 })}
@@ -843,7 +867,7 @@ export function HomePage() {
             </Menu>
           </Box>
         ) : (
-          <Box bg={teal} borderRadius="10" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" ref={serverNameRef} height="40px">
+          <Box bg={teal} borderRadius="10" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" ref={hubNameRef} height="40px">
             <Text fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden" pl="2">
               {config.serverName}
             </Text>
@@ -1123,18 +1147,6 @@ export function HomePage() {
 
               <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
               <Box display="flex" my="2" gap="2">
-                <Tooltip label={'Create a new board in this room'} openDelay={400} hasArrow placement="top">
-                  <Button
-                    colorScheme="teal"
-                    variant="outline"
-                    size="sm"
-                    width="120px"
-                    isDisabled={!canCreateBoards}
-                    onClick={createBoardModalOnOpen}
-                  >
-                    Create Board
-                  </Button>
-                </Tooltip>
                 <Tooltip
                   label={
                     selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
@@ -1181,33 +1193,48 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" height="100%">
+          <Box width="100%" flexGrow={1}>
             <Tabs colorScheme="teal">
               <TabList>
-                <Tab>Boards</Tab>
-                <Tab>Members</Tab>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Assets</Tab>
-                </Tooltip>
-                <Tooltip label="Coming Soon" openDelay={400} hasArrow placement="top">
-                  <Tab isDisabled={true}>Chat</Tab>
-                </Tooltip>
+                <Tab>
+                  <Icon as={MdBorderAll} mr="1"></Icon>Boards
+                </Tab>
+                <Tab>
+                  <Icon as={MdPeople} mr="1"></Icon>Members
+                </Tab>
+                <Tab>
+                  <Icon as={MdFolder} mr="1"></Icon> Assets
+                </Tab>
+                <Tab>
+                  <Icon as={HiPuzzle} mr="1"></Icon>Plugins
+                </Tab>
               </TabList>
 
-              <TabPanels>
+              <TabPanels height="100%">
                 <TabPanel px="0">
                   <Box display="flex" gap="4">
                     <Flex gap="4" flexDirection="column">
-                      <Flex align="center" gap="2" justify="flex-start" mx="4">
-                        <ButtonGroup size="md" isAttached variant="outline">
+                      <Flex align="center" gap="2" justify="flex-start" mx="2">
+                        <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
                           <IconButton
-                            aria-label="Board List View"
-                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
-                            onClick={() => {
-                              setBoardListView('list');
-                            }}
-                            icon={<MdList />}
-                          />
+                            size="md"
+                            variant={'outline'}
+                            colorScheme={'teal'}
+                            aria-label="favorite-board"
+                            fontSize="xl"
+                            onClick={createBoardModalOnOpen}
+                            isDisabled={!canCreateBoards}
+                            icon={<MdAdd />}
+                          ></IconButton>
+                        </Tooltip>
+
+                        <InputGroup size="md" width="365px" my="1">
+                          <InputLeftElement pointerEvents="none">
+                            <MdSearch />
+                          </InputLeftElement>
+                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                        </InputGroup>
+                        <ButtonGroup size="md" isAttached variant="outline">
                           <IconButton
                             aria-label="Board Grid View"
                             colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
@@ -1216,20 +1243,21 @@ export function HomePage() {
                             }}
                             icon={<MdGridView />}
                           />
+                          <IconButton
+                            aria-label="Board List View"
+                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                            onClick={() => {
+                              setBoardListView('list');
+                            }}
+                            icon={<MdList />}
+                          />
                         </ButtonGroup>
-
-                        <InputGroup size="md" width="415px" my="1">
-                          <InputLeftElement pointerEvents="none">
-                            <MdSearch />
-                          </InputLeftElement>
-                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                        </InputGroup>
                       </Flex>
                       {/* <Divider /> */}
                       {boardListView == 'grid' && (
                         <Flex
                           gap="4"
-                          p="4"
+                          p="2"
                           display="flex"
                           flexWrap="wrap"
                           justifyContent="left"
@@ -1241,7 +1269,6 @@ export function HomePage() {
                           margin="0 auto"
                           overflowY="scroll"
                           overflowX="hidden"
-                          pt="2"
                           minWidth="420px"
                           css={{
                             '&::-webkit-scrollbar': {
@@ -1262,10 +1289,11 @@ export function HomePage() {
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}
@@ -1276,7 +1304,7 @@ export function HomePage() {
                         <VStack
                           gap="3"
                           alignItems="left"
-                          pl="4"
+                          px="2"
                           style={{ height: 'calc(100svh - 360px)' }}
                           overflowY="scroll"
                           overflowX="hidden"
@@ -1301,9 +1329,10 @@ export function HomePage() {
                                 <BoardRow
                                   key={board._id}
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id).length}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
                                 />
                               </Box>
                             ))}
@@ -1313,29 +1342,13 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
-                  <Box display="flex" width="800px">
-                    <VStack
-                      gap="3"
-                      pr="2"
-                      style={{ height: 'calc(100svh - 340px)' }}
-                      overflowY="scroll"
-                      alignContent="left"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          width: '5px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {users.filter(membersFilter).map((user) => {
-                        return <UserRow key={user._id} user={user} />;
-                      })}
-                    </VStack>
-                  </Box>
+                  <MembersList room={selectedRoom} />
+                </TabPanel>
+                <TabPanel px="0" display="flex">
+                  <AssetList room={selectedRoom} />
+                </TabPanel>
+                <TabPanel px="0">
+                  <PluginsList room={selectedRoom} />
                 </TabPanel>
               </TabPanels>
             </Tabs>
@@ -1522,10 +1535,11 @@ export function HomePage() {
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}
@@ -1563,18 +1577,19 @@ export function HomePage() {
                             .sort((a, b) => a.data.name.localeCompare(b.data.name))
                             .sort((a, b) => {
                               // Sorted by alpha then user count
-                              const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
-                              const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                              const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
+                              const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
                               return userCountB - userCountA;
                             })
                             .map((board) => (
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}
@@ -1614,10 +1629,11 @@ export function HomePage() {
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={presences.filter((p) => p.data.boardId === board._id)}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
                               </Box>
                             ))}

@@ -15,10 +15,12 @@ import { Board, Presence } from '@sage3/shared/types';
 
 import { BoardCard } from '../BoardCard';
 import { BoardRow } from '../BoardRow';
+import { Room } from '@sage3/shared/types';
 
 interface QuickAccessProps {
   title: string;
   icon: IconType;
+  rooms: Room[];
   boardListView: 'list' | 'grid';
   setBoardListView: (view: 'list' | 'grid') => void;
   boardSearch: string;
@@ -33,6 +35,7 @@ interface QuickAccessProps {
 const QuickAccessPage = ({
   title,
   icon,
+  rooms,
   boardListView,
   setBoardListView,
   boardSearch,
@@ -103,6 +106,7 @@ const QuickAccessPage = ({
               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined} h="fit-content">
                 {boardListView === 'grid' ? (
                   <BoardCard
+                    room={rooms.find((room) => board.data.roomId === room._id) as Room}
                     board={board}
                     onClick={() => handleBoardClick(board)}
                     selected={selectedBoard ? selectedBoard._id === board._id : false}
@@ -110,6 +114,7 @@ const QuickAccessPage = ({
                   />
                 ) : (
                   <BoardRow
+                    room={rooms.find((room) => board.data.roomId === room._id) as Room}
                     key={board._id}
                     board={board}
                     onClick={() => handleBoardClick(board)}

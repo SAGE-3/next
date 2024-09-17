@@ -18,10 +18,10 @@ import { usePresenceStore, useRoomStore, useHexColor } from '@sage3/frontend';
 
 export function BoardSidebarRow(props: { board: Board; isSelected: boolean; onClick: () => void; onDoubleClick: () => void }) {
   // Room Store
-  const { rooms } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
 
   // Presence Store
-  const { presences } = usePresenceStore((state) => state);
+  const presences = usePresenceStore((state) => state.presences);
 
   // Colors
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');

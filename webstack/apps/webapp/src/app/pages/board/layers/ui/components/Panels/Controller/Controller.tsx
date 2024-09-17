@@ -8,10 +8,17 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Stack, useToast, Button,
-  Popover, PopoverArrow, PopoverBody, PopoverContent,
-  PopoverCloseButton, PopoverHeader,
-  useDisclosure, VStack, StackDirection,
+  Stack,
+  Button,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverContent,
+  PopoverCloseButton,
+  PopoverHeader,
+  useDisclosure,
+  VStack,
+  StackDirection,
 } from '@chakra-ui/react';
 
 import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
@@ -41,16 +48,18 @@ export function Controller(props: ControllerProps) {
   const canCreateKernels = useAbility('create', 'kernels');
 
   // Panel Store
-  const { updatePanel, getPanel, bringPanelForward } = usePanelStore((state) => state);
+  const updatePanel = usePanelStore((state) => state.updatePanel);
+  const bringPanelForward = usePanelStore((state) => state.bringPanelForward);
 
-  const annotations = getPanel('annotations');
-  const applications = getPanel('applications');
-  const assets = getPanel('assets');
-  const navigation = getPanel('navigation');
-  const users = getPanel('users');
-  const plugins = getPanel('plugins');
-  const kernels = getPanel('kernels');
-  const main = getPanel("controller")!; // not undefined
+  // This makes sure to get up to date panels
+  const annotations = usePanelStore((state) => state.panels['annotations']);
+  const applications = usePanelStore((state) => state.panels['applications']);
+  const assets = usePanelStore((state) => state.panels['assets']);
+  const navigation = usePanelStore((state) => state.panels['navigation']);
+  const users = usePanelStore((state) => state.panels['users']);
+  const plugins = usePanelStore((state) => state.panels['plugins']);
+  const kernels = usePanelStore((state) => state.panels['kernels']);
+  const main = usePanelStore((state) => state.panels['controller']);
 
   // Redirect the user back to the homepage when clicking the arrow button
   const { toHome, back } = useRouteNav();
@@ -64,27 +73,11 @@ export function Controller(props: ControllerProps) {
     }
   }
 
-  // Copy the board id to the clipboard
-  const toast = useToast();
-
-  // const handleCopyId = async () => {
-  //   if (navigator.clipboard) {
-  //     await navigator.clipboard.writeText(props.boardId);
-  //     toast({
-  //       title: 'Success',
-  //       description: `BoardID Copied to Clipboard`,
-  //       duration: 3000,
-  //       isClosable: true,
-  //       status: 'success',
-  //     });
-  //   }
-  // };
-
   // Show the various panels
   const handleShowPanel = (panel: PanelUI | undefined) => {
     if (!panel) return;
     let position;
-    const controller = getPanel('controller');
+    const controller = main;
     if (controller) {
       position = { ...controller.position };
       if (controller.stuck === StuckTypes.None) {
@@ -105,12 +98,16 @@ export function Controller(props: ControllerProps) {
         position.x = position.x - offset;
       } else if (controller.stuck === StuckTypes.Left) {
         position.x = position.x + 95;
-      } else if (controller.stuck === StuckTypes.Top || controller.stuck === StuckTypes.TopRight ||
+      } else if (
+        controller.stuck === StuckTypes.Top ||
+        controller.stuck === StuckTypes.TopRight ||
         controller.stuck === StuckTypes.TopLeft
       ) {
         position.y = position.y + 60;
-      } else if (controller.stuck === StuckTypes.Bottom || controller.stuck === StuckTypes.BottomRight
-        || controller.stuck === StuckTypes.BottomLeft
+      } else if (
+        controller.stuck === StuckTypes.Bottom ||
+        controller.stuck === StuckTypes.BottomRight ||
+        controller.stuck === StuckTypes.BottomLeft
       ) {
         let offset = 0;
         panel.name === 'users' && (offset = 90);
@@ -122,7 +119,6 @@ export function Controller(props: ControllerProps) {
         panel.name === 'annotations' && (offset = 155);
         position.y = position.y - offset;
       }
-
     }
     if (position) {
       updatePanel(panel.name, { show: !panel.show, position });
@@ -167,21 +163,23 @@ export function Controller(props: ControllerProps) {
             onLongPress={popOnOpen}
             description={`Back to ${room?.data.name} (Right-click for more options)`}
           />
-          <PopoverContent fontSize={'sm'} width={"200px"}
-            top={
-              main.stuck === StuckTypes.Bottom ? "-100px" :
-                main.stuck === StuckTypes.Top ? "60px" : "0px"
-            } left={
-              main.stuck === StuckTypes.Left ? "90px" :
-                main.stuck === StuckTypes.Right ? "-205px" : "50px"
-            }>
+          <PopoverContent
+            fontSize={'sm'}
+            width={'200px'}
+            top={main.stuck === StuckTypes.Bottom ? '-100px' : main.stuck === StuckTypes.Top ? '60px' : '0px'}
+            left={main.stuck === StuckTypes.Left ? '90px' : main.stuck === StuckTypes.Right ? '-205px' : '50px'}
+          >
             <PopoverArrow />
             <PopoverCloseButton />
             <PopoverHeader>Navigate</PopoverHeader>
-            <PopoverBody userSelect={"text"}>
-              <VStack display={"block"}>
-                <Button variant={"link"} fontSize={"sm"} onClick={() => toHome(props.roomId)}>Back to {room?.data.name}</Button>
-                <Button variant={"link"} fontSize={"sm"} onClick={back}>Back to previous board</Button>
+            <PopoverBody userSelect={'text'}>
+              <VStack display={'block'}>
+                <Button variant={'link'} fontSize={'sm'} onClick={() => toHome(props.roomId)}>
+                  Back to {room?.data.name}
+                </Button>
+                <Button variant={'link'} fontSize={'sm'} onClick={back}>
+                  Back to previous board
+                </Button>
               </VStack>
             </PopoverBody>
           </PopoverContent>

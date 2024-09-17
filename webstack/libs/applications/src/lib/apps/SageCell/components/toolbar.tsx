@@ -66,7 +66,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   const toast = useToast();
 
   // Kernel Store
-  const { apiStatus, kernels } = useKernelStore((state) => state);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const kernels = useKernelStore((state) => state.kernels);
 
   // Filter out this board's kernels and boards this user has access to
   const filterMyKernels = (kernels: KernelInfo[]) => {
@@ -338,10 +339,11 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const canCreateKernels = useAbility('create', 'kernels');
 
   // Kernel Store
-  const { apiStatus, kernels } = useKernelStore((state) => state);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const kernels = useKernelStore((state) => state.kernels);
 
   // App Store
-  const { updateStateBatch } = useAppStore((state) => state);
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   // Access
   const [access, setAccess] = useState<boolean>(true); // Default true, it will be updated later

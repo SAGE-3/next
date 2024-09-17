@@ -6,24 +6,27 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, VStack, Tooltip, Box, Badge, Text } from '@chakra-ui/react';
-import { useAppStore, usePluginStore, useUIStore, useUser } from '@sage3/frontend';
+import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure } from '@chakra-ui/react';
 import { format } from 'date-fns';
+
+import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { ButtonPanel, Panel } from '../Panel';
 
-export interface PluginProps {
+
+export interface PluginUploadProps {
   boardId: string;
   roomId: string;
 }
 
 /**
- * Panel to show all the Server's plugins and allow the users to create new apps from them
+ * Panel to show all the Hub's plugins and allow the users to create new apps from them
  * @param props
  * @returns
  */
-export function PluginsPanel(props: PluginProps) {
+export function PluginsPanel(props: PluginUploadProps) {
   // Plugin store. Sort them by name.
-  const plugins = usePluginStore((state) => state.plugins);
+  const allPlugins = usePluginStore((state) => state.plugins);
+  const plugins = allPlugins.filter((plugin) => plugin.data.roomId === props.roomId);
   plugins.sort((a, b) => a.data.name.localeCompare(b.data.name));
 
   // App Store
@@ -33,8 +36,12 @@ export function PluginsPanel(props: PluginProps) {
 
   // UI store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+  const uploadButtonColor = useColorModeValue('teal.400', 'teal.600');
+  const uploadButtonColorHex = useHexColor(uploadButtonColor);
+
+  const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
 
   // Create a new app from a plugin
   const newApplication = (pluginName: string) => {
@@ -62,81 +69,104 @@ export function PluginsPanel(props: PluginProps) {
   };
 
   return (
-    <Panel title={'Plugins'} name="plugins" width={0} showClose={false}>
-      <VStack
-        maxH={300}
-        w={'100%'}
-        m={0}
-        pr={2}
-        spacing={1}
-        overflow="auto"
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: gripColor,
-            borderRadius: 'md',
-          },
-        }}
-      >
-        {plugins
-          // create a button for each application
-          .map((plugin) => {
-            const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
-            const date = format(new Date(Number(plugin.data.dateCreated)), 'MM/dd/yyyy hh:mm');
+    <>
+      <PluginUploadModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} roomId={props.roomId} />
 
-            return (
-              <Tooltip
-                key={plugin._id}
-                shouldWrapChildren
-                hasArrow={true}
-                p="2"
-                openDelay={500}
-                borderRadius="8px"
-                placement="right"
-                label={
-                  <Box>
-                    <Badge variant="solid" colorScheme="teal">
-                      Name
-                    </Badge>
-                    <br />
-                    <Text whiteSpace={'nowrap'}> {name}</Text>
+      <Panel title={'Plugins'} name="plugins" width={0} showClose={false}>
+        <VStack
+          maxH={300}
+          w={'100%'}
+          m={0}
+          mb="2"
+          pr={2}
+          spacing={1}
+          overflow="auto"
+          css={{
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: gripColor,
+              borderRadius: 'md',
+            },
+          }}
+        >
+          <Tooltip
+            shouldWrapChildren
+            hasArrow={true}
+            p="2"
+            openDelay={500}
+            borderRadius="8px"
+            placement="right"
+            label="Upload a new plugin"
+          >
+            <ButtonPanel
+              title={'Upload'}
+              style={{ width: '175px', overflow: 'hidden', backgroundColor: uploadButtonColorHex }}
+              // disable dragging for now since it doesnt work for plugins
+              draggable={false}
+              onClick={() => pluginOnOpen()}
+            />
+          </Tooltip>
+          <Divider my="1" />
+          {plugins
+            // create a button for each application
+            .map((plugin) => {
+              const name = plugin.data.name.charAt(0).toUpperCase() + plugin.data.name.slice(1);
+              const date = format(new Date(Number(plugin.data.dateCreated)), 'MM/dd/yyyy hh:mm');
 
-                    <Badge variant="solid" colorScheme="teal">
-                      Description
-                    </Badge>
-                    <br />
-                    <Text whiteSpace={'nowrap'}> {plugin.data.description}</Text>
+              return (
+                <Tooltip
+                  key={plugin._id}
+                  shouldWrapChildren
+                  hasArrow={true}
+                  p="2"
+                  openDelay={500}
+                  borderRadius="8px"
+                  placement="right"
+                  label={
+                    <Box>
+                      <Badge variant="solid" colorScheme="teal">
+                        Name
+                      </Badge>
+                      <br />
+                      <Text whiteSpace={'nowrap'}> {name}</Text>
 
-                    <Badge variant="solid" colorScheme="teal">
-                      Creator
-                    </Badge>
-                    <br />
-                    <Text whiteSpace={'nowrap'}> {plugin.data.ownerName}</Text>
+                      <Badge variant="solid" colorScheme="teal">
+                        Description
+                      </Badge>
+                      <br />
+                      <Text whiteSpace={'nowrap'}> {plugin.data.description}</Text>
 
-                    <Badge variant="solid" colorScheme="teal">
-                      Uploaded
-                    </Badge>
-                    <br />
-                    <Text whiteSpace={'nowrap'}> {date}</Text>
-                  </Box>
-                }
-              >
-                <ButtonPanel
-                  title={name}
-                  style={{ width: '175px', overflow: 'hidden' }}
-                  // disable dragging for now since it doesnt work for plugins
-                  draggable={false}
-                  onClick={() => newApplication(plugin.data.name)}
-                />
-              </Tooltip>
-            );
-          })}
-      </VStack>
-    </Panel>
+                      <Badge variant="solid" colorScheme="teal">
+                        Creator
+                      </Badge>
+                      <br />
+                      <Text whiteSpace={'nowrap'}> {plugin.data.ownerName}</Text>
+
+                      <Badge variant="solid" colorScheme="teal">
+                        Uploaded
+                      </Badge>
+                      <br />
+                      <Text whiteSpace={'nowrap'}> {date}</Text>
+                    </Box>
+                  }
+                >
+                  <ButtonPanel
+                    title={name}
+                    style={{ width: '175px', overflow: 'hidden' }}
+                    // disable dragging for now since it doesnt work for plugins
+                    draggable={false}
+                    onClick={() => newApplication(plugin.data.name)}
+                  />
+                </Tooltip>
+              );
+            })}
+        </VStack>
+      </Panel>
+    </>
   );
 }

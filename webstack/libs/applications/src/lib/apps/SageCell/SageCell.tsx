@@ -78,6 +78,7 @@ import {
   useYjs,
   serverTime,
   YjsRoomConnection,
+  useThrottleScale,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -138,7 +139,7 @@ function AppComponent(props: App): JSX.Element {
   const boardId = props.data.boardId;
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
+  const scale = useThrottleScale(250);
   const { uiToBoard } = useCursorBoardPosition();
 
   // Local state
@@ -159,6 +160,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Local state
   const [access, setAccess] = useState(true);
+  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
 
   // Styles
   const [editorHeight, setEditorHeight] = useState(350);
@@ -166,8 +168,11 @@ function AppComponent(props: App): JSX.Element {
   const executionCountColor = useHexColor('red');
 
   // Kernel Store
-  const { apiStatus, kernels, executeCode, fetchResults, interruptKernel } = useKernelStore((state) => state);
-  const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const kernels = useKernelStore((state) => state.kernels);
+  const executeCode = useKernelStore((state) => state.executeCode);
+  const fetchResults = useKernelStore((state) => state.fetchResults);
+  const interruptKernel = useKernelStore((state) => state.interruptKernel);
 
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);

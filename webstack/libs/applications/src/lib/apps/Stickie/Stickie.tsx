@@ -73,20 +73,15 @@ function AppComponent(props: App): JSX.Element {
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  // const isDragging = useUIStore((state) => state.boardDragging);
-  const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
+
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
-  // Monitor application size
-  const [isSmall, setIsSmall] = useState(false);
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
@@ -97,16 +92,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
-
-  useEffect(() => {
-    // Apparent font size
-    const fontSize = scale * props.data.state.fontSize;
-    if (fontSize < 7) {
-      setIsSmall(true);
-    } else if (isSmall) {
-      setIsSmall(false);
-    }
-  }, [scale, props.data.state.fontSize]);
 
   const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
@@ -166,7 +151,6 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     if (e.repeat) return;
     // if not selected, don't do anything
-    if (props._id !== selectedApp) return;
 
     if (e.code === 'Escape') {
       // Deselect the app
@@ -353,7 +337,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // Update the application state
     updateState(props._id, { color: color });
     // Update the tags with the new color
-    updateTags(props._id, oldcolor + ":" + oldcolor, color + ":" + color);
+    updateTags(props._id, oldcolor + ':' + oldcolor, color + ':' + color);
   };
 
   const lockUnlock = () => {

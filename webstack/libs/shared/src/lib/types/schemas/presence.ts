@@ -32,6 +32,7 @@ const schema = z.object({
   viewport: z.object({
     position: PositionSchema,
     size: SizeSchema,
+    selfUpdate: z.boolean(),
   }),
   following: z.string(),
   // Go to viewport

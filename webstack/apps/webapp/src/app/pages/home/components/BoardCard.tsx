@@ -24,13 +24,22 @@ import {
 import { MdStar, MdLink, MdStarOutline, MdSettings, MdInfo, MdLock, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
-import { Board, Presence } from '@sage3/shared/types';
+import { Board, PresencePartial, Room } from '@sage3/shared/types';
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
 import { BsThreeDotsVertical } from 'react-icons/bs';
 import { useRef } from 'react';
 
-export function BoardCard(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: Presence[] }) {
+// Board Card Props
+interface BoardCardProps {
+  board: Board;
+  room: Room;
+  selected: boolean;
+  onClick: (board: Board) => void;
+  usersPresent: PresencePartial[];
+}
+
+export function BoardCard(props: BoardCardProps) {
   const { user, saveBoard, removeBoard } = useUser();
 
   const toast = useToast();
@@ -51,6 +60,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
   const isYourBoard = user?._id == props.board._createdBy;
+  const isRoomOwner = user?._id == props.room._createdBy;
 
   const starColorValue = useColorModeValue('yellow.600', 'yellow.200');
   const starColor = useHexColor(starColorValue);
@@ -231,7 +241,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
                   </Box>
                   <Box
                     _hover={{ background: highlightGray }}
-                    hidden={!isYourBoard}
+                    hidden={!isYourBoard && !isRoomOwner}
                     cursor="pointer"
                     px="2"
                     py="1"
@@ -279,15 +289,15 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
             </Box>
           </Tooltip>
 
-          <Tooltip placement="top" hasArrow={true} isDisabled={!isYourBoard} label={'Edit board settings'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} isDisabled={!isYourBoard && !isRoomOwner} label={'Edit board settings'} openDelay={400}>
             <IconButton
               size="sm"
               variant={'ghost'}
-              color={isYourBoard ? borderColor : grayedOutColor}
+              color={isYourBoard || isRoomOwner ? borderColor : grayedOutColor}
               aria-label="favorite-board"
               fontSize="xl"
               onClick={handleSettings}
-              isDisabled={!isYourBoard}
+              isDisabled={!isYourBoard && !isRoomOwner}
               onDoubleClick={handleBlockDoubleClick}
               icon={<MdSettings />}
             ></IconButton>

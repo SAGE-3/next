@@ -6,11 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './MembersList';
-export * from './BoardRow';
-export * from './BoardCard';
-export * from './RoomSearch';
-export * from './BoardPreview';
-export * from './BoardSidebarRow';
-export * from './AssetList';
-export * from './PluginsList';
+/* CSS definitions for the app Timer */
+
+@keyframes scaleAnimation {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

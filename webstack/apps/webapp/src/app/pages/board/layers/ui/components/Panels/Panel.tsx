@@ -120,12 +120,11 @@ export type PanelProps = {
  */
 export function Panel(props: PanelProps) {
   // Panel Store
-  const getPanel = usePanelStore((state) => state.getPanel);
-  const panel = getPanel(props.name);
+  const panel = usePanelStore((state) => state.panels[props.name]);
   if (!panel) return null;
-  const panels = usePanelStore((state) => state.panels);
+  // const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
-  const zIndex = panels.findIndex((el) => el.name == panel.name);
+  const zIndex = usePanelStore((state) => state.zOrder.indexOf(props.name));
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
@@ -227,13 +226,14 @@ export function Panel(props: PanelProps) {
   };
 
   // Handle a drag start of the panel
-  const handleDragStart = () => {
+  const handleDragStart = (e: any) => {
+    e.stopPropagation();
     bringPanelForward(props.name);
   };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    updatePanel(panel.name, { position: { x: data.x, y: data.y } });
+    update({ position: { x: data.x, y: data.y } });
     if (ref.current) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
@@ -336,14 +336,16 @@ export function Panel(props: PanelProps) {
 
               <Box display="flex" flexWrap={'nowrap'}>
                 {!panel.minimized ? (
-                  props.showMinimize ? <IconButton
-                    size="xs"
-                    icon={<MdExpandLess size="24px" />}
-                    aria-label="show less"
-                    onClick={handleMinimizeClick}
-                    mx="1"
-                    cursor="pointer"
-                  /> : null
+                  props.showMinimize ? (
+                    <IconButton
+                      size="xs"
+                      icon={<MdExpandLess size="24px" />}
+                      aria-label="show less"
+                      onClick={handleMinimizeClick}
+                      mx="1"
+                      cursor="pointer"
+                    />
+                  ) : null
                 ) : (
                   <IconButton
                     size="xs"
@@ -405,8 +407,11 @@ const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
           event.target.addEventListener('touchend', preventDefault, { passive: false });
           target.current = event.target;
         }
-      }
-      timeout.current = setTimeout(() => { callback(event); preventTouchClick(); }, delay);
+      };
+      timeout.current = setTimeout(() => {
+        callback(event);
+        preventTouchClick();
+      }, delay);
     },
     [callback, delay, isPreventDefault]
   );
