@@ -1117,7 +1117,7 @@ export function HomePage() {
       )} */}
 
       {/* Selected Room */}
-      {selectedRoom && rooms && (
+      {selectedRoom && rooms.length > 0 && (
         <Box
           display="flex"
           flex="1"
@@ -1357,7 +1357,7 @@ export function HomePage() {
       )}
 
       {/* Home when room or quick access are not selected */}
-      {!selectedRoom && !selectedQuickAccess && rooms && (
+      {!selectedRoom && !selectedQuickAccess && rooms.length > 0 && (
         <Box
           ref={homeRef}
           display="flex"

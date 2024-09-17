@@ -55,6 +55,8 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
 
+  console.log('rooms', rooms);
+
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
   const searchColorValue = useColorModeValue('gray.900', 'gray.100');
@@ -152,7 +154,7 @@ function RoomRow(props: RoomRowProps) {
   const borderColor = useHexColor(borderColorValue);
   const linearBGColor = useColorModeValue(
     `linear-gradient(180deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`,
+    `linear-gradient(180deg, #464545, #373737, #2f2e2e)`
   );
 
   // Room Store

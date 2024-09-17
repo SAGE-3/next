@@ -59,8 +59,8 @@ export function BoardCard(props: BoardCardProps) {
 
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
-  const isYourBoard = user?._id == props.board._createdBy;
-  const isRoomOwner = user?._id == props.room._createdBy;
+  const isYourBoard = user?._id === props.board._createdBy;
+  const isRoomOwner = user?._id === props.room?._createdBy;
 
   const starColorValue = useColorModeValue('yellow.600', 'yellow.200');
   const starColor = useHexColor(starColorValue);
