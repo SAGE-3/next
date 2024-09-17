@@ -66,7 +66,6 @@ export function usePressureObserver(on: boolean): Pressure {
 
     const handleStateChange = (records: PressureRecord[]) => {
       const lastRecord = records[records.length - 1];
-      console.log('PressureObserver> state:', lastRecord.state, 'source:', lastRecord.source, 'time:', lastRecord.time);
       setState({
         state: lastRecord.state,
         value: stateToValue(lastRecord.state),
