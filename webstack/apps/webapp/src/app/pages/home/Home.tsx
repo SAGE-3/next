@@ -1399,6 +1399,11 @@ export function HomePage() {
                   _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
                   value={searchSage}
                   onChange={(e) => setSearchSage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchSage('');
+                    }
+                  }}
                   roundedTop="2xl"
                   _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
                   bg={isSearchSageFocused ? searchBarColor : 'inherit'}
@@ -1648,6 +1653,11 @@ export function HomePage() {
                         // bg={isSearchSageFocused ? searchBarColor : 'inherit'}
                         value={roomSearch}
                         onChange={(e) => setRoomSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setRoomSearch('');
+                          }
+                        }}
                         rounded="md"
                       />
                     </InputGroup>
