@@ -153,12 +153,12 @@ export function Background(props: BackgroundProps) {
     event.dataTransfer.dropEffect = 'copy';
   }
 
-  const newApp = (type: AppName, x: number, y: number) => {
+  const newApp = (type: AppName, w: number, h: number, x: number, y: number) => {
     if (!user) return;
     if (type === 'Screenshare') {
       createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w: 1280, h: 720 }, { accessId }));
     } else {
-      createApp(setupApp('', type, x, y, props.roomId, props.boardId));
+      createApp(setupApp('', type, x, y, props.roomId, props.boardId, { w, h }));
     }
   };
 
@@ -261,6 +261,19 @@ export function Background(props: BackgroundProps) {
         // if no files were dropped, create an application
         const appName = event.dataTransfer.getData('app') as AppName;
         if (appName) {
+          // Setup initial size
+          let w = 600;
+          let h = 400;
+          if (appName === 'SageCell') {
+            w = 650;
+            h = 400;
+          } else if (appName === 'Calculator') {
+            w = 260;
+            h = 369;
+          } else if (appName === 'Chat') {
+            w = 800;
+            h = 420;
+          }
           // if a specific app was setup, create it
           const appstatestr = event.dataTransfer.getData('app_state');
           if (appstatestr) {
@@ -270,7 +283,7 @@ export function Background(props: BackgroundProps) {
               roomId: props.roomId,
               boardId: props.boardId,
               position: { x: xdrop, y: ydrop, z: 0 },
-              size: { width: 600, height: 400, depth: 0 },
+              size: { width: w, height: h, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
               type: appName,
               state: { ...(initialValues[appName] as AppState), ...appstate },
@@ -280,7 +293,7 @@ export function Background(props: BackgroundProps) {
             };
             createApp(newState);
           } else {
-            newApp(appName, xdrop, ydrop);
+            newApp(appName, w, h, xdrop, ydrop);
           }
         } else {
           // Get information from the drop

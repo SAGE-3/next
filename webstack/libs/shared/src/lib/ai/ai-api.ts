@@ -10,6 +10,7 @@
 export type AiQueryRequest = {
   input: string;
   model: string;
+  prompt?: string;
   max_new_tokens?: number;
   app_id?: string;
 };

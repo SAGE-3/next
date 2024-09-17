@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -25,6 +25,7 @@ interface RoomState {
   members: RoomMembers[];
   joinRoomMembership: (roomId: string) => Promise<void>;
   leaveRoomMembership: (roomId: string) => Promise<void>;
+  removeUserRoomMembership: (roomId: string, userId: string) => Promise<boolean>;
   clearError: () => void;
   create: (newRoom: RoomSchema) => Promise<Room | undefined>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
@@ -93,6 +94,10 @@ const RoomStore = create<RoomState>()((set, get) => {
     },
     leaveRoomMembership: async (roomId: string) => {
       await APIHttp.POST<RoomMembers>(`/roommembers/leave`, { roomId, members: [] });
+    },
+    removeUserRoomMembership: async (roomId: string, userId: string) => {
+      const response = await APIHttp.POST<any>(`/roommembers/remove`, { roomId, userId });
+      return response.success;
     },
     clearError: () => {
       set({ error: null });

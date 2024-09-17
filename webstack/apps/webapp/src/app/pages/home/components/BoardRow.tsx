@@ -6,13 +6,22 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast, border } from '@chakra-ui/react';
+import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast } from '@chakra-ui/react';
 import { MdLock, MdStar, MdExitToApp, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
 
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
-import { Board } from '@sage3/shared/types';
+import { Board, Room } from '@sage3/shared/types';
 
-export function BoardRow(props: { board: Board; selected: boolean; onClick: (board: Board) => void; usersPresent: number }) {
+// Board Row Props
+interface BoardRowProps {
+  board: Board;
+  room: Room;
+  selected: boolean;
+  onClick: (board: Board) => void;
+  usersPresent: number;
+}
+
+export function BoardRow(props: BoardRowProps) {
   const { user, saveBoard, removeBoard } = useUser();
 
   // Toast to inform user that they are not a member of a room
@@ -23,7 +32,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);
   const borderColor = useHexColor(borderColorValue);
-  const boardColor = props.board.data.color;
+  // const boardColor = props.board.data.color;
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
 
@@ -33,6 +42,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
   const savedBoards = user?.data.savedBoards || [];
   const isFavorite = user && savedBoards.includes(props.board._id);
   const isYourBoard = user?._id == props.board._createdBy;
+  const isRoomOwner = user?._id == props.room._createdBy;
 
   const handleFavorite = (event: any) => {
     event.preventDefault();
@@ -153,11 +163,11 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
             <IconButton
               size="sm"
               variant={'ghost'}
-              color={isYourBoard ? borderColor : grayedOutColor}
+              color={isYourBoard || isRoomOwner ? borderColor : grayedOutColor}
               aria-label="favorite-board"
               fontSize="xl"
               onClick={handleSettings}
-              isDisabled={!isYourBoard}
+              isDisabled={!isYourBoard && !isRoomOwner}
               onDoubleClick={handleBlockDoubleClick}
               icon={<MdSettings />}
             ></IconButton>

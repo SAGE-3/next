@@ -146,6 +146,7 @@ export function HomePage() {
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+  const [membersSearch, setMembersSearch] = useState<string>('');
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -388,12 +389,17 @@ export function HomePage() {
   const membersFilter = (user: User): boolean => {
     if (!selectedRoom) return false;
     const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+    const isYourself = user._id === userId;
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    return isMember;
+    return isMember && !isYourself;
   };
 
   const boardSearchFilter = (board: Board) => {
     return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
+  };
+
+  const membersSearchFilter = (user: User) => {
+    return fuzzySearch(user.data.name + ' ' + user.data.email, membersSearch);
   };
 
   // Check to see if the user is the owner but not a member in weird cases
@@ -586,6 +592,19 @@ export function HomePage() {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
+
+  // Handle when the members list changes. Maybe the user was removed from the room
+  useEffect(() => {
+    // Check if is still a member of the room
+    if (selectedRoom) {
+      const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
+      const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+      if (!isMember) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+    }
+  }, [members]);
 
   return (
     // Main Container
@@ -1147,6 +1166,7 @@ export function HomePage() {
                               <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
                                 <BoardCard
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
@@ -1186,6 +1206,7 @@ export function HomePage() {
                                 <BoardRow
                                   key={board._id}
                                   board={board}
+                                  room={selectedRoom}
                                   onClick={() => handleBoardClick(board)}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
@@ -1198,10 +1219,11 @@ export function HomePage() {
                   </Box>
                 </TabPanel>
                 <TabPanel px="0">
-                  <Box display="flex" width="800px">
+                  <Box display="flex" width="400px">
                     <VStack
                       gap="3"
                       pr="2"
+                      width="100%"
                       style={{ height: 'calc(100svh - 340px)' }}
                       overflowY="scroll"
                       alignContent="left"
@@ -1216,9 +1238,28 @@ export function HomePage() {
                         },
                       }}
                     >
-                      {users.filter(membersFilter).map((user) => {
-                        return <UserRow key={user._id} user={user} />;
-                      })}
+                      <InputGroup size="md" width="100%" my="1">
+                        <InputLeftElement pointerEvents="none">
+                          <MdSearch />
+                        </InputLeftElement>
+                        <Input placeholder="Search Members" value={membersSearch} onChange={(e) => setMembersSearch(e.target.value)} />
+                      </InputGroup>
+                      {users
+                        .filter(membersFilter)
+                        .filter(membersSearchFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((u) => {
+                          const online = partialPrescences.find((p) => p.data.userId === u._id);
+                          return (
+                            <UserRow
+                              key={u._id}
+                              user={u}
+                              currUserIsOwner={selectedRoom.data.ownerId === user?._id}
+                              roomId={selectedRoom._id}
+                              online={online ? true : false}
+                            />
+                          );
+                        })}
                     </VStack>
                   </Box>
                 </TabPanel>
