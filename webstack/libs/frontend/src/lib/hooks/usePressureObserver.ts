@@ -53,21 +53,20 @@ export interface Pressure {
   time: DOMHighResTimeStamp;
 }
 
-export function usePressureObserver(): Pressure {
+export function usePressureObserver(on: boolean): Pressure {
   const [state, setState] = useState({ state: PressureState.nominal, value: 1, time: 0, source: PressureSource.cpu.toString() });
   const hasPressureObserver = useRef(false);
 
   useEffect(() => {
-    if ('PressureObserver' in globalThis) {
+    if ('PressureObserver' in globalThis && on) {
       hasPressureObserver.current = true;
-      // console.log('PressureObserver> is supported');
     } else {
-      // console.log('PressureObserver> is not supported');
       return;
     }
 
     const handleStateChange = (records: PressureRecord[]) => {
       const lastRecord = records[records.length - 1];
+      console.log('PressureObserver> state:', lastRecord.state, 'source:', lastRecord.source, 'time:', lastRecord.time);
       setState({
         state: lastRecord.state,
         value: stateToValue(lastRecord.state),
