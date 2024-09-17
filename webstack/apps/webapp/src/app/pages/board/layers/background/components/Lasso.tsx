@@ -27,7 +27,7 @@ type BoxProps = {
 export function Lasso(props: LassoProps) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
-  
+
   // Board state
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -66,13 +66,13 @@ export function Lasso(props: LassoProps) {
     if (!isDragging) {
       clearSelectedApps();
     }
-    setIsDragging(false)
+    setIsDragging(false);
   };
 
   const lassoEndTouch = () => {
     setMouseDown(false);
     setLassoMode(false);
-    setIsDragging(false)
+    setIsDragging(false);
   };
 
   // Get last position
@@ -86,50 +86,47 @@ export function Lasso(props: LassoProps) {
   // Mouse Behaviours
   const mouseDown = (ev: any) => {
     if (ev.button == 0) {
-      lassoStart(ev.clientX, ev.clientY)
+      lassoStart(ev.clientX, ev.clientY);
     }
   };
 
   const mouseUp = () => {
-    lassoEnd()
+    lassoEnd();
   };
 
   const mouseMove = (ev: any) => {
     if (ev.button == 0 && mousedown) {
-      lassoMove(ev.clientX, ev.clientY)
-    }
-    else if (ev.buttons === 4) {
-      setIsDragging(true) // Keep Current Lasso Selection
+      lassoMove(ev.clientX, ev.clientY);
+    } else if (ev.buttons === 4) {
+      setIsDragging(true); // Keep Current Lasso Selection
     }
   };
 
   // Touch Behaviours
   const touchDown = (ev: any) => {
     if (ev.touches.length === 1) {
-      lassoStart(ev.touches[0].clientX, ev.touches[0].clientY)
+      lassoStart(ev.touches[0].clientX, ev.touches[0].clientY);
     }
   };
 
   const touchUp = () => {
-    lassoEndTouch()
+    lassoEndTouch();
   };
 
   const touchMove = (ev: any) => {
     if (ev.touches.length === 1) {
-      lassoMove(ev.touches[0].clientX, ev.touches[0].clientY)
-    }
-    else if (ev.touches.length === 2) {
-      setIsDragging(true) // Keep Current Lasso Selection
-    }
-    else {
+      lassoMove(ev.touches[0].clientX, ev.touches[0].clientY);
+    } else if (ev.touches.length === 2) {
+      setIsDragging(true); // Keep Current Lasso Selection
+    } else {
       // lassoEnd()
     }
   };
 
   // Turn off lasso layer when dragging stuff on board
   const preventDragDrop = (event: React.DragEvent<any>) => {
-    setCachedPrimaryActionMode(settings.primaryActionMode)
-    setPrimaryActionMode("grab")
+    setCachedPrimaryActionMode(settings.primaryActionMode);
+    setPrimaryActionMode('grab');
     // event.stopPropagation();
   };
 
@@ -153,11 +150,9 @@ export function Lasso(props: LassoProps) {
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}
-
           onTouchStart={touchDown}
           onTouchEnd={touchUp}
           onTouchMove={touchMove}
-         
           onDragEnter={preventDragDrop}
         >
           {mousedown ? (

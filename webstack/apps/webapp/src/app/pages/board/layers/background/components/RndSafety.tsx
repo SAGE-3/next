@@ -14,17 +14,17 @@ import { useUIStore } from '@sage3/frontend';
 // Fix to handle disappearing apps during scaling/zooming events
 // Tried to put this inside of UI store, but didn't seem to work....
 
-// If the bug occurs during re-rendering, it may be ideal to have a delayed start to 
+// If the bug occurs during re-rendering, it may be ideal to have a delayed start to
 // allow for drag inside the app window, granted it wont scale well with lots of applications,
 // but it guarantees all cases are caught
 export const RndSafety = () => {
-  const boardSynced = useUIStore((state) => state.boardSynced)
-  const setRndSafeForAction = useUIStore((state) => state.setRndSafeForAction)
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const setRndSafeForAction = useUIStore((state) => state.setRndSafeForAction);
 
-  const rndSafeForActionTimeoutRef = useRef<number | null>(null)
+  const rndSafeForActionTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setRndSafeForAction(false)
+    setRndSafeForAction(false);
 
     if (boardSynced) {
       if (rndSafeForActionTimeoutRef.current !== null) {
@@ -32,13 +32,10 @@ export const RndSafety = () => {
       }
 
       rndSafeForActionTimeoutRef.current = window.setTimeout(() => {
-        setRndSafeForAction(true)
+        setRndSafeForAction(true);
       }, 200);
     }
-  }, [boardSynced])
+  }, [boardSynced]);
 
-
-  return (
-    <></>
-  );
+  return <></>;
 };

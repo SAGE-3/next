@@ -194,31 +194,32 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yAnnotations, props.boardId]);
 
   // On pointer move, update awareness and (if down) update the current line
-  const draw = useCallback((x: number, y: number) => {
-    if (whiteboardMode === 'pen') {
-      const currentLine = rCurrentLine.current;
-      if (!currentLine) return;
-      const points = currentLine.get('points');
-      // Don't add the new point to the line
-      if (!points) return;
-      const point = getPoint(x, y);
-      points.push([...point]);
+  const draw = useCallback(
+    (x: number, y: number) => {
+      if (whiteboardMode === 'pen') {
+        const currentLine = rCurrentLine.current;
+        if (!currentLine) return;
+        const points = currentLine.get('points');
+        // Don't add the new point to the line
+        if (!points) return;
+        const point = getPoint(x, y);
+        points.push([...point]);
+      }
+    },
+    [rCurrentLine.current, whiteboardMode]
+  );
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== 'touch') {
+      draw(e.clientX, e.clientY);
     }
-  }, [rCurrentLine.current, whiteboardMode]);
+  };
 
-  const handlePointerMove =
-    (e: React.PointerEvent<SVGSVGElement>) => {
-      if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== "touch") {
-        draw(e.clientX, e.clientY)
-      }
-    };
-
-  const handleTouchMove = 
-    (e: React.TouchEvent<SVGSVGElement>) => {
-      if (e.touches.length === 1) {
-        draw(e.touches[0].clientX, e.touches[0].clientY)
-      }
-    };
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length === 1) {
+      draw(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
 
   // On pointer up, complete the current line
   const handlePointerUp = useCallback(
@@ -342,7 +343,6 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-
         onTouchMove={handleTouchMove}
       >
         <g>

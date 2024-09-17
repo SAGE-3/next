@@ -213,14 +213,13 @@ export function Apps() {
         evt.preventDefault();
         evt.stopPropagation();
         pasteApp(boardCursor);
-      }
-      else {
+      } else {
         toast({
           title: 'Pasting app while panning or zooming is not supported',
           status: 'warning',
           duration: 2000,
           isClosable: true,
-        })
+        });
       }
     },
     { dependencies: [] }

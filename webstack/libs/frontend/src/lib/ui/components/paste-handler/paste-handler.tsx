@@ -60,7 +60,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           status: 'warning',
           duration: 2000,
           isClosable: true,
-        })
+        });
         return;
       }
 

@@ -41,7 +41,7 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * @returns boolean
  */
 function isTouchDevice(): boolean {
-  return window.matchMedia("(any-pointer: coarse)").matches;
+  return window.matchMedia('(any-pointer: coarse)').matches;
 }
 
 /**
@@ -64,7 +64,6 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
       setTimeout(() => setShowContextMenu(false));
     }
   }, [showContextMenu]);
-
 
   const handleContextMenu = useCallback(
     (event: any) => {
@@ -90,7 +89,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
-      console.log(type)
+      console.log(type);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
@@ -101,8 +100,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
           if (props.divIds.includes(event.target.id) || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false), 400);
           }
-        }
-        else if (event.type === 'touchend' && showContextMenu) {
+        } else if (event.type === 'touchend' && showContextMenu) {
           document.removeEventListener('touchmove', ctx.onTouchMove);
         }
       }
