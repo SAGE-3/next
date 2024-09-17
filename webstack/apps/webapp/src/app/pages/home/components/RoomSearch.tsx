@@ -55,8 +55,6 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
 
-  console.log('rooms', rooms);
-
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
   const searchColorValue = useColorModeValue('gray.900', 'gray.100');
