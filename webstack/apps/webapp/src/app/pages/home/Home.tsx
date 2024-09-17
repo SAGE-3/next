@@ -1504,7 +1504,7 @@ export function HomePage() {
                   <TabPanel px="0" pt="2" id="Recent Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
-                      {recentBoards.length > 0 ? (
+                      {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
                         <HStack
                           gap="3"
                           width="100%"
