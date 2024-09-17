@@ -100,8 +100,8 @@ interface UIState {
   setBoardSynced: (synced: boolean) => void;
 
   // Cache Cursor Type when dragging items on board
-  cachedPrimaryActionMode: "lasso" | "grab" | 'pen' | 'eraser' | undefined;
-  setCachedPrimaryActionMode: (mode: "lasso" | "grab" | 'pen' | 'eraser' | undefined) => void;
+  cachedPrimaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined;
+  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
@@ -162,7 +162,8 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
 
   cachedPrimaryActionMode: undefined,
-  setCachedPrimaryActionMode: (mode: "lasso" | "grab" | 'pen' | 'eraser' | undefined) => set((state) => ({ ...state, cachedPrimaryActionMode: mode })),
+  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) =>
+    set((state) => ({ ...state, cachedPrimaryActionMode: mode })),
 
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },

@@ -55,8 +55,6 @@ import {
   KernelsPanel,
   TagsDisplay,
 } from './components';
-import { BiPencil } from 'react-icons/bi';
-import { BsEraserFill } from 'react-icons/bs';
 
 type UILayerProps = {
   boardId: string;
@@ -107,7 +105,7 @@ export function UILayer(props: UILayerProps) {
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Color
-  const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
+  // const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
 
   // Navigation
   const { toHome } = useRouteNav();
@@ -315,25 +313,25 @@ export function UILayer(props: UILayerProps) {
             <Tooltip label={'Grab (Panning Tool)'}>
               <IconButton
                 size="sm"
-                colorScheme={(primaryActionMode === "grab" ? (user?.data.color || 'teal') : 'gray') }
+                colorScheme={(primaryActionMode === "grab" ? (user?.data.color || 'teal') : 'gray')}
                 icon={<LiaHandPaperSolid />}
                 fontSize="xl"
                 aria-label={'input-type'}
                 roundedLeft={'lg'}
                 roundedRight={'none'}
-                onClick={() => {setPrimaryActionMode("grab")}}
+                onClick={() => { setPrimaryActionMode("grab") }}
               ></IconButton>
             </Tooltip>
             <Tooltip label={'Selection'}>
               <IconButton
                 size="sm"
-                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray') }
+                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray')}
                 icon={<LiaMousePointerSolid />}
                 fontSize="xl"
                 roundedLeft={'none'}
                 roundedRight={'lg'}
                 aria-label={'input-type'}
-                onClick={() => {setPrimaryActionMode("lasso")}}
+                onClick={() => { setPrimaryActionMode("lasso") }}
               ></IconButton>
             </Tooltip>
             {/* <Tooltip label={'Annotations'}>

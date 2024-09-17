@@ -40,9 +40,9 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * Check if the device is a touch device using CSS media queries
  * @returns boolean
  */
-function isTouchDevice(): boolean {
-  return window.matchMedia('(any-pointer: coarse)').matches;
-}
+// function isTouchDevice(): boolean {
+//   return window.matchMedia('(any-pointer: coarse)').matches;
+// }
 
 /**
  * ContextMenu component

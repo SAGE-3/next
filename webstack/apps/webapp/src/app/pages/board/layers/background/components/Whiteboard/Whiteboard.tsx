@@ -27,7 +27,6 @@ import {
   useYjs,
 } from '@sage3/frontend';
 import { Line } from './Line';
-import { useParams } from 'react-router';
 
 type WhiteboardProps = {
   boardId: string;

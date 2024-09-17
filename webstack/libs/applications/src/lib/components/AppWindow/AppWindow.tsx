@@ -12,11 +12,12 @@ import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'reac
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
+// SAGE3 Frontend
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 import { App } from '../../schema';
+import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;

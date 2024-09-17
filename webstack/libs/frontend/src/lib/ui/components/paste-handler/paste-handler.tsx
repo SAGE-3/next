@@ -11,8 +11,10 @@ import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { stringContainsCode } from '@sage3/shared';
-import { isValidURL, setupApp, processContentURL, useFiles } from '@sage3/frontend';
-import { useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore } from '@sage3/frontend';
+import {
+  isValidURL, setupApp, processContentURL, useFiles,
+  useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore
+} from '@sage3/frontend';
 
 /**
  * Handling copy/paste events on a board

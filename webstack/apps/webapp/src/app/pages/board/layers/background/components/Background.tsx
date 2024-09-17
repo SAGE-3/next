@@ -45,11 +45,12 @@ import {
   useAbility,
   processContentURL,
   useUserSettings,
+  HelpModal,
 } from '@sage3/frontend';
-import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/initialValues';
 
-import { HelpModal } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+
 
 type BackgroundProps = {
   roomId: string;
@@ -464,9 +465,8 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       userSelect={'none'}
       draggable={false}
