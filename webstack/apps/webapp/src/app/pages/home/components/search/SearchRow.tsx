@@ -40,7 +40,6 @@ SearchRow.Board = ({ board }: SearchRowChildrenProps) => {
         role="button"
         onClick={(e) => {
           e.stopPropagation();
-          console.log('board', board);
           onOpen();
         }}
         _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
