@@ -1117,7 +1117,7 @@ export function HomePage() {
       )} */}
 
       {/* Selected Room */}
-      {selectedRoom && (
+      {selectedRoom && rooms && (
         <Box
           display="flex"
           flex="1"
@@ -1357,7 +1357,7 @@ export function HomePage() {
       )}
 
       {/* Home when room or quick access are not selected */}
-      {!selectedRoom && !selectedQuickAccess && (
+      {!selectedRoom && !selectedQuickAccess && rooms && (
         <Box
           ref={homeRef}
           display="flex"
@@ -1652,6 +1652,11 @@ export function HomePage() {
                 </Box>
                 <Box p="4" bg={homeSectionColor} rounded="xl">
                   <Box display="flex" alignItems="center" gap="2">
+                    <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
+                      <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
+                        <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
+                      </Button>
+                    </Tooltip>
                     <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
@@ -1667,10 +1672,6 @@ export function HomePage() {
                       />
                     </InputGroup>
                     {/* <Box ref={createRoomRef}> */}
-                    <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
-                      <Icon as={MdAdd} mr="1" fontWeight="bold" />
-                      Create Room
-                    </Button>
                     {/* </Box> */}
                   </Box>
                   <Box>
