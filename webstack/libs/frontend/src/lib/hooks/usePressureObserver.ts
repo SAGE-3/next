@@ -60,9 +60,9 @@ export function usePressureObserver(): Pressure {
   useEffect(() => {
     if ('PressureObserver' in globalThis) {
       hasPressureObserver.current = true;
-      console.log('PressureObserver> is supported');
+      // console.log('PressureObserver> is supported');
     } else {
-      console.log('PressureObserver> is not supported');
+      // console.log('PressureObserver> is not supported');
       return;
     }
 
