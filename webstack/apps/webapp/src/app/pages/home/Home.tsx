@@ -118,8 +118,6 @@ export function HomePage() {
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
-  console.log('recentBoards', recentBoards);
-
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -592,7 +590,6 @@ export function HomePage() {
       setSelectedQuickAccess(undefined);
       toHome();
     }
-    console.log('quickAccess', quickAccess);
   }
 
   // Clear the filters only when selecting from navigation sidebar
