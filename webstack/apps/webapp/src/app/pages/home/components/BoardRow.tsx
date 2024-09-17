@@ -107,7 +107,7 @@ export function BoardRow(props: { board: Board; selected: boolean; onClick: (boa
         boxSizing="border-box"
         width="500px"
         height="56px"
-        border={`solid 2px ${props.selected ? borderColor : baseBorderColor}`}
+        border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
         transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
         _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         transition={'all 0.2s ease-in-out'}

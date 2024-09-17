@@ -1357,6 +1357,7 @@ export function HomePage() {
           width="100%"
           overflow="hidden"
           py="6"
+          minWidth="600px"
         >
           <Box
             display="flex"
@@ -1453,7 +1454,7 @@ export function HomePage() {
                 pt="3"
                 borderRadius={cardRadius}
               >
-                <TabList px="5" h="30px">
+                <TabList px="5" h="30px" gap="1">
                   <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
                     Recent Boards
                   </Tab>
@@ -1465,7 +1466,7 @@ export function HomePage() {
                   </Tab>
                 </TabList>
 
-                <TabPanels>
+                <TabPanels minH="250px">
                   <TabPanel px="0" pt="2" id="Recent Boards">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}

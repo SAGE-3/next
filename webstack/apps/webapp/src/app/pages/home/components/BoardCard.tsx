@@ -52,6 +52,8 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
   const isFavorite = user && savedBoards.includes(props.board._id);
   const isYourBoard = user?._id == props.board._createdBy;
 
+  const starColorValue = useColorModeValue('yellow.600', 'yellow.200');
+  const starColor = useHexColor(starColorValue);
   const grayedOutColorValue = useColorModeValue('gray.100', 'gray.700');
   const grayedOutColor = useHexColor(grayedOutColorValue);
 
@@ -143,7 +145,7 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
           width="250px"
           transition={'all 0.2s ease-in-out'}
           cursor="pointer"
-          border={`solid 2px ${props.selected ? borderColor : baseBorderColor}`}
+          border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
           transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
           _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         >
@@ -163,18 +165,20 @@ export function BoardCard(props: { board: Board; selected: boolean; onClick: (bo
             <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} />
             <Tooltip hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400}>
               <IconButton
-                top="0"
-                right="0"
+                top="1"
+                right="1"
                 position="absolute"
                 size="sm"
                 variant={'ghost'}
-                color={isFavorite ? 'yellow' : grayedOutColor}
+                color={isFavorite ? starColor : grayedOutColor}
                 aria-label="favorite-board"
                 fontSize="xl"
                 onClick={handleFavorite}
                 onDoubleClick={handleBlockDoubleClick}
                 icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-                _hover={{ transform: 'scale(1.3)' }}
+                _hover={{ transform: 'scale(1.3)', bg: 'none' }}
+                p="0"
+                h="fit-content"
               ></IconButton>
             </Tooltip>
           </Box>
