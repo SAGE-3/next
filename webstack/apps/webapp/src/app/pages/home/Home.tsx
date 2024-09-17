@@ -1430,10 +1430,11 @@ export function HomePage() {
                   ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
                     // If it's a board, get the room ID
                     if ((item as Board & { roomName: string }).data.roomId) {
-                      return <SearchRow.Board board={item as Board & { roomName: string }} />;
+                      return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
                     }
                     return (
                       <SearchRow.Room
+                        key={item._id}
                         room={item as Room}
                         clickHandler={() => {
                           handleRoomClick(item as Room);
@@ -1580,7 +1581,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No active boards.</Text>
+                        <Text p="3" px="6">No active boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1624,7 +1625,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No favorite boards.</Text>
+                        <Text p="3" px="6">No favorite boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
