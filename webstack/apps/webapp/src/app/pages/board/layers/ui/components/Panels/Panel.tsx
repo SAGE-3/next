@@ -8,6 +8,7 @@
 
 import { useState, useEffect, createRef, useRef, useCallback, CSSProperties } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
+
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
@@ -71,7 +72,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  // const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
@@ -278,7 +279,7 @@ export function Panel(props: PanelProps) {
       <Rnd
         dragHandleClassName="dragHandle" // only allow dragging the header
         position={{ ...panel.position }}
-        bounds="window"
+        bounds="parent"
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}

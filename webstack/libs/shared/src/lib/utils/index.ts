@@ -9,3 +9,4 @@
 export * from './gen-id';
 export * from './mime-utils';
 export * from './fuzzy-search';
+export * from './platform-checker';

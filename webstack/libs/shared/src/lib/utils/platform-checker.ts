@@ -6,11 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './MembersList';
-export * from './BoardRow';
-export * from './BoardCard';
-export * from './RoomSearch';
-export * from './BoardPreview';
-export * from './BoardSidebarRow';
-export * from './AssetList';
-export * from './PluginsList';
+/**
+ * Check if current platform is mac
+ * @returns {boolean} true if mac, false otherwise
+ */
+export const isMac = () => {
+  return window.navigator.userAgent.toLowerCase().includes('macintosh');
+};
