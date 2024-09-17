@@ -80,6 +80,9 @@ export function isCode(mimeType: string): boolean {
 export function mimeToCode(code: string) {
   const result = 'js';
   switch (code) {
+    case 'application/python':
+    case 'text/x-python-script':
+      return 'python';
     case 'text/javascript':
     case 'application/javascript':
       return 'js';
@@ -90,6 +93,7 @@ export function mimeToCode(code: string) {
     case 'text/x-java-source':
       return 'java';
     case 'application/json':
+    case 'application/geo+json':
       return 'json';
     case 'text/yaml':
       return 'yaml';

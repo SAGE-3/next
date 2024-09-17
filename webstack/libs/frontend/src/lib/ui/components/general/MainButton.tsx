@@ -48,7 +48,6 @@ import {
   MdRemoveRedEye,
   MdHelpOutline,
 } from 'react-icons/md';
-import { HiPuzzle } from 'react-icons/hi';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 
 import {
@@ -58,7 +57,6 @@ import {
   AboutModal,
   copyBoardUrlToClipboard,
   useRouteNav,
-  PluginModal,
   useBoardStore,
   EnterBoardModal,
   useHexColor,
@@ -69,6 +67,7 @@ import {
   HelpModal,
   EditVisibilityModal,
   Alfred,
+  truncateWithEllipsis,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -87,6 +86,8 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
+  const name = user ? truncateWithEllipsis(user.data.name, 25) : '';
+
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
 
@@ -97,7 +98,6 @@ export function MainButton(props: MainButtonProps) {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   // Abilities
-  const canCreatePlugins = useAbility('create', 'plugins');
   const canUpdateAccount = useAbility('update', 'users');
 
   const { logout } = useAuth();
@@ -105,7 +105,7 @@ export function MainButton(props: MainButtonProps) {
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
-  const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
+
   const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
 
   // Alfred Modal
@@ -214,7 +214,9 @@ export function MainButton(props: MainButtonProps) {
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
       {/* Alfred modal dialog */}
-      {props.boardInfo && (<Alfred boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />)}
+      {props.boardInfo && (
+        <Alfred boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
+      )}
 
       {/* Feedback modal */}
       {feedbackUrl && <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} url={feedbackUrl} />}
@@ -230,7 +232,7 @@ export function MainButton(props: MainButtonProps) {
             leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
           >
             <Box textOverflow={'ellipsis'} overflow={'hidden'}>
-              {user ? user.data.name : ''}
+              {name}
             </Box>
           </MenuButton>
         ) : (
@@ -249,8 +251,8 @@ export function MainButton(props: MainButtonProps) {
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
               <Box display="flex">
                 <Icon as={MdPerson} fontSize="24px" mx="2" />
-                <Text fontSize="md" fontWeight={'bold'}>
-                  {user?.data.name}
+                <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
+                  {name}
                 </Text>
               </Box>
               <Box pr="3" fontSize="3xl">
@@ -260,20 +262,24 @@ export function MainButton(props: MainButtonProps) {
           </MenuButton>
         )}
 
-        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'}
-          p="2px" m="0">
+        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'} p="2px" m="0">
           <MenuGroup title="SAGE3" p="0" m="1">
-            {props.boardInfo && (<MenuItem py="1px" m="0"
-              onClick={handleHelpOpen}
-              icon={<MdHelpOutline size="24px" />}
-              justifyContent="right"
-            > Help </MenuItem>)}
-            <MenuItem onClick={openAbout} icon={<MdInfoOutline fontSize="24px" />} py="1px" m="0"> About </MenuItem>
-            {props.boardInfo && (<MenuItem py="1px" m="0"
-              justifyContent="right"
-              onClick={handleAlfredOpen}
-              icon={<MdSearch fontSize="24px" />}
-            > Search </MenuItem>)}
+            {props.boardInfo && (
+              <MenuItem py="1px" m="0" onClick={handleHelpOpen} icon={<MdHelpOutline size="24px" />} justifyContent="right">
+                {' '}
+                Help{' '}
+              </MenuItem>
+            )}
+            <MenuItem onClick={openAbout} icon={<MdInfoOutline fontSize="24px" />} py="1px" m="0">
+              {' '}
+              About{' '}
+            </MenuItem>
+            {props.boardInfo && (
+              <MenuItem py="1px" m="0" justifyContent="right" onClick={handleAlfredOpen} icon={<MdSearch fontSize="24px" />}>
+                {' '}
+                Search{' '}
+              </MenuItem>
+            )}
             {feedbackUrl && (
               <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />} py="1px" m="0">
                 Feedback
@@ -287,16 +293,7 @@ export function MainButton(props: MainButtonProps) {
             <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
               {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
             </MenuItem>
-            {props.config?.features?.plugins && (
-              <MenuItem onClick={pluginOnOpen} isDisabled={!canCreatePlugins} icon={<HiPuzzle fontSize="24px" />} py="1px" m="0">
-                Plugins
-              </MenuItem>
-            )}
-            <MenuItem
-              onClick={handlePresenceSettingsOpen}
-              icon={<MdRemoveRedEye fontSize="24px" />}
-              justifyContent="right" py="1px" m="0"
-            >
+            <MenuItem onClick={handlePresenceSettingsOpen} icon={<MdRemoveRedEye fontSize="24px" />} justifyContent="right" py="1px" m="0">
               Visibility
             </MenuItem>
           </MenuGroup>
@@ -313,7 +310,9 @@ export function MainButton(props: MainButtonProps) {
                   as={MenuItem}
                   icon={<MdArrowForward fontSize="24px" />}
                   onClick={toggleBoardList}
-                  _hover={{ background: bgColor }} py="1px" m="0"
+                  _hover={{ background: bgColor }}
+                  py="1px"
+                  m="0"
                 >
                   Go To Board
                 </MenuButton>
@@ -409,7 +408,6 @@ export function MainButton(props: MainButtonProps) {
 
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
-      <PluginModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} />
 
       {
         // The test forces the recreation of the modal when the userSearchIsOpen state changes
