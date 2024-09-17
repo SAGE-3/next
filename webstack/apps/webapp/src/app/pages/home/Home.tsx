@@ -890,7 +890,7 @@ export function HomePage() {
         {/* </Box> */}
 
         {/* Rooms and boards section */}
-        <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="5" pb="5">
+        <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
           <Box
             display="flex"
             flexDirection="column"
@@ -964,7 +964,7 @@ export function HomePage() {
                   },
                 }}
               >
-                <Box height="60%" mr="2" ml="4">
+                <Box height="60%" mr="2" ml="1">
                   {rooms
                     .filter(roomMemberFilter)
                     .sort((a, b) => a.data.name.localeCompare(b.data.name))
@@ -1350,7 +1350,7 @@ export function HomePage() {
           marginLeft="3"
           width="100%"
           overflow="hidden"
-          py="6"
+          py="1"
           minWidth="600px"
         >
           <Box
@@ -1359,7 +1359,7 @@ export function HomePage() {
             overflowX="hidden"
             overflowY="auto"
             height="100%"
-            px="6"
+            px="5"
             css={{
               '&::-webkit-scrollbar': {
                 background: 'transparent',
