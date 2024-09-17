@@ -133,6 +133,8 @@ export function HomePage() {
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
+  console.log('recentBoards', recentBoards);
+
   // Plugin Store
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -416,7 +418,7 @@ export function HomePage() {
   // Load the steps when the component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
-  }, []);
+  }, [rooms]);
 
   // Filter Functions
   const roomMemberFilter = (room: Room): boolean => {
@@ -1117,7 +1119,7 @@ export function HomePage() {
       )} */}
 
       {/* Selected Room */}
-      {selectedRoom && rooms.length > 0 && (
+      {selectedRoom && (
         <Box
           display="flex"
           flex="1"
@@ -1357,7 +1359,7 @@ export function HomePage() {
       )}
 
       {/* Home when room or quick access are not selected */}
-      {!selectedRoom && !selectedQuickAccess && rooms.length > 0 && (
+      {!selectedRoom && !selectedQuickAccess && (
         <Box
           ref={homeRef}
           display="flex"
@@ -1639,7 +1641,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No recent boards.</Text>
+                        <Text p="3">No favorite boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
