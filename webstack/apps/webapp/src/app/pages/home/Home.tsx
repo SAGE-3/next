@@ -154,7 +154,6 @@ export function HomePage() {
   // Searchbar
   const [searchSage, setSearchSage] = useState<string>('');
   const [isSearchSageFocused, setSearchSageFocused] = useState<boolean>(false);
-  const searchSageRef = useRef<null | HTMLDivElement>(null);
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -234,12 +233,13 @@ export function HomePage() {
   const clockRef = useRef<HTMLDivElement>(null);
   const serverNameRef = useRef<HTMLDivElement>(null);
   const createRoomRef = useRef<HTMLButtonElement>(null);
-  const searchRoomsRef = useRef<HTMLDivElement>(null);
+  const searchSageRef = useRef<null | HTMLDivElement>(null);
+  const searchInputRef = useRef<null | HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
-  const activeBoardsRef = useRef<HTMLDivElement>(null);
-  const starredBoardsRef = useRef<HTMLDivElement>(null);
-  const recentBoardsRef = useRef<HTMLDivElement>(null);
+  const activeBoardsRef = useRef<HTMLButtonElement>(null);
+  const starredBoardsRef = useRef<HTMLButtonElement>(null);
+  const recentBoardsRef = useRef<HTMLButtonElement>(null);
   const joyrideRef = useRef<Joyride>(null);
 
   // Joyride Callback Handler
@@ -308,16 +308,16 @@ export function HomePage() {
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
       },
-      // {
-      //   target: createRoomRef.current!,
-      //   title: 'Create Rooms',
-      //   content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
-      //   disableBeacon: true,
-      // },
       {
-        target: searchRoomsRef.current!,
-        title: 'Search for Rooms',
-        content: 'You can search for existing public rooms and join them from here.',
+        target: createRoomRef.current!,
+        title: 'Create Rooms',
+        content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
+        disableBeacon: true,
+      },
+      {
+        target: searchInputRef.current!,
+        title: 'Search your Rooms and Boards',
+        content: 'You can search for rooms that you own or join, and for boards from those rooms.',
         disableBeacon: true,
       },
       {
@@ -325,6 +325,12 @@ export function HomePage() {
         title: 'Enter a Board by URL',
         content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
+      },
+      {
+        target: recentBoardsRef.current!,
+        title: 'Recent Boards',
+        content:
+          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
       },
       {
         target: activeBoardsRef.current!,
@@ -338,12 +344,6 @@ export function HomePage() {
         content:
           'You can star your frequently used boards here for quick access. You can star a board by clicking on the star icon next to the boards name once you enter a room.',
         disableBeacon: true,
-      },
-      {
-        target: recentBoardsRef.current!,
-        title: 'Recent Boards',
-        content:
-          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
       },
       {
         target: roomsRef.current!,
@@ -706,6 +706,7 @@ export function HomePage() {
         steps={joyrideSteps}
         run={runJoyride}
         callback={handleJoyrideCallback}
+        disableScrolling
         continuous
         showProgress
         stepIndex={stepIndex}
@@ -1396,7 +1397,7 @@ export function HomePage() {
               }}
               ref={searchSageRef}
             >
-              <InputGroup size="md" width="full">
+              <InputGroup size="md" width="full" ref={searchInputRef}>
                 <InputLeftElement pointerEvents="none">
                   <MdSearch />
                 </InputLeftElement>
@@ -1455,13 +1456,31 @@ export function HomePage() {
                 borderRadius={cardRadius}
               >
                 <TabList px="5" h="30px" gap="1">
-                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={recentBoardsRef}
+                  >
                     Recent Boards
                   </Tab>
-                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={activeBoardsRef}
+                  >
                     Active Boards
                   </Tab>
-                  <Tab _selected={{ bg: tabColor }} _hover={{ bg: hightlightGray }} borderRadius="lg" fontWeight="bold">
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={starredBoardsRef}
+                  >
                     Starred Boards
                   </Tab>
                 </TabList>
