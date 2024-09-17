@@ -903,25 +903,6 @@ export function HomePage() {
             borderRadius={cardRadius}
           >
             <VStack align="stretch" gap="2px" height="100%">
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  pl="3"
-                  borderRadius={buttonRadius}
-                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                  onClick={enterBoardByURLModalOnOpen}
-                  ref={enterBoardByURLRef}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
-                  <Text fontSize="md" fontWeight="bold">
-                    Join Board
-                  </Text>
-                </Box>
-              </Tooltip>
               <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
                 <Box
                   ref={homeBtnRef}
@@ -942,6 +923,25 @@ export function HomePage() {
                   <Icon as={MdHome} fontSize="24px" mr="2" />{' '}
                   <Text fontSize="md" fontWeight="bold">
                     Home
+                  </Text>
+                </Box>
+              </Tooltip>
+              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  pl="3"
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                  onClick={enterBoardByURLModalOnOpen}
+                  ref={enterBoardByURLRef}
+                >
+                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
+                  <Text fontSize="md" fontWeight="bold">
+                    Join Board
                   </Text>
                 </Box>
               </Tooltip>
