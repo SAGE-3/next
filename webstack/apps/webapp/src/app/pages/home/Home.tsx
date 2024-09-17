@@ -7,14 +7,13 @@
  */
 
 // React Imports
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 // Chakra Iports
 import {
   Box,
   useColorModeValue,
   Text,
-  Image,
   useDisclosure,
   Icon,
   useToast,
@@ -25,24 +24,22 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
-  Accordion,
-  AccordionButton,
-  AccordionIcon,
-  AccordionItem,
-  AccordionPanel,
   Tooltip,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
   Link,
-  useMediaQuery,
   Input,
   InputGroup,
   InputLeftElement,
   Flex,
   IconButton,
   ButtonGroup,
+  HStack,
+  Tag,
+  Divider,
+  useOutsideClick,
 } from '@chakra-ui/react';
 
 // Joyride UI Explainer
@@ -53,22 +50,20 @@ import {
   MdAdd,
   MdExitToApp,
   MdHome,
-  MdPerson,
   MdSearch,
-  MdStarOutline,
   MdGridView,
   MdList,
+  MdLock,
   MdPeople,
   MdBorderAll,
   MdFolder,
 } from 'react-icons/md';
-import { IoMdTime } from 'react-icons/io';
-import { BiChevronDown } from 'react-icons/bi';
 import { HiPuzzle } from 'react-icons/hi';
+import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
+import { Board, Room } from '@sage3/shared/types';
 import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
-import { Board, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
   useBoardStore,
@@ -95,7 +90,8 @@ import {
 } from '@sage3/frontend';
 
 // Home Page Components
-import { BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, AssetList, PluginsList, MembersList } from './components';
+import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
+import SearchRow from './components/search/SearchRow';
 
 /**
  * Home page for SAGE3
@@ -104,10 +100,7 @@ import { BoardRow, BoardCard, RoomSearchModal, BoardSidebarRow, AssetList, Plugi
  * @returns JSX.Element
  */
 export function HomePage() {
-  // Media Query
-  const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-
-  const { toHome } = useRouteNav();
+  const { toHome, toQuickAccess } = useRouteNav();
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -117,12 +110,11 @@ export function HomePage() {
   const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  // const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // User Information
   const { user, clearRecentBoards } = useUser();
   const userId = user ? user._id : '';
-  // const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
@@ -162,6 +154,13 @@ export function HomePage() {
   const [selectedRoom, setSelectedRoom] = useState<Room | undefined>(undefined);
   const [selectedBoard, setSelectedBoard] = useState<Board | undefined>(undefined);
   const [boardSearch, setBoardSearch] = useState<string>('');
+  const [roomSearch, setRoomSearch] = useState<string>('');
+  const [selectedQuickAccess, setSelectedQuickAccess] = useState<'active' | 'starred' | 'recent' | undefined>(undefined);
+  const [passwordProtectedRoom, setPasswordProtectedRoom] = useState<Room | undefined>(undefined);
+
+  // Searchbar
+  const [searchSage, setSearchSage] = useState<string>('');
+  const [isSearchSageFocused, setSearchSageFocused] = useState<boolean>(false);
 
   // Selected Board Ref
   const scrollToBoardRef = useRef<null | HTMLDivElement>(null);
@@ -174,17 +173,32 @@ export function HomePage() {
   const teal = useHexColor(tealValue);
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
-  const sidebarBackgroundValue = useColorModeValue('gray.100', '#303030');
+  const sidebarBackgroundValue = useColorModeValue('gray.50', '#303030');
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
-  const mainBackgroundValue = useColorModeValue('gray.50', '#222222');
+  const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
-  const dividerValue = useColorModeValue('gray.300', '#666666');
-  const dividerColor = useHexColor(dividerValue);
+  // const dividerValue = useColorModeValue('gray.300', '#666666');
+  // const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subTextColor = useHexColor(subTextValue);
-  // const { toggleColorMode, colorMode } = useColorMode();
+  const homeSectionValue = useColorModeValue('gray.100', '#393939');
+  const homeSectionColor = useHexColor(homeSectionValue);
+  const availableRoomsBgColorValue = useColorModeValue('#ffffff', `gray.800`);
+  const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
+  // const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
+  // const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
+  const tabColorValue = useColorModeValue('gray.300', 'gray.600');
+  const tabColor = useHexColor(tabColorValue);
+  const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
+  const searchBarColor = useHexColor(searchBarColorValue);
+  const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
+
+  // Styling
+  const buttonRadius = 'xl';
+  const cardRadius = 'xl';
 
   // Modals Disclosures
   const { isOpen: createRoomModalIsOpen, onOpen: createRoomModalOnOpen, onClose: createRoomModalOnClose } = useDisclosure();
@@ -200,6 +214,11 @@ export function HomePage() {
     onOpen: clearRecentBoardsModalOnOpen,
     onClose: clearRecentBoardsModalOnClose,
   } = useDisclosure();
+  const {
+    isOpen: passwordJoinRoomModalIsOpen,
+    onOpen: passwordJoinRoomModalOnOpen,
+    onClose: passwordJoinRoomModalOnClose,
+  } = useDisclosure();
 
   // Permissions
   const canJoin = SAGE3Ability.canCurrentUser('join', 'roommembers');
@@ -213,16 +232,19 @@ export function HomePage() {
 
   // Joyride Refs
   const introRef = useRef<HTMLDivElement>(null);
+  const homeRef = useRef<HTMLDivElement>(null);
+  const homeBtnRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<HTMLDivElement>(null);
   const hubNameRef = useRef<HTMLDivElement>(null);
-  const createRoomRef = useRef<HTMLDivElement>(null);
-  const searchRoomsRef = useRef<HTMLDivElement>(null);
+  const createRoomRef = useRef<HTMLButtonElement>(null);
+  const searchSageRef = useRef<null | HTMLDivElement>(null);
+  const searchInputRef = useRef<null | HTMLDivElement>(null);
   const enterBoardByURLRef = useRef<HTMLDivElement>(null);
   const roomsRef = useRef<HTMLDivElement>(null);
-  const activeBoardsRef = useRef<HTMLDivElement>(null);
-  const starredBoardsRef = useRef<HTMLDivElement>(null);
-  const recentBoardsRef = useRef<HTMLDivElement>(null);
+  const activeBoardsRef = useRef<HTMLButtonElement>(null);
+  const starredBoardsRef = useRef<HTMLButtonElement>(null);
+  const recentBoardsRef = useRef<HTMLButtonElement>(null);
   const joyrideRef = useRef<Joyride>(null);
 
   // Joyride Callback Handler
@@ -268,6 +290,11 @@ export function HomePage() {
         placement: 'center',
       },
       {
+        target: homeRef.current!,
+        title: 'Home',
+        content: 'This is the Home Page. From here, you can access recent boards, create rooms, and search for rooms',
+      },
+      {
         target: mainButtonRef.current!,
         title: 'Main Menu',
         content: 'This is the Main Menu Button. From here, you can update your profile, change theme, find users, and logout.',
@@ -282,29 +309,33 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: createRoomRef.current!,
-        title: 'Create Rooms',
-        content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
-        disableBeacon: true,
-      },
-      {
-        target: searchRoomsRef.current!,
-        title: 'Search for Rooms',
-        content: 'You can search for existing public rooms and join them from here.',
-        disableBeacon: true,
-      },
-      {
         target: enterBoardByURLRef.current!,
         title: 'Enter a Board by URL',
         content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
-        target: roomsRef.current!,
-        title: 'Your Rooms',
-        content:
-          'Rooms you are the owner of or a member of will appear here. Click a name to enter the room. If you dont have any room listed, you can create a new one or search for existing ones above.',
+        target: homeBtnRef.current!,
+        title: 'Home Button',
+        content: 'Clicking this button will take you back to the Home Page.',
+      },
+      {
+        target: createRoomRef.current!,
+        title: 'Create Rooms',
+        content: 'This button will allow you to create new rooms. After creating a room, you can add new boards and start collaborating.',
         disableBeacon: true,
+      },
+      {
+        target: searchInputRef.current!,
+        title: 'Search your Rooms and Boards',
+        content: 'You can search for rooms that you own or join, and for boards from those rooms.',
+        disableBeacon: true,
+      },
+      {
+        target: recentBoardsRef.current!,
+        title: 'Recent Boards',
+        content:
+          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
       },
       {
         target: activeBoardsRef.current!,
@@ -320,10 +351,11 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: recentBoardsRef.current!,
-        title: 'Recent Boards',
+        target: roomsRef.current!,
+        title: 'Your Rooms',
         content:
-          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
+          'Rooms you are the owner of or a member of will appear here. Click a name to enter the room. If you dont have any room listed, you can create a new one or search for existing ones above.',
+        disableBeacon: true,
       },
       {
         target: clockRef.current!,
@@ -367,7 +399,7 @@ export function HomePage() {
   // Load the steps when the component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
-  }, []);
+  }, [rooms]);
 
   // Filter Functions
   const roomMemberFilter = (room: Room): boolean => {
@@ -375,14 +407,13 @@ export function HomePage() {
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     const isOwner = room.data.ownerId === userId;
-    const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
+    // const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
     return isMember || isOwner;
   };
 
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
-
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
   };
@@ -405,6 +436,14 @@ export function HomePage() {
     return fuzzySearch(board.data.name + ' ' + board.data.description, boardSearch);
   };
 
+  const roomSearchFilter = (room: Room) => {
+    return fuzzySearch(room.data.name + ' ' + room.data.description, roomSearch);
+  };
+
+  const sageSearchFilter = (item: Board | Room) => {
+    return fuzzySearch(item.data.name + '' + item.data.description, searchSage);
+  };
+
   // Check to see if the user is the owner but not a member in weird cases
   useEffect(() => {
     if (roomsFetched) {
@@ -425,6 +464,31 @@ export function HomePage() {
       });
     }
   }, [roomsFetched]);
+
+  const roomAndBoards = useMemo(() => {
+    const filteredRooms = rooms.filter(roomMemberFilter);
+    const filteredRoomsIdsAndNames: { [key: string]: string } = {};
+
+    filteredRooms.forEach((room: Room) => {
+      filteredRoomsIdsAndNames[`${room._id}`] = room.data.name;
+    });
+
+    const boardsInJoinedRooms = boards.filter((board: Board) => {
+      return filteredRoomsIdsAndNames[`${board.data.roomId}`] !== undefined;
+    });
+
+    const roomsAssignedToBoards = boardsInJoinedRooms.map((board: Board) => ({
+      ...board,
+      roomName: filteredRoomsIdsAndNames[`${board.data.roomId}`],
+    }));
+
+    return [...filteredRooms, ...roomsAssignedToBoards];
+  }, [rooms, boards]);
+
+  useOutsideClick({
+    ref: searchSageRef,
+    handler: () => setSearchSageFocused(false),
+  });
 
   // Function to handle states for when a user clicks on create room
   const handleCreateRoomClick = () => {
@@ -490,6 +554,7 @@ export function HomePage() {
     if (room) {
       // If the room is already selected, deselect it
       room._id == selectedRoom?._id ? setSelectedRoom(undefined) : setSelectedRoom(room);
+      setSelectedQuickAccess(undefined);
       setSelectedBoard(undefined);
       // update the URL, helps with history
       toHome(room._id);
@@ -512,6 +577,18 @@ export function HomePage() {
       }
     } else {
       setSelectedBoard(undefined);
+    }
+  }
+
+  function handleQuickAccessClick(quickAccess: 'active' | 'starred' | 'recent') {
+    if (quickAccess !== selectedQuickAccess) {
+      setSelectedRoom(undefined);
+      setSelectedQuickAccess(quickAccess);
+      toQuickAccess(quickAccess);
+    } else {
+      setSelectedRoom(undefined);
+      setSelectedQuickAccess(undefined);
+      toHome();
     }
   }
 
@@ -579,6 +656,18 @@ export function HomePage() {
     }
   }
 
+  // Function to get the greeting based on the time of the day
+  function getTimeBasedGreeting() {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return 'morning';
+    } else if (hour >= 12 && hour < 18) {
+      return 'afternoon';
+    } else {
+      return 'evening';
+    }
+  }
+
   // Handle when the rooms and boards change
   useEffect(() => {
     // Check to see if the room you are in still exists
@@ -591,6 +680,13 @@ export function HomePage() {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
+
+  // Handle password modal
+  useEffect(() => {
+    if (passwordProtectedRoom) {
+      passwordJoinRoomModalOnOpen();
+    }
+  }, [passwordProtectedRoom]);
 
   // Handle when the members list changes. Maybe the user was removed from the room
   useEffect(() => {
@@ -607,13 +703,14 @@ export function HomePage() {
 
   return (
     // Main Container
-    <Box display="flex" width="100%" height="100svh" alignItems="center" backgroundColor={mainBackgroundColor} ref={introRef}>
+    <Box display="flex" width="100svw" height="100svh" alignItems="center" p="3" backgroundColor={mainBackgroundColor} ref={introRef}>
       {/* Joyride */}
       <Joyride
         ref={joyrideRef}
         steps={joyrideSteps}
         run={runJoyride}
         callback={handleJoyrideCallback}
+        disableScrolling
         continuous
         showProgress
         stepIndex={stepIndex}
@@ -682,43 +779,58 @@ export function HomePage() {
         onConfirm={handleClearRecentBoards}
       />
 
+      {/* Confirmation Dialog to join a password protected room */}
+      {passwordProtectedRoom && (
+        <PasswordJoinRoomModal
+          isOpen={passwordJoinRoomModalIsOpen}
+          onClose={() => {
+            passwordJoinRoomModalOnClose();
+            setPasswordProtectedRoom(undefined);
+          }}
+          room={passwordProtectedRoom}
+        />
+      )}
+
       {/* Sidebar Drawer */}
       <Box
-        backgroundColor={sidebarBackgroundColor}
-        width="350px"
-        minWidth="350px"
+        // backgroundColor={sidebarBackgroundColor}
+        borderRadius={cardRadius}
+        width="300px"
+        minWidth="300px"
         transition="width 0.5s"
-        height="100svh"
+        height="100%"
         display="flex"
         flexDirection="column"
-        borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
+        {/* Server selection and main actions */}
+        {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
         {hubs.length > 0 ? (
           <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
               <MenuButton
+                marginTop="auto"
+                display="flex"
                 as={Box}
-                px="4"
-                py="2"
+                backgroundColor={teal}
+                height="40px"
+                alignItems={'center'}
+                justifyContent={'left'}
+                borderRadius="10"
                 width="100%"
-                borderBottom={`solid ${dividerColor} 1px`}
-                whiteSpace="nowrap"
-                overflow="hidden"
-                textOverflow="ellipsis"
-                fontSize="3xl"
-                fontWeight={'bold'}
-                _hover={{ cursor: 'pointer', backgroundColor: teal }}
+                transition={'all 0.5s'}
+                _hover={{ cursor: 'pointer' }}
               >
-                <Box display="flex" justifyContent={'space-between'} alignContent={'center'}>
-                  <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+                  <Text ml="2" fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
                     {config.serverName}
                   </Text>
-                  <Box pt="2">
-                    <BiChevronDown />
+                  <Box pr="3" fontSize="24px">
+                    <LuChevronsUpDown />
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'350px'}>
+              <MenuList width={'300px'}>
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -735,277 +847,266 @@ export function HomePage() {
             </Menu>
           </Box>
         ) : (
-          <Box
-            px="4"
-            py="2"
-            borderBottom={`solid ${dividerColor} 1px`}
-            whiteSpace="nowrap"
-            overflow="hidden"
-            textOverflow="ellipsis"
-            ref={hubNameRef}
-          >
-            <Text fontSize="3xl" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+          <Box bg={teal} borderRadius="10" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" ref={hubNameRef} height="40px">
+            <Text fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden" pl="2">
               {config.serverName}
             </Text>
           </Box>
         )}
 
-        <Box
-          display="flex"
-          flexDirection="column"
-          justifyItems="start"
-          flex="1"
-          overflowY="scroll"
-          overflowX="hidden"
-          css={{
-            '&::-webkit-scrollbar': {
-              background: 'transparent',
-              width: '5px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: scrollBarColor,
-              borderRadius: '48px',
-            },
-          }}
-        >
-          <VStack spacing={0} align="stretch">
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Create a space for multiple boards'}>
+        {/* <Box pt="2" px="2"> */}
+        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
               <Box
                 h="40px"
                 display="flex"
                 justifyContent={'left'}
                 alignItems={'center'}
                 transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
-                onClick={handleCreateRoomClick}
-                ref={createRoomRef}
-              >
-                <Icon as={MdAdd} fontSize="24px" mx="2" /> <Text fontSize="lg">Create Room</Text>
-              </Box>
-            </Tooltip>
-
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this hub'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
+                borderRadius={buttonRadius}
+                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                 onClick={handleRoomSearchClick}
                 ref={searchRoomsRef}
               >
                 <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
               </Box>
-            </Tooltip>
+            </Tooltip> */}
 
-            <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                _hover={{ backgroundColor: teal, cursor: 'pointer' }}
-                pl="2"
-                onClick={enterBoardByURLModalOnOpen}
-                ref={enterBoardByURLRef}
-              >
-                <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
+        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+            <Box
+              h="40px"
+              display="flex"
+              justifyContent={'left'}
+              alignItems={'center'}
+              transition="all 0.5s"
+              borderRadius={buttonRadius}
+              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+              onClick={enterBoardByURLModalOnOpen}
+              ref={enterBoardByURLRef}
+            >
+              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
+            </Box>
+          </Tooltip> */}
+        {/* </Box> */}
+        {/* </Box> */}
+
+        {/* Rooms and boards section */}
+        <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
+          <Box
+            display="flex"
+            flexDirection="column"
+            justifyItems="start"
+            flex="1"
+            height="100%"
+            // overflowY="auto"
+            // overflowX="hidden"
+            px="3"
+            borderRadius={cardRadius}
+          >
+            <VStack align="stretch" gap="2px" height="100%">
+              <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
+                <Box
+                  ref={homeBtnRef}
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  pl="3"
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                  onClick={() => {
+                    toHome();
+                    handleLeaveRoom();
+                    setSelectedQuickAccess(undefined);
+                  }}
+                >
+                  <Icon as={MdHome} fontSize="24px" mr="2" />{' '}
+                  <Text fontSize="md" fontWeight="bold">
+                    Home
+                  </Text>
+                </Box>
+              </Tooltip>
+              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+                <Box
+                  h="40px"
+                  display="flex"
+                  justifyContent={'left'}
+                  alignItems={'center'}
+                  transition="all 0.5s"
+                  pl="3"
+                  borderRadius={buttonRadius}
+                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                  onClick={enterBoardByURLModalOnOpen}
+                  ref={enterBoardByURLRef}
+                >
+                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
+                  <Text fontSize="md" fontWeight="bold">
+                    Join Board
+                  </Text>
+                </Box>
+              </Tooltip>
+              <Divider my="2" />
+              <Box pl="4" mb="2" fontSize="md" fontWeight="bold">
+                Your Rooms
               </Box>
-            </Tooltip>
-
-            <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
-
-            <Accordion defaultIndex={[0, 1, 2, 3]} allowMultiple>
-              <AccordionItem border="none" ref={roomsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} transition={'all 0.5s'} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms you are a memeber of.'}>
-                    <Box display="flex" flex="1" alignItems="left">
-                      <Icon as={MdHome} fontSize="24px" mx="2" /> <Text fontSize="md">Rooms</Text>
-                    </Box>
-                  </Tooltip>
-                  <AccordionIcon />
-                </AccordionButton>
-
-                <AccordionPanel p="0">
-                  <VStack align="stretch" gap="0">
-                    {rooms
-                      .filter(roomMemberFilter)
-                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((room) => {
-                        return (
-                          <Tooltip
-                            key={'tooltip_room' + room._id}
-                            openDelay={400}
-                            hasArrow
-                            placement="top"
-                            label={`Description ${room.data.description}`}
+              <Box
+                ref={roomsRef}
+                height="100%"
+                overflow="auto"
+                css={{
+                  '&::-webkit-scrollbar': {
+                    background: 'transparent',
+                    width: '5px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    background: scrollBarColor,
+                    borderRadius: '48px',
+                  },
+                }}
+              >
+                <Box height="60%" mr="2" ml="1">
+                  {rooms
+                    .filter(roomMemberFilter)
+                    .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                    .map((room) => {
+                      return (
+                        <Tooltip
+                          key={'tooltip_room' + room._id}
+                          openDelay={400}
+                          hasArrow
+                          placement="top"
+                          label={`Description ${room.data.description}`}
+                        >
+                          <Box
+                            borderRadius="6"
+                            key={room._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            pl="3"
+                            height="28px"
+                            my="1px"
+                            backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
                           >
-                            <Box
-                              key={room._id}
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              transition="all 0.5s"
-                              pl="48px"
-                              height="28px"
-                              backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
-                              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                              onClick={() => handleRoomClick(room)}
-                            >
-                              <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
-                                <Text fontSize="md" pl="2">
-                                  {room.data.name}
-                                </Text>
-                              </Box>
-
-                              <Text fontSize="xs" pr="4" color={subTextColor}>
-                                {room.data.ownerId === userId ? 'Owner' : 'Member'}
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" mr="5">
+                              <Text fontSize="md" pl="2">
+                                {room.data.name}
                               </Text>
                             </Box>
-                          </Tooltip>
-                        );
-                      })}
-                  </VStack>
-                </AccordionPanel>
-              </AccordionItem>
 
-              <Box borderTop={`solid 1px ${dividerColor}`} my="2"></Box>
-              {/* <Divider/> */}
-
-              <AccordionItem border="none" ref={activeBoardsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'Rooms containing users'}>
-                    <Box display="flex" flex="1" alignItems="left">
-                      <Icon as={MdPerson} fontSize="24px" mx="2" /> <Text fontSize="md">Active Boards</Text>
-                    </Box>
-                  </Tooltip>
-                  <AccordionIcon />
-                </AccordionButton>
-                <AccordionPanel p="0">
-                  <VStack align="stretch" gap="0">
-                    {boards
-                      .filter(boardActiveFilter)
-                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .sort((a, b) => {
-                        // Sorted by alpha then user count
-                        const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
-                        const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
-                        return userCountB - userCountA;
-                      })
-                      .map((board) => {
-                        return (
-                          <BoardSidebarRow
-                            key={'tooltip_active' + board._id}
-                            board={board}
-                            isSelected={board._id === selectedBoard?._id}
-                            onClick={() => handleBoardClickFromSubMenu(board)}
-                            onDoubleClick={() => handleBoardDoubleClick(board)}
-                          />
-                        );
-                      })}
-                  </VStack>
-                </AccordionPanel>
-              </AccordionItem>
-
-              <AccordionItem border="none" ref={starredBoardsRef}>
-                <AccordionButton _hover={{ backgroundColor: teal, cursor: 'pointer' }} pl="2">
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'Your favorite rooms'}>
-                    <Box display="flex" flex="1" alignItems="left">
-                      <Icon as={MdStarOutline} fontSize="24px" mx="2" /> <Text fontSize="md">Starred Boards</Text>
-                    </Box>
-                  </Tooltip>
-                  <AccordionIcon />
-                </AccordionButton>
-
-                <AccordionPanel p="0">
-                  <VStack align="stretch" gap="0">
-                    {boards
-                      .filter(boardStarredFilter)
-                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                      .map((board) => (
-                        <BoardSidebarRow
-                          key={'tooltip_starred' + board._id}
-                          board={board}
-                          isSelected={board._id === selectedBoard?._id}
-                          onClick={() => handleBoardClickFromSubMenu(board)}
-                          onDoubleClick={() => handleBoardDoubleClick(board)}
-                        />
-                      ))}
-                  </VStack>
-                </AccordionPanel>
-              </AccordionItem>
-              <AccordionItem border="none" ref={recentBoardsRef}>
-                <AccordionButton pl="2" _hover={{ backgroundColor: teal, cursor: 'pointer' }}>
-                  <Tooltip openDelay={400} hasArrow placement="top" label={'Your recently visited rooms (limit to 10)'}>
-                    <Box display="flex" flex="1" alignItems="left">
-                      <Icon as={IoMdTime} fontSize="24px" mx="2" /> <Text fontSize="md">Recent Boards</Text>
-                    </Box>
-                  </Tooltip>
-                  <AccordionIcon />
-                </AccordionButton>
-
-                <AccordionPanel p={0}>
-                  <VStack align="stretch" gap="0">
-                    {boards
-                      .filter(recentBoardsFilter)
-                      .sort((boardA, boardB) => {
-                        // Sort by most recent
-                        const indexOfA = recentBoards.indexOf(boardA._id);
-                        const indexOfB = recentBoards.indexOf(boardB._id);
-                        return indexOfA - indexOfB;
-                      })
-                      .map((board) => {
-                        return (
-                          <BoardSidebarRow
-                            key={'tooltip_recent' + board._id}
-                            board={board}
-                            isSelected={board._id === selectedBoard?._id}
-                            onClick={() => handleBoardClickFromSubMenu(board)}
-                            onDoubleClick={() => handleBoardDoubleClick(board)}
-                          />
-                        );
-                      })}
-                    {boards.filter(recentBoardsFilter).length > 0 && (
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="left"
-                        transition="all 0.5s"
-                        pl="48px"
-                        height="28px"
-                        color="red.400"
-                        fontWeight={'bold'}
-                        onClick={clearRecentBoardsModalOnOpen}
-                        _hover={{ backgroundColor: hightlightGrayValue, cursor: 'pointer' }}
-                      >
-                        <Text fontSize="md" pl="2">
-                          Clear Recents Boards
-                        </Text>
-                      </Box>
-                    )}
-                  </VStack>
-                </AccordionPanel>
-              </AccordionItem>
-            </Accordion>
-          </VStack>
+                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                              {room.data.ownerId === userId ? 'Owner' : 'Member'}
+                            </Text>
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                </Box>
+              </Box>
+            </VStack>
+          </Box>
         </Box>
+
+        {/* Profile */}
         <Box ref={mainButtonRef}>
           <MainButton config={config}></MainButton>
         </Box>
       </Box>
+
+      {/* Full pages for quick access, commented out for now */}
+      {/* {selectedQuickAccess && (
+        <Box
+          display="flex"
+          flex="1"
+          flexDirection="column"
+          backgroundColor={sidebarBackgroundColor}
+          maxHeight="100svh"
+          height="100%"
+          borderRadius={cardRadius}
+          marginLeft="3"
+          // overflow="hidden"
+          pt={4}
+          pr={4}
+          pb={4}
+          pl={6}
+        >
+          {selectedQuickAccess === 'active' && (
+            <QuickAccessPage
+              title="Active Boards"
+              icon={MdPerson}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
+                .filter(boardActiveFilter)
+                .filter(boardSearchFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                .sort((a, b) => {
+                  // Sorted by alpha then user count
+                  const userCountA = presences.filter((p) => p.data.boardId === a._id).length;
+                  const userCountB = presences.filter((p) => p.data.boardId === b._id).length;
+                  return userCountB - userCountA;
+                })}
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
+          )}
+          {selectedQuickAccess === 'starred' && (
+            <QuickAccessPage
+              title="Starred Boards"
+              icon={MdStarOutline}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
+                .filter(boardStarredFilter)
+                .filter(boardSearchFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))}
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
+          )}
+          {selectedQuickAccess === 'recent' && (
+            <QuickAccessPage
+              title="Recent Boards"
+              icon={IoMdTime}
+              boardListView={boardListView}
+              setBoardListView={setBoardListView}
+              boardSearch={boardSearch}
+              setBoardSearch={setBoardSearch}
+              filteredBoards={boards
+                .filter(recentBoardsFilter)
+                .filter(boardSearchFilter)
+                .sort((a, b) => a.data.name.localeCompare(b.data.name))}
+              handleBoardClick={handleBoardClick}
+              selectedBoard={selectedBoard}
+              presences={presences}
+              scrollToBoardRef={scrollToBoardRef}
+            />
+          )}
+        </Box>
+      )} */}
+
+      {/* Selected Room */}
       {selectedRoom && (
         <Box
           display="flex"
           flex="1"
           flexDirection="column"
-          backgroundColor={mainBackgroundColor}
+          backgroundColor={sidebarBackgroundColor}
           maxHeight="100svh"
           height="100%"
-          // border="solid green 1px"
+          borderRadius={cardRadius}
+          marginLeft="3"
           // overflow="hidden"
           pt={4}
           pr={4}
@@ -1014,7 +1115,6 @@ export function HomePage() {
         >
           <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
             {/* Room Information */}
-
             <VStack alignItems={'start'} gap="0">
               <Text fontSize="3xl" fontWeight="bold">
                 {selectedRoom.data.name}
@@ -1235,22 +1335,427 @@ export function HomePage() {
           </Box>
         </Box>
       )}
-      <Image
-        position="absolute"
-        right="2"
-        bottom="2"
-        src={imageUrl}
-        height="30px"
-        style={{ opacity: 0.7 }}
-        alt="sage3"
-        userSelect={'auto'}
-        draggable={false}
-        display={isLargerThan800 ? 'flex' : 'none'}
-      />
-      {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1" ref={clockRef} display={isLargerThan800 ? 'flex' : 'none'}>
-        <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
-      </Box>
+
+      {/* Home when room or quick access are not selected */}
+      {!selectedRoom && !selectedQuickAccess && (
+        <Box
+          ref={homeRef}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          backgroundColor={sidebarBackgroundColor}
+          maxHeight="100svh"
+          height="100%"
+          borderRadius={cardRadius}
+          marginLeft="3"
+          width="100%"
+          overflow="hidden"
+          py="1"
+          minWidth="600px"
+        >
+          <Box
+            display="flex"
+            flexDir="column"
+            overflowX="hidden"
+            overflowY="auto"
+            height="100%"
+            px="5"
+            css={{
+              '&::-webkit-scrollbar': {
+                background: 'transparent',
+                width: '5px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: scrollBarColor,
+                borderRadius: '48px',
+              },
+            }}
+            w="full"
+            maxW="1600px"
+          >
+            {/* The clock Top Right */}
+            <Box alignSelf="end" ref={clockRef} w="fit-content">
+              <Clock isBoard={false} homeHelpClick={handleHomeHelpClick} />
+            </Box>
+
+            <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
+              Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
+            </Text>
+
+            <Box
+              mt="4"
+              position="relative"
+              onFocus={() => {
+                setSearchSageFocused(true);
+              }}
+              ref={searchSageRef}
+            >
+              <InputGroup size="md" width="full" ref={searchInputRef}>
+                <InputLeftElement pointerEvents="none">
+                  <MdSearch />
+                </InputLeftElement>
+                <Input
+                  placeholder="Search your rooms and boards"
+                  _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
+                  value={searchSage}
+                  onChange={(e) => setSearchSage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchSage('');
+                    }
+                  }}
+                  roundedTop="2xl"
+                  _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+                  bg={isSearchSageFocused ? searchBarColor : 'inherit'}
+                  roundedBottom={`${searchSage.length > 0 && isSearchSageFocused ? 'none' : '2xl'}`}
+                />
+              </InputGroup>
+              <Box
+                hidden={!(searchSage.length > 0) || !isSearchSageFocused}
+                ref={searchSageRef}
+                position="absolute"
+                zIndex="10"
+                mb="0"
+                h="400px"
+                w="full"
+                bg={searchBarColor}
+                roundedBottom="2xl"
+                p="3"
+                border="1px solid"
+                borderColor="inherit"
+                borderTop="none"
+                overflow="auto"
+              >
+                {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
+                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                    // If it's a board, get the room ID
+                    if ((item as Board & { roomName: string }).data.roomId) {
+                      return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                    }
+                    return (
+                      <SearchRow.Room
+                        key={item._id}
+                        room={item as Room}
+                        clickHandler={() => {
+                          handleRoomClick(item as Room);
+                        }}
+                      />
+                    );
+                  })
+                  : 'No items match your search'}
+              </Box>
+            </Box>
+            <Box borderRadius={cardRadius} height="100%" mt="4">
+              <Tabs
+                variant="unstyled"
+                isLazy
+                defaultIndex={boards.filter(boardActiveFilter).length > 0 ? 1 : 0}
+                bg={homeSectionColor}
+                pt="3"
+                borderRadius={cardRadius}
+              >
+                <TabList px="5" h="30px" gap="1">
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={recentBoardsRef}
+                  >
+                    Recent Boards
+                  </Tab>
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={activeBoardsRef}
+                  >
+                    Active Boards
+                  </Tab>
+                  <Tab
+                    _selected={{ bg: tabColor }}
+                    _hover={{ bg: hightlightGray }}
+                    borderRadius="lg"
+                    fontWeight="bold"
+                    ref={starredBoardsRef}
+                  >
+                    Starred Boards
+                  </Tab>
+                </TabList>
+
+                <TabPanels minH="250px">
+                  <TabPanel px="0" pt="2" id="Recent Boards">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
+                      {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflowX="auto"
+                          overflowY="hidden"
+                          height="fit-content"
+                          px="2"
+                          pt="2"
+                          pb="4"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(recentBoardsFilter)
+                            .sort((boardA, boardB) => {
+                              // Sort by most recent
+                              const indexOfA = recentBoards.indexOf(boardA._id);
+                              const indexOfB = recentBoards.indexOf(boardB._id);
+                              return indexOfA - indexOfB;
+                            })
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3">No recent boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                  <TabPanel px="0" pt="2" id="Active Boards">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {boards.filter(boardActiveFilter).length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflowX="auto"
+                          overflowY="hidden"
+                          height="fit-content"
+                          px="2"
+                          pt="2"
+                          pb="4"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(boardActiveFilter)
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .sort((a, b) => {
+                              // Sorted by alpha then user count
+                              const userCountA = partialPrescences.filter((p) => p.data.boardId === a._id).length;
+                              const userCountB = partialPrescences.filter((p) => p.data.boardId === b._id).length;
+                              return userCountB - userCountA;
+                            })
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3" px="6">No active boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                  <TabPanel px="0" pt="2" id="Starred Boards">
+                    <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
+                      {boards.filter(boardStarredFilter).length > 0 ? (
+                        <HStack
+                          gap="3"
+                          width="100%"
+                          overflowX="auto"
+                          overflowY="hidden"
+                          height="fit-content"
+                          px="2"
+                          pt="2"
+                          pb="4"
+                          css={{
+                            '&::-webkit-scrollbar': {
+                              background: 'transparent',
+                              height: '10px',
+                            },
+                            '&::-webkit-scrollbar-thumb': {
+                              background: scrollBarColor,
+                              borderRadius: '48px',
+                            },
+                          }}
+                        >
+                          {boards
+                            .filter(boardStarredFilter)
+                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                            .map((board) => (
+                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                <BoardCard
+                                  board={board}
+                                  room={rooms.find((room) => board.data.roomId === room._id) as Room}
+                                  onClick={() => handleBoardClick(board)}
+                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                                />
+                              </Box>
+                            ))}
+                        </HStack>
+                      ) : (
+                        <Text p="3" px="6">No favorite boards.</Text>
+                      )}
+                    </Box>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+
+              <Box mt="6" mb="3">
+                <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
+                  <Text fontWeight="bold">Available Rooms</Text>
+                </Box>
+                <Box p="4" bg={homeSectionColor} rounded="xl">
+                  <Box display="flex" alignItems="center" gap="2">
+                    <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
+                      <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
+                        <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
+                      </Button>
+                    </Tooltip>
+                    <InputGroup size="sm" width="415px" my="1">
+                      <InputLeftElement pointerEvents="none">
+                        <MdSearch />
+                      </InputLeftElement>
+                      <Input
+                        placeholder="Search available rooms"
+                        _placeholder={{ opacity: 0.6, color: searchPlaceholderColor }}
+                        _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+                        // bg={isSearchSageFocused ? searchBarColor : 'inherit'}
+                        value={roomSearch}
+                        onChange={(e) => setRoomSearch(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            setRoomSearch('');
+                          }
+                        }}
+                        rounded="md"
+                      />
+                    </InputGroup>
+                    {/* <Box ref={createRoomRef}> */}
+                    {/* </Box> */}
+                  </Box>
+                  <Box>
+                    {rooms
+                      .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
+                      .filter(roomSearchFilter)
+                      .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                      .map((room) => {
+                        return (
+                          <Box
+                            borderRadius="lg"
+                            bg={availableRoomsBgColor}
+                            my="2"
+                            p="5"
+                            key={room._id}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            transition="all 0.5s"
+                            height="28px"
+                            _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <Box whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                              <Text fontSize="md" pl="2">
+                                {room.data.name}
+                              </Text>
+                            </Box>
+
+                            <Text fontSize="xs" color={subTextColor}>
+                              {room.data.ownerId === userId ||
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                room.data.ownerId === userId ? (
+                                  <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
+                                    Owner
+                                  </Tag>
+                                ) : (
+                                  <Tag
+                                    size="sm"
+                                    width="100px"
+                                    textAlign="center"
+                                    display="flex"
+                                    justifyContent="center"
+                                    colorScheme="yellow"
+                                  >
+                                    Member
+                                  </Tag>
+                                )
+                              ) : (
+                                <Button
+                                  size="xs"
+                                  height="20px"
+                                  width="100px"
+                                  zIndex="10"
+                                  colorScheme="teal"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (room.data.ownerId === userId) {
+                                      return;
+                                    }
+                                    // if it is a private room, open the password modal
+                                    if (room.data.isPrivate) {
+                                      if (!passwordProtectedRoom) {
+                                        setPasswordProtectedRoom(room);
+                                      } else {
+                                        setPasswordProtectedRoom(undefined);
+                                      }
+                                    } else {
+                                      joinRoomMembership(room._id);
+                                      toast({
+                                        title: `You have successfully joined ${room.data.name}`,
+                                        status: 'success',
+                                        duration: 4 * 1000,
+                                        isClosable: true,
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Box mr="1">Join</Box>
+                                  {room.data.isPrivate && <MdLock />}
+                                </Button>
+                              )}
+                            </Text>
+                          </Box>
+                        );
+                      })}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

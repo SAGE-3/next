@@ -244,6 +244,7 @@ export function MainButton(props: MainButtonProps) {
             height="40px"
             alignItems={'center'}
             justifyContent={'left'}
+            borderRadius="10"
             width="100%"
             transition={'all 0.5s'}
             _hover={{ cursor: 'pointer' }}
@@ -262,7 +263,7 @@ export function MainButton(props: MainButtonProps) {
           </MenuButton>
         )}
 
-        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '350px'} p="2px" m="0">
+        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '300px'} p="2px" m="0">
           <MenuGroup title="SAGE3" p="0" m="1">
             {props.boardInfo && (
               <MenuItem py="1px" m="0" onClick={handleHelpOpen} icon={<MdHelpOutline size="24px" />} justifyContent="right">

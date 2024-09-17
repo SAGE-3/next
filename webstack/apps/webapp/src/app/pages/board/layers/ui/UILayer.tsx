@@ -97,6 +97,9 @@ export function UILayer(props: UILayerProps) {
   // Logo
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  // Color
+  const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
+
   // Navigation
   const { toHome } = useRouteNav();
 
@@ -339,7 +342,6 @@ export function UILayer(props: UILayerProps) {
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
