@@ -5,17 +5,18 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+
 import React from 'react';
 import { Box, ButtonGroup, IconButton, InputGroup, InputLeftElement, Input, Icon, useColorModeValue } from '@chakra-ui/react';
+
 import { IconType } from 'react-icons';
 import { MdList, MdGridView, MdSearch } from 'react-icons/md';
 
 import { useHexColor } from '@sage3/frontend';
-import { Board, Presence } from '@sage3/shared/types';
+import { Room, Board, Presence } from '@sage3/shared/types';
 
 import { BoardCard } from '../BoardCard';
 import { BoardRow } from '../BoardRow';
-import { Room } from '@sage3/shared/types';
 
 interface QuickAccessProps {
   title: string;

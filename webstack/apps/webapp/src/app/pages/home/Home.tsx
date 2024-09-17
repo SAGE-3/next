@@ -30,7 +30,6 @@ import {
   MenuItem,
   MenuList,
   Link,
-  useMediaQuery,
   Input,
   InputGroup,
   InputLeftElement,
@@ -38,10 +37,7 @@ import {
   IconButton,
   ButtonGroup,
   HStack,
-  Grid,
-  GridItem,
   Tag,
-  TabIndicator,
   Divider,
   useOutsideClick,
 } from '@chakra-ui/react';
@@ -54,9 +50,7 @@ import {
   MdAdd,
   MdExitToApp,
   MdHome,
-  MdPerson,
   MdSearch,
-  MdStarOutline,
   MdGridView,
   MdList,
   MdLock,
@@ -64,13 +58,12 @@ import {
   MdBorderAll,
   MdFolder,
 } from 'react-icons/md';
-import { IoMdTime } from 'react-icons/io';
-import { BiChevronDown } from 'react-icons/bi';
 import { HiPuzzle } from 'react-icons/hi';
+import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
+import { Board, Room } from '@sage3/shared/types';
 import { SAGE3Ability, generateReadableID, fuzzySearch } from '@sage3/shared';
-import { Board, Insight, Room, User } from '@sage3/shared/types';
 import {
   JoinBoardCheck,
   useBoardStore,
@@ -93,14 +86,11 @@ import {
   Clock,
   isElectron,
   useUserSettings,
-  APIHttp,
   useAssetStore,
 } from '@sage3/frontend';
 
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
-import QuickAccessPage from './components/quick-access/QuickAccessPage';
-import { LuChevronsDownUp, LuChevronsUp, LuChevronsUpDown } from 'react-icons/lu';
 import SearchRow from './components/search/SearchRow';
 
 /**
@@ -110,9 +100,6 @@ import SearchRow from './components/search/SearchRow';
  * @returns JSX.Element
  */
 export function HomePage() {
-  // Media Query
-  // const [isLargerThan800] = useMediaQuery('(min-width: 800px)');
-
   const { toHome, toQuickAccess } = useRouteNav();
 
   // Configuration information
@@ -123,13 +110,11 @@ export function HomePage() {
   const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
 
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  // const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // User Information
   const { user, clearRecentBoards } = useUser();
   const userId = user ? user._id : '';
-  // const userColor = user ? useHexColor(user.data.color) : useHexColor('teal');
-  // const userColor = useHexColor(user ? user.data.color : 'gray');
   const recentBoards = user && user.data.recentBoards ? user.data.recentBoards : [];
   const savedBoards = user && user.data.savedBoards ? user.data.savedBoards : [];
 
@@ -194,8 +179,8 @@ export function HomePage() {
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
   const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
-  const dividerValue = useColorModeValue('gray.300', '#666666');
-  const dividerColor = useHexColor(dividerValue);
+  // const dividerValue = useColorModeValue('gray.300', '#666666');
+  // const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
@@ -204,16 +189,14 @@ export function HomePage() {
   const homeSectionColor = useHexColor(homeSectionValue);
   const availableRoomsBgColorValue = useColorModeValue('#ffffff', `gray.800`);
   const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
-  const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
-  const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
+  // const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
+  // const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
   const tabColorValue = useColorModeValue('gray.300', 'gray.600');
   const tabColor = useHexColor(tabColorValue);
   const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
   const searchBarColor = useHexColor(searchBarColorValue);
   const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
   const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
-
-  // const { toggleColorMode, colorMode } = useColorMode();
 
   // Styling
   const buttonRadius = 'xl';
@@ -426,14 +409,13 @@ export function HomePage() {
     const roomMembership = members.find((m) => m.data.roomId === room._id);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     const isOwner = room.data.ownerId === userId;
-    const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
+    // const isMainRoom = room.data.name === 'Main Room' && room.data.ownerId === '';
     return isMember || isOwner;
   };
 
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
-
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
   };
@@ -680,7 +662,6 @@ export function HomePage() {
   // Function to get the greeting based on the time of the day
   function getTimeBasedGreeting() {
     const hour = new Date().getHours();
-
     if (hour >= 5 && hour < 12) {
       return 'morning';
     } else if (hour >= 12 && hour < 18) {
@@ -823,7 +804,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1445,19 +1426,19 @@ export function HomePage() {
               >
                 {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
                   ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                      // If it's a board, get the room ID
-                      if ((item as Board & { roomName: string }).data.roomId) {
-                        return <SearchRow.Board board={item as Board & { roomName: string }} />;
-                      }
-                      return (
-                        <SearchRow.Room
-                          room={item as Room}
-                          clickHandler={() => {
-                            handleRoomClick(item as Room);
-                          }}
-                        />
-                      );
-                    })
+                    // If it's a board, get the room ID
+                    if ((item as Board & { roomName: string }).data.roomId) {
+                      return <SearchRow.Board board={item as Board & { roomName: string }} />;
+                    }
+                    return (
+                      <SearchRow.Room
+                        room={item as Room}
+                        clickHandler={() => {
+                          handleRoomClick(item as Room);
+                        }}
+                      />
+                    );
+                  })
                   : 'No items match your search'}
               </Box>
             </Box>
@@ -1705,7 +1686,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

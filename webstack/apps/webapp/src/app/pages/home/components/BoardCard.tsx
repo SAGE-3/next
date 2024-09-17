@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useRef } from 'react';
 import {
   useColorModeValue,
   IconButton,
@@ -13,22 +14,21 @@ import {
   useDisclosure,
   Tooltip,
   useToast,
-  Icon,
   Popover,
   PopoverContent,
   PopoverTrigger,
   Portal,
   useOutsideClick,
-  Divider,
 } from '@chakra-ui/react';
-import { MdStar, MdLink, MdStarOutline, MdSettings, MdInfo, MdLock, MdLockOpen } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
+import { MdStar, MdStarOutline } from 'react-icons/md';
+import { BsThreeDotsVertical } from 'react-icons/bs';
+
 import { Board, PresencePartial, Room } from '@sage3/shared/types';
+import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
+
 import { BoardPreview } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
-import { BsThreeDotsVertical } from 'react-icons/bs';
-import { useRef } from 'react';
 
 // Board Card Props
 interface BoardCardProps {

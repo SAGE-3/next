@@ -1,11 +1,19 @@
-import { Box, Divider, HStack, Text, useDisclosure } from '@chakra-ui/react';
-import { EnterBoardModal } from '@sage3/frontend';
-import { Board, Room } from '@sage3/shared/types';
+/**
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import { ReactNode } from 'react';
+import { Box, Divider, HStack, Text, useDisclosure } from '@chakra-ui/react';
+
 import { BiGridAlt } from 'react-icons/bi';
 import { BsFillCollectionFill } from 'react-icons/bs';
-import { HiOutlineRectangleStack, HiRectangleGroup } from 'react-icons/hi2';
-import { TbRectangle, TbRectangleFilled } from 'react-icons/tb';
+
+import { Board, Room } from '@sage3/shared/types';
+import { EnterBoardModal } from '@sage3/frontend';
 
 type SearchRowChildrenProps = {
   room?: Room;

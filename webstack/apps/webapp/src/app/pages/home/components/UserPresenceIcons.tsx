@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, Box, Avatar, AvatarGroup, BoxProps, MenuButton } from '@chakra-ui/react';
+import { useColorModeValue, Box, Avatar, AvatarGroup, BoxProps } from '@chakra-ui/react';
 
-import { useHexColor, useUsersStore, initials } from '@sage3/frontend';
 import { User, PresencePartial } from '@sage3/shared/types';
+import { useHexColor, useUsersStore, initials } from '@sage3/frontend';
 
 export function UserPresenceIcons(
   props: { usersPresent: PresencePartial[]; maxUsersDisplayed: number; anonymousNames?: boolean } & Omit<

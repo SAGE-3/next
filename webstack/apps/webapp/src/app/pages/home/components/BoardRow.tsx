@@ -9,8 +9,8 @@
 import { useColorModeValue, IconButton, Box, Text, useDisclosure, Icon, Tooltip, useToast } from '@chakra-ui/react';
 import { MdLock, MdStar, MdStarOutline, MdSettings, MdLink, MdInfo, MdLockOpen } from 'react-icons/md';
 
-import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 import { Board, Room } from '@sage3/shared/types';
+import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 
 // Board Row Props
 interface BoardRowProps {
@@ -27,8 +27,6 @@ export function BoardRow(props: BoardRowProps) {
   // Toast to inform user that they are not a member of a room
   const toast = useToast();
 
-  // const backgroundColorValue = useColorModeValue(`${props.board.data.color}.200`, `${props.board.data.color}.800`);
-  // const boardColor = props.board.data.color;
   const backgroundColorValue = useColorModeValue('#ffffff', `gray.800`);
   const backgroundColor = useHexColor(backgroundColorValue);
   const borderColorValue = useColorModeValue(`${props.board.data.color}.600`, `${props.board.data.color}.200`);

@@ -8,8 +8,8 @@
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
 import { MdCloudQueue } from 'react-icons/md';
 
-import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
 import { useHexColor } from '@sage3/frontend';
+import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
 
 type BoardTitleProps = {
   config: OpenConfiguration;
