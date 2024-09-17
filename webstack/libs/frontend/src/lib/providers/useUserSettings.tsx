@@ -69,7 +69,7 @@ export function useUserSettings() {
 export function getUserSettings() {
   const settings = localStorage.getItem(USER_SETTINGS_KEY);
   if (settings) {
-    return JSON.parse(settings);
+    return { ...defaultSettings, ...JSON.parse(settings) };
   } else {
     setUserSettings(defaultSettings);
     return defaultSettings;
