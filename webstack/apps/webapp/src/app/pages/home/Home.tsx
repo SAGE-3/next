@@ -304,6 +304,12 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
+        target: enterBoardByURLRef.current!,
+        title: 'Enter a Board by URL',
+        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
+        disableBeacon: true,
+      },
+      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
@@ -318,12 +324,6 @@ export function HomePage() {
         target: searchInputRef.current!,
         title: 'Search your Rooms and Boards',
         content: 'You can search for rooms that you own or join, and for boards from those rooms.',
-        disableBeacon: true,
-      },
-      {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
@@ -791,8 +791,8 @@ export function HomePage() {
       <Box
         // backgroundColor={sidebarBackgroundColor}
         borderRadius={cardRadius}
-        width="350px"
-        minWidth="350px"
+        width="300px"
+        minWidth="300px"
         transition="width 0.5s"
         height="100%"
         display="flex"
@@ -826,7 +826,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'350px'}>
+              <MenuList width={'300px'}>
                 {servers.map((server) => {
                   return (
                     <MenuItem
