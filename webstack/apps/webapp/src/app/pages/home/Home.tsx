@@ -8,6 +8,7 @@
 
 // React Imports
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {
@@ -101,6 +102,7 @@ import SearchRow from './components/search/SearchRow';
  */
 export function HomePage() {
   const { toHome, toQuickAccess } = useRouteNav();
+  const { roomId } = useParams();
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -522,6 +524,16 @@ export function HomePage() {
     subscribeToBoards();
     subPlugins();
 
+    // return to room from a board
+    if (roomId && roomsFetched && user) {
+      const room = rooms.find((r) => r._id === roomId);
+      if (room) {
+        setSelectedRoom(room);
+        setSelectedQuickAccess(undefined);
+        setSelectedBoard(undefined);
+      }
+    }
+
     if (electron) {
       getBookmarks();
     }
@@ -671,12 +683,12 @@ export function HomePage() {
   // Handle when the rooms and boards change
   useEffect(() => {
     // Check to see if the room you are in still exists
-    if (!rooms.find((r) => r._id === selectedRoom?._id)) {
+    if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
     }
     // Check to see if the board you are in still exists
-    if (!boards.find((board) => board._id === selectedBoard?._id)) {
+    if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
