@@ -3,6 +3,7 @@
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
@@ -16,6 +17,7 @@ import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFVi
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as IFrameName, init as defaultIFrame } from './apps/IFrame';
 import { name as ImageViewerName, init as defaultImageViewer } from './apps/ImageViewer';
+import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
@@ -30,6 +32,7 @@ import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
+import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
@@ -41,6 +44,7 @@ export const initialValues = {
   [AIPaneName]: defaultAIPane,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
+  [CalculatorName]: defaultCalculator,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
@@ -54,6 +58,7 @@ export const initialValues = {
   [HCDPName]: defaultHCDP,
   [IFrameName]: defaultIFrame,
   [ImageViewerName]: defaultImageViewer,
+  [JupyterLabName]: defaultJupyterLab,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapGLName]: defaultMapGL,
@@ -68,6 +73,7 @@ export const initialValues = {
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TLDrawName]: defaultTLDraw,
+  [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,

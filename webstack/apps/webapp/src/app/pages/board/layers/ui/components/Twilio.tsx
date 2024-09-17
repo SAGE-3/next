@@ -14,7 +14,8 @@ export function Twilio(props: { roomName: string; connect: boolean }) {
   const { user, accessId } = useUser();
 
   // Twilio Store to join and leave room when joining board
-  const { joinRoom, leaveRoom } = useTwilioStore((state) => state);
+  const joinRoom = useTwilioStore((state) => state.joinRoom);
+  const leaveRoom = useTwilioStore((state) => state.leaveRoom);
 
   // Handle joining and leaving twilio room when entering board
   useEffect(() => {

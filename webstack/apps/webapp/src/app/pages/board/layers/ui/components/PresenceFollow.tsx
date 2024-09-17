@@ -7,13 +7,13 @@
  */
 
 // React
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useParams } from 'react-router';
 
 import { Button, useToast } from '@chakra-ui/react';
 
 // Sage
-import { usePresenceStore, useUser, useUsersStore, initials, useHexColor, useUIStore } from '@sage3/frontend';
+import { usePresenceStore, useUser, useUsersStore, useUIStore } from '@sage3/frontend';
 
 export function PresenceFollow() {
   // BoardId
@@ -23,14 +23,46 @@ export function PresenceFollow() {
   const { user } = useUser();
 
   // UI Store
-  const { setBoardPosition, setScale } = useUIStore((state) => state);
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const scale = useUIStore((state) => state.scale);
+  const setScale = useUIStore((state) => state.setScale);
 
   // Presences
-  const { presences, update: updatePresence, following, setFollowing } = usePresenceStore((state) => state);
+  const presences = usePresenceStore((state) => state.presences);
+  const following = usePresenceStore((state) => state.following);
+  const setFollowing = usePresenceStore((state) => state.setFollowing);
+  const updatePresence = usePresenceStore((state) => state.update);
+
   const users = useUsersStore((state) => state.users);
 
   // Toast Info
   const followingToast = useToast({ id: 'followingToast' });
+  const matchToast = useToast({ id: 'matchToast' });
+
+  // My Presence
+  const myPresence = usePresenceStore.getState().presences.find((el) => el._id === user?._id);
+
+  const setViewport = useCallback((userId: string) => {
+    // Get the presence of the user
+    const presence = usePresenceStore.getState().presences.find((el) => el._id === userId);
+    if (!presence) return;
+    // Get viewport information
+    const { position, size } = presence.data.viewport;
+    const vx = -position.x;
+    const vy = -position.y;
+    const vw = -size.width;
+    const vh = -size.height;
+    const vcx = vx + vw / 2;
+    const vcy = vy + vh / 2;
+    const ww = window.innerWidth;
+    const wh = window.innerHeight;
+    const s = Math.min(ww / -vw, wh / -vh);
+    const cx = vcx + ww / s / 2;
+    const cy = vcy + wh / s / 2;
+    setScale(s);
+    setBoardPosition({ x: cx, y: cy });
+  }, []);
 
   function startFollowing(userId: string) {
     setFollowing(userId);
@@ -59,10 +91,55 @@ export function PresenceFollow() {
     followingToast.close('followingToast');
   }
 
+  useEffect(() => {
+    const goToViewport = myPresence?.data.goToViewport;
+    if (!goToViewport || !user) return;
+    const userName = users.find((el) => el._id === goToViewport)?.data.name;
+    matchToast({
+      status: 'info',
+      title: 'Matched View',
+      description: `You matched the view of ${userName}`,
+      duration: 2000,
+      isClosable: false,
+      position: 'bottom',
+    });
+    updatePresence(user?._id, { goToViewport: '' });
+    setViewport(goToViewport);
+  }, [myPresence?.data.goToViewport, user]);
+
+  useEffect(() => {
+    if (!myPresence) return;
+    if (myPresence.data.viewport.selfUpdate) return;
+    // If I am a wall, allow movement from the remote user
+    if (user?.data.userType === 'wall') {
+      const vx = -myPresence.data.viewport.position.x;
+      const vy = -myPresence.data.viewport.position.y;
+      const vw = -myPresence.data.viewport.size.width;
+      const vh = -myPresence.data.viewport.size.height;
+      const vcx = vx + vw / 2;
+      const vcy = vy + vh / 2;
+      const ww = window.innerWidth;
+      const wh = window.innerHeight;
+      const s = Math.min(ww / -vw, wh / -vh);
+      const cx = vcx + ww / s / 2;
+      const cy = vcy + wh / s / 2;
+      if (cx !== boardPosition.x || cy !== boardPosition.y) {
+        setBoardPosition({ x: cx, y: cy });
+      }
+      if (isFinite(s) && s !== scale) {
+        setScale(s);
+      }
+    }
+  }, [
+    myPresence?.data.viewport.selfUpdate,
+    myPresence?.data.viewport.position.x,
+    myPresence?.data.viewport.position.y,
+    myPresence?.data.viewport.size.width,
+    myPresence?.data.viewport.size.height,
+  ]);
+
   // Check if I am following someone
   useEffect(() => {
-    // Check for my presence
-    const myPresence = presences.find((el) => el._id === user?._id);
     if (!myPresence) return;
 
     // Check if I am following someone
@@ -99,19 +176,7 @@ export function PresenceFollow() {
     if (!following) return;
     const target = presences.find((el) => el._id === following);
     if (!target) return;
-    const vx = -target.data.viewport.position.x;
-    const vy = -target.data.viewport.position.y;
-    const vw = -target.data.viewport.size.width;
-    const vh = -target.data.viewport.size.height;
-    const vcx = vx + vw / 2;
-    const vcy = vy + vh / 2;
-    const ww = window.innerWidth;
-    const wh = window.innerHeight;
-    const s = Math.min(ww / -vw, wh / -vh);
-    const cx = vcx + ww / s / 2;
-    const cy = vcy + wh / s / 2;
-    setScale(s);
-    setBoardPosition({ x: cx, y: cy });
+    setViewport(target.data.userId);
   }, [following, presences]);
 
   return null;

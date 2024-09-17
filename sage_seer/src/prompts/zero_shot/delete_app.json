@@ -1,0 +1,11 @@
+{
+  "description": "Delete the apps that meet the requirement defined in a user query.",
+  "prefix": "Please delete the SAGE3 apps (widgets) that match the user's query below. If no apps are deleted, respond with 'No apps match the query'.",
+  "input_variables": [
+    "originalItems",
+    "query"
+  ],
+  "suffix": "originalItems: {originalItems}\nquery: {query}\n"
+}
+
+

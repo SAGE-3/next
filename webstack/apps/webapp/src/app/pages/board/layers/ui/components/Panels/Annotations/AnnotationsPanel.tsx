@@ -64,7 +64,7 @@ export function AnnotationsPanel() {
   const setMarkerOpacity = useUIStore((state) => state.setMarkerOpacity);
 
   // Get the annotation panel
-  const panel = usePanelStore((state) => state.getPanel('annotations'));
+  const panel = usePanelStore((state) => state.panels['annotations']);
   // Notifications
   const toast = useToast();
 

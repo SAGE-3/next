@@ -29,7 +29,6 @@ interface UIState {
   scale: number;
   boardWidth: number;
   boardHeight: number;
-  gridSize: number;
   zIndex: number;
 
   boardPosition: { x: number; y: number };
@@ -48,8 +47,6 @@ interface UIState {
   // Selected Apps
   selectedAppsIds: string[];
   selectedAppsSnapshot: { [id: string]: Position };
-  deltaPos: { p: Position; id: string };
-  setDeltaPostion: (position: Position, id: string) => void;
   setSelectedAppsIds: (appId: string[]) => void;
   setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
@@ -59,6 +56,10 @@ interface UIState {
   savedSelectedAppsIds: string[];
   setSavedSelectedAppsIds: () => void;
   clearSavedSelectedAppsIds: () => void;
+
+  //Tags
+  selectedTag: string;
+  setSelectedTag: (value: string) => void;
 
   // whiteboard
   whiteboardMode: DrawingMode;
@@ -95,7 +96,6 @@ interface UIState {
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
   setAppDragging: (dragging: boolean) => void;
-  setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   incZ: () => void;
   resetZIndex: () => void;
@@ -110,6 +110,11 @@ interface UIState {
   fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
+
+  deltaLocalMove: {
+    [appId: string]: { x: number; y: number };
+  };
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
 }
 
 /**
@@ -120,7 +125,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
   boardHeight: 3000000, // It was like the div scaleing became to large
   selectedBoardId: '',
-  gridSize: 1,
   zIndex: 1,
   boardDragging: false,
   appDragging: false,
@@ -217,7 +221,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
   setAppDragging: (dragging: boolean) => set((state) => ({ ...state, appDragging: dragging })),
-  setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
@@ -227,8 +230,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   setroomlistShowFavorites: (show: boolean) => set((state) => ({ ...state, roomlistShowFavorites: show })),
 
-  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
-  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
   setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds, savedSelectedAppsIds: appIds })),
   setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
     snapshot = structuredClone(snapshot);
@@ -330,6 +331,17 @@ export const useUIStore = create<UIState>()((set, get) => ({
           return { ...state, scale: zoomOutVal };
         }
       });
+  },
+
+  selectedTag: '',
+  setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
+  deltaLocalMove: {},
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => {
+    const newLocalMove = {} as { [appId: string]: { x: number; y: number } };
+    appIds.forEach((appId) => {
+      newLocalMove[appId] = delta;
+    });
+    set((state) => ({ ...state, deltaLocalMove: newLocalMove }));
   },
 }));
 

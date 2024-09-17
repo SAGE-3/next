@@ -43,6 +43,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
+    toggleShowTags,
     restoreDefaultSettings,
   } = useUserSettings();
 
@@ -50,12 +51,20 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
   const showViewports = userSettings.showViewports;
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
+  const showTags = userSettings.showTags;
 
   const initialRef = useRef(null);
 
   return (
-    <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}
-      returnFocusOnClose={false} initialFocusRef={initialRef} size="sm">
+    <Modal
+      isCentered
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+      blockScrollOnMount={false}
+      returnFocusOnClose={false}
+      initialFocusRef={initialRef}
+      size="sm"
+    >
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl" pb="0">
@@ -93,9 +102,16 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
           </FormControl>
+          <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
+            <FormLabel htmlFor="hide-tags" mb="0">
+              Tags
+              <InfoTooltip label={'Show/Hide SAGE3 tags. Must enable User Interface.'} />
+            </FormLabel>
+            <Switch id="other-viewports" colorScheme="teal" isChecked={showTags} onChange={toggleShowTags} isDisabled={!showUI} />
+          </FormControl>
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef} >
+          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
             Restore Default Settings
           </Button>
         </ModalFooter>

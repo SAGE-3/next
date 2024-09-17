@@ -15,17 +15,19 @@ import { AiQueryResponse } from '@sage3/shared';
 export class CodeLlamaModel extends AiModel {
   private _url: string;
   private _maxTokens: number;
+  private _model: string;
   public name = 'code-llama';
 
   constructor(config: ServerConfiguration) {
     super();
     this._url = config.services.codellama.url;
     this._maxTokens = config.services.codellama.max_tokens;
+    this._model = config.services.codellama.model;
   }
 
   public async health(): Promise<boolean> {
     try {
-      const response = await fetch(`${this._url}/health`, { method: 'GET' });
+      const response = await fetch(`${this._url}/v1/health/ready`, { method: 'GET' });
       if (response.status === 200) {
         return true;
       } else {
@@ -37,14 +39,30 @@ export class CodeLlamaModel extends AiModel {
   }
 
   public async query(input: string): Promise<AiQueryResponse> {
+    return {
+      success: false,
+      error_message: `Not implemented: ${input} for ${this.name}`,
+    };
+  }
+
+  public async code(prompt: string, input: string): Promise<AiQueryResponse> {
     try {
       const modelBody = {
-        inputs: input,
-        parameters: {
-          max_new_tokens: this._maxTokens,
-        },
+        model: this._model,
+        messages: [
+          {
+            role: 'assistant',
+            content: prompt,
+          },
+          {
+            role: 'user',
+            content: input,
+          },
+        ],
+        stream: false,
+        max_tokens: this._maxTokens,
       };
-      const response = await fetch(`${this._url}/generate`, {
+      const response = await fetch(`${this._url}/v1/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modelBody),
@@ -53,7 +71,7 @@ export class CodeLlamaModel extends AiModel {
         const data = await response.json();
         return {
           success: true,
-          output: data.generated_text,
+          output: data.choices[0].message.content,
         };
       } else {
         return {
