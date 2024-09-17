@@ -6,7 +6,29 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ButtonGroup, Button, DarkMode, useColorMode, Tooltip, CircularProgress, Spinner } from '@chakra-ui/react';
+import { 
+  ButtonGroup, 
+  Button, 
+  DarkMode, 
+  useColorMode, 
+  Tooltip, 
+  CircularProgress, 
+  Spinner, 
+  Box,
+  Input,
+  useColorModeValue,
+  Text,
+  ListItem,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  UnorderedList,
+  useDisclosure,
+} from '@chakra-ui/react';
 import { App, AppGroup } from '../../schema';
 
 import { state as AppState } from './index';
@@ -19,10 +41,26 @@ import { useAppStore, useUser, useUIStore } from '@sage3/frontend';
 import { VncScreen, RFB } from '@sage3/frontend';
 import { FaFirefoxBrowser } from 'react-icons/fa';
 import { TbMouse, TbMouseOff } from "react-icons/tb";
+import { PiTabs } from "react-icons/pi";
 
-
-const fetchWS = async (vmId: string="allocate", theme: number=0, callback?: (jsonData: any) => void) => {
+const fetchWS = async (vmId: string="allocate", theme: number=0, urls: string[], id: string, callback?: (jsonData: any) => void) => {
   try {
+    const getUrl = () => {
+      const protocol = window.location.protocol;
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+    
+      // let fullUrl = `${protocol}//${hostname}`;
+      // let fullUrl = `${protocol}//10.89.51.134`;
+      let fullUrl = `${protocol}//host.docker.internal`;
+      
+      if (port) {
+        fullUrl += `:${port}`;
+      }
+      
+      return fullUrl;
+    };
+
     const response = await fetch(`/vm/any/${vmId}`, {
       method: 'POST',
       headers: {
@@ -31,7 +69,10 @@ const fetchWS = async (vmId: string="allocate", theme: number=0, callback?: (jso
       body: JSON.stringify({ 
         vm: "vnc-x11-firefox",
         env: {
-          FIREFOX_THEME: theme
+          FIREFOX_URLS: urls,
+          FIREFOX_THEME: theme,
+          // CALLBACK_URL_BASE: `${getUrl()}`,
+          CALLBACK_ID: `${id}`
         },
       }),
     });
@@ -68,6 +109,7 @@ function AppComponent(props: App): JSX.Element {
   const [ wsUrl, setWsUrl ] = useState<string | undefined>(undefined);
   const [ viewOnly, setViewOnly ] = useState<boolean>(true);
   const [ connected, setVncConnected ] = useState<boolean>(false);
+  const [ rejoinSpinner, setRejoinSpinner ] = useState<boolean>(false);
 
   const { user } = useUser();
   const updateState = useAppStore((state) => state.updateState);
@@ -104,8 +146,13 @@ function AppComponent(props: App): JSX.Element {
     }
     // Start Container on user selecting app; this is the alternative to autostarting the container
     if (isSelected && s.vmId && !vncScreenRef.current) {
-      fetchWS(s.vmId, theme, (jsonData) => {
-        if ("url" in jsonData) { setWsUrl(jsonData["url"]); updateState(props._id, { refreshSeed: Math.random() }) }
+      setRejoinSpinner(true)
+      fetchWS(s.vmId, theme, s.urls, props._id, (jsonData) => {
+        if ("url" in jsonData) { 
+          setWsUrl(jsonData["url"]); 
+          setRejoinSpinner(false)
+          updateState(props._id, { refreshSeed: Math.random() }) 
+        }
       })  
     }
   }, [isSelected]);
@@ -115,7 +162,7 @@ function AppComponent(props: App): JSX.Element {
     if (s.vmId) {
       // Send request to start container or recieve websocket if running
       if ((startVmOnLoad && appIsMountingRef.current) || (!appIsMountingRef.current)) {
-        fetchWS(s.vmId, theme, (jsonData) => {
+        fetchWS(s.vmId, theme, s.urls, props._id, (jsonData) => {
           if ("url" in jsonData) { setWsUrl(jsonData["url"]); }
         })  
       }
@@ -146,7 +193,7 @@ function AppComponent(props: App): JSX.Element {
     appIsMountingRef.current = false;
     if (s.vmId == undefined && props._createdBy === user?._id) {
       console.log("EFFECT TRIGGERED")
-      fetchWS("allocate", theme, (jsonData) => {
+      fetchWS("allocate", theme, s.urls, props._id, (jsonData) => {
         if ("url" in jsonData && "uid" in jsonData) 
           { 
             updateState(props._id, { vmId: jsonData["uid"] })
@@ -190,16 +237,61 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-
   return (
     <AppWindow app={props} hideBackgroundColor={"orange"} hideBordercolor={"orange"} hideBackgroundIcon={FaFirefoxBrowser}>
       <>
         {!wsUrl && (
          s.lastImage ? (
-          <img src={s.lastImage} alt="Displayed Image"/>
+          <Box
+            position="relative"
+            width="100%"
+            height="100%"
+          >
+          {rejoinSpinner ? (
+            <>
+              <img 
+                style={{ filter: "blur(4px)", width: "100%", height: "100%" }} 
+                src={s.lastImage} 
+                alt="Displayed Image" 
+              />
+              
+              <Box
+                position="absolute"
+                top="0"
+                left="0"
+                width="100%"
+                height="100%"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Spinner
+                  thickness="4px"
+                  speed="1.5s"
+                  emptyColor="gray.200"
+                  color="orange"
+                  size="xl"
+                />
+              </Box>
+            </>
+            ) : (
+              <img 
+                src={s.lastImage} 
+                style={{ width: "100%", height: "100%" }} 
+                alt="Displayed Image"
+              />
+            )
+          }
+          </Box>
          ) : (
-          s.vmId ? <div>Select App to Start</div> : 
-          <div>
+          // s.vmId ? <div>Select App to Start</div> : 
+          <Box
+            // w="100%"
+            h="100%"
+            display="flex" 
+            alignItems="center" 
+            justifyContent="center"
+          >
             {/* <CircularProgress isIndeterminate color='orange'/> */}
             <Spinner
               thickness='4px'
@@ -208,7 +300,7 @@ function AppComponent(props: App): JSX.Element {
               color='orange'
               size='xl'
             />
-          </div>
+          </Box>
          )
         )}
         {wsUrl && (
@@ -283,19 +375,45 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* {s.vmId} */}
       {props._createdBy === user?._id && (
       <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-      <Tooltip label={s.nonOwnerViewOnly ? "Click to Allow Shared Controls" : "Click to Stop Sharing Controls"} openDelay={400} hasArrow placement="top">
-          <Button colorScheme={s.nonOwnerViewOnly ? "red" : "green" } onClick={
+      {/* <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1"> */}
+      <Tooltip label={s.nonOwnerViewOnly ? "Current Not Sharing Controls" : "Controls are Shared Currently"} openDelay={400} hasArrow placement="top">
+          <Button size="xs" colorScheme={s.nonOwnerViewOnly ? "red" : "green" } onClick={
             () => {
               updateState(props._id, { nonOwnerViewOnly: !s.nonOwnerViewOnly }) 
             }
           }>{s.nonOwnerViewOnly ? <TbMouseOff/> : <TbMouse/>}</Button>
         </Tooltip>
-      </ButtonGroup>
+      {/* </ButtonGroup> */}
 
 
       </>
     )}
+     <Popover trigger="hover">
+        {({ isOpen, onClose }) => (
+          <>
+            <PopoverTrigger>
+              <Button size="xs" colorScheme="teal" ml="1" mr="0" p={0}>
+                {/* FaLink */}
+                <PiTabs />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent fontSize={'sm'} width={'375px'}>
+              <PopoverArrow />
+              <PopoverCloseButton />
+              <PopoverHeader>Urls</PopoverHeader>
+              <PopoverBody userSelect={'text'}>
+                <UnorderedList>
+                  {s.urls.map(url => (
+                    <ListItem key={url} wordBreak="break-all">
+                      {url}
+                    </ListItem>
+                  ))}
+                </UnorderedList>
+              </PopoverBody>
+            </PopoverContent>
+          </>
+        )}
+      </Popover>
     </>
   );
 }
