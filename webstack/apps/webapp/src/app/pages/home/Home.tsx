@@ -47,18 +47,7 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import {
-  MdAdd,
-  MdExitToApp,
-  MdHome,
-  MdSearch,
-  MdGridView,
-  MdList,
-  MdLock,
-  MdPeople,
-  MdBorderAll,
-  MdFolder,
-} from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
@@ -813,7 +802,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1425,36 +1414,56 @@ export function HomePage() {
               <Box
                 hidden={!(searchSage.length > 0) || !isSearchSageFocused}
                 ref={searchSageRef}
+                bg={searchBarColor}
                 position="absolute"
-                zIndex="10"
-                mb="0"
                 h="400px"
                 w="full"
-                bg={searchBarColor}
+                pb="3"
+                overflow="hidden"
+                zIndex="200"
+                borderTop="none"
                 roundedBottom="2xl"
-                p="3"
                 border="1px solid"
                 borderColor="inherit"
-                borderTop="none"
-                overflow="auto"
               >
-                {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
-                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                    // If it's a board, get the room ID
-                    if ((item as Board & { roomName: string }).data.roomId) {
-                      return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                    }
-                    return (
-                      <SearchRow.Room
-                        key={item._id}
-                        room={item as Room}
-                        clickHandler={() => {
-                          handleRoomClick(item as Room);
-                        }}
-                      />
-                    );
-                  })
-                  : 'No items match your search'}
+                <Box
+                  // hidden={!(searchSage.length > 0) || !isSearchSageFocused}
+                  // ref={searchSageRef}
+                  // position="absolute"
+                  p="3"
+                  mb="0"
+                  h="full"
+                  w="full"
+                  overflow="auto"
+                  css={{
+                    '&::-webkit-scrollbar': {
+                      background: 'transparent',
+                      width: '5px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: scrollBarColor,
+                      borderRadius: '48px',
+                    },
+                  }}
+                >
+                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
+                    ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                        // If it's a board, get the room ID
+                        if ((item as Board & { roomName: string }).data.roomId) {
+                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                        }
+                        return (
+                          <SearchRow.Room
+                            key={item._id}
+                            room={item as Room}
+                            clickHandler={() => {
+                              handleRoomClick(item as Room);
+                            }}
+                          />
+                        );
+                      })
+                    : 'No items match your search'}
+                </Box>
               </Box>
             </Box>
             <Box borderRadius={cardRadius} height="100%" mt="4">
@@ -1593,7 +1602,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No active boards.</Text>
+                        <Text p="3" px="6">
+                          No active boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1637,7 +1648,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No favorite boards.</Text>
+                        <Text p="3" px="6">
+                          No favorite boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1706,7 +1719,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner
