@@ -146,6 +146,8 @@ function MembersListItem(props: UserRowProps) {
   const backgroundColor = useHexColor(backgroundColorValue);
   // Colors
   const borderColorValue = useColorModeValue(props.user.data.color, props.user.data.color);
+  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColor = useHexColor(baseBorderColorValue);
   const online = useHexColor(borderColorValue);
   const offline = useHexColor('gray.700');
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
@@ -192,7 +194,7 @@ function MembersListItem(props: UserRowProps) {
         boxSizing="border-box"
         width="100%"
         height="46px"
-        border={`solid 2px ${props.online ? color : 'transparent'}`}
+        border={`solid 1px ${props.online ? color : baseBorderColor}`}
         transition={'all 0.2s ease-in-out'}
         cursor="pointer"
       >

@@ -70,13 +70,13 @@ export function LoginPage() {
   const { colorMode } = useColorMode();
 
   return (
-    <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%">
+    <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%" position="relative">
       <Box pb={'2rem'} alignItems="center">
         <Image aspectRatio={2.55} width="20vw" minWidth="400px" maxWidth="35rem" src={logoUrl} alt="SAGE3 Logo" fit="contain" />
       </Box>
 
       {/* Server Name */}
-      <Box left="2" top="1" position="absolute">
+      <Box left="2" top="5" position="absolute">
         <Text
           fontSize="xl"
           flex="1 1 0px"

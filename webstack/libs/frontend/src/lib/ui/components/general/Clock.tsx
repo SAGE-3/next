@@ -34,7 +34,7 @@ export function Clock(props: ClockProps) {
 
   // Colors
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
+  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
 
@@ -50,7 +50,7 @@ export function Clock(props: ClockProps) {
   const [netlabel, setNetlabel] = useState('online');
 
   // Pressure Observer
-  const pressure = usePressureObserver();
+  const pressure = usePressureObserver(props.isBoard ?? false);
   const [cpucolor, setCPUcolor] = useState(onlineColor);
   const [cpulabel, setCPUlabel] = useState('nominal');
 
@@ -83,7 +83,7 @@ export function Clock(props: ClockProps) {
         setNetlabel('offline');
       }
     }
-  }, [networkStatus]);
+  }, [networkStatus, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
   useEffect(() => {
     if (pressure) {
@@ -98,14 +98,15 @@ export function Clock(props: ClockProps) {
       }
       setCPUlabel(pressure.state.toString());
     }
-  }, [pressure]);
+  }, [pressure, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
 
 
   return (
     <Box
+      sx={{ '-webkit-app-region': 'no-drag' }}
       borderRadius="md"
-      backgroundColor={backgroundColor}
+      backgroundColor={'transparent'}
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"

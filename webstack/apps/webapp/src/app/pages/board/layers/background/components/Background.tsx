@@ -7,7 +7,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { throttle } from 'throttle-debounce';
 import {
   Box,
   Button,
@@ -28,6 +27,7 @@ import {
   Portal,
   Center,
 } from '@chakra-ui/react';
+import { throttle } from 'throttle-debounce';
 
 import {
   useUIStore,
@@ -44,22 +44,22 @@ import {
   setupApp,
   useAbility,
   processContentURL,
+  useUserSettings,
+  HelpModal,
 } from '@sage3/frontend';
-import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/initialValues';
 
-import { HelpModal } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+
 
 type BackgroundProps = {
   roomId: string;
   boardId: string;
 };
 
-// Global vars to cache event state
-const evCache = new Array();
-let prevDiff = -1;
-
 export function Background(props: BackgroundProps) {
+  // Settings
+  const { settings, setPrimaryActionMode } = useUserSettings();
   // display some notifications
   const toast = useToast();
   // Handle to a toast
@@ -94,13 +94,15 @@ export function Background(props: BackgroundProps) {
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
   const zoomOutDelta = useUIStore((state) => state.zoomOutDelta);
-  const zoomIn = useUIStore((state) => state.zoomIn);
-  const zoomOut = useUIStore((state) => state.zoomOut);
   const scale = useUIStore((state) => state.scale);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
-  const setLassoMode = useUIStore((state) => state.setLassoMode);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const selectedApp = useUIStore((state) => state.selectedAppId);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const cachedPrimaryActionMode = useUIStore((state) => state.cachedPrimaryActionMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
@@ -161,158 +163,174 @@ export function Background(props: BackgroundProps) {
     }
   };
 
+  const handleDragEnd = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      if (cachedPrimaryActionMode) {
+        setPrimaryActionMode(cachedPrimaryActionMode);
+      }
+    },
+    [cachedPrimaryActionMode]
+  );
+
   // Drop event
-  async function OnDrop(event: React.DragEvent<HTMLDivElement>) {
-    if (!user) return;
+  const OnDrop = useCallback(
+    async (event: React.DragEvent<HTMLDivElement>) => {
+      if (cachedPrimaryActionMode) {
+        setPrimaryActionMode(cachedPrimaryActionMode);
+      }
 
-    if (!canDrop) {
-      toast({
-        title: 'Guests and Spectators cannot upload assets',
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-      return;
-    }
-    // Get the position of the drop
-    const xdrop = event.nativeEvent.offsetX;
-    const ydrop = event.nativeEvent.offsetY;
-    setDropCursor({ x: event.clientX, y: event.clientY });
-    setDropPosition({ x: xdrop, y: ydrop });
+      if (!user) return;
 
-    if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
-      event.preventDefault();
-      event.stopPropagation();
-      // Collect all the files dropped into an array
-      collectFiles(event.dataTransfer)
-        .then(async (files) => {
-          if (!uploadInProgress) {
-            toast.closeAll();
-            // do the actual upload
-            uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
-          } else {
+      if (!canDrop) {
+        toast({
+          title: 'Guests and Spectators cannot upload assets',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+      // Get the position of the drop
+      const xdrop = event.nativeEvent.offsetX;
+      const ydrop = event.nativeEvent.offsetY;
+      setDropCursor({ x: event.clientX, y: event.clientY });
+      setDropPosition({ x: xdrop, y: ydrop });
+
+      if (event.dataTransfer.types.includes('Files') && event.dataTransfer.files.length > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Collect all the files dropped into an array
+        collectFiles(event.dataTransfer)
+          .then(async (files) => {
+            if (!uploadInProgress) {
+              toast.closeAll();
+              // do the actual upload
+              uploadFiles(Array.from(files), xdrop, ydrop, props.roomId, props.boardId);
+            } else {
+              toast({
+                title: 'Upload in progress - Please wait',
+                status: 'warning',
+                duration: 4000,
+                isClosable: true,
+              });
+            }
+          })
+          .catch((err) => {
+            console.log('Error> uploading files', err);
+            lotsOnOpen();
+          });
+      } else {
+        // Drag/Drop a URL
+        if (event.dataTransfer.types.includes('text/uri-list')) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          // Block guests from uploading assets
+          if (auth?.provider === 'guest') {
             toast({
-              title: 'Upload in progress - Please wait',
+              title: 'Guests cannot upload assets',
               status: 'warning',
               duration: 4000,
               isClosable: true,
             });
+            return;
           }
-        })
-        .catch((err) => {
-          console.log('Error> uploading files', err);
-          lotsOnOpen();
-        });
-    } else {
-      // Drag/Drop a URL
-      if (event.dataTransfer.types.includes('text/uri-list')) {
-        event.preventDefault();
-        event.stopPropagation();
 
-        // Block guests from uploading assets
-        if (auth?.provider === 'guest') {
-          toast({
-            title: 'Guests cannot upload assets',
-            status: 'warning',
-            duration: 4000,
-            isClosable: true,
-          });
-          return;
-        }
-
-        const pastedText = event.dataTransfer.getData('Url');
-        if (pastedText) {
-          if (pastedText.startsWith('data:image/png;base64')) {
-            const title = event.dataTransfer.getData('title') || 'Image';
-            // it's a base64 image
-            getImageDimensionsFromBase64(pastedText).then((res) => {
-              const ar = res.w / res.h;
-              let w = res.w;
-              let h = w / ar;
-              if (ar < 1) {
-                w = res.h * ar;
-                h = res.h;
+          const pastedText = event.dataTransfer.getData('Url');
+          if (pastedText) {
+            if (pastedText.startsWith('data:image/png;base64')) {
+              const title = event.dataTransfer.getData('title') || 'Image';
+              // it's a base64 image
+              getImageDimensionsFromBase64(pastedText).then((res) => {
+                const ar = res.w / res.h;
+                let w = res.w;
+                let h = w / ar;
+                if (ar < 1) {
+                  w = res.h * ar;
+                  h = res.h;
+                }
+                createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+              });
+            } else {
+              // Is it a valid URL
+              const valid = isValidURL(pastedText);
+              if (valid) {
+                // Create a link or view app
+                popOnOpen();
+                setValidURL(valid);
               }
-              createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
-            });
-          } else {
-            // Is it a valid URL
-            const valid = isValidURL(pastedText);
-            if (valid) {
-              // Create a link or view app
-              popOnOpen();
-              setValidURL(valid);
             }
           }
-        }
-      } else {
-        // if no files were dropped, create an application
-        const appName = event.dataTransfer.getData('app') as AppName;
-        if (appName) {
-          // Setup initial size
-          let w = 600;
-          let h = 400;
-          if (appName === 'SageCell') {
-            w = 650;
-            h = 400;
-          } else if (appName === 'Calculator') {
-            w = 260;
-            h = 369;
-          } else if (appName === 'Chat') {
-            w = 800;
-            h = 420;
-          }
-          // if a specific app was setup, create it
-          const appstatestr = event.dataTransfer.getData('app_state');
-          if (appstatestr) {
-            const appstate = JSON.parse(appstatestr);
-            const newState = {
-              title: user.data.name,
-              roomId: props.roomId,
-              boardId: props.boardId,
-              position: { x: xdrop, y: ydrop, z: 0 },
-              size: { width: w, height: h, depth: 0 },
-              rotation: { x: 0, y: 0, z: 0 },
-              type: appName,
-              state: { ...(initialValues[appName] as AppState), ...appstate },
-              raised: true,
-              dragging: false,
-              pinned: false,
-            };
-            createApp(newState);
-          } else {
-            newApp(appName, w, h, xdrop, ydrop);
-          }
         } else {
-          // Get information from the drop
-          const ids = event.dataTransfer.getData('file');
-          const types = event.dataTransfer.getData('type');
-          if (ids && types) {
-            // if it's files from the asset manager
-            const fileIDs = JSON.parse(ids);
-            const fileTypes = JSON.parse(types);
-            // Open the file at the drop location
-            const num = fileIDs.length;
-            if (num < 20) {
-              const batch: AppSchema[] = [];
-              let xpos = xdrop;
-              for (let i = 0; i < num; i++) {
-                const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
-                if (res) {
-                  batch.push(res);
-                  xpos += res.size.width + 10;
-                }
-              }
-              createBatch(batch);
+          // if no files were dropped, create an application
+          const appName = event.dataTransfer.getData('app') as AppName;
+          if (appName) {
+            // Setup initial size
+            let w = 600;
+            let h = 400;
+            if (appName === 'SageCell') {
+              w = 650;
+              h = 400;
+            } else if (appName === 'Calculator') {
+              w = 260;
+              h = 369;
+            } else if (appName === 'Chat') {
+              w = 800;
+              h = 420;
+            }
+            // if a specific app was setup, create it
+            const appstatestr = event.dataTransfer.getData('app_state');
+            if (appstatestr) {
+              const appstate = JSON.parse(appstatestr);
+              const newState = {
+                title: user.data.name,
+                roomId: props.roomId,
+                boardId: props.boardId,
+                position: { x: xdrop, y: ydrop, z: 0 },
+                size: { width: w, height: h, depth: 0 },
+                rotation: { x: 0, y: 0, z: 0 },
+                type: appName,
+                state: { ...(initialValues[appName] as AppState), ...appstate },
+                raised: true,
+                dragging: false,
+                pinned: false,
+              };
+              createApp(newState);
             } else {
-              // Too many assets selected, not doing it.
-              lotsOnOpen();
+              newApp(appName, w, h, xdrop, ydrop);
+            }
+          } else {
+            // Get information from the drop
+            const ids = event.dataTransfer.getData('file');
+            const types = event.dataTransfer.getData('type');
+            if (ids && types) {
+              // if it's files from the asset manager
+              const fileIDs = JSON.parse(ids);
+              const fileTypes = JSON.parse(types);
+              // Open the file at the drop location
+              const num = fileIDs.length;
+              if (num < 20) {
+                const batch: AppSchema[] = [];
+                let xpos = xdrop;
+                for (let i = 0; i < num; i++) {
+                  const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+                  if (res) {
+                    batch.push(res);
+                    xpos += res.size.width + 10;
+                  }
+                }
+                createBatch(batch);
+              } else {
+                // Too many assets selected, not doing it.
+                lotsOnOpen();
+              }
             }
           }
         }
       }
-    }
-  }
+    },
+    [cachedPrimaryActionMode]
+  );
 
   // Question mark character for help
   useHotkeys(
@@ -381,28 +399,24 @@ export function Background(props: BackgroundProps) {
     'shift+s',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      const x = boardCursor.x;
-      const y = boardCursor.y;
-      throttleStickieCreationRef(x, y);
-      // Returning false stops the event and prevents default browser events
-      return false;
+      if (boardSynced) {
+        const x = boardCursor.x;
+        const y = boardCursor.y;
+        throttleStickieCreationRef(x, y);
+        // Returning false stops the event and prevents default browser events
+        return false;
+      } else {
+        toast({
+          title: 'Creating Sticky while panning or zooming is not supported',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
     },
     // Depends on the cursor to get the correct position
     { dependencies: [] }
   );
-
-  useEffect(() => {
-    // if app selected, don't allow lasso, othwerwise it consumes the event away from the app
-    if (selectedAppId !== '') return;
-
-    // if (isShiftPressed) {
-    //   document.onselectstart = function () {
-    //     return false;
-    //   };
-    // }
-
-    setLassoMode(isShiftPressed);
-  }, [isShiftPressed]);
 
   const createWeblink = () => {
     createApp(
@@ -434,76 +448,16 @@ export function Background(props: BackgroundProps) {
     popOnClose();
   };
 
-  // Functions for zooming with touch events
-  function remove_event(ev: any) {
-    // Remove this event from the target's cache
-    for (var i = 0; i < evCache.length; i++) {
-      if (evCache[i].pointerId == ev.pointerId) {
-        evCache.splice(i, 1);
-        break;
-      }
+  // Deselect Application by clicking on board
+  function handleDeselect() {
+    if (selectedApp) {
+      setSelectedApp('');
+    }
+
+    if (setSelectedAppsIds.length > 0) {
+      setSelectedAppsIds([]);
     }
   }
-
-  const onPointerDown = (ev: any) => {
-    evCache.push(ev);
-  };
-
-  /**
-   * This function implements a 2-pointer horizontal pinch/zoom gesture.
-   * If the distance between the two pointers has increased (zoom in),
-   * and if the distance is decreasing (zoom out)
-   *
-   * @param ev
-   */
-  const onPointerMove = (ev: any) => {
-    // Find this event in the cache and update its record with this event
-    for (var i = 0; i < evCache.length; i++) {
-      if (ev.pointerId == evCache[i].pointerId) {
-        evCache[i] = ev;
-        break;
-      }
-    }
-
-    // If two pointers are down, check for pinch gestures
-    if (evCache.length == 2) {
-      // Calculate the distance between the two pointers
-      var curDiff = Math.sqrt(Math.pow(evCache[1].clientX - evCache[0].clientX, 2) + Math.pow(evCache[1].clientY - evCache[0].clientY, 2));
-      if (prevDiff > 0) {
-        if (curDiff > prevDiff) {
-          // The distance between the two pointers has increased
-          zoomIn();
-        }
-        if (curDiff < prevDiff) {
-          // The distance between the two pointers has decreased
-          zoomOut();
-        }
-      }
-      // Cache the distance for the next move event
-      prevDiff = curDiff;
-    }
-  };
-  const onPointerUp = (ev: any) => {
-    // Remove this pointer from the cache
-    remove_event(ev);
-    // If the number of pointers down is less than two then reset diff tracker
-    if (evCache.length < 2) prevDiff = -1;
-  };
-
-  // Throttle The wheel event
-  const throttleWheel = throttle(50, (evt: any) => {
-    evt.stopPropagation();
-    const cursor = { x: evt.clientX, y: evt.clientY };
-    if (evt.deltaY < 0) {
-      zoomInDelta(evt.deltaY, cursor);
-    } else if (evt.deltaY > 0) {
-      zoomOutDelta(evt.deltaY, cursor);
-    }
-  });
-  const throttleWheelRef = useCallback(throttleWheel, []);
-  const onWheelEvent = (ev: any) => {
-    throttleWheelRef(ev);
-  };
 
   return (
     <Box
@@ -514,20 +468,19 @@ export function Background(props: BackgroundProps) {
       bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
         }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
+      userSelect={'none'}
+      draggable={false}
+      cursor={'grab'}
+      sx={{
+        '&:active': {
+          cursor: 'grabbing',
+        },
+      }}
       // Drag and drop event handlers
       onDrop={OnDrop}
       onDragOver={OnDragOver}
-      onScroll={(evt) => {
-        evt.stopPropagation();
-      }}
-      onWheel={onWheelEvent}
-      // Zoom touch events
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      onPointerOut={onPointerUp}
-      onPointerLeave={onPointerUp}
+      onDragLeave={handleDragEnd}
+      onClick={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 

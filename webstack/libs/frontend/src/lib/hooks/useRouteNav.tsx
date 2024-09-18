@@ -19,10 +19,14 @@ export function useRouteNav() {
 
   function toHome(roomId?: string) {
     if (roomId) {
-      navigate(`/home/${roomId}`);
+      navigate(`/home/room/${roomId}`);
     } else {
       navigate('/home');
     }
+  }
+
+  function toQuickAccess(quickAccess: 'active' | 'starred' | 'recent') {
+    navigate(`/home/${quickAccess}`);
   }
 
   function toBoard(roomId: string, boardId: string) {
@@ -41,5 +45,5 @@ export function useRouteNav() {
     navigate(-1);
   }
 
-  return { toHome, toBoard, toLogin, toAdmin, back };
+  return { toHome, toBoard, toLogin, toAdmin, toQuickAccess, back };
 }
