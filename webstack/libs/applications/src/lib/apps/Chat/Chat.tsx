@@ -133,7 +133,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.context) {
       // Quick summary
-      const ctx = `SAGE, Please carefully read the following document text:
+      const ctx = `@S, Please carefully read the following document text:
 
       <document>
       ${s.context}
