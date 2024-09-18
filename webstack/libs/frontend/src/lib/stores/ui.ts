@@ -14,14 +14,13 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
-
 import { useAppStore } from './app';
 
 // Zoom limits, from 30% to 400%
-const MinZoom = 0.1;
-const MaxZoom = 3;
+export const MinZoom = 0.1;
+export const MaxZoom = 3;
 // When using mouse wheel, repeated events
-const WheelStepZoom = 0.008;
+export const WheelStepZoom = 0.008;
 
 type DrawingMode = 'none' | 'pen' | 'eraser';
 
@@ -92,6 +91,18 @@ interface UIState {
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
+  // RndSafety: to fix appWindows from disappearing
+  rndSafeForAction: boolean;
+  setRndSafeForAction: (isSafe: boolean) => void;
+
+  // Position Syncronization Information
+  boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
+  setBoardSynced: (synced: boolean) => void;
+
+  // Cache Cursor Type when dragging items on board
+  cachedPrimaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined;
+  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) => void;
+
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
@@ -143,6 +154,17 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
+
+  rndSafeForAction: true,
+  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),
+
+  boardSynced: true,
+  setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
+
+  cachedPrimaryActionMode: undefined,
+  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) =>
+    set((state) => ({ ...state, cachedPrimaryActionMode: mode })),
+
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
