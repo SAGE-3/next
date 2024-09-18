@@ -74,10 +74,13 @@ import {
   ColorPicker,
   truncateWithEllipsis,
   setupApp,
+  useAssetStore,
+  apiUrls,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
+import ky from 'ky';
 
 type AppToolbarProps = {
   boardId: string;
@@ -899,7 +902,7 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
-  const openChat = () => {
+  const openChat = async () => {
     if (app) {
       console.log('Chat with SAGE Intelligence');
       const w = 800;
@@ -907,11 +910,42 @@ export function AppToolbar(props: AppToolbarProps) {
       const x = app.data.position.x + app.data.size.width + 40;
       const y = app.data.position.y;
       let context = '';
+      // Specific cases for each app to build a context for the LLM
       if (app.data.type === 'Stickie') {
+        // Get the text of the stickie
         context = app.data.state.text;
+      } else if (app.data.type === 'CSVViewer') {
+        // Get information about the asset
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          const dl = apiUrls.assets.getAssetById(asset.data.file);
+          // get the content of the CSV file
+          const csv = await ky.get(dl).text();
+          context = csv;
+        }
+      } else if (app.data.type === 'PDFViewer') {
+        // Get the current page number
+        const page = app.data.state.currentPage;
+        // Get information about the asset
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          const url = asset.data.file;
+          const parts = url.split('.');
+          const dl = apiUrls.assets.getAssetById(parts[0] + '-text.json');
+          // get the file containing the text of the PDF
+          const pages: { count: number, pages: string[] } = await ky.get(dl).json();
+          // get the text of the current page
+          context = pages.pages[page];
+        }
+      } else {
+        // Otherwise, serialize the whole app state
+        context = JSON.stringify(app.data.state, null, 2);
       }
-      const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
-      createApp(state);
+      if (context) {
+        // Create the chat app with the context
+        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
+        createApp(state);
+      }
     }
   };
 

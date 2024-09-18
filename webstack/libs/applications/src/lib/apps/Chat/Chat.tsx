@@ -143,7 +143,9 @@ function AppComponent(props: App): JSX.Element {
 
       Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
 
-      Please list the keywords you came up in bold using the Markdown syntax.`;
+      Please list the keywords you came up in bold using the Markdown syntax.
+
+      Finally, provide a short opinion on the text.`;
 
       // Longer version
       // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
