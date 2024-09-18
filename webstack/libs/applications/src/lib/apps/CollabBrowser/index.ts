@@ -14,7 +14,6 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  vmId: z.string(),
   nonOwnerViewOnly: z.boolean(),
   lastImage: z.string(),
   initialWebPage: z.string(),
@@ -24,7 +23,6 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  vmId: undefined,
   nonOwnerViewOnly: false,
   lastImage: undefined,
   // This is only used for the paste-handler to open in vnc-firefox
