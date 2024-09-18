@@ -86,8 +86,14 @@ export function IntelligencePane(props: SIProps) {
     <Box borderRadius="md" display="flex">
       <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose}>
         <DrawerContent maxWidth={"50vw"} height={"532px"}
-          transitionDuration={"0.2s"}
-          rounded={"lg"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}>
+          rounded={"lg"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}
+          motionProps={{
+            variants: {
+              enter: { x: "0%", transition: { duration: 0.1 }, },
+              exit: { x: "100%", transition: { duration: 0.1 }, },
+            },
+          }}
+        >
           <DrawerHeader p={1} m={1}>
             SAGE Intelligence
           </DrawerHeader>

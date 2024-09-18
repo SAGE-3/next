@@ -56,7 +56,7 @@ import {
   MdExpandMore,
   MdExpandLess,
 } from 'react-icons/md';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
 
 import { formatDistance } from 'date-fns';
 
@@ -72,6 +72,8 @@ import {
   usePresenceStore,
   useUserSettings,
   ColorPicker,
+  truncateWithEllipsis,
+  setupApp,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
@@ -95,6 +97,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
+  const createApp = useAppStore((state) => state.create);
   const update = useAppStore((state) => state.update);
   const duplicate = useAppStore((state) => state.duplicateApps);
 
@@ -109,6 +112,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
+  const intelligenceColor = useHexColor('purple');
 
   // Settings
   const { settings } = useUserSettings();
@@ -584,11 +588,6 @@ export function AppToolbar(props: AppToolbarProps) {
       setTagColor(color as SAGEColors);
     };
 
-    const truncateStr = (str: string) => {
-      const maxLen = 10;
-      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
-    };
-
     return (
       <HStack spacing={1} ref={tagsContainerRef}>
         {/* Main list of tags */}
@@ -605,7 +604,7 @@ export function AppToolbar(props: AppToolbarProps) {
             onClick={() => openEditModal(tag)}
           >
             <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
-              <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+              <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
               <TagCloseButton
@@ -655,7 +654,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       colorScheme={tag.split(delimiter)[1]}
                       onClick={() => openEditModal(tag)}
                     >
-                      <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+                      <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
                       <TagCloseButton
                         m={0}
                         onClick={(e) => {
@@ -776,6 +775,19 @@ export function AppToolbar(props: AppToolbarProps) {
           <>
             <Component key={app._id} {...app}></Component>
 
+            {/* Sage Intelligence */}
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              openDelay={400}
+              ml="1"
+              label={'Chat with SAGE Intelligence'}
+            >
+              <Button onClick={openChat} backgroundColor={intelligenceColor} size="xs" ml="1" p={0}>
+                <HiOutlineSparkles size="14px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
@@ -886,6 +898,23 @@ export function AppToolbar(props: AppToolbarProps) {
       );
     }
   }
+
+  const openChat = () => {
+    if (app) {
+      console.log('Chat with SAGE Intelligence');
+      const w = 800;
+      const h = 620;
+      const x = app.data.position.x + app.data.size.width + 40;
+      const y = app.data.position.y;
+      let context = '';
+      if (app.data.type === 'Stickie') {
+        context = app.data.state.text;
+      }
+      const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
+      createApp(state);
+    }
+  };
+
 
   if (showUI && app)
     return (
