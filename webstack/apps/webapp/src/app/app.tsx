@@ -31,7 +31,7 @@ import {
 } from '@sage3/frontend';
 import { OpenConfiguration } from '@sage3/shared/types';
 // Pages
-import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
+import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -101,7 +101,13 @@ export function App() {
                 <Routes>
                   <Route path="/" element={<LoginPage />} />
                   <Route path="/login" element={<LoginPage />} />
-                  <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
+
+                  {/* <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} /> */}
+                  <Route path="/enter/:roomId/:boardId" element={
+                    <ProtectedAuthRoute>
+                      <OpenDesktopPage />
+                    </ProtectedAuthRoute>
+                  } />
 
                   <Route
                     path="/createuser"
