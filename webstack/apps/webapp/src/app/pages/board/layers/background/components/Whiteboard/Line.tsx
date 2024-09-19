@@ -11,7 +11,7 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUIStore } from '@sage3/frontend';
+import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -19,17 +19,19 @@ export interface LineProps {
 }
 
 export const Line = memo(function Line({ line, onClick }: LineProps) {
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   const { points, color, isComplete, alpha, size } = useLine(line);
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
-  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
 
   const handleClick = (ev: any) => {
     // If Right Click
-    if ((ev.button === 2 && whiteboardMode === 'pen') || (ev.button === 0 && whiteboardMode === 'eraser')) {
+    if ((ev.button === 2 && primaryActionMode === 'pen') || (ev.button === 0 && primaryActionMode === 'eraser')) {
       onClick(id);
     }
   };
@@ -59,7 +61,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   );
 });
 
-
 function average(a: number, b: number) {
   return (a + b) / 2;
 }
@@ -67,13 +68,18 @@ function average(a: number, b: number) {
 function getSvgPathFromStroke(points: number[][]) {
   const len = points.length;
 
-  if (len < 4) { return ``; }
+  if (len < 4) {
+    return ``;
+  }
 
   let a = points[0];
   let b = points[1];
   const c = points[2];
 
-  let result = `M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${b[0].toFixed(1)},${b[1].toFixed(1)} ${average(b[0], c[0]).toFixed(1)},${average(b[1], c[1]).toFixed(1)} T`;
+  let result = `M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${b[0].toFixed(1)},${b[1].toFixed(1)} ${average(b[0], c[0]).toFixed(1)},${average(
+    b[1],
+    c[1]
+  ).toFixed(1)} T`;
 
   for (let i = 2, max = len - 1; i < max; i++) {
     a = points[i];

@@ -42,6 +42,9 @@ import { SAGEColors } from '@sage3/shared';
 import { Panel } from '../Panel';
 
 export function AnnotationsPanel() {
+  const { setPrimaryActionMode, settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   // UI Store
   const { toggleShowUI } = useUserSettings();
 
@@ -51,8 +54,6 @@ export function AnnotationsPanel() {
   const { user } = useUser();
 
   // Whiteboard information
-  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const markerColor = useUIStore((state) => state.markerColor);
@@ -92,13 +93,13 @@ export function AnnotationsPanel() {
   // Track the panel state to enable/disable the pen
   useEffect(() => {
     if (panel) {
-      if (panel.show) setWhiteboardMode('pen');
-      else setWhiteboardMode('none');
+      if (panel.show) setPrimaryActionMode('pen');
+      // else setWhiteboardMode('none');
     }
   }, [panel, panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
-    setWhiteboardMode('pen');
+    setPrimaryActionMode('pen');
     setMarkerColor(color);
   };
 
@@ -135,14 +136,14 @@ export function AnnotationsPanel() {
     allOnClose();
   };
 
-  useEffect(() => {
-    // Disable marker on entry
-    setWhiteboardMode('none');
-    return () => {
-      // Disable marker on leave
-      setWhiteboardMode('none');
-    };
-  }, []);
+  // useEffect(() => {
+  //   // Disable marker on entry
+  //   setWhiteboardMode('none');
+  //   return () => {
+  //     // Disable marker on leave
+  //     setWhiteboardMode('none');
+  //   };
+  // }, []);
 
   return (
     <>
@@ -150,23 +151,23 @@ export function AnnotationsPanel() {
         <Box alignItems="center" pb="1" width="100%" display="flex">
           <VStack width="100%" alignItems="left" spacing="0">
             <HStack m={0} p={0} spacing={'inherit'}>
-              <Tooltip placement="top" hasArrow label={whiteboardMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
+              <Tooltip placement="top" hasArrow label={primaryActionMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
                 <Button
-                  onClick={() => setWhiteboardMode(whiteboardMode === 'pen' ? 'none' : 'pen')}
+                  onClick={() => setPrimaryActionMode('pen')}
                   size="sm"
                   mr="2"
-                  colorScheme={whiteboardMode === 'pen' ? 'green' : 'gray'}
+                  colorScheme={primaryActionMode === 'pen' ? 'green' : 'gray'}
                 >
                   <BsPencilFill />
                 </Button>
               </Tooltip>
 
-              <Tooltip placement="top" hasArrow label={whiteboardMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
+              <Tooltip placement="top" hasArrow label={primaryActionMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
                 <Button
-                  onClick={() => setWhiteboardMode(whiteboardMode === 'pen' || whiteboardMode === 'none' ? 'eraser' : 'none')}
+                  onClick={() => setPrimaryActionMode('eraser')}
                   size="sm"
                   mr="2"
-                  colorScheme={whiteboardMode === 'eraser' ? 'green' : 'gray'}
+                  colorScheme={primaryActionMode === 'eraser' ? 'green' : 'gray'}
                 >
                   <BsEraserFill />
                 </Button>
