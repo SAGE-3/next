@@ -103,11 +103,7 @@ export function App() {
                   <Route path="/login" element={<LoginPage />} />
 
                   {/* <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} /> */}
-                  <Route path="/enter/:roomId/:boardId" element={
-                    <ProtectedAuthRoute>
-                      <OpenDesktopPage />
-                    </ProtectedAuthRoute>
-                  } />
+                  <Route path="/enter/:roomId/:boardId" element={<OpenDesktopPage />} />
 
                   <Route
                     path="/createuser"
