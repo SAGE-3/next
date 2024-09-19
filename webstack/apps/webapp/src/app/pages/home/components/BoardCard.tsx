@@ -154,12 +154,12 @@ export function BoardCard(props: BoardCardProps) {
           height="190px"
           width="250px"
           transition={'all 0.2s ease-in-out'}
-          cursor="pointer"
+          // cursor="pointer"
           border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
           transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
           _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         >
-          <Box gridArea="preview" position="relative" onClick={handleEnterBoard} overflow="hidden">
+          <Box cursor="pointer" gridArea="preview" position="relative" onClick={handleEnterBoard} overflow="hidden">
             <Box display="flex">
               <Box position="absolute" height={0} width="100%" bottom="6">
                 <UserPresenceIcons
