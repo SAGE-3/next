@@ -29,6 +29,7 @@ import {
   UnorderedList,
   useDisclosure,
   Link,
+  Image,
 } from '@chakra-ui/react';
 import { App, AppGroup } from '../../schema';
 
@@ -231,7 +232,7 @@ function AppComponent(props: App): JSX.Element {
             <Box position="relative" width="100%" height="100%">
               {rejoinSpinner ? (
                 <>
-                  <img style={{ filter: 'blur(4px)', width: '100%', height: '100%' }} src={s.lastImage} alt="Displayed Image" />
+                  <Image style={{ filter: 'blur(4px)', width: '100%', height: '100%' }} src={s.lastImage} alt="Displayed Image" />
 
                   <Box
                     position="absolute"
@@ -247,7 +248,7 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 </>
               ) : (
-                <img src={s.lastImage} style={{ width: '100%', height: '100%' }} alt="Displayed Image" />
+                <Image src={s.lastImage} style={{ width: '100%', height: '100%' }} alt="Displayed Image" />
               )}
             </Box>
           ) : (
