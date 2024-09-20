@@ -54,6 +54,7 @@ import {
   BoardTitle,
   KernelsPanel,
   TagsDisplay,
+  Interactionbar,
 } from './components';
 import { BiPencil } from 'react-icons/bi';
 import { BsEraserFill } from 'react-icons/bs';
@@ -309,56 +310,7 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <ButtonGroup isAttached size="xs">
-            <Tooltip label={'Grab (Panning Tool)'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
-                icon={<LiaHandPaperSolid />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('grab');
-                }}
-              ></IconButton>
-            </Tooltip>
-            <Tooltip label={'Selection'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
-                icon={<LiaMousePointerSolid />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('lasso');
-                }}
-              ></IconButton>
-            </Tooltip>
-            <Tooltip label={'Annotations'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
-                icon={<BiPencil />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('pen');
-                }}
-              ></IconButton>
-            </Tooltip>
-            <Tooltip label={'Eraser'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
-                icon={<BsEraserFill />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('eraser');
-                }}
-              ></IconButton>
-            </Tooltip>
-          </ButtonGroup>
+          <Interactionbar />
         </Box>
       </Box>
 

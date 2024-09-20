@@ -93,13 +93,16 @@ export function AnnotationsPanel() {
   // Track the panel state to enable/disable the pen
   useEffect(() => {
     if (panel) {
-      if (panel.show) setPrimaryActionMode('pen');
-      // else setWhiteboardMode('none');
+      if (panel.show && primaryActionMode !== 'pen' && primaryActionMode !== 'eraser') {
+        setPrimaryActionMode('pen');
+      }
     }
-  }, [panel, panel?.show]);
+  }, [panel?.show]);
 
   const handleColorChange = (color: SAGEColors) => {
-    setPrimaryActionMode('pen');
+    if (primaryActionMode !== 'pen' && primaryActionMode !== 'eraser') {
+      setPrimaryActionMode('pen');
+    }
     setMarkerColor(color);
   };
 
