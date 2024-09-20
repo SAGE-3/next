@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY ./seer/app /code/app
 
-CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "9999"]
+CMD ["fastapi", "run", "app/main.py", "--proxy-headers", "--port", "9999", "--workers", "4"]
