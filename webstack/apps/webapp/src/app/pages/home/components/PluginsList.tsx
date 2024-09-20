@@ -147,7 +147,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
           </Tooltip>
         </Box>
         <VStack
-          height="calc(100vh - 320px)"
+          height="calc(100vh - 345px)"
           width="100%"
           gap="2"
           overflowY="auto"

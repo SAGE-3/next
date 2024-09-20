@@ -455,7 +455,7 @@ function createWindow() {
     show: !commander.fullscreen,
     // autoHideMenuBar: true,
     fullscreenable: commander.fullscreen,
-    alwaysOnTop: commander.fullscreen,
+    alwaysOnTop: false, // commander.fullscreen,
     // kiosk: commander.fullscreen,
     // a default color while loading
     backgroundColor: '#565656',

@@ -118,7 +118,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
           if (isValid) {
             setValidURL(isValid);
             popOnOpen();
-          } else if (pastedText.startsWith('sage3://')) {
+          } else if (pastedText.startsWith('sage3://') || (pastedText.startsWith('https://') && pastedText.includes('/#/enter/'))) {
             // Create a board link app
             createApp({
               title: 'BoardLink',

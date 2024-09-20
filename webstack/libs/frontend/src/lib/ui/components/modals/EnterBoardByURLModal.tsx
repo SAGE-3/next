@@ -108,7 +108,7 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
         invalidURLReset();
         return;
       }
-    } else if (!useUrl.startsWith('sage3://')) {
+    } else if (!useUrl.startsWith('https://')) {
       // Invalid URL: reset local state
       invalidURLReset();
       return;
