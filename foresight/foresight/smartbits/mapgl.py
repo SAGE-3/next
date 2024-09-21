@@ -6,9 +6,9 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
+from typing import List, Optional
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
-from typing import List, Optional
 
 
 class MapGLState(TrackedBaseModel):

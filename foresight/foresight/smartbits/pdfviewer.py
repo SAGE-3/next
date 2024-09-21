@@ -5,7 +5,8 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from pydantic import Field, UUID4, Optional
+from typing import Optional
+from pydantic import Field, UUID4
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 

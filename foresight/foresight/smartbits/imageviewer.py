@@ -6,9 +6,10 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
+from typing import List
+from pydantic import BaseModel
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
-from pydantic import BaseModel, List
 
 
 class Box(BaseModel):
