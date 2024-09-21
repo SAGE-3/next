@@ -93,8 +93,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          onContextMenu={props.onLongPress ? props.onLongPress : () => { }} // Uncomment for alternative solution to longPressEvent
-        // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
+          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
+          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -228,7 +228,7 @@ export function Panel(props: PanelProps) {
 
   // Handle a drag start of the panel
   const handleDragStart = (e: any) => {
-    e.stopPropagation();
+    // e.stopPropagation(); // comment this or else: in grab mode, moving panels will move the board too
     bringPanelForward(props.name);
   };
 

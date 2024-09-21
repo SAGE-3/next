@@ -51,7 +51,6 @@ import {
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
 
-
 type BackgroundProps = {
   roomId: string;
   boardId: string;
@@ -103,6 +102,7 @@ export function Background(props: BackgroundProps) {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
   const cachedPrimaryActionMode = useUIStore((state) => state.cachedPrimaryActionMode);
+  const setCachedPrimaryActionMode = useUIStore((state) => state.setCachedPrimaryActionMode);
 
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
@@ -167,6 +167,7 @@ export function Background(props: BackgroundProps) {
     async (event: React.DragEvent<HTMLDivElement>) => {
       if (cachedPrimaryActionMode) {
         setPrimaryActionMode(cachedPrimaryActionMode);
+        setCachedPrimaryActionMode(undefined);
       }
     },
     [cachedPrimaryActionMode]
@@ -465,8 +466,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       userSelect={'none'}
       draggable={false}
