@@ -54,7 +54,10 @@ import {
   BoardTitle,
   KernelsPanel,
   TagsDisplay,
+  Interactionbar,
 } from './components';
+import { BiPencil } from 'react-icons/bi';
+import { BsEraserFill } from 'react-icons/bs';
 
 type UILayerProps = {
   boardId: string;
@@ -85,7 +88,6 @@ export function UILayer(props: UILayerProps) {
   const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -245,7 +247,6 @@ export function UILayer(props: UILayerProps) {
 
   // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
-    setWhiteboardMode('none');
     setSelectedApp('');
     clearSavedSelectedAppsIds();
     setSelectedAppsIds([]);
@@ -309,52 +310,7 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <ButtonGroup isAttached size="xs">
-            <Tooltip label={'Grab (Panning Tool)'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
-                icon={<LiaHandPaperSolid />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('grab');
-                }}
-              ></IconButton>
-            </Tooltip>
-            <Tooltip label={'Selection'}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
-                icon={<LiaMousePointerSolid />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('lasso');
-                }}
-              ></IconButton>
-            </Tooltip>
-            {/* <Tooltip label={'Annotations'}>
-              <IconButton
-                size="sm"
-                colorScheme={(primaryActionMode === "pen" ? (user?.data.color || 'teal') : 'gray') }
-                icon={<BiPencil />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {setPrimaryActionMode("pen")}}
-              ></IconButton>
-            </Tooltip>
-            <Tooltip label={'Eraser'}>
-              <IconButton
-                size="sm"
-                colorScheme={(primaryActionMode === "eraser" ? (user?.data.color || 'teal') : 'gray') }
-                icon={<BsEraserFill />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {setPrimaryActionMode("eraser")}}
-              ></IconButton>
-            </Tooltip> */}
-          </ButtonGroup>
+          <Interactionbar />
         </Box>
       </Box>
 

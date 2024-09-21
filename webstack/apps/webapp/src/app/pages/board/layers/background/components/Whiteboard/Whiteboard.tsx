@@ -24,6 +24,7 @@ import {
   useThrottleScale,
   useUIStore,
   useUser,
+  useUserSettings,
   useYjs,
 } from '@sage3/frontend';
 import { Line } from './Line';
@@ -35,6 +36,10 @@ type WhiteboardProps = {
 };
 
 export function Whiteboard(props: WhiteboardProps) {
+  // Settings
+  const { setPrimaryActionMode, settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   const { user } = useUser();
 
   const scale = useThrottleScale(250);
@@ -45,8 +50,6 @@ export function Whiteboard(props: WhiteboardProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
@@ -200,7 +203,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer move, update awareness and (if down) update the current line
   const draw = useCallback(
     (x: number, y: number) => {
-      if (whiteboardMode === 'pen') {
+      if (primaryActionMode === 'pen') {
         const currentLine = rCurrentLine.current;
         if (!currentLine) return;
         const points = currentLine.get('points');
@@ -210,7 +213,7 @@ export function Whiteboard(props: WhiteboardProps) {
         points.push([...point]);
       }
     },
-    [rCurrentLine.current, whiteboardMode]
+    [rCurrentLine.current, primaryActionMode]
   );
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -302,15 +305,16 @@ export function Whiteboard(props: WhiteboardProps) {
   const spacebarPressed = useKeyPress(' ');
 
   // Switch between pen and interactive mode
-  useHotkeys(
-    'shift+w',
-    () => {
-      if (canAnnotate) {
-        setWhiteboardMode(whiteboardMode === 'none' ? 'pen' : 'none');
-      }
-    },
-    { dependencies: [whiteboardMode] }
-  );
+  // Going to make each interaction mode a hotkey/ keybind
+  // useHotkeys(
+  //   'shift+w',
+  //   () => {
+  //     if (canAnnotate) {
+  //       // setWhiteboardMode(primaryActionMode === 'none' ? 'pen' : 'none');
+  //     }
+  //   },
+  //   { dependencies: [primaryActionMode] }
+  // );
 
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
@@ -328,8 +332,8 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: whiteboardMode !== 'none' && !spacebarPressed ? 'auto' : 'none',
-        touchAction: whiteboardMode !== 'none' && !spacebarPressed ? 'none' : 'auto',
+        pointerEvents: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'auto' : 'none',
+        touchAction: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'none' : 'auto',
       }}
     >
       <svg
