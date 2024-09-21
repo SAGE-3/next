@@ -75,9 +75,9 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('pen');
-              if (!annotations.show) {
-                updatePanel('annotations', { show: true });
-              }
+              // if (!annotations.show) {
+              //   updatePanel('annotations', { show: true });
+              // }
             }}
           ></IconButton>
         </Tooltip>
@@ -90,9 +90,9 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('eraser');
-              if (!annotations.show) {
-                updatePanel('annotations', { show: true });
-              }
+              // if (!annotations.show) {
+              //   updatePanel('annotations', { show: true });
+              // }
             }}
           ></IconButton>
         </Tooltip>
