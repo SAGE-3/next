@@ -68,9 +68,6 @@ export function Background(props: BackgroundProps) {
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
 
-  // For Lasso
-  const isShiftPressed = useKeyPress('Shift');
-
   // Subscribe to messages
   useEffect(() => {
     subMessage();
@@ -225,7 +222,6 @@ export function Background(props: BackgroundProps) {
       onClick={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-      {/* Too many assets selected */}
       {renderContent()}
     </Box>
   );

@@ -17,18 +17,7 @@ import {
   Center,
 } from '@chakra-ui/react';
 
-import {
-  useUIStore,
-  useAppStore,
-  useUser,
-  useAuth,
-  useFiles,
-  isValidURL,
-  setupApp,
-  useAbility,
-  processContentURL,
-  useUserSettings,
-} from '@sage3/frontend';
+import { useAppStore, useUser, useAuth, useFiles, isValidURL, setupApp, useAbility, processContentURL } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -284,6 +273,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
         </Portal>
       </Popover>
 
+      {/* Too many assets selected */}
       <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
         <ModalOverlay />
         <ModalContent>
