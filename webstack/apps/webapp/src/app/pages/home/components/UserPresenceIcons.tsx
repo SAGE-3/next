@@ -22,7 +22,7 @@ export function UserPresenceIcons(
 
   return (
     <Box {...boxProps}>
-      <AvatarGroup size="md" max={props.maxUsersDisplayed}>
+      <AvatarGroup size="sm" max={props.maxUsersDisplayed}>
         {props.usersPresent.map((pUser, index) => (
           <Box key={index}>
             <UserIcons users={users} currentUser={pUser} anonymousNames={props.anonymousNames} />
@@ -46,7 +46,8 @@ function UserIcons(props: { users: User[]; currentUser: PresencePartial; anonymo
       backgroundColor={backgroundColor}
       borderColor={'grey.400'}
       textAlign="center"
-      whiteSpace="nowrap" size="sm"
+      whiteSpace="nowrap"
+      size="sm"
     >
       {name}
     </Avatar>

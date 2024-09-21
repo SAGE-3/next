@@ -70,7 +70,7 @@ export function BoardRow(props: BoardRowProps) {
     e.stopPropagation();
     const roomId = board.data.roomId;
     const boardId = board._id;
-    // make it a sage3:// protocol link
+    // make it a https:// protocol link
     copyBoardUrlToClipboard(roomId, boardId);
     toast({
       title: 'Success',

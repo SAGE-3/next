@@ -183,17 +183,18 @@ export function AssetList(props: { room: Room }) {
         </Box>
 
         <VStack
-          height="calc(100vh - 320px)"
+          height="calc(100vh - 345px)"
           width="100%"
           gap="2"
           overflowY="auto"
           overflowX="hidden"
-          px="2"
+          pl="2"
+          pr="3"
           userSelect={'none'}
           css={{
             '&::-webkit-scrollbar': {
               background: 'transparent',
-              width: '5px',
+              width: '10px',
             },
             '&::-webkit-scrollbar-thumb': {
               background: scrollBarColor,
@@ -340,7 +341,12 @@ function AssetPreview(props: AssetPreviewProps) {
   }
 
   return (
-    <Box width={'800px'} display="flex" flexDirection="column">
+    <Box width={'800px'} display="flex" flexDirection="column"
+      height="calc(100vh - 280px)"
+      overflowY="auto"
+      overflowX="hidden"
+
+    >
       {/* First Area: Meta Data */}
       <Box mb={2}>
         <HStack gap="8" mb="4">
@@ -398,7 +404,7 @@ function AssetPreview(props: AssetPreviewProps) {
       </HStack>
 
       {/* Third Area: Preview */}
-      <Box flexGrow="1" overflow={'hidden'} display="flex">
+      <Box>
         {PreviewElement}
       </Box>
     </Box>

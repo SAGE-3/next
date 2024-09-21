@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { MdRemoveRedEye } from 'react-icons/md';
+import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -33,6 +34,7 @@ import {
   useUserSettings,
   useHexColor,
   EditVisibilityModal,
+  useUser,
 } from '@sage3/frontend';
 
 import {
@@ -65,11 +67,16 @@ export function UILayer(props: UILayerProps) {
   const canLasso = useAbility('lasso', 'apps');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
+  const primaryActionMode = settings.primaryActionMode;
+
   // Colors
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
+
+  // User
+  const { user } = useUser();
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
@@ -99,7 +106,7 @@ export function UILayer(props: UILayerProps) {
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Color
-  const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
+  // const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
 
   // Navigation
   const { toHome } = useRouteNav();
@@ -127,7 +134,6 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    // apps.forEach((a) => deleteApp(a._id));
     const ids = apps.map((a) => a._id);
     deleteApp(ids);
     setClearAllMarkers(true);
@@ -308,6 +314,52 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
+          <ButtonGroup isAttached size="xs">
+            <Tooltip label={'Grab (Panning Tool)'}>
+              <IconButton
+                size="sm"
+                colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
+                icon={<LiaHandPaperSolid />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                onClick={() => {
+                  setPrimaryActionMode('grab');
+                }}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Selection'}>
+              <IconButton
+                size="sm"
+                colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
+                icon={<LiaMousePointerSolid />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                onClick={() => {
+                  setPrimaryActionMode('lasso');
+                }}
+              ></IconButton>
+            </Tooltip>
+            {/* <Tooltip label={'Annotations'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "pen" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<BiPencil />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                onClick={() => {setPrimaryActionMode("pen")}}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Eraser'}>
+              <IconButton
+                size="sm"
+                colorScheme={(primaryActionMode === "eraser" ? (user?.data.color || 'teal') : 'gray') }
+                icon={<BsEraserFill />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                onClick={() => {setPrimaryActionMode("eraser")}}
+              ></IconButton>
+            </Tooltip> */}
+          </ButtonGroup>
         </Box>
       </Box>
 
@@ -323,7 +375,7 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      <ContextMenu divId="board">
+      <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 

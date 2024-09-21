@@ -8,16 +8,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
-
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
+import { MdWindow } from 'react-icons/md';
+import { IconType } from 'react-icons/lib';
 
+// SAGE3 Frontend
 import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
-import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 import { App } from '../../schema';
-import { MdWindow } from 'react-icons/md';
-import { IconType } from 'react-icons/lib';
+import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -65,6 +65,8 @@ export function AppWindow(props: WindowProps) {
   const selectedTag = useUIStore((state) => state.selectedTag);
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
+  const boardSynced = useUIStore((state) => state.boardSynced)
+  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction)
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -328,8 +330,11 @@ export function AppWindow(props: WindowProps) {
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize && canResize && !isPinned}
-      disableDragging={!canMove || isPinned}
+      // enableResizing={enableResize && canResize && !isPinned}
+      enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // Temporary solution to fix resize while drag
+
+      // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
