@@ -30,9 +30,11 @@ type useDragAndDropBoardProps = {
 export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
   // display some notifications
   const toast = useToast();
+
   // Modal for opening lots of files
   const { isOpen: lotsIsOpen, onOpen: lotsOnOpen, onClose: lotsOnClose } = useDisclosure();
   // Popover
+
   const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
 
   // Hooks
@@ -317,6 +319,7 @@ export async function collectFiles(evdt: DataTransfer): Promise<File[]> {
       }
     }
 
+    // WARNING: this can be easily bypassed by stored a bunch of files in a folder and then uploading the folder...
     const dt = evdt;
     const length = evdt.items.length;
     if (length > 20) {
