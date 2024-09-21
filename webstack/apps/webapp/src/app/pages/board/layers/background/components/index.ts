@@ -12,3 +12,4 @@ export * from './Lasso';
 export * from './Whiteboard';
 export * from './Presence';
 export * from './RndSafety';
+export * from './DragAndDropBoard';

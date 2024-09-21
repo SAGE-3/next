@@ -27,9 +27,11 @@ import {
   useYjs,
 } from '@sage3/frontend';
 import { Line } from './Line';
+import { useDragAndDropBoard } from '../DragAndDropBoard';
 
 type WhiteboardProps = {
   boardId: string;
+  roomId: string;
 };
 
 export function Whiteboard(props: WhiteboardProps) {
@@ -68,6 +70,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const rCurrentLine = useRef<Y.Map<any>>();
+
+  // Drag and Drop On Board
+  const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
@@ -343,6 +348,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
+        {...dragProps}
       >
         <g>
           {/* Lines */}
@@ -351,6 +357,7 @@ export function Whiteboard(props: WhiteboardProps) {
           ))}
         </g>
       </svg>
+      {renderContent()}
     </div>
   );
 }
