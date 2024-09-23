@@ -87,7 +87,6 @@ export function BoardPage() {
     const elt = event.target as HTMLElement;
     const ids = ['board', 'whiteboard', 'lasso'];
     if (!ids.includes(elt.id)) {
-      //elt.id !== 'board'
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = 'none';
       }
