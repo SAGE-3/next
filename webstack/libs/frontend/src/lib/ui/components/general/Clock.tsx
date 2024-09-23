@@ -50,7 +50,7 @@ export function Clock(props: ClockProps) {
   const [netlabel, setNetlabel] = useState('online');
 
   // Pressure Observer
-  const pressure = usePressureObserver();
+  const pressure = usePressureObserver(props.isBoard ?? false);
   const [cpucolor, setCPUcolor] = useState(onlineColor);
   const [cpulabel, setCPUlabel] = useState('nominal');
 
@@ -83,7 +83,7 @@ export function Clock(props: ClockProps) {
         setNetlabel('offline');
       }
     }
-  }, [networkStatus]);
+  }, [networkStatus, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
   useEffect(() => {
     if (pressure) {
@@ -98,7 +98,7 @@ export function Clock(props: ClockProps) {
       }
       setCPUlabel(pressure.state.toString());
     }
-  }, [pressure]);
+  }, [pressure, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
 
 

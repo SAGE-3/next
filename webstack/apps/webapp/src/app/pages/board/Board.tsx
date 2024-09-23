@@ -117,8 +117,8 @@ export function BoardPage() {
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
     if (!isMember) {
       toast({
-        title: 'Room Membership Revoked',
-        description: `Your membership to this room has been revoked by the room's owner.`,
+        title: 'Room Membership Invalid',
+        description: `You are not member of this room.`,
         status: 'error',
         duration: 5000,
         isClosable: false,

@@ -8,6 +8,7 @@
 
 // React Imports
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 // Chakra Iports
 import {
@@ -46,18 +47,7 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import {
-  MdAdd,
-  MdExitToApp,
-  MdHome,
-  MdSearch,
-  MdGridView,
-  MdList,
-  MdLock,
-  MdPeople,
-  MdBorderAll,
-  MdFolder,
-} from 'react-icons/md';
+import { MdAdd, MdExitToApp, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
@@ -101,6 +91,7 @@ import SearchRow from './components/search/SearchRow';
  */
 export function HomePage() {
   const { toHome, toQuickAccess } = useRouteNav();
+  const { roomId } = useParams();
 
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -522,6 +513,16 @@ export function HomePage() {
     subscribeToBoards();
     subPlugins();
 
+    // return to room from a board
+    if (roomId && roomsFetched && user) {
+      const room = rooms.find((r) => r._id === roomId);
+      if (room) {
+        setSelectedRoom(room);
+        setSelectedQuickAccess(undefined);
+        setSelectedBoard(undefined);
+      }
+    }
+
     if (electron) {
       getBookmarks();
     }
@@ -671,12 +672,12 @@ export function HomePage() {
   // Handle when the rooms and boards change
   useEffect(() => {
     // Check to see if the room you are in still exists
-    if (!rooms.find((r) => r._id === selectedRoom?._id)) {
+    if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
       setSelectedRoom(undefined);
       setSelectedBoard(undefined);
     }
     // Check to see if the board you are in still exists
-    if (!boards.find((board) => board._id === selectedBoard?._id)) {
+    if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
       setSelectedBoard(undefined);
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
@@ -801,7 +802,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1173,166 +1174,173 @@ export function HomePage() {
             </VStack>
           </Box>
 
-          <Box width="100%" flexGrow={1}>
-            <Tabs colorScheme="teal">
-              <TabList>
-                <Tab>
-                  <Icon as={MdBorderAll} mr="1"></Icon>Boards
-                </Tab>
-                <Tab>
-                  <Icon as={MdPeople} mr="1"></Icon>Members
-                </Tab>
-                <Tab>
-                  <Icon as={MdFolder} mr="1"></Icon> Assets
-                </Tab>
-                <Tab>
-                  <Icon as={HiPuzzle} mr="1"></Icon>Plugins
-                </Tab>
-              </TabList>
+          {rooms.filter(roomMemberFilter).includes(selectedRoom) ? (
+            <Box width="100%" flexGrow={1}>
+              <Tabs colorScheme="teal">
+                <TabList>
+                  <Tab>
+                    <Icon as={MdBorderAll} mr="1"></Icon>Boards
+                  </Tab>
+                  <Tab>
+                    <Icon as={MdPeople} mr="1"></Icon>Members
+                  </Tab>
+                  <Tab>
+                    <Icon as={MdFolder} mr="1"></Icon> Assets
+                  </Tab>
+                  <Tab>
+                    <Icon as={HiPuzzle} mr="1"></Icon>Plugins
+                  </Tab>
+                </TabList>
 
-              <TabPanels height="100%">
-                <TabPanel px="0">
-                  <Box display="flex" gap="4">
-                    <Flex gap="4" flexDirection="column">
-                      <Flex align="center" gap="2" justify="flex-start" mx="2">
-                        <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
-                          <IconButton
-                            size="md"
-                            variant={'outline'}
-                            colorScheme={'teal'}
-                            aria-label="favorite-board"
-                            fontSize="xl"
-                            onClick={createBoardModalOnOpen}
-                            isDisabled={!canCreateBoards}
-                            icon={<MdAdd />}
-                          ></IconButton>
-                        </Tooltip>
+                <TabPanels height="100%">
+                  <TabPanel px="0">
+                    <Box display="flex" gap="4">
+                      <Flex gap="4" flexDirection="column">
+                        <Flex align="center" gap="2" justify="flex-start" mx="2">
+                          <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
+                            <IconButton
+                              size="md"
+                              variant={'outline'}
+                              colorScheme={'teal'}
+                              aria-label="favorite-board"
+                              fontSize="xl"
+                              onClick={createBoardModalOnOpen}
+                              isDisabled={!canCreateBoards}
+                              icon={<MdAdd />}
+                            ></IconButton>
+                          </Tooltip>
 
-                        <InputGroup size="md" width="365px" my="1">
-                          <InputLeftElement pointerEvents="none">
-                            <MdSearch />
-                          </InputLeftElement>
-                          <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
-                        </InputGroup>
-                        <ButtonGroup size="md" isAttached variant="outline">
-                          <IconButton
-                            aria-label="Board Grid View"
-                            colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
-                            onClick={() => {
-                              setBoardListView('grid');
-                            }}
-                            icon={<MdGridView />}
-                          />
-                          <IconButton
-                            aria-label="Board List View"
-                            colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
-                            onClick={() => {
-                              setBoardListView('list');
-                            }}
-                            icon={<MdList />}
-                          />
-                        </ButtonGroup>
-                      </Flex>
-                      {/* <Divider /> */}
-                      {boardListView == 'grid' && (
-                        <Flex
-                          gap="4"
-                          p="2"
-                          display="flex"
-                          flexWrap="wrap"
-                          justifyContent="left"
-                          style={{
-                            maxHeight: 'calc(100vh - 360px)',
-                            width: '100%',
-                            maxWidth: '2200px',
-                          }}
-                          margin="0 auto"
-                          overflowY="scroll"
-                          overflowX="hidden"
-                          minWidth="420px"
-                          css={{
-                            '&::-webkit-scrollbar': {
-                              background: 'transparent',
-                              width: '5px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                              background: scrollBarColor,
-                              borderRadius: '48px',
-                            },
-                          }}
-                        >
-                          {boards
-                            .filter((board) => board.data.roomId === selectedRoom?._id)
-                            .filter((board) => boardSearchFilter(board))
-                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                            .map((board) => (
-                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                                <BoardCard
-                                  board={board}
-                                  room={selectedRoom}
-                                  onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
-                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
-                                />
-                              </Box>
-                            ))}
+                          <InputGroup size="md" width="365px" my="1">
+                            <InputLeftElement pointerEvents="none">
+                              <MdSearch />
+                            </InputLeftElement>
+                            <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                          </InputGroup>
+                          <ButtonGroup size="md" isAttached variant="outline">
+                            <IconButton
+                              aria-label="Board Grid View"
+                              colorScheme={boardListView === 'grid' ? 'teal' : 'gray'}
+                              onClick={() => {
+                                setBoardListView('grid');
+                              }}
+                              icon={<MdGridView />}
+                            />
+                            <IconButton
+                              aria-label="Board List View"
+                              colorScheme={boardListView === 'list' ? 'teal' : 'gray'}
+                              onClick={() => {
+                                setBoardListView('list');
+                              }}
+                              icon={<MdList />}
+                            />
+                          </ButtonGroup>
                         </Flex>
-                      )}
+                        {/* <Divider /> */}
+                        {boardListView == 'grid' && (
+                          <Flex
+                            gap="4"
+                            p="2"
+                            display="flex"
+                            flexWrap="wrap"
+                            justifyContent="left"
+                            style={{
+                              maxHeight: 'calc(100vh - 360px)',
+                              width: '100%',
+                              maxWidth: '2200px',
+                            }}
+                            margin="0 auto"
+                            overflowY="scroll"
+                            overflowX="hidden"
+                            minWidth="420px"
+                            css={{
+                              '&::-webkit-scrollbar': {
+                                background: 'transparent',
+                                width: '5px',
+                              },
+                              '&::-webkit-scrollbar-thumb': {
+                                background: scrollBarColor,
+                                borderRadius: '48px',
+                              },
+                            }}
+                          >
+                            {boards
+                              .filter((board) => board.data.roomId === selectedRoom?._id)
+                              .filter((board) => boardSearchFilter(board))
+                              .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                              .map((board) => (
+                                <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                  <BoardCard
+                                    board={board}
+                                    room={selectedRoom}
+                                    onClick={() => handleBoardClick(board)}
+                                    // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
+                                    selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                    usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                                  />
+                                </Box>
+                              ))}
+                          </Flex>
+                        )}
 
-                      {boardListView == 'list' && (
-                        <VStack
-                          gap="3"
-                          alignItems="left"
-                          px="2"
-                          style={{ height: 'calc(100svh - 360px)' }}
-                          overflowY="scroll"
-                          overflowX="hidden"
-                          minWidth="420px"
-                          css={{
-                            '&::-webkit-scrollbar': {
-                              background: 'transparent',
-                              width: '5px',
-                            },
-                            '&::-webkit-scrollbar-thumb': {
-                              background: scrollBarColor,
-                              borderRadius: '48px',
-                            },
-                          }}
-                        >
-                          {boards
-                            .filter((board) => board.data.roomId === selectedRoom?._id)
-                            .filter((board) => boardSearchFilter(board))
-                            .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                            .map((board) => (
-                              <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                                <BoardRow
-                                  key={board._id}
-                                  board={board}
-                                  room={selectedRoom}
-                                  onClick={() => handleBoardClick(board)}
-                                  selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                  usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
-                                />
-                              </Box>
-                            ))}
-                        </VStack>
-                      )}
-                    </Flex>
-                  </Box>
-                </TabPanel>
-                <TabPanel px="0">
-                  <MembersList room={selectedRoom} />
-                </TabPanel>
-                <TabPanel px="0" display="flex">
-                  <AssetList room={selectedRoom} />
-                </TabPanel>
-                <TabPanel px="0">
-                  <PluginsList room={selectedRoom} />
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </Box>
+                        {boardListView == 'list' && (
+                          <VStack
+                            gap="3"
+                            alignItems="left"
+                            px="2"
+                            style={{ height: 'calc(100svh - 360px)' }}
+                            overflowY="scroll"
+                            overflowX="hidden"
+                            minWidth="420px"
+                            css={{
+                              '&::-webkit-scrollbar': {
+                                background: 'transparent',
+                                width: '5px',
+                              },
+                              '&::-webkit-scrollbar-thumb': {
+                                background: scrollBarColor,
+                                borderRadius: '48px',
+                              },
+                            }}
+                          >
+                            {boards
+                              .filter((board) => board.data.roomId === selectedRoom?._id)
+                              .filter((board) => boardSearchFilter(board))
+                              .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                              .map((board) => (
+                                <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                                  <BoardRow
+                                    key={board._id}
+                                    board={board}
+                                    room={selectedRoom}
+                                    onClick={() => handleBoardClick(board)}
+                                    selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                    usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id).length}
+                                  />
+                                </Box>
+                              ))}
+                          </VStack>
+                        )}
+                      </Flex>
+                    </Box>
+                  </TabPanel>
+                  <TabPanel px="0">
+                    <MembersList room={selectedRoom} />
+                  </TabPanel>
+                  <TabPanel px="0" display="flex">
+                    <AssetList room={selectedRoom} />
+                  </TabPanel>
+                  <TabPanel px="0">
+                    <PluginsList room={selectedRoom} />
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            </Box>
+          ) : (
+            <>
+              <Divider />
+              <Box my="3">Join room to access boards.</Box>
+            </>
+          )}
         </Box>
       )}
 
@@ -1413,36 +1421,56 @@ export function HomePage() {
               <Box
                 hidden={!(searchSage.length > 0) || !isSearchSageFocused}
                 ref={searchSageRef}
+                bg={searchBarColor}
                 position="absolute"
-                zIndex="10"
-                mb="0"
                 h="400px"
                 w="full"
-                bg={searchBarColor}
+                pb="3"
+                overflow="hidden"
+                zIndex="200"
+                borderTop="none"
                 roundedBottom="2xl"
-                p="3"
                 border="1px solid"
                 borderColor="inherit"
-                borderTop="none"
-                overflow="auto"
               >
-                {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
-                  ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                    // If it's a board, get the room ID
-                    if ((item as Board & { roomName: string }).data.roomId) {
-                      return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                    }
-                    return (
-                      <SearchRow.Room
-                        key={item._id}
-                        room={item as Room}
-                        clickHandler={() => {
-                          handleRoomClick(item as Room);
-                        }}
-                      />
-                    );
-                  })
-                  : 'No items match your search'}
+                <Box
+                  // hidden={!(searchSage.length > 0) || !isSearchSageFocused}
+                  // ref={searchSageRef}
+                  // position="absolute"
+                  p="3"
+                  mb="0"
+                  h="full"
+                  w="full"
+                  overflow="auto"
+                  css={{
+                    '&::-webkit-scrollbar': {
+                      background: 'transparent',
+                      width: '5px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: scrollBarColor,
+                      borderRadius: '48px',
+                    },
+                  }}
+                >
+                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
+                    ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                        // If it's a board, get the room ID
+                        if ((item as Board & { roomName: string }).data.roomId) {
+                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                        }
+                        return (
+                          <SearchRow.Room
+                            key={item._id}
+                            room={item as Room}
+                            clickHandler={() => {
+                              handleRoomClick(item as Room);
+                            }}
+                          />
+                        );
+                      })
+                    : 'No items match your search'}
+                </Box>
               </Box>
             </Box>
             <Box borderRadius={cardRadius} height="100%" mt="4">
@@ -1581,7 +1609,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No active boards.</Text>
+                        <Text p="3" px="6">
+                          No active boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1625,7 +1655,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No favorite boards.</Text>
+                        <Text p="3" px="6">
+                          No favorite boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1694,7 +1726,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

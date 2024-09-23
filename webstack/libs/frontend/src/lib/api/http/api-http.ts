@@ -47,7 +47,8 @@ async function POST<T extends CollectionDocs>(url: string, body: T['data'] | T['
     const data = await response.json();
     if (data.success === false) {
       if (data.authentication === false) {
-        window.location.replace('/#/');
+        // window.location.replace('/#/');
+        return { success: false, message: 'authentication failed' };
       }
     }
     return data;
@@ -70,7 +71,8 @@ async function GET<T extends CollectionDocs>(url: string, body?: string[]): Prom
     const data = await response.json();
     if (data.success === false) {
       if (data.authentication === false) {
-        window.location.replace('/#/');
+        // window.location.replace('/#/');
+        return { success: false, message: 'authentication failed' };
       }
     }
     return data;
@@ -93,7 +95,8 @@ async function QUERY<T extends CollectionDocs>(url: string, query: Partial<T['da
     const data = await response.json();
     if (data.success === false) {
       if (data.authentication === false) {
-        window.location.replace('/#/');
+        // window.location.replace('/#/');
+        return { success: false, message: 'authentication failed' };
       }
     }
     return data;
@@ -119,7 +122,8 @@ async function PUT<T extends CollectionDocs>(
     const data = await response.json();
     if (data.success === false) {
       if (data.authentication === false) {
-        window.location.replace('/#/');
+        // window.location.replace('/#/');
+        return { success: false, message: 'authentication failed' };
       }
     }
     return data;
@@ -142,7 +146,8 @@ async function DELETE(url: string, body?: string[]): Promise<DELResponse> {
     const data = await response.json();
     if (data.success === false) {
       if (data.authentication === false) {
-        window.location.replace('/#/');
+        // window.location.replace('/#/');
+        return { success: false, message: 'authentication failed' };
       }
     }
     return data;
