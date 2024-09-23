@@ -8,9 +8,8 @@
 
 import * as express from 'express';
 import { config } from 'apps/homebase/src/config';
-// import ky from 'ky';
 
-import { SError, AgentRoutes, HealthRequest, HealthResponse, AskRequest, AskResponse } from '@sage3/shared';
+import { SError, AgentRoutes, HealthRequest, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer } from '@sage3/shared';
 
 // Define a general RPC handler type
 type RpcHandler<Request, Response> = (req: Request) => (Response | SError) | Promise<Response | SError>;
@@ -21,7 +20,6 @@ interface HandlerStore {
 }
 
 async function fetchGet(url: string) {
-  // return await ky.get(url).json();
   return fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -39,18 +37,20 @@ async function fetchPost(url: string, data: object) {
 // Forward functions to the agents
 const statusHandler: RpcHandler<HealthRequest, HealthResponse> = (req) => {
   const route = AgentRoutes.status;
-  // return ky.get(`${config.agents.url}${route}`).json();
   return fetchGet(`${config.agents.url}${route}`);
 };
 const askHandler: RpcHandler<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.ask;
-  // return ky.post(`${config.agents.url}${route}`, { json: req }).json();
   return fetchPost(`${config.agents.url}${route}`, req);
 };
 
 const summaryHandler: RpcHandler<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.summary;
-  // return ky.post(`${config.agents.url}${route}`, { json: req }).json();
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
+
+const webHandler: RpcHandler<WebQuery, WebAnswer> = (req) => {
+  const route = AgentRoutes.web;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
 
@@ -59,6 +59,7 @@ const handlers: HandlerStore = {};
 handlers[AgentRoutes.status] = { func: statusHandler, method: 'GET' };
 handlers[AgentRoutes.ask] = { func: askHandler, method: 'POST' };
 handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
+handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

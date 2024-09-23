@@ -15,7 +15,7 @@ import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, use
 import { MdSend, MdSettings } from 'react-icons/md';
 
 import { useUIStore, useHexColor, useUser, useAppStore, useConfigStore, apiUrls } from '@sage3/frontend';
-import { genId, AskRequest, AskResponse, SError, AgentRoutes, HealthRequest, HealthResponse } from '@sage3/shared';
+import { genId, AskRequest, AskResponse, SError, AgentRoutes, HealthRequest, HealthResponse, WebQuery, WebAnswer } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -72,6 +72,9 @@ const callAsk = async (data: AskRequest) => {
 };
 const callSummary = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.summary, data) as Promise<AskResponse | SError>;
+};
+const callWeb = async (data: WebQuery) => {
+  return makeRpcPost(AgentRoutes.web, data) as Promise<WebAnswer | SError>;
 };
 
 export function AIChat(props: { model: string }) {
@@ -159,6 +162,37 @@ export function AIChat(props: { model: string }) {
         toast({
           title: 'Error',
           description: response.message || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      }
+    } else if (new_input.startsWith('web')) {
+      // Build the query
+      const q: WebQuery = {
+        ctx: {
+          prompt: context || '',
+          pos: position, roomId, boardId
+        },
+        user: username,
+        url: new_input.split(' ')[1],
+      };
+      // Invoke the agent
+      const response = await callWeb(q);
+      setIsWorking(false);
+      if ('message' in response) {
+        toast({
+          title: 'Error',
+          description: response.message || 'Error sending web query to the agent. Please try again.',
           status: 'error',
           duration: 4000,
           isClosable: true,

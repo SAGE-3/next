@@ -37,9 +37,22 @@ export type AskResponse = {
   actions?: any[];
 };
 
+// Web request
+export type WebQuery = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  url: string;
+  user: string;
+};
+export type WebAnswer = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Agent routes
 export const AgentRoutes = {
   status: '/status',
   ask: '/ask',
   summary: '/summary',
+  web: '/web',
 } as const;
