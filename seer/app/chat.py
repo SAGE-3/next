@@ -19,7 +19,7 @@ from langchain_huggingface import HuggingFaceEndpoint
 from langchain_openai import ChatOpenAI
 
 # Typing for RPC
-from localtypes import Context, Question, Answer
+from libs.localtypes import Context, Question, Answer
 
 
 class ChatAgent:

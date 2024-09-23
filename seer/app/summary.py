@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Typing for RPC
-from localtypes import Question, Answer
+from libs.localtypes import Question, Answer
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."

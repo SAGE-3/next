@@ -1,6 +1,6 @@
 # Models
+from typing import List, NamedTuple, Optional
 from pydantic import BaseModel, Json
-from typing import List, Any, NamedTuple
 
 # Pydantic models: Question, Answer, Context
 
@@ -23,6 +23,18 @@ class Question(BaseModel):
 
 class Answer(BaseModel):
     id: str  # question UUID v4
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+
+class WebQuery(BaseModel):
+    ctx: Context  # context
+    url: str  # question
+    user: str  # user name
+
+
+class WebAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed

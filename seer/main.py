@@ -1,11 +1,11 @@
 # python modules
-import logging
+import logging, asyncio
 from dotenv import load_dotenv
 
-from localtypes import Question
+from libs.localtypes import Question, WebQuery
 
 # Web API
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -24,11 +24,14 @@ from langchain.globals import set_debug, set_verbose
 # Modules
 from app.chat import ChatAgent
 from app.summary import SummaryAgent
+from app.web import WebAgent
 
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 summaryAG = SummaryAgent(logger, ps3)
+webAG = WebAgent(logger, ps3)
+asyncio.ensure_future(webAG.init())
 
 # set to debug the queries into langchain
 set_debug(True)
@@ -69,6 +72,19 @@ async def summary(qq: Question):
     try:
         # do the work
         val = await summaryAG.process(qq)
+        return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+# SUMMARY FUNCTION
+@app.post("/web")
+async def webquery(qq: WebQuery):
+    try:
+        # do the work
+        val = await webAG.process(qq)
         return val
     except HTTPException as e:
         # Get the error message

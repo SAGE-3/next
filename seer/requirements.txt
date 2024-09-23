@@ -30,3 +30,9 @@ langchain==0.2.3
 langchain-openai==0.1.8
 langchain-huggingface==0.0.3
 langchain-nvidia-ai-endpoints==0.2.0
+
+# Image
+PIL
+
+# Web scrapping
+playwright
