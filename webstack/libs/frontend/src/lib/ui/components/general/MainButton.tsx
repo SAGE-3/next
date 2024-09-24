@@ -163,7 +163,7 @@ export function MainButton(props: MainButtonProps) {
     e.stopPropagation();
     const roomId = board ? board.data.roomId : props.boardInfo.roomId;
     const boardId = board ? board._id : props.boardInfo.boardId;
-    // make it a sage3:// protocol link
+    // make it a https:// protocol link
     copyBoardUrlToClipboard(roomId, boardId);
     toast({
       title: 'Success',

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
 import { MdRemoveRedEye } from 'react-icons/md';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
@@ -68,7 +68,7 @@ export function UILayer(props: UILayerProps) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
-  const primaryActionMode = settings.primaryActionMode
+  const primaryActionMode = settings.primaryActionMode;
 
   // Colors
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
@@ -309,29 +309,29 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Box display="flex">
+          <ButtonGroup isAttached size="xs">
             <Tooltip label={'Grab (Panning Tool)'}>
               <IconButton
                 size="sm"
-                colorScheme={(primaryActionMode === "grab" ? (user?.data.color || 'teal') : 'gray')}
+                colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
                 icon={<LiaHandPaperSolid />}
                 fontSize="xl"
                 aria-label={'input-type'}
-                roundedLeft={'lg'}
-                roundedRight={'none'}
-                onClick={() => { setPrimaryActionMode("grab") }}
+                onClick={() => {
+                  setPrimaryActionMode('grab');
+                }}
               ></IconButton>
             </Tooltip>
             <Tooltip label={'Selection'}>
               <IconButton
                 size="sm"
-                colorScheme={(primaryActionMode === "lasso" ? (user?.data.color || 'teal') : 'gray')}
+                colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
                 icon={<LiaMousePointerSolid />}
                 fontSize="xl"
-                roundedLeft={'none'}
-                roundedRight={'lg'}
                 aria-label={'input-type'}
-                onClick={() => { setPrimaryActionMode("lasso") }}
+                onClick={() => {
+                  setPrimaryActionMode('lasso');
+                }}
               ></IconButton>
             </Tooltip>
             {/* <Tooltip label={'Annotations'}>
@@ -340,8 +340,6 @@ export function UILayer(props: UILayerProps) {
                 colorScheme={(primaryActionMode === "pen" ? (user?.data.color || 'teal') : 'gray') }
                 icon={<BiPencil />}
                 fontSize="xl"
-                roundedLeft={'none'}
-                roundedRight={'none'}
                 aria-label={'input-type'}
                 onClick={() => {setPrimaryActionMode("pen")}}
               ></IconButton>
@@ -352,13 +350,11 @@ export function UILayer(props: UILayerProps) {
                 colorScheme={(primaryActionMode === "eraser" ? (user?.data.color || 'teal') : 'gray') }
                 icon={<BsEraserFill />}
                 fontSize="xl"
-                roundedLeft={'none'}
-                roundedRight={'lg'}
                 aria-label={'input-type'}
                 onClick={() => {setPrimaryActionMode("eraser")}}
               ></IconButton>
             </Tooltip> */}
-          </Box>
+          </ButtonGroup>
         </Box>
       </Box>
 
@@ -374,7 +370,7 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      <ContextMenu divIds={["board", "lasso", "whiteboard"]}>
+      <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
