@@ -889,7 +889,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1432,12 +1432,6 @@ export function HomePage() {
           ) : (
             <>
               <Divider />
-              {console.log('selectedRoom', selectedRoom)}
-              {console.log('roommember', rooms.filter(roomMemberFilter))}
-              {console.log(
-                'rooms',
-                rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id)
-              )}
               <Box my="3">Join room to access boards.</Box>
             </>
           )}
@@ -1555,20 +1549,20 @@ export function HomePage() {
                 >
                   {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
                     ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                        // If it's a board, get the room ID
-                        if ((item as Board & { roomName: string }).data.roomId) {
-                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                        }
-                        return (
-                          <SearchRow.Room
-                            key={item._id}
-                            room={item as Room}
-                            clickHandler={() => {
-                              handleRoomClick(item as Room);
-                            }}
-                          />
-                        );
-                      })
+                      // If it's a board, get the room ID
+                      if ((item as Board & { roomName: string }).data.roomId) {
+                        return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                      }
+                      return (
+                        <SearchRow.Room
+                          key={item._id}
+                          room={item as Room}
+                          clickHandler={() => {
+                            handleRoomClick(item as Room);
+                          }}
+                        />
+                      );
+                    })
                     : 'No items match your search'}
                 </Box>
               </Box>
@@ -1709,7 +1703,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No active boards.</Text>
+                        <Text p="3" px="6">No active boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1753,7 +1747,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No favorite boards.</Text>
+                        <Text p="3" px="6">No favorite boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1822,7 +1816,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner
