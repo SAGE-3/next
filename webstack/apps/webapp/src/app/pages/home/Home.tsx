@@ -1615,9 +1615,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">
-                          No active boards.
-                        </Text>
+                        <Text p="3">No active boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1661,9 +1659,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">
-                          No favorite boards.
-                        </Text>
+                        <Text p="3">No favorite boards.</Text>
                       )}
                     </Box>
                   </TabPanel>
