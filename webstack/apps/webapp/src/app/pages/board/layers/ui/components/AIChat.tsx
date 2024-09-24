@@ -76,6 +76,9 @@ const callSummary = async (data: AskRequest) => {
 const callWeb = async (data: WebQuery) => {
   return makeRpcPost(AgentRoutes.web, data) as Promise<WebAnswer | SError>;
 };
+const callWebshot = async (data: WebQuery) => {
+  return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebAnswer | SError>;
+};
 
 export function AIChat(props: { model: string }) {
   const { roomId, boardId } = useParams();
@@ -162,6 +165,37 @@ export function AIChat(props: { model: string }) {
         toast({
           title: 'Error',
           description: response.message || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
+        // Store the agent's response
+        setResponse(response.r);
+        // Get the propose actions
+        if (response.actions) {
+          setActions(response.actions);
+        }
+        // Increase the position
+        setPosition([position[0] + (400 + 20), position[1]]);
+      }
+    } else if (new_input.startsWith('webshot')) {
+      // Build the query
+      const q: WebQuery = {
+        ctx: {
+          prompt: context || '',
+          pos: position, roomId, boardId
+        },
+        user: username,
+        url: new_input.split(' ')[1],
+      };
+      // Invoke the agent
+      const response = await callWebshot(q);
+      setIsWorking(false);
+      if ('message' in response) {
+        toast({
+          title: 'Error',
+          description: response.message || 'Error sending web query to the agent. Please try again.',
           status: 'error',
           duration: 4000,
           isClosable: true,

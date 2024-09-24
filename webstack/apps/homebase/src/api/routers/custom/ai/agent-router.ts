@@ -53,6 +53,10 @@ const webHandler: RpcHandler<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.web;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const webshotHandler: RpcHandler<WebQuery, WebAnswer> = (req) => {
+  const route = AgentRoutes.webshot;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -60,6 +64,7 @@ handlers[AgentRoutes.status] = { func: statusHandler, method: 'GET' };
 handlers[AgentRoutes.ask] = { func: askHandler, method: 'POST' };
 handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
 handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
+handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

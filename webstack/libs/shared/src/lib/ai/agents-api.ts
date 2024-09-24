@@ -55,4 +55,5 @@ export const AgentRoutes = {
   ask: '/ask',
   summary: '/summary',
   web: '/web',
+  webshot: '/webshot',
 } as const;
