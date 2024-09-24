@@ -85,7 +85,8 @@ export function BoardPage() {
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
-    if (elt.id !== 'board') {
+    const ids = ['board', 'whiteboard', 'lasso'];
+    if (!ids.includes(elt.id)) {
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = 'none';
       }

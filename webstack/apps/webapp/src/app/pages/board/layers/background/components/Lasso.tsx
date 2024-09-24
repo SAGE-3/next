@@ -10,9 +10,11 @@ import { useEffect, useState } from 'react';
 
 // SAGE Imports
 import { Position, Size } from '@sage3/shared/types';
-import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUserSettings } from '@sage3/frontend';
+import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {
+  roomId: string;
   boardId: string;
 };
 
@@ -25,9 +27,6 @@ type BoxProps = {
 };
 
 export function Lasso(props: LassoProps) {
-  // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
-
   // Board state
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -36,7 +35,6 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const setCachedPrimaryActionMode = useUIStore((state) => state.setCachedPrimaryActionMode);
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
@@ -48,6 +46,9 @@ export function Lasso(props: LassoProps) {
 
   // State of cursor
   const [isDragging, setIsDragging] = useState(false);
+
+  // Drag and Drop On Board
+  const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   // Get initial position
   const lassoStart = (x: number, y: number) => {
@@ -123,13 +124,6 @@ export function Lasso(props: LassoProps) {
     }
   };
 
-  // Turn off lasso layer when dragging stuff on board
-  const preventDragDrop = (event: React.DragEvent<any>) => {
-    setCachedPrimaryActionMode(settings.primaryActionMode);
-    setPrimaryActionMode('grab');
-    // event.stopPropagation();
-  };
-
   return (
     <>
       {/* lassoMode */}
@@ -143,6 +137,7 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
+            // pointerEvents: 'none',
             // To keep in theme with other notable whiteboard applications,
             // the cursor should remain a pointer
             // cursor: 'crosshair',
@@ -153,13 +148,14 @@ export function Lasso(props: LassoProps) {
           onTouchStart={touchDown}
           onTouchEnd={touchUp}
           onTouchMove={touchMove}
-          onDragEnter={preventDragDrop}
+          {...dragProps}
         >
           {mousedown ? (
             <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
           ) : null}
         </svg>
       </div>
+      {renderContent()}
     </>
   );
 }

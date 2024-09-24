@@ -1653,7 +1653,7 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No recent boards.</Text>
+                        <Text p="3" px="6">No recent boards.</Text>
                       )}
                     </Box>
                   </TabPanel>

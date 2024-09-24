@@ -108,7 +108,7 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
         invalidURLReset();
         return;
       }
-    } else if (!useUrl.startsWith('https://')) {
+    } else if (!useUrl.startsWith('https://') && !useUrl.startsWith('http://')) {
       // Invalid URL: reset local state
       invalidURLReset();
       return;

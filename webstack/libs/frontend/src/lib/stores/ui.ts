@@ -22,7 +22,7 @@ export const MaxZoom = 3;
 // When using mouse wheel, repeated events
 export const WheelStepZoom = 0.008;
 
-type DrawingMode = 'none' | 'pen' | 'eraser';
+// type DrawingMode = 'none' | 'pen' | 'eraser';
 
 interface UIState {
   scale: number;
@@ -61,7 +61,6 @@ interface UIState {
   setSelectedTag: (value: string) => void;
 
   // whiteboard
-  whiteboardMode: DrawingMode;
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
@@ -69,7 +68,6 @@ interface UIState {
   markerSize: number;
   markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
-  setWhiteboardMode: (mode: DrawingMode) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
@@ -98,10 +96,6 @@ interface UIState {
   // Position Syncronization Information
   boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
   setBoardSynced: (synced: boolean) => void;
-
-  // Cache Cursor Type when dragging items on board
-  cachedPrimaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined;
-  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
@@ -145,7 +139,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   lassoColor: 'red',
   clearLassos: false,
   clearAllLassos: false,
-  whiteboardMode: 'none',
   markerColor: 'red',
   markerSize: 8,
   markerOpacity: 0.6,
@@ -160,10 +153,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   boardSynced: true,
   setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
-
-  cachedPrimaryActionMode: undefined,
-  setCachedPrimaryActionMode: (mode: 'lasso' | 'grab' | 'pen' | 'eraser' | undefined) =>
-    set((state) => ({ ...state, cachedPrimaryActionMode: mode })),
 
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
@@ -271,7 +260,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: get().selectedAppsIds })),
   clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [] })),
 
-  setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
