@@ -270,7 +270,7 @@ export function HomePage() {
 
   // The actual steps for the joyride
   const handleSetJoyrideSteps = () => {
-    setJoyrideSteps([
+    const userJoyrideSteps: Step[] = [
       {
         target: introRef.current!,
         title: 'Welcome to SAGE3',
@@ -372,7 +372,94 @@ export function HomePage() {
         disableOverlayClose: true,
         placement: 'center',
       },
-    ]);
+    ];
+
+    const guestJoyrideSteps: Step[] = [
+      {
+        target: introRef.current!,
+        title: 'Welcome to SAGE3',
+        content:
+          'We recently updated our design to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
+        disableBeacon: true,
+        disableOverlayClose: true,
+        placement: 'center',
+      },
+      {
+        target: homeRef.current!,
+        title: 'Home',
+        content: 'This is the Home Page. From here, you can access recent boards, create rooms, and search for rooms',
+      },
+      {
+        target: mainButtonRef.current!,
+        title: 'Main Menu',
+        content: 'This is the Main Menu Button. From here, you can update your profile, change theme, find users, and logout.',
+        disableBeacon: true,
+      },
+      {
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
+        content: electron
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
+        disableBeacon: true,
+      },
+      {
+        target: enterBoardByURLRef.current!,
+        title: 'Enter a Board by URL',
+        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
+        disableBeacon: true,
+      },
+      {
+        target: homeBtnRef.current!,
+        title: 'Home Button',
+        content: 'Clicking this button will take you back to the Home Page.',
+      },
+      {
+        target: recentBoardsRef.current!,
+        title: 'Recent Boards',
+        content:
+          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
+      },
+      {
+        target: activeBoardsRef.current!,
+        title: 'Active Boards',
+        content: 'Boards with active users on them will appear here.',
+        disableBeacon: true,
+      },
+      {
+        target: starredBoardsRef.current!,
+        title: 'Starred Boards',
+        content:
+          'You can star your frequently used boards here for quick access. You can star a board by clicking on the star icon next to the boards name once you enter a room.',
+        disableBeacon: true,
+      },
+      {
+        target: clockRef.current!,
+        title: 'Clock and more',
+        content:
+          'Your local time is displayed here, with the help button. While in a board, it also displays performance and network status, help, search and settings buttons.',
+      },
+      {
+        target: introRef.current!,
+        title: 'End of the Tour',
+        content: (
+          <>
+            <Text py={2}>We hope you enjoy using SAGE3!</Text>
+            <Text>
+              Join us on the SAGE3 Discord server:
+              <Link href="https://discord.gg/hHsKu47buY" color="teal.500" isExternal>
+                https://discord.gg/hHsKu47buY
+              </Link>
+            </Text>
+          </>
+        ),
+        disableBeacon: true,
+        disableOverlayClose: true,
+        placement: 'center',
+      },
+    ];
+
+    setJoyrideSteps(user?.data.userRole === 'guest' || user?.data.userRole === 'spectator' ? guestJoyrideSteps : userJoyrideSteps);
   };
 
   // Handle when the user clicks on the help button to restart Joyride
@@ -387,10 +474,10 @@ export function HomePage() {
     enterBoardModalOnOpen();
   };
 
-  // Load the steps when the component mounts
+  // Load the steps when room changes and component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
-  }, [rooms]);
+  }, [roomId]);
 
   // Filter Functions
   const roomMemberFilter = (room: Room): boolean => {
@@ -916,8 +1003,8 @@ export function HomePage() {
                   borderRadius={buttonRadius}
                   _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                   onClick={() => {
-                    toHome();
                     handleLeaveRoom();
+                    toHome();
                     setSelectedQuickAccess(undefined);
                   }}
                 >
@@ -947,7 +1034,13 @@ export function HomePage() {
                 </Box>
               </Tooltip>
               <Divider my="2" />
-              <Box pl="4" mb="2" fontSize="md" fontWeight="bold">
+              <Box
+                pl="4"
+                mb="2"
+                fontSize="md"
+                fontWeight="bold"
+                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
+              >
                 Your Rooms
               </Box>
               <Box
@@ -964,6 +1057,7 @@ export function HomePage() {
                     borderRadius: '48px',
                   },
                 }}
+                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
               >
                 <Box height="60%" mr="2" ml="1">
                   {rooms
