@@ -1098,7 +1098,7 @@ export function HomePage() {
       )} */}
 
       {/* Selected Room */}
-      {selectedRoom && (
+      {selectedRoom && rooms.length > 0 && (
         <Box
           display="flex"
           flex="1"
@@ -1154,12 +1154,12 @@ export function HomePage() {
                   placement="top"
                 >
                   <Button
-                    colorScheme={rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'red' : 'teal'}
+                    colorScheme={rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? 'red' : 'teal'}
                     variant="outline"
                     size="sm"
                     width="120px"
                     onClick={() => {
-                      if (rooms.filter(roomMemberFilter).includes(selectedRoom)) {
+                      if (rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id)) {
                         leaveRoomModalOnOpen();
                       } else {
                         handleJoinRoomMembership(selectedRoom);
@@ -1167,14 +1167,14 @@ export function HomePage() {
                     }}
                     isDisabled={selectedRoom.data.ownerId === userId}
                   >
-                    {rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'Unjoin' : 'Join'}
+                    {rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? 'Unjoin' : 'Join'}
                   </Button>
                 </Tooltip>
               </Box>
             </VStack>
           </Box>
 
-          {rooms.filter(roomMemberFilter).includes(selectedRoom) ? (
+          {rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? (
             <Box width="100%" flexGrow={1}>
               <Tabs colorScheme="teal">
                 <TabList>
@@ -1338,6 +1338,12 @@ export function HomePage() {
           ) : (
             <>
               <Divider />
+              {console.log('selectedRoom', selectedRoom)}
+              {console.log('roommember', rooms.filter(roomMemberFilter))}
+              {console.log(
+                'rooms',
+                rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id)
+              )}
               <Box my="3">Join room to access boards.</Box>
             </>
           )}
@@ -1664,7 +1670,7 @@ export function HomePage() {
                 </TabPanels>
               </Tabs>
 
-              <Box mt="6" mb="3">
+              <Box mt="6" mb="3" hidden={user?.data.userRole === 'guest' || user?.data.userRole === 'spectator'}>
                 <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
                   <Text fontWeight="bold">Available Rooms</Text>
                 </Box>
