@@ -385,9 +385,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* The board's apps */}
         <Apps />
         {/* Whiteboard */}
-        <Whiteboard boardId={props.boardId} />
+        <Whiteboard roomId={props.roomId} boardId={props.boardId} />
         {/* Lasso */}
-        {canLasso && primaryActionMode === 'lasso' && <Lasso boardId={props.boardId} />}
+        {canLasso && primaryActionMode === 'lasso' && <Lasso roomId={props.roomId} boardId={props.boardId} />}
 
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
