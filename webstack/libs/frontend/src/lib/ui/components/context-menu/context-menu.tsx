@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 import { useUIStore } from '../../../stores';
+import { useUserSettings } from '../../../providers';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
@@ -50,6 +51,8 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * @returns JSX.Element
  */
 export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) => {
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -69,7 +72,8 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      if (props.divIds.includes(event.target.id)) {
+      if (props.divIds.includes(event.target.id) && primaryActionMode !== 'pen') {
+        console.log('context menu');
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
