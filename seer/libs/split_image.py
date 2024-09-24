@@ -13,7 +13,9 @@ def split_image_into_tiles(image_path, tile_height, output_path):
     print("🚀 ~ rows:", columns, rows)
 
     # Create a new image to store the tiles in a grid
-    tiled_image = Image.new("RGB", (columns * tile_width, tile_height))
+    tiled_image = Image.new(
+        "RGB", (columns * (tile_width + 10), tile_height), (255, 255, 255)
+    )
 
     for col in range(columns):
         print("col:", col)
@@ -28,7 +30,8 @@ def split_image_into_tiles(image_path, tile_height, output_path):
         # tile.save(f"tile_{col}.jpg")
 
         # Paste the tile into the tiled image at the correct position
-        tiled_image.paste(tile, (col * tile_width, 0))
+        tiled_image.paste(tile, (col * (tile_width + 10), 0))
 
     # Save the new tiled image
     tiled_image.save(output_path)
+    return (columns * tile_width, tile_height)

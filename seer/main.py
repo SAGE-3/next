@@ -79,12 +79,25 @@ async def summary(qq: Question):
         raise HTTPException(status_code=500, detail=text)
 
 
-# SUMMARY FUNCTION
+# WEB1 FUNCTION
 @app.post("/web")
 async def webquery(qq: WebQuery):
     try:
         # do the work
         val = await webAG.process(qq)
+        return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+# WEB2 FUNCTION
+@app.post("/webshot")
+async def webshot(qq: WebQuery):
+    try:
+        # do the work
+        val = await webAG.process_screenshot(qq)
         return val
     except HTTPException as e:
         # Get the error message
