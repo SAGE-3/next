@@ -6,9 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
 import { MdRemoveRedEye } from 'react-icons/md';
-import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -56,8 +55,6 @@ import {
   TagsDisplay,
   Interactionbar,
 } from './components';
-import { BiPencil } from 'react-icons/bi';
-import { BsEraserFill } from 'react-icons/bs';
 
 type UILayerProps = {
   boardId: string;

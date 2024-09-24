@@ -22,7 +22,7 @@ export const MaxZoom = 3;
 // When using mouse wheel, repeated events
 export const WheelStepZoom = 0.008;
 
-type DrawingMode = 'none' | 'pen' | 'eraser';
+// type DrawingMode = 'none' | 'pen' | 'eraser';
 
 interface UIState {
   scale: number;

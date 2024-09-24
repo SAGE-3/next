@@ -6,13 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Tooltip, ButtonGroup, Divider, Center } from '@chakra-ui/react';
-import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
-
-import { useUserSettings, useUser, usePanelStore } from '@sage3/frontend';
+import { IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';
 import { BsEraserFill } from 'react-icons/bs';
+import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
+
+import { useUserSettings, useUser } from '@sage3/frontend';
 
 export function Interactionbar() {
   // Settings
@@ -23,8 +23,8 @@ export function Interactionbar() {
   const { user } = useUser();
 
   // Panel Stores
-  const annotations = usePanelStore((state) => state.panels['annotations']);
-  const updatePanel = usePanelStore((state) => state.updatePanel);
+  // const annotations = usePanelStore((state) => state.panels['annotations']);
+  // const updatePanel = usePanelStore((state) => state.updatePanel);
 
   return (
     <>
@@ -38,9 +38,6 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('grab');
-              // if (annotations.show) {
-              //   updatePanel('annotations', { show: false });
-              // }
             }}
           ></IconButton>
         </Tooltip>
@@ -53,19 +50,10 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('lasso');
-              // if (annotations.show) {
-              //   updatePanel('annotations', { show: false });
-              // }
             }}
           ></IconButton>
         </Tooltip>
-        {/* </ButtonGroup>
 
-      <Center>
-        <Divider orientation="vertical" />
-      </Center>
-
-      <ButtonGroup isAttached size="xs"> */}
         <Tooltip label={'Annotations'}>
           <IconButton
             size="sm"
@@ -75,9 +63,6 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('pen');
-              // if (!annotations.show) {
-              //   updatePanel('annotations', { show: true });
-              // }
             }}
           ></IconButton>
         </Tooltip>
@@ -90,9 +75,6 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('eraser');
-              // if (!annotations.show) {
-              //   updatePanel('annotations', { show: true });
-              // }
             }}
           ></IconButton>
         </Tooltip>
