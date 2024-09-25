@@ -54,7 +54,7 @@ export function Interactionbar() {
           ></IconButton>
         </Tooltip>
 
-        <Tooltip label={'Annotations'}>
+        <Tooltip label={'Marker'}>
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
