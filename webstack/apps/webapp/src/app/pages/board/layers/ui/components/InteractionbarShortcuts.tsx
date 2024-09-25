@@ -12,41 +12,41 @@ export function InteractionbarShortcuts() {
   // Settings
   const { setPrimaryActionMode } = useUserSettings();
 
-  useHotkeys(
-    'h',
-    (event: KeyboardEvent): void | boolean => {
-      event.stopPropagation();
-      setPrimaryActionMode('grab');
-    },
-    { dependencies: [] }
-  );
+  // useHotkeys(
+  //   'h',
+  //   (event: KeyboardEvent): void | boolean => {
+  //     event.stopPropagation();
+  //     setPrimaryActionMode('grab');
+  //   },
+  //   { dependencies: [] }
+  // );
 
-  useHotkeys(
-    's',
-    (event: KeyboardEvent): void | boolean => {
-      event.stopPropagation();
-      setPrimaryActionMode('lasso');
-    },
-    { dependencies: [] }
-  );
+  // useHotkeys(
+  //   's',
+  //   (event: KeyboardEvent): void | boolean => {
+  //     event.stopPropagation();
+  //     setPrimaryActionMode('lasso');
+  //   },
+  //   { dependencies: [] }
+  // );
 
-  useHotkeys(
-    'p',
-    (event: KeyboardEvent): void | boolean => {
-      event.stopPropagation();
-      setPrimaryActionMode('pen');
-    },
-    { dependencies: [] }
-  );
+  // useHotkeys(
+  //   'p',
+  //   (event: KeyboardEvent): void | boolean => {
+  //     event.stopPropagation();
+  //     setPrimaryActionMode('pen');
+  //   },
+  //   { dependencies: [] }
+  // );
 
-  useHotkeys(
-    'e',
-    (event: KeyboardEvent): void | boolean => {
-      event.stopPropagation();
-      setPrimaryActionMode('eraser');
-    },
-    { dependencies: [] }
-  );
+  // useHotkeys(
+  //   'e',
+  //   (event: KeyboardEvent): void | boolean => {
+  //     event.stopPropagation();
+  //     setPrimaryActionMode('eraser');
+  //   },
+  //   { dependencies: [] }
+  // );
 
   useHotkeys(
     '1',
