@@ -302,18 +302,6 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [undoLastMaker]);
 
-  // Switch between pen and interactive mode
-  // Going to make each interaction mode a hotkey/ keybind
-  // useHotkeys(
-  //   'shift+w',
-  //   () => {
-  //     if (canAnnotate) {
-  //       // setWhiteboardMode(primaryActionMode === 'none' ? 'pen' : 'none');
-  //     }
-  //   },
-  //   { dependencies: [primaryActionMode] }
-  // );
-
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
     if (yLines) {
