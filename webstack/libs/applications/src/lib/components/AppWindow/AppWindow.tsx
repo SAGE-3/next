@@ -65,8 +65,8 @@ export function AppWindow(props: WindowProps) {
   const selectedTag = useUIStore((state) => state.selectedTag);
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
-  const boardSynced = useUIStore((state) => state.boardSynced)
-  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction)
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -192,7 +192,7 @@ export function AppWindow(props: WindowProps) {
       updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
       setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
-      update(props.app._id, { position: { x, y, z: props.app.data.position.z, } });
+      update(props.app._id, { position: { x, y, z: props.app.data.position.z } });
     }
   }
 
@@ -331,8 +331,7 @@ export function AppWindow(props: WindowProps) {
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
       // enableResizing={enableResize && canResize && !isPinned}
-      enableResizing={enableResize && canResize && !isPinned && (selectedApp !== "")} // Temporary solution to fix resize while drag
-
+      enableResizing={enableResize && canResize && !isPinned} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
       // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
       disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction)}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
@@ -349,6 +348,16 @@ export function AppWindow(props: WindowProps) {
         top: { transform: `scaleY(${handleScale})` },
         topLeft: { transform: `scale(${handleScale})` },
         topRight: { transform: `scale(${handleScale})` },
+      }}
+      resizeHandleClasses={{
+        bottom: 'app-window-resize-handle',
+        bottomLeft: 'app-window-resize-handle',
+        bottomRight: 'app-window-resize-handle',
+        left: 'app-window-resize-handle',
+        right: 'app-window-resize-handle',
+        top: 'app-window-resize-handle',
+        topLeft: 'app-window-resize-handle',
+        topRight: 'app-window-resize-handle',
       }}
       // min/max app window dimensions
       minWidth={APP_MIN_WIDTH}
