@@ -154,7 +154,7 @@ export function AnnotationsPanel() {
         <Box alignItems="center" pb="1" width="100%" display="flex">
           <VStack width="100%" alignItems="left" spacing="0">
             <HStack m={0} p={0} spacing={'inherit'}>
-              <Tooltip placement="top" hasArrow label={primaryActionMode === 'pen' ? 'Disable Marker' : 'Enable Marker'}>
+              <Tooltip placement="top" hasArrow label={'Marker'}>
                 <Button
                   onClick={() => setPrimaryActionMode('pen')}
                   size="sm"
@@ -165,7 +165,7 @@ export function AnnotationsPanel() {
                 </Button>
               </Tooltip>
 
-              <Tooltip placement="top" hasArrow label={primaryActionMode === 'eraser' ? 'Disable Eraser' : 'Enable Eraser'}>
+              <Tooltip placement="top" hasArrow label={'Eraser'}>
                 <Button
                   onClick={() => setPrimaryActionMode('eraser')}
                   size="sm"
