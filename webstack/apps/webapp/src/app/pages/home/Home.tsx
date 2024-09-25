@@ -82,6 +82,7 @@ import {
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
+import { PiStackPlusFill } from 'react-icons/pi';
 
 /**
  * Home page for SAGE3
@@ -889,7 +890,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1034,15 +1035,23 @@ export function HomePage() {
                 </Box>
               </Tooltip>
               <Divider my="2" />
-              <Box
-                pl="4"
-                mb="2"
-                fontSize="md"
-                fontWeight="bold"
-                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
-              >
-                Your Rooms
-              </Box>
+              <HStack justify="space-between" alignItems="center" mb="2">
+                <Box pl="4" fontSize="md" fontWeight="bold" hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}>
+                  Your Rooms
+                </Box>
+                <Tooltip hasArrow placement="top" label="Create a new Room" closeDelay={200}>
+                  <IconButton
+                    aria-label="Create Room"
+                    onFocus={(e) => e.preventDefault()}
+                    size="sm"
+                    bg="none"
+                    onClick={handleCreateRoomClick}
+                    ref={createRoomRef}
+                    _hover={{ transform: 'scale(1.1)', bg: 'none' }}
+                    icon={<PiStackPlusFill fontSize="24px" />}
+                  />
+                </Tooltip>
+              </HStack>
               <Box
                 ref={roomsRef}
                 height="100%"
@@ -1071,6 +1080,7 @@ export function HomePage() {
                           hasArrow
                           placement="top"
                           label={`Description ${room.data.description}`}
+                          closeOnScroll
                         >
                           <Box
                             borderRadius="6"
@@ -1092,7 +1102,7 @@ export function HomePage() {
                               </Text>
                             </Box>
 
-                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                            <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ? 'Owner' : 'Member'}
                             </Text>
                           </Box>
@@ -1549,20 +1559,20 @@ export function HomePage() {
                 >
                   {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
                     ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                      // If it's a board, get the room ID
-                      if ((item as Board & { roomName: string }).data.roomId) {
-                        return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                      }
-                      return (
-                        <SearchRow.Room
-                          key={item._id}
-                          room={item as Room}
-                          clickHandler={() => {
-                            handleRoomClick(item as Room);
-                          }}
-                        />
-                      );
-                    })
+                        // If it's a board, get the room ID
+                        if ((item as Board & { roomName: string }).data.roomId) {
+                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                        }
+                        return (
+                          <SearchRow.Room
+                            key={item._id}
+                            room={item as Room}
+                            clickHandler={() => {
+                              handleRoomClick(item as Room);
+                            }}
+                          />
+                        );
+                      })
                     : 'No items match your search'}
                 </Box>
               </Box>
@@ -1653,7 +1663,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No recent boards.</Text>
+                        <Text p="3" px="6">
+                          No recent boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1703,7 +1715,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No active boards.</Text>
+                        <Text p="3" px="6">
+                          No active boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1747,7 +1761,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No favorite boards.</Text>
+                        <Text p="3" px="6">
+                          No favorite boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1760,11 +1776,11 @@ export function HomePage() {
                 </Box>
                 <Box p="4" bg={homeSectionColor} rounded="xl">
                   <Box display="flex" alignItems="center" gap="2">
-                    <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
+                    {/* <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
                       <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
                         <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
                       </Button>
-                    </Tooltip>
+                    </Tooltip> */}
                     <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
@@ -1816,7 +1832,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

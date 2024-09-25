@@ -14,6 +14,8 @@ import { BsFillCollectionFill } from 'react-icons/bs';
 
 import { Board, Room } from '@sage3/shared/types';
 import { EnterBoardModal } from '@sage3/frontend';
+import { PiStackFill } from 'react-icons/pi';
+import { MdDashboard } from 'react-icons/md';
 
 type SearchRowChildrenProps = {
   room?: Room;
@@ -46,7 +48,7 @@ SearchRow.Board = ({ board }: SearchRowChildrenProps) => {
         transition="ease-in 200ms"
       >
         <Box overflow="hidden" display="flex" gap="4" alignItems="center">
-          <BiGridAlt fontSize="24px" />
+          <MdDashboard fontSize="24px" />
           <Box w="250px">
             <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
               {board?.data.name}
@@ -75,7 +77,7 @@ SearchRow.Room = ({ room, clickHandler }: SearchRowChildrenProps) => {
         transition="ease-in 200ms"
       >
         <Box overflow="hidden" display="flex" gap="4" alignItems="center">
-          <BsFillCollectionFill fontSize="24px" />
+          <PiStackFill fontSize="24px" />
           <Box>
             <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
               {room?.data.name}
