@@ -9,14 +9,15 @@
 import * as express from 'express';
 import { config } from 'apps/homebase/src/config';
 
-import { SError, AgentRoutes, HealthRequest, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer } from '@sage3/shared';
+import { SError, AgentRoutes, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer } from '@sage3/shared';
 
 // Define a general RPC handler type
-type RpcHandler<Request, Response> = (req: Request) => (Response | SError) | Promise<Response | SError>;
+type RpcHandlerGet<Response> = () => (Response | SError) | Promise<Response | SError>;
+type RpcHandlerPost<Request, Response> = (req: Request) => (Response | SError) | Promise<Response | SError>;
 
 // Index the list of handlers with string keys used as route names
 interface HandlerStore {
-  [key: string]: { func: RpcHandler<any, any>; method: 'POST' | 'GET' };
+  [key: string]: { func: RpcHandlerGet<any> | RpcHandlerPost<any, any>; method: 'POST' | 'GET' };
 }
 
 async function fetchGet(url: string) {
@@ -35,25 +36,25 @@ async function fetchPost(url: string, data: object) {
 }
 
 // Forward functions to the agents
-const statusHandler: RpcHandler<HealthRequest, HealthResponse> = (req) => {
+const statusHandler: RpcHandlerGet<HealthResponse> = () => {
   const route = AgentRoutes.status;
   return fetchGet(`${config.agents.url}${route}`);
 };
-const askHandler: RpcHandler<AskRequest, AskResponse> = (req) => {
+const askHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.ask;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
 
-const summaryHandler: RpcHandler<AskRequest, AskResponse> = (req) => {
+const summaryHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.summary;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
 
-const webHandler: RpcHandler<WebQuery, WebAnswer> = (req) => {
+const webHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.web;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
-const webshotHandler: RpcHandler<WebQuery, WebAnswer> = (req) => {
+const webshotHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.webshot;
   return fetchPost(`${config.agents.url}${route}`, req);
 };

@@ -15,7 +15,7 @@ import { Box, useColorModeValue, Flex, Input, InputGroup, InputRightElement, use
 import { MdSend, MdSettings } from 'react-icons/md';
 
 import { useUIStore, useHexColor, useUser, useAppStore, useConfigStore, apiUrls } from '@sage3/frontend';
-import { genId, AskRequest, AskResponse, SError, AgentRoutes, HealthRequest, HealthResponse, WebQuery, WebAnswer } from '@sage3/shared';
+import { genId, AskRequest, AskResponse, SError, AgentRoutes, HealthResponse, WebQuery, WebAnswer } from '@sage3/shared';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -42,7 +42,7 @@ const makeRpcPost = async (mth: string, data: object) => {
     }
   }
 }
-const makeRpcGet = async (mth: string, data: object) => {
+const makeRpcGet = async (mth: string) => {
   try {
     const base = apiUrls.ai.agents.base;
     const response = await ky.get<Response>(`${base}${mth}`).json();
@@ -64,8 +64,8 @@ const makeRpcGet = async (mth: string, data: object) => {
  * @param data SumRequest payload
  * @returns 
  */
-const callStatus = async (data: HealthRequest) => {
-  return makeRpcGet(AgentRoutes.status, data) as Promise<HealthResponse | SError>;
+const callStatus = async () => {
+  return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
 };
 const callAsk = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;
@@ -130,7 +130,7 @@ export function AIChat(props: { model: string }) {
   }, [user]);
 
   useEffect(() => {
-    callStatus({}).then((res) => {
+    callStatus().then((res) => {
       if ("message" in res) {
         console.log('Health> error', res.message);
       } else {

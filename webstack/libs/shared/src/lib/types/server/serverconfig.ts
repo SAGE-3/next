@@ -57,7 +57,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
-    chat: AIChatConfiguration;
+    llama: LlamaConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
   };
@@ -98,7 +98,7 @@ export type OpenConfiguration = Pick<
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
-  chat: ServerConfiguration['services']['chat'];
+  llama: ServerConfiguration['services']['llama'];
 };
 
 /**
@@ -159,16 +159,8 @@ export interface OpenAIConfiguration {
   model: string; // LLM model
 }
 
-// AI Chat Configuration
-export interface AIChatConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string; // API Key
-  max_tokens: number;
-}
-
-// AI Chat Configuration
-export interface AIChatConfiguration {
+// Llama Configuration
+export interface LlamaConfiguration {
   url: string;
   model: string; // LLM model
   apiKey: string; // API Key

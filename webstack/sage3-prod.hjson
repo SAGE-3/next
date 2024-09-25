@@ -65,11 +65,15 @@
       // "model": "gpt-3.5-turbo"
       "model": "gpt-4o-mini"
     },
-    "chat": {
-      "url": "https://arcade.evl.uic.edu/llama",
-      "model": "llama3",
-      "max_tokens": 2048,
-      "apiKey": ""
+    "llama": {
+      // "url": "https://arcade.evl.uic.edu/llama",
+      // "model": "llama3",
+      // "max_tokens": 2048,
+      // "apiKey": ""
+      "url": "https://arcade.evl.uic.edu/llama31_8bf",
+      "model": "meta/llama-3.1-8b-instruct",
+      "apiKey": "",
+      "max_tokens": 1000
     },
     "codellama": {
       "url": "https://arcade.evl.uic.edu/llama31_8bf",

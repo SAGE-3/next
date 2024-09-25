@@ -40,6 +40,7 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
+
 // AI model information from the backend
 interface modelInfo {
   name: string;
@@ -47,12 +48,8 @@ interface modelInfo {
   maxTokens: number;
 }
 
-// LLAMA2
-const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
 // LLAMA3
 const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
-// Prompt to interject or not
-const LLAMA3_INTERJECT = 'You are a helpful AI assistant with many names (sage, sage3, ai, siri, google, bixby, alexa) and able to understand intent in multi-party conversations. You will be given a sample conversation transcript between multiple users plus you, and asked a question.';
 
 
 /* App component for Chat */
@@ -91,7 +88,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [analysis, setAnalysis] = useState<string>("\u00A0"); // space
+  const [status, setStatus] = useState<string>("AI can make mistakes. Check important information.");
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -185,7 +182,7 @@ function AppComponent(props: App): JSX.Element {
     // Get server time
     const now = await serverTime();
     // Is it a question to SAGE?
-    const isQuestion = new_input.startsWith('@S');
+    const isQuestion = new_input.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
@@ -199,21 +196,14 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
-      setAnalysis("Direct question to SAGE.");
       setProcessing(true);
-      // Remove the @G from the question
+      // Remove the @S from the question
       const request = isQuestion ? new_input.slice(2) : new_input;
 
       if (isQuestion) {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
-          if (selectedModel?.model === 'llama2') {
-            // schema for follow up questions:
-            // https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            // {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            // <s>[INST] {{ user_msg_2 }} [/INST]
-            complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
-          } else {
+          if (selectedModel?.model === 'llama3') {
             // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
             // LLAMA3 schema for follow up questions:
             // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -231,9 +221,7 @@ function AppComponent(props: App): JSX.Element {
                  <|start_header_id|>assistant<|end_header_id|>`;
           }
         } else {
-          if (selectedModel?.model === 'llama2') {
-            complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
-          } else {
+          if (selectedModel?.model === 'llama3') {
             // LLAMA3 question
             // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
             // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
@@ -245,7 +233,7 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Send request to backend
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400, app_id: props._id });
+        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'llama', max_new_tokens: 1000, app_id: props._id });
         if (backend.success) {
           const new_text = backend.output || '';
           setProcessing(false);
@@ -274,100 +262,7 @@ function AppComponent(props: App): JSX.Element {
           });
         }
       }
-    } else {
-      // Not a question to SAGE
-      const sample = "The conversation transcript is contained in backtick delimiters below: ```\n" +
-        new_input + "\n```";
-      const question = "Question: you are an AI assistant and should reply only when being addressed by name. Looking at the last message from 'User' in the transcript, should an AI assistant interject this time? Respond in the following JSON format:\n\nreasoning: (give very brief reasoning here)\njudgement: INTERJECT|QUIET (choose one)";
 
-      const test_request = `<|begin_of_text|>
-      <|start_header_id|>system<|end_header_id|> ${LLAMA3_INTERJECT} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${sample} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${question} <|eot_id|>
-      <|start_header_id|>assistant<|end_header_id|>`;
-
-      const interject = await AiAPI.chat.query({ input: test_request, model: 'chat', max_new_tokens: 100 });
-      if (interject && interject.success && interject.output) {
-        try {
-          const text = interject.output.replace(/(\r\n|\n|\r|```)/gm, '').trim();
-          const json = JSON.parse(text);
-          const reasoning = json.reasoning;
-          const judgement = json.judgement;
-
-          // Display the reasoning in the chat
-          setAnalysis(reasoning);
-
-          if (judgement === 'INTERJECT') {
-            // Add messages
-            const initialAnswer = {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch,
-              userName: 'SAGE',
-              query: new_input,
-              response: 'Working on it...',
-            };
-            updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-            let complete_request = '';
-            if (previousQuestion && previousAnswer) {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${previousQuestion}<|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>
-                     ${previousAnswer}<|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${new_input} <|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            } else {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                       <|start_header_id|>user<|end_header_id|> ${new_input} <|eot_id|>
-                       <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            }
-            // Send request to backend
-            const backend = await AiAPI.chat.query({ input: complete_request, model: 'chat', max_new_tokens: 400, app_id: props._id });
-            if (backend.success) {
-              const new_text = backend.output || '';
-              setProcessing(false);
-              // Clear the stream text
-              setStreamText('');
-              ctrlRef.current = null;
-              setPreviousAnswer(new_text);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: new_input,
-                previousA: new_text,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: new_text,
-                  },
-                ],
-              });
-            }
-          }
-
-        } catch (error) {
-          setAnalysis("Inconclusive answer from SAGE. Please try again.");
-        }
-      }
     }
   };
 
@@ -381,7 +276,6 @@ function AppComponent(props: App): JSX.Element {
 
   const stopSAGE = async () => {
     setProcessing(false);
-    setAnalysis("\u00A0");
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -413,7 +307,6 @@ function AppComponent(props: App): JSX.Element {
   const resetSAGE = () => {
     setPreviousQuestion('');
     setPreviousAnswer('');
-    setAnalysis("\u00A0");
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
 
@@ -624,7 +517,7 @@ function AppComponent(props: App): JSX.Element {
                                 'app_state',
                                 JSON.stringify({
                                   color: 'purple',
-                                  text: message.response,
+                                  text: message.response.trim(),
                                   fontSize: 24,
                                 })
                               );
@@ -687,7 +580,7 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop SAGE'} openDelay={400}>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
             <IconButton
               aria-label="stop"
               size={'xs'}
@@ -716,7 +609,7 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
+            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + " model)" : " ")}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -732,7 +625,7 @@ function AppComponent(props: App): JSX.Element {
 
         <Box bg={'blackAlpha.100'} rounded={'sm'} p={1} m={0}>
           <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="2xs">
-            {analysis}
+            {status}
           </Text>
         </Box>
 

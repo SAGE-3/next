@@ -16,6 +16,7 @@ type UserSettings = {
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
+  aiModel: 'llama' | 'openai';
 };
 
 const defaultSettings: UserSettings = {
@@ -26,6 +27,7 @@ const defaultSettings: UserSettings = {
   showTags: false,
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
+  aiModel: 'llama',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -40,6 +42,7 @@ type UserSettingsContextType = {
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => void;
   restoreDefaultSettings: () => void;
+  setAIModel: (value: UserSettings['aiModel']) => void;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
@@ -52,6 +55,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
   restoreDefaultSettings: () => { },
+  setAIModel: (value: UserSettings['aiModel']) => { },
 });
 
 /**
@@ -163,6 +167,18 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     [setSettings]
   );
 
+  const setAIModel = useCallback(
+    (value: UserSettings['aiModel']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.aiModel = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
@@ -180,6 +196,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         setBoardListView,
         setPrimaryActionMode,
         restoreDefaultSettings,
+        setAIModel,
       }}
     >
       {props.children}

@@ -14,9 +14,6 @@ export type SError = {
 // Request Types
 
 // Health check request
-export type HealthRequest = {
-  // empty
-};
 export type HealthResponse = {
   success: boolean;
 };

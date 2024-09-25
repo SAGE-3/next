@@ -26,7 +26,6 @@ import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
 
 import { useHexColor, useUserSettings, useConfigStore } from '@sage3/frontend';
-import { AIChat } from './AIChat';
 
 type SIProps = {
   notificationCount: number;
@@ -36,7 +35,7 @@ type SIProps = {
 // SAP Intelligence Panel
 export function IntelligencePane(props: SIProps) {
   const isBoard = props.isBoard ? props.isBoard : false;
-  const { settings } = useUserSettings();
+  const { settings, setAIModel } = useUserSettings();
   const showUI = settings.showUI;
   // Configuration information
   const config = useConfigStore((state) => state.config);
@@ -51,7 +50,7 @@ export function IntelligencePane(props: SIProps) {
   const [sliderValue1, setSliderValue1] = useState(4);
   const [sliderValue2, setSliderValue2] = useState(3);
   const [location, setLocation] = useState('');
-  const [selectedModel, setSelectedModel] = useState('chat');
+  const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
   const openOrClose = () => {
     if (isOpen) {
@@ -61,31 +60,27 @@ export function IntelligencePane(props: SIProps) {
     }
   };
 
-  const setAIModel = (val: string) => {
-    setSelectedModel(val);
-    localStorage.setItem('s3_ai_model', val);
-  };
-
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(function (location) {
       setLocation(location.coords.latitude + ',' + location.coords.longitude);
     });
 
     // Look for a previously set model
-    const local = localStorage.getItem('s3_ai_model');
-    if (local) {
+    if (settings.aiModel) {
       // If value previously set, use it
-      setSelectedModel(local);
+      setSelectedModel(settings.aiModel);
     } else {
-      // Otherwise, use openai if available, else chat
-      setSelectedModel(config.openai.apiKey ? 'openai' : 'chat');
+      // Otherwise, use openai if available, else llama
+      const val = config.openai.apiKey ? 'openai' : 'llama';
+      setSelectedModel(val);
+      setAIModel(val);
     }
   }, []);
 
   return (
     <Box borderRadius="md" display="flex">
-      <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose}>
-        <DrawerContent maxWidth={"50vw"} height={"532px"}
+      <Drawer placement="right" variant="code" isOpen={isOpen} onClose={onClose} closeOnEsc={true} closeOnOverlayClick={true}>
+        <DrawerContent maxWidth={"40vw"} height={"532px"}
           rounded={"lg"} position="absolute" style={{ top: undefined, bottom: "45px", right: "10px" }}
           motionProps={{
             variants: {
@@ -101,7 +96,6 @@ export function IntelligencePane(props: SIProps) {
           <DrawerBody p={1} m={1} boxSizing="border-box">
             <Tabs style={{ width: '100%', height: '100%' }}>
               <TabList>
-                <Tab>Chat</Tab>
                 <Tab>Notifications
                   {props.notificationCount > 0 && (
                     <Badge colorScheme="green" variant="solid" pos="relative" right={-1} top={-2} >
@@ -115,9 +109,6 @@ export function IntelligencePane(props: SIProps) {
 
               <TabPanels>
                 <TabPanel>
-                  <AIChat model={selectedModel} />
-                </TabPanel>
-                <TabPanel>
                   <p>No notifcations</p>
                 </TabPanel>
 
@@ -127,7 +118,7 @@ export function IntelligencePane(props: SIProps) {
                       <Text fontSize="lg" mb={1} fontWeight={"bold"}>AI Models</Text>
                       <RadioGroup defaultValue={selectedModel} onChange={setAIModel}>
                         <Stack>
-                          <Radio value='chat' isDisabled={!config.chat.url}><b>Chat</b>: {config.chat.model} - {config.chat.url.substring(0, 12) + '•'.repeat(10)}</Radio>
+                          <Radio value='llama' isDisabled={!config.llama.url}><b>Llama</b>: {config.llama.model} - {config.llama.url.substring(0, 12) + '•'.repeat(10)}</Radio>
                           <Radio value='openai' isDisabled={!config.openai.apiKey}><b>OpenAI</b>: {config.openai.model} - {config.openai.apiKey ? config.openai.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
                           </Radio>
                         </Stack>
