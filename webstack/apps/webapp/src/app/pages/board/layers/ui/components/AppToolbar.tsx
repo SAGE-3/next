@@ -914,6 +914,9 @@ export function AppToolbar(props: AppToolbarProps) {
       if (app.data.type === 'Stickie') {
         // Get the text of the stickie
         context = app.data.state.text;
+      } else if (app.data.type === 'CodeEditor') {
+        // Get the source code of the editor
+        context = `Language ${app.data.state.language}:\n\n${app.data.state.content}`;
       } else if (app.data.type === 'CSVViewer') {
         // Get information about the asset
         const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);

@@ -146,21 +146,15 @@ function AppComponent(props: App): JSX.Element {
 
       // Longer version
       // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
-
       // <documents>
       // ${s.context}
       // </documents>
-
       // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
-
       // - Write a sentence or two describing the essence of the topic
       // - Extract a few representative excerpts or quotes from the documents that relate to the topic
       // - Estimate approximately what percentage of the overall content across the documents is about this topic
-
       // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
-
       // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
-
       // Enclose your final topic analysis in <analysis> tags.`;
       newMessage(ctx);
       setInput('');

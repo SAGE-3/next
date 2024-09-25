@@ -43,7 +43,7 @@ class ChatAgent:
                 + openai["model"]
             ),
         )
-        chat = sage3_config["chat"]
+        chat = sage3_config["llama"]
         self.logger.info(
             "chat server: url: " + chat["url"] + " - model: " + chat["model"],
         )

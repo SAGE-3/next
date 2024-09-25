@@ -60,7 +60,8 @@ export function AiRouter(): express.Router {
     try {
       if (model === chat.name) {
         // Query Llama with the input
-        const response = await chat.asking(input, max_new_tokens, app_id, user.id);
+        // const response = await chat.asking(input, max_new_tokens, app_id, user.id);
+        const response = await chat.ask(input, max_new_tokens);
         // Return the response
         res.status(200).json(response);
       } else {
