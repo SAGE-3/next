@@ -10,6 +10,8 @@ import { useRef, useEffect, useState } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
 // Upload with axios and progress event
 import axios, { AxiosProgressEvent, AxiosError } from 'axios';
+// Date manipulation (for filename)
+import { format as dateFormat } from 'date-fns/format';
 
 // File information
 import {
@@ -225,9 +227,21 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           } else {
-            fd.append('files', input[i]);
-            if (filenames) filenames += ', ' + input[i].name;
-            else filenames = input[i].name;
+            let item;
+            // Rename file for called image.png coming from the clipboard
+            if (input[i].name === "image.png") {
+              // Create a more meaningful name
+              const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
+              const username = user?.data.name || 'user';
+              const filename = username + '-' + dt + '.png';
+              // Create a new file with the new name
+              item = new File([input[i]], filename, { type: input[i].type });
+            } else {
+              item = input[i];
+            }
+            fd.append('files', item);
+            if (filenames) filenames += ', ' + item.name;
+            else filenames = item.name;
           }
         } else {
           toast({
