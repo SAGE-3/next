@@ -231,7 +231,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
         }
       }
     },
-    [user]
+    [user?.data.userRole, canDrop]
   );
 
   const createWeblink = () => {
