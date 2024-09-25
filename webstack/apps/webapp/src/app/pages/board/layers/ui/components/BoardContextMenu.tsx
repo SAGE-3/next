@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center, Divider } from '@chakra-ui/react';
 
 import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -136,26 +136,27 @@ export function BoardContextMenu(props: ContextProps) {
       pinned: false,
     });
   };
+  console.log(Applications['Chat']);
 
   return (
     <Box
       whiteSpace={'nowrap'}
       boxShadow={`4px 4px 10px 0px ${shadowColor}`}
       p="2"
-      rounded="md"
+      rounded="xl"
       bg={panelBackground}
       cursor="auto"
       w={'100%'}
     >
-      <Center pb={2}>
-        <Interactionbar />
-      </Center>
-
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'125px'}>
+        <VStack w={'130px'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Actions
           </Text>
+
+          <Center>
+            <Interactionbar />
+          </Center>
 
           <Button
             w="100%"
@@ -224,6 +225,10 @@ export function BoardContextMenu(props: ContextProps) {
             Show all Apps
           </Button>
         </VStack>
+
+        <Center h={'235px'}>
+          <Divider orientation="vertical" h={'100%'} />
+        </Center>
 
         <VStack w={'125px'}>
           <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>

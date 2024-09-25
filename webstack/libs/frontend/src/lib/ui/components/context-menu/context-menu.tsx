@@ -127,7 +127,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
       style={{
         top: contextMenuPos.y + 2,
         left: contextMenuPos.x + 2,
-        backgroundColor: bgColor,
+        // backgroundColor: bgColor,
       }}
     >
       {props.children}
