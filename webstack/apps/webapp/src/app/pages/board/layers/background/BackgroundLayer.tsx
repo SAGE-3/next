@@ -44,7 +44,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     { x: 0, y: 0 },
     { x: 0, y: 0 },
   ]);
-  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'other'>('other'); // Used to differentiate between board drag and app deselect
+  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other'); // Used to differentiate between board drag and app deselect
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);
@@ -117,6 +117,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setStartedDragOn('board-actions');
     } else if (target.classList.contains('handle')) {
       setStartedDragOn('app');
+    } else if (target.classList.contains('app-window-resize-handle')) {
+      setStartedDragOn('app-resize');
     } else {
       setStartedDragOn('other');
     }
@@ -137,6 +139,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
     if (checkValidClassIfOnlyOneTouch('handle')) {
       setStartedDragOn('app');
+    } else if (checkValidClassIfOnlyOneTouch('app-window-resize-handle')) {
+      setStartedDragOn('app-resize');
     } else if (checkValidIds(['board'])) {
       setStartedDragOn('board');
     } else if (checkValidIds(['lasso', 'whiteboard'])) {
@@ -152,7 +156,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       draggedOnCheck(event);
     };
 
-    window.addEventListener('mousedown', handleMouseStart, { passive: false });
+    window.addEventListener('mousedown', handleMouseStart, { capture: true, passive: false });
     return () => {
       window.removeEventListener('mousedown', handleMouseStart);
     };
@@ -216,6 +220,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (selectedApp) {
         return;
       }
+
       const move = () => {
         setLocalBoardPosition((prev) => ({
           x: prev.x + (event.movementX * 1) / prev.scale,
@@ -281,7 +286,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
 
       setStartedDragOn((draggedOn) => {
-        if (draggedOn === 'other' || draggedOn === 'app') {
+        if (draggedOn === 'other' || draggedOn === 'app' || draggedOn === 'app-resize') {
           return draggedOn;
         }
         if (event.touches.length === 1) {

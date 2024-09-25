@@ -24,6 +24,7 @@ import {
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
+import { InteractionbarShortcuts } from '../../ui/components';
 
 type BackgroundProps = {
   roomId: string;
@@ -222,6 +223,9 @@ export function Background(props: BackgroundProps) {
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {renderContent()}
+
+      {/* Interaction Shortcuts */}
+      <InteractionbarShortcuts />
     </Box>
   );
 }
