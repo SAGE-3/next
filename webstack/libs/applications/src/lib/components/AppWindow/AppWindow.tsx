@@ -119,9 +119,6 @@ export function AppWindow(props: WindowProps) {
   const toast = useToast();
   const toastID = 'error-toast';
 
-  // Detect if spacebar is held down to allow for board dragging through apps
-  const spacebarPressed = useKeyPress(' ');
-
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
@@ -337,7 +334,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },

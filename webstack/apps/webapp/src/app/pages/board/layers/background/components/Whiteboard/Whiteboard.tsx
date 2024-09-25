@@ -302,8 +302,6 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [undoLastMaker]);
 
-  const spacebarPressed = useKeyPress(' ');
-
   // Switch between pen and interactive mode
   // Going to make each interaction mode a hotkey/ keybind
   // useHotkeys(
@@ -332,8 +330,8 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'auto' : 'none',
-        touchAction: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'none' : 'auto',
+        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'auto' : 'none',
+        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'none' : 'auto',
       }}
     >
       <svg

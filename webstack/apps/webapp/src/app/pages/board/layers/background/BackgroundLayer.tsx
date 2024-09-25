@@ -49,7 +49,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);
 
-  // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
