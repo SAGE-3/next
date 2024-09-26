@@ -402,15 +402,16 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
-        disableBeacon: true,
-      },
-      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
+      },
+      {
+        target: searchInputRef.current!,
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
+        disableBeacon: true,
       },
       {
         target: recentBoardsRef.current!,
@@ -490,12 +491,26 @@ export function HomePage() {
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
+
+    // As a guest or spectator, check
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      const recentAndStarred = new Set([...recentBoards, ...savedBoards]);
+      const isRecentOrStarred = recentAndStarred.has(board._id);
+      return isRecentOrStarred && userCount > 0;
+    }
+
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
   };
 
   const boardStarredFilter = (board: Board): boolean => {
     const isSaved = savedBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isSaved;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isSaved && isMember;
@@ -503,6 +518,12 @@ export function HomePage() {
 
   const recentBoardsFilter = (board: Board): boolean => {
     const isRecent = recentBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isRecent;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isRecent && isMember;
@@ -871,6 +892,8 @@ export function HomePage() {
       }
     }
   }, [members]);
+
+  console.log('user', user);
 
   return (
     // Main Container
