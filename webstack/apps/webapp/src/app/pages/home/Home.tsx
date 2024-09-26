@@ -766,15 +766,12 @@ export function HomePage() {
   // Function to check if it's a valid URL
   function isValidURL() {
     try {
-      console.log('searchSage', searchSage);
       const SAGE_URL = searchSage.trim();
-      console.log('SAGEURL', SAGE_URL);
       const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
       const hostname = cleanURL.hostname;
       const hash = cleanURL.hash;
 
       if (!hostname || !hash) {
-        console.log('invalid URL');
         return false;
       }
 
@@ -784,11 +781,8 @@ export function HomePage() {
 
       // Extract the boardID
       const boardId = hash.split('/')[hash.split('/').length - 1];
-      console.log('boardId', boardId);
       if (!isUUIDv4(boardId)) {
         // Invalid URL
-        // Reset local state
-        console.log('invalid URL');
         return false;
       } else {
         const board = boards.find((board) => board._id === boardId);
@@ -798,7 +792,6 @@ export function HomePage() {
         return false;
       }
     } catch {
-      console.log('invalid url');
       return false;
     }
   }
@@ -828,7 +821,6 @@ export function HomePage() {
 
       // Extract the boardID
       const boardId = hash.split('/')[hash.split('/').length - 1];
-      console.log('boardId', boardId);
       if (!isUUIDv4(boardId)) {
         // Invalid URL
         return result;
@@ -843,7 +835,6 @@ export function HomePage() {
         return result;
       }
     } catch {
-      console.log('invalid url');
       return result;
     }
   }
@@ -892,8 +883,6 @@ export function HomePage() {
       }
     }
   }, [members]);
-
-  console.log('user', user);
 
   return (
     // Main Container
