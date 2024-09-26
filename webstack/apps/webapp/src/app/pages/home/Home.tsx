@@ -1506,7 +1506,7 @@ export function HomePage() {
           marginLeft="3"
           width="100%"
           overflow="hidden"
-          py="1"
+          py="2"
           minWidth="600px"
         >
           <Box
@@ -1669,8 +1669,8 @@ export function HomePage() {
                   </Tab>
                 </TabList>
 
-                <TabPanels minH="250px">
-                  <TabPanel px="0" pt="2" id="Recent Boards">
+                <TabPanels height="240px">
+                  <TabPanel px="0" pt="2" id="Recent Boards" height="100%">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
                       {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
