@@ -43,6 +43,7 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Spacer,
 } from '@chakra-ui/react';
 import {
   MdClose,
@@ -115,7 +116,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
-  const intelligenceColor = useHexColor('purple');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
 
   // Settings
   const { settings } = useUserSettings();
@@ -624,8 +626,8 @@ export function AppToolbar(props: AppToolbarProps) {
         {/* Menu for overflow tags */}
         {overflowTags.length > 0 && (
           <Box>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags.' : 'Show more tags.'}>
-              <Button size="xs" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags' : 'Show more tags'}>
+              <Button size="xs" p={0} width="30px" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
                 {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
               </Button>
             </Tooltip>
@@ -674,11 +676,13 @@ export function AppToolbar(props: AppToolbarProps) {
           </Box>
         )}
         {/* Button to add tag */}
-        <Tooltip placement="top" hasArrow={true} openDelay={400} label="Add tag">
-          <Button onClick={openAddModal} size="xs" p={0} width="30px">
-            <MdAddCircleOutline size="14px" />
-          </Button>
-        </Tooltip>
+        <Box>
+          <Tooltip placement="top" hasArrow={true} openDelay={400} label="Add tag">
+            <Button onClick={openAddModal} size="xs">
+              <MdAddCircleOutline size="14px" />
+            </Button>
+          </Tooltip>
+        </Box>
         {/* Modal for adding or editing a new tag */}
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
           <ModalOverlay />
@@ -777,19 +781,6 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-
-            {/* Sage Intelligence */}
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              openDelay={400}
-              ml="1"
-              label={'Chat with SAGE Intelligence'}
-            >
-              <Button onClick={openChat} backgroundColor={intelligenceColor} size="xs" ml="1" p={0}>
-                <HiOutlineSparkles size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
 
             {/* Application Information Popover */}
             <Popover trigger="hover">
@@ -902,6 +893,33 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
+  /**
+   * Get the text selected by the user in the app
+   * @param id string application id
+   * @returns string | null
+   */
+  function getTextSelection(id: string): string | null {
+    const elt = document.getElementById(`app_${id}`);
+    if (elt) {
+      const ta = elt.getElementsByTagName('textarea');
+      if (ta) {
+        const start = ta[0].selectionStart;
+        const end = ta[0].selectionEnd;
+        if (start !== end) {
+          return ta[0].value.substring(start, end);
+        } else {
+          return null;
+        }
+      }
+    }
+    // Get the text selected by the user: maybe get the text from other apps
+    // const selObj = window.getSelection();
+    // if (selObj && selObj.anchorNode) {
+    //   return selObj.toString();
+    // }
+    return null;
+  }
+
   const openChat = async () => {
     if (app) {
       console.log('Chat with SAGE Intelligence');
@@ -912,11 +930,13 @@ export function AppToolbar(props: AppToolbarProps) {
       let context = '';
       // Specific cases for each app to build a context for the LLM
       if (app.data.type === 'Stickie') {
-        // Get the text of the stickie
-        context = app.data.state.text;
+        const selection = getTextSelection(app._id);
+        context = selection || app.data.state.text;
       } else if (app.data.type === 'CodeEditor') {
+        const selection = getTextSelection(app._id);
+        const code = selection || app.data.state.content;
         // Get the source code of the editor
-        context = `Language ${app.data.state.language}:\n\n${app.data.state.content}`;
+        context = `Language ${app.data.state.language}:\n\n${code}`;
       } else if (app.data.type === 'CSVViewer') {
         // Get information about the asset
         const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
@@ -979,13 +999,32 @@ export function AppToolbar(props: AppToolbarProps) {
               fontWeight="bold"
               h={'auto'}
               userSelect={'none'}
-            // className="handle"
             >
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">
               {getAppTags()}
             </Box>
+
+            <Spacer />
+
+            {/* Sage Intelligence */}
+            <Box>
+              <Tooltip
+                placement="top"
+                hasArrow={true}
+                openDelay={400}
+                ml="1"
+                label={'Chat with SAGE Intelligence'}
+              >
+                <Button onClick={openChat} backgroundColor={intelligenceColor}
+                  variant='solid' size="xs" m={0} mr={2} p={0}
+                  _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
+                  <HiOutlineSparkles size="14px" color={"white"} />
+                </Button>
+              </Tooltip>
+            </Box>
+
           </Box>
 
           <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
