@@ -1069,6 +1069,7 @@ export function HomePage() {
                 justify="space-between"
                 alignItems="center"
                 mb="2"
+                pr="3"
                 hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
               >
                 <Box pl="4" fontSize="md" fontWeight="bold">
