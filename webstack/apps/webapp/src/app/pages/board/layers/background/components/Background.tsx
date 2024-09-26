@@ -191,13 +191,10 @@ export function Background(props: BackgroundProps) {
 
   // Deselect Application by clicking on board
   function handleDeselect() {
-    if (selectedApp) {
-      setSelectedApp('');
-    }
-
-    if (setSelectedAppsIds.length > 0) {
-      setSelectedAppsIds([]);
-    }
+    setSelectedApp('');
+    // Maybe people would want to use lasso tool and then switch to hand to move
+    // then go back to lasso more
+    // setSelectedAppsIds([]);
   }
 
   return (
@@ -206,8 +203,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       userSelect={'none'}
       draggable={false}
@@ -219,7 +217,7 @@ export function Background(props: BackgroundProps) {
       }}
       // Drag and drop event handlers
       {...dragProps}
-      onClick={handleDeselect}
+      onPointerDown={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {renderContent()}

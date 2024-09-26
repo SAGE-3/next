@@ -60,6 +60,8 @@ export function Whiteboard(props: WhiteboardProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
   const boardSynced = useUIStore((state) => state.boardSynced);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
@@ -97,6 +99,9 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
+      setSelectedApp('');
+      setSelectedAppsIds([]);
+
       if (yLines && yDoc && canAnnotate && boardSynced) {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
