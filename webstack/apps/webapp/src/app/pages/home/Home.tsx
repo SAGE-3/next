@@ -1346,6 +1346,7 @@ export function HomePage() {
                               colorScheme={'teal'}
                               aria-label="favorite-board"
                               fontSize="xl"
+                              onFocus={(e) => e.preventDefault()}
                               onClick={createBoardModalOnOpen}
                               isDisabled={!canCreateBoards}
                               icon={<MdAdd />}
