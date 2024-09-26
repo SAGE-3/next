@@ -1039,15 +1039,7 @@ export function HomePage() {
 
         {/* Rooms and boards section */}
         <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
-          <Box
-            display="flex"
-            flexDirection="column"
-            justifyItems="start"
-            flex="1"
-            height="100%"
-            px="3"
-            borderRadius={cardRadius}
-          >
+          <Box display="flex" flexDirection="column" justifyItems="start" flex="1" height="100%" px="3" borderRadius={cardRadius}>
             <VStack align="stretch" gap="2px" height="100%">
               <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
                 <Box
@@ -1607,10 +1599,12 @@ export function HomePage() {
                     },
                   }}
                 >
+                  {/* If it starts with https:// or http:// and is a valid URL */}
                   {(searchSage.startsWith('https://') || searchSage.startsWith('http://')) && isValidURL() && boards.length > 0 && (
                     <SearchRow.Url urlInfo={extractUrlInfo()} />
                   )}
 
+                  {/* If it doesn't start with https:// or http:// and filtered roomsAndBoards have more than 1 item */}
                   {roomAndBoards &&
                     roomAndBoards.filter(sageSearchFilter).length > 0 &&
                     (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
@@ -1630,6 +1624,7 @@ export function HomePage() {
                       );
                     })}
 
+                  {/* If there are no roomAndBoards and it's not a valid URL*/}
                   {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
                 </Box>
               </Box>

@@ -6,11 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactNode, SyntheticEvent, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { Box, Divider, HStack, Text, useDisclosure, useToast } from '@chakra-ui/react';
-
-import { BiGridAlt } from 'react-icons/bi';
-import { BsFillCollectionFill } from 'react-icons/bs';
 
 import { Board, Room } from '@sage3/shared/types';
 import { EnterBoardModal } from '@sage3/frontend';
