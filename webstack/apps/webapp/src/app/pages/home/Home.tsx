@@ -1037,41 +1037,6 @@ export function HomePage() {
           </Box>
         )}
 
-        {/* <Box pt="2" px="2"> */}
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={handleRoomSearchClick}
-                ref={searchRoomsRef}
-              >
-                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
-              </Box>
-            </Tooltip> */}
-
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-            <Box
-              h="40px"
-              display="flex"
-              justifyContent={'left'}
-              alignItems={'center'}
-              transition="all 0.5s"
-              borderRadius={buttonRadius}
-              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-              onClick={enterBoardByURLModalOnOpen}
-              ref={enterBoardByURLRef}
-            >
-              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
-            </Box>
-          </Tooltip> */}
-        {/* </Box> */}
-        {/* </Box> */}
-
         {/* Rooms and boards section */}
         <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
           <Box
@@ -1080,8 +1045,6 @@ export function HomePage() {
             justifyItems="start"
             flex="1"
             height="100%"
-            // overflowY="auto"
-            // overflowX="hidden"
             px="3"
             borderRadius={cardRadius}
           >
@@ -1109,25 +1072,6 @@ export function HomePage() {
                   </Text>
                 </Box>
               </Tooltip>
-              {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  pl="3"
-                  borderRadius={buttonRadius}
-                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                  onClick={enterBoardByURLModalOnOpen}
-                  ref={enterBoardByURLRef}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
-                  <Text fontSize="md" fontWeight="bold">
-                    Join Board
-                  </Text>
-                </Box>
-              </Tooltip> */}
               <Divider my="2" />
               <HStack
                 justify="space-between"
@@ -1647,9 +1591,6 @@ export function HomePage() {
                 borderColor="inherit"
               >
                 <Box
-                  // hidden={!(searchSage.length > 0) || !isSearchSageFocused}
-                  // ref={searchSageRef}
-                  // position="absolute"
                   p="3"
                   mb="0"
                   h="full"
@@ -1771,7 +1712,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1823,7 +1763,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1869,7 +1808,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1892,11 +1830,6 @@ export function HomePage() {
                 </Box>
                 <Box p="4" bg={homeSectionColor} rounded="xl">
                   <Box display="flex" alignItems="center" gap="2">
-                    {/* <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
-                      <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
-                        <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
-                      </Button>
-                    </Tooltip> */}
                     <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
