@@ -26,7 +26,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { RoomSchema } from '@sage3/shared/types';
-import { randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { isAlphanumeric, randomSAGEColor, SAGEColors } from '@sage3/shared';
 
 import { useRoomStore, useConfigStore } from '../../../stores';
 import { useUser } from '../../../providers';
@@ -95,6 +95,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       // remove leading and trailing space, and limit name length to 20
       const cleanedName = name.trim().substring(0, 19);
       const roomNames = rooms.map((room) => room.data.name);
+
       if (cleanedName.split(' ').join('').length === 0) {
         toast({
           title: 'Name must have at least one character',
@@ -107,6 +108,13 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           title: 'Room name already exists',
           status: 'error',
           duration: 2 * 1000,
+          isClosable: true,
+        });
+      } else if (!isAlphanumeric(cleanedName)) {
+        toast({
+          title: 'Name must only contain characters A-Z, 0-9, and spaces',
+          status: 'error',
+          duration: 3 * 1000,
           isClosable: true,
         });
       } else {
