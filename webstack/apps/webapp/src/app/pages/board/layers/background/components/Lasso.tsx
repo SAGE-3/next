@@ -33,7 +33,6 @@ export function Lasso(props: LassoProps) {
 
   // Lasso mode apps & Selected apps
   const setLassoMode = useUIStore((state) => state.setLassoMode);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 

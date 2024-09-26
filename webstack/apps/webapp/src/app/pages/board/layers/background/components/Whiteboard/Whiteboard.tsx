@@ -60,8 +60,6 @@ export function Whiteboard(props: WhiteboardProps) {
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
   const boardSynced = useUIStore((state) => state.boardSynced);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);

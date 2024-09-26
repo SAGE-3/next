@@ -61,10 +61,8 @@ export function Background(props: BackgroundProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
+
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);

@@ -12,7 +12,7 @@ import { BiPencil } from 'react-icons/bi';
 import { BsEraserFill } from 'react-icons/bs';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
-import { useUserSettings, useUser, useHotkeys } from '@sage3/frontend';
+import { useUserSettings, useUser, useHotkeys, useUIStore } from '@sage3/frontend';
 
 export function Interactionbar() {
   // Settings
@@ -25,6 +25,8 @@ export function Interactionbar() {
   // Panel Stores
   // const annotations = usePanelStore((state) => state.panels['annotations']);
   // const updatePanel = usePanelStore((state) => state.updatePanel);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   return (
     <>
@@ -63,6 +65,8 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('pen');
+              setSelectedApp('');
+              setSelectedAppsIds([]);
             }}
           ></IconButton>
         </Tooltip>
@@ -75,6 +79,8 @@ export function Interactionbar() {
             aria-label={'input-type'}
             onClick={() => {
               setPrimaryActionMode('eraser');
+              setSelectedApp('');
+              setSelectedAppsIds([]);
             }}
           ></IconButton>
         </Tooltip>
