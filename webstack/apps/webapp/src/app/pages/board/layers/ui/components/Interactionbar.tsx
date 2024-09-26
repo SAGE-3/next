@@ -39,7 +39,7 @@ export function Interactionbar() {
             colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
             sx={{
               _dark: {
-                bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.700', // 'inherit' didnt seem to work
+                bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.600', // 'inherit' didnt seem to work
               },
             }}
             icon={<LiaHandPaperSolid />}
@@ -56,7 +56,7 @@ export function Interactionbar() {
             colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
             sx={{
               _dark: {
-                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.700',
+                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
               },
             }}
             icon={<LiaMousePointerSolid />}
@@ -74,7 +74,7 @@ export function Interactionbar() {
             colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
             sx={{
               _dark: {
-                bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.700',
+                bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
               },
             }}
             icon={<BiPencil />}
@@ -93,7 +93,7 @@ export function Interactionbar() {
             colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
             sx={{
               _dark: {
-                bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.700',
+                bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
               },
             }}
             icon={<BsEraserFill />}
