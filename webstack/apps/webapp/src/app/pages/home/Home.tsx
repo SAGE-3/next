@@ -303,12 +303,6 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
-        disableBeacon: true,
-      },
-      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
@@ -321,8 +315,9 @@ export function HomePage() {
       },
       {
         target: searchInputRef.current!,
-        title: 'Search your Rooms and Boards',
-        content: 'You can search for rooms that you own or join, and for boards from those rooms.',
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
@@ -1177,6 +1172,8 @@ export function HomePage() {
                             justifyContent="space-between"
                             transition="all 0.5s"
                             pl="3"
+                            ml="2"
+                            pr="2"
                             height="28px"
                             my="1px"
                             backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
