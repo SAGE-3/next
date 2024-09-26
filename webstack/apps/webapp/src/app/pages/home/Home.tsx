@@ -1653,29 +1653,29 @@ export function HomePage() {
                   }}
                 >
                   {(searchSage.startsWith('https://') || searchSage.startsWith('http://')) && isValidURL() && boards.length > 0 && (
-                    <Box>
-                      <SearchRow.Url urlInfo={extractUrlInfo()} />
-                    </Box>
+                    <SearchRow.Url urlInfo={extractUrlInfo()} />
                   )}
+
                   {roomAndBoards &&
-                  roomAndBoards.filter(sageSearchFilter).length > 0 &&
-                  (searchSage.startsWith('https://') || searchSage.startsWith('http://'))
-                    ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                        // If it's a board, get the room ID
-                        if ((item as Board & { roomName: string }).data.roomId) {
-                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                        }
-                        return (
-                          <SearchRow.Room
-                            key={item._id}
-                            room={item as Room}
-                            clickHandler={() => {
-                              handleRoomClick(item as Room);
-                            }}
-                          />
-                        );
-                      })
-                    : 'No items match your search'}
+                    roomAndBoards.filter(sageSearchFilter).length > 0 &&
+                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
+                    roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                      // If it's a board, get the room ID
+                      if ((item as Board & { roomName: string }).data.roomId) {
+                        return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                      }
+                      return (
+                        <SearchRow.Room
+                          key={item._id}
+                          room={item as Room}
+                          clickHandler={() => {
+                            handleRoomClick(item as Room);
+                          }}
+                        />
+                      );
+                    })}
+
+                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
                 </Box>
               </Box>
             </Box>
