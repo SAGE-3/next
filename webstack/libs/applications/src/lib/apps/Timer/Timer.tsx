@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
-import { useAppStore, zeroPad } from '@sage3/frontend';
+import { useAppStore, zeroPad, serverTime } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { App, AppGroup } from '../../schema';
@@ -34,22 +34,21 @@ function AppComponent(props: App): JSX.Element {
   const [intervalId, setIntervalId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Update global state when local state changes
-    updateState(props._id, { total: total });
-  }, [total]);
-
-  useEffect(() => {
     // Sync local state across clients when users manually adjust time (inc/dec/reset)
     if (s.total !== total && !s.isRunning) {
       setTotal(s.total);
     }
-  }, [s.total]);
+  }, [s.total, s.isRunning]);
 
   useEffect(() => {
     // Manages the countdown of the timer, starting or stopping based on the running state
     if (s.isRunning) {
-      const id = window.setInterval(() => {
-        setTotal((prevTotal) => prevTotal - 1);
+      const id = window.setInterval(async () => {
+        const currentTime = await serverTime();
+        const localTime = Math.floor(currentTime.epoch / 1000);
+        const elapsedTime = localTime - s.clientStartTime;
+        const remainingTime = total - elapsedTime;
+        setTotal(remainingTime);
       }, 1000);
 
       setIntervalId(id);
@@ -94,23 +93,27 @@ function AppComponent(props: App): JSX.Element {
 
   // Increment or decrement the time by the given amount
   const adjustTotal = (amount: number) => {
-    setTotal(total + amount);
+    updateState(props._id, { total: total + amount})
+    updateState(props._id, { originalTotal: total + amount})
   };
 
-  // Updates the global running state of the timer
-  const setTimerRunning = () => {
+  // Updates global states
+  const setTimerRunning = async () => {
+    const time = await serverTime();
+    const inSeconds = Math.floor(time.epoch / 1000); // divide by 1000 to convert to seconds
+    updateState(props._id, { clientStartTime: inSeconds });
+    updateState(props._id, { total: total });
     updateState(props._id, { isRunning: !s.isRunning });
   };
 
   // Reset timer to 5 minutes
   const resetTimer = () => {
     updateState(props._id, { isRunning: false });
+    updateState(props._id, { total: s.originalTotal });
     if (intervalId) {
       window.clearInterval(intervalId);
     }
-    setTotal(5 * 60);
   };
-
 
   return (
     <AppWindow app={props} disableResize={true}>
@@ -119,7 +122,7 @@ function AppComponent(props: App): JSX.Element {
           color={total > -1 ? total < 60 ? "orange.600" : "green.600" : "red.600"}
           animation={(total < 0) && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
         >
-          {formatTime(s.total)}
+          {formatTime(total)}
         </Text>
 
         <VStack>
