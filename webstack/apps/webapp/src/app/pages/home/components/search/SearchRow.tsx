@@ -157,49 +157,26 @@ SearchRow.Url = ({ urlInfo }: SearchRowUrlProps) => {
 
   return (
     <>
-      {!urlInfo.isExternal ? (
-        <>
-          <HStack
-            w="100%"
-            p="1"
-            role="button"
-            onClick={handleSubmit}
-            _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
-            transition="ease-in 200ms"
-          >
-            <Box overflow="hidden" display="flex" gap="4" alignItems="center">
-              <MdExitToApp fontSize="24px" />
-              <Box>
-                <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
-                  Join Board: {urlInfo.board?.data.name}
-                </Text>
-              </Box>
-            </Box>
-          </HStack>
-          <Divider />
-        </>
-      ) : (
-        <>
-          <HStack
-            w="100%"
-            p="1"
-            role="button"
-            onClick={handleSubmit}
-            _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
-            transition="ease-in 200ms"
-          >
-            <Box overflow="hidden" display="flex" gap="4" alignItems="center">
-              <MdExitToApp fontSize="24px" />
-              <Box>
-                <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
-                  Join board in a different hub
-                </Text>
-              </Box>
-            </Box>
-          </HStack>
-          <Divider />
-        </>
-      )}
+      <HStack
+        w="100%"
+        px="1"
+        py="3"
+        role="button"
+        onClick={handleSubmit}
+        _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
+        transition="ease-in 200ms"
+      >
+        <Box overflow="hidden" display="flex" gap="4" alignItems="center">
+          <MdExitToApp fontSize="24px" />
+          <Box>
+            <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
+              {!urlInfo.isExternal ? `Join board: ${urlInfo.board?.data.name}` : 'Join board in a different hub'}
+            </Text>
+          </Box>
+        </Box>
+      </HStack>
+      <Divider />
+
       {urlInfo.board ? (
         <EnterBoardModal isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard} board={urlInfo.board}></EnterBoardModal>
       ) : null}

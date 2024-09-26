@@ -1102,7 +1102,7 @@ export function HomePage() {
                   </Text>
                 </Box>
               </Tooltip>
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
+              {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
                 <Box
                   h="40px"
                   display="flex"
@@ -1120,7 +1120,7 @@ export function HomePage() {
                     Join Board
                   </Text>
                 </Box>
-              </Tooltip>
+              </Tooltip> */}
               <Divider my="2" />
               <HStack justify="space-between" alignItems="center" mb="2">
                 <Box pl="4" fontSize="md" fontWeight="bold" hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}>
