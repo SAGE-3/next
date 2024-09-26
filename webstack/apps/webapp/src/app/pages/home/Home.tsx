@@ -77,6 +77,8 @@ import {
   isElectron,
   useUserSettings,
   useAssetStore,
+  apiUrls,
+  isUUIDv4,
 } from '@sage3/frontend';
 
 // Home Page Components
@@ -745,6 +747,91 @@ export function HomePage() {
     }
   }
 
+  // Function to check if it's a valid URL
+  function isValidURL() {
+    try {
+      console.log('searchSage', searchSage);
+      const SAGE_URL = searchSage.trim();
+      console.log('SAGEURL', SAGE_URL);
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        console.log('invalid URL');
+        return false;
+      }
+
+      if (hostname !== window.location.hostname) {
+        return true;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      console.log('boardId', boardId);
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        // Reset local state
+        console.log('invalid URL');
+        return false;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          return true;
+        }
+        return false;
+      }
+    } catch {
+      console.log('invalid url');
+      return false;
+    }
+  }
+
+  function extractUrlInfo(): { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } {
+    const result: { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } = {
+      board: null,
+      isExternal: false,
+      error: true,
+      url: searchSage,
+    };
+    try {
+      const SAGE_URL = searchSage.trim();
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        return result;
+      }
+
+      if (hostname !== window.location.hostname) {
+        result.isExternal = true;
+        result.error = false;
+        return result;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      console.log('boardId', boardId);
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        return result;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          result.board = board;
+          result.error = false;
+          result.isExternal = false;
+          return result;
+        }
+        return result;
+      }
+    } catch {
+      console.log('invalid url');
+      return result;
+    }
+  }
+
   // Function to get the greeting based on the time of the day
   function getTimeBasedGreeting() {
     const hour = new Date().getHours();
@@ -1318,7 +1405,13 @@ export function HomePage() {
                             <InputLeftElement pointerEvents="none">
                               <MdSearch />
                             </InputLeftElement>
-                            <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                            <Input
+                              placeholder="Search Boards"
+                              value={boardSearch}
+                              onChange={(e) => {
+                                setBoardSearch(e.target.value);
+                              }}
+                            />
                           </InputGroup>
                           <ButtonGroup size="md" isAttached variant="outline">
                             <IconButton
@@ -1507,10 +1600,12 @@ export function HomePage() {
                   <MdSearch />
                 </InputLeftElement>
                 <Input
-                  placeholder="Search your rooms and boards"
+                  placeholder="Search your rooms, boards, or join board via URL"
                   _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
                   value={searchSage}
-                  onChange={(e) => setSearchSage(e.target.value)}
+                  onChange={(e) => {
+                    setSearchSage(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
                       setSearchSage('');
@@ -1557,7 +1652,14 @@ export function HomePage() {
                     },
                   }}
                 >
-                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
+                  {(searchSage.startsWith('https://') || searchSage.startsWith('http://')) && isValidURL() && boards.length > 0 && (
+                    <Box>
+                      <SearchRow.Url urlInfo={extractUrlInfo()} />
+                    </Box>
+                  )}
+                  {roomAndBoards &&
+                  roomAndBoards.filter(sageSearchFilter).length > 0 &&
+                  (searchSage.startsWith('https://') || searchSage.startsWith('http://'))
                     ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
                         // If it's a board, get the room ID
                         if ((item as Board & { roomName: string }).data.roomId) {

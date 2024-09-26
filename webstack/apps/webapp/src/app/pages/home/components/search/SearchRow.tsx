@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactNode } from 'react';
-import { Box, Divider, HStack, Text, useDisclosure } from '@chakra-ui/react';
+import { ReactNode, SyntheticEvent, useState } from 'react';
+import { Box, Divider, HStack, Text, useDisclosure, useToast } from '@chakra-ui/react';
 
 import { BiGridAlt } from 'react-icons/bi';
 import { BsFillCollectionFill } from 'react-icons/bs';
@@ -15,17 +15,23 @@ import { BsFillCollectionFill } from 'react-icons/bs';
 import { Board, Room } from '@sage3/shared/types';
 import { EnterBoardModal } from '@sage3/frontend';
 import { PiStackFill } from 'react-icons/pi';
-import { MdDashboard } from 'react-icons/md';
+import { MdDashboard, MdExitToApp } from 'react-icons/md';
+
+import { ConfirmModal } from '@sage3/frontend';
 
 type SearchRowChildrenProps = {
   room?: Room;
-  board?: Board & { roomName: string };
+  board?: Board & { roomName?: string };
   clickHandler?: () => void;
 };
 
 type SearchRowProps = {
   children: ReactNode;
 };
+
+interface SearchRowUrlProps extends SearchRowChildrenProps {
+  urlInfo: { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null };
+}
 
 const SearchRow = ({ children }: SearchRowProps) => {
   return <>{children}</>;
@@ -89,6 +95,135 @@ SearchRow.Room = ({ room, clickHandler }: SearchRowChildrenProps) => {
         </Box>
       </HStack>
       <Divider />
+    </>
+  );
+};
+
+SearchRow.Url = ({ urlInfo }: SearchRowUrlProps) => {
+  // Local state
+  const [boardUrl, setboardURL] = useState('');
+
+  // Chakra Toast
+  const toast = useToast();
+
+  // Enter Board by ID Modal
+  const { isOpen: isOpenEnterBoard, onOpen: onOpenEnterBoard, onClose: onCloseEnterBoard } = useDisclosure();
+  const { isOpen: changeBoardIsOpen, onOpen: changeBoardOnOpen, onClose: changeBoardOnClose } = useDisclosure();
+  const { isOpen: differentServerIsOpen, onOpen: differentServerOnOpen, onClose: differentServerOnClose } = useDisclosure();
+
+  const differentServerConfirm = () => {
+    try {
+      const url = new URL((urlInfo.url as string).replace('sage3://', 'https://'));
+      // Change the current address to the new url
+      window.location.href = url.href;
+    } catch {
+      toast({
+        title: 'Invalid URL',
+        description: 'This URL is invalid.',
+        duration: 3000,
+        isClosable: true,
+        status: 'error',
+      });
+    }
+  };
+
+  const changeBoardConfirm = () => {
+    if (urlInfo.board) {
+      onOpenEnterBoard();
+    }
+  };
+
+  const cancelReset = () => {
+    setboardURL('');
+    differentServerOnClose();
+    changeBoardOnClose();
+    onCloseEnterBoard();
+  };
+
+  /* Submit handler */
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+
+    if (urlInfo.isExternal) {
+      differentServerOnOpen();
+      return;
+    }
+
+    if (urlInfo.board) {
+      changeBoardOnOpen();
+      return;
+    }
+  };
+
+  return (
+    <>
+      {!urlInfo.isExternal ? (
+        <>
+          <HStack
+            w="100%"
+            p="1"
+            role="button"
+            onClick={handleSubmit}
+            _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
+            transition="ease-in 200ms"
+          >
+            <Box overflow="hidden" display="flex" gap="4" alignItems="center">
+              <MdExitToApp fontSize="24px" />
+              <Box>
+                <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
+                  Join Board: {urlInfo.board?.data.name}
+                </Text>
+              </Box>
+            </Box>
+          </HStack>
+          <Divider />
+        </>
+      ) : (
+        <>
+          <HStack
+            w="100%"
+            p="1"
+            role="button"
+            onClick={handleSubmit}
+            _hover={{ cursor: 'pointer', background: 'gray.700', borderRadius: 'lg' }}
+            transition="ease-in 200ms"
+          >
+            <Box overflow="hidden" display="flex" gap="4" alignItems="center">
+              <MdExitToApp fontSize="24px" />
+              <Box>
+                <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold">
+                  Join board in a different hub
+                </Text>
+              </Box>
+            </Box>
+          </HStack>
+          <Divider />
+        </>
+      )}
+      {urlInfo.board ? (
+        <EnterBoardModal isOpen={isOpenEnterBoard} onClose={onCloseEnterBoard} board={urlInfo.board}></EnterBoardModal>
+      ) : null}
+      <ConfirmModal
+        isOpen={differentServerIsOpen}
+        onClose={cancelReset}
+        title={'Different Hub'}
+        cancelText={'Cancel'}
+        confirmText="Confirm"
+        confirmColor="green"
+        message={`This board exists on a different hub. Are you sure you want to leave this hub?`}
+        onConfirm={differentServerConfirm}
+      />
+
+      <ConfirmModal
+        isOpen={changeBoardIsOpen}
+        onClose={cancelReset}
+        title={'Change Board'}
+        cancelText={'Cancel'}
+        confirmText="Confirm"
+        confirmColor="green"
+        message={`Are you sure you want to enter "${urlInfo.board?.data.name}?`}
+        onConfirm={changeBoardConfirm}
+      />
     </>
   );
 };
