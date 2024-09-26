@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
+import { IconButton, Tooltip, ButtonGroup, useColorModeValue } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';
 import { BsEraserFill } from 'react-icons/bs';
@@ -22,11 +22,13 @@ export function Interactionbar() {
   // User
   const { user } = useUser();
 
+  // UiStore
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+
   // Panel Stores
   // const annotations = usePanelStore((state) => state.panels['annotations']);
   // const updatePanel = usePanelStore((state) => state.updatePanel);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   return (
     <>
