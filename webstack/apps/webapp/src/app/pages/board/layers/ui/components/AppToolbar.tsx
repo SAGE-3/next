@@ -1020,7 +1020,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 <Button onClick={openChat} backgroundColor={intelligenceColor}
                   variant='solid' size="xs" m={0} mr={2} p={0}
                   _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
-                  <HiOutlineSparkles size="14px" color={"white"} />
+                  <HiOutlineSparkles size="20px" color={"white"} />
                 </Button>
               </Tooltip>
             </Box>
