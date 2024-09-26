@@ -189,14 +189,6 @@ export function Background(props: BackgroundProps) {
     { dependencies: [] }
   );
 
-  // Deselect Application by clicking on board
-  function handleDeselect() {
-    setSelectedApp('');
-    // Maybe people would want to use lasso tool and then switch to hand to move
-    // then go back to lasso more
-    // setSelectedAppsIds([]);
-  }
-
   return (
     <Box
       className="board-handle"
@@ -217,7 +209,8 @@ export function Background(props: BackgroundProps) {
       }}
       // Drag and drop event handlers
       {...dragProps}
-      onPointerDown={handleDeselect}
+      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+      // onPointerDown={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {renderContent()}

@@ -125,11 +125,6 @@ export function Lasso(props: LassoProps) {
     }
   };
 
-  // Deselect Application by clicking on board
-  function handleDeselect() {
-    setSelectedApp('');
-  }
-
   return (
     <>
       {/* lassoMode */}
@@ -148,7 +143,8 @@ export function Lasso(props: LassoProps) {
             // the cursor should remain a pointer
             // cursor: 'crosshair',
           }}
-          onPointerDown={handleDeselect}
+          // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+          // onPointerDown={handleDeselect}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}

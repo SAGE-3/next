@@ -99,9 +99,6 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      setSelectedApp('');
-      setSelectedAppsIds([]);
-
       if (yLines && yDoc && canAnnotate && boardSynced) {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
@@ -344,6 +341,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
         {...dragProps}
+        // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}
