@@ -26,7 +26,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { RoomSchema } from '@sage3/shared/types';
-import { isAlphanumeric, randomSAGEColor, SAGEColors } from '@sage3/shared';
+import { isAlphanumericWithSpacesAndForeign, randomSAGEColor, SAGEColors } from '@sage3/shared';
 
 import { useRoomStore, useConfigStore } from '../../../stores';
 import { useUser } from '../../../providers';
@@ -110,7 +110,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           duration: 2 * 1000,
           isClosable: true,
         });
-      } else if (!isAlphanumeric(cleanedName)) {
+      } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
         toast({
           title: 'Name must only contain characters A-Z, 0-9, and spaces',
           status: 'error',

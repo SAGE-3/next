@@ -6,6 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export function isAlphanumeric(str: string) {
-  return /^[a-zA-Z0-9\s]+$/.test(str);
+export function isAlphanumericWithSpacesAndForeign(str: string) {
+  return /^[\p{L}\p{N}\s]+$/u.test(str);
 }

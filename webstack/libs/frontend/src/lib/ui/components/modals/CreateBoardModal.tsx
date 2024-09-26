@@ -30,7 +30,7 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { BoardSchema } from '@sage3/shared/types';
-import { SAGEColors, randomSAGEColor, generateReadableID, isAlphanumeric } from '@sage3/shared';
+import { SAGEColors, randomSAGEColor, generateReadableID, isAlphanumericWithSpacesAndForeign } from '@sage3/shared';
 import { useUser } from '@sage3/frontend';
 import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
@@ -121,7 +121,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           duration: 2 * 1000,
           isClosable: true,
         });
-      } else if (!isAlphanumeric(cleanedName)) {
+      } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
         toast({
           title: 'Name must only contain characters A-Z, 0-9, and spaces',
           status: 'error',
