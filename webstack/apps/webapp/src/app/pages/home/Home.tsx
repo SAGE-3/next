@@ -1117,8 +1117,13 @@ export function HomePage() {
                 </Box>
               </Tooltip> */}
               <Divider my="2" />
-              <HStack justify="space-between" alignItems="center" mb="2">
-                <Box pl="4" fontSize="md" fontWeight="bold" hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}>
+              <HStack
+                justify="space-between"
+                alignItems="center"
+                mb="2"
+                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
+              >
+                <Box pl="4" fontSize="md" fontWeight="bold">
                   Your Rooms
                 </Box>
                 <Tooltip hasArrow placement="top" label="Create a new Room" closeDelay={200}>
