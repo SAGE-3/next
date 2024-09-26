@@ -71,16 +71,16 @@ const components = {
       colorScheme: 'primary',
     },
   },
-  Button: {
-    variants: {
-      solid: (props: any) => ({
-        bg: props.colorScheme === 'gray' ? 'gray.100' : `${props.colorScheme}.500`,
-        _dark: {
-          bg: props.colorScheme === 'gray' ? 'gray.700' : `${props.colorScheme}.200`,
-        },
-      }),
-    },
-  },
+  // Button: {
+  //   variants: {
+  //     solid: (props: any) => ({
+  //       bg: props.colorScheme === 'gray' ? 'gray.100' : `${props.colorScheme}.500`,
+  //       _dark: {
+  //         bg: props.colorScheme === 'gray' ? 'gray.700' : `${props.colorScheme}.200`,
+  //       },
+  //     }),
+  //   },
+  // },
 };
 
 // Extend the theme

@@ -37,6 +37,11 @@ export function Interactionbar() {
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.700', // 'inherit' didnt seem to work
+              },
+            }}
             icon={<LiaHandPaperSolid />}
             fontSize="xl"
             aria-label={'input-type'}
@@ -49,6 +54,11 @@ export function Interactionbar() {
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.700',
+              },
+            }}
             icon={<LiaMousePointerSolid />}
             fontSize="xl"
             aria-label={'input-type'}
@@ -62,6 +72,11 @@ export function Interactionbar() {
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.700',
+              },
+            }}
             icon={<BiPencil />}
             fontSize="xl"
             aria-label={'input-type'}
@@ -76,6 +91,11 @@ export function Interactionbar() {
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.700',
+              },
+            }}
             icon={<BsEraserFill />}
             fontSize="xl"
             aria-label={'input-type'}
