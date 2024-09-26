@@ -41,8 +41,8 @@ export function IntelligencePane(props: SIProps) {
   const config = useConfigStore((state) => state.config);
 
   // Colors
-  const purpleColorMode = useColorModeValue('purple.400', 'purple.400');
-  const purple = useHexColor(purpleColorMode);
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
 
   // Intelligence modal
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -222,11 +222,12 @@ export function IntelligencePane(props: SIProps) {
             aria-label='SAGE Intelligence'
             as={Button}
             size="sm"
-            colorScheme='purple'
+            backgroundColor={intelligenceColor}
+            textColor={"white"}
             variant='solid'
             leftIcon={<HiSparkles fontSize="18px" />}
             width="100%"
-            _hover={{ cursor: 'pointer', opacity: 1, backgroundColor: purple }}
+            _hover={{ cursor: 'pointer', opacity: 1, backgroundColor: intelligenceBgColor }}
             onClick={openOrClose}
           >
             SAGE Intelligence
