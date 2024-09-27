@@ -9,12 +9,11 @@
 import { ReactNode, useState } from 'react';
 import { Box, Divider, HStack, Text, useDisclosure, useToast } from '@chakra-ui/react';
 
-import { Board, Room } from '@sage3/shared/types';
-import { EnterBoardModal } from '@sage3/frontend';
 import { PiStackFill } from 'react-icons/pi';
 import { MdDashboard, MdExitToApp } from 'react-icons/md';
 
-import { ConfirmModal } from '@sage3/frontend';
+import { Board, Room } from '@sage3/shared/types';
+import { EnterBoardModal, ConfirmModal } from '@sage3/frontend';
 
 type SearchRowChildrenProps = {
   room?: Room;

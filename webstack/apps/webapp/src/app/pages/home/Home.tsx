@@ -47,7 +47,7 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
+import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
@@ -984,7 +984,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1878,7 +1878,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

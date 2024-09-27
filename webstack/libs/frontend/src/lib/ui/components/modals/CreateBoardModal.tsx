@@ -29,9 +29,10 @@ import {
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
+import { useUser } from '@sage3/frontend';
 import { BoardSchema } from '@sage3/shared/types';
 import { SAGEColors, randomSAGEColor, generateReadableID, isAlphanumericWithSpacesAndForeign } from '@sage3/shared';
-import { useUser } from '@sage3/frontend';
+
 import { useBoardStore, useConfigStore } from '../../../stores';
 import { ColorPicker } from '../general';
 
