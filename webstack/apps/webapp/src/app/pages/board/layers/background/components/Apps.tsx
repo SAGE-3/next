@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -27,7 +27,6 @@ import {
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppState } from '@sage3/applications/schema';
-import React from 'react';
 
 // Renders all the apps
 export function Apps() {
@@ -54,6 +53,7 @@ export function Apps() {
   const resetZIndex = useUIStore((state) => state.resetZIndex);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
+  const boardSynced = useUIStore((state) => state.boardSynced);
 
   // Cursor Position
   const { boardCursor } = useCursorBoardPosition();
@@ -209,9 +209,18 @@ export function Apps() {
   useHotkeys(
     'v',
     (evt) => {
-      evt.preventDefault();
-      evt.stopPropagation();
-      pasteApp(boardCursor);
+      if (boardSynced) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        pasteApp(boardCursor);
+      } else {
+        toast({
+          title: 'Pasting app while panning or zooming is not supported',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
     },
     { dependencies: [] }
   );

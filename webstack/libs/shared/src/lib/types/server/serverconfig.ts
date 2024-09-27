@@ -166,6 +166,7 @@ export interface AIChatConfiguration {
 
 export interface CodeLlamaConfiguration {
   url: string;
+  model: string; // LLM model
   apiKey: string;
   max_tokens: number;
 }

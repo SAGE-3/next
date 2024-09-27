@@ -21,6 +21,7 @@ import {
   Box,
   Checkbox,
   useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -50,6 +51,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
 
+  // Board Store
+  const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
   const updateBoard = useBoardStore((state) => state.update);
 
@@ -64,6 +67,9 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
+
+  // Toast
+  const toast = useToast();
 
   useEffect(() => {
     setName(props.board.data.name);
@@ -97,7 +103,10 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   // Update button handler
   const handleSubmit = () => {
     if (name !== props.board.data.name) {
-      updateBoard(props.board._id, { name });
+      const cleanedName = cleanNameCheckDoubles(name);
+      if (cleanedName) {
+        updateBoard(props.board._id, { name: cleanedName });
+      }
     }
     if (description !== props.board.data.description) {
       updateBoard(props.board._id, { description });
@@ -119,6 +128,30 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     }
     props.onClose();
   };
+
+  function cleanNameCheckDoubles(name: string): string | null {
+    // remove leading and trailing space, and limit name length to 20
+    const cleanedName = name.trim().substring(0, 19);
+    const boardNames = boards.filter((r) => r._id !== props.board._id).map((board) => board.data.name);
+    if (cleanedName.split(' ').join('').length === 0) {
+      toast({
+        title: 'Name must have at least one character',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (boardNames.includes(cleanedName)) {
+      toast({
+        title: 'Board name already exists',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    }
+    return cleanedName;
+  }
 
   /**
    * Delete the board: delete all the apps and the board itself

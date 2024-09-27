@@ -33,6 +33,7 @@ import {
   useUserSettings,
   useHexColor,
   EditVisibilityModal,
+  useUser,
 } from '@sage3/frontend';
 
 import {
@@ -52,6 +53,7 @@ import {
   BoardTitle,
   KernelsPanel,
   TagsDisplay,
+  Interactionbar,
 } from './components';
 
 type UILayerProps = {
@@ -64,11 +66,16 @@ export function UILayer(props: UILayerProps) {
   const canLasso = useAbility('lasso', 'apps');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
+  const primaryActionMode = settings.primaryActionMode;
+
   // Colors
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
   const teal = useHexColor(tealColorMode);
+
+  // User
+  const { user } = useUser();
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
@@ -78,7 +85,6 @@ export function UILayer(props: UILayerProps) {
   const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -96,6 +102,9 @@ export function UILayer(props: UILayerProps) {
 
   // Logo
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+
+  // Color
+  // const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
 
   // Navigation
   const { toHome } = useRouteNav();
@@ -123,7 +132,6 @@ export function UILayer(props: UILayerProps) {
    */
   const onClearConfirm = () => {
     // delete all apps
-    // apps.forEach((a) => deleteApp(a._id));
     const ids = apps.map((a) => a._id);
     deleteApp(ids);
     setClearAllMarkers(true);
@@ -236,7 +244,6 @@ export function UILayer(props: UILayerProps) {
 
   // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
-    setWhiteboardMode('none');
     setSelectedApp('');
     clearSavedSelectedAppsIds();
     setSelectedAppsIds([]);
@@ -300,6 +307,7 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
+          <Interactionbar />
         </Box>
       </Box>
 
@@ -315,7 +323,7 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      <ContextMenu divId="board">
+      <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
@@ -339,7 +347,6 @@ export function UILayer(props: UILayerProps) {
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
@@ -348,7 +355,7 @@ export function UILayer(props: UILayerProps) {
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
 
-      {/* Presence Follow Component. Doesnt Render Anything */}
+      {/* Presence Follow Component: Does not render anything */}
       <PresenceFollow />
 
       {/* Display a list of all tags */}

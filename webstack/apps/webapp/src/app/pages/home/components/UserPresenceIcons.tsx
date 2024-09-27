@@ -6,10 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, Box, Avatar, AvatarGroup, BoxProps, MenuButton } from '@chakra-ui/react';
+import { useColorModeValue, Box, Avatar, AvatarGroup, BoxProps } from '@chakra-ui/react';
 
-import { useHexColor, useUsersStore, initials } from '@sage3/frontend';
 import { User, PresencePartial } from '@sage3/shared/types';
+import { useHexColor, useUsersStore, initials } from '@sage3/frontend';
 
 export function UserPresenceIcons(
   props: { usersPresent: PresencePartial[]; maxUsersDisplayed: number; anonymousNames?: boolean } & Omit<
@@ -22,7 +22,7 @@ export function UserPresenceIcons(
 
   return (
     <Box {...boxProps}>
-      <AvatarGroup size="md" max={props.maxUsersDisplayed}>
+      <AvatarGroup size="sm" max={props.maxUsersDisplayed}>
         {props.usersPresent.map((pUser, index) => (
           <Box key={index}>
             <UserIcons users={users} currentUser={pUser} anonymousNames={props.anonymousNames} />
@@ -47,6 +47,7 @@ function UserIcons(props: { users: User[]; currentUser: PresencePartial; anonymo
       borderColor={'grey.400'}
       textAlign="center"
       whiteSpace="nowrap"
+      size="sm"
     >
       {name}
     </Avatar>

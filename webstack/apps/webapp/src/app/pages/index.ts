@@ -11,3 +11,4 @@ export * from './admin/Admin';
 export * from './board/Board';
 export * from './home/Home';
 export * from './login/Login';
+export * from './client/Client';

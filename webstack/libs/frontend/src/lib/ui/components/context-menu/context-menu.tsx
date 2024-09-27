@@ -10,6 +10,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 import { useUIStore } from '../../../stores';
+import { useUserSettings } from '../../../providers';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
@@ -40,16 +41,18 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * Check if the device is a touch device using CSS media queries
  * @returns boolean
  */
-function isTouchDevice(): boolean {
-  return window.matchMedia("(any-pointer: coarse)").matches;
-}
+// function isTouchDevice(): boolean {
+//   return window.matchMedia('(any-pointer: coarse)').matches;
+// }
 
 /**
  * ContextMenu component
  * @param props children divId
  * @returns JSX.Element
  */
-export const ContextMenu = (props: { children: JSX.Element; divId: string }) => {
+export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) => {
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -61,18 +64,16 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
   const handleClick = useCallback(() => {
     // timeout to allow button click to fire before hiding menu
     if (showContextMenu) {
-      // setShowContextMenu(false);
       setTimeout(() => setShowContextMenu(false));
     }
   }, [showContextMenu]);
-
 
   const handleContextMenu = useCallback(
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      // if (event.target.id === props.divId && !isTouchDevice()) {
-      if (event.target.id === props.divId) {
+      if (props.divIds.includes(event.target.id) && primaryActionMode !== 'pen') {
+        console.log('context menu');
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
@@ -87,11 +88,12 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setTimeout(() => setShowContextMenu(true));
       }
     },
-    [setContextMenuPos, props.divId, setContextMenuPosition]
+    [setContextMenuPos, props.divIds, setContextMenuPosition]
   );
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
+      console.log(type);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });
@@ -99,7 +101,7 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
         setTimeout(() => setShowContextMenu(true));
       } else {
         if (event.type === 'touchstart' && showContextMenu) {
-          if (event.target.id === 'board' || event.target.id === '') {
+          if (props.divIds.includes(event.target.id) || event.target.id === '') {
             setTimeout(() => setShowContextMenu(false), 400);
           }
         } else if (event.type === 'touchend' && showContextMenu) {
@@ -110,24 +112,9 @@ export const ContextMenu = (props: { children: JSX.Element; divId: string }) => 
     document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
-    // Touch events
-    if (isTouchDevice()) {
-      document.addEventListener('touchstart', ctx.onTouchStart);
-      document.addEventListener('touchcancel', ctx.onTouchCancel);
-      document.addEventListener('touchend', ctx.onTouchEnd);
-      document.addEventListener('touchmove', ctx.onTouchMove);
-    }
-
     return () => {
       document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
-
-      if (isTouchDevice()) {
-        document.removeEventListener('touchstart', ctx.onTouchStart);
-        document.removeEventListener('touchcancel', ctx.onTouchCancel);
-        document.removeEventListener('touchend', ctx.onTouchEnd);
-        document.removeEventListener('touchmove', ctx.onTouchMove);
-      }
     };
   }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
 

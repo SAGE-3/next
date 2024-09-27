@@ -15,8 +15,6 @@ type HelpProps = {
   isOpen: boolean;
 };
 
-// const url = 'https://sage-3.github.io/docs/Quick-Start-Guide#pages';
-
 export function HelpModal(props: HelpProps) {
   return (
     <Modal isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false} isCentered={true} size="6xl">

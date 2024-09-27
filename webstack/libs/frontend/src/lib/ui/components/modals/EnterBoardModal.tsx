@@ -70,7 +70,7 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
       setPrivateText(undefined);
       setLoading(true);
       setPasswordPrompt(false);
-      await timeout(600);
+      await timeout(300);
       toBoard(props.board.data.roomId, props.board._id);
       props.onClose();
     }

@@ -7,12 +7,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center } from '@chakra-ui/react';
 
 import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
+import { Interactionbar } from './Interactionbar';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -118,8 +119,8 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-    const width = 600;
-    const height = 400;
+    const width = 820;
+    const height = 420;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
       title: 'Chat',
@@ -146,6 +147,10 @@ export function BoardContextMenu(props: ContextProps) {
       cursor="auto"
       w={'100%'}
     >
+      <Center pb={2}>
+        <Interactionbar />
+      </Center>
+
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
         <VStack w={'125px'}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>

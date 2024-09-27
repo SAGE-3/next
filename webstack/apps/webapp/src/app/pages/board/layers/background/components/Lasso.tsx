@@ -9,10 +9,12 @@
 import { useEffect, useState } from 'react';
 
 // SAGE Imports
-import { useCursorBoardPosition, useHexColor, useKeyPress, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
+import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {
+  roomId: string;
   boardId: string;
 };
 
@@ -30,7 +32,7 @@ export function Lasso(props: LassoProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
 
   // Lasso mode apps & Selected apps
-  const lassoMode = useUIStore((state) => state.lassoMode);
+  const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
 
@@ -45,47 +47,89 @@ export function Lasso(props: LassoProps) {
   // State of cursor
   const [isDragging, setIsDragging] = useState(false);
 
-  // Key press
-  const spacebarPressed = useKeyPress(' ');
-
-  useEffect(() => {
-    // Handle if let go shift before mouse up, clear the rectangle
-    if (!lassoMode && mousedown === true) {
-      mouseUp();
-    }
-  }, [lassoMode]);
+  // Drag and Drop On Board
+  const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   // Get initial position
-  const mouseDown = (ev: any) => {
-    const position = uiToBoard(ev.clientX, ev.clientY);
+  const lassoStart = (x: number, y: number) => {
+    const position = uiToBoard(x, y);
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
     set_mousey(position.y);
     setMouseDown(true);
+    setLassoMode(true);
   };
 
-  const mouseUp = () => {
+  const lassoEnd = () => {
     setMouseDown(false);
-    // Deselect all aps
+    setLassoMode(false);
     if (!isDragging) {
       clearSelectedApps();
     }
     setIsDragging(false);
   };
 
+  const lassoEndTouch = () => {
+    setMouseDown(false);
+    setLassoMode(false);
+    setIsDragging(false);
+  };
+
   // Get last position
-  const mouseMove = (ev: any) => {
-    const position = uiToBoard(ev.clientX, ev.clientY);
+  const lassoMove = (x: number, y: number) => {
+    const position = uiToBoard(x, y);
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
   };
 
+  // Mouse Behaviours
+  const mouseDown = (ev: any) => {
+    if (ev.button == 0) {
+      lassoStart(ev.clientX, ev.clientY);
+    }
+  };
+
+  const mouseUp = () => {
+    lassoEnd();
+  };
+
+  const mouseMove = (ev: any) => {
+    if (ev.button == 0 && mousedown) {
+      lassoMove(ev.clientX, ev.clientY);
+    } else if (ev.buttons === 4) {
+      setIsDragging(true); // Keep Current Lasso Selection
+    }
+  };
+
+  // Touch Behaviours
+  const touchDown = (ev: any) => {
+    if (ev.touches.length === 1) {
+      lassoStart(ev.touches[0].clientX, ev.touches[0].clientY);
+    }
+  };
+
+  const touchUp = () => {
+    lassoEndTouch();
+  };
+
+  const touchMove = (ev: any) => {
+    if (ev.touches.length === 1) {
+      lassoMove(ev.touches[0].clientX, ev.touches[0].clientY);
+    } else if (ev.touches.length === 2) {
+      setIsDragging(true); // Keep Current Lasso Selection
+    } else {
+      // lassoEnd()
+    }
+  };
+
   return (
     <>
-      <div className="canvas-container" style={{ pointerEvents: lassoMode && !spacebarPressed ? 'auto' : 'none' }}>
+      {/* lassoMode */}
+      <div className="canvas-container">
         <svg
+          id="lasso"
           className="canvas-layer"
           style={{
             position: 'absolute',
@@ -93,18 +137,25 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            zIndex: 2000,
-            cursor: 'crosshair',
+            // pointerEvents: 'none',
+            // To keep in theme with other notable whiteboard applications,
+            // the cursor should remain a pointer
+            // cursor: 'crosshair',
           }}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}
+          onTouchStart={touchDown}
+          onTouchEnd={touchUp}
+          onTouchMove={touchMove}
+          {...dragProps}
         >
           {mousedown ? (
             <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
           ) : null}
         </svg>
       </div>
+      {renderContent()}
     </>
   );
 }
