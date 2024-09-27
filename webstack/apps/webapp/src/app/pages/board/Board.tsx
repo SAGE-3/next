@@ -209,14 +209,15 @@ export function BoardPage() {
 
       // Show a notification
       toast({
-        title: 'Using a browser is not recommended',
+        title: 'Reduced Functionality in Browser Version',
         status: 'info',
-        duration: 30000, // 30 sec.
+        duration: null, // never close automatically
         isClosable: true,
         position: 'bottom',
         description: (
           <p>
-            Continue in the SAGE3 App ?
+            By accessing our SAGE3 through a browser, you will lose access to key features that are only available in our native client. This may significantly impact your experience.<br />
+            Continue in the SAGE3 client ?
             <Button ml="2" size="xs" colorScheme="green" onClick={openDesktopApp}>
               OK
             </Button>
