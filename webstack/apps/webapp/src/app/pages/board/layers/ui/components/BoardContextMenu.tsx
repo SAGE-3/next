@@ -136,7 +136,6 @@ export function BoardContextMenu(props: ContextProps) {
       pinned: false,
     });
   };
-  console.log(Applications['Chat']);
 
   return (
     <Box
