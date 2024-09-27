@@ -1,0 +1,44 @@
+export default class Websock {
+    _websocket: any;
+    _rQi: number;
+    _rQlen: number;
+    _rQbufferSize: number;
+    _rQ: Uint8Array | null;
+    _sQbufferSize: number;
+    _sQlen: number;
+    _sQ: Uint8Array | null;
+    _eventHandlers: {
+        message: () => void;
+        open: () => void;
+        close: () => void;
+        error: () => void;
+    };
+    get readyState(): "connecting" | "open" | "unused" | "closing" | "closed" | "unknown";
+    rQpeek8(): number;
+    rQskipBytes(bytes: any): void;
+    rQshift8(): number;
+    rQshift16(): number;
+    rQshift32(): number;
+    _rQshift(bytes: any): number;
+    rQshiftStr(len: any): string;
+    rQshiftBytes(len: any, copy?: boolean): Uint8Array;
+    rQshiftTo(target: any, len: any): void;
+    rQpeekBytes(len: any, copy?: boolean): Uint8Array;
+    rQwait(msg: any, num: any, goback: any): boolean;
+    sQpush8(num: any): void;
+    sQpush16(num: any): void;
+    sQpush32(num: any): void;
+    sQpushString(str: any): void;
+    sQpushBytes(bytes: any): void;
+    flush(): void;
+    _sQensureSpace(bytes: any): void;
+    off(evt: any): void;
+    on(evt: any, handler: any): void;
+    _allocateBuffers(): void;
+    init(): void;
+    open(uri: any, protocols: any): void;
+    attach(rawChannel: any): void;
+    close(): void;
+    _expandCompactRQ(minFit: any): void;
+    _recvMessage(e: any): void;
+}

@@ -12,3 +12,4 @@ export * from './context-menu/context-menu';
 
 export * from './paste-handler/paste-handler';
 export * from './general';
+export * from './react-vnc';
