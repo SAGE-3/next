@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center, Divider } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center, Divider, Spacer } from '@chakra-ui/react';
 
 import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -148,7 +148,7 @@ export function BoardContextMenu(props: ContextProps) {
       w={'100%'}
     >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'130px'}>
+        <VStack w={'130px'} spacing={"6px"}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Actions
           </Text>
@@ -160,7 +160,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -174,7 +174,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -187,7 +187,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -200,7 +200,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -213,7 +213,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -229,15 +229,15 @@ export function BoardContextMenu(props: ContextProps) {
           <Divider orientation="vertical" h={'100%'} />
         </Center>
 
-        <VStack w={'125px'}>
-          <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+        <VStack w={'130px'} spacing={"6px"}>
+          <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Apps
           </Text>
 
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="32px"
             p={1}
             mt={0}
             fontSize={14}
@@ -252,7 +252,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -267,7 +267,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -282,7 +282,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -296,7 +296,21 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            isDisabled={!appsList.includes('TLDraw')}
+            onClick={() => newApplication('TLDraw', user?.data.name)}
+          >
+            TLDraw
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}

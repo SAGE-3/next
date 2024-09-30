@@ -27,83 +27,81 @@ export function Interactionbar() {
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   return (
-    <>
-      <ButtonGroup isAttached size="xs">
-        <Tooltip label={'Grab (Panning Tool) — [1]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.600', // 'inherit' didnt seem to work
-              },
-            }}
-            icon={<LiaHandPaperSolid />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('grab');
-              setSelectedAppsIds([]);
-            }}
-          ></IconButton>
-        </Tooltip>
-        <Tooltip label={'Selection — [2]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<LiaMousePointerSolid />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('lasso');
-            }}
-          ></IconButton>
-        </Tooltip>
+    <ButtonGroup isAttached size="xs">
+      <Tooltip label={'Grab (Panning Tool) — [1]'}>
+        <IconButton
+          size="sm"
+          colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
+          sx={{
+            _dark: {
+              bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.600', // 'inherit' didnt seem to work
+            },
+          }}
+          icon={<LiaHandPaperSolid />}
+          fontSize="xl"
+          aria-label={'input-type'}
+          onClick={() => {
+            setPrimaryActionMode('grab');
+            setSelectedAppsIds([]);
+          }}
+        ></IconButton>
+      </Tooltip>
+      <Tooltip label={'Selection — [2]'}>
+        <IconButton
+          size="sm"
+          colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
+          sx={{
+            _dark: {
+              bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
+            },
+          }}
+          icon={<LiaMousePointerSolid />}
+          fontSize="xl"
+          aria-label={'input-type'}
+          onClick={() => {
+            setPrimaryActionMode('lasso');
+          }}
+        ></IconButton>
+      </Tooltip>
 
-        <Tooltip label={'Marker — [3]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<BiPencil />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('pen');
-              setSelectedApp('');
-              setSelectedAppsIds([]);
-            }}
-          ></IconButton>
-        </Tooltip>
-        <Tooltip label={'Eraser — [4]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<BsEraserFill />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('eraser');
-              setSelectedApp('');
-              setSelectedAppsIds([]);
-            }}
-          ></IconButton>
-        </Tooltip>
-      </ButtonGroup>
-    </>
+      <Tooltip label={'Marker — [3]'}>
+        <IconButton
+          size="sm"
+          colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
+          sx={{
+            _dark: {
+              bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
+            },
+          }}
+          icon={<BiPencil />}
+          fontSize="xl"
+          aria-label={'input-type'}
+          onClick={() => {
+            setPrimaryActionMode('pen');
+            setSelectedApp('');
+            setSelectedAppsIds([]);
+          }}
+        ></IconButton>
+      </Tooltip>
+      <Tooltip label={'Eraser — [4]'}>
+        <IconButton
+          size="sm"
+          colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+          sx={{
+            _dark: {
+              bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
+            },
+          }}
+          icon={<BsEraserFill />}
+          fontSize="xl"
+          aria-label={'input-type'}
+          onClick={() => {
+            setPrimaryActionMode('eraser');
+            setSelectedApp('');
+            setSelectedAppsIds([]);
+          }}
+        ></IconButton>
+      </Tooltip>
+    </ButtonGroup>
   );
 }
