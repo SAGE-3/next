@@ -6,13 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Tooltip, ButtonGroup, useColorModeValue } from '@chakra-ui/react';
+import { IconButton, Tooltip, ButtonGroup } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';
 import { BsEraserFill } from 'react-icons/bs';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
-import { useUserSettings, useUser, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useUserSettings, useUser, useUIStore } from '@sage3/frontend';
 
 export function Interactionbar() {
   // Settings
@@ -25,10 +25,6 @@ export function Interactionbar() {
   // UiStore
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-
-  // Panel Stores
-  // const annotations = usePanelStore((state) => state.panels['annotations']);
-  // const updatePanel = usePanelStore((state) => state.updatePanel);
 
   return (
     <>

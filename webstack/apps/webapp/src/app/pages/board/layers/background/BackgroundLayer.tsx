@@ -45,7 +45,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     { x: 0, y: 0 },
     { x: 0, y: 0 },
   ]);
-  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other'); // Used to differentiate between board drag and app deselect
+  // Used to differentiate between board drag and app deselect
+  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other');
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);

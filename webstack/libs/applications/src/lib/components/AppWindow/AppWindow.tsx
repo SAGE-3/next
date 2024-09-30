@@ -13,7 +13,7 @@ import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { App } from '../../schema';
