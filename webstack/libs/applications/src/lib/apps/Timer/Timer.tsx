@@ -13,7 +13,7 @@ import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md'
 import { useAppStore, zeroPad, serverTime } from '@sage3/frontend';
 
 import { state as AppState } from './index';
-import { App, AppGroup } from '../../schema';
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
 
 // Styling
@@ -70,8 +70,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Format time as hh:mm:ss
   const formatTime = (param: number) => {
-    // Determine the sign and work with the absolute value for calculation
-    // const isNegative = param < 0;
+    // Determine the absolute value for calculation
     const absSeconds = Math.abs(param);
 
     // Calculate hours, minutes, and seconds
@@ -87,14 +86,14 @@ function AppComponent(props: App): JSX.Element {
     // Construct the formatted time string
     const timeStr = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
 
-    // Add a negative sign if the time is negative
+    // Return the formatted time string
     return timeStr;
   };
 
   // Increment or decrement the time by the given amount
   const adjustTotal = (amount: number) => {
-    updateState(props._id, { total: total + amount})
-    updateState(props._id, { originalTotal: total + amount})
+    updateState(props._id, { total: total + amount })
+    updateState(props._id, { originalTotal: total + amount })
   };
 
   // Updates global states
@@ -191,19 +190,12 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app Timer */
-function ToolbarComponent(props: App): JSX.Element {
-  return (
-    <>
-    </>
-  );
-}
+const ToolbarComponent = () => { return null; };
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
-  return null;
-};
+const GroupedToolbarComponent = () => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
