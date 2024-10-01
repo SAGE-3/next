@@ -2,7 +2,7 @@ name: Docker Images DEV
 
 on:
   push:
-    branches: ["dev", "dev-ai2"]
+    branches: ["dev"]
 
 env:
   REGISTRY: ghcr.io
