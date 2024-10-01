@@ -318,14 +318,20 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
-    if (yLines) {
-      for (let index = yLines.length - 1; index >= 0; index--) {
-        const line = yLines.get(index);
-        if (line.get('id') === id) {
-          yLines.delete(index, 1);
-        }
+    if (!yLines) return; // Exit if yLines is undefined or null
+    let delComplete = false;
+    // Loop through yLines in reverse to find and delete the line with the matching id
+    for (let index = yLines.length - 1; index >= 0; index--) {
+      const line = yLines.get(index);
+
+      if (line.get('id') === id) {
+        yLines.delete(index, 1);
+        delComplete = true;
+        break; // Exit loop after deleting the line
       }
     }
+    // If the line was deleted, update the board lines
+    if (delComplete) updateBoardLines();
   };
 
   return (

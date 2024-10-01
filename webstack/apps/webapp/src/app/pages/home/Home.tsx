@@ -47,7 +47,7 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
+import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
@@ -77,11 +77,14 @@ import {
   isElectron,
   useUserSettings,
   useAssetStore,
+  apiUrls,
+  isUUIDv4,
 } from '@sage3/frontend';
 
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
+import { PiStackPlusFill } from 'react-icons/pi';
 
 /**
  * Home page for SAGE3
@@ -300,12 +303,6 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
-        disableBeacon: true,
-      },
-      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
@@ -318,8 +315,9 @@ export function HomePage() {
       },
       {
         target: searchInputRef.current!,
-        title: 'Search your Rooms and Boards',
-        content: 'You can search for rooms that you own or join, and for boards from those rooms.',
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
@@ -404,15 +402,16 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
-        disableBeacon: true,
-      },
-      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
+      },
+      {
+        target: searchInputRef.current!,
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
+        disableBeacon: true,
       },
       {
         target: recentBoardsRef.current!,
@@ -492,12 +491,26 @@ export function HomePage() {
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
+
+    // As a guest or spectator, check
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      const recentAndStarred = new Set([...recentBoards, ...savedBoards]);
+      const isRecentOrStarred = recentAndStarred.has(board._id);
+      return isRecentOrStarred && userCount > 0;
+    }
+
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
   };
 
   const boardStarredFilter = (board: Board): boolean => {
     const isSaved = savedBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isSaved;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isSaved && isMember;
@@ -505,6 +518,12 @@ export function HomePage() {
 
   const recentBoardsFilter = (board: Board): boolean => {
     const isRecent = recentBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isRecent;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isRecent && isMember;
@@ -744,6 +763,82 @@ export function HomePage() {
     }
   }
 
+  // Function to check if it's a valid URL
+  function isValidURL() {
+    try {
+      const SAGE_URL = searchSage.trim();
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        return false;
+      }
+
+      if (hostname !== window.location.hostname) {
+        return true;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        return false;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          return true;
+        }
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  function extractUrlInfo(): { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } {
+    const result: { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } = {
+      board: null,
+      isExternal: false,
+      error: true,
+      url: searchSage,
+    };
+    try {
+      const SAGE_URL = searchSage.trim();
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        return result;
+      }
+
+      if (hostname !== window.location.hostname) {
+        result.isExternal = true;
+        result.error = false;
+        return result;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        return result;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          result.board = board;
+          result.error = false;
+          result.isExternal = false;
+          return result;
+        }
+        return result;
+      }
+    } catch {
+      return result;
+    }
+  }
+
   // Function to get the greeting based on the time of the day
   function getTimeBasedGreeting() {
     const hour = new Date().getHours();
@@ -942,54 +1037,9 @@ export function HomePage() {
           </Box>
         )}
 
-        {/* <Box pt="2" px="2"> */}
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={handleRoomSearchClick}
-                ref={searchRoomsRef}
-              >
-                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
-              </Box>
-            </Tooltip> */}
-
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-            <Box
-              h="40px"
-              display="flex"
-              justifyContent={'left'}
-              alignItems={'center'}
-              transition="all 0.5s"
-              borderRadius={buttonRadius}
-              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-              onClick={enterBoardByURLModalOnOpen}
-              ref={enterBoardByURLRef}
-            >
-              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
-            </Box>
-          </Tooltip> */}
-        {/* </Box> */}
-        {/* </Box> */}
-
         {/* Rooms and boards section */}
         <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
-          <Box
-            display="flex"
-            flexDirection="column"
-            justifyItems="start"
-            flex="1"
-            height="100%"
-            // overflowY="auto"
-            // overflowX="hidden"
-            px="3"
-            borderRadius={cardRadius}
-          >
+          <Box display="flex" flexDirection="column" justifyItems="start" flex="1" height="100%" px="3" borderRadius={cardRadius}>
             <VStack align="stretch" gap="2px" height="100%">
               <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
                 <Box
@@ -1014,35 +1064,30 @@ export function HomePage() {
                   </Text>
                 </Box>
               </Tooltip>
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  pl="3"
-                  borderRadius={buttonRadius}
-                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                  onClick={enterBoardByURLModalOnOpen}
-                  ref={enterBoardByURLRef}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
-                  <Text fontSize="md" fontWeight="bold">
-                    Join Board
-                  </Text>
-                </Box>
-              </Tooltip>
               <Divider my="2" />
-              <Box
-                pl="4"
+              <HStack
+                justify="space-between"
+                alignItems="center"
                 mb="2"
-                fontSize="md"
-                fontWeight="bold"
+                pr="3"
                 hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
               >
-                Your Rooms
-              </Box>
+                <Box pl="4" fontSize="md" fontWeight="bold">
+                  Your Rooms
+                </Box>
+                <Tooltip hasArrow placement="top" label="Create a new Room" closeDelay={200}>
+                  <IconButton
+                    aria-label="Create Room"
+                    onFocus={(e) => e.preventDefault()}
+                    size="sm"
+                    bg="none"
+                    onClick={handleCreateRoomClick}
+                    ref={createRoomRef}
+                    _hover={{ transform: 'scale(1.1)', bg: 'none' }}
+                    icon={<PiStackPlusFill fontSize="24px" />}
+                  />
+                </Tooltip>
+              </HStack>
               <Box
                 ref={roomsRef}
                 height="100%"
@@ -1071,6 +1116,7 @@ export function HomePage() {
                           hasArrow
                           placement="top"
                           label={`Description ${room.data.description}`}
+                          closeOnScroll
                         >
                           <Box
                             borderRadius="6"
@@ -1080,6 +1126,8 @@ export function HomePage() {
                             justifyContent="space-between"
                             transition="all 0.5s"
                             pl="3"
+                            ml="2"
+                            pr="2"
                             height="28px"
                             my="1px"
                             backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
@@ -1092,7 +1140,7 @@ export function HomePage() {
                               </Text>
                             </Box>
 
-                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                            <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ? 'Owner' : 'Member'}
                             </Text>
                           </Box>
@@ -1298,6 +1346,7 @@ export function HomePage() {
                               colorScheme={'teal'}
                               aria-label="favorite-board"
                               fontSize="xl"
+                              onFocus={(e) => e.preventDefault()}
                               onClick={createBoardModalOnOpen}
                               isDisabled={!canCreateBoards}
                               icon={<MdAdd />}
@@ -1308,7 +1357,13 @@ export function HomePage() {
                             <InputLeftElement pointerEvents="none">
                               <MdSearch />
                             </InputLeftElement>
-                            <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                            <Input
+                              placeholder="Search Boards"
+                              value={boardSearch}
+                              onChange={(e) => {
+                                setBoardSearch(e.target.value);
+                              }}
+                            />
                           </InputGroup>
                           <ButtonGroup size="md" isAttached variant="outline">
                             <IconButton
@@ -1452,7 +1507,7 @@ export function HomePage() {
           marginLeft="3"
           width="100%"
           overflow="hidden"
-          py="1"
+          py="2"
           minWidth="600px"
         >
           <Box
@@ -1497,10 +1552,12 @@ export function HomePage() {
                   <MdSearch />
                 </InputLeftElement>
                 <Input
-                  placeholder="Search your rooms and boards"
+                  placeholder="Search your rooms, boards, or join board via URL"
                   _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
                   value={searchSage}
-                  onChange={(e) => setSearchSage(e.target.value)}
+                  onChange={(e) => {
+                    setSearchSage(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
                       setSearchSage('');
@@ -1528,9 +1585,6 @@ export function HomePage() {
                 borderColor="inherit"
               >
                 <Box
-                  // hidden={!(searchSage.length > 0) || !isSearchSageFocused}
-                  // ref={searchSageRef}
-                  // position="absolute"
                   p="3"
                   mb="0"
                   h="full"
@@ -1547,8 +1601,16 @@ export function HomePage() {
                     },
                   }}
                 >
-                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
-                    ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                  {/* If it starts with https:// or http:// and is a valid URL */}
+                  {(searchSage.startsWith('https://') || searchSage.startsWith('http://')) && isValidURL() && boards.length > 0 && (
+                    <SearchRow.Url urlInfo={extractUrlInfo()} />
+                  )}
+
+                  {/* If it doesn't start with https:// or http:// and filtered roomsAndBoards have more than 1 item */}
+                  {roomAndBoards &&
+                    roomAndBoards.filter(sageSearchFilter).length > 0 &&
+                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
+                    roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
                       // If it's a board, get the room ID
                       if ((item as Board & { roomName: string }).data.roomId) {
                         return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
@@ -1562,8 +1624,10 @@ export function HomePage() {
                           }}
                         />
                       );
-                    })
-                    : 'No items match your search'}
+                    })}
+
+                  {/* If there are no roomAndBoards and it's not a valid URL*/}
+                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
                 </Box>
               </Box>
             </Box>
@@ -1606,8 +1670,8 @@ export function HomePage() {
                   </Tab>
                 </TabList>
 
-                <TabPanels minH="250px">
-                  <TabPanel px="0" pt="2" id="Recent Boards">
+                <TabPanels height="240px">
+                  <TabPanel px="0" pt="2" id="Recent Boards" height="100%">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
                       {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
@@ -1645,7 +1709,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1653,7 +1716,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No recent boards.</Text>
+                        <Text p="3" px="6">
+                          No recent boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1695,7 +1760,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1703,7 +1767,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No active boards.</Text>
+                        <Text p="3" px="6">
+                          No active boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1739,7 +1805,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1747,7 +1812,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3" px="6">No favorite boards.</Text>
+                        <Text p="3" px="6">
+                          No favorite boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1760,11 +1827,6 @@ export function HomePage() {
                 </Box>
                 <Box p="4" bg={homeSectionColor} rounded="xl">
                   <Box display="flex" alignItems="center" gap="2">
-                    <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
-                      <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
-                        <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
-                      </Button>
-                    </Tooltip>
                     <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
