@@ -14,7 +14,7 @@ numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
 urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
 
 # SAGE3
-git+https://github.com/SAGE-3/next.git@dev-langchain-deploy#subdirectory=foresight
+git+https://github.com/SAGE-3/next.git@dev-ai2#subdirectory=foresight
 python-dotenv
 
 # Web API
@@ -26,13 +26,17 @@ uvicorn
 pydantic>=2.0.0
 
 # AI with langchain
-langchain==0.2.3
-langchain-openai==0.1.8
-langchain-huggingface==0.0.3
+#langchain==0.2.3
+#langchain-openai==0.1.8
+#langchain-huggingface==0.0.3
+#langchain-nvidia-ai-endpoints==0.2.0
+
+langchain-openai
+langchain_huggingface
 langchain-nvidia-ai-endpoints==0.2.0
 
 # Image
-PIL
+Pillow
 
 # Web scrapping
 playwright
