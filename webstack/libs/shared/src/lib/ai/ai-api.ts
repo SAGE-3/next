@@ -21,6 +21,8 @@ export type AiQueryRequest = {
   model: string;
   max_new_tokens?: number;
   app_id?: string;
+  previousQ?: string;
+  previousA?: string;
 };
 export type AiImageQueryRequest = {
   assetid: string;

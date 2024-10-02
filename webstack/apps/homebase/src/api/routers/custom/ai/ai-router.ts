@@ -55,13 +55,13 @@ export function AiRouter(): express.Router {
   // Post a chat request
   router.post('/chat_query', async ({ body, user }, res) => {
     // Get the request parameters
-    const { input, model, max_new_tokens, app_id } = body;
+    const { input, model, max_new_tokens, app_id, previousQ, previousA } = body;
     // Try/catch block to handle errors
     try {
       if (model === chat.name) {
         // Query Llama with the input
         // const response = await chat.asking(input, max_new_tokens, app_id, user.id);
-        const response = await chat.ask(input, max_new_tokens);
+        const response = await chat.ask(input, max_new_tokens, previousQ, previousA);
         // Return the response
         res.status(200).json(response);
       } else {

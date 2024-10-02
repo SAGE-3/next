@@ -922,7 +922,6 @@ export function AppToolbar(props: AppToolbarProps) {
 
   const openChat = async () => {
     if (app) {
-      console.log('Chat with SAGE Intelligence');
       const w = 800;
       const h = 620;
       const x = app.data.position.x + app.data.size.width + 40;

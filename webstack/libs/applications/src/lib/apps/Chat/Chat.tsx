@@ -26,6 +26,7 @@ import {
   AbsoluteCenter,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
+import { HiCommandLine } from "react-icons/hi2";
 
 // Date management
 import { formatDistance } from 'date-fns';
@@ -34,7 +35,7 @@ import { format } from 'date-fns/format';
 import Markdown from 'markdown-to-jsx';
 
 import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
+import { AiQueryRequest, genId } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -88,7 +89,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [status, setStatus] = useState<string>("AI can make mistakes. Check important information.");
+  const [status,] = useState<string>("AI can make mistakes. Check important information.");
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -127,39 +128,39 @@ function AppComponent(props: App): JSX.Element {
     setPreviousAnswer(s.previousA);
   }, [s.previousA]);
 
-  useEffect(() => {
-    if (s.context) {
-      // Quick summary
-      const ctx = `@S, Please carefully read the following document text:
+  // useEffect(() => {
+  //   if (s.context) {
+  //     // Quick summary
+  //     const ctx = `@S, Please carefully read the following document text:
 
-      <document>
-      ${s.context}
-      </document>
+  //     <document>
+  //     ${s.context}
+  //     </document>
 
-      After reading through the document, identify the main topics, themes, and key concepts that are covered.
+  //     After reading through the document, identify the main topics, themes, and key concepts that are covered.
 
-      Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+  //     Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
 
-      Please list the keywords you came up in bold using the Markdown syntax.
+  //     Please list the keywords you came up in bold.
 
-      Finally, provide a short opinion on the text.`;
+  //     Finally, provide a short opinion on the text. Provide all your answers using the Markdown syntax`;
 
-      // Longer version
-      // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
-      // <documents>
-      // ${s.context}
-      // </documents>
-      // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
-      // - Write a sentence or two describing the essence of the topic
-      // - Extract a few representative excerpts or quotes from the documents that relate to the topic
-      // - Estimate approximately what percentage of the overall content across the documents is about this topic
-      // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
-      // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
-      // Enclose your final topic analysis in <analysis> tags.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  }, [s.context]);
+  //     // Longer version
+  //     // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
+  //     // <documents>
+  //     // ${s.context}
+  //     // </documents>
+  //     // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
+  //     // - Write a sentence or two describing the essence of the topic
+  //     // - Extract a few representative excerpts or quotes from the documents that relate to the topic
+  //     // - Estimate approximately what percentage of the overall content across the documents is about this topic
+  //     // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
+  //     // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
+  //     // Enclose your final topic analysis in <analysis> tags.`;
+  //     newMessage(ctx);
+  //     setInput('');
+  //   }
+  // }, [s.context]);
 
   // Tokens coming from the server as a stream
   useEffect(() => {
@@ -227,7 +228,26 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Send request to backend
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'llama', max_new_tokens: 1000, app_id: props._id });
+        let body: AiQueryRequest;
+        if (previousAnswer && previousQuestion) {
+          body = {
+            input: complete_request || request,
+            model: 'llama',
+            max_new_tokens: 1000,
+            app_id: props._id,
+            previousQ: previousQuestion,
+            previousA: previousAnswer
+          };
+        } else {
+          body = {
+            input: complete_request || request,
+            model: 'llama',
+            max_new_tokens: 1000,
+            app_id: props._id,
+            previousQ: s.context || '',
+          };
+        }
+        const backend = await AiAPI.chat.query(body);
         if (backend.success) {
           const new_text = backend.output || '';
           setProcessing(false);
@@ -302,6 +322,70 @@ function AppComponent(props: App): JSX.Element {
     setPreviousQuestion('');
     setPreviousAnswer('');
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
+  };
+
+  const onSummary = async () => {
+    if (s.context) {
+      // Quick summary
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        After reading through the document, identify the main topics, themes, and key concepts that are covered.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onProsCons = async () => {
+    if (s.context) {
+      // Quick summary
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        After reading through the document, identify the pros and cons.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onKeywords = async () => {
+    if (s.context) {
+      // Quick summary
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+        Provide all your answers using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onOpinion = async () => {
+    if (s.context) {
+      // Quick summary
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide a short opinion on the document using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onFacts = async () => {
+    if (s.context) {
+      // Quick summary
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide two or three interesting facts from the document, using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
   };
 
   useEffect(() => {
@@ -403,6 +487,7 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
                           color="white"
@@ -475,6 +560,7 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
                           boxShadow="md"
@@ -601,6 +687,75 @@ function AppComponent(props: App): JSX.Element {
             />
           </Tooltip>
         </HStack>
+        <hr />
+        <HStack>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Promptz'} openDelay={400}>
+            <Button
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              textAlign={"left"}
+              onClick={onSummary}
+              width="34%"
+            >Summary</Button>
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+            <Button
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              textAlign={"left"}
+              onClick={onProsCons}
+              width="34%"
+            >Pros/Cons</Button>
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+            <Button
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              textAlign={"left"}
+              onClick={onKeywords}
+              width="34%"
+            >Keywords</Button>
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+            <Button
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              textAlign={"left"}
+              onClick={onOpinion}
+              width="34%"
+            >Opinion</Button>
+          </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+            <Button
+              aria-label="stop"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              textAlign={"left"}
+              onClick={onFacts}
+              width="34%"
+            >Interesting Facts</Button>
+          </Tooltip>
+        </HStack>
+
         <InputGroup bg={'blackAlpha.100'}>
           <Input
             placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + " model)" : " ")}

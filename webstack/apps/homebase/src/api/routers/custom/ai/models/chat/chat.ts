@@ -61,7 +61,7 @@ export class LlamaModel extends AiModel {
     };
   }
 
-  public async ask(input: string, max_new_tokens: number): Promise<AiQueryResponse> {
+  public async ask(input: string, max_new_tokens: number, previousQ?: string, previousA?: string): Promise<AiQueryResponse> {
     try {
       const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
       let modelBody, url;
@@ -77,21 +77,28 @@ export class LlamaModel extends AiModel {
           },
         };
       } else {
+        console.log('OpenAI style API: /v1/chat/completions');
         url = `${this._url}/v1/chat/completions`;
         modelBody = {
           model: 'meta/llama-3.1-8b-instruct',
           messages: [
             {
-              role: 'assistant',
+              role: 'system',
               content:
                 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.',
             },
-            { role: 'user', content: input },
           ],
           stream: false,
           // maximum number of tokens to generate
           max_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
         };
+        if (previousQ) {
+          modelBody.messages.push({ role: 'user', content: previousQ });
+        }
+        if (previousA) {
+          modelBody.messages.push({ role: 'assistant', content: previousA });
+        }
+        modelBody.messages.push({ role: 'user', content: input });
       }
       const response = await fetch(url, {
         method: 'POST',
