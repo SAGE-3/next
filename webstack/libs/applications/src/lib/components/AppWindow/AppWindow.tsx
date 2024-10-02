@@ -13,7 +13,7 @@ import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
 
 // Window Components
 import { App } from '../../schema';
@@ -118,9 +118,6 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
   const toastID = 'error-toast';
-
-  // Detect if spacebar is held down to allow for board dragging through apps
-  const spacebarPressed = useKeyPress(' ');
 
   // Track the app store errors
   useEffect(() => {
@@ -337,7 +334,7 @@ export function AppWindow(props: WindowProps) {
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
