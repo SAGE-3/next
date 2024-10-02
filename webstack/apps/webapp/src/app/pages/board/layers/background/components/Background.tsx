@@ -61,10 +61,8 @@ export function Background(props: BackgroundProps) {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const selectedAppId = useUIStore((state) => state.selectedAppId);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
   const boardSynced = useUIStore((state) => state.boardSynced);
+
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
@@ -189,17 +187,6 @@ export function Background(props: BackgroundProps) {
     { dependencies: [] }
   );
 
-  // Deselect Application by clicking on board
-  function handleDeselect() {
-    if (selectedApp) {
-      setSelectedApp('');
-    }
-
-    if (setSelectedAppsIds.length > 0) {
-      setSelectedAppsIds([]);
-    }
-  }
-
   return (
     <Box
       className="board-handle"
@@ -219,7 +206,8 @@ export function Background(props: BackgroundProps) {
       }}
       // Drag and drop event handlers
       {...dragProps}
-      onClick={handleDeselect}
+    // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+    // onPointerDown={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {renderContent()}

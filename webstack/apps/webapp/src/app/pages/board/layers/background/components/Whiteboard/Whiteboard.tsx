@@ -11,16 +11,16 @@ import * as Simplify from 'simplify-js';
 
 // Yjs Imports
 import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+// import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
 import {
   YjsRoomConnection,
-  YjsRooms,
+  // YjsRooms,
   useAbility,
   useAnnotationStore,
-  useHotkeys,
-  useKeyPress,
+  // useHotkeys,
+  // useKeyPress,
   useThrottleScale,
   useUIStore,
   useUser,
@@ -37,7 +37,7 @@ type WhiteboardProps = {
 
 export function Whiteboard(props: WhiteboardProps) {
   // Settings
-  const { setPrimaryActionMode, settings } = useUserSettings();
+  const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
   const { user } = useUser();
@@ -302,20 +302,6 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [undoLastMaker]);
 
-  const spacebarPressed = useKeyPress(' ');
-
-  // Switch between pen and interactive mode
-  // Going to make each interaction mode a hotkey/ keybind
-  // useHotkeys(
-  //   'shift+w',
-  //   () => {
-  //     if (canAnnotate) {
-  //       // setWhiteboardMode(primaryActionMode === 'none' ? 'pen' : 'none');
-  //     }
-  //   },
-  //   { dependencies: [primaryActionMode] }
-  // );
-
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
     if (!yLines) return; // Exit if yLines is undefined or null
@@ -338,8 +324,8 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'auto' : 'none',
-        touchAction: !spacebarPressed && (primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? 'none' : 'auto',
+        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'auto' : 'none',
+        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'none' : 'auto',
       }}
     >
       <svg
@@ -359,6 +345,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
         {...dragProps}
+      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}

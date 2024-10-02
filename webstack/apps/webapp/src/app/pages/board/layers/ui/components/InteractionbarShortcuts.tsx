@@ -6,11 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useUserSettings, useHotkeys } from '@sage3/frontend';
+import { useUserSettings, useHotkeys, useUIStore } from '@sage3/frontend';
 
 export function InteractionbarShortcuts() {
   // Settings
   const { setPrimaryActionMode } = useUserSettings();
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   // useHotkeys(
   //   'h',
@@ -53,6 +55,7 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('grab');
+      setSelectedAppsIds([]);
     },
     { dependencies: [] }
   );
@@ -71,6 +74,8 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('pen');
+      setSelectedApp('');
+      setSelectedAppsIds([]);
     },
     { dependencies: [] }
   );
@@ -80,6 +85,8 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('eraser');
+      setSelectedApp('');
+      setSelectedAppsIds([]);
     },
     { dependencies: [] }
   );

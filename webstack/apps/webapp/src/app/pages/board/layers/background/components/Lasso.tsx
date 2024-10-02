@@ -24,6 +24,7 @@ type BoxProps = {
   last_mousex: number;
   last_mousey: number;
   selectedApps: string[];
+  remove: boolean;
 };
 
 export function Lasso(props: LassoProps) {
@@ -38,6 +39,7 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
+  const [removal, setRemoval] = useState(false);
   const { uiToBoard } = useCursorBoardPosition();
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
@@ -85,8 +87,12 @@ export function Lasso(props: LassoProps) {
   };
 
   // Mouse Behaviours
-  const mouseDown = (ev: any) => {
+  const mouseDown = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0) {
+      if (ev.ctrlKey === false && ev.shiftKey === false) {
+        clearSelectedApps();
+      }
+      setRemoval(ev.shiftKey);
       lassoStart(ev.clientX, ev.clientY);
     }
   };
@@ -95,8 +101,9 @@ export function Lasso(props: LassoProps) {
     lassoEnd();
   };
 
-  const mouseMove = (ev: any) => {
+  const mouseMove = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0 && mousedown) {
+      setRemoval(ev.shiftKey);
       lassoMove(ev.clientX, ev.clientY);
     } else if (ev.buttons === 4) {
       setIsDragging(true); // Keep Current Lasso Selection
@@ -142,6 +149,8 @@ export function Lasso(props: LassoProps) {
             // the cursor should remain a pointer
             // cursor: 'crosshair',
           }}
+          // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+          // onPointerDown={handleDeselect}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}
@@ -151,7 +160,14 @@ export function Lasso(props: LassoProps) {
           {...dragProps}
         >
           {mousedown ? (
-            <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
+            <DrawBox
+              mousex={mousex}
+              mousey={mousey}
+              last_mousex={last_mousex}
+              last_mousey={last_mousey}
+              selectedApps={selectedApps}
+              remove={removal}
+            />
           ) : null}
         </svg>
       </div>
@@ -258,9 +274,14 @@ const DrawBox = (props: BoxProps) => {
     if (selectedAppId.length) {
       setSelectedApp('');
     }
+
+    if (props.remove) {
+      setSelectedApps([...clickSelectedApps.filter((app) => !rectSelectedApps.includes(app))]);
+    } else {
+      setSelectedApps([...rectSelectedApps, ...clickSelectedApps]);
+    }
     // Only update UI store when local state changes
-    setSelectedApps([...rectSelectedApps, ...clickSelectedApps]);
-  }, [rectSelectedApps, clickSelectedApps]);
+  }, [props.remove, rectSelectedApps, clickSelectedApps]);
 
   return (
     <rect
