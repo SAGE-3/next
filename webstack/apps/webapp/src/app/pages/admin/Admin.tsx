@@ -21,6 +21,12 @@ import {
   Tabs,
   useToast,
   useColorMode,
+  Flex,
+  IconButton,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // Collection specific schemas
@@ -49,6 +55,7 @@ import './adminStyle.css';
 
 // Components
 import { TableViewer } from './components';
+import { MdSearch, MdRefresh } from 'react-icons/md';
 
 export function AdminPage() {
   // SAGE3 Image
@@ -186,11 +193,13 @@ export function AdminPage() {
     });
   };
 
+  const [search, setSearch] = useState('');
+
   return (
-    <Box display="flex" width="100vw" height="100vh" justifyContent="center" py="2" px="2">
-      <Box height="100%" maxWidth="1600px" width="100%">
+    <Flex direction="column" align="center" minH="100vh" py="2">
+      <Flex direction="column" width="100%" maxW="1600px" flex="1">
         {/* Top Section */}
-        <Box display="flex" flexDir="column" justifyContent={'space-between'} height="calc(100vh - 18px)" minHeight={0} width="100%">
+        <Box as="header">
           <Box display="flex" justifyContent="left" gap="2">
             <Button onClick={handleBackToHome} colorScheme="teal" size="sm">
               Home
@@ -199,9 +208,11 @@ export function AdminPage() {
               {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
             </Button>
           </Box>
+        </Box>
 
-          {/* Tab Section that holds the main data and information */}
-          <Tabs width="100%" onChange={(index) => handleTabChange(index)}>
+        {/* Tab Section that holds the main data and information */}
+        <Flex as="main" flex="1" overflow="hidden" my="3">
+          <Tabs isFitted variant="enclosed" flex="1">
             <TabList>
               <Tab>Rooms</Tab>
               <Tab>Boards</Tab>
@@ -214,85 +225,103 @@ export function AdminPage() {
               <Tab>Logs</Tab>
             </TabList>
 
-            <TabPanels>
-              <TabPanel>
+            {/* Search Input */}
+            <InputGroup my="4" colorScheme="teal">
+              <InputLeftElement pointerEvents="none">
+                <MdSearch color="gray.300" />
+              </InputLeftElement>
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" width="500px" />
+            </InputGroup>
+
+            <TabPanels flex="1" overflow="hidden">
+              <TabPanel p={0} height="100%">
                 {TableViewer<RoomSchema>({
                   heading: 'Rooms',
                   data: rooms,
+                  search: search,
                   columns: ['_id', 'name', 'description', 'color'],
                   onRefresh: fetchRooms,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'rooms') }],
                 })}
               </TabPanel>
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<BoardSchema>({
                   heading: 'Boards',
                   data: boards,
+                  search: search,
+
                   columns: ['_id', 'name', 'description', 'isPrivate'],
                   onRefresh: fetchBoards,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'boards') }],
                 })}
               </TabPanel>
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<AppSchema>({
                   heading: 'Apps',
                   data: apps,
+                  search: search,
+
                   columns: ['_id', 'type', 'title', 'boardId'],
                   onRefresh: fetchApps,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'apps') }],
                 })}
               </TabPanel>
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<AssetSchema>({
                   heading: 'Assets',
                   data: assets,
+                  search: search,
+
                   columns: ['_id', 'originalfilename', 'mimetype', 'size'],
                   onRefresh: fetchAssets,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') }],
                 })}
               </TabPanel>
-
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<UserSchema>({
                   heading: 'Users',
                   data: users,
+                  search: search,
+
                   columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'],
                   onRefresh: fetchUsers,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'users') }],
                 })}
               </TabPanel>
-
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<PresenceSchema>({
                   heading: 'Presences',
                   data: presences,
+                  search: search,
+
                   columns: ['_id', 'userId', 'roomId', 'boardId'],
                   onRefresh: fetchPresences,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'presence') }],
                 })}
               </TabPanel>
-
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<InsightSchema>({
                   heading: 'Insights',
                   data: insights,
+                  search: search,
+
                   columns: ['_id', 'app_id', 'boardId'],
                   onRefresh: fetchInsights,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'insight') }],
                 })}
               </TabPanel>
-
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 {TableViewer<MessageSchema>({
                   heading: 'Messages',
                   data: messages,
+                  search: search,
+
                   columns: ['_id', 'type'],
                   onRefresh: fetchMessages,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'message') }],
                 })}
               </TabPanel>
-
-              <TabPanel>
+              <TabPanel p={0} height="100%">
                 <Heading>Logs</Heading>
                 <Code ref={preRef} width={'100%'} height={'700px'} fontSize={'xs'} m={1} p={1} overflowY="scroll" overflowX="hidden"></Code>
                 <Button mx={3} colorScheme="green" size="xs" onClick={() => delLogs()}>
@@ -301,15 +330,15 @@ export function AdminPage() {
               </TabPanel>
             </TabPanels>
           </Tabs>
+        </Flex>
 
-          {/* Bottom Bar */}
-          <Box display="flex" flexDirection="row" justifyContent={'space-between'} width="100%" minHeight={'initial'} alignItems="center">
-            <div></div>
-            <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sage3" userSelect={'auto'} draggable={false} />
-          </Box>
+        {/* Bottom Bar */}
+        <Box as="footer">
+          <div></div>
+          <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sage3" userSelect={'auto'} draggable={false} />
         </Box>
-      </Box>
-    </Box>
+      </Flex>
+    </Flex>
   );
 }
 

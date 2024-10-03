@@ -38,7 +38,7 @@ interface TableViewerProps<T> {
   data: TableDataType<T>[];
   columns: (keyof T | keyof SBDoc)[];
   onRefresh: () => void;
-
+  search: string;
   actions?: {
     label: string;
     color: SAGEColors;
@@ -163,7 +163,6 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   //     return 0;
   //  };
 
-  const [search, setSearch] = useState('');
   const searchFilter = (item: TableDataType<T>) => {
     // Get all the values from the selected columns and concat in to one string
     let values: Array<string | number | boolean> = [];
@@ -187,33 +186,16 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
     });
     // Extract the values from the room object that are strings, numbers, or booleans
     const searchStr = values.join(' ');
-    return fuzzySearch(searchStr, search);
+    return fuzzySearch(searchStr, props.search);
   };
   // Chakra Table
   return (
-    <>
-      <Heading>
-        {heading} ({dataCount})
-      </Heading>
-
-      <InputGroup my="2" colorScheme="teal">
-        <InputLeftElement pointerEvents="none">
-          <MdSearch color="gray.300" />
-        </InputLeftElement>
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" width="500px" />
-        <Tooltip label="Refresh" aria-label="Refresh" hasArrow placement="top">
-          <IconButton ml="2" aria-label="Home" icon={<MdRefresh />} onClick={props.onRefresh} />
-        </Tooltip>
-      </InputGroup>
-      <Box height="80vh" overflow="hidden">
-        <Box maxHeight="calc(80vh - 100px)" overflowY="auto">
-          <Table variant="striped" size="sm" width="100%" layout="fixed">
-            {TableHeader(columns)}
-            {TableBody(data.filter(searchFilter), columns)}
-            {/* {TableFooter(columns)} */}
-          </Table>
-        </Box>
-      </Box>
-    </>
+    <Box height="100%" overflowY="hidden">
+      <Table variant="striped" size="sm" layout="fixed">
+        {TableHeader(columns)}
+        {TableBody(data.filter(searchFilter), columns)}
+        {/* {TableFooter(columns)} */}
+      </Table>
+    </Box>
   );
 }
