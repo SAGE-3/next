@@ -325,11 +325,21 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onSummary = async () => {
-    if (s.context) {
-      // Quick summary
+    // Get the current context
+    let newctx = s.context;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
+        return accumulate;
+      }, '');
+    }
+    if (newctx) {
+      // Summary prompt
       const ctx = `@S, Please carefully read the following document text:
         <document>
-        ${s.context}
+        ${newctx}
         </document>
         After reading through the document, identify the main topics, themes, and key concepts that are covered.
         Provide all your answers in a few sentences using the Markdown syntax`;
@@ -339,7 +349,7 @@ function AppComponent(props: App): JSX.Element {
   };
   const onProsCons = async () => {
     if (s.context) {
-      // Quick summary
+      // ProsCons prompt
       const ctx = `@S, Please carefully read the following document text:
         <document>
         ${s.context}
@@ -352,7 +362,7 @@ function AppComponent(props: App): JSX.Element {
   };
   const onKeywords = async () => {
     if (s.context) {
-      // Quick summary
+      // Keywords prompt
       const ctx = `@S, Please carefully read the following document text:
         <document>
         ${s.context}
@@ -365,7 +375,7 @@ function AppComponent(props: App): JSX.Element {
   };
   const onOpinion = async () => {
     if (s.context) {
-      // Quick summary
+      // Opinion prompt
       const ctx = `@S, Please carefully read the following document text:
         <document>
         ${s.context}
@@ -377,7 +387,7 @@ function AppComponent(props: App): JSX.Element {
   };
   const onFacts = async () => {
     if (s.context) {
-      // Quick summary
+      // Facts prompt
       const ctx = `@S, Please carefully read the following document text:
         <document>
         ${s.context}
@@ -689,7 +699,7 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
         <hr />
         <HStack>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Promptz'} openDelay={400}>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
             <Button
               aria-label="stop"
               size={'xs'}
@@ -700,7 +710,7 @@ function AppComponent(props: App): JSX.Element {
               textAlign={"left"}
               onClick={onSummary}
               width="34%"
-            >Summary</Button>
+            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Summary</Text></Button>
           </Tooltip>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
             <Button
@@ -713,7 +723,7 @@ function AppComponent(props: App): JSX.Element {
               textAlign={"left"}
               onClick={onProsCons}
               width="34%"
-            >Pros/Cons</Button>
+            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Pros/Cons</Text></Button>
           </Tooltip>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
             <Button
@@ -726,7 +736,7 @@ function AppComponent(props: App): JSX.Element {
               textAlign={"left"}
               onClick={onKeywords}
               width="34%"
-            >Keywords</Button>
+            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Keywords</Text></Button>
           </Tooltip>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
             <Button
@@ -739,7 +749,7 @@ function AppComponent(props: App): JSX.Element {
               textAlign={"left"}
               onClick={onOpinion}
               width="34%"
-            >Opinion</Button>
+            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Opinion</Text></Button>
           </Tooltip>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
             <Button
@@ -752,7 +762,7 @@ function AppComponent(props: App): JSX.Element {
               textAlign={"left"}
               onClick={onFacts}
               width="34%"
-            >Interesting Facts</Button>
+            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Interesting Facts</Text></Button>
           </Tooltip>
         </HStack>
 

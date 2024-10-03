@@ -965,8 +965,10 @@ export function AppToolbar(props: AppToolbarProps) {
       }
       if (context) {
         // Create the chat app with the context
-        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
+        const source = app._id;
+        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context, sources: [source] });
         createApp(state);
+        useUIStore.getState().setSelectedApp('');
       }
     }
   };

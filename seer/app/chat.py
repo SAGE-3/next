@@ -60,6 +60,7 @@ class ChatAgent:
         if chat["url"] and chat["model"]:
             llm_llama = HuggingFaceEndpoint(
                 endpoint_url=chat_server,
+                model="",
                 max_new_tokens=2048,
                 stop_sequences=[
                     "<|start_header_id|>",
