@@ -7,6 +7,7 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
+import { useParams } from 'react-router';
 import {
   ButtonGroup,
   Button,
@@ -24,22 +25,97 @@ import {
   Divider,
   Center,
   AbsoluteCenter,
+  List,
+  ListIcon,
+  ListItem,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
 import { HiCommandLine } from "react-icons/hi2";
 
 // Date management
 import { formatDistance } from 'date-fns';
 import { format } from 'date-fns/format';
+// Fetch
+import ky, { HTTPError } from 'ky';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
-import { AiQueryRequest, genId } from '@sage3/shared';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, apiUrls } from '@sage3/frontend';
+import {
+  genId,
+  AiQueryRequest, AskRequest, AskResponse, SError,
+  AgentRoutes, HealthResponse, WebQuery, WebAnswer,
+  ImageQuery, ImageAnswer,
+} from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
+import { initialValues } from '@sage3/applications/initialValues';
+import { AppName } from '@sage3/applications/schema';
+
+/**
+ * Makes the actual RPC call using ky library
+ * @param mth string endpoint name
+ * @param data object data to send
+ * @returns
+ */
+const makeRpcPost = async (mth: string, data: object) => {
+  try {
+    const base = apiUrls.ai.agents.base;
+    const response = await ky.post<Response>(`${base}${mth}`, { json: data }).json();
+    return response;
+  } catch (e) {
+    const error = e as HTTPError<Response>;
+    if (error.name === 'HTTPError') {
+      const err: SError = await error.response.json();
+      return err;
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+const makeRpcGet = async (mth: string) => {
+  try {
+    const base = apiUrls.ai.agents.base;
+    const response = await ky.get<Response>(`${base}${mth}`).json();
+    return response;
+  } catch (e) {
+    const error = e as HTTPError<Response>;
+    if (error.name === 'HTTPError') {
+      const err: SError = await error.response.json();
+      return err;
+    } else {
+      return { message: "Unknown error" };
+    }
+  }
+}
+
+/**
+ * Check the health of the agent server
+ * @param mth string endpoint name
+ * @param data SumRequest payload
+ * @returns
+ */
+const callStatus = async () => {
+  return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
+};
+const callAsk = async (data: AskRequest) => {
+  return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;
+};
+const callSummary = async (data: AskRequest) => {
+  return makeRpcPost(AgentRoutes.summary, data) as Promise<AskResponse | SError>;
+};
+const callWeb = async (data: WebQuery) => {
+  return makeRpcPost(AgentRoutes.web, data) as Promise<WebAnswer | SError>;
+};
+const callWebshot = async (data: WebQuery) => {
+  return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebAnswer | SError>;
+};
+const callImage = async (data: ImageQuery) => {
+  return makeRpcPost(AgentRoutes.image, data) as Promise<ImageAnswer | SError>;
+};
+
 
 
 // AI model information from the backend
@@ -57,7 +133,11 @@ const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const { roomId, boardId } = useParams();
+
   const { user } = useUser();
+  const [username, setUsername] = useState('');
+  const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
@@ -90,6 +170,7 @@ function AppComponent(props: App): JSX.Element {
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
   const [status,] = useState<string>("AI can make mistakes. Check important information.");
+  const [actions, setActions] = useState<any[]>([]);
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -119,6 +200,14 @@ function AppComponent(props: App): JSX.Element {
       sendMessage();
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      const u = user.data.name;
+      const firstName = u.split(' ')[0];
+      setUsername(firstName);
+    }
+  }, [user]);
 
   // Update from server
   useEffect(() => {
@@ -325,6 +414,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onSummary = async () => {
+    if (!user) return;
     // Get the current context
     let newctx = s.context;
     if (s.sources.length > 0) {
@@ -334,6 +424,80 @@ function AppComponent(props: App): JSX.Element {
         if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
         return accumulate;
       }, '');
+
+      // Check for image
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: "Describe the image",
+            response: 'Working on it...',
+          };
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: ImageQuery = {
+            ctx: {
+              prompt: '',
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            user: username,
+            asset: assetid,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callImage(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the image',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+
+            if (response.actions) {
+              setActions(response.actions);
+            }
+
+          }
+
+
+        }
+      }
     }
     if (newctx) {
       // Summary prompt
@@ -435,6 +599,41 @@ function AppComponent(props: App): JSX.Element {
     }
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
+
+
+  const applyAction = (action: any) => async () => {
+    // Test JSON data
+    if (action.type === 'create_app') {
+      // Create a new duplicate app
+      const type = action.app as AppName;
+      const size = action.data.size;
+      const pos = action.data.position;
+      const state = action.state;
+      // Create the app
+      createApp({
+        title: type,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: pos,
+        size: size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: type,
+        state: { ...(initialValues[type] as AppState), ...state },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      toast({
+        title: 'Info',
+        description: 'Action applied.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      console.log('Action> not valid');
+    }
+  };
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
@@ -653,6 +852,38 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             )
           }
+
+          <Box display={'flex'} justifyContent={'left'}>
+            {actions &&
+              <List>
+                {actions.map((action, index) => (
+                  <Box
+                    color="black"
+                    rounded={'md'}
+                    boxShadow="md"
+                    fontFamily="arial"
+                    textAlign={'left'}
+                    bg={textColor}
+                    p={1}
+                    m={3}
+                    // maxWidth="80%"
+                    userSelect={'none'}
+                    _hover={{ background: "purple.300" }}
+                    background={'purple.200'}
+                    onDoubleClick={applyAction(action)}
+                    key={"list-" + index}
+                  >
+                    <Tooltip label="Double click to apply action" aria-label="A tooltip">
+                      <ListItem key={index}><ListIcon as={MdSettings} color='green.500' />
+                        Show the result on the board
+                      </ListItem>
+                    </Tooltip>
+                  </Box>
+                ))}
+              </List>
+            }
+          </Box>
+
         </Box>
         <HStack>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>

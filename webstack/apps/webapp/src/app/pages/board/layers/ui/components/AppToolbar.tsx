@@ -923,8 +923,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const openChat = async () => {
     if (app) {
       const w = 800;
-      const h = 620;
-      const x = app.data.position.x + app.data.size.width + 40;
+      const h = 720;
+      const x = app.data.position.x + app.data.size.width + 20;
       const y = app.data.position.y;
       let context = '';
       // Specific cases for each app to build a context for the LLM

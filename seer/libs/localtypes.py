@@ -28,6 +28,18 @@ class Answer(BaseModel):
     actions: List[Json]  # actions to be performed
 
 
+class ImageQuery(BaseModel):
+    ctx: Context  # context
+    asset: str  # question
+    user: str  # user name
+
+
+class ImageAnswer(BaseModel):
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+
 class WebQuery(BaseModel):
     ctx: Context  # context
     url: str  # question

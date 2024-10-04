@@ -46,6 +46,18 @@ export type WebAnswer = {
   actions?: any[];
 };
 
+// Image request
+export type ImageQuery = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  asset: string;
+  user: string;
+};
+export type ImageAnswer = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Agent routes
 export const AgentRoutes = {
   status: '/status',
@@ -53,4 +65,5 @@ export const AgentRoutes = {
   summary: '/summary',
   web: '/web',
   webshot: '/webshot',
+  image: '/image',
 } as const;

@@ -2,7 +2,7 @@
 import logging, asyncio
 from dotenv import load_dotenv
 
-from libs.localtypes import Question, WebQuery
+from libs.localtypes import ImageQuery, Question, WebQuery
 
 # Web API
 from fastapi import FastAPI, HTTPException, Request
@@ -25,17 +25,19 @@ from langchain.globals import set_debug, set_verbose
 from app.chat import ChatAgent
 from app.summary import SummaryAgent
 from app.web import WebAgent
+from app.image import ImageAgent
 
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 summaryAG = SummaryAgent(logger, ps3)
+imageAG = ImageAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
 
 # set to debug the queries into langchain
-set_debug(True)
-set_verbose(True)
+# set_debug(True)
+# set_verbose(True)
 
 # Web server
 app = FastAPI(title="Seer", description="A LangChain proxy for SAGE3.", version="0.1.0")
@@ -72,6 +74,18 @@ async def summary(qq: Question):
     try:
         # do the work
         val = await summaryAG.process(qq)
+        return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+@app.post("/image")
+async def image(qq: ImageQuery):
+    try:
+        # do the work
+        val = await imageAG.process(qq)
         return val
     except HTTPException as e:
         # Get the error message

@@ -9,7 +9,7 @@
 import * as express from 'express';
 import { config } from 'apps/homebase/src/config';
 
-import { SError, AgentRoutes, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer } from '@sage3/shared';
+import { SError, AgentRoutes, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer, ImageQuery, ImageAnswer } from '@sage3/shared';
 
 // Define a general RPC handler type
 type RpcHandlerGet<Response> = () => (Response | SError) | Promise<Response | SError>;
@@ -58,6 +58,10 @@ const webshotHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.webshot;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const imageHandler: RpcHandlerPost<ImageQuery, ImageAnswer> = (req) => {
+  const route = AgentRoutes.image;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -66,6 +70,7 @@ handlers[AgentRoutes.ask] = { func: askHandler, method: 'POST' };
 handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
 handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
+handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API
