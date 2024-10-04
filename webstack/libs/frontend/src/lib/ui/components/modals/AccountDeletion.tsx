@@ -49,6 +49,9 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
   const inputTextPlaceholdColor = useColorModeValue('gray.900', 'gray.100');
   const inputColor = useHexColor(inputTextPlaceholdColor);
 
+  const redText = useColorModeValue('red.500', 'red.300');
+  const redTextHex = useHexColor(redText);
+
   const [value, setValue] = useState('');
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value);
@@ -65,15 +68,30 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
     <Modal isOpen={props.isOpen} onClose={props.onClose} size="lg" colorScheme="red">
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader fontSize={'2xl'}>Account Deletion</ModalHeader>
+        <ModalHeader fontSize={'3xl'}>Account Deletion</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Text>Are you sure you want to delete your account? This action cannot be undone.</Text>
-          <Text mt={4}>Please enter your email address below to confirm:</Text>
-          <Text mt={2}>{email}</Text>
+          <Text color={redTextHex} fontWeight={'bold'} fontSize={'lg'}>
+            This action cannot be undone.
+          </Text>
+          <Text mt={6} fontWeight="bold">
+            The following will be removed from this SAGE3 Server
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Your created Rooms, Boards, Apps, and Annotations.
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Your uploaded Files, Assets, and Plugins.
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Your User information.
+          </Text>
+
+          <Text mt={6}>Please enter your email address below to confirm:</Text>
+          <Text>{email}</Text>
 
           <Input
-            my="2"
+            my="3"
             value={value}
             onChange={handleEmailChange}
             placeholder="Enter your email"
