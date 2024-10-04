@@ -31,6 +31,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardLocked = useUIStore((state) => state.boardLocked);
@@ -44,12 +45,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     { x: 0, y: 0 },
     { x: 0, y: 0 },
   ]);
-  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other'); // Used to differentiate between board drag and app deselect
+  // Used to differentiate between board drag and app deselect
+  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other');
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);
 
-  // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
@@ -113,8 +114,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
     if (target.id === 'board') {
       setStartedDragOn('board');
+      setSelectedApp('');
     } else if ([target.id === 'lasso', target.id === 'whiteboard'].some((condition) => condition)) {
       setStartedDragOn('board-actions');
+      setSelectedApp('');
     } else if (target.classList.contains('handle')) {
       setStartedDragOn('app');
     } else if (target.classList.contains('app-window-resize-handle')) {
@@ -143,8 +146,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setStartedDragOn('app-resize');
     } else if (checkValidIds(['board'])) {
       setStartedDragOn('board');
+      setSelectedApp('');
     } else if (checkValidIds(['lasso', 'whiteboard'])) {
       setStartedDragOn('board-actions');
+      setSelectedApp('');
     } else {
       setStartedDragOn('other');
     }
@@ -172,9 +177,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (boardLocked) {
         return;
       }
-      if (selectedApp) {
-        return;
-      }
 
       // This is a workable solution to have a psudeo onWheelStart-like behaviour
       // Note that if someone is wheeling on the board and then quickly wheels on a panel, the board will move
@@ -185,6 +187,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         return prev;
       });
+
+      if (selectedApp) {
+        return;
+      }
 
       setStartedDragOn((draggedOn) => {
         if (draggedOn === 'other') {

@@ -71,6 +71,17 @@ const components = {
       colorScheme: 'primary',
     },
   },
+  // Looking to change the color scheme?  Remember to change the Interactionbar.tsx's color scheme logic
+  // Button: {
+  //   variants: {
+  //     solid: (props: any) => ({
+  //       bg: props.colorScheme === 'gray' ? 'gray.100' : `${props.colorScheme}.500`,
+  //       _dark: {
+  //         bg: props.colorScheme === 'gray' ? 'gray.600' : `${props.colorScheme}.200`,
+  //       },
+  //     }),
+  //   },
+  // },
 };
 
 // Extend the theme
