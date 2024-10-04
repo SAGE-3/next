@@ -40,6 +40,20 @@ class SBAuthDatabase {
     return;
   }
 
+  public async deleteAllTemporaryAccounts(): Promise<void> {
+    // Delte all keys with the prefix 'guest'
+    const guestKeys = await this._redisClient.keys(`${this._prefix}:guest*`);
+    for (const key of guestKeys) {
+      await this._redisClient.del(key);
+    }
+    console.log('SBAuth > Deleted all guest accounts. Count:', guestKeys.length);
+    const spectatorKeys = await this._redisClient.keys(`${this._prefix}:spectator*`);
+    for (const key of spectatorKeys) {
+      await this._redisClient.del(key);
+    }
+    console.log('SBAuth > Deleted all spectator accounts. Count:', spectatorKeys.length);
+  }
+
   /**
    * Create an index for the SBAuth database.
    */
@@ -59,6 +73,10 @@ class SBAuthDatabase {
         '$.providerId': {
           type: SchemaFieldTypes.TEXT,
           AS: 'providerId',
+        },
+        '$.email': {
+          type: SchemaFieldTypes.TAG,
+          AS: 'email',
         },
       },
       {
@@ -121,6 +139,45 @@ class SBAuthDatabase {
       const key = provider + providerId;
       const response = await this._redisClient.json.get(`${this._prefix}:${key}`);
       return response as SBAuthSchema;
+    } catch (error) {
+      console.log('SAGEBase SBAuthDatabase error> ', error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Find an Auth by email
+   * @param email The email to search for
+   */
+  public async deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
+    try {
+      const escapedQuery = email.replace(/[@.]/g, '\\$&');
+      const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
+      const docs = response.documents;
+      console.log('after Search', docs);
+      if (docs.length > 1) {
+        console.log('SBAuth Error > Found Mulitple Auths with the same email');
+        console.log(docs);
+        return undefined;
+      } else if (docs.length == 0) {
+        return undefined;
+      } else {
+        // Delete the auth
+        const provider = docs[0].value.provider as string;
+        const providerId = docs[0].value.providerId as string;
+        if (provider && providerId) {
+          const result = await this.deleteAuth(provider, providerId);
+          if (result) {
+            console.log('SBAuth > Auth Deleted', provider, providerId);
+            return docs[0].value as SBAuthSchema;
+          } else {
+            return undefined;
+          }
+        } else {
+          console.log('SBAuth Error > Auth not found');
+          return undefined;
+        }
+      }
     } catch (error) {
       console.log('SAGEBase SBAuthDatabase error> ', error);
       return undefined;

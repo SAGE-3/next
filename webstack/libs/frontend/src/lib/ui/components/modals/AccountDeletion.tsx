@@ -23,7 +23,7 @@ import {
   Input,
 } from '@chakra-ui/react';
 
-import { useHexColor, useUser } from '@sage3/frontend';
+import { useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 
 // Props for the AccountDeletion
 interface AccountDeletionProps {
@@ -40,6 +40,8 @@ interface AccountDeletionProps {
 export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
   const { user } = useUser();
 
+  const accountDelete = useUsersStore((state) => state.accountDeletion);
+
   const email = user?.data.email;
 
   const toast = useToast();
@@ -54,13 +56,9 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
 
   const handleDeleteAccount = () => {
     // Delete account
-    toast({
-      title: 'Account Deleted',
-      description: 'Your account has been deleted.',
-      status: 'success',
-      duration: 9000,
-      isClosable: true,
-    });
+    const userId = user?._id;
+    if (!userId) return;
+    accountDelete(userId);
   };
 
   return (
