@@ -52,6 +52,15 @@ class SAGE3InsightCollection extends SAGE3Collection<InsightSchema> {
       }
     });
   }
+
+  // Delete all the insights on the board
+  public async deleteInsightsOnBoard(boardId: string): Promise<number> {
+    // Delete the insights on the board
+    const boardInsights = await this.query('boardId', boardId);
+    const insightsIds = boardInsights ? boardInsights.map((insight) => insight._id) : [];
+    const insightsDeleted = await this.deleteBatch(insightsIds);
+    return insightsDeleted ? insightsDeleted.length : 0;
+  }
 }
 
 export const InsightCollection = new SAGE3InsightCollection();

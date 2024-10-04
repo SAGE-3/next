@@ -154,7 +154,6 @@ class SBAuthDatabase {
       const escapedQuery = email.replace(/[@.]/g, '\\$&');
       const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
       const docs = response.documents;
-      console.log('after Search', docs);
       if (docs.length > 1) {
         console.log('SBAuth Error > Found Mulitple Auths with the same email');
         console.log(docs);

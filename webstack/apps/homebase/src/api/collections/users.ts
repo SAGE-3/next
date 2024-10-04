@@ -12,9 +12,22 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 import { SAGEBase } from '@sage3/sagebase';
 
 import { config } from '../../config';
-import { RoomsCollection } from './rooms';
-import { BoardsCollection } from './boards';
+import { RoomDeleteInfo, RoomsCollection } from './rooms';
+import { BoardDeleteInfo, BoardsCollection } from './boards';
 import { AppsCollection } from './apps';
+import { AssetsCollection } from './assets';
+import { PluginsCollection } from './plugins';
+
+type UserDeleteInfo = {
+  userId: string;
+  userDeleted: boolean;
+  roomsDeleteInfo: RoomDeleteInfo[];
+  authDeleted: boolean;
+  boardsDeleteInfo: BoardDeleteInfo[];
+  appsDeleted: number;
+  assetsDeleted: number;
+  pluginsDeleted: number;
+};
 
 class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
   constructor() {
@@ -82,60 +95,78 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         return;
       }
 
-      // This user is allowed to delete the account
-      console.log(`User Deletion Request for ${userEmail}`);
-      console.log(`User Deletion process started`);
+      this.userDeleteLog('User Deletion Request Started', userEmail);
 
       const userCollDelete = await this.delete(userIdToDelete);
-      console.log(`User Collection Delete ${userCollDelete ? 'Success' : 'Failed'}`);
+      const userCollectionRemoval = userCollDelete ? true : false;
+      this.userDeleteLog(`User Collection Delete ${userCollectionRemoval ? 'Success' : 'Failed'}`, userEmail);
 
-      // Now we need to delete all the user's data
-
-      // Delete Authorization Information
       const authCollDelete = await SAGEBase.Auth.deleteAuthByEmail(userEmail);
-      console.log(`Auth Collection Delete ${authCollDelete ? 'Success' : 'Failed'}`);
+      const authCollectionRemoval = authCollDelete ? true : false;
+      this.userDeleteLog(`Auth Collection Delete ${authCollectionRemoval ? 'Success' : 'Failed'}`, userEmail);
 
       // Delete the User's Rooms
-      const usersRooms = await RoomsCollection.query('ownerId', userIdToDelete);
-      const roomsIds = usersRooms ? usersRooms.map((room) => room._id) : [];
-      const roomsDeleted = await RoomsCollection.deleteBatch(roomsIds);
-      console.log(`Rooms Delete ${roomsDeleted ? 'Success' : 'Failed'}. Count: ${roomsDeleted ? roomsDeleted.length : 0}`);
-
-      // Delete all the boards that belong to the deleted rooms
-      if (roomsDeleted) {
-        for (const roomId of roomsDeleted) {
-          // Delete the Room's Boards
-          const roomBoards = await BoardsCollection.query('roomId', roomId);
-          const boardsIds = roomBoards ? roomBoards.map((board) => board._id) : [];
-          const boardsDeleted = await BoardsCollection.deleteBatch(boardsIds);
-          console.log(`Boards Delete ${boardsDeleted ? 'Success' : 'Failed'}. Count: ${boardsDeleted ? boardsDeleted.length : 0}`);
-
-          // Delete the Room's Apps
-          const roomApps = await AppsCollection.query('roomId', roomId);
-          const appsIds = roomApps ? roomApps.map((app) => app._id) : [];
-          const appsDeleted = await AppsCollection.deleteBatch(appsIds);
-          console.log(`Apps Delete ${appsDeleted ? 'Success' : 'Failed'}. Count: ${appsDeleted ? appsDeleted.length : 0}`);
-        }
-      }
+      const roomsDeleteInfo = await RoomsCollection.deleteUsersRooms(userIdToDelete);
 
       // Delete the User's Boards
-      const usersBoards = await BoardsCollection.query('ownerId', userIdToDelete);
-      const boardsIds = usersBoards ? usersBoards.map((board) => board._id) : [];
-      const boardsDeleted = await BoardsCollection.deleteBatch(boardsIds);
-      console.log(`Boards Delete ${boardsDeleted ? 'Success' : 'Failed'}. Count: ${boardsDeleted ? boardsDeleted.length : 0}`);
+      const boardsDeleteInfo = await BoardsCollection.deleteUsersBoards(userIdToDelete);
 
       // Delete the User's Apps
-      const usersApps = await AppsCollection.query('_createdBy', userIdToDelete);
-      const appsIds = usersApps ? usersApps.map((app) => app._id) : [];
-      const appsDeleted = await AppsCollection.deleteBatch(appsIds);
-      console.log(`Apps Delete ${appsDeleted ? 'Success' : 'Failed'}. Count: ${appsDeleted ? appsDeleted.length : 0}`);
+      const appsDeleted = await AppsCollection.deleteUsersApps(userIdToDelete);
 
       // Delete the User's Assets
+      const assetsDelete = await AssetsCollection.deleteUsersAssets(userIdToDelete);
 
       // Delete the User's Plugins
+      const pluginsDeleted = await PluginsCollection.deletePluginsByUser(userIdToDelete);
+
+      // Total Rooms Deleted
+      const totalRoomsDeleted = roomsDeleteInfo.length;
+
+      // Total Boards Deleted
+      const boards = [];
+      roomsDeleteInfo.forEach((room) => {
+        boards.push(...room.boardsDeleteInfo);
+      });
+      boards.push(...boardsDeleteInfo);
+      const totalBoardsDeleted = boards.length;
+
+      // Total Apps Deleted
+      let boardApps = 0;
+      boards.forEach((board) => {
+        boardApps += board.appsDeleted;
+      });
+      const totalAppsDeleted = appsDeleted + boardApps;
+
+      // Total Assets Deleted
+      let roomAssets = 0;
+      roomsDeleteInfo.forEach((room) => {
+        roomAssets += room.assetsDeleted;
+      });
+      const totalAssetsDeleted = roomAssets + assetsDelete;
+
+      // Total Plugins Deleted
+      let roomPlugins = 0;
+      roomsDeleteInfo.forEach((room) => {
+        roomPlugins += room.pluginsDeleted;
+      });
+      const totalPluginsDeleted = roomPlugins + pluginsDeleted;
+
+      this.userDeleteLog(`Rooms Deleted: ${totalRoomsDeleted}`, userEmail);
+      this.userDeleteLog(`Boards Deleted: ${totalBoardsDeleted}`, userEmail);
+      this.userDeleteLog(`Apps Deleted: ${totalAppsDeleted}`, userEmail);
+      this.userDeleteLog(`Assets Deleted: ${totalAssetsDeleted}`, userEmail);
+      this.userDeleteLog(`Plugins Deleted: ${totalPluginsDeleted}`, userEmail);
+
+      this.userDeleteLog('User Deletion Request Finished', userEmail);
+      res.status(200).send({ success: true });
     });
 
     this.httpRouter = router;
+  }
+
+  private userDeleteLog(message: string, email: string) {
+    console.log(`USER DELETION (${email}) >> ${message}`);
   }
 
   // Remove all temporary user accounts at server startup
