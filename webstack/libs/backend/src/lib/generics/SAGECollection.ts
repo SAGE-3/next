@@ -143,7 +143,7 @@ export class SAGE3Collection<T extends SBJSON> {
    * @param query The value to query
    * @returns The documents that match the query if successful. Otherwise undefined
    */
-  public async query(field: keyof T, query: string | number): Promise<SBDocument<T>[] | undefined> {
+  public async query(field: keyof T | keyof SBDocument<T>, query: string | number): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await this._collection.query(field, query);
       return docs;

@@ -119,8 +119,16 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       }
 
       // Delete the User's Boards
+      const usersBoards = await BoardsCollection.query('ownerId', userIdToDelete);
+      const boardsIds = usersBoards ? usersBoards.map((board) => board._id) : [];
+      const boardsDeleted = await BoardsCollection.deleteBatch(boardsIds);
+      console.log(`Boards Delete ${boardsDeleted ? 'Success' : 'Failed'}. Count: ${boardsDeleted ? boardsDeleted.length : 0}`);
 
       // Delete the User's Apps
+      const usersApps = await AppsCollection.query('_createdBy', userIdToDelete);
+      const appsIds = usersApps ? usersApps.map((app) => app._id) : [];
+      const appsDeleted = await AppsCollection.deleteBatch(appsIds);
+      console.log(`Apps Delete ${appsDeleted ? 'Success' : 'Failed'}. Count: ${appsDeleted ? appsDeleted.length : 0}`);
 
       // Delete the User's Assets
 
@@ -130,9 +138,8 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
     this.httpRouter = router;
   }
 
+  // Remove all temporary user accounts at server startup
   public async removeAllTemporaryAccount() {
-    // Remove all temporary accounts (Guest, Spectators)
-    // userRole == 'guest' || userRole == 'spectator'
     const guests = await this.query('userRole', 'guest');
     const spectators = await this.query('userRole', 'spectator');
     const guestsIds = guests ? guests.map((guest) => guest._id) : [];
