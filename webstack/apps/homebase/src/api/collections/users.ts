@@ -12,6 +12,9 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 import { SAGEBase } from '@sage3/sagebase';
 
 import { config } from '../../config';
+import { RoomsCollection } from './rooms';
+import { BoardsCollection } from './boards';
+import { AppsCollection } from './apps';
 
 class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
   constructor() {
@@ -91,7 +94,29 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       // Delete Authorization Information
       const authCollDelete = await SAGEBase.Auth.deleteAuthByEmail(userEmail);
       console.log(`Auth Collection Delete ${authCollDelete ? 'Success' : 'Failed'}`);
+
       // Delete the User's Rooms
+      const usersRooms = await RoomsCollection.query('ownerId', userIdToDelete);
+      const roomsIds = usersRooms ? usersRooms.map((room) => room._id) : [];
+      const roomsDeleted = await RoomsCollection.deleteBatch(roomsIds);
+      console.log(`Rooms Delete ${roomsDeleted ? 'Success' : 'Failed'}. Count: ${roomsDeleted ? roomsDeleted.length : 0}`);
+
+      // Delete all the boards that belong to the deleted rooms
+      if (roomsDeleted) {
+        for (const roomId of roomsDeleted) {
+          // Delete the Room's Boards
+          const roomBoards = await BoardsCollection.query('roomId', roomId);
+          const boardsIds = roomBoards ? roomBoards.map((board) => board._id) : [];
+          const boardsDeleted = await BoardsCollection.deleteBatch(boardsIds);
+          console.log(`Boards Delete ${boardsDeleted ? 'Success' : 'Failed'}. Count: ${boardsDeleted ? boardsDeleted.length : 0}`);
+
+          // Delete the Room's Apps
+          const roomApps = await AppsCollection.query('roomId', roomId);
+          const appsIds = roomApps ? roomApps.map((app) => app._id) : [];
+          const appsDeleted = await AppsCollection.deleteBatch(appsIds);
+          console.log(`Apps Delete ${appsDeleted ? 'Success' : 'Failed'}. Count: ${appsDeleted ? appsDeleted.length : 0}`);
+        }
+      }
 
       // Delete the User's Boards
 
