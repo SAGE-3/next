@@ -229,6 +229,8 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const { auth } = useAuth();
   const data = useData(apiUrls.config.getConfig);
 
+  const isSignedInUser = user?.data.userRole === 'user' || user?.data.userRole === 'admin';
+
   if (!user || loading || !data) {
     return <div>Loading...</div>;
   } else {
@@ -237,12 +239,8 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
     if (!config.production) {
       return <> {props.children}</>;
     } else {
-      // in production, checking that the user is logged with google and in the list
-      return auth?.provider === 'google' && config.admins.includes(user?.data.email) ? (
-        <> {props.children}</>
-      ) : (
-        <Navigate to="/#/home" replace />
-      );
+      // in production, checking that the user is logged properly...not a guest or spectator. And email is in the admin list.
+      return isSignedInUser && config.admins.includes(user?.data.email) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
     }
   }
 };
