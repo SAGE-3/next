@@ -91,6 +91,7 @@ export function MainButton(props: MainButtonProps) {
   const userColor = useHexColor(userColorValue);
 
   const config = useConfigStore((state) => state.config);
+  const isProduction = config.production;
   const feedbackUrl = config.feedback ? config.feedback.url : null;
 
   // Track if the menu is open or not
@@ -390,7 +391,7 @@ export function MainButton(props: MainButtonProps) {
             <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />} py="1px" m="0">
               Account
             </MenuItem>
-            {isAdmin && (
+            {(isAdmin || !isProduction) && (
               <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
                 Admin Page
               </MenuItem>
