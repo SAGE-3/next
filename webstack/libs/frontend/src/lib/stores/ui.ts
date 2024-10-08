@@ -16,8 +16,8 @@ import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
 import { useAppStore } from './app';
 
-// Zoom limits, from 30% to 400%
-export const MinZoom = 0.1;
+// Zoom limits, from 2% to 300%
+export const MinZoom = 0.02;
 export const MaxZoom = 3;
 // When using mouse wheel, repeated events
 export const WheelStepZoom = 0.008;
