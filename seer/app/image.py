@@ -90,7 +90,6 @@ class ImageAgent:
                     img = Image.open(BytesIO(r.content))
                     width, height = img.size
                     img = img.resize((800, int(800 / (width / height))))
-                    img.save("temp.jpg")
                     buffered = BytesIO()
                     img.save(buffered, format="JPEG")
                     image_bytes = buffered.getvalue()
