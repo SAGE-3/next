@@ -89,10 +89,10 @@ export function Lasso(props: LassoProps) {
   // Mouse Behaviours
   const mouseDown = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0) {
-      if (ev.ctrlKey === false && ev.shiftKey === false) {
+      if (ev.altKey === false && ev.shiftKey === false) {
         clearSelectedApps();
       }
-      setRemoval(ev.shiftKey);
+      setRemoval(ev.altKey);
       lassoStart(ev.clientX, ev.clientY);
     }
   };
@@ -103,7 +103,7 @@ export function Lasso(props: LassoProps) {
 
   const mouseMove = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0 && mousedown) {
-      setRemoval(ev.shiftKey);
+      setRemoval(ev.altKey);
       lassoMove(ev.clientX, ev.clientY);
     } else if (ev.buttons === 4) {
       setIsDragging(true); // Keep Current Lasso Selection
