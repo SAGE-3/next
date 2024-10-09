@@ -240,7 +240,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
       setStartedDragOn((draggedOn) => {
         // Tranversal/Panning
-        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn === 'board') {
+        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn !== 'other') {
           move();
         } else if (event.buttons & 4 && (draggedOn === 'app' || draggedOn === 'board' || draggedOn === 'board-actions')) {
           move();
@@ -292,7 +292,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
 
       setStartedDragOn((draggedOn) => {
-        if (draggedOn === 'other' || draggedOn === 'app' || draggedOn === 'app-resize') {
+        if (draggedOn === 'other') {
           return draggedOn;
         }
         if (event.touches.length === 1) {
