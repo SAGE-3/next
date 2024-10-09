@@ -227,6 +227,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         return;
       }
 
+      // // Aggressive method to force deselect accidentally selection of text on screen which
+      // // will prevent proper dragging behaviour, uncomment code in future if needed
+      // if (window.getSelection) {
+      //   window.getSelection()?.removeAllRanges();
+      // }
+
       const move = () => {
         setLocalBoardPosition((prev) => ({
           x: prev.x + (event.movementX * 1) / prev.scale,
