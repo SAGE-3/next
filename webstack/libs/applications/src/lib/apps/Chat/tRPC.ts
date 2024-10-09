@@ -10,7 +10,19 @@
 import ky, { HTTPError } from 'ky';
 
 import { apiUrls } from '@sage3/frontend';
-import { SError, AgentRoutes, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer } from '@sage3/shared';
+import {
+  SError,
+  AgentRoutes,
+  HealthResponse,
+  AskRequest,
+  AskResponse,
+  WebQuery,
+  WebAnswer,
+  ImageQuery,
+  ImageAnswer,
+  PDFQuery,
+  PDFAnswer,
+} from '@sage3/shared';
 
 /**
  * Makes the actual RPC call using ky library
@@ -69,4 +81,10 @@ export const callWeb = async (data: WebQuery) => {
 };
 export const callWebshot = async (data: WebQuery) => {
   return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebAnswer | SError>;
+};
+export const callImage = async (data: ImageQuery) => {
+  return makeRpcPost(AgentRoutes.image, data) as Promise<ImageAnswer | SError>;
+};
+export const callPDF = async (data: PDFQuery) => {
+  return makeRpcPost(AgentRoutes.pdf, data) as Promise<PDFAnswer | SError>;
 };

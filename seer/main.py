@@ -2,10 +2,10 @@
 import logging, asyncio
 from dotenv import load_dotenv
 
-from libs.localtypes import ImageQuery, Question, WebQuery
+from libs.localtypes import ImageQuery, Question, WebQuery, PDFQuery
 
 # Web API
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -26,12 +26,14 @@ from app.chat import ChatAgent
 from app.summary import SummaryAgent
 from app.web import WebAgent
 from app.image import ImageAgent
+from app.pdf import PDFAgent
 
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
+pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
 
@@ -86,6 +88,18 @@ async def image(qq: ImageQuery):
     try:
         # do the work
         val = await imageAG.process(qq)
+        return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+@app.post("/pdf")
+async def pdf(qq: PDFQuery):
+    try:
+        # do the work
+        val = await pdfAG.process(qq)
         return val
     except HTTPException as e:
         # Get the error message

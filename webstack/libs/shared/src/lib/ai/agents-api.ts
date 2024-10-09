@@ -58,6 +58,18 @@ export type ImageAnswer = {
   actions?: any[];
 };
 
+// PDF request
+export type PDFQuery = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  asset: string;
+  user: string;
+};
+export type PDFAnswer = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Agent routes
 export const AgentRoutes = {
   status: '/status',
@@ -66,4 +78,5 @@ export const AgentRoutes = {
   web: '/web',
   webshot: '/webshot',
   image: '/image',
+  pdf: '/pdf',
 } as const;

@@ -35,86 +35,21 @@ import { HiCommandLine } from "react-icons/hi2";
 // Date management
 import { formatDistance } from 'date-fns';
 import { format } from 'date-fns/format';
-// Fetch
-import ky, { HTTPError } from 'ky';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, apiUrls } from '@sage3/frontend';
-import {
-  genId,
-  AiQueryRequest, AskRequest, AskResponse, SError,
-  AgentRoutes, HealthResponse, WebQuery, WebAnswer,
-  ImageQuery, ImageAnswer,
-} from '@sage3/shared';
+import { AppName } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
+import { genId, AiQueryRequest, ImageQuery, PDFQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
-import { initialValues } from '@sage3/applications/initialValues';
-import { AppName } from '@sage3/applications/schema';
 
-/**
- * Makes the actual RPC call using ky library
- * @param mth string endpoint name
- * @param data object data to send
- * @returns
- */
-const makeRpcPost = async (mth: string, data: object) => {
-  try {
-    const base = apiUrls.ai.agents.base;
-    const response = await ky.post<Response>(`${base}${mth}`, { json: data }).json();
-    return response;
-  } catch (e) {
-    const error = e as HTTPError<Response>;
-    if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
-    } else {
-      return { message: "Unknown error" };
-    }
-  }
-}
-const makeRpcGet = async (mth: string) => {
-  try {
-    const base = apiUrls.ai.agents.base;
-    const response = await ky.get<Response>(`${base}${mth}`).json();
-    return response;
-  } catch (e) {
-    const error = e as HTTPError<Response>;
-    if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
-    } else {
-      return { message: "Unknown error" };
-    }
-  }
-}
+import { callImage, callPDF } from './tRPC';
 
-/**
- * Check the health of the agent server
- * @param mth string endpoint name
- * @param data SumRequest payload
- * @returns
- */
-const callStatus = async () => {
-  return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
-};
-const callAsk = async (data: AskRequest) => {
-  return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;
-};
-const callSummary = async (data: AskRequest) => {
-  return makeRpcPost(AgentRoutes.summary, data) as Promise<AskResponse | SError>;
-};
-const callWeb = async (data: WebQuery) => {
-  return makeRpcPost(AgentRoutes.web, data) as Promise<WebAnswer | SError>;
-};
-const callWebshot = async (data: WebQuery) => {
-  return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebAnswer | SError>;
-};
-const callImage = async (data: ImageQuery) => {
-  return makeRpcPost(AgentRoutes.image, data) as Promise<ImageAnswer | SError>;
-};
+type OperationMode = 'text' | 'image' | 'web' | 'pdf';
 
 // LLAMA3
 const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
@@ -169,7 +104,7 @@ function AppComponent(props: App): JSX.Element {
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
   const [status,] = useState<string>("AI can make mistakes. Check important information.");
   const [actions, setActions] = useState<any[]>([]);
-  const [mode, setMode] = useState<string>('text');
+  const [mode, setMode] = useState<OperationMode>('text');
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -265,6 +200,8 @@ function AppComponent(props: App): JSX.Element {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
       if (apps && apps[0].data.type === 'ImageViewer') {
         setMode('image');
+      } else if (apps && apps[0].data.type === 'PDFViewer') {
+        setMode('pdf');
       }
     }
   }, [s.sources]);
@@ -447,21 +384,22 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onImageSummary = async () => {
-    return onImage('Describe the image in details');
+    return onContentImage('Describe the image in details');
   }
   const onImageCaption = async () => {
-    return onImage('Generate a caption for the image, fit for a scientific publication');
+    return onContentImage('Generate a caption for the image, fit for a scientific publication');
   }
   const onImageProsCons = async () => {
-    return onImage('Describe the good parts and then the bad parts of the image at conveying its message');
+    return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
   }
   const onImageKeywords = async () => {
-    return onImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+    return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
   }
   const onImageFacts = async () => {
-    return onImage('Read the image and provide two or three interesting facts from the image');
+    return onContentImage('Read the image and provide two or three interesting facts from the image');
   }
-  const onImage = async (prompt: string) => {
+
+  const onContentImage = async (prompt: string) => {
     if (!user) return;
     if (s.sources.length > 0) {
       // Update the context with the stickies
@@ -515,7 +453,7 @@ function AppComponent(props: App): JSX.Element {
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the image',
+              previousQ: 'Describe the content',
               previousA: response.r,
               messages: [
                 ...s.messages,
@@ -539,6 +477,91 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   };
+
+  const onContentPDF = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'PDFViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: PDFQuery = {
+            ctx: {
+              prompt: prompt,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            user: username,
+            asset: assetid,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callPDF(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+
+  const onPDFSummary = async () => {
+    return onContentPDF('Read the PDF file and provide a short summary.');
+  }
+
 
   const onProsCons = async () => {
     if (s.context) {
@@ -1096,6 +1119,23 @@ function AppComponent(props: App): JSX.Element {
                 onClick={onImageFacts}
                 width="34%"
               ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+        {mode === 'pdf' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'PDF summary prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onPDFSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>PDF Summary</Text></Button>
             </Tooltip>
           </HStack>
         )}

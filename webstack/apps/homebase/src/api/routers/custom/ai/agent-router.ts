@@ -9,7 +9,19 @@
 import * as express from 'express';
 import { config } from 'apps/homebase/src/config';
 
-import { SError, AgentRoutes, HealthResponse, AskRequest, AskResponse, WebQuery, WebAnswer, ImageQuery, ImageAnswer } from '@sage3/shared';
+import {
+  SError,
+  AgentRoutes,
+  HealthResponse,
+  AskRequest,
+  AskResponse,
+  WebQuery,
+  WebAnswer,
+  ImageQuery,
+  ImageAnswer,
+  PDFQuery,
+  PDFAnswer,
+} from '@sage3/shared';
 
 // Define a general RPC handler type
 type RpcHandlerGet<Response> = () => (Response | SError) | Promise<Response | SError>;
@@ -62,6 +74,10 @@ const imageHandler: RpcHandlerPost<ImageQuery, ImageAnswer> = (req) => {
   const route = AgentRoutes.image;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
+  const route = AgentRoutes.pdf;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -71,6 +87,7 @@ handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
 handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
+handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

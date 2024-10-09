@@ -40,6 +40,18 @@ class ImageAnswer(BaseModel):
     actions: List[Json]  # actions to be performed
 
 
+class PDFQuery(BaseModel):
+    ctx: Context  # context
+    asset: str  # question
+    user: str  # user name
+
+
+class PDFAnswer(BaseModel):
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+
 class WebQuery(BaseModel):
     ctx: Context  # context
     url: str  # question

@@ -1,13 +1,8 @@
-# Image Agent
+# PDF Agent
 
 import json
 from logging import Logger
 import httpx
-
-# Image
-from PIL import Image
-from io import BytesIO
-import base64
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -21,7 +16,7 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_huggingface import HuggingFaceEndpoint
 
 # Typing for RPC
-from libs.localtypes import ImageQuery, ImageAnswer
+from libs.localtypes import PDFQuery, PDFAnswer
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
@@ -52,81 +47,43 @@ prompt = ChatPromptTemplate.from_messages(
 output_parser = StrOutputParser()
 
 
-class ImageAgent:
+class PDFAgent:
     def __init__(
         self,
         logger: Logger,
         ps3: PySage3,
     ):
-        logger.info("Initializing ImageAgent")
+        logger.info("Initializing PDFAgent")
         self.logger = logger
         self.ps3 = ps3
-        # Long context model
-        # self.llm_llama = ChatNVIDIA(
-        #     base_url="https://arcade.evl.uic.edu/llama32-11B-vision/v1",
-        #     model="/data/11Bf",
-        #     max_new_tokens=400,
-        # )
         self.server = "https://arcade.evl.uic.edu/llama32-11B-vision/"
         self.model = ("/data/11Bf",)
         self.httpx_client = httpx.Client(timeout=None)
 
-    async def process(self, qq: ImageQuery):
-        self.logger.info("Got image> from " + qq.user + ": " + qq.ctx.prompt)
+    async def process(self, qq: PDFQuery):
+        self.logger.info("Got PDF> from " + qq.user + ": " + qq.ctx.prompt)
+        # Default answer
         description = "No description available."
+        # Get the assets
         assets = self.ps3.s3_comm.get_assets()
+        # Find the asset in question
         for f in assets:
             if f["_id"] == qq.asset:
                 asset = f["data"]
+                # Build the URL
                 url = (
                     self.ps3.s3_comm.conf[self.ps3.s3_comm.prod_type]["web_server"]
                     + self.ps3.s3_comm.routes["get_static_content"]
                     + asset["file"]
                 )
+                # Get the authorization headers
                 headers = self.ps3.s3_comm._SageCommunication__headers
+                # Download the PDF
                 r = self.ps3.s3_comm.httpx_client.get(url, headers=headers)
                 if r.is_success:
-                    img = Image.open(BytesIO(r.content))
-                    width, height = img.size
-                    img = img.resize((800, int(800 / (width / height))))
-                    buffered = BytesIO()
-                    img.save(buffered, format="JPEG")
-                    image_bytes = buffered.getvalue()
-                    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-                    data = {
-                        "model": "/data/11Bf",
-                        "messages": [
-                            {
-                                "role": "assistant",
-                                "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-                            },
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": qq.ctx.prompt},
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {
-                                            "url": f"data:image/jpeg;base64,{image_base64}"
-                                        },
-                                        "detail": "high",
-                                    },
-                                ],
-                            },
-                        ],
-                        "stream": False,
-                        "max_tokens": 400,
-                    }
-                    url = self.server + "v1/chat/completions"
-                    response = self.httpx_client.post(url, json=data)
-                    if response.status_code == 200:
-                        print("Response: ", response.json())
-                        description = response.json()["choices"][0]["message"][
-                            "content"
-                        ]
-                else:
-                    print("Failed to get image.", r)
-                break
+                    pdf_content = r.content
+                    ## Do something with the PDF content
+                    description = f"PDF content retrieved: {len(pdf_content)} bytes"
 
         text = description
 
@@ -145,7 +102,7 @@ class ImageAgent:
         )
 
         # Build the answer object
-        val = ImageAnswer(
+        val = PDFAnswer(
             r=text,
             success=True,
             actions=[action1],
