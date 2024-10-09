@@ -116,7 +116,8 @@ const callImage = async (data: ImageQuery) => {
   return makeRpcPost(AgentRoutes.image, data) as Promise<ImageAnswer | SError>;
 };
 
-
+// LLAMA3
+const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 
 // AI model information from the backend
 interface modelInfo {
@@ -124,9 +125,6 @@ interface modelInfo {
   model: string;
   maxTokens: number;
 }
-
-// LLAMA3
-const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 
 
 /* App component for Chat */
@@ -171,6 +169,7 @@ function AppComponent(props: App): JSX.Element {
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
   const [status,] = useState<string>("AI can make mistakes. Check important information.");
   const [actions, setActions] = useState<any[]>([]);
+  const [mode, setMode] = useState<string>('text');
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -260,6 +259,15 @@ function AppComponent(props: App): JSX.Element {
     }
     goToBottom('auto');
   }, [s.token]);
+
+  useEffect(() => {
+    if (s.sources && s.sources.length === 1) {
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        setMode('image');
+      }
+    }
+  }, [s.sources]);
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
@@ -424,6 +432,40 @@ function AppComponent(props: App): JSX.Element {
         if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
         return accumulate;
       }, '');
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${newctx}
+        </document>
+        After reading through the document, identify the main topics, themes, and key concepts that are covered.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+
+  const onImageSummary = async () => {
+    return onImage('Describe the image in details');
+  }
+  const onImageCaption = async () => {
+    return onImage('Generate a caption for the image, fit for a scientific publication');
+  }
+  const onImageProsCons = async () => {
+    return onImage('Describe the good parts and then the bad parts of the image at conveying its message');
+  }
+  const onImageKeywords = async () => {
+    return onImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+  }
+  const onImageFacts = async () => {
+    return onImage('Read the image and provide two or three interesting facts from the image');
+  }
+  const onImage = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
 
       // Check for image
       if (apps && apps[0].data.type === 'ImageViewer') {
@@ -435,15 +477,16 @@ function AppComponent(props: App): JSX.Element {
             creationId: '',
             creationDate: now.epoch,
             userName: 'SAGE',
-            query: "Describe the image",
+            query: prompt,
             response: 'Working on it...',
           };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
           const assetid = apps[0].data.state.assetid;
           // Build the query
           const q: ImageQuery = {
             ctx: {
-              prompt: '',
+              prompt: prompt,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
               roomId, boardId
             },
@@ -488,29 +531,15 @@ function AppComponent(props: App): JSX.Element {
                 },
               ],
             });
-
             if (response.actions) {
               setActions(response.actions);
             }
-
           }
-
-
         }
       }
     }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${newctx}
-        </document>
-        After reading through the document, identify the main topics, themes, and key concepts that are covered.
-        Provide all your answers in a few sentences using the Markdown syntax`;
-      newMessage(ctx);
-      setInput('');
-    }
   };
+
   const onProsCons = async () => {
     if (s.context) {
       // ProsCons prompt
@@ -929,74 +958,149 @@ function AppComponent(props: App): JSX.Element {
           </Tooltip>
         </HStack>
         <hr />
-        <HStack>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
-            <Button
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              textAlign={"left"}
-              onClick={onSummary}
-              width="34%"
-            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Summary</Text></Button>
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
-            <Button
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              textAlign={"left"}
-              onClick={onProsCons}
-              width="34%"
-            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Pros/Cons</Text></Button>
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
-            <Button
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              textAlign={"left"}
-              onClick={onKeywords}
-              width="34%"
-            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Keywords</Text></Button>
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
-            <Button
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              textAlign={"left"}
-              onClick={onOpinion}
-              width="34%"
-            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Opinion</Text></Button>
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
-            <Button
-              aria-label="stop"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              textAlign={"left"}
-              onClick={onFacts}
-              width="34%"
-            ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Interesting Facts</Text></Button>
-          </Tooltip>
-        </HStack>
 
+        {/* AI Prompts */}
+        {mode === 'text' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Summary Prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Summary</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Pros/Cons Prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onProsCons}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Pros/Cons</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onKeywords}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Keywords</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Opinion Prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onOpinion}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Opinion</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Facts Prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onFacts}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Interesting Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {mode === 'image' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image summary prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Summary</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image caption prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageCaption}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Caption</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image pros and cons prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageProsCons}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Pros/Cons</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image keywords prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageKeywords}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image keywords</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image facts prompt'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageFacts}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'}>
           <Input
             placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + " model)" : " ")}

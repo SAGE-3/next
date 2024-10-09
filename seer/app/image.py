@@ -73,14 +73,8 @@ class ImageAgent:
         self.httpx_client = httpx.Client(timeout=None)
 
     async def process(self, qq: ImageQuery):
-        self.logger.info("Got image> from " + qq.user)
-        # Get the current date and time
-        today = time.asctime()
-
-        # Find the image asset
-        # board_id = qq.ctx.boardId
+        self.logger.info("Got image> from " + qq.user + ": " + qq.ctx.prompt)
         description = "No description available."
-        room_id = qq.ctx.roomId
         assets = self.ps3.s3_comm.get_assets()
         for f in assets:
             if f["_id"] == qq.asset:
@@ -95,7 +89,7 @@ class ImageAgent:
                 if r.is_success:
                     img = Image.open(BytesIO(r.content))
                     width, height = img.size
-                    img = img.resize((600, int(600 / (width / height))))
+                    img = img.resize((800, int(800 / (width / height))))
                     img.save("temp.jpg")
                     buffered = BytesIO()
                     img.save(buffered, format="JPEG")
@@ -111,7 +105,7 @@ class ImageAgent:
                             {
                                 "role": "user",
                                 "content": [
-                                    {"type": "text", "text": "Whats in this image?"},
+                                    {"type": "text", "text": qq.ctx.prompt},
                                     {
                                         "type": "image_url",
                                         "image_url": {
@@ -132,14 +126,6 @@ class ImageAgent:
                         description = response.json()["choices"][0]["message"][
                             "content"
                         ]
-                    # response = await self.session.ainvoke(
-                    #     {
-                    #         "username": qq.user,
-                    #         "date": today,
-                    #         "image_base64": image_base64,
-                    #     }
-                    # )
-                    # print("Response: ", response)
                 else:
                     print("Failed to get image.", r)
                 break
