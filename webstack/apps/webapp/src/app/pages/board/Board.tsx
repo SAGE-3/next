@@ -52,7 +52,6 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const members = useRoomStore((state) => state.members);
 
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -112,8 +111,9 @@ export function BoardPage() {
     if (!user) return;
     const isGuest = user.data.userRole === 'guest';
     if (isGuest) return;
+    const members = useRoomStore.getState().members;
     const roomMembership = members.find((m) => m.data.roomId === roomId);
-    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+    const isMember = (roomMembership && roomMembership.data.members) ? roomMembership.data.members.includes(user._id) : false;
     if (!isMember) {
       toast({
         title: 'Room Membership Invalid',
@@ -124,7 +124,7 @@ export function BoardPage() {
       });
       toHome();
     }
-  }, [members, user]);
+  }, [user]);
 
   // Scroll detection
   useEffect(() => {
