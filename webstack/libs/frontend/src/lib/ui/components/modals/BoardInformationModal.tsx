@@ -48,7 +48,7 @@ export function BoardInformationModal(props: BoardInformationProps): JSX.Element
         <ModalBody px={8} pb={8}>
           <Box display="flex" flexDir="row" justifyContent="space-evenly">
             <Box display="flex" flexDir="column" textAlign={'left'} width="55%">
-              <Box fontWeight={'bold'}>Name</Box>
+              <Box fontWeight={'bold'}>Board Name</Box>
               <Box fontWeight={'bold'}>Room Name</Box>
               <Box fontWeight={'bold'}>Description</Box>
               <Box fontWeight={'bold'}>Board ID</Box>
