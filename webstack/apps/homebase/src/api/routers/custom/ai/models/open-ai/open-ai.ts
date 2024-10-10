@@ -54,33 +54,4 @@ export class OpenAiModel extends AiModel {
       };
     }
   }
-
-  public async code(prompt: string, input: string): Promise<AiQueryResponse> {
-    // Query OpenAI with the input
-    const response = await this._openai.chat.completions.create({
-      messages: [
-        {
-          role: 'assistant',
-          content: prompt,
-        },
-        {
-          role: 'user',
-          content: input,
-        },
-      ],
-      model: this._model,
-      stream: false,
-    });
-    if (response.choices[0].message.content === null) {
-      return {
-        success: false,
-        error_message: 'Failed to query OpenAI',
-      };
-    } else {
-      return {
-        success: true,
-        output: response.choices[0].message.content,
-      };
-    }
-  }
 }

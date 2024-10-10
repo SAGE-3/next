@@ -7,6 +7,7 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
+import { useParams } from 'react-router';
 import {
   ButtonGroup,
   Button,
@@ -24,8 +25,12 @@ import {
   Divider,
   Center,
   AbsoluteCenter,
+  List,
+  ListIcon,
+  ListItem,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
+import { HiCommandLine } from "react-icons/hi2";
 
 // Date management
 import { formatDistance } from 'date-fns';
@@ -33,12 +38,21 @@ import { format } from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 
+import { AppName } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
+import { genId, AiQueryRequest, ImageQuery, PDFQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
+
+import { callImage, callPDF } from './tRPC';
+
+type OperationMode = 'text' | 'image' | 'web' | 'pdf';
+
+// LLAMA3
+const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
 
 // AI model information from the backend
 interface modelInfo {
@@ -47,19 +61,16 @@ interface modelInfo {
   maxTokens: number;
 }
 
-// LLAMA2
-const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
-// LLAMA3
-const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
-// Prompt to interject or not
-const LLAMA3_INTERJECT = 'You are a helpful AI assistant with many names (sage, sage3, ai, siri, google, bixby, alexa) and able to understand intent in multi-party conversations. You will be given a sample conversation transcript between multiple users plus you, and asked a question.';
-
 
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const { roomId, boardId } = useParams();
+
   const { user } = useUser();
+  const [username, setUsername] = useState('');
+  const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
   const myColor = useHexColor(user?.data.color || 'blue');
@@ -91,7 +102,9 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [analysis, setAnalysis] = useState<string>("\u00A0"); // space
+  const [status,] = useState<string>("AI can make mistakes. Check important information.");
+  const [actions, setActions] = useState<any[]>([]);
+  const [mode, setMode] = useState<OperationMode>('text');
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -122,6 +135,14 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  useEffect(() => {
+    if (user) {
+      const u = user.data.name;
+      const firstName = u.split(' ')[0];
+      setUsername(firstName);
+    }
+  }, [user]);
+
   // Update from server
   useEffect(() => {
     setPreviousQuestion(s.previousQ);
@@ -130,43 +151,39 @@ function AppComponent(props: App): JSX.Element {
     setPreviousAnswer(s.previousA);
   }, [s.previousA]);
 
-  useEffect(() => {
-    if (s.context) {
-      // Quick summary
-      const ctx = `SAGE, Please carefully read the following document text:
+  // useEffect(() => {
+  //   if (s.context) {
+  //     // Quick summary
+  //     const ctx = `@S, Please carefully read the following document text:
 
-      <document>
-      ${s.context}
-      </document>
+  //     <document>
+  //     ${s.context}
+  //     </document>
 
-      After reading through the document, identify the main topics, themes, and key concepts that are covered.
+  //     After reading through the document, identify the main topics, themes, and key concepts that are covered.
 
-      Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+  //     Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
 
-      Please list the keywords you came up in bold using the Markdown syntax.`;
+  //     Please list the keywords you came up in bold.
 
-      // Longer version
-      // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
+  //     Finally, provide a short opinion on the text. Provide all your answers using the Markdown syntax`;
 
-      // <documents>
-      // ${s.context}
-      // </documents>
-
-      // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
-
-      // - Write a sentence or two describing the essence of the topic
-      // - Extract a few representative excerpts or quotes from the documents that relate to the topic
-      // - Estimate approximately what percentage of the overall content across the documents is about this topic
-
-      // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
-
-      // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
-
-      // Enclose your final topic analysis in <analysis> tags.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  }, [s.context]);
+  //     // Longer version
+  //     // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
+  //     // <documents>
+  //     // ${s.context}
+  //     // </documents>
+  //     // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
+  //     // - Write a sentence or two describing the essence of the topic
+  //     // - Extract a few representative excerpts or quotes from the documents that relate to the topic
+  //     // - Estimate approximately what percentage of the overall content across the documents is about this topic
+  //     // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
+  //     // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
+  //     // Enclose your final topic analysis in <analysis> tags.`;
+  //     newMessage(ctx);
+  //     setInput('');
+  //   }
+  // }, [s.context]);
 
   // Tokens coming from the server as a stream
   useEffect(() => {
@@ -178,12 +195,23 @@ function AppComponent(props: App): JSX.Element {
     goToBottom('auto');
   }, [s.token]);
 
+  useEffect(() => {
+    if (s.sources && s.sources.length === 1) {
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        setMode('image');
+      } else if (apps && apps[0].data.type === 'PDFViewer') {
+        setMode('pdf');
+      }
+    }
+  }, [s.sources]);
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
     // Get server time
     const now = await serverTime();
     // Is it a question to SAGE?
-    const isQuestion = new_input.startsWith('@S');
+    const isQuestion = new_input.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
@@ -197,21 +225,14 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
-      setAnalysis("Direct question to SAGE.");
       setProcessing(true);
-      // Remove the @G from the question
+      // Remove the @S from the question
       const request = isQuestion ? new_input.slice(2) : new_input;
 
       if (isQuestion) {
         let complete_request = '';
         if (previousQuestion && previousAnswer) {
-          if (selectedModel?.model === 'llama2') {
-            // schema for follow up questions:
-            // https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            // {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            // <s>[INST] {{ user_msg_2 }} [/INST]
-            complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
-          } else {
+          if (selectedModel?.model === 'llama3') {
             // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
             // LLAMA3 schema for follow up questions:
             // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
@@ -229,9 +250,7 @@ function AppComponent(props: App): JSX.Element {
                  <|start_header_id|>assistant<|end_header_id|>`;
           }
         } else {
-          if (selectedModel?.model === 'llama2') {
-            complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
-          } else {
+          if (selectedModel?.model === 'llama3') {
             // LLAMA3 question
             // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
             // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
@@ -243,7 +262,26 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Send request to backend
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400, app_id: props._id });
+        let body: AiQueryRequest;
+        if (previousAnswer && previousQuestion) {
+          body = {
+            input: complete_request || request,
+            model: 'llama',
+            max_new_tokens: 1000,
+            app_id: props._id,
+            previousQ: previousQuestion,
+            previousA: previousAnswer
+          };
+        } else {
+          body = {
+            input: complete_request || request,
+            model: 'llama',
+            max_new_tokens: 1000,
+            app_id: props._id,
+            previousQ: s.context || '',
+          };
+        }
+        const backend = await AiAPI.chat.query(body);
         if (backend.success) {
           const new_text = backend.output || '';
           setProcessing(false);
@@ -272,100 +310,7 @@ function AppComponent(props: App): JSX.Element {
           });
         }
       }
-    } else {
-      // Not a question to SAGE
-      const sample = "The conversation transcript is contained in backtick delimiters below: ```\n" +
-        new_input + "\n```";
-      const question = "Question: you are an AI assistant and should reply only when being addressed by name. Looking at the last message from 'User' in the transcript, should an AI assistant interject this time? Respond in the following JSON format:\n\nreasoning: (give very brief reasoning here)\njudgement: INTERJECT|QUIET (choose one)";
 
-      const test_request = `<|begin_of_text|>
-      <|start_header_id|>system<|end_header_id|> ${LLAMA3_INTERJECT} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${sample} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${question} <|eot_id|>
-      <|start_header_id|>assistant<|end_header_id|>`;
-
-      const interject = await AiAPI.chat.query({ input: test_request, model: 'chat', max_new_tokens: 100 });
-      if (interject && interject.success && interject.output) {
-        try {
-          const text = interject.output.replace(/(\r\n|\n|\r|```)/gm, '').trim();
-          const json = JSON.parse(text);
-          const reasoning = json.reasoning;
-          const judgement = json.judgement;
-
-          // Display the reasoning in the chat
-          setAnalysis(reasoning);
-
-          if (judgement === 'INTERJECT') {
-            // Add messages
-            const initialAnswer = {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch,
-              userName: 'SAGE',
-              query: new_input,
-              response: 'Working on it...',
-            };
-            updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-            let complete_request = '';
-            if (previousQuestion && previousAnswer) {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${previousQuestion}<|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>
-                     ${previousAnswer}<|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${new_input} <|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            } else {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                       <|start_header_id|>user<|end_header_id|> ${new_input} <|eot_id|>
-                       <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            }
-            // Send request to backend
-            const backend = await AiAPI.chat.query({ input: complete_request, model: 'chat', max_new_tokens: 400, app_id: props._id });
-            if (backend.success) {
-              const new_text = backend.output || '';
-              setProcessing(false);
-              // Clear the stream text
-              setStreamText('');
-              ctrlRef.current = null;
-              setPreviousAnswer(new_text);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: new_input,
-                previousA: new_text,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: new_text,
-                  },
-                ],
-              });
-            }
-          }
-
-        } catch (error) {
-          setAnalysis("Inconclusive answer from SAGE. Please try again.");
-        }
-      }
     }
   };
 
@@ -379,7 +324,6 @@ function AppComponent(props: App): JSX.Element {
 
   const stopSAGE = async () => {
     setProcessing(false);
-    setAnalysis("\u00A0");
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -411,9 +355,262 @@ function AppComponent(props: App): JSX.Element {
   const resetSAGE = () => {
     setPreviousQuestion('');
     setPreviousAnswer('');
-    setAnalysis("\u00A0");
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
   };
+
+  const onSummary = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
+        return accumulate;
+      }, '');
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${newctx}
+        </document>
+        After reading through the document, identify the main topics, themes, and key concepts that are covered.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+
+  const onImageSummary = async () => {
+    return onContentImage('Describe the image in details');
+  }
+  const onImageCaption = async () => {
+    return onContentImage('Generate a caption for the image, fit for a scientific publication');
+  }
+  const onImageProsCons = async () => {
+    return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
+  }
+  const onImageKeywords = async () => {
+    return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+  }
+  const onImageFacts = async () => {
+    return onContentImage('Read the image and provide two or three interesting facts from the image');
+  }
+
+  const onContentImage = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: ImageQuery = {
+            ctx: {
+              prompt: prompt,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            user: username,
+            asset: assetid,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callImage(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onContentPDF = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'PDFViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: PDFQuery = {
+            ctx: {
+              prompt: prompt,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            user: username,
+            asset: assetid,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callPDF(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onProsCons = async () => {
+    if (s.context) {
+      // ProsCons prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        After reading through the document, identify the pros and cons.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onKeywords = async () => {
+    if (s.context) {
+      // Keywords prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+        Provide all your answers using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onOpinion = async () => {
+    if (s.context) {
+      // Opinion prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide a short opinion on the document using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onFacts = async () => {
+    if (s.context) {
+      // Facts prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide two or three interesting facts from the document, using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+
+  const onPDFSummary = async () => {
+    return onContentPDF('Read the PDF file and provide a short summary.');
+  }
 
   useEffect(() => {
 
@@ -452,6 +649,41 @@ function AppComponent(props: App): JSX.Element {
     }
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
+
+
+  const applyAction = (action: any) => async () => {
+    // Test JSON data
+    if (action.type === 'create_app') {
+      // Create a new duplicate app
+      const type = action.app as AppName;
+      const size = action.data.size;
+      const pos = action.data.position;
+      const state = action.state;
+      // Create the app
+      createApp({
+        title: type,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: pos,
+        size: size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: type,
+        state: { ...(initialValues[type] as AppState), ...state },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      toast({
+        title: 'Info',
+        description: 'Action applied.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      console.log('Action> not valid');
+    }
+  };
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
@@ -514,6 +746,7 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
                           color="white"
@@ -586,6 +819,7 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
                           boxShadow="md"
@@ -622,7 +856,7 @@ function AppComponent(props: App): JSX.Element {
                                 'app_state',
                                 JSON.stringify({
                                   color: 'purple',
-                                  text: message.response,
+                                  text: message.response.trim(),
                                   fontSize: 24,
                                 })
                               );
@@ -668,6 +902,38 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             )
           }
+
+          <Box display={'flex'} justifyContent={'left'}>
+            {actions &&
+              <List>
+                {actions.map((action, index) => (
+                  <Box
+                    color="black"
+                    rounded={'md'}
+                    boxShadow="md"
+                    fontFamily="arial"
+                    textAlign={'left'}
+                    bg={textColor}
+                    p={1}
+                    m={3}
+                    // maxWidth="80%"
+                    userSelect={'none'}
+                    _hover={{ background: "purple.300" }}
+                    background={'purple.200'}
+                    onDoubleClick={applyAction(action)}
+                    key={"list-" + index}
+                  >
+                    <Tooltip label="Double click to apply action" aria-label="A tooltip">
+                      <ListItem key={index}><ListIcon as={MdSettings} color='green.500' />
+                        Show the result on the board
+                      </ListItem>
+                    </Tooltip>
+                  </Box>
+                ))}
+              </List>
+            }
+          </Box>
+
         </Box>
         <HStack>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
@@ -685,7 +951,7 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop SAGE'} openDelay={400}>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
             <IconButton
               aria-label="stop"
               size={'xs'}
@@ -712,9 +978,170 @@ function AppComponent(props: App): JSX.Element {
             />
           </Tooltip>
         </HStack>
+        <hr />
+
+        {/* AI Prompts */}
+        {mode === 'text' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the main topics, themes, and key concepts that are covered in the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onProsCons}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give feedback</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onKeywords}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onOpinion}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Provide Opinion</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts from the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onFacts}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {mode === 'image' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the image in details'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Describe Image</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageCaption}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Caption</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the good parts and then the bad parts of the image'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageProsCons}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give Feedback</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageKeywords}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts about the image'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onImageFacts}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+        {mode === 'pdf' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short summary for this PDF file'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onPDFSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
+            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + " model)" : " ")}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -729,8 +1156,8 @@ function AppComponent(props: App): JSX.Element {
         </InputGroup>
 
         <Box bg={'blackAlpha.100'} rounded={'sm'} p={1} m={0}>
-          <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="2xs">
-            {analysis}
+          <Text width="100%" align="center" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="xs">
+            {status}
           </Text>
         </Box>
 
