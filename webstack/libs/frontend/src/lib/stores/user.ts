@@ -20,6 +20,7 @@ import { APIHttp, SocketAPI } from '../api';
 interface UserState {
   users: User[];
   error: string | null;
+  accountDeletion: (id: string) => Promise<void>;
   clearError: () => void;
   get: (id: string) => Promise<User | null>;
   subscribeToUsers: () => Promise<void>;
@@ -34,6 +35,20 @@ const UsersStore = create<UserState>()((set, get) => {
   return {
     users: [],
     error: null,
+    accountDeletion: async (id: string) => {
+      // POST Request to delete the user
+      const res = await fetch('/api/users/accountDeletion', {
+        body: JSON.stringify({ id }),
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const jsonREspone = await res.json();
+      console.log(jsonREspone);
+    },
     clearError: () => {
       set({ error: null });
     },
