@@ -221,7 +221,7 @@ export function BoardPage() {
             </p>
             <p style={{ marginTop: '8px' }}>
               Would you like to open this board in the SAGE3 application (if you have it installed)?
-              <Button ml="2" size="xs" onClick={openDesktopApp}>
+              <Button ml="2" size="xs" colorScheme={"green"} onClick={openDesktopApp}>
                 OK
               </Button>
             </p>
