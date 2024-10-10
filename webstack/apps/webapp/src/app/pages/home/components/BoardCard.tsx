@@ -175,8 +175,8 @@ export function BoardCard(props: BoardCardProps) {
             <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} />
             <Tooltip hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400}>
               <IconButton
-                top="1"
-                right="1"
+                top="0"
+                right="0"
                 position="absolute"
                 size="sm"
                 variant={'ghost'}
@@ -195,14 +195,18 @@ export function BoardCard(props: BoardCardProps) {
 
           <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
 
-          <Box display="flex" flexDir="column" pl="1" width="150px">
-            <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
-              {props.board.data.name}
+
+          <Tooltip hasArrow={true} label={`Room: ${props.room.data.name}`} openDelay={400}>
+            <Box display="flex" flexDir="column" pl="1" width="200px">
+              <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+                {props.board.data.name}
+              </Box>
+              <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
+                {props.board.data.description}
+              </Box>
             </Box>
-            <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
-              {props.board.data.description}
-            </Box>
-          </Box>
+          </Tooltip>
+
           <Box ref={popoverRef}>
             <Popover
               closeOnBlur={true} // Ensures the popover closes when you click outside
@@ -262,7 +266,7 @@ export function BoardCard(props: BoardCardProps) {
                     fontSize="sm"
                     rounded="md"
                   >
-                    Info
+                    Information
                   </Box>
                 </PopoverContent>
               </Portal>
