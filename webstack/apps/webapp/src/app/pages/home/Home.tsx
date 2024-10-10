@@ -853,14 +853,17 @@ export function HomePage() {
 
   // Handle when the rooms and boards change
   useEffect(() => {
-    // Check to see if the room you are in still exists
-    if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
-      setSelectedRoom(undefined);
-      setSelectedBoard(undefined);
-    }
-    // Check to see if the board you are in still exists
-    if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
-      setSelectedBoard(undefined);
+    // Check URL
+    if (!roomId) {
+      // Check to see if the room you are in still exists
+      if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+      // Check to see if the board you are in still exists
+      if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
+        setSelectedBoard(undefined);
+      }
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 

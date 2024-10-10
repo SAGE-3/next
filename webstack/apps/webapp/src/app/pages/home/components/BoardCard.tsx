@@ -148,18 +148,18 @@ export function BoardCard(props: BoardCardProps) {
           gridTemplateColumns="1fr auto"
           justifyContent={'space-between'}
           alignItems={'center'}
-          // onClick={handleEnterBoard}
+          onClick={handleEnterBoard}
           borderRadius="xl"
           boxSizing="border-box"
           height="190px"
           width="250px"
           transition={'all 0.2s ease-in-out'}
-          // cursor="pointer"
+          cursor="pointer"
           border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
           transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
           _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
         >
-          <Box cursor="pointer" gridArea="preview" position="relative" onClick={handleEnterBoard} overflow="hidden">
+          <Box gridArea="preview" position="relative" overflow="hidden">
             <Box display="flex">
               <Box position="absolute" height={0} width="100%" bottom="6">
                 <UserPresenceIcons
@@ -175,8 +175,8 @@ export function BoardCard(props: BoardCardProps) {
             <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} />
             <Tooltip hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400}>
               <IconButton
-                top="1"
-                right="1"
+                top="0"
+                right="0"
                 position="absolute"
                 size="sm"
                 variant={'ghost'}
@@ -195,14 +195,17 @@ export function BoardCard(props: BoardCardProps) {
 
           <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
 
-          <Box display="flex" flexDir="column" pl="1" width="150px">
-            <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
-              {props.board.data.name}
+          <Tooltip hasArrow={true} label={`Room: ${props.room?.data.name}`} openDelay={400}>
+            <Box display="flex" flexDir="column" pl="1" width="200px">
+              <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
+                {props.board.data.name}
+              </Box>
+              <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
+                {props.board.data.description}
+              </Box>
             </Box>
-            <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
-              {props.board.data.description}
-            </Box>
-          </Box>
+          </Tooltip>
+
           <Box ref={popoverRef}>
             <Popover
               closeOnBlur={true} // Ensures the popover closes when you click outside
@@ -219,6 +222,11 @@ export function BoardCard(props: BoardCardProps) {
                   variant={'ghost'}
                   // color={isYourBoard ? borderColor : grayedOutColor}
                   fontSize="xl"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    optionsPopoverOnOpen();
+                  }}
                   onDoubleClick={handleBlockDoubleClick}
                   icon={<BsThreeDotsVertical />}
                 />
@@ -262,89 +270,12 @@ export function BoardCard(props: BoardCardProps) {
                     fontSize="sm"
                     rounded="md"
                   >
-                    Info
+                    Information
                   </Box>
                 </PopoverContent>
               </Portal>
             </Popover>
           </Box>
-
-          {/* <Box display="flex" alignItems={'center'}>
-          <Tooltip
-            placement="top"
-            hasArrow={true}
-            isDisabled={!props.board.data.isPrivate}
-            label={'This room is password protected'}
-            openDelay={400}
-          >
-            <Box>
-              <Icon
-                pointerEvents="none"
-                verticalAlign={'text-top'}
-                fontSize="xl"
-                color={props.board.data.isPrivate ? borderColor : grayedOutColor}
-                as={props.board.data.isPrivate ? MdLock : MdLockOpen}
-                mr="2"
-              />
-            </Box>
-          </Tooltip>
-
-          <Tooltip placement="top" hasArrow={true} isDisabled={!isYourBoard && !isRoomOwner} label={'Edit board settings'} openDelay={400}>
-            <IconButton
-              size="sm"
-              variant={'ghost'}
-              color={isYourBoard || isRoomOwner ? borderColor : grayedOutColor}
-              aria-label="favorite-board"
-              fontSize="xl"
-              onClick={handleSettings}
-              isDisabled={!isYourBoard && !isRoomOwner}
-              onDoubleClick={handleBlockDoubleClick}
-              icon={<MdSettings />}
-            ></IconButton>
-          </Tooltip>
-
-          <Tooltip placement="top" hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400}>
-            <IconButton
-              size="sm"
-              variant={'ghost'}
-              color={isFavorite ? borderColor : grayedOutColor}
-              aria-label="favorite-board"
-              fontSize="xl"
-              onClick={handleFavorite}
-              onDoubleClick={handleBlockDoubleClick}
-              icon={isFavorite ? <MdStar /> : <MdStarOutline />}
-            ></IconButton>
-          </Tooltip>
-
-          <Tooltip placement="top" hasArrow={true} label={"Copy this board's link"} openDelay={400}>
-            <IconButton
-              size="sm"
-              variant={'ghost'}
-              color={borderColor}
-              aria-label="copy-link-board"
-              fontSize="xl"
-              mr="0"
-              onClick={(e) => {
-                handleCopyLink(e, props.board);
-              }}
-              onDoubleClick={handleBlockDoubleClick}
-              icon={<MdLink />}
-            ></IconButton>
-          </Tooltip>
-
-          <Tooltip placement="top" hasArrow={true} label={'More Information'} openDelay={400} ml="1">
-            <IconButton
-              size="sm"
-              variant={'ghost'}
-              color={borderColor}
-              aria-label="enter-board"
-              fontSize="xl"
-              onClick={handleInformation}
-              onDoubleClick={handleBlockDoubleClick}
-              icon={<MdInfo />}
-            ></IconButton>
-          </Tooltip>
-        </Box> */}
         </Box>
         <EditBoardModal
           isOpen={editBoardModalIsOpen}
@@ -357,6 +288,7 @@ export function BoardCard(props: BoardCardProps) {
           onOpen={boardInformationModalOnOpen}
           onClose={boardInformationModalOnClose}
           board={props.board}
+          room={props.room}
         ></BoardInformationModal>
       </Box>
     </>

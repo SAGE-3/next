@@ -226,6 +226,7 @@ export function BoardRow(props: BoardRowProps) {
         onOpen={boardInformationModalOnOpen}
         onClose={boardInformationModalOnClose}
         board={props.board}
+        room={props.room}
       ></BoardInformationModal>
     </>
   );

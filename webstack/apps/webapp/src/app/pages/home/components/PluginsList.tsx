@@ -240,6 +240,8 @@ function PluginItem(props: PluginItemProps): JSX.Element {
 
   const borderColorValue = useColorModeValue(`teal.600`, `teal.200`);
   const borderColor = useHexColor(borderColorValue);
+  const baseBorderColorValue = useColorModeValue('gray.200', 'gray.700');
+  const baseBorderColor = useHexColor(baseBorderColorValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
   const subText = useHexColor(subTextValue);
 
@@ -258,7 +260,7 @@ function PluginItem(props: PluginItemProps): JSX.Element {
       boxSizing="border-box"
       width="100%"
       height="44px"
-      border={`solid 2px ${props.selected ? borderColor : 'transparent'}`}
+      border={`solid 1px ${props.selected ? borderColor : baseBorderColor}`}
       transform={props.selected ? 'scale(1.02)' : 'scale(1)'}
       _hover={{ border: `solid 2px ${borderColor}`, transform: 'scale(1.02)' }}
       transition={'all 0.2s ease-in-out'}
