@@ -85,6 +85,7 @@ import {
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
 import { PiStackPlusFill } from 'react-icons/pi';
+import { CompositeMarkNormalizer } from 'vega-lite/build/src/compositemark/base';
 
 /**
  * Home page for SAGE3
@@ -853,14 +854,17 @@ export function HomePage() {
 
   // Handle when the rooms and boards change
   useEffect(() => {
-    // Check to see if the room you are in still exists
-    if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
-      setSelectedRoom(undefined);
-      setSelectedBoard(undefined);
-    }
-    // Check to see if the board you are in still exists
-    if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
-      setSelectedBoard(undefined);
+    // Check URL
+    if (!roomId) {
+      // Check to see if the room you are in still exists
+      if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+      // Check to see if the board you are in still exists
+      if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
+        setSelectedBoard(undefined);
+      }
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
@@ -984,7 +988,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1878,7 +1882,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

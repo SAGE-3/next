@@ -357,6 +357,7 @@ export function BoardCard(props: BoardCardProps) {
           onOpen={boardInformationModalOnOpen}
           onClose={boardInformationModalOnClose}
           board={props.board}
+          room={props.room}
         ></BoardInformationModal>
       </Box>
     </>
