@@ -557,12 +557,6 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-
-  const onPDFSummary = async () => {
-    return onContentPDF('Read the PDF file and provide a short summary.');
-  }
-
-
   const onProsCons = async () => {
     if (s.context) {
       // ProsCons prompt
@@ -613,6 +607,10 @@ function AppComponent(props: App): JSX.Element {
       setInput('');
     }
   };
+
+  const onPDFSummary = async () => {
+    return onContentPDF('Read the PDF file and provide a short summary.');
+  }
 
   useEffect(() => {
 
@@ -985,7 +983,7 @@ function AppComponent(props: App): JSX.Element {
         {/* AI Prompts */}
         {mode === 'text' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Summary Prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the main topics, themes, and key concepts that are covered in the text'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -996,9 +994,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Summary</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Pros/Cons Prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1009,9 +1007,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onProsCons}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Pros/Cons</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give feedback</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'New Prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1022,9 +1020,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onKeywords}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Keywords</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Opinion Prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1035,9 +1033,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onOpinion}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Opinion</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Provide Opinion</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Facts Prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts from the text'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1048,14 +1046,14 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onFacts}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Interesting Facts</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
             </Tooltip>
           </HStack>
         )}
 
         {mode === 'image' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image summary prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the image in details'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1066,9 +1064,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onImageSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Summary</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Describe Image</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image caption prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1079,9 +1077,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onImageCaption}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Caption</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Caption</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image pros and cons prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the good parts and then the bad parts of the image'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1092,9 +1090,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onImageProsCons}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Pros/Cons</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give Feedback</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image keywords prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1105,9 +1103,9 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onImageKeywords}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image keywords</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Image facts prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts about the image'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1118,13 +1116,13 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onImageFacts}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Image Facts</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
             </Tooltip>
           </HStack>
         )}
         {mode === 'pdf' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'PDF summary prompt'} openDelay={400}>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short summary for this PDF file'} openDelay={400}>
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1135,7 +1133,7 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onPDFSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>PDF Summary</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
             </Tooltip>
           </HStack>
         )}
