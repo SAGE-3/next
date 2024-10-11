@@ -124,7 +124,15 @@ function AppComponent(props: App): JSX.Element {
   const sendMessage = async () => {
     const text = input.trim();
     setInput('');
-    await newMessage(text);
+    if (mode === 'image') {
+      // Image
+      onContentImage(text);
+    } else if (mode === 'pdf') {
+      // PDF
+      onContentPDF(text);
+    } else {
+      await newMessage(text);
+    }
   };
 
   const onSubmit = (e: React.KeyboardEvent) => {
