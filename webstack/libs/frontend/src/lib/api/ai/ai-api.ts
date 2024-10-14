@@ -232,71 +232,6 @@ async function imageToImage(request: AiImageQueryRequest): Promise<AiJSONQueryRe
   }
 }
 
-async function agentStatus(): Promise<boolean> {
-  // Try/catch block to handle errors
-  try {
-    // Send the request
-    const response = await fetch(apiUrls.ai.agents.status, {
-      method: 'GET',
-    });
-    return response.ok;
-  } catch (error) {
-    return false;
-  }
-}
-
-async function agentAsk(request: AgentQueryType): Promise<AgentQueryResponse> {
-  const modelHeaders: Record<string, string> = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
-  // Try/catch block to handle errors
-  try {
-    // Send the request
-    const response = await fetch(apiUrls.ai.agents.ask, {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(request),
-    });
-    if (response.status === 200) {
-      // Parse the response
-      const jsonResponse = await response.json();
-      return { success: true, r: jsonResponse.r, id: jsonResponse.id, actions: jsonResponse.actions };
-    } else {
-      const error_text = await response.json();
-      return { success: false, r: error_text.error_message, id: request.id };
-    }
-  } catch (error) {
-    return { success: false, r: 'Query failed', id: request.id };
-  }
-}
-
-async function agentSummary(request: AgentQueryType): Promise<AgentQueryResponse> {
-  const modelHeaders: Record<string, string> = {
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
-  // Try/catch block to handle errors
-  try {
-    // Send the request
-    const response = await fetch(apiUrls.ai.agents.summary, {
-      method: 'POST',
-      headers: modelHeaders,
-      body: JSON.stringify(request),
-    });
-    if (response.status === 200) {
-      // Parse the response
-      const jsonResponse = await response.json();
-      return { success: true, r: jsonResponse.r, id: jsonResponse.id, actions: jsonResponse.actions };
-    } else {
-      const error_text = await response.json();
-      return { success: false, r: error_text.error_message, id: request.id };
-    }
-  } catch (error) {
-    return { success: false, r: 'Query failed', id: request.id };
-  }
-}
-
 export const AiAPI = {
   chat: {
     status: chatStatus,
@@ -311,10 +246,5 @@ export const AiAPI = {
     status: imageStatus,
     labels: imageLabels,
     image: imageToImage,
-  },
-  agents: {
-    status: agentStatus,
-    ask: agentAsk,
-    summary: agentSummary,
   },
 };

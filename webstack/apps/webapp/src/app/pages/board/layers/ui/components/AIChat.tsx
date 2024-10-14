@@ -243,7 +243,6 @@ export function AIChat(props: { model: string }) {
       }
     } else {
       // Invoke the agent
-      // const response = await AiAPI.agents.ask(question);
       const response = await callAsk(question);
       setIsWorking(false);
       if ('message' in response) {
