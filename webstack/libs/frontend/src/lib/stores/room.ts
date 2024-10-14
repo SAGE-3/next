@@ -130,7 +130,7 @@ const RoomStore = create<RoomState>()((set, get) => {
     subscribeToAllRooms: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'rooms')) return;
       // Sub to Members
-      subscribeToRoomMembers();
+      await subscribeToRoomMembers();
 
       set({ rooms: [], fetched: false });
 
