@@ -41,13 +41,13 @@ import Markdown from 'markdown-to-jsx';
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
-import { genId, AiQueryRequest, ImageQuery, PDFQuery } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF } from './tRPC';
+import { callImage, callPDF, callAsk } from './tRPC';
 
 type OperationMode = 'text' | 'image' | 'web' | 'pdf';
 
@@ -105,6 +105,7 @@ function AppComponent(props: App): JSX.Element {
   const [status,] = useState<string>("AI can make mistakes. Check important information.");
   const [actions, setActions] = useState<any[]>([]);
   const [mode, setMode] = useState<OperationMode>('text');
+  const [location, setLocation] = useState('');
 
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
@@ -145,9 +146,14 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (user) {
+      // User name
       const u = user.data.name;
       const firstName = u.split(' ')[0];
       setUsername(firstName);
+      // Location
+      navigator.geolocation.getCurrentPosition(function (location) {
+        setLocation(location.coords.latitude + ',' + location.coords.longitude);
+      }, function (e) { console.log('Location> error', e); });
     }
   }, [user]);
 
@@ -270,28 +276,49 @@ function AppComponent(props: App): JSX.Element {
         }
 
         // Send request to backend
-        let body: AiQueryRequest;
-        if (previousAnswer && previousQuestion) {
-          body = {
-            input: complete_request || request,
-            model: 'llama',
-            max_new_tokens: 1000,
-            app_id: props._id,
-            previousQ: previousQuestion,
-            previousA: previousAnswer
-          };
+        // let body: AskRequest;
+        // if (previousAnswer && previousQuestion) {
+        //   body = {
+        //     input: complete_request || request,
+        //     model: 'llama',
+        //     max_new_tokens: 1000,
+        //     app_id: props._id,
+        //     previousQ: previousQuestion,
+        //     previousA: previousAnswer
+        //   };
+        // } else {
+        //   body = {
+        //     input: complete_request || request,
+        //     model: 'llama',
+        //     max_new_tokens: 1000,
+        //     app_id: props._id,
+        //     previousQ: s.context || '',
+        //   };
+        // }
+        const body: AskRequest = {
+          ctx: {
+            prompt: '',
+            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+            roomId: roomId!, boardId: boardId!
+          },
+          user: username,
+          id: genId(),
+          model: 'llama',
+          location: location,
+          q: request,
+        };
+        // const backend = await AiAPI.chat.query(body);
+        const response = await callAsk(body);
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: response.message || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
         } else {
-          body = {
-            input: complete_request || request,
-            model: 'llama',
-            max_new_tokens: 1000,
-            app_id: props._id,
-            previousQ: s.context || '',
-          };
-        }
-        const backend = await AiAPI.chat.query(body);
-        if (backend.success) {
-          const new_text = backend.output || '';
+          const new_text = response.r || '';
           setProcessing(false);
           // Clear the stream text
           setStreamText('');
@@ -318,7 +345,6 @@ function AppComponent(props: App): JSX.Element {
           });
         }
       }
-
     }
   };
 

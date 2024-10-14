@@ -22,6 +22,19 @@ from langchain_openai import ChatOpenAI
 from libs.localtypes import Context, Question, Answer
 
 
+def getModelsInfo(ps3):
+    sage3_config = ps3.s3_comm.web_config
+    openai = sage3_config["openai"]
+    llama = sage3_config["llama"]
+    # Get the value from the SAGE3 server configuration
+    chat_server = llama["url"]
+    if chat_server[-1] != "/":
+        # add the trailing slash
+        chat_server += "/"
+        llama["url"] = chat_server
+    return {"llama": llama, "openai": openai}
+
+
 class ChatAgent:
     def __init__(
         self,
@@ -33,7 +46,9 @@ class ChatAgent:
         self.ps3 = ps3
         sage3_config = self.ps3.s3_comm.web_config
         self.logger.info("SAGE3 server configuration:")
-        openai = sage3_config["openai"]
+        models = getModelsInfo(ps3)
+        openai = models["openai"]
+        llama = models["llama"]
         self.logger.info(
             (
                 "openai key: "
@@ -43,24 +58,22 @@ class ChatAgent:
                 + openai["model"]
             ),
         )
-        chat = sage3_config["llama"]
         self.logger.info(
-            "chat server: url: " + chat["url"] + " - model: " + chat["model"],
+            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
         )
         # Get the value from the SAGE3 server configuration
-        chat_server = chat["url"]
-        if chat_server[-1] != "/":
-            # add the trailing slash
-            chat_server += "/"
+        llama_server = llama["url"]
 
         llm_llama = None
         llm_openai = None
 
         # LLM model using TGI interface
-        if chat["url"] and chat["model"]:
+        if llama["url"] and llama["model"]:
             llm_llama = HuggingFaceEndpoint(
-                endpoint_url=chat_server,
+                endpoint_url=llama_server,
                 model="",
+                # async_client=None,
+                # client=None,
                 max_new_tokens=2048,
                 stop_sequences=[
                     "<|start_header_id|>",
@@ -122,19 +135,14 @@ class ChatAgent:
 
     async def process(self, qq: Question):
         self.logger.info(
-            "Got question> from "
-            + qq.user
-            + " from:"
-            + qq.location
-            + " using: "
-            + qq.model
+            "Got Chat> from " + qq.user + " from:" + qq.location + " using: " + qq.model
         )
 
         # Get the current date and time
         today = time.asctime()
         session = None
         # Select the session
-        if qq.model == "chat":
+        if qq.model == "llama":
             session = self.session_llama
         elif qq.model == "openai":
             session = self.session_openai
