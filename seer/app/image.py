@@ -1,3 +1,11 @@
+# -----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+# -----------------------------------------------------------------------------
+
 # Image Agent
 
 import json
@@ -16,10 +24,11 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 # AI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_huggingface import HuggingFaceEndpoint
+
+# from langchain_huggingface import HuggingFaceEndpoint
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
@@ -70,7 +79,7 @@ class ImageAgent:
             # base_url="https://arcade.evl.uic.edu/llama32-11B-vision/v1",
             # model="/data/11Bf",
             # max_new_tokens=400,
-            base_url=llama["url"] + "/v1",
+            base_url=llama["url"],  # + "/v1",
             model=llama["model"],
             stream=False,
             max_tokens=400,

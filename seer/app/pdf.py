@@ -1,4 +1,12 @@
-# PDF Agent
+# -----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+# -----------------------------------------------------------------------------
+
+# PDFAgent
 
 import json
 from logging import Logger
@@ -12,8 +20,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_huggingface import HuggingFaceEndpoint
+# from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
