@@ -59,7 +59,6 @@ import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
 import { create } from 'zustand';
-import { html } from 'd3';
 
 const languageExtensions = [
   { name: 'markdown', extension: 'md' },
@@ -75,7 +74,10 @@ const languageExtensions = [
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
   { name: 'r', extension: 'r' },
-];
+].sort((a, b) => {
+  return a.name.localeCompare(b.name);
+});
+
 interface CodeStore {
   editor: { [key: string]: editor.IStandaloneCodeEditor };
   setEditor: (id: string, r: editor.IStandaloneCodeEditor) => void;
