@@ -55,10 +55,10 @@ class ChatAgent:
         # Llama model
         if llama["url"] and llama["model"]:
             llm_llama = ChatNVIDIA(
-                base_url=llama["url"],  # + "/v1",
+                base_url=llama["url"] + "/v1",
                 model=llama["model"],
                 stream=False,
-                max_tokens=400,
+                max_tokens=2000,
             )
 
         # OpenAI model
@@ -133,7 +133,7 @@ class ChatAgent:
                 "data": {
                     "title": "Answer",
                     "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                    "size": {"width": 400, "height": 400, "depth": 0},
+                    "size": {"width": 400, "height": 720, "depth": 0},
                 },
             }
         )

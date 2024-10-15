@@ -2,7 +2,7 @@
 import logging, asyncio
 from dotenv import load_dotenv
 
-from libs.localtypes import ImageQuery, Question, WebQuery, PDFQuery
+from libs.localtypes import ImageQuery, Question, WebQuery, PDFQuery, CodeRequest
 
 # Web API
 from fastapi import FastAPI, HTTPException
@@ -27,10 +27,12 @@ from app.summary import SummaryAgent
 from app.web import WebAgent
 from app.image import ImageAgent
 from app.pdf import PDFAgent
+from app.code import CodeAgent
 
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
+codeAG = CodeAgent(logger, ps3)
 summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
@@ -62,6 +64,20 @@ async def ask_question(qq: Question):
     try:
         # do the work
         val = await chatAG.process(qq)
+        return val
+
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+# CODE QUESTION
+@app.post("/code")
+async def code_question(qq: CodeRequest):
+    try:
+        # do the work
+        val = await codeAG.process(qq)
         return val
 
     except HTTPException as e:

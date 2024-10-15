@@ -26,10 +26,27 @@ class Question(BaseModel):
     q: str  # question
     user: str  # user name
     location: str  # location
-    model: str  # AI model: chat, openai
+    model: str  # AI model: llama, openai
 
 
 class Answer(BaseModel):
+    id: str  # question UUID v4
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+
+class CodeRequest(BaseModel):
+    ctx: Context  # context
+    id: str  # question UUID v4
+    q: str  # question
+    user: str  # user name
+    location: str  # location
+    model: str  # AI model: llama, openai
+    method: str
+
+
+class CodeAnswer(BaseModel):
     id: str  # question UUID v4
     r: str  # answer
     success: bool = True  # success flag
@@ -40,6 +57,7 @@ class ImageQuery(BaseModel):
     ctx: Context  # context
     asset: str  # question
     user: str  # user name
+    model: str  # AI model: llama, openai
 
 
 class ImageAnswer(BaseModel):
