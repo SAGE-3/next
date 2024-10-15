@@ -64,7 +64,9 @@ export function IntelligencePane(props: SIProps) {
     navigator.geolocation.getCurrentPosition(function (location) {
       setLocation(location.coords.latitude + ',' + location.coords.longitude);
     });
+  }, []);
 
+  useEffect(() => {
     // Look for a previously set model
     if (settings.aiModel) {
       // If value previously set, use it
@@ -75,7 +77,7 @@ export function IntelligencePane(props: SIProps) {
       setSelectedModel(val);
       setAIModel(val);
     }
-  }, []);
+  }, [settings.aiModel]);
 
   return (
     <Box borderRadius="md" display="flex">

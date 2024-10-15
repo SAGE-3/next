@@ -47,6 +47,11 @@ export function AiRouter(): express.Router {
     if (chatHealth) {
       onlineModels.push(chat.info());
     }
+    // Check openai
+    const openaiHealth = await openai.health();
+    if (openaiHealth) {
+      onlineModels.push(openai.info());
+    }
     // Return the response
     const responseMessage = { onlineModels } as AiStatusResponse;
     res.status(200).json(responseMessage);

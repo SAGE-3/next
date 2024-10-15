@@ -7,15 +7,7 @@
  */
 
 import { apiUrls } from '@sage3/frontend';
-import {
-  AiStatusResponse,
-  AiQueryRequest,
-  AiImageQueryRequest,
-  AiQueryResponse,
-  AiJSONQueryResponse,
-  AgentQueryType,
-  AgentQueryResponse,
-} from '@sage3/shared';
+import { AiStatusResponse, AiQueryRequest, AiImageQueryRequest, AiQueryResponse, AiJSONQueryResponse } from '@sage3/shared';
 
 async function chatStatus(): Promise<AiStatusResponse> {
   // Try/catch block to handle errors

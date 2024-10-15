@@ -40,7 +40,7 @@ import Markdown from 'markdown-to-jsx';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -86,9 +86,10 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
   const users = useUsersStore((state) => state.users);
-  // Online Models
-  // const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
-  const [selectedModel, setSelectedModel] = useState<modelInfo>();
+  // Model Preferences
+  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
+  const { settings } = useUserSettings();
+  const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -244,36 +245,25 @@ function AppComponent(props: App): JSX.Element {
       const request = isQuestion ? new_input.slice(2) : new_input;
 
       if (isQuestion) {
-        let complete_request = '';
-        if (previousQuestion && previousAnswer) {
-          if (selectedModel?.model === 'llama3') {
-            // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
-            // LLAMA3 schema for follow up questions:
-            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message_1 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            // {{ model_answer_1 }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message_2 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                 <|start_header_id|>user<|end_header_id|>
-                 ${previousQuestion}<|eot_id|>
-                 <|start_header_id|>assistant<|end_header_id|>
-                 ${previousAnswer}<|eot_id|>
-                 <|start_header_id|>user<|end_header_id|>
-                 ${request} <|eot_id|>
-                 <|start_header_id|>assistant<|end_header_id|>`;
-          }
-        } else {
-          if (selectedModel?.model === 'llama3') {
-            // LLAMA3 question
-            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                   <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
-                   <|start_header_id|>assistant<|end_header_id|>`;
-          }
-        }
+        // let complete_request = '';
+        // if (previousQuestion && previousAnswer) {
+        //   if (selectedModel === 'llama') {
+        //     complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+        //          <|start_header_id|>user<|end_header_id|>
+        //          ${previousQuestion}<|eot_id|>
+        //          <|start_header_id|>assistant<|end_header_id|>
+        //          ${previousAnswer}<|eot_id|>
+        //          <|start_header_id|>user<|end_header_id|>
+        //          ${request} <|eot_id|>
+        //          <|start_header_id|>assistant<|end_header_id|>`;
+        //   }
+        // } else {
+        //   if (selectedModel === 'llama') {
+        //     complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
+        //            <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
+        //            <|start_header_id|>assistant<|end_header_id|>`;
+        //   }
+        // }
 
         // Send request to backend
         // let body: AskRequest;
@@ -295,6 +285,7 @@ function AppComponent(props: App): JSX.Element {
         //     previousQ: s.context || '',
         //   };
         // }
+
         const body: AskRequest = {
           ctx: {
             prompt: '',
@@ -303,7 +294,7 @@ function AppComponent(props: App): JSX.Element {
           },
           user: username,
           id: genId(),
-          model: 'llama',
+          model: selectedModel || 'llama',
           location: location,
           q: request,
         };
@@ -651,8 +642,7 @@ function AppComponent(props: App): JSX.Element {
     async function fetchStatus() {
       const response = await AiAPI.chat.status();
       const models = response.onlineModels as modelInfo[];
-      // setOnlineModels(models);
-      if (response.onlineModels.length > 0) setSelectedModel(models[0]);
+      setOnlineModels(models);
     }
     fetchStatus();
 
@@ -674,6 +664,16 @@ function AppComponent(props: App): JSX.Element {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (settings.aiModel) {
+      const model = onlineModels.find((m) => m.name === settings.aiModel);
+      if (model) {
+        setSelectedModel(model.name as "openai" | "llama");
+      }
+    }
+  }, [settings.aiModel, onlineModels]);
+
 
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
@@ -1175,7 +1175,7 @@ function AppComponent(props: App): JSX.Element {
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'}>
           <Input
-            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + " model)" : " ")}
+            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel ? " (" + selectedModel + " model)" : "")}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}

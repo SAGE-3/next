@@ -8,6 +8,7 @@ import httpx
 from PIL import Image
 from io import BytesIO
 import base64
+from typing import List
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -15,13 +16,14 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 # AI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_huggingface import HuggingFaceEndpoint
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
+from libs.utils import getModelsInfo
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
@@ -61,12 +63,18 @@ class ImageAgent:
         logger.info("Initializing ImageAgent")
         self.logger = logger
         self.ps3 = ps3
-        # Long context model
-        # self.llm_llama = ChatNVIDIA(
-        #     base_url="https://arcade.evl.uic.edu/llama32-11B-vision/v1",
-        #     model="/data/11Bf",
-        #     max_new_tokens=400,
-        # )
+        models = getModelsInfo(ps3)
+        llama = models["llama"]
+        # Llama model
+        self.llm_llama = ChatNVIDIA(
+            # base_url="https://arcade.evl.uic.edu/llama32-11B-vision/v1",
+            # model="/data/11Bf",
+            # max_new_tokens=400,
+            base_url=llama["url"] + "/v1",
+            model=llama["model"],
+            stream=False,
+            max_tokens=400,
+        )
         self.server = "https://arcade.evl.uic.edu/llama32-11B-vision/"
         self.model = ("/data/11Bf",)
         self.httpx_client = httpx.Client(timeout=None)
@@ -93,8 +101,28 @@ class ImageAgent:
                     img.save(buffered, format="JPEG")
                     image_bytes = buffered.getvalue()
                     image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+                    # messages: List[BaseMessage] = []
+                    # messages.append(
+                    #     SystemMessage(
+                    #         content="You are a helpful assistant, providing detailed  answers to the user, using the Markdown format."
+                    #     )
+                    # )
+                    # messages.append(
+                    #     HumanMessage(
+                    #         content=[
+                    #             {"type": "text", "text": qq.ctx.prompt},
+                    #             {
+                    #                 "type": "image_url",
+                    #                 "image_url": {
+                    #                     "url": f"data:image/png;base64,{image_base64}"
+                    #                 },
+                    #             },
+                    #         ]
+                    #     )
+                    # )
+
                     data = {
-                        "model": "/data/11Bf",
                         "messages": [
                             {
                                 "role": "assistant",
@@ -114,11 +142,14 @@ class ImageAgent:
                                 ],
                             },
                         ],
-                        "stream": False,
-                        "max_tokens": 400,
                     }
+
                     url = self.server + "v1/chat/completions"
                     response = self.httpx_client.post(url, json=data)
+
+                    # response = await self.llm_llama.ainvoke(messages)
+                    # print("Response: ", response)
+                    # description = response.content
                     if response.status_code == 200:
                         print("Response: ", response.json())
                         description = response.json()["choices"][0]["message"][

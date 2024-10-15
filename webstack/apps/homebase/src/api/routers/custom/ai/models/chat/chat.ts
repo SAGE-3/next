@@ -36,11 +36,12 @@ export class LlamaModel extends AiModel {
   public async health(): Promise<boolean> {
     try {
       let url: string;
-      if (this._model === 'llama3') {
+      console.log('Checking health of llama model', this._model);
+      if (this._model.startsWith('/data')) {
         // TGI huggingface style API
         url = `${this._url}/health`;
       } else {
-        // OpenAI syle API
+        // Nvidia - OpenAI syle API
         url = `${this._url}/v1/health/ready`;
       }
       const response = await fetch(url, { method: 'GET' });
