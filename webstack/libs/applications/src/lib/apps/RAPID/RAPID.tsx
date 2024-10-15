@@ -145,7 +145,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Box display="flex" gap="2" alignItems="center">
+      <Box display="flex" gap="2" alignItems="center" w="100%" h="100%">
         <Button size="xs" onClick={onOpenCreate}>
           +
         </Button>
@@ -174,11 +174,11 @@ function ToolbarComponent(props: App): JSX.Element {
           }}
         />
       </Box>
-      { hovered && (
+      {/* {hovered && (
         <Box width={props.data.size.width} height={props.data.size.height} position="absolute" top="-400" left="700" bg="black">
           New app will go here
         </Box>
-      )}
+      )} */}
       <ToolbarSelector props={props as App} />
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>

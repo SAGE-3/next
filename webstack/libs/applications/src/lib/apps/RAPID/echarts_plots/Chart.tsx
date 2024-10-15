@@ -14,6 +14,7 @@ function Chart({ option }: ChartProps) {
   const divRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<EChartsType | null>();
   const updateChartDataURL = useEchartsStore((state) => state.updateChartDataURL);
+  const resizeObserver = useRef<ResizeObserver | null>(null);
 
   const chartDataURL = useEchartsStore((state) => state.chartDataURL);
 
@@ -35,40 +36,77 @@ function Chart({ option }: ChartProps) {
     };
   }, [option]);
 
+  //  Resize chart when window or parent div is resized
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    });
+
+    if (divRef.current) {
+      resizeObserver.observe(divRef.current);
+    }
+    console.log('rerendering');
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   useEffect(() => {
     if (chartRef.current && divRef.current) {
-      const base64 = chartRef.current.getDataURL({
-        pixelRatio: 2,
-        type: 'svg',
-        backgroundColor: '#fff', // Ensure white background
-        excludeComponents: ['toolbox', 'dataZoom'],
-      });
+      const generateChartImage = () => {
+        if (chartRef.current && divRef.current) {
+          const base64 = chartRef.current.getDataURL({
+            pixelRatio: 2,
+            type: 'svg',
+            backgroundColor: '#fff', // Ensure white background
+            excludeComponents: ['toolbox', 'dataZoom'],
+          });
 
-      const svgRect = divRef.current.getBoundingClientRect();
+          const svgRect = divRef.current.getBoundingClientRect();
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
 
-      canvas.width = svgRect.width || 0;
-      canvas.height = svgRect.height || 0;
+          canvas.width = svgRect.width || 0;
+          canvas.height = svgRect.height || 0;
 
-      const img = new Image();
-      img.src = base64;
+          const img = new Image();
+          img.src = base64;
 
-      img.onload = () => {
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const pngBase64 = canvas.toDataURL('image/png');
-        updateChartDataURL(pngBase64);
+          img.onload = () => {
+            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const pngBase64 = canvas.toDataURL('image/png');
+            updateChartDataURL(pngBase64);
+          };
+
+          canvas.remove();
+
+          img.onerror = (error) => {
+            console.error('Image loading error:', error);
+          };
+        } else {
+          console.error('chartRef or divRef is not available');
+        }
       };
 
-      canvas.remove();
-
-      img.onerror = (error) => {
-        console.error('Image loading error:', error);
-      };
+      if (divRef.current) {
+        resizeObserver.current = new ResizeObserver(() => {
+          generateChartImage();
+        });
+        resizeObserver.current.observe(divRef.current);
+      }
     } else {
       console.error('chartRef or divRef is not available');
     }
+    return () => {
+      // Clean up ResizeObserver
+      if (resizeObserver.current && divRef.current) {
+        resizeObserver.current.unobserve(divRef.current);
+        resizeObserver.current.disconnect();
+      }
+    };
   }, [divRef.current, chartRef.current]);
 
   return (
