@@ -1,13 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- */
-
-/**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -61,7 +53,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   const { user } = useUser();
 
   // Room Store
-  const { rooms } = useRoomStore((state) => state);
+  const rooms = useRoomStore((state) => state.rooms);
 
   // Search Term
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,7 +156,8 @@ function RoomRow(props: RoomRowProps) {
   );
 
   // Room Store
-  const { joinRoomMembership, members } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
+  const members = useRoomStore((state) => state.members);
 
   // Password disclosure
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -256,7 +249,7 @@ type PasswordModalProps = {
   room: Room;
 };
 
-function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
+export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   // Configuration information
   const config = useConfigStore((state) => state.config);
   // Reference to the input field
@@ -272,7 +265,7 @@ function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
   };
 
   // Room Store
-  const { joinRoomMembership } = useRoomStore((state) => state);
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   // Checks if the user entered pin matches the board pin
   const compareKey = async () => {

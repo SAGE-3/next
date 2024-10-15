@@ -14,3 +14,6 @@ export * from './Panels';
 export * from './Twilio';
 export * from './PresenceFollow';
 export * from './BoardTitle';
+export * from './TagsDisplay';
+export * from './Interactionbar';
+export * from './InteractionbarShortcuts';

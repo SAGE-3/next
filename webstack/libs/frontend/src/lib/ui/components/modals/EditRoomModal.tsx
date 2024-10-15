@@ -31,6 +31,8 @@ import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal 
 import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
+import { useRouteNav } from '@sage3/frontend';
+
 interface EditRoomModalProps {
   isOpen: boolean;
   onOpen: () => void;
@@ -39,6 +41,7 @@ interface EditRoomModalProps {
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
+  const { toHome } = useRouteNav();
   // Configuration information
   const config = useConfigStore((state) => state.config);
 
@@ -50,6 +53,8 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
+  // Rooms
+  const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
   const updateRoom = useRoomStore((state) => state.update);
 
@@ -58,7 +63,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Boards
-  const { boards } = useBoardStore((state) => state);
+  const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
 
   const [isListed, setIsListed] = useState(props.room.data.isListed);
@@ -95,8 +100,9 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   const handleSubmit = () => {
-    updateRoom(props.room._id, { name, description, color, isListed });
-
+    const cleanedName = cleanNameCheckDoubles(name);
+    if (!cleanedName) return;
+    updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
     if (passwordChanged) {
       if (!isProtected) {
         updateRoom(props.room._id, { privatePin: '', isPrivate: false });
@@ -121,6 +127,30 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     props.onClose();
   };
 
+  function cleanNameCheckDoubles(name: string): string | null {
+    // remove leading and trailing space, and limit name length to 20
+    const cleanedName = name.trim().substring(0, 19);
+    const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
+    if (cleanedName.split(' ').join('').length === 0) {
+      toast({
+        title: 'Name must have at least one character',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (roomNames.includes(cleanedName)) {
+      toast({
+        title: 'Room name already exists',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    }
+    return cleanedName;
+  }
+
   /**
    * Delete the room and its boards and its apps
    */
@@ -141,6 +171,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     });
     // delete the room
     deleteRoom(props.room._id);
+    toHome();
   };
 
   // To enable/disable

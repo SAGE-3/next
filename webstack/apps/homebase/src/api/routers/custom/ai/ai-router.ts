@@ -17,7 +17,7 @@ import { config } from '../../../../config';
 import { AiStatusResponse, getFileType } from '@sage3/shared';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { AssetsCollection } from '../../../collections';
-import { CodeLlamaModel, OpenAiModel, YoloModel } from './models';
+import { CodeLlamaModel, OpenAiModel, YoloModel, ChatModel } from './models';
 
 // Request Return Type
 export type GenerateResponseType = {
@@ -36,6 +36,66 @@ export function AiRouter(): express.Router {
   const codeLlama = new CodeLlamaModel(config);
   const openai = new OpenAiModel(config);
   const yolo = new YoloModel(config);
+  const chat = new ChatModel(config);
+
+  // Check if the chat models are online
+  router.get('/chat_status', async (req, res) => {
+    // Array of online models
+    const onlineModels = [];
+    // Check Chat
+    const chatHealth = await chat.health();
+    if (chatHealth) {
+      onlineModels.push(chat.info());
+    }
+    // Return the response
+    const responseMessage = { onlineModels } as AiStatusResponse;
+    res.status(200).json(responseMessage);
+  });
+
+  // Post a chat request
+  router.post('/chat_query', async ({ body, user }, res) => {
+    // Get the request parameters
+    const { input, model, max_new_tokens, app_id } = body;
+    // Try/catch block to handle errors
+    try {
+      if (model === chat.name) {
+        // Query Llama with the input
+        const response = await chat.asking(input, max_new_tokens, app_id, user.id);
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false } as GenerateResponseType;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false } as GenerateResponseType;
+      res.status(500).json(responseMessage);
+    }
+  });
+
+  router.post('/chat', async ({ body }, res) => {
+    // Get the request parameters
+    const { input, model, max_new_tokens } = body;
+    // Try/catch block to handle errors
+    try {
+      if (model === chat.name) {
+        // Query Llama with the input
+        const response = await chat.ask(input, max_new_tokens);
+        // Return the response
+        res.status(200).json(response);
+      } else {
+        // Return an error message if the request fails
+        const responseMessage = { success: false } as GenerateResponseType;
+        res.status(500).json(responseMessage);
+      }
+    } catch (error) {
+      // Return an error message if the request fails
+      const responseMessage = { success: false } as GenerateResponseType;
+      res.status(500).json(responseMessage);
+    }
+  });
 
   // Check if the code models are online
   router.get('/code_status', async (req, res) => {
@@ -73,18 +133,18 @@ export function AiRouter(): express.Router {
   // Post a explain code request
   router.post('/code_query', async (req, res) => {
     // Get the request parameters
-    const { input, model } = req.body;
+    const { input, prompt, model } = req.body;
 
     // Try/catch block to handle errors
     try {
       if (model === codeLlama.name) {
         // Query Llama with the input
-        const response = await codeLlama.query(input);
+        const response = await codeLlama.code(prompt, input);
         // Return the response
         res.status(200).json(response);
       } else if (model === openai.name) {
         // Query OpenAI with the input
-        const response = await openai.query(input);
+        const response = await openai.code(prompt, input);
         // Return the response
         res.status(200).json(response);
       } else {

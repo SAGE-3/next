@@ -48,10 +48,14 @@ export interface ServerConfiguration {
   // FastAPI
   fastapi: { url: string };
 
+  // Feedback server
+  feedback: { url: string };
+
   // External Services
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
+    chat: AIChatConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
   };
@@ -79,10 +83,14 @@ export interface ServerConfiguration {
 export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
   isSage3: boolean;
   logins: ServerConfiguration['auth']['strategies'];
+  onlineUsers: number;
 };
 
 // Public to authenticated users from server to the configuration request, for security reasons
-export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features'> & {
+export type OpenConfiguration = Pick<
+  ServerConfiguration,
+  'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features' | 'feedback'
+> & {
   token: string;
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
@@ -148,8 +156,17 @@ export interface OpenAIConfiguration {
   model: string; // LLM model
 }
 
+// AI Chat Configuration
+export interface AIChatConfiguration {
+  url: string;
+  model: string; // LLM model
+  apiKey: string; // API Key
+  max_tokens: number;
+}
+
 export interface CodeLlamaConfiguration {
   url: string;
+  model: string; // LLM model
   apiKey: string;
   max_tokens: number;
 }

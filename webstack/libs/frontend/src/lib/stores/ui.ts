@@ -14,22 +14,20 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
-
 import { useAppStore } from './app';
 
-// Zoom limits, from 30% to 400%
-const MinZoom = 0.1;
-const MaxZoom = 3;
+// Zoom limits, from 2% to 300%
+export const MinZoom = 0.02;
+export const MaxZoom = 3;
 // When using mouse wheel, repeated events
-const WheelStepZoom = 0.008;
+export const WheelStepZoom = 0.008;
 
-type DrawingMode = 'none' | 'pen' | 'eraser';
+// type DrawingMode = 'none' | 'pen' | 'eraser';
 
 interface UIState {
   scale: number;
   boardWidth: number;
   boardHeight: number;
-  gridSize: number;
   zIndex: number;
 
   boardPosition: { x: number; y: number };
@@ -48,8 +46,6 @@ interface UIState {
   // Selected Apps
   selectedAppsIds: string[];
   selectedAppsSnapshot: { [id: string]: Position };
-  deltaPos: { p: Position; id: string };
-  setDeltaPostion: (position: Position, id: string) => void;
   setSelectedAppsIds: (appId: string[]) => void;
   setSelectedAppSnapshot: (apps: { [id: string]: Position }) => void;
   addSelectedApp: (appId: string) => void;
@@ -60,8 +56,11 @@ interface UIState {
   setSavedSelectedAppsIds: () => void;
   clearSavedSelectedAppsIds: () => void;
 
+  //Tags
+  selectedTag: string;
+  setSelectedTag: (value: string) => void;
+
   // whiteboard
-  whiteboardMode: DrawingMode;
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
@@ -69,7 +68,6 @@ interface UIState {
   markerSize: number;
   markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
-  setWhiteboardMode: (mode: DrawingMode) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
@@ -91,11 +89,18 @@ interface UIState {
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
 
+  // RndSafety: to fix appWindows from disappearing
+  rndSafeForAction: boolean;
+  setRndSafeForAction: (isSafe: boolean) => void;
+
+  // Position Syncronization Information
+  boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
+  setBoardSynced: (synced: boolean) => void;
+
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
   setBoardDragging: (dragging: boolean) => void;
   setAppDragging: (dragging: boolean) => void;
-  setGridSize: (gridSize: number) => void;
   setSelectedApp: (appId: string) => void;
   incZ: () => void;
   resetZIndex: () => void;
@@ -110,6 +115,11 @@ interface UIState {
   fitAllApps: () => void;
   fitArea: (x: number, y: number, w: number, h: number) => void;
   lockBoard: (lock: boolean) => void;
+
+  deltaLocalMove: {
+    [appId: string]: { x: number; y: number };
+  };
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
 }
 
 /**
@@ -120,7 +130,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   boardWidth: 3000000, // Having it set to 5,000,000 caused a bug where you couldn't zoom back out.
   boardHeight: 3000000, // It was like the div scaleing became to large
   selectedBoardId: '',
-  gridSize: 1,
   zIndex: 1,
   boardDragging: false,
   appDragging: false,
@@ -130,7 +139,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   lassoColor: 'red',
   clearLassos: false,
   clearAllLassos: false,
-  whiteboardMode: 'none',
   markerColor: 'red',
   markerSize: 8,
   markerOpacity: 0.6,
@@ -139,6 +147,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
+
+  rndSafeForAction: true,
+  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),
+
+  boardSynced: true,
+  setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
+
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
@@ -217,7 +232,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
 
   setBoardDragging: (dragging: boolean) => set((state) => ({ ...state, boardDragging: dragging })),
   setAppDragging: (dragging: boolean) => set((state) => ({ ...state, appDragging: dragging })),
-  setGridSize: (size: number) => set((state) => ({ ...state, gridSize: size })),
   setSelectedApp: (appId: string) => set((state) => ({ ...state, selectedAppId: appId })),
   incZ: () => set((state) => ({ ...state, zIndex: state.zIndex + 1 })),
   resetZIndex: () => set((state) => ({ ...state, zIndex: 1 })),
@@ -227,8 +241,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setLassoColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
   setroomlistShowFavorites: (show: boolean) => set((state) => ({ ...state, roomlistShowFavorites: show })),
 
-  deltaPos: { p: { x: 0, y: 0, z: 0 }, id: '' },
-  setDeltaPostion: (position: Position, id: string) => set((state) => ({ ...state, deltaPos: { id, p: position } })),
   setSelectedAppsIds: (appIds: string[]) => set((state) => ({ ...state, selectedAppsIds: appIds, savedSelectedAppsIds: appIds })),
   setSelectedAppSnapshot: (snapshot: { [id: string]: Position }) => {
     snapshot = structuredClone(snapshot);
@@ -248,7 +260,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: get().selectedAppsIds })),
   clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [] })),
 
-  setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
@@ -330,6 +341,17 @@ export const useUIStore = create<UIState>()((set, get) => ({
           return { ...state, scale: zoomOutVal };
         }
       });
+  },
+
+  selectedTag: '',
+  setSelectedTag: (value: string) => set((state) => ({ ...state, selectedTag: value })),
+  deltaLocalMove: {},
+  setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => {
+    const newLocalMove = {} as { [appId: string]: { x: number; y: number } };
+    appIds.forEach((appId) => {
+      newLocalMove[appId] = delta;
+    });
+    set((state) => ({ ...state, deltaLocalMove: newLocalMove }));
   },
 }));
 

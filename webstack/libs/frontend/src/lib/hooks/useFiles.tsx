@@ -10,6 +10,8 @@ import { useRef, useEffect, useState } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
 // Upload with axios and progress event
 import axios, { AxiosProgressEvent, AxiosError } from 'axios';
+// Date manipulation (for filename)
+import { format as dateFormat } from 'date-fns/format';
 
 // File information
 import {
@@ -31,6 +33,7 @@ import {
   isTiff,
   isSessionFile,
   isCode,
+  isPythonNotebook,
   mimeToCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -39,7 +42,7 @@ import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 import { apiUrls } from '../config';
 import { useUser } from '../providers';
-import { useAssetStore, useAppStore, useUIStore } from '../stores';
+import { useAssetStore, useAppStore, useUIStore, useConfigStore } from '../stores';
 
 /**
  * Setup data structure to open an application
@@ -224,9 +227,21 @@ export function useFiles(): UseFiles {
               isClosable: true,
             });
           } else {
-            fd.append('files', input[i]);
-            if (filenames) filenames += ', ' + input[i].name;
-            else filenames = input[i].name;
+            let item;
+            // Rename file for called image.png coming from the clipboard
+            if (input[i].name === "image.png") {
+              // Create a more meaningful name
+              const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
+              const username = user?.data.name || 'user';
+              const filename = username + '-' + dt + '.png';
+              // Create a new file with the new name
+              item = new File([input[i]], filename, { type: input[i].type });
+            } else {
+              item = input[i];
+            }
+            fd.append('files', item);
+            if (filenames) filenames += ', ' + item.name;
+            else filenames = item.name;
           }
         } else {
           toast({
@@ -495,43 +510,45 @@ export function useFiles(): UseFiles {
           return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
         }
       }
-      // } else if (isPythonNotebook(fileType)) {
-      //   // Look for the file in the asset store
-      //   for (const a of assets) {
-      //     if (a._id === fileID) {
-      //       const localurl = apiUrls.assets.getAssetById(a.data.file);
-      //       // Get the content of the file
-      //       const response = await fetch(localurl, {
-      //         headers: {
-      //           'Content-Type': 'application/json',
-      //           Accept: 'application/json',
-      //         },
-      //       });
-      //       const json = await response.json();
-      //       // Create a notebook file in Jupyter with the content of the file
-      //       const conf = await GetConfiguration();
-      //       if (conf.token) {
-      //         // Create a new notebook
-      //         const base = `http://${window.location.hostname}:8888`;
-      //         // Talk to the jupyter server API
-      //         const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
-      //         const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-      //         // Create a new notebook
-      //         const response = await fetch(j_url, {
-      //           method: 'PUT',
-      //           headers: {
-      //             'Content-Type': 'application/json',
-      //             Authorization: 'Token ' + conf.token,
-      //           },
-      //           body: JSON.stringify(payload),
-      //         });
-      //         const res = await response.json();
-      //         console.log('Jupyter> notebook created', res);
-      //         // Create a note from the json
-      //         return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
-      //       }
-      //     }
-      //   }
+    } else if (isPythonNotebook(fileType)) {
+      console.log('Jupyter> drag notebook')
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          const localurl = apiUrls.assets.getAssetById(a.data.file);
+          // Get the content of the file
+          const response = await fetch(localurl, {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+          });
+          const json = await response.json();
+          // Create a notebook file in Jupyter with the content of the file
+          const conf = useConfigStore.getState().config;
+          // const conf = await GetConfiguration();
+          if (conf.token) {
+            // Create a new notebook
+            const base = `http://${window.location.hostname}:8888`;
+            // Talk to the jupyter server API
+            const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
+            const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+            // Create a new notebook
+            const response = await fetch(j_url, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Token ' + conf.token,
+              },
+              body: JSON.stringify(payload),
+            });
+            const res = await response.json();
+            console.log('Jupyter> notebook created', res);
+            // Create a note from the json
+            return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
+          }
+        }
+      }
     } else if (isJSON(fileType)) {
       // Look for the file in the asset store
       for (const a of assets) {

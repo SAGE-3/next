@@ -11,7 +11,7 @@ import { Tooltip, Box, Text, useToast, Flex, IconButton, Divider, useDisclosure,
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
-import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useUIStore, useUser } from '@sage3/frontend';
+import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
 // App imports
@@ -34,7 +34,8 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const createApp = useAppStore((state) => state.create);
 
   // Board Position
-  const { scale, boardPosition } = useUIStore((state) => state);
+  const scale = useThrottleScale(250);
+  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // User
   const { user } = useUser();
@@ -50,7 +51,13 @@ export function KernelsPanel(props: KernelsPanelProps) {
   const toast = useToast();
 
   // Kernel Store
-  const { kernels, fetchKernels, deleteKernel, restartKernel, apiStatus, keepChecking, stopChecking } = useKernelStore((state) => state);
+  const kernels = useKernelStore((state) => state.kernels);
+  const fetchKernels = useKernelStore((state) => state.fetchKernels);
+  const deleteKernel = useKernelStore((state) => state.deleteKernel);
+  const restartKernel = useKernelStore((state) => state.restartKernel);
+  const apiStatus = useKernelStore((state) => state.apiStatus);
+  const keepChecking = useKernelStore((state) => state.keepChecking);
+  const stopChecking = useKernelStore((state) => state.stopChecking);
 
   // Local kernel state
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);

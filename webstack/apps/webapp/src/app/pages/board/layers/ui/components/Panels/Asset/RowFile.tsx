@@ -36,8 +36,13 @@ import {
 
 // Icons for file types
 import {
-  MdJavascript, MdOutlineLink, MdOutlineMap, MdOutlinePictureAsPdf,
-  MdOutlineImage, MdOutlineFilePresent, MdOndemandVideo, MdOutlineStickyNote2
+  MdJavascript,
+  MdOutlineLink,
+  MdOutlineMap,
+  MdOutlinePictureAsPdf,
+  MdOutlineImage,
+  MdOutlineFilePresent,
+  MdOndemandVideo,
 } from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
 import { LuFileCode, LuFileJson } from 'react-icons/lu';
@@ -65,6 +70,7 @@ export type RowFileProps = {
   file: FileEntry;
   clickCB: (p: FileEntry, shift: boolean, modif: boolean) => void;
   dragCB: (e: React.DragEvent<HTMLDivElement>) => void;
+  scale: number;
 };
 
 /**
@@ -74,7 +80,7 @@ export type RowFileProps = {
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
+export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
   const { auth } = useAuth();
@@ -98,8 +104,6 @@ export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
-
-  const scale = useUIStore((state) => state.scale);
 
   // Abilities
   const canCreateApp = useAbility('create', 'apps');

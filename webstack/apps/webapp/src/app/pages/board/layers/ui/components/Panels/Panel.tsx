@@ -6,21 +6,25 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect, createRef, useRef, useCallback } from 'react';
+import { useState, useEffect, createRef, useRef, useCallback, CSSProperties } from 'react';
 import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip } from '@chakra-ui/react';
+
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUIStore, useUserSettings } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
 const smallFont = 14;
 
 // Add a title to the chakra button props
-export interface ButtonPanelProps extends ButtonProps {
+export interface ButtonPanelProps {
   title: string;
   textColor?: string;
+  draggable?: boolean;
+  onClick?: () => void;
+  style?: CSSProperties | undefined;
 }
 
 // Button with a title and using the font size from parent panel
@@ -68,7 +72,7 @@ export interface IconButtonPanelProps extends ButtonProps {
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  const longPressEvent = useLongPress(props.onLongPress || (() => { }));
+  // const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
@@ -89,7 +93,8 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          {...longPressEvent}
+          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
+          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -104,6 +109,7 @@ export type PanelProps = {
   width: number;
   children?: JSX.Element;
   showClose: boolean;
+  showMinimize?: boolean;
   titleDblClick?: () => void;
 };
 
@@ -115,12 +121,11 @@ export type PanelProps = {
  */
 export function Panel(props: PanelProps) {
   // Panel Store
-  const getPanel = usePanelStore((state) => state.getPanel);
-  const panel = getPanel(props.name);
+  const panel = usePanelStore((state) => state.panels[props.name]);
   if (!panel) return null;
-  const panels = usePanelStore((state) => state.panels);
+  // const panels = usePanelStore((state) => state.panels);
   const updatePanel = usePanelStore((state) => state.updatePanel);
-  const zIndex = panels.findIndex((el) => el.name == panel.name);
+  const zIndex = usePanelStore((state) => state.zOrder.indexOf(props.name));
   const update = (updates: Partial<PanelUI>) => updatePanel(panel.name, updates);
 
   // Track the size of the panel
@@ -222,13 +227,14 @@ export function Panel(props: PanelProps) {
   };
 
   // Handle a drag start of the panel
-  const handleDragStart = () => {
+  const handleDragStart = (e: any) => {
+    // e.stopPropagation(); // comment this or else: in grab mode, moving panels will move the board too
     bringPanelForward(props.name);
   };
 
   // Handle a drag stop of the panel
   const handleDragStop = (event: any, data: DraggableData) => {
-    updatePanel(panel.name, { position: { x: data.x, y: data.y } });
+    update({ position: { x: data.x, y: data.y } });
     if (ref.current) {
       const we = ref.current['clientWidth'];
       const he = ref.current['clientHeight'];
@@ -273,7 +279,7 @@ export function Panel(props: PanelProps) {
       <Rnd
         dragHandleClassName="dragHandle" // only allow dragging the header
         position={{ ...panel.position }}
-        bounds="window"
+        bounds="parent"
         onClick={() => bringPanelForward(props.name)}
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
@@ -331,14 +337,16 @@ export function Panel(props: PanelProps) {
 
               <Box display="flex" flexWrap={'nowrap'}>
                 {!panel.minimized ? (
-                  <IconButton
-                    size="xs"
-                    icon={<MdExpandLess size="24px" />}
-                    aria-label="show less"
-                    onClick={handleMinimizeClick}
-                    mx="1"
-                    cursor="pointer"
-                  />
+                  props.showMinimize ? (
+                    <IconButton
+                      size="xs"
+                      icon={<MdExpandLess size="24px" />}
+                      aria-label="show less"
+                      onClick={handleMinimizeClick}
+                      mx="1"
+                      cursor="pointer"
+                    />
+                  ) : null
                 ) : (
                   <IconButton
                     size="xs"
@@ -392,12 +400,19 @@ const useLongPress = (callback: (e: TouchEvent | MouseEvent) => void) => {
 
   const start = useCallback(
     (event: TouchEvent | MouseEvent) => {
-      // prevent ghost click on mobile devices
-      if (isPreventDefault && event.target) {
-        event.target.addEventListener('touchend', preventDefault, { passive: false });
-        target.current = event.target;
-      }
-      timeout.current = setTimeout(() => callback(event), delay);
+      // prevent ghost click on mobile devices, only if long click was triggered
+      // Warning: LongPRess may not stop propagation of onClick for all function calls;
+      //          only currently works because the popup (modal) releases the cursor (for mouse)
+      const preventTouchClick = () => {
+        if (isPreventDefault && event.target) {
+          event.target.addEventListener('touchend', preventDefault, { passive: false });
+          target.current = event.target;
+        }
+      };
+      timeout.current = setTimeout(() => {
+        callback(event);
+        preventTouchClick();
+      }, delay);
     },
     [callback, delay, isPreventDefault]
   );

@@ -11,29 +11,35 @@ import * as Simplify from 'simplify-js';
 
 // Yjs Imports
 import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-websocket';
+// import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
 import {
   YjsRoomConnection,
-  YjsRooms,
+  // YjsRooms,
   useAbility,
   useAnnotationStore,
-  useHotkeys,
-  useKeyPress,
+  // useHotkeys,
+  // useKeyPress,
   useThrottleScale,
   useUIStore,
   useUser,
+  useUserSettings,
   useYjs,
 } from '@sage3/frontend';
 import { Line } from './Line';
-import { useParams } from 'react-router';
+import { useDragAndDropBoard } from '../DragAndDropBoard';
 
 type WhiteboardProps = {
   boardId: string;
+  roomId: string;
 };
 
 export function Whiteboard(props: WhiteboardProps) {
+  // Settings
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   const { user } = useUser();
 
   const scale = useThrottleScale(250);
@@ -44,8 +50,6 @@ export function Whiteboard(props: WhiteboardProps) {
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
-  const whiteboardMode = useUIStore((state) => state.whiteboardMode);
-  const setWhiteboardMode = useUIStore((state) => state.setWhiteboardMode);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
@@ -55,6 +59,8 @@ export function Whiteboard(props: WhiteboardProps) {
   const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const color = useUIStore((state) => state.markerColor);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
@@ -67,6 +73,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const rCurrentLine = useRef<Y.Map<any>>();
+
+  // Drag and Drop On Board
+  const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
@@ -88,7 +97,7 @@ export function Whiteboard(props: WhiteboardProps) {
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc && canAnnotate) {
+      if (yLines && yDoc && canAnnotate && boardSynced) {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
           e.currentTarget.setPointerCapture(e.pointerId);
@@ -112,7 +121,7 @@ export function Whiteboard(props: WhiteboardProps) {
         }
       }
     },
-    [yDoc, yLines, user, color, markerOpacity, markerSize]
+    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
   );
 
   useEffect(() => {
@@ -192,22 +201,32 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yAnnotations, props.boardId]);
 
   // On pointer move, update awareness and (if down) update the current line
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent<SVGSVGElement>) => {
-      if (whiteboardMode === 'pen') {
-        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-          const currentLine = rCurrentLine.current;
-          if (!currentLine) return;
-          const points = currentLine.get('points');
-          // Don't add the new point to the line
-          if (!points) return;
-          const point = getPoint(e.clientX, e.clientY);
-          points.push([...point]);
-        }
+  const draw = useCallback(
+    (x: number, y: number) => {
+      if (primaryActionMode === 'pen') {
+        const currentLine = rCurrentLine.current;
+        if (!currentLine) return;
+        const points = currentLine.get('points');
+        // Don't add the new point to the line
+        if (!points) return;
+        const point = getPoint(x, y);
+        points.push([...point]);
       }
     },
-    [rCurrentLine.current, whiteboardMode]
+    [rCurrentLine.current, primaryActionMode]
   );
+
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== 'touch') {
+      draw(e.clientX, e.clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    if (e.touches.length === 1) {
+      draw(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  };
 
   // On pointer up, complete the current line
   const handlePointerUp = useCallback(
@@ -283,40 +302,34 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [undoLastMaker]);
 
-  const spacebarPressed = useKeyPress(' ');
-
-  // Switch between pen and interactive mode
-  useHotkeys(
-    'shift+w',
-    () => {
-      if (canAnnotate) {
-        setWhiteboardMode(whiteboardMode === 'none' ? 'pen' : 'none');
-      }
-    },
-    { dependencies: [whiteboardMode] }
-  );
-
   // Delete a line when it is clicked
   const lineClicked = (id: string) => {
-    if (yLines) {
-      for (let index = yLines.length - 1; index >= 0; index--) {
-        const line = yLines.get(index);
-        if (line.get('id') === id) {
-          yLines.delete(index, 1);
-        }
+    if (!yLines) return; // Exit if yLines is undefined or null
+    let delComplete = false;
+    // Loop through yLines in reverse to find and delete the line with the matching id
+    for (let index = yLines.length - 1; index >= 0; index--) {
+      const line = yLines.get(index);
+
+      if (line.get('id') === id) {
+        yLines.delete(index, 1);
+        delComplete = true;
+        break; // Exit loop after deleting the line
       }
     }
+    // If the line was deleted, update the board lines
+    if (delComplete) updateBoardLines();
   };
 
   return (
     <div
       className="canvas-container"
       style={{
-        pointerEvents: whiteboardMode !== 'none' && !spacebarPressed ? 'auto' : 'none',
-        touchAction: whiteboardMode !== 'none' && !spacebarPressed ? 'none' : 'auto',
+        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'auto' : 'none',
+        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'none' : 'auto',
       }}
     >
       <svg
+        id="whiteboard"
         className="canvas-layer"
         style={{
           position: 'absolute',
@@ -330,6 +343,9 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onTouchMove={handleTouchMove}
+        {...dragProps}
+      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}
@@ -338,6 +354,7 @@ export function Whiteboard(props: WhiteboardProps) {
           ))}
         </g>
       </svg>
+      {renderContent()}
     </div>
   );
 }

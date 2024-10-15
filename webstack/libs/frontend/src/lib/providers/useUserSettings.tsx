@@ -13,6 +13,9 @@ type UserSettings = {
   showViewports: boolean;
   showAppTitles: boolean;
   showUI: boolean;
+  showTags: boolean;
+  selectedBoardListView: 'grid' | 'list';
+  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
 };
 
 const defaultSettings: UserSettings = {
@@ -20,6 +23,9 @@ const defaultSettings: UserSettings = {
   showViewports: true,
   showAppTitles: false,
   showUI: true,
+  showTags: false,
+  selectedBoardListView: 'grid',
+  primaryActionMode: 'lasso',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -30,6 +36,9 @@ type UserSettingsContextType = {
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
   toggleShowUI: () => void;
+  toggleShowTags: () => void;
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => void;
   restoreDefaultSettings: () => void;
 };
 
@@ -39,6 +48,9 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowViewports: () => { },
   toggleShowAppTitles: () => { },
   toggleShowUI: () => { },
+  toggleShowTags: () => { },
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
   restoreDefaultSettings: () => { },
 });
 
@@ -57,7 +69,7 @@ export function useUserSettings() {
 export function getUserSettings() {
   const settings = localStorage.getItem(USER_SETTINGS_KEY);
   if (settings) {
-    return JSON.parse(settings);
+    return { ...defaultSettings, ...JSON.parse(settings) };
   } else {
     setUserSettings(defaultSettings);
     return defaultSettings;
@@ -118,6 +130,39 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
+  const toggleShowTags = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.showTags = !prev.showTags;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
+  const setBoardListView = useCallback(
+    (value: UserSettings['selectedBoardListView']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.selectedBoardListView = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
+  const setPrimaryActionMode = useCallback(
+    (value: UserSettings['primaryActionMode']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.primaryActionMode = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
@@ -125,7 +170,17 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
 
   return (
     <UserSettingsContext.Provider
-      value={{ settings, toggleShowCursors, toggleShowViewports, toggleShowAppTitles, toggleShowUI, restoreDefaultSettings }}
+      value={{
+        settings,
+        toggleShowCursors,
+        toggleShowViewports,
+        toggleShowAppTitles,
+        toggleShowUI,
+        toggleShowTags,
+        setBoardListView,
+        setPrimaryActionMode,
+        restoreDefaultSettings,
+      }}
     >
       {props.children}
     </UserSettingsContext.Provider>

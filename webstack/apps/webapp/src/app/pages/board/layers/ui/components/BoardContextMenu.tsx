@@ -7,12 +7,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack } from '@chakra-ui/react';
+import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center, Divider, Spacer } from '@chakra-ui/react';
 
-import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
+import { Interactionbar } from './Interactionbar';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -23,9 +24,6 @@ type ContextProps = {
   clearBoard: () => void;
   showAllApps: () => void;
 };
-
-// State of the checkboxes in context menu: grid ui
-const savedRadios = [false, true];
 
 export function BoardContextMenu(props: ContextProps) {
   // Configuration information
@@ -62,7 +60,6 @@ export function BoardContextMenu(props: ContextProps) {
   const createApp = useAppStore((state) => state.create);
 
   // UI Store
-  const setGridSize = useUIStore((state) => state.setGridSize);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   const { uiToBoard } = useCursorBoardPosition();
@@ -70,26 +67,10 @@ export function BoardContextMenu(props: ContextProps) {
   // UI Menu position setters
   const updatePanel = usePanelStore((state) => state.updatePanel);
 
-  // State of the checkboxes in context menu: grid ui
-  const [radios, setRadios] = useState(savedRadios);
-
   // Theme
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const panelBackground = useColorModeValue('gray.50', 'gray.700');
   const shadowColor = useColorModeValue('#00000050', '#00000080');
-
-  // Enable/disable the grid
-  const onGridChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.checked;
-    if (val) {
-      setGridSize(50);
-    } else {
-      setGridSize(1);
-    }
-    setRadios((_prev) => [val, radios[1]]);
-    savedRadios[0] = val;
-  };
-
   const { colorMode, toggleColorMode } = useColorMode();
 
   /**
@@ -138,8 +119,8 @@ export function BoardContextMenu(props: ContextProps) {
     if (!user) return;
 
     const position = uiToBoard(contextMenuPosition.x, contextMenuPosition.y);
-    const width = 600;
-    const height = 400;
+    const width = 820;
+    const height = 420;
     // Open a webview into the SAGE3 builtin Jupyter instance
     createApp({
       title: 'Chat',
@@ -161,21 +142,25 @@ export function BoardContextMenu(props: ContextProps) {
       whiteSpace={'nowrap'}
       boxShadow={`4px 4px 10px 0px ${shadowColor}`}
       p="2"
-      rounded="md"
+      rounded="xl"
       bg={panelBackground}
       cursor="auto"
       w={'100%'}
     >
       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'125px'}>
+        <VStack w={'130px'} spacing={"6px"}>
           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Actions
           </Text>
 
+          <Center>
+            <Interactionbar />
+          </Center>
+
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -189,7 +174,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -202,7 +187,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -215,7 +200,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -228,7 +213,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -240,15 +225,19 @@ export function BoardContextMenu(props: ContextProps) {
           </Button>
         </VStack>
 
-        <VStack w={'125px'}>
-          <Text className="header" color={textColor} fontSize={18} fontWeight="bold" h={'auto'} userSelect={'none'}>
+        <Center h={'235px'}>
+          <Divider orientation="vertical" h={'100%'} />
+        </Center>
+
+        <VStack w={'130px'} spacing={"6px"}>
+          <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
             Apps
           </Text>
 
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="32px"
             p={1}
             mt={0}
             fontSize={14}
@@ -263,7 +252,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -278,7 +267,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -293,7 +282,7 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}
@@ -307,7 +296,21 @@ export function BoardContextMenu(props: ContextProps) {
           <Button
             w="100%"
             borderRadius={2}
-            h="auto"
+            h="2em"
+            p={1}
+            mt={0}
+            fontSize={14}
+            color={textColor}
+            justifyContent="flex-start"
+            isDisabled={!appsList.includes('TLDraw')}
+            onClick={() => newApplication('TLDraw', user?.data.name)}
+          >
+            TLDraw
+          </Button>
+          <Button
+            w="100%"
+            borderRadius={2}
+            h="2em"
             p={1}
             mt={0}
             fontSize={14}

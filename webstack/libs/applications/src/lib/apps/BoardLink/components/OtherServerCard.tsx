@@ -110,7 +110,7 @@ export function OtherServerCard(props: App): JSX.Element {
         />
 
         <Text fontSize="2xl" mb="2" color="white" fontWeight="bold">
-          {s.cardTitle === undefined ? 'This board ' : s.cardTitle} is hosted on the "{server?.serverName}" server.
+          {s.cardTitle === undefined ? 'This board ' : s.cardTitle} is hosted on the "{server?.serverName}" hub.
         </Text>
       </Box>
 
@@ -133,7 +133,7 @@ export function OtherServerCard(props: App): JSX.Element {
               {s.cardTitle} Board
             </Heading>
             <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" width="100%" size="md">
-              {server?.serverName} Server
+              {server?.serverName} Hub
             </Text>
           </Box>
           <Box display="flex"></Box>

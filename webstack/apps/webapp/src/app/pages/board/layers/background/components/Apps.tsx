@@ -1,12 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -30,32 +30,36 @@ import { App, AppName, AppState } from '@sage3/applications/schema';
 
 // Renders all the apps
 export function Apps() {
+  // Params
+  const { roomId, boardId } = useParams();
+
   // Apps Store
-  // Throttle Apps Update
   const apps = useThrottleApps(250);
   const appsFetched = useAppStore((state) => state.fetched);
-
+  const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
-  const resetZIndex = useUIStore((state) => state.resetZIndex);
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
+
   // Save the previous location and scale when zoming to an application
   const scale = useThrottleScale(250);
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+
+  // UI Store
+  const fitAllApps = useUIStore((state) => state.fitAllApps);
+  const fitApps = useUIStore((state) => state.fitApps);
+  const boardPosition = useUIStore((state) => state.boardPosition);
   const setSelectedApps = useUIStore((state) => state.setSelectedAppsIds);
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const appDragging = useUIStore((state) => state.appDragging);
+  const resetZIndex = useUIStore((state) => state.resetZIndex);
+  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  const setScale = useUIStore((state) => state.setScale);
+  const boardSynced = useUIStore((state) => state.boardSynced);
 
-  const { roomId, boardId } = useParams();
+  // Cursor Position
+  const { boardCursor } = useCursorBoardPosition();
+
   // Display some notifications
   const toast = useToast();
-
-  const { boardCursor } = useCursorBoardPosition();
-  const createApp = useAppStore((state) => state.create);
-
-  // Fitapps
-  const { fitAllApps, fitApps } = useUIStore((state) => state);
 
   // Position board when entering board
   useEffect(() => {
@@ -73,7 +77,7 @@ export function Apps() {
   // But a start
   useHotkeys(
     'ctrl+d,cmd+d',
-    () => {
+    (evt) => {
       if (lassoApps.length > 0) {
         // If there are selected apps, delete them
         deleteApp(lassoApps);
@@ -101,7 +105,7 @@ export function Apps() {
           });
       }
     },
-    { dependencies: [boardCursor.x, boardCursor.y, JSON.stringify(apps)] }
+    { dependencies: [JSON.stringify(apps)] }
   );
 
   // Select all apps
@@ -121,7 +125,6 @@ export function Apps() {
     (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
-
       if (boardCursor && apps.length > 0) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
@@ -155,7 +158,7 @@ export function Apps() {
           });
       }
     },
-    { dependencies: [boardCursor.x, boardCursor.y, JSON.stringify(apps)] }
+    { dependencies: [JSON.stringify(apps)] }
   );
 
   // Throttle the paste function
@@ -202,15 +205,24 @@ export function Apps() {
   // Keep the throttlefunc reference
   const pasteApp = useCallback(pasteAppThrottle, []);
 
-  // // Create a new app from the clipboard
+  // Create a new app from the clipboard
   useHotkeys(
     'v',
     (evt) => {
-      evt.preventDefault();
-      evt.stopPropagation();
-      pasteApp(boardCursor);
+      if (boardSynced) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        pasteApp(boardCursor);
+      } else {
+        toast({
+          title: 'Pasting app while panning or zooming is not supported',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+      }
     },
-    { dependencies: [boardCursor.x, boardCursor.y] }
+    { dependencies: [] }
   );
 
   // Zoom to app when pressing z over an app
@@ -259,16 +271,7 @@ export function Apps() {
       }
     },
     {
-      dependencies: [
-        previousLocation.set,
-        boardCursor.x,
-        boardCursor.y,
-        appDragging,
-        scale,
-        boardPosition.x,
-        boardPosition.y,
-        JSON.stringify(apps),
-      ],
+      dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)],
     }
   );
 
@@ -276,7 +279,7 @@ export function Apps() {
     <>
       {/* Apps array */}
       {apps.map((app) => {
-        return <AppRender key={app._id} app={app} />;
+        return <AppRenderMemo key={app._id} app={app} />;
       })}
     </>
   );
@@ -310,7 +313,7 @@ function AppRender(props: { app: App }) {
             style={{ width: props.app.data.size.width + 'px', height: props.app.data.size.height + 'px' }}
           >
             <Icon fontSize={`${iconSize}px`} color={iconColorAppNotFound}>
-              <MdError size={'xl'}></MdError>
+              <MdError size="24px" />
             </Icon>
             <Text fontWeight={'bold'} fontSize={fontSize} align={'center'}>
               Application '{props.app.data.type}' was not found.
@@ -321,3 +324,6 @@ function AppRender(props: { app: App }) {
     </>
   );
 }
+
+// Memo AppRender Component
+const AppRenderMemo = React.memo(AppRender);

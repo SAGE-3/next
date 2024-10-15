@@ -1,6 +1,6 @@
 services:
   redis-server:
-    image: "redis/redis-stack-server:latest"
+    image: "redis/redis-stack-server:7.4.0-v0"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
@@ -69,7 +69,7 @@ services:
       restart_policy:
         condition: on-failure
   jupyter:
-    image: "jupyter/datascience-notebook:latest"
+    image: "quay.io/jupyter/datascience-notebook:2024-05-27"
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks

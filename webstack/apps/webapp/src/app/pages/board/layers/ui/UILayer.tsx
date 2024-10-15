@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, Tooltip, IconButton } from '@chakra-ui/react';
-import { MdApps } from 'react-icons/md';
+import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
+import { MdRemoveRedEye } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -31,6 +31,9 @@ import {
   Alfred,
   HotkeysEvent,
   useUserSettings,
+  useHexColor,
+  EditVisibilityModal,
+  useUser,
 } from '@sage3/frontend';
 
 import {
@@ -49,6 +52,8 @@ import {
   PresenceFollow,
   BoardTitle,
   KernelsPanel,
+  TagsDisplay,
+  Interactionbar,
 } from './components';
 
 type UILayerProps = {
@@ -61,16 +66,25 @@ export function UILayer(props: UILayerProps) {
   const canLasso = useAbility('lasso', 'apps');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
+  const primaryActionMode = settings.primaryActionMode;
+
+  // Colors
+  const tealColorMode = useColorModeValue('teal.500', 'teal.200');
+  const teal = useHexColor(tealColorMode);
+
+  // User
+  const { user } = useUser();
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
   const selectedApp = useUIStore((state) => state.selectedAppId);
-  const { setSelectedApp, savedSelectedAppsIds, clearSavedSelectedAppsIds, setSelectedAppsIds, setWhiteboardMode } = useUIStore(
-    (state) => state
-  );
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
+  const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
+  const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -89,6 +103,9 @@ export function UILayer(props: UILayerProps) {
   // Logo
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
+  // Color
+  // const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
+
   // Navigation
   const { toHome } = useRouteNav();
 
@@ -99,17 +116,22 @@ export function UILayer(props: UILayerProps) {
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
 
   // Alfred Modal
-  const { isOpen: alfredIsOpen, onOpen: alredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // Presence settings modal
+  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+
+  const handlePresenceSettingsOpen = () => {
+    visibilityOnOpen();
+  };
 
   /**
    * Clear the board confirmed
    */
   const onClearConfirm = () => {
     // delete all apps
-    // apps.forEach((a) => deleteApp(a._id));
     const ids = apps.map((a) => a._id);
     deleteApp(ids);
     setClearAllMarkers(true);
@@ -220,15 +242,8 @@ export function UILayer(props: UILayerProps) {
     });
   };
 
-  // Zoom to the saved selected apps
-  const goToSavedSelectedApps = () => {
-    if (savedSelectedAppsIds.length < 1) return;
-    fitApps(apps.filter((a) => savedSelectedAppsIds.includes(a._id)));
-  };
-
   // Deselect all apps when the escape key is pressed
   useHotkeys('esc', () => {
-    setWhiteboardMode('none');
     setSelectedApp('');
     clearSavedSelectedAppsIds();
     setSelectedAppsIds([]);
@@ -237,16 +252,46 @@ export function UILayer(props: UILayerProps) {
   // Open Alfred
   useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
     // Open the window
-    alredOnOpen();
+    alfredOnOpen();
     return false;
   });
 
   return (
     <>
+      {/* Presence settings modal dialog */}
+      <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
+
       {/* The Corner SAGE3 Image Bottom Right */}
-      <Box position="absolute" bottom="2" right="2" opacity={0.7} userSelect={'none'}>
-        <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-      </Box>
+      <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
+        {!showUI && (
+          <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <IconButton
+              borderRadius="md"
+              h="auto"
+              p={0}
+              mx={-2}
+              justifyContent="center"
+              aria-label={'Presence'}
+              icon={<MdRemoveRedEye size="24px" />}
+              background={'transparent'}
+              colorScheme="gray"
+              transition={'all 0.2s'}
+              opacity={0.5}
+              variant="ghost"
+              onClick={handlePresenceSettingsOpen}
+              isDisabled={false}
+              _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
+            />
+          </Tooltip>
+        )}
+
+        {/* The Corner SAGE3 Image Bottom Right */}
+        {showUI && (
+          <Box opacity={0.7} userSelect={'none'}>
+            <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
+          </Box>
+        )}
+      </HStack>
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
@@ -262,29 +307,11 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Tooltip
-            label={savedSelectedAppsIds.length > 0 ? `${savedSelectedAppsIds.length} apps saved to selection.` : 'No selected apps saved.'}
-          >
-            <IconButton
-              size="sm"
-              disabled={savedSelectedAppsIds.length < 1}
-              colorScheme={savedSelectedAppsIds.length > 0 ? 'red' : 'gray'}
-              icon={<MdApps />}
-              fontSize="xl"
-              variant={'outline'}
-              aria-label={'selected-apps'}
-              onClick={goToSavedSelectedApps}
-            ></IconButton>
-          </Tooltip>
+          <Interactionbar />
         </Box>
       </Box>
 
-      {/* Buttons Middle Bottom */}
-      {/* <Box position="absolute" left="calc(50% - 110px)" bottom="2" display={showUI ? 'flex' : 'none'}>
-        <FunctionButtons boardId={props.boardId} roomId={props.roomId} />
-      </Box> */}
-
-      {/* ServerName Top Left */}
+      {/* Hub-Room-Board Name Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
       </Box>
@@ -296,7 +323,7 @@ export function UILayer(props: UILayerProps) {
 
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      <ContextMenu divId="board">
+      <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
@@ -320,7 +347,6 @@ export function UILayer(props: UILayerProps) {
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-
       <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
@@ -329,8 +355,13 @@ export function UILayer(props: UILayerProps) {
       {/* Alfred modal dialog */}
       <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
 
-      {/* Presence Follow Component. Doesnt Render Anything */}
+      {/* Presence Follow Component: Does not render anything */}
       <PresenceFollow />
+
+      {/* Display a list of all tags */}
+      <Box position="absolute" bottom="50" left="2">
+        <TagsDisplay />
+      </Box>
     </>
   );
 }

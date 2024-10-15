@@ -115,20 +115,15 @@ function AppComponent(props: App): JSX.Element {
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
-
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  // const isDragging = useUIStore((state) => state.boardDragging);
-  const scale = useUIStore((state) => state.scale);
   const backgroundColor = useHexColor(s.color + '.300');
   const scrollbarColor = useHexColor(s.color + '.400');
+
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
-  // Monitor application size
-  const [isSmall, setIsSmall] = useState(false);
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
@@ -139,16 +134,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
-
-  useEffect(() => {
-    // Apparent font size
-    const fontSize = scale * props.data.state.fontSize;
-    if (fontSize < 7) {
-      setIsSmall(true);
-    } else if (isSmall) {
-      setIsSmall(false);
-    }
-  }, [scale, props.data.state.fontSize]);
 
   const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
@@ -199,7 +184,7 @@ function AppComponent(props: App): JSX.Element {
   // callback for textarea change
   function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
     const inputValue = ev.target.value;
-    // // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
+    // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
     debounceFunc.current(inputValue);
   }
 
@@ -208,7 +193,6 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     if (e.repeat) return;
     // if not selected, don't do anything
-    if (props._id !== selectedApp) return;
 
     if (e.code === 'Escape') {
       // Deselect the app
@@ -258,15 +242,16 @@ function AppComponent(props: App): JSX.Element {
           focusBorderColor={backgroundColor}
           fontSize={fontSize + 'px'}
           lineHeight="1em"
-          onChange={handleTextChange}
+          onInput={handleTextChange}
           onKeyDown={handleKeyDown}
           readOnly={s.lock}
           zIndex={1}
           name={'stickie' + props._id}
-          // display={isSmall || isDragging ? 'none' : 'block'}
+          whiteSpace={'pre-wrap'}
           css={{
-            // Balance the text, improve text layouts
-            textWrap: 'pretty', // 'balance',
+            scrollPaddingBlock: '1em',
+            // Balance the text, improve text layouts, pretty or balance
+            textWrap: 'pretty',
             '&::-webkit-scrollbar': {
               background: `${backgroundColor}`,
               width: '24px',
@@ -327,7 +312,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
     // Make a filename with username and date
-    const filename = 'stickie-' + dt + '.md';
+    const filename = 'stickie-' + dt + '.txt';
     // Go for download
     downloadFile(txturl, filename);
   };
@@ -394,7 +379,7 @@ function ToolbarComponent(props: App): JSX.Element {
     // Update the application state
     updateState(props._id, { color: color });
     // Update the tags with the new color
-    updateTags(props._id, oldcolor, color);
+    updateTags(props._id, oldcolor + ':' + oldcolor, color + ':' + color);
   };
 
   const lockUnlock = () => {
@@ -463,7 +448,7 @@ function ToolbarComponent(props: App): JSX.Element {
         isOpen={saveIsOpen}
         onClose={saveOnClose}
         onConfirm={handleSave}
-        title="Save Code in Asset Manager"
+        title="Save Note in Asset Manager"
         message="Select a file name:"
         initiaValue={'stickie-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.md'}
         cancelText="Cancel"
