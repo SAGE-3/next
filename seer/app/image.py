@@ -34,7 +34,7 @@ from libs.localtypes import ImageQuery, ImageAnswer
 from libs.utils import getModelsInfo
 
 # Downsized image size for processing by LLMs
-ImageSize = 300
+ImageSize = 800
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
@@ -91,8 +91,8 @@ class ImageAgent:
         if openai["apiKey"] and openai["model"]:
             self.llm_openai = ChatOpenAI(
                 api_key=openai["apiKey"],
-                model="gpt-4o-mini",
-                # model=openai["model"]
+                # needs to be gpt-4o-mini or better, for image processing
+                model=openai["model"],
             )
 
     async def process(self, qq: ImageQuery):
