@@ -56,12 +56,14 @@ const askHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.ask;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
-
+const codeHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
+  const route = AgentRoutes.code;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 const summaryHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.summary;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
-
 const webHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.web;
   return fetchPost(`${config.agents.url}${route}`, req);
@@ -88,6 +90,7 @@ handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
+handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

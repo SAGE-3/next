@@ -51,6 +51,7 @@ export type ImageQuery = {
   ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
   asset: string;
   user: string;
+  model: string;
 };
 export type ImageAnswer = {
   r: string;
@@ -70,6 +71,23 @@ export type PDFAnswer = {
   actions?: any[];
 };
 
+// Code request
+export type CodeRequest = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  id: string;
+  user: string;
+  location: string;
+  q: string;
+  model: string;
+  method: string;
+};
+export type CodeResponse = {
+  id: string;
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Agent routes
 export const AgentRoutes = {
   status: '/status',
@@ -79,4 +97,5 @@ export const AgentRoutes = {
   webshot: '/webshot',
   image: '/image',
   pdf: '/pdf',
+  code: '/code',
 } as const;

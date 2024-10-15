@@ -41,18 +41,15 @@ import Markdown from 'markdown-to-jsx';
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk } from './tRPC';
+import { callImage, callPDF, callAsk, callCode } from './tRPC';
 
-type OperationMode = 'text' | 'image' | 'web' | 'pdf';
-
-// LLAMA3
-const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
+type OperationMode = 'text' | 'image' | 'web' | 'pdf' | 'code';
 
 // AI model information from the backend
 interface modelInfo {
@@ -132,6 +129,9 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'pdf') {
       // PDF
       onContentPDF(text);
+    } else if (mode === 'code') {
+      // Code
+      onContentCode(text, '');
     } else {
       await newMessage(text);
     }
@@ -217,6 +217,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('image');
       } else if (apps && apps[0].data.type === 'PDFViewer') {
         setMode('pdf');
+      } else if (apps && apps[0].data.type === 'CodeEditor') {
+        setMode('code');
       }
     }
   }, [s.sources]);
@@ -298,7 +300,6 @@ function AppComponent(props: App): JSX.Element {
           location: location,
           q: request,
         };
-        // const backend = await AiAPI.chat.query(body);
         const response = await callAsk(body);
         if ('message' in response) {
           toast({
@@ -387,7 +388,7 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (s.sources.length > 0) {
+    if (!newctx && s.sources.length > 0) {
       // Update the context with the stickies
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
@@ -455,6 +456,7 @@ function AppComponent(props: App): JSX.Element {
             },
             user: username,
             asset: assetid,
+            model: selectedModel || 'llama',
           };
           setProcessing(true);
           setActions([]);
@@ -582,6 +584,86 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  const onContentCode = async (prompt: string, method: string) => {
+    if (!user) return;
+    // Get server time
+    const now = await serverTime();
+    // Is it a question to SAGE?
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+    // Add messages
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: name,
+      query: prompt,
+      response: isQuestion ? 'Working on it...' : '',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+    if (isQuestion) {
+      setProcessing(true);
+      // Remove the @S from the question
+      const request = isQuestion ? prompt.slice(2) : prompt;
+
+      if (isQuestion) {
+        const body: CodeRequest = {
+          ctx: {
+            prompt: '',
+            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+            roomId: roomId!, boardId: boardId!
+          },
+          user: username,
+          id: genId(),
+          model: selectedModel || 'llama',
+          location: location,
+          q: request,
+          method: method,
+        };
+        const response = await callCode(body);
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: response.message || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          const new_text = response.r || '';
+          setProcessing(false);
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(new_text);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: request,
+            previousA: new_text,
+            messages: [
+              ...s.messages,
+              initialAnswer,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: '',
+                response: new_text,
+              },
+            ],
+          });
+          if (response.actions) {
+            setActions(response.actions);
+          }
+        }
+      }
+    }
+  };
+
   const onProsCons = async () => {
     if (s.context) {
       // ProsCons prompt
@@ -635,7 +717,117 @@ function AppComponent(props: App): JSX.Element {
 
   const onPDFSummary = async () => {
     return onContentPDF('Read the PDF file and provide a short summary.');
-  }
+  };
+
+  const onCodeComment = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Comment this code extensively to explain clearly what each instruction is supposed to do`;
+      onContentCode(ctx, 'comment');
+      setInput('');
+    }
+  };
+  const onCodeExplain = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Explain this code`;
+      onContentCode(ctx, 'explain');
+      setInput('');
+    }
+  };
+  const onCodeGenerate = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Generate the best solution in ${language} code according to the following prompt: ${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Generate the best solution according to the following prompt: ${newctx}`;
+      onContentCode(ctx, 'refactor');
+      setInput('');
+    }
+  };
+
+  const onCodeRefactor = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Can you refactor this code`;
+      onContentCode(ctx, 'refactor');
+      setInput('');
+    }
+  };
 
   useEffect(() => {
 
@@ -959,7 +1151,7 @@ function AppComponent(props: App): JSX.Element {
                   >
                     <Tooltip label="Double click to apply action" aria-label="A tooltip">
                       <ListItem key={index}><ListIcon as={MdSettings} color='green.500' />
-                        Show the result on the board
+                        Show result {index + 1} on the board: {action.type} {action.app}
                       </ListItem>
                     </Tooltip>
                   </Box>
@@ -1081,6 +1273,63 @@ function AppComponent(props: App): JSX.Element {
                 onClick={onFacts}
                 width="34%"
               ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {mode === 'code' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Refactor the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onCodeRefactor}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Refactor Code</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Explain the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onCodeExplain}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Explain Code</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Comment the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onCodeComment}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Comment Code</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate some code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onCodeGenerate}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Code</Text></Button>
             </Tooltip>
           </HStack>
         )}
