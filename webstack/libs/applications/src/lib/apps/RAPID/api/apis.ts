@@ -44,6 +44,8 @@ export type ResultDataPoint = {
   Mesonet: number;
 };
 
+const conversionMetersPerSecondToKmPerHr = 3.6;
+
 // Utility functions
 const handleFetchError = (context: string) => (error: Error) => {
   console.error(`Error ${context}:`, error);
@@ -64,6 +66,7 @@ const beautifyDate = (date: string): string => {
 export const getSageNodeData = async (query: SageNodeQueryParams): Promise<any[]> => {
   try {
     const { start, end, filter } = query;
+
     const res = await fetch(SAGE_NODE_URL, {
       method: 'POST',
       body: JSON.stringify({
@@ -78,12 +81,7 @@ export const getSageNodeData = async (query: SageNodeQueryParams): Promise<any[]
       .trim()
       .split('\n')
       .map((line) => {
-        try {
-          return JSON.parse(line);
-        } catch (error) {
-          console.error('Error parsing JSON:', error);
-          return null;
-        }
+        return JSON.parse(line);
       })
       .filter((data) => data !== null);
     return text ? parsedData : [];
@@ -123,14 +121,22 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
       return false;
     });
     // Format the filtered metrics into the required structure
-    console.log('sage query', query);
 
-    const PRESSURE = METRICS.find((metric) => metric.waggle === 'env.pressure');
+    if (query.filter?.name === 'env.pressure') {
+      return filteredMetrics.map((data: any) => ({
+        time: data.timestamp,
+        value: data.value / 100,
+      }));
+    }
 
-    return filteredMetrics.map((data: any) => ({
-      time: data.timestamp,
-      value: query.filter?.name === PRESSURE?.waggle ? data.value / 100 : data.value,
-    }));
+    if (query.filter?.name === 'wxt.wind.speed') {
+      return filteredMetrics.map((data: any) => ({
+        time: data.timestamp,
+        value: Number((data.value * conversionMetersPerSecondToKmPerHr).toFixed(2)),
+      }));
+    }
+
+    return filteredMetrics.map((data: any) => ({ time: data.timestamp, value: data.value }));
   } catch (error) {
     // Handle any errors that occur during the process
     return handleFetchError('formatting Waggle Node data')(error as Error);
@@ -174,9 +180,8 @@ export const getMesonetData = async (query: MesonetQueryParams): Promise<any> =>
       }&units=metric,speed|kph,pres|mb&r&qc_remove_data=off&qc_flags=on&qc_checks=all&hfmetars=1&showemptystations=1&precip=1&token=${MESONET_TOKEN}`
     );
     if (!res.ok) throw new Error('Failed to fetch Mesonet data');
-    const mesonetData = res.json();
+    const mesonetData = await res.json();
 
-    console.log('mesonet res', mesonetData);
     return mesonetData;
   } catch (error) {
     return handleFetchError('fetching Mesonet data')(error as Error);

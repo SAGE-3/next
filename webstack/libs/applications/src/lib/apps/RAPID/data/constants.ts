@@ -46,6 +46,18 @@ export const SAGE_SENSORS = [
     lat: 19.415121313,
     lon: -155.238433559,
   },
+  {
+    id: 'W069',
+    name: 'Lahaina',
+    lat: 20.890681042619217,
+    lon: -156.65474422852128,
+  },
+  {
+    id: 'W071',
+    name: 'Waikalua Loko Fish Pond',
+    lat: 21.41130215,
+    lon: -157.7842519,
+  },
 ];
 
 export interface WaggleMetrics {
@@ -80,25 +92,6 @@ export const MESONET_METRICS: MesonetMetrics = {
   'Pressure (Millibars)': 'pressure_set_1',
 };
 
-// Metrics shared between Waggle Node and Mesonet
-export const SHARED_METRICS = [
-  {
-    name: 'Temperature (°C)',
-    waggle: 'env.temperature',
-    mesonet: 'air_temp_set_1',
-  },
-  {
-    name: 'Relative Humidity (%)',
-    waggle: 'env.relative_humidity',
-    mesonet: 'relative_humidity_set_1',
-  },
-  {
-    name: 'Pressure (Millibars)',
-    waggle: 'env.pressure',
-    mesonet: 'pressure_set_1',
-  },
-];
-
 export interface Metric {
   name: string;
   waggle: string;
@@ -122,9 +115,29 @@ export const METRICS: Metric[] = [
     mesonet: 'pressure_set_1',
   },
   {
-    name: 'Rainfall (mm)',
+    name: 'Event Accumulated Rainfall (mm)',
     waggle: 'env.raingauge.event_acc',
     mesonet: null,
+  },
+  {
+    name: 'Total Accumulated Rainfall (mm)',
+    waggle: 'env.raingauge.total_acc',
+    mesonet: null,
+  },
+  {
+    name: 'Rain Intensity (mm/hr)',
+    waggle: 'env.raingauge.rint',
+    mesonet: null,
+  },
+  {
+    name: 'Wind Direction (°)',
+    waggle: 'wxt.wind.direction',
+    mesonet: 'wind_direction_set_1',
+  },
+  {
+    name: 'Wind Speed (km/hr)',
+    waggle: 'wxt.wind.speed',
+    mesonet: 'wind_speed_set_1',
   },
   {
     name: 'CPU Load (%)',
@@ -138,4 +151,4 @@ export const METRICS: Metric[] = [
   },
 ];
 
-export const BME_680_METRICS = ['env.temperature', 'env.relative_humidity', 'env.pressure', 'env.raingauge.event_acc'];
+export const BME_680_METRICS = ['env.temperature', 'env.relative_humidity', 'env.pressure'];

@@ -36,12 +36,12 @@ export const init: Partial<state> = {
   liveData: true,
   lastUpdated: null,
   sensors: {
-    waggle: ['W085'],
+    waggle: ['W097'],
     mesonet: ['004HI'],
   },
   metric: METRICS.find((m) => m.name === 'Temperature (°C)'),
   category: CATEGORIES.GRAPH,
-  startTime: new Date(1719268246465),
+  startTime: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
   endTime: new Date(Date.now()),
 };
 

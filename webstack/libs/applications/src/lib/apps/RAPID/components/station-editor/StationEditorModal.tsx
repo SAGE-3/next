@@ -45,8 +45,11 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
   useEffect(() => {
     fetchStations();
-    initializeFromProps();
   }, []);
+
+  useEffect(() => {
+    initializeFromProps();
+  }, [app.data.state]);
 
   useEffect(() => {
     updateSensorSelection();

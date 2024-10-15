@@ -111,6 +111,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'edit' | 'create'>('create');
 
+  const [hovered, setHovered] = useState(false);
+
   useEffect(() => {
     setDateRange({
       startDate: new Date(s.startTime as Date),
@@ -138,6 +140,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
   };
+
+  // console.log("props", props);
 
   return (
     <>
@@ -170,6 +174,11 @@ function ToolbarComponent(props: App): JSX.Element {
           }}
         />
       </Box>
+      { hovered && (
+        <Box width={props.data.size.width} height={props.data.size.height} position="absolute" top="-400" left="700" bg="black">
+          New app will go here
+        </Box>
+      )}
       <ToolbarSelector props={props as App} />
       <StationEditorModal mode={mode} isOpen={isOpen} onClose={onClose} app={props} />
     </>
