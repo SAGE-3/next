@@ -105,6 +105,11 @@ async def image(qq: ImageQuery):
         # do the work
         val = await imageAG.process(qq)
         return val
+    except asyncio.TimeoutError as e:
+        print("Timeout error")
+        # Get the error message
+        text = str(e)
+        raise HTTPException(status_code=408, detail=text)
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -150,4 +155,6 @@ async def webshot(qq: WebQuery):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=9999, log_level="info")
+    uvicorn.run(
+        app, host="127.0.0.1", port=9999, log_level="info", timeout_keep_alive=30
+    )

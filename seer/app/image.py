@@ -34,7 +34,7 @@ from libs.localtypes import ImageQuery, ImageAnswer
 from libs.utils import getModelsInfo
 
 # Downsized image size for processing by LLMs
-ImageSize = 800
+ImageSize = 600
 
 # Templates
 sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
@@ -93,10 +93,12 @@ class ImageAgent:
                 api_key=openai["apiKey"],
                 # needs to be gpt-4o-mini or better, for image processing
                 model=openai["model"],
+                max_tokens=1000,
+                streaming=False,
             )
 
     async def process(self, qq: ImageQuery):
-        self.logger.info("Got image> from " + qq.user + ": " + qq.q)
+        self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
         assets = self.ps3.s3_comm.get_assets()
         for f in assets:
@@ -169,7 +171,6 @@ class ImageAgent:
                         response = await self.llm_openai.ainvoke(messages)
                         description = str(response.content)
                 else:
-                    print("Failed to get image.", r)
                     description = "Failed to get image."
                 break
 

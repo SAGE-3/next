@@ -6,6 +6,7 @@ COPY ./seer/requirements.txt /code/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 RUN playwright install chromium
+RUN playwright install-deps
 
 COPY ./seer/app /code/app
 COPY ./seer/libs/ /code/libs
