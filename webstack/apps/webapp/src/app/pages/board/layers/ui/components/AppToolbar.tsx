@@ -945,20 +945,6 @@ export function AppToolbar(props: AppToolbarProps) {
           const csv = await ky.get(dl).text();
           context = csv;
         }
-      } else if (app.data.type === 'PDFViewer') {
-        // Get the current page number
-        const page = app.data.state.currentPage;
-        // Get information about the asset
-        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
-        if (asset) {
-          const url = asset.data.file;
-          const parts = url.split('.');
-          const dl = apiUrls.assets.getAssetById(parts[0] + '-text.json');
-          // get the file containing the text of the PDF
-          const pages: { count: number, pages: string[] } = await ky.get(dl).json();
-          // get the text of the current page
-          context = pages.pages[page];
-        }
       } else {
         // Otherwise, serialize the whole app state
         context = JSON.stringify(app.data.state, null, 2);

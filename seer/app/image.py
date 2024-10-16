@@ -31,38 +31,10 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
-from libs.utils import getModelsInfo
+from libs.utils import getModelsInfo, getImageFile, scaleImage
 
 # Downsized image size for processing by LLMs
 ImageSize = 600
-
-# Templates
-sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
-human_template_str = "Describe the following image."
-
-
-# For OpenAI / Message API compatible models
-prompt = ChatPromptTemplate.from_messages(
-    messages=[
-        SystemMessage(content=sys_template_str),
-        HumanMessage(content=human_template_str),
-        HumanMessagePromptTemplate.from_template(
-            [
-                {
-                    "image_url": {
-                        "url": "data:image/jpeg;base64,{image_base64}",
-                        "detail": "high",
-                    }
-                }
-            ]
-        ),
-    ]
-)
-
-# OutputParser that parses LLMResult into the top likely string.
-# Create a new model by parsing and validating input data from keyword arguments.
-# Raises ValidationError if the input data cannot be parsed to form a valid model.
-output_parser = StrOutputParser()
 
 
 class ImageAgent:
@@ -80,12 +52,14 @@ class ImageAgent:
         # Llama model
         self.server = llama["url"]
         self.model = llama["model"]
-        self.llm_llama = ChatNVIDIA(
-            base_url=llama["url"] + "/v1",
-            model=llama["model"],
-            stream=False,
-            max_tokens=1000,
-        )
+        # Llama model
+        if llama["url"] and llama["model"]:
+            self.llm_llama = ChatNVIDIA(
+                base_url=llama["url"] + "/v1",
+                model=llama["model"],
+                stream=False,
+                max_tokens=1000,
+            )
         self.httpx_client = httpx.Client(timeout=None)
         # OpenAI model
         if openai["apiKey"] and openai["model"]:
@@ -100,79 +74,64 @@ class ImageAgent:
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
-        assets = self.ps3.s3_comm.get_assets()
-        for f in assets:
-            if f["_id"] == qq.asset:
-                asset = f["data"]
-                url = (
-                    self.ps3.s3_comm.conf[self.ps3.s3_comm.prod_type]["web_server"]
-                    + self.ps3.s3_comm.routes["get_static_content"]
-                    + asset["file"]
-                )
-                headers = self.ps3.s3_comm._SageCommunication__headers
-                r = self.ps3.s3_comm.httpx_client.get(url, headers=headers)
-                if r.is_success:
-                    img = Image.open(BytesIO(r.content))
-                    width, height = img.size
-                    img = img.resize((ImageSize, int(ImageSize / (width / height))))
-                    buffered = BytesIO()
-                    img.save(buffered, format="JPEG")
-                    image_bytes = buffered.getvalue()
-                    image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        # Retrieve the PDF content
+        imageContent = getImageFile(self.ps3, qq.asset)
+        if imageContent:
+            # Scale the image to the desired size
+            image_bytes = scaleImage(imageContent, ImageSize)
+            # Convert the image to base64
+            image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
-                    if qq.model == "llama":
-                        data = {
-                            "messages": [
+            if qq.model == "llama":
+                data = {
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": qq.q},
                                 {
-                                    "role": "assistant",
-                                    "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-                                },
-                                {
-                                    "role": "user",
-                                    "content": [
-                                        {"type": "text", "text": qq.q},
-                                        {
-                                            "type": "image_url",
-                                            "image_url": {
-                                                "url": f"data:image/jpeg;base64,{image_base64}"
-                                            },
-                                            "detail": "high",
-                                        },
-                                    ],
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{image_base64}"
+                                    },
+                                    "detail": "high",
                                 },
                             ],
-                        }
-                        url = self.server + "/v1/chat/completions"
-                        response = self.httpx_client.post(url, json=data)
-                        if response.status_code == 200:
-                            description = response.json()["choices"][0]["message"][
-                                "content"
-                            ]
-                    elif qq.model == "openai":
-                        messages: List[BaseMessage] = []
-                        messages.append(
-                            SystemMessage(
-                                content="You are a helpful assistant, providing detailed  answers to the user, using the Markdown format."
-                            )
-                        )
-                        messages.append(
-                            HumanMessage(
-                                content=[
-                                    {"type": "text", "text": qq.q},
-                                    {
-                                        "type": "image_url",
-                                        "image_url": {
-                                            "url": f"data:image/png;base64,{image_base64}"
-                                        },
-                                    },
-                                ]
-                            )
-                        )
-                        response = await self.llm_openai.ainvoke(messages)
-                        description = str(response.content)
-                else:
-                    description = "Failed to get image."
-                break
+                        },
+                    ],
+                }
+                url = self.server + "/v1/chat/completions"
+                response = self.httpx_client.post(url, json=data)
+                if response.status_code == 200:
+                    description = response.json()["choices"][0]["message"]["content"]
+            elif qq.model == "openai":
+                messages: List[BaseMessage] = []
+                messages.append(
+                    SystemMessage(
+                        content="You are a helpful assistant, providing detailed  answers to the user, using the Markdown format."
+                    )
+                )
+                messages.append(
+                    HumanMessage(
+                        content=[
+                            {"type": "text", "text": qq.q},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                },
+                            },
+                        ]
+                    )
+                )
+                response = await self.llm_openai.ainvoke(messages)
+                description = str(response.content)
+        else:
+            description = "Failed to get image."
 
         text = description
 

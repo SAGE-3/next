@@ -21,37 +21,12 @@ from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplat
 from langchain_core.messages import HumanMessage, SystemMessage
 
 # from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-
-# Templates
-sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}."
-human_template_str = "Describe the following image."
-
-
-# For OpenAI / Message API compatible models
-prompt = ChatPromptTemplate.from_messages(
-    messages=[
-        SystemMessage(content=sys_template_str),
-        HumanMessage(content=human_template_str),
-        HumanMessagePromptTemplate.from_template(
-            [
-                {
-                    "image_url": {
-                        "url": "data:image/jpeg;base64,{image_base64}",
-                        "detail": "high",
-                    }
-                }
-            ]
-        ),
-    ]
-)
-
-# OutputParser that parses LLMResult into the top likely string.
-# Create a new model by parsing and validating input data from keyword arguments.
-# Raises ValidationError if the input data cannot be parsed to form a valid model.
-output_parser = StrOutputParser()
+from libs.utils import getModelsInfo, getPDFFile
 
 
 class PDFAgent:
@@ -63,34 +38,41 @@ class PDFAgent:
         logger.info("Initializing PDFAgent")
         self.logger = logger
         self.ps3 = ps3
-        self.server = "https://arcade.evl.uic.edu/llama32-11B-vision/"
-        self.model = ("/data/11Bf",)
+        models = getModelsInfo(ps3)
+        llama = models["llama"]
+        openai = models["openai"]
+        # Llama model
+        self.server = llama["url"]
+        self.model = llama["model"]
+        # Llama model
+        if llama["url"] and llama["model"]:
+            llm_llama = ChatNVIDIA(
+                base_url=llama["url"] + "/v1",
+                model=llama["model"],
+                stream=False,
+                max_tokens=2000,
+            )
+        # OpenAI model
+        if openai["apiKey"] and openai["model"]:
+            self.llm_openai = ChatOpenAI(
+                api_key=openai["apiKey"],
+                # needs to be gpt-4o-mini or better, for image processing
+                model=openai["model"],
+                max_tokens=1000,
+                streaming=False,
+            )
+        # Server connection
         self.httpx_client = httpx.Client(timeout=None)
 
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
         # Default answer
         description = "No description available."
-        # Get the assets
-        assets = self.ps3.s3_comm.get_assets()
-        # Find the asset in question
-        for f in assets:
-            if f["_id"] == qq.asset:
-                asset = f["data"]
-                # Build the URL
-                url = (
-                    self.ps3.s3_comm.conf[self.ps3.s3_comm.prod_type]["web_server"]
-                    + self.ps3.s3_comm.routes["get_static_content"]
-                    + asset["file"]
-                )
-                # Get the authorization headers
-                headers = self.ps3.s3_comm._SageCommunication__headers
-                # Download the PDF
-                r = self.ps3.s3_comm.httpx_client.get(url, headers=headers)
-                if r.is_success:
-                    pdf_content = r.content
-                    ## Do something with the PDF content
-                    description = f"PDF content retrieved: {len(pdf_content)} bytes"
+        # Retrieve the PDF content
+        pdfContent = getPDFFile(self.ps3, qq.asset)
+        if pdfContent:
+            ## Do something with the PDF content
+            description = f"PDF content retrieved: {len(pdfContent)} bytes"
 
         text = description
 
