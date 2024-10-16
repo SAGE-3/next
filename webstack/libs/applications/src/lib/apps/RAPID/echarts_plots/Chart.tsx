@@ -16,10 +16,42 @@ function Chart({ option }: ChartProps) {
   const updateChartDataURL = useEchartsStore((state) => state.updateChartDataURL);
   const resizeObserver = useRef<ResizeObserver | null>(null);
 
-  const chartDataURL = useEchartsStore((state) => state.chartDataURL);
-
   const destroyChart = () => {
     chartRef.current?.dispose();
+  };
+
+  const generateChartImage = () => {
+    if (chartRef.current && divRef.current) {
+      const base64 = chartRef.current.getDataURL({
+        pixelRatio: 2,
+        type: 'svg',
+        backgroundColor: '#fff', // Ensure white background
+        excludeComponents: ['toolbox', 'dataZoom'],
+      });
+
+      const svgRect = divRef.current.getBoundingClientRect();
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = svgRect.width || 0;
+      canvas.height = svgRect.height || 0;
+
+      const img = new Image();
+      img.src = base64;
+
+      img.onload = () => {
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const pngBase64 = canvas.toDataURL('image/png');
+        updateChartDataURL(pngBase64);
+      };
+
+      canvas.remove();
+
+      img.onerror = (error) => {
+        console.error('Image loading error:', error);
+      };
+    }
   };
 
   useEffect(() => {
@@ -28,10 +60,8 @@ function Chart({ option }: ChartProps) {
       chartRef.current.setOption(option);
     };
     render();
-    console.log('rerendering');
 
     return () => {
-      console.log('destroying chart');
       destroyChart();
     };
   }, [option]);
@@ -47,7 +77,6 @@ function Chart({ option }: ChartProps) {
     if (divRef.current) {
       resizeObserver.observe(divRef.current);
     }
-    console.log('rerendering');
     return () => {
       resizeObserver.disconnect();
     };
@@ -55,51 +84,12 @@ function Chart({ option }: ChartProps) {
 
   useEffect(() => {
     if (chartRef.current && divRef.current) {
-      const generateChartImage = () => {
-        if (chartRef.current && divRef.current) {
-          const base64 = chartRef.current.getDataURL({
-            pixelRatio: 2,
-            type: 'svg',
-            backgroundColor: '#fff', // Ensure white background
-            excludeComponents: ['toolbox', 'dataZoom'],
-          });
-
-          const svgRect = divRef.current.getBoundingClientRect();
-
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-
-          canvas.width = svgRect.width || 0;
-          canvas.height = svgRect.height || 0;
-
-          const img = new Image();
-          img.src = base64;
-
-          img.onload = () => {
-            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const pngBase64 = canvas.toDataURL('image/png');
-            updateChartDataURL(pngBase64);
-          };
-
-          canvas.remove();
-
-          img.onerror = (error) => {
-            console.error('Image loading error:', error);
-          };
-        } else {
-          console.error('chartRef or divRef is not available');
-        }
-      };
-
-      if (divRef.current) {
-        resizeObserver.current = new ResizeObserver(() => {
-          generateChartImage();
-        });
-        resizeObserver.current.observe(divRef.current);
-      }
-    } else {
-      console.error('chartRef or divRef is not available');
+      resizeObserver.current = new ResizeObserver(() => {
+        generateChartImage();
+      });
+      resizeObserver.current.observe(divRef.current);
     }
+
     return () => {
       // Clean up ResizeObserver
       if (resizeObserver.current && divRef.current) {
@@ -110,7 +100,14 @@ function Chart({ option }: ChartProps) {
   }, [divRef.current, chartRef.current]);
 
   return (
-    <Box height="100%" width="100%" position="relative">
+    <Box
+      height="100%"
+      width="100%"
+      position="relative"
+      onMouseEnter={() => {
+        generateChartImage();
+      }}
+    >
       <Box ref={divRef} height="100%" width="100%" background="white" />
     </Box>
   );

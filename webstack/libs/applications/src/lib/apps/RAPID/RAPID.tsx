@@ -111,7 +111,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'edit' | 'create'>('create');
 
-  const [hovered, setHovered] = useState(false);
+  // const [hovered, setHovered] = useState(false);
 
   useEffect(() => {
     setDateRange({
@@ -119,7 +119,6 @@ function ToolbarComponent(props: App): JSX.Element {
       endDate: new Date(s.endTime as Date),
     });
     setSelectedMetric(JSON.stringify(s.metric));
-    console.log('rerendering toolbar');
   }, [s.startTime, s.endTime, s.metric]);
 
   const onClose = () => setIsOpen(false);

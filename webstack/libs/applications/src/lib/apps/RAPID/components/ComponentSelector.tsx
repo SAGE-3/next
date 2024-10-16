@@ -26,7 +26,6 @@ const components = {
  */
 function ComponentSelector({ props }: ComponentSelectorProps): JSX.Element {
   const s = props.data.state as AppState;
-  console.log("s from created app", s);
 
   if (components[s.category]) {
     return components[s.category](props);
