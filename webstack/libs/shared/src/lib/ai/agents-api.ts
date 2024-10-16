@@ -20,7 +20,7 @@ export type HealthResponse = {
 
 // Ask request
 export type AskRequest = {
-  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   id: string;
   user: string;
   location: string;
@@ -36,7 +36,7 @@ export type AskResponse = {
 
 // Web request
 export type WebQuery = {
-  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   url: string;
   user: string;
 };
@@ -48,10 +48,11 @@ export type WebAnswer = {
 
 // Image request
 export type ImageQuery = {
-  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   asset: string;
   user: string;
   model: string;
+  q: string;
 };
 export type ImageAnswer = {
   r: string;
@@ -61,9 +62,10 @@ export type ImageAnswer = {
 
 // PDF request
 export type PDFQuery = {
-  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   asset: string;
   user: string;
+  q: string;
 };
 export type PDFAnswer = {
   r: string;
@@ -73,7 +75,7 @@ export type PDFAnswer = {
 
 // Code request
 export type CodeRequest = {
-  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   id: string;
   user: string;
   location: string;

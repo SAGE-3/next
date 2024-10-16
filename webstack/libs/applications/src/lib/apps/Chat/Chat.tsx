@@ -17,7 +17,6 @@ import {
   Text,
   Flex,
   useColorModeValue,
-  Input,
   Tooltip,
   InputGroup,
   InputRightElement,
@@ -28,6 +27,7 @@ import {
   List,
   ListIcon,
   ListItem,
+  Textarea,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
 import { HiCommandLine } from "react-icons/hi2";
@@ -40,7 +40,7 @@ import Markdown from 'markdown-to-jsx';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings, useUIStore } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -49,7 +49,7 @@ import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode } from './tRPC';
 
-type OperationMode = 'text' | 'image' | 'web' | 'pdf' | 'code';
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
 
 // AI model information from the backend
 interface modelInfo {
@@ -92,7 +92,7 @@ function AppComponent(props: App): JSX.Element {
   const [input, setInput] = useState<string>('');
   const [streamText, setStreamText] = useState<string>('');
   // Element to set the focus to when opening the dialog
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   // Processing
   const [processing, setProcessing] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -102,9 +102,10 @@ function AppComponent(props: App): JSX.Element {
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
   const [status,] = useState<string>("AI can make mistakes. Check important information.");
   const [actions, setActions] = useState<any[]>([]);
-  const [mode, setMode] = useState<OperationMode>('text');
+  const [mode, setMode] = useState<OperationMode>('chat');
   const [location, setLocation] = useState('');
 
+  const isSelected = useUIStore.getState().selectedAppId === props._id;
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
 
@@ -115,7 +116,8 @@ function AppComponent(props: App): JSX.Element {
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
   // Input text for query
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
   };
@@ -140,10 +142,22 @@ function AppComponent(props: App): JSX.Element {
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
-      e.preventDefault();
-      sendMessage();
+      if (e.shiftKey) {
+        // Shift + Enter
+        e.preventDefault();
+        setInput(input + '\n');
+      } else {
+        e.preventDefault();
+        sendMessage();
+      }
     }
   };
+
+  useEffect(() => {
+    if (inputRef.current && isSelected) {
+      inputRef.current.focus();
+    }
+  }, [inputRef, isSelected]);
 
   useEffect(() => {
     if (user) {
@@ -166,40 +180,6 @@ function AppComponent(props: App): JSX.Element {
     setPreviousAnswer(s.previousA);
   }, [s.previousA]);
 
-  // useEffect(() => {
-  //   if (s.context) {
-  //     // Quick summary
-  //     const ctx = `@S, Please carefully read the following document text:
-
-  //     <document>
-  //     ${s.context}
-  //     </document>
-
-  //     After reading through the document, identify the main topics, themes, and key concepts that are covered.
-
-  //     Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-
-  //     Please list the keywords you came up in bold.
-
-  //     Finally, provide a short opinion on the text. Provide all your answers using the Markdown syntax`;
-
-  //     // Longer version
-  //     // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
-  //     // <documents>
-  //     // ${s.context}
-  //     // </documents>
-  //     // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
-  //     // - Write a sentence or two describing the essence of the topic
-  //     // - Extract a few representative excerpts or quotes from the documents that relate to the topic
-  //     // - Estimate approximately what percentage of the overall content across the documents is about this topic
-  //     // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
-  //     // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
-  //     // Enclose your final topic analysis in <analysis> tags.`;
-  //     newMessage(ctx);
-  //     setInput('');
-  //   }
-  // }, [s.context]);
-
   // Tokens coming from the server as a stream
   useEffect(() => {
     if (s.token) {
@@ -211,14 +191,16 @@ function AppComponent(props: App): JSX.Element {
   }, [s.token]);
 
   useEffect(() => {
-    if (s.sources && s.sources.length === 1) {
+    if (s.sources && s.sources.length >= 1) {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-      if (apps && apps[0].data.type === 'ImageViewer') {
+      if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
         setMode('image');
-      } else if (apps && apps[0].data.type === 'PDFViewer') {
+      } else if (apps && apps[0] && apps[0].data.type === 'PDFViewer') {
         setMode('pdf');
-      } else if (apps && apps[0].data.type === 'CodeEditor') {
+      } else if (apps && apps[0] && apps[0].data.type === 'CodeEditor') {
         setMode('code');
+      } else {
+        setMode('text');
       }
     }
   }, [s.sources]);
@@ -247,50 +229,16 @@ function AppComponent(props: App): JSX.Element {
       const request = isQuestion ? new_input.slice(2) : new_input;
 
       if (isQuestion) {
-        // let complete_request = '';
-        // if (previousQuestion && previousAnswer) {
-        //   if (selectedModel === 'llama') {
-        //     complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-        //          <|start_header_id|>user<|end_header_id|>
-        //          ${previousQuestion}<|eot_id|>
-        //          <|start_header_id|>assistant<|end_header_id|>
-        //          ${previousAnswer}<|eot_id|>
-        //          <|start_header_id|>user<|end_header_id|>
-        //          ${request} <|eot_id|>
-        //          <|start_header_id|>assistant<|end_header_id|>`;
-        //   }
-        // } else {
-        //   if (selectedModel === 'llama') {
-        //     complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-        //            <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
-        //            <|start_header_id|>assistant<|end_header_id|>`;
-        //   }
-        // }
-
-        // Send request to backend
-        // let body: AskRequest;
-        // if (previousAnswer && previousQuestion) {
-        //   body = {
-        //     input: complete_request || request,
-        //     model: 'llama',
-        //     max_new_tokens: 1000,
-        //     app_id: props._id,
-        //     previousQ: previousQuestion,
-        //     previousA: previousAnswer
-        //   };
-        // } else {
-        //   body = {
-        //     input: complete_request || request,
-        //     model: 'llama',
-        //     max_new_tokens: 1000,
-        //     app_id: props._id,
-        //     previousQ: s.context || '',
-        //   };
-        // }
+        const ctx = `Please carefully read the following text:
+        <text>
+        ${s.context}
+        </text>
+        ${request}`;
 
         const body: AskRequest = {
           ctx: {
-            prompt: '',
+            previousQ: previousQuestion,
+            previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
             roomId: roomId!, boardId: boardId!
           },
@@ -298,7 +246,7 @@ function AppComponent(props: App): JSX.Element {
           id: genId(),
           model: selectedModel || 'llama',
           location: location,
-          q: request,
+          q: s.context ? ctx : request,
         };
         const response = await callAsk(body);
         if ('message' in response) {
@@ -450,10 +398,12 @@ function AppComponent(props: App): JSX.Element {
           // Build the query
           const q: ImageQuery = {
             ctx: {
-              prompt: prompt,
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
               roomId, boardId
             },
+            q: prompt,
             user: username,
             asset: assetid,
             model: selectedModel || 'llama',
@@ -530,10 +480,12 @@ function AppComponent(props: App): JSX.Element {
           // Build the query
           const q: PDFQuery = {
             ctx: {
-              prompt: prompt,
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
               roomId, boardId
             },
+            q: prompt,
             user: username,
             asset: assetid,
           };
@@ -610,7 +562,8 @@ function AppComponent(props: App): JSX.Element {
       if (isQuestion) {
         const body: CodeRequest = {
           ctx: {
-            prompt: '',
+            previousQ: previousQuestion,
+            previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
             roomId: roomId!, boardId: boardId!
           },
@@ -1204,7 +1157,8 @@ function AppComponent(props: App): JSX.Element {
             />
           </Tooltip>
         </HStack>
-        <hr />
+
+        {mode !== "chat" && <hr />}
 
         {/* AI Prompts */}
         {mode === 'text' && (
@@ -1422,8 +1376,8 @@ function AppComponent(props: App): JSX.Element {
         )}
 
         {/* Input Text */}
-        <InputGroup bg={'blackAlpha.100'}>
-          <Input
+        <InputGroup bg={'blackAlpha.100'} maxHeight={"120px"}>
+          <Textarea
             placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel ? " (" + selectedModel + " model)" : "")}
             size="md"
             variant="outline"
@@ -1432,8 +1386,9 @@ function AppComponent(props: App): JSX.Element {
             onKeyDown={onSubmit}
             value={input}
             ref={inputRef}
+            resize="none"
           />
-          <InputRightElement onClick={sendMessage}>
+          <InputRightElement onClick={sendMessage} mr={3}>
             <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>
