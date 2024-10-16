@@ -19,7 +19,7 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 
 # AI Models
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI
@@ -73,6 +73,7 @@ class ChatAgent:
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", sys_template_str),
+                MessagesPlaceholder("history"),
                 ("user", human_template_str),
             ]
         )
@@ -106,6 +107,7 @@ class ChatAgent:
         if qq.model == "llama" and self.session_llama:
             response = await self.session_llama.ainvoke(
                 {
+                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
                     "question": qq.q,
                     "username": qq.user,
                     "location": qq.location,
@@ -115,6 +117,7 @@ class ChatAgent:
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
                 {
+                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
                     "question": qq.q,
                     "username": qq.user,
                     "location": qq.location,

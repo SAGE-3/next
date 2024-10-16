@@ -68,7 +68,7 @@ class PDFAgent:
         self.httpx_client = httpx.Client(timeout=None)
 
     async def process(self, qq: PDFQuery):
-        self.logger.info("Got PDF> from " + qq.user + ": " + qq.ctx.prompt)
+        self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
         # Default answer
         description = "No description available."
         # Get the assets

@@ -96,7 +96,7 @@ class ImageAgent:
             )
 
     async def process(self, qq: ImageQuery):
-        self.logger.info("Got image> from " + qq.user + ": " + qq.ctx.prompt)
+        self.logger.info("Got image> from " + qq.user + ": " + qq.q)
         description = "No description available."
         assets = self.ps3.s3_comm.get_assets()
         for f in assets:
@@ -128,7 +128,7 @@ class ImageAgent:
                                 {
                                     "role": "user",
                                     "content": [
-                                        {"type": "text", "text": qq.ctx.prompt},
+                                        {"type": "text", "text": qq.q},
                                         {
                                             "type": "image_url",
                                             "image_url": {
@@ -156,7 +156,7 @@ class ImageAgent:
                         messages.append(
                             HumanMessage(
                                 content=[
-                                    {"type": "text", "text": qq.ctx.prompt},
+                                    {"type": "text", "text": qq.q},
                                     {
                                         "type": "image_url",
                                         "image_url": {

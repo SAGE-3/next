@@ -191,6 +191,8 @@ class CodeAgent:
             language = first_line.strip()
             # Remove the first line
             code = "\n".join(code.split("\n")[1:])
+            text_without_code = re.sub(pattern, "", response, flags=re.DOTALL)
+            response = text_without_code
 
             # Propose the answer to the user
             action1 = json.dumps(

@@ -14,7 +14,8 @@ from pydantic import BaseModel, Json
 
 
 class Context(NamedTuple):
-    prompt: str  # previous prompt
+    previousQ: str  # previous prompt
+    previousA: str  # previous answer
     pos: List[float]  # position in the board
     roomId: str  # room ID
     boardId: str  # board ID
@@ -58,6 +59,7 @@ class ImageQuery(BaseModel):
     asset: str  # question
     user: str  # user name
     model: str  # AI model: llama, openai
+    q: str  # question
 
 
 class ImageAnswer(BaseModel):
@@ -70,6 +72,7 @@ class PDFQuery(BaseModel):
     ctx: Context  # context
     asset: str  # question
     user: str  # user name
+    q: str  # question
 
 
 class PDFAnswer(BaseModel):
@@ -82,6 +85,7 @@ class WebQuery(BaseModel):
     ctx: Context  # context
     url: str  # question
     user: str  # user name
+    q: str  # question
 
 
 class WebAnswer(BaseModel):
