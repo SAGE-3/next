@@ -25,20 +25,23 @@ import {
 import { MdKeyboardArrowUp } from 'react-icons/md';
 import { HiSparkles } from "react-icons/hi2";
 
-import { useHexColor, useUserSettings, useConfigStore } from '@sage3/frontend';
+import { useUserSettings, useConfigStore } from '@sage3/frontend';
+import { ServerConfiguration } from '@sage3/shared/types';
 
 type SIProps = {
   notificationCount: number;
   isBoard?: boolean;
 };
 
-// SAP Intelligence Panel
+// Intelligence Panel
 export function IntelligencePane(props: SIProps) {
   const isBoard = props.isBoard ? props.isBoard : false;
   const { settings, setAIModel } = useUserSettings();
   const showUI = settings.showUI;
   // Configuration information
   const config = useConfigStore((state) => state.config);
+  const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
+  const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
 
   // Colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
@@ -67,17 +70,24 @@ export function IntelligencePane(props: SIProps) {
   }, []);
 
   useEffect(() => {
+    if (config) {
+      setLlama(config.llama);
+      setOpenai(config.openai);
+    }
+  }, [config]);
+
+  useEffect(() => {
     // Look for a previously set model
     if (settings.aiModel) {
       // If value previously set, use it
       setSelectedModel(settings.aiModel);
     } else {
       // Otherwise, use openai if available, else llama
-      const val = config.openai.apiKey ? 'openai' : 'llama';
+      const val = openai?.apiKey ? 'openai' : 'llama';
       setSelectedModel(val);
       setAIModel(val);
     }
-  }, [settings.aiModel]);
+  }, [settings.aiModel, openai]);
 
   return (
     <Box borderRadius="md" display="flex">
@@ -120,8 +130,8 @@ export function IntelligencePane(props: SIProps) {
                       <Text fontSize="lg" mb={1} fontWeight={"bold"}>AI Models</Text>
                       <RadioGroup defaultValue={selectedModel} onChange={setAIModel}>
                         <Stack>
-                          <Radio value='llama' isDisabled={!config.llama.url}><b>Llama</b>: {config.llama.model} - {config.llama.url.substring(0, 12) + '•'.repeat(10)}</Radio>
-                          <Radio value='openai' isDisabled={!config.openai.apiKey}><b>OpenAI</b>: {config.openai.model} - {config.openai.apiKey ? config.openai.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
+                          <Radio value='llama' isDisabled={!llama?.url}><b>Llama</b>: {llama?.model} - {llama?.url.substring(0, 12) + '•'.repeat(10)}</Radio>
+                          <Radio value='openai' isDisabled={!openai?.apiKey}><b>OpenAI</b>: {openai?.model} - {openai?.apiKey ? openai?.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
                           </Radio>
                         </Stack>
                       </RadioGroup>
