@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Flex } from '@chakra-ui/react';
 import { App } from '@sage3/applications/schema';
 import { useAppStore } from '@sage3/frontend';
@@ -115,9 +115,15 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
     });
   }
 
-  function hasAllRequiredFields(): boolean {
-    return Boolean(selectedMetric) && Boolean(dateRange?.startDate) && Boolean(dateRange?.endDate) && Boolean(selectedVisualizationType);
-  }
+  const hasAllRequiredFields: boolean = useMemo(() => {
+    return (
+      Boolean(selectedSensors.length > 0) &&
+      Boolean(selectedMetric) &&
+      Boolean(dateRange?.startDate) &&
+      Boolean(dateRange?.endDate) &&
+      Boolean(selectedVisualizationType)
+    );
+  }, [selectedMetric, dateRange, selectedVisualizationType, selectedSensors]);
 
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
@@ -125,7 +131,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
 
   async function handleSubmit() {
     try {
-      if (!hasAllRequiredFields()) {
+      if (!hasAllRequiredFields) {
         console.error('Missing required fields');
         return;
       }
@@ -209,7 +215,7 @@ const StationEditorModal: React.FC<StationEditorModalProps> = ({ isOpen, onClose
             </Box>
             <Box display="flex" justifyContent="end" gap="3">
               <Button onClick={onClose}>Cancel</Button>
-              <Button isDisabled={!hasAllRequiredFields()} onClick={handleSubmit}>
+              <Button isDisabled={!hasAllRequiredFields} onClick={handleSubmit}>
                 {mode === 'edit' ? 'Update' : 'Create'}
               </Button>
             </Box>
