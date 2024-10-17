@@ -8,7 +8,7 @@
 
 # PDFAgent
 
-import json
+import json, os
 from logging import Logger
 import httpx
 
@@ -27,6 +27,27 @@ from langchain_openai import ChatOpenAI
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
 from libs.utils import getModelsInfo, getPDFFile
+
+# ChromaDB AI vector DB
+import chromadb
+from chromadb.config import Settings
+
+# Create a single instance of the ChromaDB client
+chroma = chromadb.HttpClient(
+    # Local ChromaDB server - docker instance
+    host="127.0.0.1",
+    # Port changed to 8100 to avoid conflicts with other services
+    port=8100,
+    # Authorization
+    settings=Settings(
+        # http basic auth scheme
+        chroma_client_auth_provider="chromadb.auth.basic_authn.BasicAuthClientProvider",
+        # credentials for the basic auth scheme loaded from .env file
+        chroma_client_auth_credentials=os.getenv("CHROMA_CLIENT_AUTH_CREDENTIALS"),
+    ),
+)
+# Heartbeat to check the connection
+chroma.heartbeat()
 
 
 class PDFAgent:

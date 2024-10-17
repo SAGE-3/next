@@ -35,3 +35,7 @@ Pillow
 
 # Web scrapping
 playwright
+
+# ChromaDB AI vector DB
+chromadb
+
