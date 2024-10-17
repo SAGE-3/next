@@ -6,16 +6,19 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from pydantic import Field
+from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
 class StickieState(TrackedBaseModel):
-    text: str
-    fontSize: int
-    color: str
-    lock: bool
-    executeInfo: ExecuteInfo
+    text: str = Field(description="The text to display on the stickie note")
+    color: str = Field(
+        description="The background color of the stickie note, use yellow if a color is not provided",
+        default="yellow",
+    )
+    fontSize: int = Field(description="The font size to use for the text", default=36)
+    lock: bool = Field(description="Is the note locked for editing", default=False)
 
 
 class Stickie(SmartBit):

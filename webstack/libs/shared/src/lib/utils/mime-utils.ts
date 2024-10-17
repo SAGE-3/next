@@ -12,7 +12,7 @@ import * as mime from 'mime';
 import hljs from 'highlight.js';
 
 hljs.configure({
-  languages: ['json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp', 'r'],
+  languages: ['markdown', 'json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp', 'r'],
 });
 
 // Define extra MIME types
