@@ -20,6 +20,12 @@ services:
       - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
       - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
     command: "--workers 1 --proxy-headers --port 8000 --host 0.0.0.0 --timeout-keep-alive 30"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     deploy:
       restart_policy:
         condition: on-failure
