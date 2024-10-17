@@ -17,4 +17,6 @@ foresight/task_queue
 configurations/fluentd/log/*.log
 configurations/fluentd/log/data.*
 
+configurations/chroma/data/chroma.sqlite3
+
 .ipynb_checkpoints

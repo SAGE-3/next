@@ -9,6 +9,20 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+  chromadb:
+    image: "chromadb/chroma:0.5.15"
+    ports:
+      - "127.0.0.1:8100:8000"
+    volumes:
+      - ./configurations/chroma/data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+    command: "--workers 1 --proxy-headers --port 8000 --host 0.0.0.0 --timeout-keep-alive 30"
+    deploy:
+      restart_policy:
+        condition: on-failure
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
