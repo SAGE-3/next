@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
+import { throttle } from 'throttle-debounce';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
@@ -45,6 +46,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     { x: 0, y: 0 },
     { x: 0, y: 0 },
   ]);
+  const [, setCursorPos] = useState({ x: 0, y: 0 });
   // Used to differentiate between board drag and app deselect
   const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other');
 
@@ -109,9 +111,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     });
   };
 
-  const draggedOnCheck = (event: any) => {
-    const target = event.target as HTMLElement;
+  const draggedOnCheck = (target: HTMLElement) => {
+    // const target = event.target as HTMLElement;
     // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
+
     if (target.id === 'board') {
       setStartedDragOn('board');
       setSelectedApp('');
@@ -155,10 +158,62 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }
   };
 
+  const grabModeDeselection = () => {
+    // // Uncomment me if you want the disable app deselect on input fields
+    // const target = event.target as HTMLElement;
+    // const computedStyle = window.getComputedStyle(target);
+    // const isTextEditable =
+    //   target.tagName === 'INPUT' ||
+    //   target.tagName === 'TEXTAREA' ||
+    //   target.getAttribute('contenteditable') === 'true' ||
+    //   computedStyle.cursor === 'text';
+
+    // if (!isTextEditable) {
+    //   setSelectedApp('');
+    // }
+
+    // Aggressive method to force deselect accidentally selection of text on screen which
+    // will prevent proper dragging behaviour, uncomment code in future if needed
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+
+    // Deselect application when pan moves in grab mode
+    // Caviat, first input will be ignored
+    setSelectedApp('');
+
+    setLocalSynced((prev) => {
+      if (prev) {
+        setCursorPos((cur) => {
+          const element = document.elementFromPoint(cur.x, cur.y);
+          draggedOnCheck(element as HTMLElement);
+          return cur;
+        });
+      }
+      return prev;
+    });
+  };
+
+  // Keep track of primary position
+  useEffect(() => {
+    // Recommened not to throttle for due to touch users being able to essentially teleport the cursor position
+    // const pointerMove = throttle(100, (e: PointerEvent) => {
+    //   setCursorPos({ x: e.clientX, y: e.clientY });
+    // });
+    const pointerMove = (e: PointerEvent) => {
+      setCursorPos({ x: e.clientX, y: e.clientY });
+    };
+
+    window.addEventListener('pointermove', pointerMove, { capture: true, passive: false });
+    return () => {
+      window.removeEventListener('pointermove', pointerMove);
+    };
+  }, []);
+
   // Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
-      draggedOnCheck(event);
+      draggedOnCheck(event.target as HTMLElement);
     };
 
     window.addEventListener('mousedown', handleMouseStart, { capture: true, passive: false });
@@ -169,7 +224,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
   useEffect(() => {
-    // Mouse & Touchpad
+    // Mouse (Scroll Wheel) & Touchpad (Two Finger Pan)
     const handleMove = (event: WheelEvent) => {
       if (event.ctrlKey) {
         event.preventDefault();
@@ -183,12 +238,21 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced((prev) => {
         if (prev) {
-          draggedOnCheck(event);
+          // draggedOnCheck(event.target as HTMLElement);
+          // This way ensures that it will be the most up to date element...
+          setCursorPos((cur) => {
+            const element = document.elementFromPoint(cur.x, cur.y);
+            draggedOnCheck(element as HTMLElement);
+            return cur;
+          });
         }
         return prev;
       });
 
-      if (selectedApp) {
+      if (selectedApp && primaryActionMode !== 'grab') {
+        return;
+      } else if (selectedApp) {
+        grabModeDeselection();
         return;
       }
 
@@ -218,20 +282,28 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       });
     };
 
-    // Mouse
+    // Mouse (Primary and Middle Clicks)
     const handleMouseMove = (event: MouseEvent) => {
       if (boardLocked) {
         return;
       }
+
+      if (primaryActionMode === 'grab' && (event.buttons & 1 || event.buttons & 4) && selectedApp) {
+        grabModeDeselection();
+        return;
+      }
+
       if (selectedApp) {
         return;
       }
 
-      // // Aggressive method to force deselect accidentally selection of text on screen which
-      // // will prevent proper dragging behaviour, uncomment code in future if needed
-      // if (window.getSelection) {
-      //   window.getSelection()?.removeAllRanges();
-      // }
+      // Pseudo on mouse down needed to revaluate NEW event.target after app has been deselected
+      setLocalSynced((prev) => {
+        if (prev) {
+          draggedOnCheck(event.target as HTMLElement);
+        }
+        return prev;
+      });
 
       const move = () => {
         setLocalBoardPosition((prev) => ({
@@ -268,6 +340,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   useEffect(() => {
     const handleTouchStart = (event: TouchEvent) => {
       if (event.touches.length >= 1) {
+        // if (event.touches.length >= 2) {
+        //   event.preventDefault();
+        // }
+
         draggedOnTouchCheck(event);
 
         setLastTouch(
@@ -276,24 +352,39 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
           })
         );
       }
+
+      // if (primaryActionMode === 'grab' && event.touches.length >= 1 && selectedApp) {
+      //   if (window.getSelection) {
+      //     window.getSelection()?.removeAllRanges();
+      //   }
+
+      //   setSelectedApp('');
+      //   setStartedDragOn('app');
+      //   return;
+      // }
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: false });
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
     };
-  }, []);
+  }, [primaryActionMode, selectedApp]);
 
   useEffect(() => {
     // Touch Screen
     const handleTouchMove = (event: TouchEvent) => {
       event.preventDefault();
       event.stopPropagation();
+      // event.stopImmediatePropagation();
 
       if (boardLocked) {
         return;
       }
-      if (selectedApp) {
+
+      if (selectedApp && primaryActionMode !== 'grab') {
+        return;
+      } else if (selectedApp) {
+        grabModeDeselection();
         return;
       }
 
@@ -303,7 +394,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
-          if (primaryActionMode === 'grab' && draggedOn !== 'board-actions') {
+          if (primaryActionMode === 'grab') {
             setLastTouch((prev) => {
               if (prev.length < 1) {
                 return prev;

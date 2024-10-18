@@ -42,7 +42,7 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
@@ -256,23 +256,33 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
-    if (primaryActionMode === 'grab') {
-      return;
-    }
+    // if (primaryActionMode === 'grab') {
+    //   handleBringAppForward();
+    //   clearSelectedApps();
+    //   setSelectedApp(props.app._id);
+    //   return;
+    // }
     handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
   function handleAppTouchStart(e: PointerEvent) {
+    // console.log(e);
     e.stopPropagation();
-    if (primaryActionMode === 'grab') {
-      return;
-    }
+    // if (primaryActionMode === 'grab') {
+    //   handleBringAppForward();
+    //   clearSelectedApps();
+    //   setSelectedApp(props.app._id);
+    //   return;
+    // }
     handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) {
@@ -280,6 +290,9 @@ export function AppWindow(props: WindowProps) {
     } else {
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
@@ -346,6 +359,7 @@ export function AppWindow(props: WindowProps) {
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
         borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
+        touchAction: 'none', // needed to prevent pinch to zoom
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
