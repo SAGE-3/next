@@ -85,10 +85,23 @@ class WebQuery(BaseModel):
     ctx: Context  # context
     url: str  # question
     user: str  # user name
+    model: str  # AI model: llama, openai
     q: str  # question
 
 
 class WebAnswer(BaseModel):
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+
+class WebScreenshot(BaseModel):
+    ctx: Context  # context
+    url: str  # question
+    user: str  # user name
+
+
+class WebScreenshotAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed

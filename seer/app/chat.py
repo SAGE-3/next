@@ -20,7 +20,6 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 # AI Models
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI
 

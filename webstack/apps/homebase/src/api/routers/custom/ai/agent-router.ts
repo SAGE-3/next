@@ -21,6 +21,8 @@ import {
   ImageAnswer,
   PDFQuery,
   PDFAnswer,
+  WebScreenshot,
+  WebScreenshotAnswer,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -68,7 +70,7 @@ const webHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
   const route = AgentRoutes.web;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
-const webshotHandler: RpcHandlerPost<WebQuery, WebAnswer> = (req) => {
+const webshotHandler: RpcHandlerPost<WebScreenshot, WebScreenshotAnswer> = (req) => {
   const route = AgentRoutes.webshot;
   return fetchPost(`${config.agents.url}${route}`, req);
 };

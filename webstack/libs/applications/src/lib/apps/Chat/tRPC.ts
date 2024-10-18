@@ -22,6 +22,8 @@ import {
   ImageAnswer,
   PDFQuery,
   PDFAnswer,
+  WebScreenshot,
+  WebScreenshotAnswer,
 } from '@sage3/shared';
 
 /**
@@ -79,8 +81,8 @@ export const callSummary = async (data: AskRequest) => {
 export const callWeb = async (data: WebQuery) => {
   return makeRpcPost(AgentRoutes.web, data) as Promise<WebAnswer | SError>;
 };
-export const callWebshot = async (data: WebQuery) => {
-  return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebAnswer | SError>;
+export const callWebshot = async (data: WebScreenshot) => {
+  return makeRpcPost(AgentRoutes.webshot, data) as Promise<WebScreenshotAnswer | SError>;
 };
 export const callImage = async (data: ImageQuery) => {
   return makeRpcPost(AgentRoutes.image, data) as Promise<ImageAnswer | SError>;

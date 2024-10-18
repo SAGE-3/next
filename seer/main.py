@@ -2,7 +2,14 @@
 import logging, asyncio
 from dotenv import load_dotenv
 
-from libs.localtypes import ImageQuery, Question, WebQuery, PDFQuery, CodeRequest
+from libs.localtypes import (
+    ImageQuery,
+    Question,
+    WebQuery,
+    PDFQuery,
+    CodeRequest,
+    WebScreenshot,
+)
 
 # Web API
 from fastapi import FastAPI, HTTPException
@@ -144,7 +151,7 @@ async def webquery(qq: WebQuery):
 
 # WEB2 FUNCTION
 @app.post("/webshot")
-async def webshot(qq: WebQuery):
+async def webshot(qq: WebScreenshot):
     try:
         # do the work
         val = await webAG.process_screenshot(qq)

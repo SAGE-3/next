@@ -39,8 +39,22 @@ export type WebQuery = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   url: string;
   user: string;
+  model: string;
+  q: string;
 };
+
 export type WebAnswer = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
+export type WebScreenshot = {
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  url: string;
+  user: string;
+};
+export type WebScreenshotAnswer = {
   r: string;
   success: boolean;
   actions?: any[];

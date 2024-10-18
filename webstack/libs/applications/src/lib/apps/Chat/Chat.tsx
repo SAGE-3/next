@@ -41,13 +41,16 @@ import Markdown from 'markdown-to-jsx';
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings, useUIStore } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest } from '@sage3/shared';
+import {
+  genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery,
+  WebScreenshot, WebScreenshotAnswer,
+} from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
 
@@ -134,6 +137,9 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'code') {
       // Code
       onContentCode(text, '');
+    } else if (mode === 'web') {
+      // Code
+      onContentWeb(text);
     } else {
       await newMessage(text);
     }
@@ -199,6 +205,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('pdf');
       } else if (apps && apps[0] && apps[0].data.type === 'CodeEditor') {
         setMode('code');
+      } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
+        setMode('web');
       } else {
         setMode('text');
       }
@@ -493,6 +501,186 @@ function AppComponent(props: App): JSX.Element {
           setActions([]);
           // Invoke the agent
           const response = await callPDF(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onWebSummary = async () => {
+    return onContentWeb('Read the page content and identify the main topics, themes, and key concepts that are covered. Provide all your answers in a few sentences using the Markdown syntax.');
+  };
+
+  const onWebLinks = async () => {
+    return onContentWeb('Read the page content and list the main links that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.');
+  };
+
+  const onWebKeywords = async () => {
+    return onContentWeb('Read the page and extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text. Provide all your answers using a list in Markdown syntax.');
+  };
+
+  const onWebFacts = async () => {
+    return onContentWeb('Read the page content and provide two or three interesting facts from the document, using a list in Markdown syntax.');
+  };
+  const onWebScreenshot = async () => {
+    return onContentWebScreenshot();
+  };
+
+
+  const onContentWeb = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'Webview') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          // Build the query
+          const q: WebQuery = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            q: prompt,
+            url: apps[0].data.state.webviewurl,
+            user: username,
+            model: selectedModel || 'llama',
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callWeb(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onContentWebScreenshot = async () => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'Webview') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          // Build the query
+          const q: WebScreenshot = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId, boardId
+            },
+            url: apps[0].data.state.webviewurl,
+            user: username,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callWebshot(q);
           setProcessing(false);
 
           if ('message' in response) {
@@ -900,7 +1088,7 @@ function AppComponent(props: App): JSX.Element {
             return (
               <Fragment key={index}>
                 {/* Start of User Messages */}
-                {message.query.length ? (
+                {message.query && message.query.length ? (
                   <Box position="relative" my={1}>
                     {isMe ? (
                       <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
@@ -981,7 +1169,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
 
                 {/* Start of SAGE Messages */}
-                {message.response.length ? (
+                {message.response && message.response.length ? (
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
@@ -1374,6 +1562,76 @@ function AppComponent(props: App): JSX.Element {
             </Tooltip>
           </HStack>
         )}
+        {mode === 'web' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Summarize this webpage'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebSummary}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Web Summary</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'What are the main links that I should read to expand on the subject matter of the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebLinks}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Followup Links</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebKeywords}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts from the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebFacts}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Screenshot the page'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebScreenshot}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Take screenshot</Text></Button>
+            </Tooltip>
+          </HStack>
+        )}
+
 
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'} maxHeight={"120px"}>
