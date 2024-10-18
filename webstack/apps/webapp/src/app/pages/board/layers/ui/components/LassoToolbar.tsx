@@ -386,16 +386,18 @@ export function LassoToolbar(props: LassoToolbarProps) {
       // Check if all of same type
       const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
       let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
-      let context = '';
       if (isAllOfSameType) {
+        let context = '';
         if (selectedApps[0].data.type === 'Stickie') {
           context = selectedApps.reduce((acc, el) => {
-            acc += el.data.state.text + '\n';
+            acc += el.data.state.text + '\n\n';
             return acc;
           }, '');
         }
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
+      } else {
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
       }
-      createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
     }
   };
 
@@ -742,7 +744,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

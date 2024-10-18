@@ -1,0 +1,7 @@
+#/bin/sh
+
+echo "Stopping seer"
+docker stop seer
+echo "Deleting seer"
+docker rm seer
+

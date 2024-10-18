@@ -259,7 +259,6 @@ const useConnectStatus = () => {
 
   useEffect(() => {
     function disconnected() {
-      console.log('connection issues');
       setConnection(false);
     }
     if (socket) {
