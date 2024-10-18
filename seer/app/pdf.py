@@ -33,9 +33,14 @@ import chromadb
 from chromadb.config import Settings
 
 # Create a single instance of the ChromaDB client
+if os.getenv("ENVIRONMENT") == "production":
+    chromaServer = "chromadb"
+else:
+    chromaServer = "127.0.0.1"
+
 chroma = chromadb.HttpClient(
     # Local ChromaDB server - docker instance
-    host="127.0.0.1",
+    host=chromaServer,
     # Port changed to 8100 to avoid conflicts with other services
     port=8100,
     # Authorization
