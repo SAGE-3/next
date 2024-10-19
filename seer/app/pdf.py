@@ -32,28 +32,6 @@ from libs.utils import getModelsInfo, getPDFFile
 import chromadb
 from chromadb.config import Settings
 
-# Create a single instance of the ChromaDB client
-if os.getenv("ENVIRONMENT") == "production":
-    chromaServer = "chromadb"
-else:
-    chromaServer = "127.0.0.1"
-
-chroma = chromadb.HttpClient(
-    # Local ChromaDB server - docker instance
-    host=chromaServer,
-    # Port changed to 8100 to avoid conflicts with other services
-    port=8100,
-    # Authorization
-    settings=Settings(
-        # http basic auth scheme
-        chroma_client_auth_provider="chromadb.auth.basic_authn.BasicAuthClientProvider",
-        # credentials for the basic auth scheme loaded from .env file
-        chroma_client_auth_credentials=os.getenv("CHROMA_CLIENT_AUTH_CREDENTIALS"),
-    ),
-)
-# Heartbeat to check the connection
-chroma.heartbeat()
-
 
 class PDFAgent:
     def __init__(
@@ -72,7 +50,7 @@ class PDFAgent:
         self.model = llama["model"]
         # Llama model
         if llama["url"] and llama["model"]:
-            llm_llama = ChatNVIDIA(
+            self.llm_llama = ChatNVIDIA(
                 base_url=llama["url"] + "/v1",
                 model=llama["model"],
                 stream=False,
@@ -89,6 +67,31 @@ class PDFAgent:
             )
         # Server connection
         self.httpx_client = httpx.Client(timeout=None)
+
+        # Create the ChromaDB client
+        chromaServer = "127.0.0.1"
+        chromaPort = 8100
+        if os.getenv("ENVIRONMENT") == "production":
+            chromaServer = "chromadb"
+            chromaPort = 8000
+
+        self.chroma = chromadb.HttpClient(
+            # Local ChromaDB server - docker instance
+            host=chromaServer,
+            # Port changed to 8100 to avoid conflicts with other services
+            port=chromaPort,
+            # Authorization
+            settings=Settings(
+                # http basic auth scheme
+                chroma_client_auth_provider="chromadb.auth.basic_authn.BasicAuthClientProvider",
+                # credentials for the basic auth scheme loaded from .env file
+                chroma_client_auth_credentials=os.getenv(
+                    "CHROMA_CLIENT_AUTH_CREDENTIALS"
+                ),
+            ),
+        )
+        # Heartbeat to check the connection
+        self.chroma.heartbeat()
 
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
