@@ -131,7 +131,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   function cleanNameCheckDoubles(name: string): string | null {
     // remove leading and trailing space, and limit name length to 20
-    const cleanedName = name.trim().substring(0, 19);
+    const cleanedName = name.trim().substring(0, 20);
     const boardNames = boards.filter((r) => r._id !== props.board._id).map((board) => board.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
       toast({
@@ -198,6 +198,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               onChange={handleNameChange}
               onKeyDown={onSubmit}
               isRequired={true}
+              maxLength={20}
             />
           </InputGroup>
           <InputGroup my={4}>

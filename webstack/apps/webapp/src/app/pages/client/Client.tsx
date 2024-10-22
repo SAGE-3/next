@@ -7,6 +7,7 @@
  */
 
 // React
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, HStack, Flex, Icon } from "@chakra-ui/react";
 import { FiExternalLink } from "react-icons/fi";
@@ -23,14 +24,22 @@ export function OpenDesktopPage() {
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const [sage3url, setSage3Url] = useState<string>('');
 
-  function openDesktopApp() {
+  const openDesktopApp = () => {
     if (!boardId || !roomId) return;
     // Get the board link
     const link = `sage3://${window.location.host}/#/board/${roomId}/${boardId}`;
     // Open the link in the sage3 app
     window.open(link, '_self');
   }
+
+  useEffect(() => {
+    if (!boardId || !roomId) return;
+    // Get the board link
+    const link = `${window.location.protocol}//${window.location.host}/#/board/${roomId}/${boardId}`;
+    setSage3Url(link);
+  }, [roomId, boardId]);
 
   return (
     // Main Container
@@ -50,19 +59,26 @@ export function OpenDesktopPage() {
       <VStack alignItems={"left"} fontSize={"2xl"}>
         <Link isExternal href="https://sage3.sagecommons.org/?page_id=358">
           <Flex>
-            <Text >Get the SAGE3 client</Text>
+            <Text>Get the SAGE3 client</Text>
             <Icon as={FiExternalLink} mt="5px" ml={2} />
           </Flex>
         </Link>
 
         <Link isExternal href="https://sage3.sagecommons.org/?page_id=921">
           <Flex>
-            <Text >What is SAGE3?</Text>
+            <Text>What is SAGE3?</Text>
             <Icon as={FiExternalLink} mt="5px" ml={2} />
           </Flex>
         </Link>
       </VStack>
 
+      <Spacer />
+      <Link href={sage3url}>
+        <Flex>
+          <Text>Continue in your browser</Text>
+          <Icon as={FiExternalLink} mt="5px" ml={2} />
+        </Flex>
+      </Link>
       <Spacer />
       <footer>SAGE3 is funded by the following National Science Foundation awards: 2004014 | 2003800 | 2003387
       </footer>
