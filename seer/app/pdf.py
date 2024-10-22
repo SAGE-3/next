@@ -10,7 +10,6 @@
 
 import json, os
 from logging import Logger
-import httpx
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -60,20 +59,16 @@ class PDFAgent:
                 base_url=llama["url"] + "/v1",
                 model=llama["model"],
                 stream=False,
-                max_tokens=2000,
+                max_tokens=1000,
             )
         # OpenAI model
         if openai["apiKey"] and openai["model"]:
             self.llm_openai = ChatOpenAI(
                 api_key=openai["apiKey"],
-                # needs to be gpt-4o-mini or better, for image processing
                 model=openai["model"],
                 max_tokens=1000,
                 streaming=False,
             )
-        # Server connection
-        self.httpx_client = httpx.Client(timeout=None)
-
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
         chromaPort = 8100
@@ -105,7 +100,7 @@ class PDFAgent:
         description = "No description available."
         # Retrieve the PDF content
         pdfContent = getPDFFile(self.ps3, qq.asset)
-        
+
         if pdfContent:
             ## Do something with the PDF content
             # description = f"PDF content retrieved: {len(pdfContent)} bytes"
@@ -113,8 +108,11 @@ class PDFAgent:
             pdf_stream = BytesIO(pdfContent)
             pdf_document = pymupdf.open(stream=pdf_stream, filetype="pdf")
             md = pymupdf4llm.to_markdown(pdf_document)
-            
-            answer = await generate_answer(qq, self.llm_openai, md, self.llm_openai.openai_api_key)
+
+            # answer = await generate_answer(qq, self.llm_openai, md, self.llm_openai.openai_api_key)
+            answer = await generate_answer(
+                qq, self.llm_openai, md, self.llm_openai.openai_api_key
+            )
 
         text = answer
 
