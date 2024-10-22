@@ -13,6 +13,7 @@ import { useParams } from 'react-router';
 import { useUser } from './useUser';
 import { User } from '@sage3/shared/types';
 import { Box, CircularProgress } from '@chakra-ui/react';
+import { useHexColor } from '@sage3/frontend';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -154,9 +155,10 @@ export function YjsProvider(props: React.PropsWithChildren<Record<string, unknow
 }
 
 function LoadingYjsComponent() {
+  const teal = useHexColor('teal');
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
-      <CircularProgress isIndeterminate size={'xl'} />
+      <CircularProgress isIndeterminate size={'xl'} color={teal} />
     </Box>
   );
 }
