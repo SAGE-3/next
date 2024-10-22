@@ -164,5 +164,5 @@ async def webshot(qq: WebScreenshot):
 
 if __name__ == "__main__":
     uvicorn.run(
-        app, host="127.0.0.1", port=9999, log_level="info", timeout_keep_alive=30
+        app, host="127.0.0.1", port=9999, log_level="info", timeout_keep_alive=120
     )
