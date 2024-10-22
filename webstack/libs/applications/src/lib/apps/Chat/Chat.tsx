@@ -597,6 +597,7 @@ function AppComponent(props: App): JSX.Element {
             url: apps[0].data.state.webviewurl,
             user: username,
             model: selectedModel || 'llama',
+            extras: prompt.includes('links') ? 'links' : prompt.includes('images') ? 'images' : prompt.includes('pdfs') ? 'pdfs' : undefined,
           };
           setProcessing(true);
           setActions([]);

@@ -41,6 +41,7 @@ export type WebQuery = {
   user: string;
   model: string;
   q: string;
+  extras?: 'links' | 'text' | 'images' | 'pdfs';
 };
 
 export type WebAnswer = {

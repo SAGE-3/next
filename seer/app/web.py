@@ -137,6 +137,21 @@ class WebAgent:
         self.logger.info("web page title> " + title)
         # Get the whole text of the webpage
         page_text = await page.inner_text("body")
+
+        # extras: Optional[str]  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
+        if qq.extras and qq.extras == "links":
+            # Extract all the links (href attributes) from the page
+            links = await page.eval_on_selector_all(
+                "a", "elements => elements.map(el => el.href)"
+            )
+            print("Getting links", links)
+        elif qq.extras and qq.extras == "text":
+            print("Getting text")
+        elif qq.extras and qq.extras == "images":
+            print("Getting images")
+        elif qq.extras and qq.extras == "pdfs":
+            print("Getting pdfs")
+
         await page.close()
 
         # Ask the question
