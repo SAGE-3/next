@@ -31,6 +31,8 @@ import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal 
 import { SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
+import { useRouteNav } from '@sage3/frontend';
+
 interface EditRoomModalProps {
   isOpen: boolean;
   onOpen: () => void;
@@ -39,6 +41,7 @@ interface EditRoomModalProps {
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
+  const { toHome } = useRouteNav();
   // Configuration information
   const config = useConfigStore((state) => state.config);
 
@@ -168,6 +171,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     });
     // delete the room
     deleteRoom(props.room._id);
+    toHome();
   };
 
   // To enable/disable

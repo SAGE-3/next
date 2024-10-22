@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import Fuse from 'fuse.js'
+import Fuse from 'fuse.js';
 
 /**
  * https://www.fusejs.io/api/options.html#fuzzy-matching-options
@@ -21,7 +21,8 @@ const options = {
   ignoreCase: true,
   includeScore: false,
   ignoreLocation: true,
-  threshold: 0.4,
+  threshold: 0.2,
+  findAllMatches: true,
   keys: ['text'],
 };
 
@@ -29,9 +30,9 @@ const defaultFuse = new Fuse<{ text: string }>([], options);
 
 export const fuzzySearch = (text: string, query: string, fuse: Fuse<{ text: string }> = defaultFuse): boolean => {
   if (!query) {
-    return true
+    return true;
   }
-  
+
   fuse.setCollection([{ text: text }]);
   const result = fuse.search(query);
   return result.length > 0;

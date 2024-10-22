@@ -52,7 +52,6 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const members = useRoomStore((state) => state.members);
 
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -112,8 +111,9 @@ export function BoardPage() {
     if (!user) return;
     const isGuest = user.data.userRole === 'guest';
     if (isGuest) return;
+    const members = useRoomStore.getState().members;
     const roomMembership = members.find((m) => m.data.roomId === roomId);
-    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+    const isMember = (roomMembership && roomMembership.data.members) ? roomMembership.data.members.includes(user._id) : false;
     if (!isMember) {
       toast({
         title: 'Room Membership Invalid',
@@ -124,7 +124,7 @@ export function BoardPage() {
       });
       toHome();
     }
-  }, [members, user]);
+  }, [user]);
 
   // Scroll detection
   useEffect(() => {
@@ -210,18 +210,22 @@ export function BoardPage() {
       // Show a notification
       toast({
         title: 'Reduced Functionality in Browser Version',
-        status: 'info',
+        status: 'warning',
         duration: null, // never close automatically
         isClosable: true,
         position: 'bottom',
         description: (
-          <p>
-            By accessing our SAGE3 through a browser, you will lose access to key features that are only available in our native client. This may significantly impact your experience.<br />
-            Continue in the SAGE3 client ?
-            <Button ml="2" size="xs" colorScheme="green" onClick={openDesktopApp}>
-              OK
-            </Button>
-          </p>
+          <div>
+            <p>
+              Using SAGE3 on a web browser will __not__ support several key features that are only available on the SAGE3 application. Download the SAGE3 application at <a target='_blank' style={{ textDecoration: "underline" }} href="https://sage3.sagecommons.org/?page_id=358">sage3.sagecommons.org</a>.
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Would you like to open this board in the SAGE3 application (if you have it installed)?
+              <Button ml="2" size="xs" colorScheme={"green"} onClick={openDesktopApp}>
+                OK
+              </Button>
+            </p>
+          </div>
         ),
       });
     }
