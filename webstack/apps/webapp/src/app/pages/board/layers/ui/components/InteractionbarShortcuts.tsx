@@ -55,7 +55,7 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('grab');
-      setSelectedAppsIds([]);
+      setSelectedApp('');
     },
     { dependencies: [] }
   );
