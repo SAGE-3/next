@@ -335,6 +335,7 @@ export function AppWindow(props: WindowProps) {
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
