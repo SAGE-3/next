@@ -32,6 +32,12 @@ from libs.utils import getModelsInfo, getPDFFile
 import chromadb
 from chromadb.config import Settings
 
+# PDF
+import pymupdf4llm
+import pymupdf
+from io import BytesIO
+from libs.pdf.pdf_utils import generate_answer
+
 
 class PDFAgent:
     def __init__(
@@ -99,11 +105,18 @@ class PDFAgent:
         description = "No description available."
         # Retrieve the PDF content
         pdfContent = getPDFFile(self.ps3, qq.asset)
+        
         if pdfContent:
             ## Do something with the PDF content
-            description = f"PDF content retrieved: {len(pdfContent)} bytes"
+            # description = f"PDF content retrieved: {len(pdfContent)} bytes"
+            # print(pdfContent)
+            pdf_stream = BytesIO(pdfContent)
+            pdf_document = pymupdf.open(stream=pdf_stream, filetype="pdf")
+            md = pymupdf4llm.to_markdown(pdf_document)
+            
+            answer = await generate_answer(qq, self.llm_openai, md, self.llm_openai.openai_api_key)
 
-        text = description
+        text = answer
 
         # Propose the answer to the user
         action1 = json.dumps(
