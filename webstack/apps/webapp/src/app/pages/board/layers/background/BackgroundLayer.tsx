@@ -271,22 +271,22 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced((prev) => {
         if (prev) {
-          // draggedOnCheck(event.target as HTMLElement);
+          draggedOnCheck(event.target as HTMLElement);
           // This way ensures that it will be the most up to date element...
-          setCursorPos((cur) => {
-            const element = document.elementFromPoint(cur.x, cur.y);
-            draggedOnCheck(element as HTMLElement);
-            return cur;
-          });
+          // setCursorPos((cur) => {
+          //   const element = document.elementFromPoint(cur.x, cur.y);
+          //   draggedOnCheck(element as HTMLElement);
+          //   return cur;
+          // });
         }
         return prev;
       });
 
       if (selectedApp) {
-        if (primaryActionMode === 'grab') {
-          // In an effort to acknowledge the time+0 input; Having a SetTimeout calling the re-calling the current function may not work due to the depency array
-          grabModeDeselection();
-        }
+        // if (primaryActionMode === 'grab') {
+        //   // In an effort to acknowledge the time+0 input; Having a SetTimeout calling the re-calling the current function may not work due to the depency array
+        //   grabModeDeselection();
+        // }
         return;
       }
 
@@ -323,9 +323,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
 
       if (selectedApp) {
-        if (primaryActionMode === 'grab' && (event.buttons & 1 || event.buttons & 4)) {
-          grabModeDeselection();
-        }
+        // if (primaryActionMode === 'grab' && (event.buttons & 1 || event.buttons & 4)) {
+        //   grabModeDeselection();
+        // }
         return;
       }
 
@@ -361,9 +361,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
 
       if (selectedApp) {
-        if (primaryActionMode === 'grab') {
-          grabModeDeselection();
-        }
+        // if (primaryActionMode === 'grab') {
+        //   grabModeDeselection();
+        // }
         return;
       }
 

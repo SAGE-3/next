@@ -42,7 +42,7 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
@@ -258,9 +258,9 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
 
     // // Uncomment me to block selection behaviour on AppWindows
-    // if (primaryActionMode === 'grab') {
-    //   return;
-    // }
+    if (primaryActionMode === 'grab') {
+      return;
+    }
 
     handleBringAppForward();
     // Set the selected app in the UI store
@@ -268,6 +268,10 @@ export function AppWindow(props: WindowProps) {
     else {
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
@@ -275,9 +279,9 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
 
     // // Uncomment me to block selection behaviour on AppWindows
-    // if (primaryActionMode === 'grab') {
-    //   return;
-    // }
+    if (primaryActionMode === 'grab') {
+      return;
+    }
 
     handleBringAppForward();
     // Set the selected app in the UI store
@@ -286,6 +290,10 @@ export function AppWindow(props: WindowProps) {
     } else {
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
