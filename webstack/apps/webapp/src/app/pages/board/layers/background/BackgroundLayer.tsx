@@ -54,7 +54,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
-  // Bulk of Movement Code Starts Here
+  /////////////////////////////////
+  // UI Store Board Syncronizers //
+  /////////////////////////////////
   // Forward boardPosition to localBoardPosition
   useEffect(() => {
     setLocalBoardPosition({ x: boardPosition.x, y: boardPosition.y, scale: scale });
@@ -86,6 +88,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
 
+  ////////////////////////
+  // Local Calculations //
+  ////////////////////////
   const localZoomInDelta = (d: number, cursor: { x: number; y: number }) => {
     const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
     setLocalBoardPosition((prev) => {
@@ -109,6 +114,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     });
   };
 
+  /////////////////////////////////
+  // User Target Element Checker //
+  /////////////////////////////////
   const draggedOnCheck = (event: any) => {
     const target = event.target as HTMLElement;
     // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
@@ -155,25 +163,43 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }
   };
 
-  // Make sure the initial mouse click is on a valid surface
+  ///////////////////////////////////////////
+  // Mouse/TouchPad/TouchScreen Behaviours //
+  ///////////////////////////////////////////
+  // (INITAL CLICKS) Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
       draggedOnCheck(event);
     };
 
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length >= 1) {
+        draggedOnTouchCheck(event);
+
+        setLastTouch(
+          Array.from(event.touches).map((touch, index) => {
+            return { x: touch.clientX, y: touch.clientY };
+          })
+        );
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
     window.addEventListener('mousedown', handleMouseStart, { capture: true, passive: false });
     return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('mousedown', handleMouseStart);
     };
   }, []);
 
-  // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
+  // (MOVEMENT) Movement
   useEffect(() => {
     // Mouse (Scroll Wheel) & Touchpad (Two Finger Pan)
     const handleMove = (event: WheelEvent) => {
       if (event.ctrlKey) {
-        event.preventDefault();
+        event.preventDefault(); // Page Zoom Inhibitors
       }
+
       if (boardLocked) {
         return;
       }
@@ -249,39 +275,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: false });
-    window.addEventListener('wheel', handleMove, { passive: false });
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('wheel', handleMove);
-    };
-  }, [selectedApp, primaryActionMode, boardLocked]);
-
-  // Movement with Page Zoom Inhibitors (For Touch Screen)
-  useEffect(() => {
-    const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length >= 1) {
-        draggedOnTouchCheck(event);
-
-        setLastTouch(
-          Array.from(event.touches).map((touch, index) => {
-            return { x: touch.clientX, y: touch.clientY };
-          })
-        );
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-    };
-  }, []);
-
-  useEffect(() => {
     // Touch Screen
     const handleTouchMove = (event: TouchEvent) => {
-      event.preventDefault();
+      event.preventDefault(); // Page Zoom Inhibitors
       event.stopPropagation();
 
       if (boardLocked) {
@@ -374,9 +370,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     };
 
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('mousemove', handleMouseMove, { passive: false });
+    window.addEventListener('wheel', handleMove, { passive: false });
 
     return () => {
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('wheel', handleMove);
     };
   }, [selectedApp, primaryActionMode, boardLocked]);
 
