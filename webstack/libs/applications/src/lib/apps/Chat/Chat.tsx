@@ -338,6 +338,8 @@ function AppComponent(props: App): JSX.Element {
     setPreviousQuestion('');
     setPreviousAnswer('');
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
+    setProcessing(false);
+    setActions([]);
   };
 
   const onSummary = async () => {
@@ -551,6 +553,9 @@ function AppComponent(props: App): JSX.Element {
   const onWebLinks = async () => {
     return onContentWeb('Read the page content and list the main links that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.');
   };
+  const onWebPDF = async () => {
+    return onContentWeb('Read the page content and find the pdf file that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.');
+  };
 
   const onWebKeywords = async () => {
     return onContentWeb('Read the page and extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text. Provide all your answers using a list in Markdown syntax.');
@@ -597,7 +602,7 @@ function AppComponent(props: App): JSX.Element {
             url: apps[0].data.state.webviewurl,
             user: username,
             model: selectedModel || 'llama',
-            extras: prompt.includes('links') ? 'links' : prompt.includes('images') ? 'images' : prompt.includes('pdfs') ? 'pdfs' : undefined,
+            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : undefined,
           };
           setProcessing(true);
           setActions([]);
@@ -857,9 +862,25 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  /*
+    Chat with Paper:
+      Explain Abstract of this paper
+      Conclusions from the paper
+      Results of the paper
+      Methods used in this paper
+      Summarise introduction of this paper
+      What are the contributions of this paper
+      Explain the practical implications of this paper
+      Limitations of this paper
+      Literature survey of this paper
+      What data has been used in this paper
+      Future works suggested in this paper
+      Find Related Papers
+ */
   const onPDFSummary = async () => {
     return onContentPDF('Read the PDF file and provide a short summary.');
   };
+
 
   const onCodeComment = async () => {
     if (!user) return;
@@ -1589,7 +1610,20 @@ function AppComponent(props: App): JSX.Element {
                 textAlign={"left"}
                 onClick={onWebLinks}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Followup Links</Text></Button>
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Links</Text></Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Find the PDF in the page'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={"left"}
+                onClick={onWebPDF}
+                width="34%"
+              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find PDF</Text></Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
               <Button

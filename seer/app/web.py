@@ -9,8 +9,10 @@
 
 # WebAgent
 
-import json, time
+import json, time, random
+from datetime import datetime
 from logging import Logger
+import urllib.request
 
 # Web API
 from fastapi import HTTPException
@@ -126,12 +128,26 @@ class WebAgent:
         if self.browser is None:
             return WebAnswer(r="Browser not initialized", success=False, actions=[])
 
-        page = await self.browser.new_page(
-            viewport={"width": ww, "height": hh}, device_scale_factor=1, is_mobile=True
+        # An array of user agent strings for different versions of Chrome on Windows and Mac
+        userAgentStrings = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
+        ]
+
+        context = await self.browser.new_context(
+            user_agent=userAgentStrings[random.randint(0, len(userAgentStrings) - 1)],
+            viewport={"width": ww, "height": hh},
+            device_scale_factor=1,
+            is_mobile=True,
         )
+
+        page = await context.new_page()
         # URL to visit
         site = qq.url
         await page.goto(url=site, timeout=5 * 1000)  # wait_until="networkidle")
+
         # Get the title of the webpage
         title = await page.title()
         self.logger.info("web page title> " + title)
@@ -139,20 +155,30 @@ class WebAgent:
         page_text = await page.inner_text("body")
 
         # extras: Optional[str]  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
+        links = None
+        pdfs = None
         if qq.extras and qq.extras == "links":
             # Extract all the links (href attributes) from the page
             links = await page.eval_on_selector_all(
                 "a", "elements => elements.map(el => el.href)"
             )
-            print("Getting links", links)
-        elif qq.extras and qq.extras == "text":
-            print("Getting text")
+            links = sort_and_remove_duplicate_strings(links)
+            self.logger.info("Getting links: " + str(len(links)))
         elif qq.extras and qq.extras == "images":
-            print("Getting images")
+            self.logger.info("Getting images")
         elif qq.extras and qq.extras == "pdfs":
-            print("Getting pdfs")
+            # Extract all the links (href attributes) from the page
+            pdfs = await page.eval_on_selector_all(
+                "a", "elements => elements.map(el => el.href)"
+            )
+            pdfs = sort_and_remove_duplicate_strings(pdfs)
+            pdfs = filter_strings(pdfs, "pdf")
+            if len(pdfs) > 0:
+                self.logger.info("Getting pdf:" + " ".join(pdfs))
 
+        # Done with the page
         await page.close()
+        await context.close()
 
         # Ask the question
         if qq.model == "llama" and self.session_llama:
@@ -191,13 +217,77 @@ class WebAgent:
                 },
             }
         )
+        action2 = None
+        if pdfs:
+            asset = pdfs[0]
+            if asset:
+                with urllib.request.urlopen(asset) as f:
+                    pdf_data = f.read()
+                    # Get the current date and time
+                    now = datetime.now()
+                    # Format the date and time for the filename
+                    filename = now.strftime("_%Y-%m-%d_%H-%M-%S.pdf")
+                    # add username to the filename
+                    filename = qq.user + filename
+                    resp = self.ps3.upload_file(qq.ctx.roomId, filename, pdf_data)
+                    if resp and resp.status_code == 200:
+                        asset = resp.json()[0]
 
+                        # Propose the answer to the user
+                        action2 = json.dumps(
+                            {
+                                "type": "create_app",
+                                "app": "PDFViewer",
+                                "state": {"assetid": asset["id"]},
+                                "data": {
+                                    "title": "Screenshot",
+                                    "position": {
+                                        "x": qq.ctx.pos[0],
+                                        "y": qq.ctx.pos[1],
+                                        "z": 0,
+                                    },
+                                    "size": {
+                                        "width": 800,
+                                        "height": 1035,
+                                        "depth": 0,
+                                    },
+                                },
+                            }
+                        )
+        elif links:
+            action2 = json.dumps(
+                {
+                    "type": "create_app",
+                    "app": "Stickie",
+                    "state": {
+                        "text": "\n".join(links),
+                        "fontSize": 24,
+                        "color": "purple",
+                    },
+                    "data": {
+                        "title": "Answer",
+                        "position": {
+                            "x": qq.ctx.pos[0],
+                            "y": qq.ctx.pos[1],
+                            "z": 0,
+                        },
+                        "size": {"width": 400, "height": 400, "depth": 0},
+                    },
+                }
+            )
         # Build the answer object
-        val = WebAnswer(
-            r=response,
-            success=True,
-            actions=[action1],
-        )
+        if action2:
+            val = WebAnswer(
+                r=response,
+                success=True,
+                actions=[action1, action2],
+            )
+        else:
+            val = WebAnswer(
+                r=response,
+                success=True,
+                actions=[action1],
+            )
         return val
 
     async def process_screenshot(self, qq: WebScreenshot):
@@ -273,3 +363,40 @@ class WebAgent:
             actions=[action1],
         )
         return val
+
+
+#
+# Utility functions
+#
+
+
+def sort_and_remove_duplicate_strings(arr):
+    """
+    Removes duplicates from the input list and sorts the resulting list.
+
+    Args:
+      arr (list): The list of elements to be processed.
+
+    Returns:
+      list: A sorted list with duplicates removed.
+    """
+    # Remove duplicates by converting to a set and back to list
+    arr = list(set(arr))
+    # Sort the list
+    arr.sort()
+    return arr
+
+
+def filter_strings(arr, keyword):
+    """
+    Filters strings from the input list that contain the specified keyword.
+
+    Args:
+      arr (list of str): The list of strings to be filtered.
+      keyword (str): The keyword to filter the list.
+
+    Returns:
+      list of str: A list of strings that contain the keyword.
+    """
+    filtered_arr = [string for string in arr if keyword in string]
+    return filtered_arr
