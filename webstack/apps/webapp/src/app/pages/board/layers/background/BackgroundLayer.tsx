@@ -169,7 +169,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
   useEffect(() => {
-    // Mouse & Touchpad
+    // Mouse (Scroll Wheel) & Touchpad (Two Finger Pan)
     const handleMove = (event: WheelEvent) => {
       if (event.ctrlKey) {
         event.preventDefault();
@@ -218,7 +218,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       });
     };
 
-    // Mouse
+    // Mouse (Left Click)
     const handleMouseMove = (event: MouseEvent) => {
       if (boardLocked) {
         return;
@@ -240,7 +240,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
       setStartedDragOn((draggedOn) => {
         // Tranversal/Panning
-        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn === 'board') {
+        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn !== 'other') {
           move();
         } else if (event.buttons & 4 && (draggedOn === 'app' || draggedOn === 'board' || draggedOn === 'board-actions')) {
           move();
@@ -292,7 +292,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       }
 
       setStartedDragOn((draggedOn) => {
-        if (draggedOn === 'other' || draggedOn === 'app' || draggedOn === 'app-resize') {
+        if (draggedOn === 'other') {
           return draggedOn;
         }
         if (event.touches.length === 1) {
@@ -317,7 +317,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
               return [{ x: event.touches[0].clientX, y: event.touches[0].clientY }];
             });
           }
-        } else if (event.touches.length === 2) {
+        } else if (
+          // If in grab mode, allow 2 finger gesture on all but 'other'; if not in grab, limit to not allow drag on app or app-resize
+          event.touches.length === 2 &&
+          ((primaryActionMode !== 'grab' && draggedOn !== 'app' && draggedOn !== 'app-resize') || primaryActionMode === 'grab')
+        ) {
           setLastTouch((prev) => {
             if (prev.length < 2) {
               return prev;
