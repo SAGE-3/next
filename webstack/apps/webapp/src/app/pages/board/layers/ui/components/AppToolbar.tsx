@@ -76,6 +76,7 @@ import {
 import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
+import { IoMdExit } from 'react-icons/io';
 
 type AppToolbarProps = {
   boardId: string;
@@ -100,6 +101,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -108,6 +110,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
+  const leaveColor = useHexColor('red.400');
   const selectColor = useHexColor('teal');
 
   // Settings
@@ -604,10 +607,10 @@ export function AppToolbar(props: AppToolbarProps) {
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => openEditModal(tag)}
           >
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Edit Tag'}>
               <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Delete Tag'}>
               <TagCloseButton
                 m={0}
                 onClick={(e) => {
@@ -860,6 +863,12 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
+            <Tooltip placement="top" hasArrow={true} label={'Leave App'} openDelay={400} ml="1">
+              <Button onClick={() => setSelectedApp('')} backgroundColor={leaveColor} size="xs" mx="1" p={0}>
+                <IoMdExit size="18px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+
             <ConfirmModal
               isOpen={isDeleteOpen}
               onClose={onDeleteClose}
@@ -913,7 +922,7 @@ export function AppToolbar(props: AppToolbarProps) {
               fontWeight="bold"
               h={'auto'}
               userSelect={'none'}
-            // className="handle"
+              // className="handle"
             >
               {app?.data.type}
             </Text>
