@@ -256,6 +256,9 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
+    if (primaryActionMode === 'grab') {
+      return;
+    }
     handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
@@ -267,6 +270,9 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppTouchStart(e: PointerEvent) {
     e.stopPropagation();
+    if (primaryActionMode === 'grab') {
+      return;
+    }
     handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) {
