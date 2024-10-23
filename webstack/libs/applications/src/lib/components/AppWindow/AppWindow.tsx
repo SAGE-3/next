@@ -262,10 +262,10 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
-    handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
       // // Uncomment to allow for selection in grab mode to change interaction modes
@@ -283,11 +283,11 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
-    handleBringAppForward();
     // Set the selected app in the UI store
     if (appWasDragged) {
       setAppWasDragged(false);
     } else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
       // // Uncomment to allow for selection in grab mode to change interaction modes
