@@ -226,7 +226,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // (INITAL CLICKS) Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
-      draggedOnCheck(event.target as HTMLElement);
+      // Prevent dragging for everyone due to MacOS ctrl + leftclick bringing up context menu
+      if (event.ctrlKey && event.buttons & 1) {
+        setStartedDragOn('other');
+      } else {
+        draggedOnCheck(event.target as HTMLElement);
+      }
     };
 
     const handleTouchStart = (event: TouchEvent) => {
@@ -279,6 +284,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
       if (selectedApp) {
         if (primaryActionMode === 'grab') {
+          // In an effort to acknowledge the time+0 input; Having a SetTimeout calling the re-calling the current function may not work due to the depency array
           grabModeDeselection();
         }
         return;
