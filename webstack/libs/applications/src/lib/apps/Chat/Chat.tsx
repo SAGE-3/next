@@ -602,7 +602,7 @@ function AppComponent(props: App): JSX.Element {
             url: apps[0].data.state.webviewurl,
             user: username,
             model: selectedModel || 'llama',
-            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : undefined,
+            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
           };
           setProcessing(true);
           setActions([]);
