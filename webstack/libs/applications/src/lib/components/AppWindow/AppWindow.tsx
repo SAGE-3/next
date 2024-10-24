@@ -258,9 +258,9 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
 
     // // Uncomment me to block selection behaviour on AppWindows
-    if (primaryActionMode === 'grab') {
-      return;
-    }
+    // if (primaryActionMode === 'grab') {
+    //   return;
+    // }
 
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
@@ -269,9 +269,9 @@ export function AppWindow(props: WindowProps) {
       clearSelectedApps();
       setSelectedApp(props.app._id);
       // // Uncomment to allow for selection in grab mode to change interaction modes
-      // if (primaryActionMode === 'grab') {
-      //   setPrimaryActionMode('lasso');
-      // }
+      if (primaryActionMode === 'grab') {
+        setPrimaryActionMode('lasso');
+      }
     }
   }
 
@@ -279,9 +279,9 @@ export function AppWindow(props: WindowProps) {
     e.stopPropagation();
 
     // // Uncomment me to block selection behaviour on AppWindows
-    if (primaryActionMode === 'grab') {
-      return;
-    }
+    // if (primaryActionMode === 'grab') {
+    //   return;
+    // }
 
     // Set the selected app in the UI store
     if (appWasDragged) {
@@ -291,9 +291,9 @@ export function AppWindow(props: WindowProps) {
       clearSelectedApps();
       setSelectedApp(props.app._id);
       // // Uncomment to allow for selection in grab mode to change interaction modes
-      // if (primaryActionMode === 'grab') {
-      //   setPrimaryActionMode('lasso');
-      // }
+      if (primaryActionMode === 'grab') {
+        setPrimaryActionMode('lasso');
+      }
     }
   }
 
