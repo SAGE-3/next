@@ -208,20 +208,20 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Mouse/TouchPad/TouchScreen Behaviours //
   ///////////////////////////////////////////
   // Keep track of primary position for grab mode movement exiting app behaviour
-  useEffect(() => {
-    // Recommened not to throttle for due to touch users being able to essentially teleport the cursor position
-    // const pointerMove = throttle(100, (e: PointerEvent) => {
-    //   setCursorPos({ x: e.clientX, y: e.clientY });
-    // });
-    const pointerMove = (e: PointerEvent) => {
-      setCursorPos({ x: e.clientX, y: e.clientY });
-    };
+  // useEffect(() => {
+  //   // Recommened not to throttle for due to touch users being able to essentially teleport the cursor position
+  //   // const pointerMove = throttle(100, (e: PointerEvent) => {
+  //   //   setCursorPos({ x: e.clientX, y: e.clientY });
+  //   // });
+  //   const pointerMove = (e: PointerEvent) => {
+  //     setCursorPos({ x: e.clientX, y: e.clientY });
+  //   };
 
-    window.addEventListener('pointermove', pointerMove, { capture: true, passive: false });
-    return () => {
-      window.removeEventListener('pointermove', pointerMove);
-    };
-  }, []);
+  //   window.addEventListener('pointermove', pointerMove, { capture: true, passive: false });
+  //   return () => {
+  //     window.removeEventListener('pointermove', pointerMove);
+  //   };
+  // }, []);
 
   // (INITAL CLICKS) Make sure the initial mouse click is on a valid surface
   useEffect(() => {
