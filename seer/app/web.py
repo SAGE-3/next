@@ -68,7 +68,7 @@ class WebAgent:
         # Llama model
         if llama["url"] and llama["model"]:
             llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
+                base_url=llama["url"],
                 model=llama["model"],
                 stream=False,
                 max_tokens=2000,
@@ -142,8 +142,8 @@ class WebAgent:
             device_scale_factor=1,
             is_mobile=True,
         )
-
         page = await context.new_page()
+
         # URL to visit
         site = qq.url
         await page.goto(url=site, timeout=5 * 1000)  # wait_until="networkidle")
@@ -157,16 +157,16 @@ class WebAgent:
         # extras: Optional[str]  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
         links = None
         pdfs = None
-        if qq.extras and qq.extras == "links":
+        if qq.extras == "links":
             # Extract all the links (href attributes) from the page
             links = await page.eval_on_selector_all(
                 "a", "elements => elements.map(el => el.href)"
             )
             links = sort_and_remove_duplicate_strings(links)
             self.logger.info("Getting links: " + str(len(links)))
-        elif qq.extras and qq.extras == "images":
+        elif qq.extras == "images":
             self.logger.info("Getting images")
-        elif qq.extras and qq.extras == "pdfs":
+        elif qq.extras == "pdfs":
             # Extract all the links (href attributes) from the page
             pdfs = await page.eval_on_selector_all(
                 "a", "elements => elements.map(el => el.href)"
