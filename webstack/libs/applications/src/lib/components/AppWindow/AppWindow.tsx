@@ -444,7 +444,7 @@ export function AppWindow(props: WindowProps) {
           }
           userSelect={'none'}
           zIndex={3}
-          borderRadius={innerBorderRadius}
+          // borderRadius={innerBorderRadius}
         ></Box>
       )}
 
