@@ -860,7 +860,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+            <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
               <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
               </Button>
@@ -870,8 +870,8 @@ export function AppToolbar(props: AppToolbarProps) {
               isOpen={isDeleteOpen}
               onClose={onDeleteClose}
               onConfirm={() => deleteApp(app._id)}
-              title="Delete this Application"
-              message="Are you sure you want to delete this application?"
+              title="Close this Application"
+              message="Are you sure you want to close this application?"
               cancelText="Cancel"
               confirmText="Delete"
               cancelColor="green"
