@@ -417,7 +417,7 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background || primaryActionMode === 'grab' ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {props.children}
