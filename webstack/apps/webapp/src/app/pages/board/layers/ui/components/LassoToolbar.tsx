@@ -197,7 +197,6 @@ export function LassoToolbar(props: LassoToolbarProps) {
     } else {
       return 'Apps';
     }
-    return '';
   };
 
   // This function will check if the selected apps are all of the same type
