@@ -1,0 +1,4 @@
+#/bin/sh
+
+docker run -d --name seer -p 9999:9999 seer 
+

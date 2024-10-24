@@ -22,7 +22,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: state = {
   text: 'stickie note',
-  fontSize: 36,
+  fontSize: 24,
   color: 'yellow',
   lock: false,
   executeInfo: { executeFunc: '', params: {} },
