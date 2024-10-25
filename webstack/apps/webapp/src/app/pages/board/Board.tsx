@@ -113,7 +113,7 @@ export function BoardPage() {
     if (isGuest) return;
     const members = useRoomStore.getState().members;
     const roomMembership = members.find((m) => m.data.roomId === roomId);
-    const isMember = (roomMembership && roomMembership.data.members) ? roomMembership.data.members.includes(user._id) : false;
+    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
     if (!isMember) {
       toast({
         title: 'Room Membership Invalid',
@@ -217,11 +217,16 @@ export function BoardPage() {
         description: (
           <div>
             <p>
-              Using SAGE3 on a web browser will __not__ support several key features that are only available on the SAGE3 application. Download the SAGE3 application at <a target='_blank' style={{ textDecoration: "underline" }} href="https://sage3.sagecommons.org/?page_id=358">sage3.sagecommons.org</a>.
+              Using SAGE3 on a web browser will __not__ support several key features that are only available on the SAGE3 application.
+              Download the SAGE3 application at{' '}
+              <a target="_blank" style={{ textDecoration: 'underline' }} href="https://sage3.sagecommons.org/?page_id=358">
+                sage3.sagecommons.org
+              </a>
+              .
             </p>
             <p style={{ marginTop: '8px' }}>
               Would you like to open this board in the SAGE3 application (if you have it installed)?
-              <Button ml="2" size="xs" colorScheme={"green"} onClick={openDesktopApp}>
+              <Button ml="2" size="xs" colorScheme={'green'} onClick={openDesktopApp}>
                 OK
               </Button>
             </p>

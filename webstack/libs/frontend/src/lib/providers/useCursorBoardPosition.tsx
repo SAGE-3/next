@@ -52,7 +52,12 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   // UseEffect to update the cursor position
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
-      throttleMoveRef(e);
+      // Simple hacky way to fix de-synced mouse and appwindow while dragging
+      // Use Mouse 1 check as this as the controller (top left menu) uses react-rnd
+      // if (!useUIStore.getState().appDragging) {
+      if (e.buttons !== 1) {
+        throttleMoveRef(e);
+      }
     };
     window.addEventListener('mousemove', updateCursor);
     return () => {
