@@ -73,7 +73,6 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
       event.preventDefault();
       // Check if right div ID is clicked
       if (props.divIds.includes(event.target.id) && primaryActionMode !== 'pen') {
-        console.log('context menu');
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;

@@ -91,42 +91,49 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
 
   return (
     <Menu>
-      <MenuButton as={Button} size="sm">
+      <MenuButton
+        as={Button} size="sm"
+        maxWidth="150px"
+        variant={'solid'}
+      >
         Screenshares
         <Badge ml="1" colorScheme={screenshares.length > 0 ? user!.data.color : 'gray'}>
           {screenshares.length}
         </Badge>
       </MenuButton>
-      <MenuList p="0">
-        <MenuGroup title="Screenshares" cursor="default">
+      <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={'100%'} p="2px" m="0">
+        <MenuGroup title="Screenshares" cursor="default" p="0" m="1">
           {screenshares.map((app) => {
             const userName = users.find((u) => u._id === app._createdBy)?.data.name;
             const yours = app._createdBy === user?._id;
             return yours ? (
-              <MenuItem pl="24px" icon={<MdPerson />} key={app._id} onClick={() => handleGoToApp(app)}>
+              <MenuItem py="1px" m="0" icon={<MdPerson size="24px" />} justifyContent="right"
+                key={app._id} onClick={() => handleGoToApp(app)} >
                 {userName} (Yours)
               </MenuItem>
             ) : (
-              <MenuItem pl="24px" icon={<MdPerson />} key={app._id} onClick={() => handleGoToApp(app)}>
+              <MenuItem py="1px" m="0" icon={<MdPerson size="24px" />} justifyContent="right"
+                key={app._id} onClick={() => handleGoToApp(app)} >
                 {userName}
               </MenuItem>
             );
           })}
           {screenshares.length === 0 && (
-            <Text ml="24px" cursor="default">
+            <Text ml="18px" cursor="default">
               No Screenshares
             </Text>
           )}
         </MenuGroup>
-        <MenuGroup title="Actions" cursor="default">
-          <MenuItem pl="24px" icon={<MdPlayArrow />} onClick={() => startScreenshare()} isDisabled={yourScreenshare !== null}>
+        <MenuGroup title="Actions" cursor="default" m="1">
+          {/* py="1px" m="0"> */}
+          <MenuItem onClick={() => startScreenshare()} icon={<MdPlayArrow fontSize="24px" />} isDisabled={yourScreenshare !== null} py="1px" m="0">
             Start Sharing
           </MenuItem>
-          <MenuItem pl="24px" icon={<MdStop />} onClick={() => stopYourScreenshare()} isDisabled={yourScreenshare == null}>
+          <MenuItem onClick={() => stopYourScreenshare()} icon={<MdStop fontSize="24px" />} isDisabled={yourScreenshare == null} py="1px" m="0">
             Stop Sharing
           </MenuItem>
         </MenuGroup>
       </MenuList>
-    </Menu>
+    </Menu >
   );
 }
