@@ -52,7 +52,7 @@ class SummaryAgent:
         self.ps3 = ps3
         # Long context model
         self.llm_llama = ChatNVIDIA(
-            base_url="https://arcade.evl.uic.edu/llama31_8bf",
+            base_url="https://arcade.evl.uic.edu/llama31_8bf/v1",
             model="meta/llama-3.1-8b-instruct",
             max_new_tokens=2048,
         )
