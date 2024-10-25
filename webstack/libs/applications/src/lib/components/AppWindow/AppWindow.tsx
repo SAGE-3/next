@@ -13,7 +13,7 @@ import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
+import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
 
 // Window Components
 import { App } from '../../schema';
@@ -41,6 +41,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // Settings
+  const { settings, setPrimaryActionMode } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   // Can update
   const canMove = useAbility('move', 'apps');
   const canResize = useAbility('resize', 'apps');
@@ -252,24 +256,44 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
-    handleBringAppForward();
+
+    // // Uncomment me to block selection behaviour on AppWindows
+    // if (primaryActionMode === 'grab') {
+    //   return;
+    // }
+
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
   function handleAppTouchStart(e: PointerEvent) {
     e.stopPropagation();
-    handleBringAppForward();
+
+    // // Uncomment me to block selection behaviour on AppWindows
+    // if (primaryActionMode === 'grab') {
+    //   return;
+    // }
+
     // Set the selected app in the UI store
     if (appWasDragged) {
       setAppWasDragged(false);
     } else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
@@ -328,13 +352,15 @@ export function AppWindow(props: WindowProps) {
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
       // enableResizing={enableResize && canResize && !isPinned}
-      enableResizing={enableResize && canResize && !isPinned} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
+      enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
       // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction)}
+      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab'}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
+        touchAction: 'none', // needed to prevent pinch to zoom
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -391,7 +417,7 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {props.children}
@@ -406,10 +432,19 @@ export function AppWindow(props: WindowProps) {
           top="0px"
           width="100%"
           height="100%"
-          cursor="move"
+          cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
+          sx={
+            primaryActionMode === 'grab'
+              ? {
+                  '&:active': {
+                    cursor: 'grabbing',
+                  },
+                }
+              : {}
+          }
           userSelect={'none'}
           zIndex={3}
-          borderRadius={innerBorderRadius}
+          // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

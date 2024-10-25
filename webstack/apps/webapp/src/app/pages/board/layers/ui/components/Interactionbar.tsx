@@ -42,7 +42,7 @@ export function Interactionbar() {
           aria-label={'input-type'}
           onClick={() => {
             setPrimaryActionMode('grab');
-            setSelectedAppsIds([]);
+            setSelectedApp('');
           }}
         ></IconButton>
       </Tooltip>
