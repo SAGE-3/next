@@ -8,7 +8,7 @@
 
 // React and Chakra Imports
 import { useEffect, useState } from 'react';
-import { Badge, Button, Menu, MenuButton, MenuGroup, MenuItem, MenuList, Text } from '@chakra-ui/react';
+import { Badge, Button, Menu, MenuButton, MenuGroup, MenuItem, MenuList, Text, Tooltip } from '@chakra-ui/react';
 import { MdPerson, MdPlayArrow, MdStop } from 'react-icons/md';
 
 // SAGE3 Imports
@@ -91,16 +91,24 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
 
   return (
     <Menu>
-      <MenuButton
-        as={Button} size="sm"
-        maxWidth="150px"
-        variant={'solid'}
-      >
-        Screenshares
-        <Badge ml="1" colorScheme={screenshares.length > 0 ? user!.data.color : 'gray'}>
-          {screenshares.length}
-        </Badge>
-      </MenuButton>
+      <Tooltip label="List of current screenshares" aria-label="Screenshares" placement="top" hasArrow={true} openDelay={400}>
+        <MenuButton
+          as={Button} size="sm"
+          maxWidth="150px"
+          variant={'solid'}
+          colorScheme='gray'
+          sx={{
+            _dark: {
+              bg: 'gray.600', // 'inherit' didnt seem to work
+            },
+          }}
+        >
+          Screenshares
+          <Badge ml="1" colorScheme={screenshares.length > 0 ? user!.data.color : 'gray'}>
+            {screenshares.length}
+          </Badge>
+        </MenuButton>
+      </Tooltip>
       <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={'100%'} p="2px" m="0">
         <MenuGroup title="Screenshares" cursor="default" p="0" m="1">
           {screenshares.map((app) => {
