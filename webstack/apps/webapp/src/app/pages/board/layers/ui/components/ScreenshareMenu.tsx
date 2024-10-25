@@ -30,7 +30,7 @@ interface ScreensharesMenuProps {
  */
 export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Stores (Users, Apps, UI)
-  const { user } = useUser();
+  const { user, accessId } = useUser();
   const users = useUsersStore((state) => state.users);
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
@@ -82,7 +82,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
       size,
       rotation: { x: 0, y: 0, z: 0 },
       type: 'Screenshare',
-      state: { ...(initialValues['Screenshare'] as any) },
+      state: { ...(initialValues['Screenshare'] as any), accessId },
       raised: true,
       dragging: false,
       pinned: false,
