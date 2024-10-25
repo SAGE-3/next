@@ -54,6 +54,7 @@ import {
   KernelsPanel,
   TagsDisplay,
   Interactionbar,
+  ScreenshareMenu,
 } from './components';
 
 type UILayerProps = {
@@ -308,6 +309,7 @@ export function UILayer(props: UILayerProps) {
             config={config}
           />
           <Interactionbar />
+          <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
         </Box>
       </Box>
 

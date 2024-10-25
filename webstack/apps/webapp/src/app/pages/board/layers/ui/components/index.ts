@@ -17,3 +17,4 @@ export * from './BoardTitle';
 export * from './TagsDisplay';
 export * from './Interactionbar';
 export * from './InteractionbarShortcuts';
+export * from './ScreenshareMenu';
