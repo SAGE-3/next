@@ -6,30 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {
-  Thead,
-  Tr,
-  Th,
-  Tbody,
-  Td,
-  Button,
-  Tfoot,
-  Heading,
-  InputGroup,
-  InputLeftElement,
-  Input,
-  IconButton,
-  TableContainer,
-  Table,
-  Tooltip,
-  Box,
-  useColorModeValue,
-} from '@chakra-ui/react';
+import { Thead, Tr, Th, Tbody, Td, Button, Tfoot, Table, Box, useColorModeValue } from '@chakra-ui/react';
 import { SAGEColors, fuzzySearch } from '@sage3/shared';
 import { SBDoc } from '@sage3/shared/types';
-import { use } from 'passport';
-import { useState } from 'react';
-import { MdSearch, MdRefresh } from 'react-icons/md';
 
 type TableDataType<T> = SBDoc & { data: T };
 
@@ -52,9 +31,7 @@ const CellStyle = {
 };
 
 export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
-  const heading = props.heading;
   const data = props.data;
-  const dataCount = data.length;
   const columns = props.columns;
 
   const headerBackgroundColor = useColorModeValue('teal.200', 'teal.600');
@@ -81,7 +58,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
 
   const TableBody = (data: TableDataType<T>[], columns: (keyof T | keyof SBDoc)[]) => {
     return (
-      <Tbody>
+      <Tbody maxHeight="500px" overflowY="scroll">
         {data.map((item: any, i) => {
           return (
             <Tr key={item._id}>
@@ -121,48 +98,6 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
     );
   };
 
-  const TableFooter = (columns: (keyof T | keyof SBDoc)[]) => {
-    return (
-      <Tfoot>
-        <Tr>
-          {columns.map((column, i) => (
-            <Th key={i} style={CellStyle}>
-              {column.toString()}
-            </Th>
-          ))}
-          {props.actions && <Th style={CellStyle}>Actions</Th>}
-        </Tr>
-      </Tfoot>
-    );
-  };
-
-  // const [sortBy, setSortBy] = useState<keyof T>();
-  //  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-  //  const handleSort = (column: keyof T) => {
-  //    if (sortBy === column) {
-  //      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  //    } else {
-  //      setSortBy(column);
-  //      setSortOrder('asc');
-  //    }
-  //  };
-  //  const sort = (a: T, b: T) => {
-  //     if (!sortBy) return 0;
-  //     // Handle sorting for different types
-  //     if (typeof a[sortBy] === 'string') {
-  //       if (a[sortBy] < b[sortBy]) return sortOrder === 'asc' ? -1 : 1;
-  //       if (a[sortBy] > b[sortBy]) return sortOrder === 'asc' ? 1 : -1;
-  //       return 0;
-  //     }
-  //     if (typeof a[sortBy] === 'number') {
-  //       if (a[sortBy] < b[sortBy]) return sortOrder === 'asc' ? -1 : 1;
-  //       if (a[sortBy] > b[sortBy]) return sortOrder === 'asc' ? 1 : -1;
-  //       return 0;
-  //     }
-  //     return 0;
-  //  };
-
   const searchFilter = (item: TableDataType<T>) => {
     // Get all the values from the selected columns and concat in to one string
     let values: Array<string | number | boolean> = [];
@@ -188,13 +123,15 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
     const searchStr = values.join(' ');
     return fuzzySearch(searchStr, props.search);
   };
+
   // Chakra Table
   return (
-    <Box height="100%" overflowY="hidden">
+    // This height is really ugly but I couldnt figure out how to make the table reactively size with a scrollbar
+    // The height is calculated by subtracting the height of the header, footer, tabs, search bar, and padding
+    <Box height="calc(100vh - 16px - 32px - 30px -  42px - 72px - 24px) " overflowY="auto">
       <Table variant="striped" size="sm" layout="fixed">
         {TableHeader(columns)}
         {TableBody(data.filter(searchFilter), columns)}
-        {/* {TableFooter(columns)} */}
       </Table>
     </Box>
   );

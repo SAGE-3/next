@@ -112,7 +112,7 @@
       "spectator" // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
-    "admins": ["rtheriot@hawaii.edu"],
+    "admins": [],
     // Guest configuration
     "guestConfig": {
        // Endpoint for the guest login. No need to change this

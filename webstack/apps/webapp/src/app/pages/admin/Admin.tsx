@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import {
   Code,
   Box,
@@ -55,7 +55,8 @@ import './adminStyle.css';
 
 // Components
 import { TableViewer } from './components';
-import { MdSearch, MdRefresh } from 'react-icons/md';
+import { MdSearch } from 'react-icons/md';
+import { throttle, debounce } from 'throttle-debounce';
 
 export function AdminPage() {
   // SAGE3 Image
@@ -85,6 +86,17 @@ export function AdminPage() {
 
   // Chakra Toggle Color Mode
   const { toggleColorMode, colorMode } = useColorMode();
+
+  const clearAllFetchedData = () => {
+    setBoards([]);
+    setApps([]);
+    setAssets([]);
+    setUsers([]);
+    setRooms([]);
+    setMessages([]);
+    setPresences([]);
+    setInsights([]);
+  };
 
   const fetchApps = () => {
     APIHttp.GET<App>('/apps').then((bb) => {
@@ -131,6 +143,9 @@ export function AdminPage() {
   const [tabIndex, setTabIndex] = useState(0);
   const handleTabChange = (index: number) => {
     setTabIndex(index);
+    setSearch('');
+    setSearchValue('');
+    clearAllFetchedData();
     if (index === 0) fetchRooms();
     if (index === 1) fetchBoards();
     if (index === 2) fetchApps();
@@ -194,6 +209,18 @@ export function AdminPage() {
   };
 
   const [search, setSearch] = useState('');
+  const [searchValue, setSearchValue] = useState('');
+  // Set Search Throttle
+  const throttleSearchValue = throttle(250, (value: string) => {
+    setSearchValue(value);
+  });
+  const throttleSearchValueRef = useCallback(throttleSearchValue, []);
+  // Handle Search Change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    // Need to throttle this to increase performance
+    throttleSearchValueRef(e.target.value);
+  };
 
   return (
     <Flex direction="column" align="center" minH="100vh" py="2">
@@ -212,7 +239,7 @@ export function AdminPage() {
 
         {/* Tab Section that holds the main data and information */}
         <Flex as="main" flex="1" overflow="hidden" my="3">
-          <Tabs isFitted variant="enclosed" flex="1">
+          <Tabs isFitted variant="enclosed" flex="1" onChange={handleTabChange}>
             <TabList>
               <Tab>Rooms</Tab>
               <Tab>Boards</Tab>
@@ -224,21 +251,19 @@ export function AdminPage() {
               <Tab>Messages</Tab>
               <Tab>Logs</Tab>
             </TabList>
-
             {/* Search Input */}
             <InputGroup my="4" colorScheme="teal">
               <InputLeftElement pointerEvents="none">
                 <MdSearch color="gray.300" />
               </InputLeftElement>
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" width="500px" />
+              <Input value={search} onChange={(e) => handleSearchChange(e)} placeholder="Search" width="500px" />
             </InputGroup>
-
-            <TabPanels flex="1" overflow="hidden">
+            <TabPanels flex="1" overflow="hidden" height="100%">
               <TabPanel p={0} height="100%">
                 {TableViewer<RoomSchema>({
                   heading: 'Rooms',
                   data: rooms,
-                  search: search,
+                  search: searchValue,
                   columns: ['_id', 'name', 'description', 'color'],
                   onRefresh: fetchRooms,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'rooms') }],
@@ -248,8 +273,7 @@ export function AdminPage() {
                 {TableViewer<BoardSchema>({
                   heading: 'Boards',
                   data: boards,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'name', 'description', 'isPrivate'],
                   onRefresh: fetchBoards,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'boards') }],
@@ -259,8 +283,7 @@ export function AdminPage() {
                 {TableViewer<AppSchema>({
                   heading: 'Apps',
                   data: apps,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'type', 'title', 'boardId'],
                   onRefresh: fetchApps,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'apps') }],
@@ -270,8 +293,7 @@ export function AdminPage() {
                 {TableViewer<AssetSchema>({
                   heading: 'Assets',
                   data: assets,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'originalfilename', 'mimetype', 'size'],
                   onRefresh: fetchAssets,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') }],
@@ -281,8 +303,7 @@ export function AdminPage() {
                 {TableViewer<UserSchema>({
                   heading: 'Users',
                   data: users,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'],
                   onRefresh: fetchUsers,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'users') }],
@@ -292,8 +313,7 @@ export function AdminPage() {
                 {TableViewer<PresenceSchema>({
                   heading: 'Presences',
                   data: presences,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'userId', 'roomId', 'boardId'],
                   onRefresh: fetchPresences,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'presence') }],
@@ -303,8 +323,7 @@ export function AdminPage() {
                 {TableViewer<InsightSchema>({
                   heading: 'Insights',
                   data: insights,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'app_id', 'boardId'],
                   onRefresh: fetchInsights,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'insight') }],
@@ -314,8 +333,7 @@ export function AdminPage() {
                 {TableViewer<MessageSchema>({
                   heading: 'Messages',
                   data: messages,
-                  search: search,
-
+                  search: searchValue,
                   columns: ['_id', 'type'],
                   onRefresh: fetchMessages,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'message') }],
