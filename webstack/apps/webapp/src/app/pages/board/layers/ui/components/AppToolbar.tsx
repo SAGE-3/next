@@ -837,7 +837,13 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin Application' : 'Pin Application'} openDelay={400} ml="1">
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={app.data.pinned ? 'Unpin Application' : 'Pin Application'}
+              openDelay={400}
+              ml="1"
+            >
               <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
                 {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
               </Button>
@@ -863,7 +869,7 @@ export function AppToolbar(props: AppToolbarProps) {
             </Tooltip>
 
             <Tooltip placement="top" hasArrow={true} label={'Deselect Application'} openDelay={400} ml="1">
-              <Button onClick={() => setSelectedApp('')} colorScheme={'orange'} size="xs" mx="1" p={0}>
+              <Button onClick={() => setSelectedApp('')} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
                 <IoMdExit size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
@@ -912,16 +918,7 @@ export function AppToolbar(props: AppToolbarProps) {
       >
         <Box display="flex" flexDirection="column">
           <Box display="flex" flexDirection="row">
-            <Text
-              textAlign="left"
-              mx={0}
-              p={0}
-              color={textColor}
-              fontSize={14}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-            >
+            <Text textAlign="left" mx={0} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">
