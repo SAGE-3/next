@@ -29,7 +29,7 @@ import {
 
 // Collection specific schemas
 import { App, AppSchema } from '@sage3/applications/schema';
-import { useConfigStore, APIHttp, useRouteNav } from '@sage3/frontend';
+import { APIHttp, useRouteNav } from '@sage3/frontend';
 import {
   Board,
   Asset,
@@ -58,9 +58,6 @@ import { throttle } from 'throttle-debounce';
 export function AdminPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-
-  // Configuration information
-  const config = useConfigStore((state) => state.config);
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);

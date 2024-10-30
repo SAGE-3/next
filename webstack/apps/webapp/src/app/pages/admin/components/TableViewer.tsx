@@ -10,8 +10,26 @@ import { Thead, Tr, Th, Tbody, Td, Button, Table, Box, useColorModeValue } from 
 import { SAGEColors, fuzzySearch } from '@sage3/shared';
 import { SBDoc } from '@sage3/shared/types';
 
+/**
+ * Represents a type that extends the SBDoc type with an additional `data` property.
+ *
+ * @template T - The type of the `data` property.
+ */
 type TableDataType<T> = SBDoc & { data: T };
 
+
+/**
+ * Props for the TableViewer component.
+ *
+ * @template T - The type of the data items.
+ *
+ * @property {string} heading - The heading of the table.
+ * @property {TableDataType<T>[]} data - The data to be displayed in the table.
+ * @property {(keyof T | keyof SBDoc)[]} columns - The columns to be displayed in the table.
+ * @property {() => void} onRefresh - Callback function to refresh the table data.
+ * @property {string} search - The search term to filter the table data.
+ * @property {Array<{ label: string; color: SAGEColors; onClick: (id: string) => void }>} [actions] - Optional actions to be displayed in the table.
+ */
 interface TableViewerProps<T> {
   heading: string;
   data: TableDataType<T>[];
@@ -30,6 +48,14 @@ const CellStyle = {
   whiteSpace: 'no-wrap',
 };
 
+/**
+ * TableViewer component renders a table with dynamic columns and data.
+ * It supports custom actions and search filtering.
+ *
+ * @template T - The type of data being displayed in the table.
+ * @param {TableViewerProps<T>} props - The properties for the TableViewer component.
+ * @returns {JSX.Element} The rendered TableViewer component.
+ */
 export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   const data = props.data;
   const columns = props.columns;
