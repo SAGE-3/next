@@ -19,6 +19,7 @@ export const schema = z.object({
   fontSize: z.number(),
   readonly: z.boolean(),
   filename: z.string().optional(),
+  sources: z.array(z.string()),
 });
 export type state = z.infer<typeof schema>;
 
@@ -27,6 +28,7 @@ export const init: Partial<state> = {
   language: 'javascript',
   fontSize: 18,
   readonly: false,
+  sources: [],
 };
 
 export const name = 'CodeEditor';

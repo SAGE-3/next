@@ -1179,6 +1179,7 @@ function AppComponent(props: App): JSX.Element {
                                 color: colorMessage,
                                 text: message.query,
                                 fontSize: 24,
+                                sources: [props._id],
                               })
                             );
                           }}
@@ -1247,6 +1248,7 @@ function AppComponent(props: App): JSX.Element {
                                   color: 'purple',
                                   text: message.response.trim(),
                                   fontSize: 24,
+                                  sources: [props._id],
                                 })
                               );
                             }}
