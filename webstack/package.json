@@ -87,6 +87,7 @@
     "passport-openidconnect": "^0.1.1",
     "pdfjs-dist": "^3.11.174",
     "peerjs": "^1.4.6",
+    "perfect-arrows": "^0.3.7",
     "perfect-freehand": "^1.2.2",
     "plotly.js": "^2.18.2",
     "plotty": "^0.4.9",

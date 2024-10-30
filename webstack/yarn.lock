@@ -13336,6 +13336,11 @@ peerjs@^1.4.6:
     peerjs-js-binarypack "^2.1.0"
     webrtc-adapter "^9.0.0"
 
+perfect-arrows@^0.3.7:
+  version "0.3.7"
+  resolved "https://registry.yarnpkg.com/perfect-arrows/-/perfect-arrows-0.3.7.tgz#6932e1c82d26cfe86e7933aed28d45502e5ea131"
+  integrity sha512-wEN2gerTPVWl3yqoFEF8OeGbg3aRe2sxNUi9rnyYrCsL4JcI6K2tBDezRtqVrYG0BNtsWLdYiiTrYm+X//8yLQ==
+
 perfect-freehand@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/perfect-freehand/-/perfect-freehand-1.2.2.tgz#292f65b72df0c7f57a89c4b346b50d7139014172"
