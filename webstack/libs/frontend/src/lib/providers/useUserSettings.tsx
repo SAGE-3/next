@@ -8,10 +8,27 @@
 
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
 
+
+/**
+ * Represents the user preferences for the application.
+ *
+ * @typedef {Object} UserSettings
+ *
+ * @property {boolean} showCursors - Indicates whether cursors should be displayed.
+ * @property {boolean} showViewports - Indicates whether viewports should be displayed.
+ * @property {boolean} showAppTitles - Indicates whether application titles should be displayed.
+ * @property {boolean} showProvenance - Indicates whether provenance information should be displayed (arrows).
+ * @property {boolean} showUI - Indicates whether the user interface should be displayed.
+ * @property {boolean} showTags - Indicates whether tags should be displayed.
+ * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
+ * @property {'lasso' | 'grab' | 'pen' | 'eraser'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
+ * @property {'llama' | 'openai'} aiModel - The AI model to be used, either 'llama' or 'openai'.
+ */
 type UserSettings = {
   showCursors: boolean;
   showViewports: boolean;
   showAppTitles: boolean;
+  showProvenance: boolean;
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
@@ -23,6 +40,7 @@ const defaultSettings: UserSettings = {
   showCursors: true,
   showViewports: true,
   showAppTitles: false,
+  showProvenance: true,
   showUI: true,
   showTags: false,
   selectedBoardListView: 'grid',
@@ -37,6 +55,7 @@ type UserSettingsContextType = {
   toggleShowCursors: () => void;
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
+  toggleProvenance: () => void;
   toggleShowUI: () => void;
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
@@ -50,6 +69,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowCursors: () => { },
   toggleShowViewports: () => { },
   toggleShowAppTitles: () => { },
+  toggleProvenance: () => { },
   toggleShowUI: () => { },
   toggleShowTags: () => { },
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
@@ -134,6 +154,16 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
+  const toggleProvenance = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.showProvenance = !prev.showProvenance;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
+
   const toggleShowTags = useCallback(() => {
     setSettings((prev) => {
       const newSettings = { ...prev };
@@ -192,6 +222,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowViewports,
         toggleShowAppTitles,
         toggleShowUI,
+        toggleProvenance,
         toggleShowTags,
         setBoardListView,
         setPrimaryActionMode,

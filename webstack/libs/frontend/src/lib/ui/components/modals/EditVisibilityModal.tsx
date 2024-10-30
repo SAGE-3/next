@@ -43,6 +43,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
+    toggleProvenance,
     toggleShowTags,
     restoreDefaultSettings,
   } = useUserSettings();
@@ -52,6 +53,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
   const showTags = userSettings.showTags;
+  const showProvenance = userSettings.showProvenance;
 
   const initialRef = useRef(null);
 
@@ -109,6 +111,17 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
             </FormLabel>
             <Switch id="other-viewports" colorScheme="teal" isChecked={showTags} onChange={toggleShowTags} isDisabled={!showUI} />
           </FormControl>
+
+
+          <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
+            <FormLabel htmlFor="hide-provenance" mb="0">
+              Provenance
+              <InfoTooltip label={'Show/Hide SAGE3 arrows for provenance. Must enable User Interface.'} />
+            </FormLabel>
+            <Switch id="other-viewports" colorScheme="teal" isChecked={showProvenance} onChange={toggleProvenance} isDisabled={!showUI} />
+          </FormControl>
+
+
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>
           <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>

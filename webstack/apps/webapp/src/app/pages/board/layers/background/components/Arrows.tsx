@@ -23,12 +23,13 @@ import { useThrottleApps, useUIStore, useUserSettings, useHexColor, } from '@sag
 export function Arrows() {
   // Apps Store
   const apps = useThrottleApps(200);
-  console.log('apps:', apps.length);
+
   // UI Store
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  const showProvenance = settings.showProvenance;
 
   // Chakra Color Mode for grid color
   const gray = useColorModeValue('gray.200', 'gray.600');
@@ -36,7 +37,7 @@ export function Arrows() {
   const dotColor = useHexColor("red.400");
   const tipColor = useHexColor("green.400");
 
-  return (showUI &&
+  return ((showUI && showProvenance) &&
     <div
       className="arrows-container"
       style={{
@@ -53,7 +54,6 @@ export function Arrows() {
           height: boardHeight + 'px',
           left: 0,
           top: 0,
-          // zIndex: 100,
           cursor: 'crosshair',
         }}
       >
