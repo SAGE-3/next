@@ -54,6 +54,7 @@ import {
   KernelsPanel,
   TagsDisplay,
   Interactionbar,
+  ScreenshareMenu,
 } from './components';
 
 type UILayerProps = {
@@ -66,9 +67,10 @@ export function UILayer(props: UILayerProps) {
   const canLasso = useAbility('lasso', 'apps');
 
   // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
+  // const { settings, setPrimaryActionMode } = useUserSettings();
+  const { settings } = useUserSettings();
   const showUI = settings.showUI;
-  const primaryActionMode = settings.primaryActionMode;
+  // const primaryActionMode = settings.primaryActionMode;
 
   // Colors
   const tealColorMode = useColorModeValue('teal.500', 'teal.200');
@@ -102,9 +104,6 @@ export function UILayer(props: UILayerProps) {
 
   // Logo
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-
-  // Color
-  // const bgColor = useColorModeValue('#EDF2F7', 'gray.700');
 
   // Navigation
   const { toHome } = useRouteNav();
@@ -308,6 +307,7 @@ export function UILayer(props: UILayerProps) {
             config={config}
           />
           <Interactionbar />
+          <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
         </Box>
       </Box>
 
