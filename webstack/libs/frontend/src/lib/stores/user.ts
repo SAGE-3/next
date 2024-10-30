@@ -17,10 +17,20 @@ import { SAGE3Ability } from '@sage3/shared';
 
 import { APIHttp, SocketAPI } from '../api';
 
+type UserStats = {
+  userId: string;
+  numRooms: number;
+  numBoards: number;
+  numApps: number;
+  numAssets: number;
+  numPlugins: number;
+};
+
 interface UserState {
   users: User[];
   error: string | null;
-  accountDeletion: (id: string) => Promise<void>;
+  getUserStats: (userId: string) => Promise<UserStats | null>;
+  accountDeletion: (id: string) => Promise<boolean>;
   clearError: () => void;
   get: (id: string) => Promise<User | null>;
   subscribeToUsers: () => Promise<void>;
@@ -35,6 +45,25 @@ const UsersStore = create<UserState>()((set, get) => {
   return {
     users: [],
     error: null,
+    getUserStats: async (userId: string) => {
+      const res = await fetch('/api/users/userStats', {
+        body: JSON.stringify({ userId }),
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const jsonResponse = await res.json();
+      if (jsonResponse.success) {
+        const data = jsonResponse.data as any;
+        return data.userStats as UserStats;
+      } else {
+        set({ error: jsonResponse.message });
+        return null;
+      }
+    },
     accountDeletion: async (id: string) => {
       // POST Request to delete the user
       const res = await fetch('/api/users/accountDeletion', {
@@ -46,8 +75,13 @@ const UsersStore = create<UserState>()((set, get) => {
           'Content-Type': 'application/json',
         },
       });
-      const jsonREspone = await res.json();
-      console.log(jsonREspone);
+      const jsonResponse = await res.json();
+      if (jsonResponse.success) {
+        return true;
+      } else {
+        set({ error: jsonResponse.message });
+        return false;
+      }
     },
     clearError: () => {
       set({ error: null });

@@ -18,15 +18,13 @@ import { AppsCollection } from './apps';
 import { AssetsCollection } from './assets';
 import { PluginsCollection } from './plugins';
 
-type UserDeleteInfo = {
+type UserStats = {
   userId: string;
-  userDeleted: boolean;
-  roomsDeleteInfo: RoomDeleteInfo[];
-  authDeleted: boolean;
-  boardsDeleteInfo: BoardDeleteInfo[];
-  appsDeleted: number;
-  assetsDeleted: number;
-  pluginsDeleted: number;
+  numRooms: number;
+  numBoards: number;
+  numApps: number;
+  numAssets: number;
+  numPlugins: number;
 };
 
 class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
@@ -47,6 +45,38 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       }
       if (doc) res.status(200).send({ success: true, data: [doc] });
       else res.status(500).send({ success: false, message: 'Failed to create user.' });
+    });
+
+    // This route will statistical information about the user
+
+    router.post('/userStats', async ({ body }, res) => {
+      const userId = body.userId;
+      if (!userId) {
+        res.status(400).send({ success: false, message: 'No userId provided' });
+        return;
+      }
+
+      const rooms = await RoomsCollection.query('ownerId', userId);
+      const numRooms = rooms ? rooms.length : 0;
+      const boards = await BoardsCollection.query('ownerId', userId);
+      const numBoards = boards ? boards.length : 0;
+      const apps = await AppsCollection.query('_createdBy', userId);
+      const numApps = apps ? apps.length : 0;
+      const assets = await AssetsCollection.query('owner', userId);
+      const numAssets = assets ? assets.length : 0;
+      const plugins = await PluginsCollection.query('ownerId', userId);
+      const numPlugins = plugins ? plugins.length : 0;
+
+      const userStats: UserStats = {
+        userId,
+        numRooms,
+        numBoards,
+        numApps,
+        numAssets,
+        numPlugins,
+      };
+
+      res.status(200).send({ success: true, data: { userStats } });
     });
 
     router.post('/accountDeletion', async ({ body, user, authInfo }, res) => {

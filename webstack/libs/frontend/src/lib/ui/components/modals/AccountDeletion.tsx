@@ -19,18 +19,26 @@ import {
   Box,
   useColorModeValue,
   Button,
-  useToast,
   Input,
 } from '@chakra-ui/react';
 
-import { useHexColor, useUser, useUsersStore } from '@sage3/frontend';
+import { useHexColor, useUsersStore } from '@sage3/frontend';
+import { User } from '@sage3/shared/types';
 
 // Props for the AccountDeletion
 interface AccountDeletionProps {
+  user: User;
   isOpen: boolean;
   onClose: () => void;
 }
-
+type UserStats = {
+  userId: string;
+  numRooms: number;
+  numBoards: number;
+  numApps: number;
+  numAssets: number;
+  numPlugins: number;
+};
 /**
  * Account Deletion Modal
  * @param props
@@ -38,13 +46,14 @@ interface AccountDeletionProps {
  */
 
 export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
-  const { user } = useUser();
-
+  const user = props.user;
   const accountDelete = useUsersStore((state) => state.accountDeletion);
+  const getUserStats = useUsersStore((state) => state.getUserStats);
 
   const email = user?.data.email;
 
-  const toast = useToast();
+  // User stats
+  const [stats, setUserStats] = useState<UserStats | null>(null);
 
   const inputTextPlaceholdColor = useColorModeValue('gray.900', 'gray.100');
   const inputColor = useHexColor(inputTextPlaceholdColor);
@@ -64,6 +73,17 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
     accountDelete(userId);
   };
 
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (user) {
+        const data = await getUserStats(user._id);
+        console.log(data);
+        setUserStats(data);
+      }
+    };
+    fetchUserStats();
+  }, [props.isOpen, user, getUserStats]);
+
   return (
     <Modal isOpen={props.isOpen} onClose={props.onClose} size="lg" colorScheme="red">
       <ModalOverlay />
@@ -71,23 +91,27 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
         <ModalHeader fontSize={'3xl'}>Account Deletion</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Text color={redTextHex} fontWeight={'bold'} fontSize={'lg'}>
+          <Text mb={3}>The following will be removed from this SAGE3 Server</Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Rooms: {stats?.numRooms}
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Boards: {stats?.numBoards}
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Apps: {stats?.numApps}
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Assets: {stats?.numAssets}
+          </Text>
+          <Text color={redTextHex} fontWeight={'bold'}>
+            Plugins: {stats?.numPlugins}
+          </Text>
+          <Text my={3} fontWeight={'bold'} fontSize={'xl'}>
             This action cannot be undone.
           </Text>
-          <Text mt={6} fontWeight="bold">
-            The following will be removed from this SAGE3 Server
-          </Text>
-          <Text color={redTextHex} fontWeight={'bold'}>
-            Your created Rooms, Boards, Apps, and Annotations.
-          </Text>
-          <Text color={redTextHex} fontWeight={'bold'}>
-            Your uploaded Files, Assets, and Plugins.
-          </Text>
-          <Text color={redTextHex} fontWeight={'bold'}>
-            Your User information.
-          </Text>
 
-          <Text mt={6}>Please enter your email address below to confirm:</Text>
+          <Text mt={3}>Please enter your email address below to confirm:</Text>
           <Text>{email}</Text>
 
           <Input

@@ -100,7 +100,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
-      <AccountDeletion isOpen={isOpen} onClose={onClose} />
+      {user && <AccountDeletion user={user} isOpen={isOpen} onClose={onClose} />}
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit User Account</ModalHeader>
@@ -158,7 +158,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           )}
         </ModalBody>
         <ModalFooter justifyContent={'space-between'}>
-          <Button colorScheme="red" onClick={onOpen}>
+          <Button colorScheme="red" onClick={onOpen} isDisabled={!user}>
             Delete Account
           </Button>
           <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name.trim()}>
