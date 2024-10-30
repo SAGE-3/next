@@ -39,5 +39,5 @@ Pillow
 playwright
 
 # ChromaDB AI vector DB
-chromadb
+chromadb==0.5.16
 

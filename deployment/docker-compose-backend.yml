@@ -10,7 +10,7 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
   chromadb:
-    image: "chromadb/chroma:0.5.15"
+    image: "chromadb/chroma:0.5.16"
     ports:
       - "127.0.0.1:8100:8000"
     volumes:
