@@ -55,9 +55,8 @@ export function MembersList(props: { room: Room }) {
       if (!online) return false;
     }
     const roomMembership = members.find((m) => m.data.roomId === props.room._id);
-    const isYourself = u._id === user?._id;
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(u._id) : false;
-    return isMember && !isYourself;
+    return isMember;
   };
 
   const membersSearchFilter = (user: User) => {

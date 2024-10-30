@@ -224,18 +224,20 @@ export function MainButton(props: MainButtonProps) {
 
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
-          <MenuButton
-            as={Button}
-            size="sm"
-            maxWidth="150px"
-            variant={props.buttonStyle ? props.buttonStyle : 'outline'}
-            colorScheme={user?.data.color ? user.data.color : 'white'}
-            leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
-          >
-            <Box textOverflow={'ellipsis'} overflow={'hidden'}>
-              {name}
-            </Box>
-          </MenuButton>
+          <Tooltip label="Main Menu" aria-label="menu" placement="top" hasArrow={true} openDelay={400}>
+            <MenuButton
+              as={Button}
+              size="sm"
+              maxWidth="150px"
+              variant={props.buttonStyle ? props.buttonStyle : 'outline'}
+              colorScheme={user?.data.color ? user.data.color : 'white'}
+              leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
+            >
+              <Box textOverflow={'ellipsis'} overflow={'hidden'}>
+                {name}
+              </Box>
+            </MenuButton>
+          </Tooltip>
         ) : (
           <MenuButton
             marginTop="auto"
