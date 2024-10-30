@@ -223,13 +223,13 @@ export function Controller(props: ControllerProps) {
           isActive={navigation?.show}
           onClick={() => handleShowPanel(navigation)}
         />
-        <IconButtonPanel
+        {/* <IconButtonPanel
           icon={<BiPencil size="32px" />}
           description="Annotation"
           isActive={annotations?.show}
           isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
-        />
+        /> */}
       </Stack>
     </Panel>
   );
