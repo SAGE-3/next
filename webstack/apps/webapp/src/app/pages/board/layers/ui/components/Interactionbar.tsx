@@ -145,112 +145,35 @@ export function Interactionbar() {
           ></IconButton>
         </Tooltip>
 
-        <Divider orientation="vertical" backgroundColor={dividerColor} width="2px" />
-
         <Tooltip label={'Marker — [3]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<BiPencil />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('pen');
-              setSelectedApp('');
-              setSelectedAppsIds([]);
-            }}
-          ></IconButton>
-        </Tooltip>
-        <Tooltip label={'Eraser — [4]'}>
-          <IconButton
-            size="sm"
-            colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<BsEraserFill />}
-            fontSize="xl"
-            aria-label={'input-type'}
-            onClick={() => {
-              setPrimaryActionMode('eraser');
-              setSelectedApp('');
-              setSelectedAppsIds([]);
-            }}
-          ></IconButton>
-        </Tooltip>
-        <Tooltip label={'Eraser — [4]'}>
-          <Popover>
+          <Popover isOpen={primaryActionMode === 'pen'}>
             <PopoverTrigger>
               <IconButton
                 size="sm"
-                aria-label={''}
-                colorScheme="gray"
+                colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
                 sx={{
                   _dark: {
-                    bg: 'gray.600',
+                    bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
                   },
                 }}
-                icon={<MdSettings />}
+                icon={<BiPencil />}
                 fontSize="xl"
-              />
+                aria-label={'input-type'}
+                onClick={() => {
+                  setPrimaryActionMode('pen');
+                  setSelectedApp('');
+                  setSelectedAppsIds([]);
+                }}
+              ></IconButton>
             </PopoverTrigger>
             <PopoverContent width="100%">
-              <PopoverArrow />
-              <PopoverCloseButton />
-              <PopoverHeader>Annotation Settings</PopoverHeader>
+              <PopoverHeader>Annotation</PopoverHeader>
               <PopoverBody>
                 <Flex direction="column" alignItems="center" my="2">
                   <Flex>
                     <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
-                    <Tooltip placement="top" hasArrow label="Undo Last Line">
-                      <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
-                        <FaUndo />
-                      </Button>
-                    </Tooltip>
-
-                    <Tooltip placement="top" hasArrow label="Erase Your Lines">
-                      <Button onClick={myOnOpen} ml="2" size="sm">
-                        <FaEraser />
-                      </Button>
-                    </Tooltip>
-
-                    <Tooltip placement="top" hasArrow label="Erase All">
-                      <Button onClick={allOnOpen} ml="2" size="sm">
-                        <FaTrash />
-                      </Button>
-                    </Tooltip>
                   </Flex>
                   <Flex width="100%" mt="3">
-                    <Text>Opacity</Text>
-                    <Slider
-                      defaultValue={markerOpacity}
-                      min={0.1}
-                      max={1}
-                      step={0.1}
-                      size={'md'}
-                      mx="2"
-                      onChangeEnd={(v) => setMarkerOpacity(v)}
-                      onChange={(v) => setSliderValue1(v)}
-                      onMouseEnter={() => setShowTooltip1(true)}
-                      onMouseLeave={() => setShowTooltip1(false)}
-                    >
-                      <SliderTrack bg={sliderBackground}>
-                        <Box position="relative" right={10} />
-                        <SliderFilledTrack bg={sliderColor} />
-                      </SliderTrack>
-                      <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
-                        <SliderThumb boxSize={4}>
-                          <Box color={thumbColor} as={MdGraphicEq} />
-                        </SliderThumb>
-                      </Tooltip>
-                    </Slider>
                     <Text> Width</Text>
                     <Slider
                       defaultValue={markerSize}
@@ -258,7 +181,7 @@ export function Interactionbar() {
                       max={80}
                       step={1}
                       size={'md'}
-                      mx="2"
+                      ml="6"
                       onChangeEnd={(v) => setMarkerSize(v)}
                       onChange={(v) => setSliderValue2(v)}
                       onMouseEnter={() => setShowTooltip2(true)}
@@ -275,6 +198,78 @@ export function Interactionbar() {
                       </Tooltip>
                     </Slider>
                   </Flex>
+                  <Flex width="100%" mt="3">
+                    <Text>Opacity</Text>
+                    <Slider
+                      defaultValue={markerOpacity}
+                      min={0.1}
+                      max={1}
+                      step={0.1}
+                      size={'md'}
+                      ml="3"
+                      onChangeEnd={(v) => setMarkerOpacity(v)}
+                      onChange={(v) => setSliderValue1(v)}
+                      onMouseEnter={() => setShowTooltip1(true)}
+                      onMouseLeave={() => setShowTooltip1(false)}
+                    >
+                      <SliderTrack bg={sliderBackground}>
+                        <Box position="relative" right={10} />
+                        <SliderFilledTrack bg={sliderColor} />
+                      </SliderTrack>
+                      <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
+                        <SliderThumb boxSize={4}>
+                          <Box color={thumbColor} as={MdGraphicEq} />
+                        </SliderThumb>
+                      </Tooltip>
+                    </Slider>
+                  </Flex>
+                </Flex>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        </Tooltip>
+        <Tooltip label={'Eraser — [4]'}>
+          <Popover isOpen={primaryActionMode === 'eraser'}>
+            <PopoverTrigger>
+              <IconButton
+                size="sm"
+                colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+                sx={{
+                  _dark: {
+                    bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
+                  },
+                }}
+                icon={<BsEraserFill />}
+                fontSize="xl"
+                aria-label={'input-type'}
+                onClick={() => {
+                  setPrimaryActionMode('eraser');
+                  setSelectedApp('');
+                  setSelectedAppsIds([]);
+                }}
+              ></IconButton>
+            </PopoverTrigger>
+            <PopoverContent width="100%">
+              <PopoverHeader>Eraser</PopoverHeader>
+              <PopoverBody>
+                <Flex>
+                  <Tooltip placement="top" hasArrow label="Undo Last Line">
+                    <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
+                      <FaUndo />
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip placement="top" hasArrow label="Erase Your Lines">
+                    <Button onClick={myOnOpen} ml="2" size="sm">
+                      <FaEraser />
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip placement="top" hasArrow label="Erase All">
+                    <Button onClick={allOnOpen} ml="2" size="sm">
+                      <FaTrash />
+                    </Button>
+                  </Tooltip>
                 </Flex>
               </PopoverBody>
             </PopoverContent>
