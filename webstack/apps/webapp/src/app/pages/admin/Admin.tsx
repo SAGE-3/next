@@ -22,11 +22,9 @@ import {
   useToast,
   useColorMode,
   Flex,
-  IconButton,
   Input,
   InputGroup,
   InputLeftElement,
-  Tooltip,
 } from '@chakra-ui/react';
 
 // Collection specific schemas
@@ -40,7 +38,6 @@ import {
   Message,
   Presence,
   Insight,
-  SBDoc,
   RoomSchema,
   BoardSchema,
   AssetSchema,
@@ -56,7 +53,7 @@ import './adminStyle.css';
 // Components
 import { TableViewer } from './components';
 import { MdSearch } from 'react-icons/md';
-import { throttle, debounce } from 'throttle-debounce';
+import { throttle } from 'throttle-debounce';
 
 export function AdminPage() {
   // SAGE3 Image
