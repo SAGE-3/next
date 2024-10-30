@@ -412,6 +412,22 @@ export function useFiles(): UseFiles {
           );
         }
       }
+    } else if (isPythonNotebook(fileType)) {
+      // Look for the file in the asset store
+      for (const a of assets) {
+        if (a._id === fileID) {
+          return setupApp(
+            a.data.originalfilename,
+            'Notebook',
+            xDrop,
+            yDrop,
+            roomId,
+            boardId,
+            { w: 900, h: 1000 },
+            { assetid: fileID }
+          );
+        }
+      }
     } else if (isImage(fileType)) {
       // Check if it is a GeoTiff in disguise
       if (isTiff(fileType)) {
