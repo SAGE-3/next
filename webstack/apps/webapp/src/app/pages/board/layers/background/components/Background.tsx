@@ -18,13 +18,11 @@ import {
   useMessageStore,
   useHotkeys,
   useCursorBoardPosition,
-  useKeyPress,
   setupApp,
   HelpModal,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
-import { InteractionbarShortcuts } from '../../ui/components';
 
 type BackgroundProps = {
   roomId: string;
@@ -193,8 +191,9 @@ export function Background(props: BackgroundProps) {
       width="100%"
       height="100%"
       backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+        1 / scale
+      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
       id="board"
       userSelect={'none'}
       draggable={false}
@@ -206,14 +205,11 @@ export function Background(props: BackgroundProps) {
       }}
       // Drag and drop event handlers
       {...dragProps}
-    // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
-    // onPointerDown={handleDeselect}
+      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+      // onPointerDown={handleDeselect}
     >
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
       {renderContent()}
-
-      {/* Interaction Shortcuts */}
-      <InteractionbarShortcuts />
     </Box>
   );
 }

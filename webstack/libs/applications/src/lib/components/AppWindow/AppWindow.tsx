@@ -257,10 +257,10 @@ export function AppWindow(props: WindowProps) {
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
-    // // Uncomment me to block selection behaviour on AppWindows
-    // if (primaryActionMode === 'grab') {
-    //   return;
-    // }
+    // Uncomment me to block selection behaviour on AppWindows
+    if (primaryActionMode === 'grab') {
+      return;
+    }
 
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
@@ -278,10 +278,10 @@ export function AppWindow(props: WindowProps) {
   function handleAppTouchStart(e: PointerEvent) {
     e.stopPropagation();
 
-    // // Uncomment me to block selection behaviour on AppWindows
-    // if (primaryActionMode === 'grab') {
-    //   return;
-    // }
+    // Uncomment me to block selection behaviour on AppWindows
+    if (primaryActionMode === 'grab') {
+      return;
+    }
 
     // Set the selected app in the UI store
     if (appWasDragged) {

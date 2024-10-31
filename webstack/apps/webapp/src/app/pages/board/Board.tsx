@@ -30,6 +30,7 @@ import {
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
+import { InteractionbarShortcuts } from './layers/ui/components';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -262,6 +263,9 @@ export function BoardPage() {
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
+
+      {/* Interaction Shortcuts */}
+      <InteractionbarShortcuts />
 
       {/* Modal if session is expired */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef} isCentered blockScrollOnMount={false}>

@@ -6,13 +6,18 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useUserSettings, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
+import { useEffect, useState } from 'react';
 
 export function InteractionbarShortcuts() {
   // Settings
-  const { setPrimaryActionMode } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+
+  const [, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | undefined>(undefined);
+  const spacebarPressed = useKeyPress(' ');
 
   // useHotkeys(
   //   'h',
@@ -49,6 +54,20 @@ export function InteractionbarShortcuts() {
   //   },
   //   { dependencies: [] }
   // );
+
+  useEffect(() => {
+    if (spacebarPressed) {
+      setCachedPrimaryActionMode(primaryActionMode);
+      setPrimaryActionMode('grab');
+    } else {
+      setCachedPrimaryActionMode((prev) => {
+        if (prev) {
+          setPrimaryActionMode(prev);
+        }
+        return prev;
+      });
+    }
+  }, [spacebarPressed]);
 
   useHotkeys(
     '1',
