@@ -182,8 +182,6 @@ export function Lasso(props: LassoProps) {
           ) : null}
         </svg>
       </div>
-      {console.log('test') === undefined && <></>}
-
       {renderContent()}
     </>
   );
