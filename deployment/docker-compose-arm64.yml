@@ -12,7 +12,7 @@ services:
       restart_policy:
         condition: on-failure
   chromadb:
-    image: "chromadb/chroma:0.5.15"
+    image: "chromadb/chroma:0.5.16"
     ports:
       - "127.0.0.1:8100:8000"
     volumes:

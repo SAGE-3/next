@@ -8,10 +8,10 @@
 
 // React
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
 
 // Chakra UI
-import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, CircularProgress, Spinner, Text, useToast } from '@chakra-ui/react';
 
 // SAGE3
 import {
@@ -28,10 +28,12 @@ import {
   apiUrls,
   UserSettingsProvider,
   YjsProvider,
+  APIHttp,
 } from '@sage3/frontend';
-import { OpenConfiguration } from '@sage3/shared/types';
+import { Board, BoardSchema, OpenConfiguration } from '@sage3/shared/types';
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
+import e from 'express';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -160,11 +162,13 @@ export function App() {
                     element={
                       <ProtectedAuthRoute>
                         <ProtectedUserRoute>
-                          <CursorBoardPositionProvider>
-                            <YjsProvider>
-                              <BoardPage />
-                            </YjsProvider>
-                          </CursorBoardPositionProvider>
+                          <CheckBoardExistsRoute>
+                            <CursorBoardPositionProvider>
+                              <YjsProvider>
+                                <BoardPage />
+                              </YjsProvider>
+                            </CursorBoardPositionProvider>
+                          </CheckBoardExistsRoute>
                         </ProtectedUserRoute>
                       </ProtectedAuthRoute>
                     }
@@ -204,7 +208,7 @@ export default App;
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
   const { auth, loading } = useAuth();
   if (loading) {
-    return <div>Loading...</div>;
+    return LoadingSpinner();
   } else {
     return auth ? <> {props.children}</> : <Navigate to="/" replace />;
   }
@@ -232,7 +236,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const isSignedInUser = user?.data.userRole === 'user' || user?.data.userRole === 'admin';
 
   if (!user || loading || !data) {
-    return <div>Loading...</div>;
+    return LoadingSpinner();
   } else {
     const config = data as OpenConfiguration;
     // in dev mode, everybody can access the route
@@ -271,4 +275,52 @@ const useConnectStatus = () => {
     };
   }, [socket]);
   return connected;
+};
+
+// A Route check to confirm a board exists
+export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
+  const { boardId, roomId } = useParams();
+
+  // Status of the check, 'pending' means it is still checking, 'exists' means the board exists, 'not-exists' means the board does not exist
+  const [status, setStatus] = useState<'pending' | 'exists' | 'not-exists'>('pending');
+
+  // Toast for when the board does not exist
+  const toast = useToast();
+
+  // UseEffect to check if the board exists
+  useEffect(() => {
+    async function checkBoard() {
+      const response = await APIHttp.GET<Board>(`/boards/${boardId}`);
+      if (response.success) {
+        setStatus('exists');
+      } else {
+        setStatus('not-exists');
+        toast({
+          title: 'Board does not exist',
+          description: 'The board you are trying to access does not exist.',
+          status: 'error',
+          duration: 9000,
+          isClosable: true,
+        });
+      }
+    }
+    checkBoard();
+  }, []);
+
+  // If status is pending, show modal that it is checking
+  if (status === 'pending') {
+    return LoadingSpinner();
+  } else {
+    return status === 'exists' ? <>{props.children}</> : <Navigate to="/home" replace />;
+  }
+};
+
+// Render a spinning chakra loading icon in the center of the page
+export const LoadingSpinner = () => {
+  const teal = useHexColor('teal');
+  return (
+    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
+      <CircularProgress isIndeterminate size={'xl'} color={teal} />
+    </Box>
+  );
 };

@@ -87,6 +87,7 @@ class WebQuery(BaseModel):
     user: str  # user name
     model: str  # AI model: llama, openai
     q: str  # question
+    extras: str  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
 
 
 class WebAnswer(BaseModel):

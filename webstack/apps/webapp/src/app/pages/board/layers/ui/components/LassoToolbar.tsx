@@ -38,6 +38,7 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Spacer,
 } from '@chakra-ui/react';
 
 import {
@@ -53,7 +54,7 @@ import {
   MdAutoAwesomeMotion,
   MdAddCircleOutline,
 } from 'react-icons/md';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -123,6 +124,9 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const panelBackground = useHexColor(background);
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.500');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
+  const buttonTextColor = useColorModeValue('white', 'black');
 
   // Modal disclosure for the Close selected apps
   const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
@@ -563,20 +567,43 @@ for b in bits:
           zIndex={1410} // above the drawer but with tooltips
         >
           <Box display="flex" flexDirection="column">
-            <Text
-              w="100%"
-              textAlign="left"
-              mx={1}
-              color={textColor}
-              fontSize={12}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-              className="handle"
-            >
-              {'Actions'}
-            </Text>
-            <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
+            <Box display="flex" flexDirection="row">
+              <Text
+                textAlign="left"
+                mx={0}
+                p={0}
+                color={textColor}
+                fontSize={14}
+                fontWeight="bold"
+                h={'auto'}
+                userSelect={'none'}
+                className="handle"
+              >
+                Actions
+              </Text>
+
+              <Spacer />
+
+              {/* Sage Intelligence */}
+              <Box>
+                <Tooltip
+                  placement="top"
+                  hasArrow={true}
+                  openDelay={400}
+                  ml="1"
+                  label={'Open selected application in Chat with SAGE Intelligence'}
+                >
+                  <Button onClick={openInChat} backgroundColor={intelligenceColor}
+                    variant='solid' size="xs" m={0} mr={2} p={0}
+                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
+                    <HiOutlineSparkles size="20px" color={"white"} />
+                  </Button>
+                </Tooltip>
+              </Box>
+            </Box>
+
+            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}
+              minWidth={"100px"}>
               {/* Show the GroupedToolberComponent here */}
               {selectedAppFunctions()}
 
@@ -694,31 +721,17 @@ for b in bits:
 
                   <MenuDivider />
 
-                  <MenuGroup title="AI Actions" m="1">
+                  <MenuGroup title="Actions" m="1">
                     <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
-                    </MenuItem>
-                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />} py="0" m="0">
-                      Open in Chat
                     </MenuItem>
                   </MenuGroup>
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
-                <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdChat size="18px" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Open in SageCell'} openDelay={400}>
-                <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <FaPython size="18px" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
-                  <HiOutlineTrash size="18px" />
+              <Tooltip placement="top" hasArrow={true} label={'Close the selected applications'} openDelay={400}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme='red' isDisabled={!canDeleteApp}>
+                  <HiOutlineTrash size="18px" color={buttonTextColor} />
                 </Button>
               </Tooltip>
             </Box>
@@ -730,7 +743,7 @@ for b in bits:
         isOpen={deleteIsOpen}
         onClose={deleteOnClose}
         onConfirm={closeSelectedApps}
-        title="Close Selected Apps"
+        title="Close Selected Applications"
         message={`Are you sure you want to close the selected ${lassoApps.length > 1 ? `${lassoApps.length} apps?` : 'app?'} `}
         cancelText="Cancel"
         confirmText="Yes"

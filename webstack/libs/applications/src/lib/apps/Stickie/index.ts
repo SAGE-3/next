@@ -13,6 +13,7 @@ export const schema = z.object({
   fontSize: z.number(),
   color: z.string(),
   lock: z.boolean(),
+  sources: z.array(z.string()),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.any(),
@@ -25,6 +26,7 @@ export const init: state = {
   fontSize: 24,
   color: 'yellow',
   lock: false,
+  sources: [],
   executeInfo: { executeFunc: '', params: {} },
 };
 

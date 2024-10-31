@@ -98,14 +98,28 @@ def scaleImage(imageContent, imageSize):
 
     Args:
       imageContent (bytes): The content of the image file.
-      ImageSize (int): The desired size of the image.
+      imageSize (int): The desired size of the image.
 
     Returns:
       bytes: The scaled image content in JPEG format.
     """
+    # Open the image from the provided byte content
     img = Image.open(BytesIO(imageContent))
     width, height = img.size
+
+    # Convert the image to RGB format
+    img = img.convert("RGB")
+
+    # Check if the width is zero to avoid division by zero error
+    if width == 0:
+        raise ValueError("Image width cannot be zero.")
+
+    # Resize the image while maintaining the aspect ratio
     img = img.resize((imageSize, int(imageSize / (width / height))))
+
+    # Save the resized image to a bytes buffer in JPEG format
     buffered = BytesIO()
     img.save(buffered, format="JPEG")
+
+    # Return the byte content of the scaled image
     return buffered.getvalue()

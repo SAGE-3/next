@@ -18,3 +18,4 @@ export * from './TagsDisplay';
 export * from './IntelligencePane';
 export * from './Interactionbar';
 export * from './InteractionbarShortcuts';
+export * from './ScreenshareMenu';
