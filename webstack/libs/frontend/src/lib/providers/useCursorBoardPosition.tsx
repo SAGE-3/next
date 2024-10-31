@@ -69,13 +69,15 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
 
     const stopListening = (e: MouseEvent) => {
       // !useUIStore.getState().appDragging
-      if (e.button === 0 || e.button === 1) {
+      //  || e.button === 1
+      if (e.button === 0) {
         window.removeEventListener('mousemove', updateCursor);
       }
     };
 
-    const startListening = () => {
+    const startListening = (e: MouseEvent) => {
       window.addEventListener('mousemove', updateCursor, { passive: true });
+      // setLastEvent(e);
     };
 
     window.addEventListener('mousemove', updateCursor, { passive: true });
