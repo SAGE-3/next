@@ -335,6 +335,8 @@ export function AppWindow(props: WindowProps) {
   const hideApp = outsideView || boardDragging;
   const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
 
+  const memoizedChildren = useMemo(() => props.children, [props.children]);
+
   return (
     <Rnd
       bounds="parent"
@@ -420,7 +422,7 @@ export function AppWindow(props: WindowProps) {
         boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
-        {props.children}
+        {memoizedChildren}
       </Box>
 
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}

@@ -60,21 +60,50 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     });
   }, [boardSynced]);
 
-  // UseEffect to update the cursor position
+  // Simple hacky way to (try) fix de-synced mouse and appwindow while dragging
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
-      // Simple hacky way to fix de-synced mouse and appwindow while dragging
-      // if (!useUIStore.getState().appDragging) {
       setLastEvent(e);
-      if (e.buttons !== 1) {
-        throttleMoveRef(e);
+      throttleMoveRef(e);
+    };
+
+    const stopListening = (e: MouseEvent) => {
+      // !useUIStore.getState().appDragging
+      if (e.button === 0 || e.button === 1) {
+        window.removeEventListener('mousemove', updateCursor);
       }
     };
+
+    const startListening = () => {
+      window.addEventListener('mousemove', updateCursor);
+    };
+
     window.addEventListener('mousemove', updateCursor);
+    window.addEventListener('mousedown', stopListening);
+    window.addEventListener('mouseup', startListening);
+
     return () => {
+      window.removeEventListener('mousedown', stopListening);
+      window.removeEventListener('mouseup', startListening);
       window.removeEventListener('mousemove', updateCursor);
     };
   }, [throttleMoveRef]);
+
+  // // UseEffect to update the cursor position
+  // useEffect(() => {
+  //   const updateCursor = (e: MouseEvent) => {
+  //     // Simple hacky way to fix de-synced mouse and appwindow while dragging
+  //     // if (!useUIStore.getState().appDragging) {
+  //     setLastEvent(e);
+  //     if (e.buttons !== 1) {
+  //       throttleMoveRef(e);
+  //     }
+  //   };
+  //   window.addEventListener('mousemove', updateCursor);
+  //   return () => {
+  //     window.removeEventListener('mousemove', updateCursor);
+  //   };
+  // }, [throttleMoveRef]);
 
   const uiToBoard = useCallback(
     (x: number, y: number) => {
