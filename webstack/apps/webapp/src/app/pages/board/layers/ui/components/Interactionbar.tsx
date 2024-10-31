@@ -94,6 +94,11 @@ export function Interactionbar() {
   // eraseAllines modal
   const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
 
+  // Annotations popover
+  const { isOpen: annotationsIsOpen, onOpen: annotationsOnOpen, onClose: annotationsOnClose } = useDisclosure();
+  // Eraser popover
+  const { isOpen: eraserIsOpen, onOpen: eraserOnOpen, onClose: eraserOnClose } = useDisclosure();
+
   const eraseYourLines = () => {
     setClearMarkers(true);
     myOnClose();
@@ -142,7 +147,7 @@ export function Interactionbar() {
           ></IconButton>
         </Tooltip>
 
-        <Popover isOpen={primaryActionMode === 'pen'}>
+        <Popover isOpen={annotationsIsOpen}>
           <PopoverTrigger>
             <Tooltip label={'Marker — [3]'} hasArrow={true} openDelay={400}>
               <IconButton
@@ -157,6 +162,8 @@ export function Interactionbar() {
                 fontSize="xl"
                 aria-label={'input-type'}
                 onClick={() => {
+                  eraserOnClose();
+                  if (annotationsIsOpen) annotationsOnClose(); else annotationsOnOpen();
                   setPrimaryActionMode('pen');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
@@ -225,7 +232,7 @@ export function Interactionbar() {
             </PopoverBody>
           </PopoverContent>
         </Popover>
-        <Popover isOpen={primaryActionMode === 'eraser'} closeOnEsc={true}>
+        <Popover isOpen={eraserIsOpen}>
           <PopoverTrigger>
             <Tooltip label={'Eraser — [4]'} placement="top" hasArrow={true} openDelay={400}>
               <IconButton
@@ -240,6 +247,8 @@ export function Interactionbar() {
                 fontSize="xl"
                 aria-label={'input-type'}
                 onClick={() => {
+                  annotationsOnClose();
+                  if (eraserIsOpen) eraserOnClose(); else eraserOnOpen();
                   setPrimaryActionMode('eraser');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
