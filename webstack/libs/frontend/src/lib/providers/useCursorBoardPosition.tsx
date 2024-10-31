@@ -75,10 +75,10 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     };
 
     const startListening = () => {
-      window.addEventListener('mousemove', updateCursor);
+      window.addEventListener('mousemove', updateCursor, { passive: true });
     };
 
-    window.addEventListener('mousemove', updateCursor);
+    window.addEventListener('mousemove', updateCursor, { passive: true });
     window.addEventListener('mousedown', stopListening);
     window.addEventListener('mouseup', startListening);
 
