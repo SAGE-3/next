@@ -6,8 +6,19 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
-import { MdRemoveRedEye } from 'react-icons/md';
+import {
+  Box,
+  useDisclosure,
+  Modal,
+  useToast,
+  useColorModeValue,
+  HStack,
+  IconButton,
+  Tooltip,
+  Divider,
+  ButtonGroup,
+} from '@chakra-ui/react';
+import { MdAdd, MdApps, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -56,6 +67,8 @@ import {
   Interactionbar,
   ScreenshareMenu,
 } from './components';
+import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 type UILayerProps = {
   boardId: string;
@@ -283,14 +296,59 @@ export function UILayer(props: UILayerProps) {
             />
           </Tooltip>
         )}
-
-        {/* The Corner SAGE3 Image Bottom Right */}
-        {showUI && (
-          <Box opacity={0.7} userSelect={'none'}>
-            <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-          </Box>
-        )}
       </HStack>
+      {/* Main Button Bottom Right */}
+      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
+        <Box display="flex" gap="2">
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            mr="1"
+            icon={<MdMap />}
+          />
+        </Box>
+        <ButtonGroup isAttached size="xs" gap="1">
+          <Tooltip label={'Zoom In'}>
+            <IconButton
+              size="sm"
+              colorScheme={'gray'}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              icon={<MdAdd />}
+              fontSize="xl"
+              aria-label={'input-type'}
+            ></IconButton>
+          </Tooltip>
+          <Box bg="gray.600" alignContent={'center'} px="1" fontSize="sm">
+            100%
+          </Box>
+          <Tooltip label={'Zoom Out'}>
+            <IconButton
+              size="sm"
+              colorScheme={'gray'}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              icon={<MdRemove />}
+              fontSize="xl"
+              aria-label={'input-type'}
+            ></IconButton>
+          </Tooltip>
+        </ButtonGroup>
+      </Box>
 
       {/* Main Button Bottom Left */}
       <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
@@ -306,8 +364,78 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
+
+          <Divider orientation="vertical" />
           <Interactionbar />
-          <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          <Divider orientation="vertical" />
+          {/* <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} /> */}
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            icon={<MdPeople />}
+          />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            icon={<MdApps />}
+          />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            icon={<HiPuzzle />}
+          />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            icon={<MdFolder />}
+          />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={'gray'}
+            sx={{
+              _dark: {
+                bg: 'gray.600',
+              },
+            }}
+            icon={<HiChip />}
+          />
+          <Divider orientation="vertical" />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" colorScheme={'purple'} icon={<IoSparklesSharp />} />
         </Box>
       </Box>
 
@@ -347,7 +475,7 @@ export function UILayer(props: UILayerProps) {
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
+      {/* <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} /> */}
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}

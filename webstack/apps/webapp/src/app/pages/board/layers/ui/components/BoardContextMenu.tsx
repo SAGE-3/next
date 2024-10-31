@@ -7,13 +7,40 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, Button, useColorModeValue, VStack, Text, useColorMode, HStack, Center, Divider, Spacer } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  useColorModeValue,
+  VStack,
+  Text,
+  useColorMode,
+  HStack,
+  Center,
+  Divider,
+  Spacer,
+  Flex,
+  IconButton,
+} from '@chakra-ui/react';
 
-import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, usePanelStore, useConfigStore } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useUser,
+  useRouteNav,
+  useCursorBoardPosition,
+  usePanelStore,
+  useConfigStore,
+  useHexColor,
+} from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
 import { Interactionbar } from './Interactionbar';
+import { MdApps, MdArrowCircleUp, MdClose, MdFolder, MdLock, MdPeople, MdPin, MdPinDrop } from 'react-icons/md';
+import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { LiaHandPaperSolid, LiaMousePointerSolid } from 'react-icons/lia';
+import { BiPencil } from 'react-icons/bi';
+import { BsEraserFill } from 'react-icons/bs';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -33,6 +60,8 @@ export function BoardContextMenu(props: ContextProps) {
 
   // User information
   const { user, accessId } = useUser();
+  const userColor = user ? user.data.color : 'teal';
+  const userColorHex = useHexColor(userColor);
 
   const { toHome } = useRouteNav();
   // Redirect the user back to the homepage
@@ -137,192 +166,245 @@ export function BoardContextMenu(props: ContextProps) {
     });
   };
 
+  // A semi transparent gray blur background
+  const background = useColorModeValue('gray.200', 'gray.600');
+  const backgroundHex = useHexColor(background);
+
   return (
-    <Box
-      whiteSpace={'nowrap'}
-      boxShadow={`4px 4px 10px 0px ${shadowColor}`}
-      p="2"
-      rounded="xl"
-      bg={panelBackground}
-      cursor="auto"
-      w={'100%'}
-    >
-      <HStack spacing={2} alignItems="start" justifyContent={'left'}>
-        <VStack w={'130px'} spacing={"6px"}>
-          <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
-            Actions
-          </Text>
-
-          <Center>
-            <Interactionbar />
-          </Center>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => handleHomeClick()}
-          >
-            Back to Room
-          </Button>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => updatePanel('controller', { position: { x: contextMenuPosition.x, y: contextMenuPosition.y } })}
-          >
-            Bring Controller
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.clearBoard}
-          >
-            Clear Board
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={toggleColorMode}
-          >
-            {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={props.showAllApps}
-          >
-            Show all Apps
-          </Button>
-        </VStack>
-
-        <Center h={'235px'}>
-          <Divider orientation="vertical" h={'100%'} />
-        </Center>
-
-        <VStack w={'130px'} spacing={"6px"}>
-          <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
-            Apps
-          </Text>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="32px"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => openChat()}
-            isDisabled={!appsList.includes('Chat')}
-          >
-            Chat
-          </Button>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => newApplication('SageCell')}
-            isDisabled={!appsList.includes('SageCell')}
-          >
-            SageCell
-          </Button>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            onClick={() => newApplication('Screenshare')}
-            isDisabled={!appsList.includes('Screenshare')}
-          >
-            Screenshare
-          </Button>
-
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isDisabled={!appsList.includes('Stickie')}
-            onClick={() => newApplication('Stickie', user?.data.name)}
-          >
-            Stickie
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isDisabled={!appsList.includes('TLDraw')}
-            onClick={() => newApplication('TLDraw', user?.data.name)}
-          >
-            TLDraw
-          </Button>
-          <Button
-            w="100%"
-            borderRadius={2}
-            h="2em"
-            p={1}
-            mt={0}
-            fontSize={14}
-            color={textColor}
-            justifyContent="flex-start"
-            isDisabled={!appsList.includes('Webview')}
-            onClick={() => newApplication('Webview')}
-          >
-            Webview
-          </Button>
-        </VStack>
-      </HStack>
+    <Box position="absolute" bottom="-50px" left="-55px" width="110px" height="110px">
+      <Box
+        position="absolute"
+        bottom="35px"
+        left="35px"
+        width="50px"
+        height="50px"
+        border={`dashed 2px ${userColorHex}`}
+        background={userColorHex}
+        opacity={0.0}
+        borderRadius="100%"
+      />
+      <Flex flexDir={'column'} justifyContent={'center'} alignItems={'center'} gap="2">
+        <Flex gap="1" justifyContent={'center'}>
+          <IconButton aria-label="applications" fontSize="2xl" variant="solid" size="sm" icon={<MdApps />} />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<HiPuzzle />} />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<HiChip />} />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<MdFolder />} />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<MdPeople />} />
+        </Flex>
+        <Flex justifyContent={'space-between'} width="100px">
+          <IconButton aria-label="Up Arrow" variant="ghost" fontSize="md" colorScheme={'red'} size="xs" icon={<MdClose />} />
+          <IconButton aria-label="Up Arrow" variant="ghost" fontSize="md" colorScheme={userColor} size="xs" icon={<MdLock />} />
+        </Flex>
+        <Flex gap="1" justifyContent={'center'}>
+          <IconButton
+            aria-label="applications"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            // colorScheme={userColor}
+            icon={<LiaHandPaperSolid />}
+          />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="2xl"
+            variant="solid"
+            size="sm"
+            colorScheme={userColor}
+            icon={<LiaMousePointerSolid />}
+          />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<BiPencil />} />
+          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<BsEraserFill />} />
+        </Flex>
+      </Flex>
     </Box>
   );
 }
+
+//     <Box
+//       whiteSpace={'nowrap'}
+//       boxShadow={`4px 4px 10px 0px ${shadowColor}`}
+//       p="2"
+//       rounded="xl"
+//       bg={panelBackground}
+//       cursor="auto"
+//       w={'100%'}
+//     >
+//       <HStack spacing={2} alignItems="start" justifyContent={'left'}>
+//         <VStack w={'130px'} spacing={"6px"}>
+//           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
+//             Actions
+//           </Text>
+
+//           <Center>
+//             <Interactionbar />
+//           </Center>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={() => handleHomeClick()}
+//           >
+//             Back to Room
+//           </Button>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={() => updatePanel('controller', { position: { x: contextMenuPosition.x, y: contextMenuPosition.y } })}
+//           >
+//             Bring Controller
+//           </Button>
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={props.clearBoard}
+//           >
+//             Clear Board
+//           </Button>
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={toggleColorMode}
+//           >
+//             {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+//           </Button>
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={props.showAllApps}
+//           >
+//             Show all Apps
+//           </Button>
+//         </VStack>
+
+//         <Center h={'235px'}>
+//           <Divider orientation="vertical" h={'100%'} />
+//         </Center>
+
+//         <VStack w={'130px'} spacing={"6px"}>
+//           <Text className="header" color={textColor} fontSize={18} h={'auto'} userSelect={'none'} fontWeight="bold" justifyContent={'left'}>
+//             Apps
+//           </Text>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="32px"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={() => openChat()}
+//             isDisabled={!appsList.includes('Chat')}
+//           >
+//             Chat
+//           </Button>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={() => newApplication('SageCell')}
+//             isDisabled={!appsList.includes('SageCell')}
+//           >
+//             SageCell
+//           </Button>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             onClick={() => newApplication('Screenshare')}
+//             isDisabled={!appsList.includes('Screenshare')}
+//           >
+//             Screenshare
+//           </Button>
+
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             isDisabled={!appsList.includes('Stickie')}
+//             onClick={() => newApplication('Stickie', user?.data.name)}
+//           >
+//             Stickie
+//           </Button>
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             isDisabled={!appsList.includes('TLDraw')}
+//             onClick={() => newApplication('TLDraw', user?.data.name)}
+//           >
+//             TLDraw
+//           </Button>
+//           <Button
+//             w="100%"
+//             borderRadius={2}
+//             h="2em"
+//             p={1}
+//             mt={0}
+//             fontSize={14}
+//             color={textColor}
+//             justifyContent="flex-start"
+//             isDisabled={!appsList.includes('Webview')}
+//             onClick={() => newApplication('Webview')}
+//           >
+//             Webview
+//           </Button>
+//         </VStack>
+//       </HStack>
+//     </Box>
+//   );
+// }
