@@ -151,32 +151,30 @@ export function Interactionbar() {
           ></IconButton>
         </Tooltip>
 
-        <Popover isOpen={annotationsIsOpen}>
+        <Popover isOpen={annotationsIsOpen && primaryActionMode === 'pen'}>
           <PopoverTrigger>
-            <Tooltip label={'Marker — [3]'} hasArrow={true} openDelay={400}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
-                sx={{
-                  _dark: {
-                    bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
-                  },
-                }}
-                icon={<BiPencil />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  eraserOnClose();
-                  if (annotationsIsOpen) annotationsOnClose(); else annotationsOnOpen();
-                  setPrimaryActionMode('pen');
-                  setSelectedApp('');
-                  setSelectedAppsIds([]);
-                }}
-              ></IconButton>
-            </Tooltip>
+            <IconButton
+              size="sm"
+              colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
+              sx={{
+                _dark: {
+                  bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
+                },
+              }}
+              icon={<BiPencil />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={() => {
+                eraserOnClose();
+                if (annotationsIsOpen) annotationsOnClose(); else annotationsOnOpen();
+                setPrimaryActionMode('pen');
+                setSelectedApp('');
+                setSelectedAppsIds([]);
+              }}
+            ></IconButton>
           </PopoverTrigger>
           <PopoverContent width="100%">
-            <PopoverHeader>Annotations</PopoverHeader>
+            <PopoverHeader>Annotations — [3]</PopoverHeader>
             <PopoverBody>
               <Flex direction="column" alignItems="center" my="2">
                 <Flex>
@@ -236,32 +234,30 @@ export function Interactionbar() {
             </PopoverBody>
           </PopoverContent>
         </Popover>
-        <Popover isOpen={eraserIsOpen}>
+        <Popover isOpen={eraserIsOpen && primaryActionMode === 'eraser'}>
           <PopoverTrigger>
-            <Tooltip label={'Eraser — [4]'} placement="top" hasArrow={true} openDelay={400}>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
-                sx={{
-                  _dark: {
-                    bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
-                  },
-                }}
-                icon={<BsEraserFill />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  annotationsOnClose();
-                  if (eraserIsOpen) eraserOnClose(); else eraserOnOpen();
-                  setPrimaryActionMode('eraser');
-                  setSelectedApp('');
-                  setSelectedAppsIds([]);
-                }}
-              ></IconButton>
-            </Tooltip>
+            <IconButton
+              size="sm"
+              colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+              sx={{
+                _dark: {
+                  bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
+                },
+              }}
+              icon={<BsEraserFill />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={() => {
+                annotationsOnClose();
+                if (eraserIsOpen) eraserOnClose(); else eraserOnOpen();
+                setPrimaryActionMode('eraser');
+                setSelectedApp('');
+                setSelectedAppsIds([]);
+              }}
+            ></IconButton>
           </PopoverTrigger>
           <PopoverContent width="172px">
-            <PopoverHeader>Eraser</PopoverHeader>
+            <PopoverHeader>Eraser — [4]</PopoverHeader>
             <PopoverBody>
               <Flex direction="row" alignContent="left" my="2">
                 <Tooltip placement="top" hasArrow label="Undo Last Line">
