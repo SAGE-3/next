@@ -5,17 +5,15 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+import { useEffect, useState } from 'react';
 
 import {
   IconButton,
   Tooltip,
   ButtonGroup,
-  Divider,
   useColorModeValue,
   Popover,
-  PopoverArrow,
   PopoverBody,
-  PopoverCloseButton,
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
@@ -31,14 +29,13 @@ import {
 } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';
+import { MdGraphicEq } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
+import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
-import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal } from '@sage3/frontend';
-import { MdGraphicEq, MdSettings } from 'react-icons/md';
 import { SAGEColors } from '@sage3/shared';
-import { useEffect, useState } from 'react';
-import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
+import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal } from '@sage3/frontend';
 
 export function Interactionbar() {
   // Settings
@@ -97,6 +94,11 @@ export function Interactionbar() {
   // eraseAllines modal
   const { isOpen: allIsOpen, onOpen: allOnOpen, onClose: allOnClose } = useDisclosure();
 
+  // Annotations popover
+  const { isOpen: annotationsIsOpen, onOpen: annotationsOnOpen, onClose: annotationsOnClose } = useDisclosure();
+  // Eraser popover
+  const { isOpen: eraserIsOpen, onOpen: eraserOnOpen, onClose: eraserOnClose } = useDisclosure();
+
   const eraseYourLines = () => {
     setClearMarkers(true);
     myOnClose();
@@ -109,7 +111,7 @@ export function Interactionbar() {
   return (
     <>
       <ButtonGroup isAttached size="xs">
-        <Tooltip label={'Grab (Panning Tool) — [1]'}>
+        <Tooltip label={'Grab (Panning Tool) — [1]'} placement="top" hasArrow={true} openDelay={400}>
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
@@ -122,12 +124,14 @@ export function Interactionbar() {
             fontSize="xl"
             aria-label={'input-type'}
             onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
             }}
           ></IconButton>
         </Tooltip>
-        <Tooltip label={'Selection — [2]'}>
+        <Tooltip label={'Selection — [2]'} placement="top" hasArrow={true} openDelay={400}>
           <IconButton
             size="sm"
             colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
@@ -140,141 +144,143 @@ export function Interactionbar() {
             fontSize="xl"
             aria-label={'input-type'}
             onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
               setPrimaryActionMode('lasso');
             }}
           ></IconButton>
         </Tooltip>
 
-        <Tooltip label={'Marker — [3]'}>
-          <Popover isOpen={primaryActionMode === 'pen'}>
-            <PopoverTrigger>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
-                sx={{
-                  _dark: {
-                    bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
-                  },
-                }}
-                icon={<BiPencil />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('pen');
-                  setSelectedApp('');
-                  setSelectedAppsIds([]);
-                }}
-              ></IconButton>
-            </PopoverTrigger>
-            <PopoverContent width="100%">
-              <PopoverHeader>Annotation</PopoverHeader>
-              <PopoverBody>
-                <Flex direction="column" alignItems="center" my="2">
-                  <Flex>
-                    <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
-                  </Flex>
-                  <Flex width="100%" mt="3">
-                    <Text> Width</Text>
-                    <Slider
-                      defaultValue={markerSize}
-                      min={1}
-                      max={80}
-                      step={1}
-                      size={'md'}
-                      ml="6"
-                      onChangeEnd={(v) => setMarkerSize(v)}
-                      onChange={(v) => setSliderValue2(v)}
-                      onMouseEnter={() => setShowTooltip2(true)}
-                      onMouseLeave={() => setShowTooltip2(false)}
-                    >
-                      <SliderTrack bg={sliderBackground}>
-                        <Box position="relative" right={10} />
-                        <SliderFilledTrack bg={sliderColor} />
-                      </SliderTrack>
-                      <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
-                        <SliderThumb boxSize={4}>
-                          <Box color={thumbColor} as={MdGraphicEq} />
-                        </SliderThumb>
-                      </Tooltip>
-                    </Slider>
-                  </Flex>
-                  <Flex width="100%" mt="3">
-                    <Text>Opacity</Text>
-                    <Slider
-                      defaultValue={markerOpacity}
-                      min={0.1}
-                      max={1}
-                      step={0.1}
-                      size={'md'}
-                      ml="3"
-                      onChangeEnd={(v) => setMarkerOpacity(v)}
-                      onChange={(v) => setSliderValue1(v)}
-                      onMouseEnter={() => setShowTooltip1(true)}
-                      onMouseLeave={() => setShowTooltip1(false)}
-                    >
-                      <SliderTrack bg={sliderBackground}>
-                        <Box position="relative" right={10} />
-                        <SliderFilledTrack bg={sliderColor} />
-                      </SliderTrack>
-                      <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
-                        <SliderThumb boxSize={4}>
-                          <Box color={thumbColor} as={MdGraphicEq} />
-                        </SliderThumb>
-                      </Tooltip>
-                    </Slider>
-                  </Flex>
-                </Flex>
-              </PopoverBody>
-            </PopoverContent>
-          </Popover>
-        </Tooltip>
-        <Tooltip label={'Eraser — [4]'}>
-          <Popover isOpen={primaryActionMode === 'eraser'}>
-            <PopoverTrigger>
-              <IconButton
-                size="sm"
-                colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
-                sx={{
-                  _dark: {
-                    bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
-                  },
-                }}
-                icon={<BsEraserFill />}
-                fontSize="xl"
-                aria-label={'input-type'}
-                onClick={() => {
-                  setPrimaryActionMode('eraser');
-                  setSelectedApp('');
-                  setSelectedAppsIds([]);
-                }}
-              ></IconButton>
-            </PopoverTrigger>
-            <PopoverContent width="100%">
-              <PopoverHeader>Eraser</PopoverHeader>
-              <PopoverBody>
+        <Popover isOpen={annotationsIsOpen && primaryActionMode === 'pen'}>
+          <PopoverTrigger>
+            <IconButton
+              size="sm"
+              colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
+              sx={{
+                _dark: {
+                  bg: primaryActionMode === 'pen' ? `${user?.data.color}.200` : 'gray.600',
+                },
+              }}
+              icon={<BiPencil />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={() => {
+                eraserOnClose();
+                if (annotationsIsOpen) annotationsOnClose(); else annotationsOnOpen();
+                setPrimaryActionMode('pen');
+                setSelectedApp('');
+                setSelectedAppsIds([]);
+              }}
+            ></IconButton>
+          </PopoverTrigger>
+          <PopoverContent width="100%">
+            <PopoverHeader>Annotations — [3]</PopoverHeader>
+            <PopoverBody>
+              <Flex direction="column" alignItems="center" my="2">
                 <Flex>
-                  <Tooltip placement="top" hasArrow label="Undo Last Line">
-                    <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
-                      <FaUndo />
-                    </Button>
-                  </Tooltip>
-
-                  <Tooltip placement="top" hasArrow label="Erase Your Lines">
-                    <Button onClick={myOnOpen} ml="2" size="sm">
-                      <FaEraser />
-                    </Button>
-                  </Tooltip>
-
-                  <Tooltip placement="top" hasArrow label="Erase All">
-                    <Button onClick={allOnOpen} ml="2" size="sm">
-                      <FaTrash />
-                    </Button>
-                  </Tooltip>
+                  <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
                 </Flex>
-              </PopoverBody>
-            </PopoverContent>
-          </Popover>
-        </Tooltip>
+                <Flex width="100%" mt="3">
+                  <Text> Width</Text>
+                  <Slider
+                    defaultValue={markerSize}
+                    min={1}
+                    max={80}
+                    step={1}
+                    size={'md'}
+                    ml="6"
+                    onChangeEnd={(v) => setMarkerSize(v)}
+                    onChange={(v) => setSliderValue2(v)}
+                    onMouseEnter={() => setShowTooltip2(true)}
+                    onMouseLeave={() => setShowTooltip2(false)}
+                  >
+                    <SliderTrack bg={sliderBackground}>
+                      <Box position="relative" right={10} />
+                      <SliderFilledTrack bg={sliderColor} />
+                    </SliderTrack>
+                    <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
+                      <SliderThumb boxSize={4}>
+                        <Box color={thumbColor} as={MdGraphicEq} />
+                      </SliderThumb>
+                    </Tooltip>
+                  </Slider>
+                </Flex>
+                <Flex width="100%" mt="3">
+                  <Text>Opacity</Text>
+                  <Slider
+                    defaultValue={markerOpacity}
+                    min={0.1}
+                    max={1}
+                    step={0.1}
+                    size={'md'}
+                    ml="3"
+                    onChangeEnd={(v) => setMarkerOpacity(v)}
+                    onChange={(v) => setSliderValue1(v)}
+                    onMouseEnter={() => setShowTooltip1(true)}
+                    onMouseLeave={() => setShowTooltip1(false)}
+                  >
+                    <SliderTrack bg={sliderBackground}>
+                      <Box position="relative" right={10} />
+                      <SliderFilledTrack bg={sliderColor} />
+                    </SliderTrack>
+                    <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
+                      <SliderThumb boxSize={4}>
+                        <Box color={thumbColor} as={MdGraphicEq} />
+                      </SliderThumb>
+                    </Tooltip>
+                  </Slider>
+                </Flex>
+              </Flex>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+        <Popover isOpen={eraserIsOpen && primaryActionMode === 'eraser'}>
+          <PopoverTrigger>
+            <IconButton
+              size="sm"
+              colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+              sx={{
+                _dark: {
+                  bg: primaryActionMode === 'eraser' ? `${user?.data.color}.200` : 'gray.600',
+                },
+              }}
+              icon={<BsEraserFill />}
+              fontSize="xl"
+              aria-label={'input-type'}
+              onClick={() => {
+                annotationsOnClose();
+                if (eraserIsOpen) eraserOnClose(); else eraserOnOpen();
+                setPrimaryActionMode('eraser');
+                setSelectedApp('');
+                setSelectedAppsIds([]);
+              }}
+            ></IconButton>
+          </PopoverTrigger>
+          <PopoverContent width="172px">
+            <PopoverHeader>Eraser — [4]</PopoverHeader>
+            <PopoverBody>
+              <Flex direction="row" alignContent="left" my="2">
+                <Tooltip placement="top" hasArrow label="Undo Last Line">
+                  <Button onClick={() => setUndoLastMarker(true)} ml="2" size="sm">
+                    <FaUndo />
+                  </Button>
+                </Tooltip>
+
+                <Tooltip placement="top" hasArrow label="Erase Your Lines">
+                  <Button onClick={myOnOpen} ml="2" size="sm">
+                    <FaEraser />
+                  </Button>
+                </Tooltip>
+
+                <Tooltip placement="top" hasArrow label="Erase All">
+                  <Button onClick={allOnOpen} ml="2" size="sm">
+                    <FaTrash />
+                  </Button>
+                </Tooltip>
+              </Flex>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
       </ButtonGroup>
       <ConfirmModal
         isOpen={myIsOpen}
