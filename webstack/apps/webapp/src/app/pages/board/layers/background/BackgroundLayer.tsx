@@ -12,6 +12,7 @@ import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
 import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
+import React from 'react';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -491,11 +492,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Background boardId={props.boardId} roomId={props.roomId} />
 
         {/* Rnd Safety to Mitigate app click dissapear issue when using new movement scheme */}
-        <RndSafety />
+        <RndMemo />
       </Rnd>
     </Box>
   );
 }
+// const BackgroundMemo = React.memo(Background, (prevProps, nextProps) => {
+//   return prevProps.boardId === nextProps.boardId && prevProps.roomId === nextProps.roomId;
+// });
+// const BackgroundMemo = React.memo(Background);
+// const PresenceComponentMemo = React.memo(PresenceComponent);
+// const WhiteboardMemo = React.memo(Whiteboard);
+// const LassoMemo = React.memo(Lasso);
+const RndMemo = React.memo(RndSafety);
 
 // This code has been modified from the one present in useUIStore
 function zoomOnLocationNewPosition(

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Box, useColorModeValue, useToast, ToastId, useDisclosure } from '@chakra-ui/react';
 import { throttle } from 'throttle-debounce';
 
@@ -18,11 +18,13 @@ import {
   useMessageStore,
   useHotkeys,
   useCursorBoardPosition,
+  useKeyPress,
   setupApp,
   HelpModal,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
+import { InteractionbarShortcuts } from '../../ui/components';
 
 type BackgroundProps = {
   roomId: string;
@@ -50,7 +52,7 @@ export function Background(props: BackgroundProps) {
 
   // User
   const { user } = useUser();
-  const { cursor, boardCursor } = useCursorBoardPosition();
+  const { cursor, boardCursor } = useCursorBoardPosition(); // Causing ReRender
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -185,31 +187,38 @@ export function Background(props: BackgroundProps) {
     { dependencies: [] }
   );
 
-  return (
-    <Box
-      className="board-handle"
-      width="100%"
-      height="100%"
-      backgroundSize={'100px 100px'}
-      bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-        1 / scale
-      }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
-      id="board"
-      userSelect={'none'}
-      draggable={false}
-      cursor={'grab'}
-      sx={{
-        '&:active': {
-          cursor: 'grabbing',
-        },
-      }}
-      // Drag and drop event handlers
-      {...dragProps}
-      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
-      // onPointerDown={handleDeselect}
-    >
-      <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
-      {renderContent()}
-    </Box>
-  );
+  const MemoizedBoard = useMemo(() => {
+    return (
+      <Box
+        className="board-handle"
+        width="100%"
+        height="100%"
+        backgroundSize={'100px 100px'}
+        bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+          1 / scale
+        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+        id="board"
+        userSelect={'none'}
+        draggable={false}
+        cursor={'grab'}
+        sx={{
+          '&:active': {
+            cursor: 'grabbing',
+          },
+        }}
+        // Drag and drop event handlers
+        {...dragProps}
+        // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+        // onPointerDown={handleDeselect}
+      >
+        <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
+        {renderContent()}
+
+        {/* Interaction Shortcuts */}
+        <InteractionbarShortcuts />
+      </Box>
+    );
+  }, [gridColor, scale, dragProps, helpOnClose, helpIsOpen, renderContent]);
+
+  return MemoizedBoard;
 }

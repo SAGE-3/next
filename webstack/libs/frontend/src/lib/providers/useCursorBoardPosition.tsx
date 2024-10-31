@@ -64,7 +64,6 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
       // Simple hacky way to fix de-synced mouse and appwindow while dragging
-      // Use Mouse 1 check as this as the controller (top left menu) uses react-rnd
       // if (!useUIStore.getState().appDragging) {
       setLastEvent(e);
       if (e.buttons !== 1) {
@@ -87,4 +86,21 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   return (
     <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>
   );
+}
+
+export function useUIToBoard() {
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+
+  const uiToBoard = useCallback(
+    (x: number, y: number) => {
+      return {
+        x: Math.floor(x / scale - boardPosition.x),
+        y: Math.floor(y / scale - boardPosition.y),
+      };
+    },
+    [boardPosition.x, boardPosition.y, scale]
+  );
+
+  return uiToBoard;
 }

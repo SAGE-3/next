@@ -345,7 +345,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
         {...dragProps}
-      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+        // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}

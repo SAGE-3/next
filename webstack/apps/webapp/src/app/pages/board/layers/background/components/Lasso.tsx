@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 // SAGE Imports
 import { Position, Size } from '@sage3/shared/types';
-import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore } from '@sage3/frontend';
+import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUIToBoard } from '@sage3/frontend';
 import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {
@@ -40,7 +40,13 @@ export function Lasso(props: LassoProps) {
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
   const [modifierAction, setModifierAction] = useState<'none' | 'removal' | 'inverse'>('none');
-  const { uiToBoard } = useCursorBoardPosition();
+
+  // Temporary Fix to Avoid Rerenders
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const scale = useUIStore((state) => state.scale);
+  // const { uiToBoard } = useMemo(() => useCursorBoardPosition(), [boardPosition.x, boardPosition.y, scale]);
+  const uiToBoard = useUIToBoard();
+
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
@@ -176,6 +182,8 @@ export function Lasso(props: LassoProps) {
           ) : null}
         </svg>
       </div>
+      {console.log('test') === undefined && <></>}
+
       {renderContent()}
     </>
   );
