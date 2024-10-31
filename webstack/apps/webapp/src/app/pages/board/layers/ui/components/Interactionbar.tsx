@@ -124,6 +124,8 @@ export function Interactionbar() {
             fontSize="xl"
             aria-label={'input-type'}
             onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
             }}
@@ -142,6 +144,8 @@ export function Interactionbar() {
             fontSize="xl"
             aria-label={'input-type'}
             onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
               setPrimaryActionMode('lasso');
             }}
           ></IconButton>
