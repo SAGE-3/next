@@ -38,6 +38,8 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   const [cursor, setCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const [, setLastEvent] = useState<MouseEvent | undefined>(undefined);
 
   // Throttle Functions for the cursor mousemove
   const throttleMove = throttle(100, (e: any) => {
@@ -49,12 +51,22 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   });
   const throttleMoveRef = useCallback(throttleMove, [boardPosition.x, boardPosition.y, scale]);
 
+  useEffect(() => {
+    setLastEvent((e) => {
+      if (e) {
+        throttleMoveRef(e);
+      }
+      return e;
+    });
+  }, [boardSynced]);
+
   // UseEffect to update the cursor position
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
       // Simple hacky way to fix de-synced mouse and appwindow while dragging
       // Use Mouse 1 check as this as the controller (top left menu) uses react-rnd
       // if (!useUIStore.getState().appDragging) {
+      setLastEvent(e);
       if (e.buttons !== 1) {
         throttleMoveRef(e);
       }
