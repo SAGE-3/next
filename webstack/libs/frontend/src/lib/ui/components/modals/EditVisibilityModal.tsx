@@ -18,6 +18,7 @@ import {
   Switch,
   ModalFooter,
   Button,
+  Select,
   Tooltip,
   Icon,
   ModalCloseButton,
@@ -65,7 +66,7 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
       blockScrollOnMount={false}
       returnFocusOnClose={false}
       initialFocusRef={initialRef}
-      size="sm"
+      size="md"
     >
       <ModalOverlay />
       <ModalContent>
@@ -118,9 +119,14 @@ export function EditVisibilityModal(props: EditPresenceSettingsModalProps): JSX.
               Provenance
               <InfoTooltip label={'Show/Hide SAGE3 arrows for provenance. Must enable User Interface.'} />
             </FormLabel>
-            <Switch id="other-viewports" colorScheme="teal" isChecked={showProvenance} onChange={toggleProvenance} isDisabled={!showUI} />
+            <Select id="other-viewports" colorScheme="teal" size="sm"
+              onChange={(e) => toggleProvenance(e.target.value as 'none' | 'selected' | 'all')}
+              value={showProvenance} isDisabled={!showUI} width="180px" textAlign={'right'}>
+              <option value="none">None</option>
+              <option value="selected">Selected Application</option>
+              <option value="all">All Applications</option>
+            </Select>
           </FormControl>
-
 
         </ModalBody>
         <ModalFooter display="flex" justifyContent={'left'}>
