@@ -7,12 +7,13 @@
  */
 
 import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function InteractionbarShortcuts() {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
+  const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
@@ -55,18 +56,25 @@ export function InteractionbarShortcuts() {
   //   { dependencies: [] }
   // );
 
-  useEffect(() => {
-    if (spacebarPressed) {
-      setCachedPrimaryActionMode(primaryActionMode);
-      setPrimaryActionMode('grab');
+  const handleSpacebarAction = useCallback(() => {
+    if (spacebarPressed && !selectedApp) {
+      if (primaryActionMode !== 'grab') {
+        setCachedPrimaryActionMode(primaryActionMode);
+        setPrimaryActionMode('grab');
+      }
     } else {
       setCachedPrimaryActionMode((prev) => {
         if (prev) {
           setPrimaryActionMode(prev);
+          return undefined;
         }
         return prev;
       });
     }
+  }, [spacebarPressed, primaryActionMode, selectedApp]);
+
+  useEffect(() => {
+    handleSpacebarAction();
   }, [spacebarPressed]);
 
   useHotkeys(
