@@ -108,6 +108,19 @@ export function Interactionbar() {
     allOnClose();
   };
 
+  useEffect(() => {
+    if (primaryActionMode === 'pen') {
+      eraserOnClose();
+      annotationsOnOpen();
+    } else if (primaryActionMode === 'eraser') {
+      annotationsOnClose();
+      eraserOnOpen();
+    } else {
+      eraserOnClose();
+      annotationsOnClose();
+    }
+  }, [primaryActionMode]);
+
   return (
     <>
       <ButtonGroup isAttached={false} spacing={0} size="xs">

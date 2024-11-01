@@ -17,8 +17,33 @@ export function InteractionbarShortcuts() {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
-  const [, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | undefined>(undefined);
+  const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | undefined>(undefined);
   const spacebarPressed = useKeyPress(' ');
+
+  const handleSpacebarAction = useCallback(() => {
+    if (spacebarPressed && !selectedApp) {
+      if (primaryActionMode !== 'grab') {
+        setCachedPrimaryActionMode(primaryActionMode);
+        setPrimaryActionMode('grab');
+      }
+    } else {
+      // setCachedPrimaryActionMode((prev) => {
+      //   if (prev) {
+      //     setPrimaryActionMode(prev);
+      //     return undefined;
+      //   }
+      //   return prev;
+      // });
+      if (cachedPrimaryActionMode) {
+        setPrimaryActionMode(cachedPrimaryActionMode);
+        setCachedPrimaryActionMode(undefined);
+      }
+    }
+  }, [spacebarPressed, primaryActionMode, cachedPrimaryActionMode, selectedApp]);
+
+  useEffect(() => {
+    handleSpacebarAction();
+  }, [spacebarPressed]);
 
   // useHotkeys(
   //   'h',
@@ -55,27 +80,6 @@ export function InteractionbarShortcuts() {
   //   },
   //   { dependencies: [] }
   // );
-
-  const handleSpacebarAction = useCallback(() => {
-    if (spacebarPressed && !selectedApp) {
-      if (primaryActionMode !== 'grab') {
-        setCachedPrimaryActionMode(primaryActionMode);
-        setPrimaryActionMode('grab');
-      }
-    } else {
-      setCachedPrimaryActionMode((prev) => {
-        if (prev) {
-          setPrimaryActionMode(prev);
-          return undefined;
-        }
-        return prev;
-      });
-    }
-  }, [spacebarPressed, primaryActionMode, selectedApp]);
-
-  useEffect(() => {
-    handleSpacebarAction();
-  }, [spacebarPressed]);
 
   useHotkeys(
     '1',
