@@ -97,7 +97,9 @@ async function exiftoolFile(filename: string): Promise<ExifDataType> {
       .read(filename, [speed, '--b']) // fast and ignore binary data
       .then((tags: Tags) => {
         if (tags.errors && tags.errors.length > 0) {
-          reject('EXIF> Error parsing JSON ' + tags.errors);
+          // reject('EXIF> Error parsing JSON ' + tags.errors);
+          // unknow file type, return any with the tags we got
+          resolve(tags as FileTags);
         } else {
           // Add a dummy type if needed
           if (!tags.MIMEType) {

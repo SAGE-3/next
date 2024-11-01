@@ -25,7 +25,7 @@
   },
   "private": true,
   "dependencies": {
-    "@chakra-ui/react": "^2.8.2",
+    "@chakra-ui/react": "2.8.2",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@fluent-org/logger": "^1.0.10",
@@ -63,7 +63,7 @@
     "highlight.js": "^11.10.0",
     "hjson": "^3.2.2",
     "hotkeys-js": "^3.10.0",
-    "http-proxy-middleware": "^2.0.6",
+    "http-proxy-middleware": "^2.0.7",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.2",

@@ -108,6 +108,8 @@ export function Alfred(props: props) {
     if (appName === 'Screenshare' && config.features && !config.features.apps.includes('Screenshare')) {
       return;
     } else {
+      w = 1280;
+      h = 720;
       state.accessId = accessId;
     }
     if (appName === 'Calculator') {
