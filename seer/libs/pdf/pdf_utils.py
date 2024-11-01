@@ -26,22 +26,34 @@ class OverallState(TypedDict):
 async def generate_answer(qq: PDFQuery, llm: ChatOpenAI, pdf_md, apiKey):
     # async def generate_answer(qq: PDFQuery, llm: ChatNVIDIA, pdf_md, apiKey):
 
-    user_prompt = "Describe the main takeaways from this paper."
+    # user_prompt = "Describe the main takeaways from this paper."
+
+    # map_template = f"""
+    # Write a concise summary of the following: {{context}}.
+
+    # Keep in mind this question from the user: {qq.q}
+
+    # If the summary does not relate to the question, ONLY return an empty string.
+  
+    # DO NOT HALLUCINATE.
+    # """
 
     map_template = f"""
-  Write a concise summary of the following: {{context}}.
+    Using {{context}}, attempt to answer this question: {qq.q}.
 
-  Keep in mind this question from the user: {user_prompt}
-
-  If the summary does not relate to the question, return an empty string.
-  """
+    If the context does not relate to the question, ONLY return an empty string.
+  
+    DO NOT HALLUCINATE.
+    """
 
     reduce_template = f"""
-  The following is a set of summaries based on this question "{user_prompt}":
-  {{docs}}
+      The following is a set of content from different parts of a document based on this question "{qq.q}":
+      {{docs}}
 
-  Consolidate the summaries into an answer.
-  """
+      Consolidate the most relevant content into an answer that will satisfy the question.
+    
+      DO NOT HALLUCINATE.
+    """
 
     map_prompt = ChatPromptTemplate([("human", map_template)])
     reduce_prompt = ChatPromptTemplate([("human", reduce_template)])
