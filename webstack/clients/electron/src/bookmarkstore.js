@@ -21,7 +21,7 @@ const defaultBookmarks = [
   {
     name: 'Chicago',
     id: genId(),
-    url: 'https://sage3.app/',
+    url: 'https://chicago.sage3.app/',
   },
   {
     name: 'Chicago Development',

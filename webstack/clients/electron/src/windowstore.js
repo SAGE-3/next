@@ -17,7 +17,7 @@ const store = new Store({ name: 'sage3-window' });
 
 // Default Window State
 const defaultWindowState = {
-  // server: 'https://sage3.app',
+  // server: 'https://chicago.sage3.app',
   server: 'file://html/landing.html',
   fullscreen: false,
   x: 0,
