@@ -10,44 +10,40 @@ import { useEffect, useState } from 'react';
 import { Box, useColorModeValue, Tooltip, IconButton, Text, ButtonGroup } from '@chakra-ui/react';
 
 import {
-  MdDelete, MdLock, MdLockOpen, MdFitScreen, MdAdd, MdRemove, MdRestore,
-  MdOutlineResetTv, MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat
+  MdDelete,
+  MdLock,
+  MdLockOpen,
+  MdFitScreen,
+  MdAdd,
+  MdRemove,
+  MdRestore,
+  MdOutlineResetTv,
+  MdImage,
+  MdOutlineStickyNote2,
+  MdMovie,
+  MdWindow,
+  MdChat,
 } from 'react-icons/md';
 import { BsFiletypePdf } from 'react-icons/bs';
 import { FaPython } from 'react-icons/fa';
 
-import {
-  useAbility,
-  useThrottleScale,
-  useThrottleApps,
-  useHexColor,
-  useUIStore,
-  useUser,
-} from '@sage3/frontend';
+import { useAbility, useThrottleScale, useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { Presence, User } from '@sage3/shared/types';
 
-import { Panel } from '../Panel';
-
-export interface NavProps {
-  fitApps: () => void;
-  clearBoard: () => void;
-  boardId: string;
-}
-
 // Icons for the minimap
 const appIcons = {
-  "ImageViewer": <MdImage />,
-  "PDFViewer": <BsFiletypePdf />,
-  "Stickie": <MdOutlineStickyNote2 />,
-  "SageCell": <FaPython />,
-  "VideoViewer": <MdMovie />,
-  "Chat": <MdChat />,
+  ImageViewer: <MdImage />,
+  PDFViewer: <BsFiletypePdf />,
+  Stickie: <MdOutlineStickyNote2 />,
+  SageCell: <FaPython />,
+  VideoViewer: <MdMovie />,
+  Chat: <MdChat />,
 };
 type AppIconsKey = keyof typeof appIcons;
 const appIconsDefined = Object.keys(appIcons) as AppIconsKey[];
 
-export function NavigationPanel(props: NavProps) {
+export function NavigationPanel() {
   // App Store
   const apps = useThrottleApps(250);
   // UI Store
@@ -143,185 +139,75 @@ export function NavigationPanel(props: NavProps) {
   };
 
   return (
-    <>
-      <Panel title={'Navigation'} name="navigation" width={400} showClose={false}>
-        <Box alignItems="center" display="flex">
-          <Box
-            width={mapWidth}
-            height={mapHeight}
-            backgroundColor={backgroundColor}
-            borderRadius="md"
-            borderWidth="2px"
-            borderStyle="solid"
-            borderColor={borderColor}
-            overflow="hidden"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Box position="relative" height={appHeight} width={appWidth}>
-              {/* Create a copy of app array and sort it by update time */}
-              {apps
-                .slice()
-                .sort((a, b) => a._updatedAt - b._updatedAt)
-                .map((app) => {
-                  return (
-                    <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
-                      <Box
-                        backgroundColor={app.data.type === 'Stickie' ? app.data.state.color + '.400' : borderColor}
-                        position="absolute"
-                        left={(app.data.position.x - appsX) * mapScale + 'px'}
-                        top={(app.data.position.y - appsY) * mapScale + 'px'}
-                        width={app.data.size.width * mapScale + 'px'}
-                        height={app.data.size.height * mapScale + 'px'}
-                        transition={'all .5s'}
-                        onClick={() => moveToApp(app)}
-                        borderWidth="1px"
-                        borderStyle="solid"
-                        borderColor={appBorderColor}
-                        borderRadius="sm"
-                        cursor="pointer"
-                        justifyContent={'center'}
-                        alignItems={'center'}
-                        display={'flex'}
-                        fontSize={Math.min(app.data.size.width * mapScale, app.data.size.height * mapScale) / 1.5}
-                        _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-                      >
-                        {
-                          // Pick an app icon
-                          appIconsDefined.includes(app.data.type as AppIconsKey) ?
-                            appIcons[app.data.type as AppIconsKey] :
-                            <MdWindow />
-                        }
-                      </Box>
-                    </Tooltip>
-                  );
-                })}
-              {/* View of the User's Viewport */}
-              {userViewport && (
-                <Box
-                  backgroundColor={userViewportBGColor}
-                  position="absolute"
-                  left={(userViewport.position.x - appsX) * mapScale + 'px'}
-                  top={(userViewport.position.y - appsY) * mapScale + 'px'}
-                  width={userViewport.size.width * mapScale + 'px'}
-                  height={userViewport.size.height * mapScale + 'px'}
-                  transition={'all .5s'}
-                  _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
-                  borderWidth="2px"
-                  borderStyle="solid"
-                  borderColor={viewportBorderColor}
-                  borderRadius="sm"
-                  pointerEvents={'none'}
-                ></Box>
-              )}
-            </Box>
-          </Box>
-
-          <Box display="flex" flexDir={'column'} ml="2" alignContent={'flexStart'}>
-            {/* Board Actions */}
-            <Box display="flex" mb="2">
-              <Tooltip label={boardLocked ? 'Unlock View' : 'Lock View'} placement="top" hasArrow openDelay={500}>
-                <IconButton
-                  icon={boardLocked ? <MdLock /> : <MdLockOpen />}
-                  colorScheme="teal"
-                  size="sm"
-                  aria-label="for board"
-                  mr="2"
-                  onClick={() => lockBoard(!boardLocked)}
-                />
-              </Tooltip>
-              <Tooltip label="Clear Board" placement="top" hasArrow openDelay={500}>
-                <IconButton
-                  icon={<MdDelete />}
-                  colorScheme="teal"
-                  size="sm"
-                  aria-label="clear"
-                  onClick={props.clearBoard}
-                  isDisabled={!canDelete}
-                />
-              </Tooltip>
-            </Box>
-
-            {/* Organize Apps and Fit View */}
-            <Box display="flex" mb="2">
-              <Tooltip label="Reset View" placement="top" hasArrow openDelay={500}>
-                <IconButton
-                  icon={<MdOutlineResetTv />}
-                  onClick={resetBoardPosition}
-                  colorScheme="teal"
-                  mr="2"
-                  size="sm"
-                  aria-label="clear"
-                  isDisabled={!canOrganize}
-                />
-              </Tooltip>
-              <Tooltip label="Show All Apps" placement="top" hasArrow openDelay={500}>
-                <IconButton icon={<MdFitScreen />} colorScheme="teal" size="sm" aria-label="fit apps" onClick={props.fitApps} />
-              </Tooltip>
-            </Box>
-
-            {/* Zoom Buttons */}
-            <Box display="flex" mb="1">
-              <ButtonGroup isAttached size="xs" colorScheme="teal">
-                <Tooltip label="Zoom Out" placement="top" hasArrow openDelay={500}>
-                  <IconButton icon={<MdRemove />} onClick={zoomOut} colorScheme="teal" aria-label="clear" />
+    <Box alignItems="center" display="flex">
+      <Box
+        width={mapWidth}
+        height={mapHeight}
+        backgroundColor={backgroundColor}
+        borderRadius="md"
+        borderWidth="1px"
+        borderStyle="solid"
+        overflow="hidden"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Box position="relative" height={appHeight} width={appWidth}>
+          {/* Create a copy of app array and sort it by update time */}
+          {apps
+            .slice()
+            .sort((a, b) => a._updatedAt - b._updatedAt)
+            .map((app) => {
+              return (
+                <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
+                  <Box
+                    backgroundColor={app.data.type === 'Stickie' ? app.data.state.color + '.400' : borderColor}
+                    position="absolute"
+                    left={(app.data.position.x - appsX) * mapScale + 'px'}
+                    top={(app.data.position.y - appsY) * mapScale + 'px'}
+                    width={app.data.size.width * mapScale + 'px'}
+                    height={app.data.size.height * mapScale + 'px'}
+                    transition={'all .5s'}
+                    onClick={() => moveToApp(app)}
+                    borderWidth="1px"
+                    borderStyle="solid"
+                    borderColor={appBorderColor}
+                    borderRadius="sm"
+                    cursor="pointer"
+                    justifyContent={'center'}
+                    alignItems={'center'}
+                    display={'flex'}
+                    fontSize={Math.min(app.data.size.width * mapScale, app.data.size.height * mapScale) / 1.5}
+                    _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+                  >
+                    {
+                      // Pick an app icon
+                      appIconsDefined.includes(app.data.type as AppIconsKey) ? appIcons[app.data.type as AppIconsKey] : <MdWindow />
+                    }
+                  </Box>
                 </Tooltip>
-                <Tooltip label="Reset Zoom Level" placement="top" hasArrow openDelay={500}>
-                  <IconButton
-                    icon={<MdRestore />}
-                    onClick={resetZoom}
-                    colorScheme="teal"
-                    borderX="solid 2px transparent"
-                    aria-label="clear"
-                  />
-                </Tooltip>
-                <Tooltip label="Zoom In" placement="top" hasArrow openDelay={500}>
-                  <IconButton icon={<MdAdd />} colorScheme="teal" aria-label="clear" onClick={zoomIn} />
-                </Tooltip>
-              </ButtonGroup>
-            </Box>
-            <Box display="flex" mb="1" justifyContent={'center'}>
-              <Text fontWeight="bold" fontSize="18">
-                {formattedScale}
-              </Text>
-            </Box>
-          </Box>
+              );
+            })}
+          {/* View of the User's Viewport */}
+          {userViewport && (
+            <Box
+              backgroundColor={userViewportBGColor}
+              position="absolute"
+              left={(userViewport.position.x - appsX) * mapScale + 'px'}
+              top={(userViewport.position.y - appsY) * mapScale + 'px'}
+              width={userViewport.size.width * mapScale + 'px'}
+              height={userViewport.size.height * mapScale + 'px'}
+              transition={'all .5s'}
+              _hover={{ backgroundColor: 'teal.200', transform: 'scale(1.1)' }}
+              borderWidth="2px"
+              borderStyle="dashed"
+              borderColor={viewportBorderColor}
+              borderRadius="sm"
+              pointerEvents={'none'}
+            ></Box>
+          )}
         </Box>
-      </Panel>
-    </>
+      </Box>
+    </Box>
   );
 }
-
-type NavMapCusorProps = {
-  presence: Presence;
-  user: User;
-  boardShift: { x: number; y: number };
-  mapScale: number;
-};
-
-const NavMapCursor = (props: NavMapCusorProps) => {
-  const { user } = useUser();
-  const self = props.user._id === user?._id;
-  const color = useHexColor(props.user.data.color);
-  const left = (props.presence.data.cursor.x - props.boardShift.x) * props.mapScale + 'px';
-  const top = (props.presence.data.cursor.y - props.boardShift.y) * props.mapScale + 'px';
-  return (
-    <Box
-      key={props.presence.data.userId}
-      style={{
-        position: 'absolute',
-        left: left,
-        top: top,
-        transition: 'all 0.5s ease-in-out',
-        pointerEvents: 'none',
-        display: 'flex',
-        zIndex: 100000,
-      }}
-      borderRadius="50%"
-      backgroundColor={self ? 'white' : color}
-      width={self ? '6px' : '4px'}
-      height={self ? '6px' : '4px'}
-    ></Box>
-  );
-};

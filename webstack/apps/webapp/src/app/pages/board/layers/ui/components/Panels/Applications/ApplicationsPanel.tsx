@@ -103,34 +103,31 @@ export function ApplicationsPanel(props: ApplicationProps) {
   };
 
   return (
-    <Panel title="Applications" name="applications" width={300} showClose={false}>
-      <VStack
-        maxH={300}
-        w={'100%'}
-        m={0}
-        pr={2}
-        spacing={1}
-        overflow="auto"
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: gripColor,
-            borderRadius: 'md',
-          },
-        }}
-      >
-        {appsList
-          // create a button for each application
-          .map((appName) => (
-            <ButtonPanel key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
-          ))}
-      </VStack>
-      {/* </Box> */}
-    </Panel>
+    <VStack
+      maxH={300}
+      w={'100%'}
+      m={0}
+      pr={2}
+      spacing={1}
+      overflow="auto"
+      css={{
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: gripColor,
+          borderRadius: 'md',
+        },
+      }}
+    >
+      {appsList
+        // create a button for each application
+        .map((appName) => (
+          <ButtonPanel key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
+        ))}
+    </VStack>
   );
 }

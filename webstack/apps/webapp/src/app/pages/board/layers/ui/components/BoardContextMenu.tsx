@@ -186,10 +186,10 @@ export function BoardContextMenu(props: ContextProps) {
       <Flex flexDir={'column'} justifyContent={'center'} alignItems={'center'} gap="2">
         <Flex gap="1" justifyContent={'center'}>
           <IconButton aria-label="applications" fontSize="2xl" variant="solid" size="sm" icon={<MdApps />} />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<HiPuzzle />} />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<HiChip />} />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<MdFolder />} />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<MdPeople />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiPuzzle />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiChip />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdFolder />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdPeople />} />
         </Flex>
         <Flex justifyContent={'space-between'} width="100px">
           <IconButton aria-label="Up Arrow" variant="ghost" fontSize="md" colorScheme={'red'} size="xs" icon={<MdClose />} />
@@ -198,7 +198,7 @@ export function BoardContextMenu(props: ContextProps) {
         <Flex gap="1" justifyContent={'center'}>
           <IconButton
             aria-label="applications"
-            fontSize="2xl"
+            fontSize="lg"
             variant="solid"
             size="sm"
             // colorScheme={userColor}
@@ -206,14 +206,14 @@ export function BoardContextMenu(props: ContextProps) {
           />
           <IconButton
             aria-label="Up Arrow"
-            fontSize="2xl"
+            fontSize="lg"
             variant="solid"
             size="sm"
             colorScheme={userColor}
             icon={<LiaMousePointerSolid />}
           />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<BiPencil />} />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" icon={<BsEraserFill />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<BiPencil />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<BsEraserFill />} />
         </Flex>
       </Flex>
     </Box>

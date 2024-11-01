@@ -17,8 +17,8 @@ import { Position, Size } from '@sage3/shared/types';
 import { useAppStore } from './app';
 
 // Zoom limits, from 2% to 300%
-export const MinZoom = 0.02;
-export const MaxZoom = 3;
+export const MinZoom = 0.1;
+export const MaxZoom = 6;
 // When using mouse wheel, repeated events
 export const WheelStepZoom = 0.008;
 
@@ -323,7 +323,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomInVal);
           return { ...state, boardPosition: pos, scale: zoomInVal };
         } else {
-          return { ...state, scale: zoomInVal };
+          // Zoom towards the center of the screen
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomInVal);
+          return { ...state, boardPosition: pos, scale: zoomInVal };
         }
       });
   },
@@ -338,7 +344,12 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomOutVal);
           return { ...state, boardPosition: pos, scale: zoomOutVal };
         } else {
-          return { ...state, scale: zoomOutVal };
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomOutVal);
+          return { ...state, boardPosition: pos, scale: zoomOutVal };
         }
       });
   },

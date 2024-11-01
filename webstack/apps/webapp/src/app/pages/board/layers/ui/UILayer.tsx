@@ -17,8 +17,16 @@ import {
   Tooltip,
   Divider,
   ButtonGroup,
+  Text,
+  Button,
+  Flex,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
 } from '@chakra-ui/react';
-import { MdAdd, MdApps, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye } from 'react-icons/md';
+import { MdAdd, MdApps, MdArrowBack, MdArrowCircleLeft, MdFolder, MdLock, MdMap, MdPeople, MdRemove, MdRemoveRedEye } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -45,6 +53,7 @@ import {
   useHexColor,
   EditVisibilityModal,
   useUser,
+  useThrottleScale,
 } from '@sage3/frontend';
 
 import {
@@ -69,6 +78,8 @@ import {
 } from './components';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
+import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
+import { useState } from 'react';
 
 type UILayerProps = {
   boardId: string;
@@ -91,6 +102,12 @@ export function UILayer(props: UILayerProps) {
 
   // User
   const { user } = useUser();
+  const usersColor = user ? user.data.color : 'teal';
+  const usersColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
+  const userColorHex = useHexColor(user ? usersColorMode : 'teal');
+
+  // Scale
+  const scale = useThrottleScale(250);
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
@@ -100,6 +117,9 @@ export function UILayer(props: UILayerProps) {
   const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const resetZoom = useUIStore((state) => state.resetZoom);
+  const zoomIn = useUIStore((state) => state.zoomInDelta);
+  const zoomOut = useUIStore((state) => state.zoomOutDelta);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -119,7 +139,7 @@ export function UILayer(props: UILayerProps) {
   const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Navigation
-  const { toHome } = useRouteNav();
+  const { toHome, back } = useRouteNav();
 
   // Toast
   const toast = useToast();
@@ -268,6 +288,31 @@ export function UILayer(props: UILayerProps) {
     return false;
   });
 
+  // Redirect the user back to the homepage when clicking the arrow button
+  function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    if (event.shiftKey) {
+      // Just go back to the previous room
+      back();
+    } else {
+      if (room) {
+        // Back to the homepage with the room id
+        toHome(room._id);
+      } else {
+        back();
+      }
+    }
+  }
+
+  const [showMap, setShowMap] = useState(false);
+  const handleShowMap = () => {
+    setShowMap(!showMap);
+  };
+
+  const [showApps, setShowApps] = useState(false);
+  const handleShowApps = () => {
+    setShowApps(!showApps);
+  };
+
   return (
     <>
       {/* Presence settings modal dialog */}
@@ -297,62 +342,27 @@ export function UILayer(props: UILayerProps) {
           </Tooltip>
         )}
       </HStack>
-      {/* Main Button Bottom Right */}
-      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
-        <Box display="flex" gap="2">
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            mr="1"
-            icon={<MdMap />}
-          />
-        </Box>
-        <ButtonGroup isAttached size="xs" gap="1">
-          <Tooltip label={'Zoom In'}>
-            <IconButton
-              size="sm"
-              colorScheme={'gray'}
-              sx={{
-                _dark: {
-                  bg: 'gray.600', // 'inherit' didnt seem to work
-                },
-              }}
-              icon={<MdAdd />}
-              fontSize="xl"
-              aria-label={'input-type'}
-            ></IconButton>
-          </Tooltip>
-          <Box bg="gray.600" alignContent={'center'} px="1" fontSize="sm">
-            100%
-          </Box>
-          <Tooltip label={'Zoom Out'}>
-            <IconButton
-              size="sm"
-              colorScheme={'gray'}
-              sx={{
-                _dark: {
-                  bg: 'gray.600', // 'inherit' didnt seem to work
-                },
-              }}
-              icon={<MdRemove />}
-              fontSize="xl"
-              aria-label={'input-type'}
-            ></IconButton>
-          </Tooltip>
-        </ButtonGroup>
-      </Box>
 
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
-        <Box display="flex" gap="2">
+      <Box
+        position="absolute"
+        left="2"
+        bottom="2"
+        zIndex={101}
+        display={showUI ? 'flex' : 'none'}
+        // background="gray.700"
+        // py="2"
+        // px="3"
+        borderRadius="md"
+      >
+        <Box display="flex" gap="1">
+          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
+              <MdArrowBack />
+            </Button>
+          </Tooltip>
+          <Divider orientation="vertical" />
+
           <MainButton
             buttonStyle="solid"
             backToRoom={() => toHome(props.roomId)}
@@ -369,74 +379,84 @@ export function UILayer(props: UILayerProps) {
           <Interactionbar />
           <Divider orientation="vertical" />
           {/* <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} /> */}
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="2xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            icon={<MdPeople />}
-          />
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="2xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            icon={<MdApps />}
-          />
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="2xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            icon={<HiPuzzle />}
-          />
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="2xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            icon={<MdFolder />}
-          />
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="2xl"
-            variant="solid"
-            size="sm"
-            colorScheme={'gray'}
-            sx={{
-              _dark: {
-                bg: 'gray.600',
-              },
-            }}
-            icon={<HiChip />}
-          />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdPeople />} />
+          <Popover>
+            <Tooltip label={'Applications'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+              <PopoverTrigger>
+                <IconButton
+                  // colorScheme={showApps ? usersColor : 'gray'}
+                  size="sm"
+                  icon={<MdApps />}
+                  fontSize="lg"
+                  aria-label={'input-type'}
+                  // onClick={handleShowApps}
+                ></IconButton>
+              </PopoverTrigger>
+            </Tooltip>
+            <PopoverContent width="100%">
+              <PopoverHeader>Applications</PopoverHeader>
+              <PopoverBody>{room && board && <ApplicationsPanel roomId={room?._id} boardId={board?._id} />}</PopoverBody>
+            </PopoverContent>
+          </Popover>
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiPuzzle />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdFolder />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiChip />} />
           <Divider orientation="vertical" />
-          <IconButton aria-label="Up Arrow" fontSize="2xl" variant="solid" size="sm" colorScheme={'purple'} icon={<IoSparklesSharp />} />
+          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" colorScheme={'purple'} icon={<IoSparklesSharp />} />
         </Box>
+      </Box>
+
+      {/* Main Button Bottom Right */}
+      <Box
+        position="absolute"
+        right="2"
+        bottom="2"
+        zIndex={101}
+        display={showUI ? 'flex' : 'none'}
+        // background="gray.700"
+        // padding="2"
+        borderRadius="md"
+      >
+        <Popover offset={[20, 8]} isOpen={showMap}>
+          <Tooltip label={'Map'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <PopoverTrigger>
+              <IconButton
+                colorScheme={showMap ? usersColor : 'gray'}
+                mr="2"
+                size="sm"
+                icon={<MdMap />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleShowMap}
+              ></IconButton>
+            </PopoverTrigger>
+          </Tooltip>
+          <PopoverContent width="100%">
+            <PopoverHeader>Map</PopoverHeader>
+            <PopoverBody>
+              <NavigationPanel />
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+        <ButtonGroup isAttached size="xs" gap="0">
+          <Tooltip label={'Zoom In'}>
+            <IconButton size="sm" icon={<MdAdd />} fontSize="lg" aria-label={'input-type'} onClick={() => zoomIn(10)}></IconButton>
+          </Tooltip>
+          <Tooltip label={'Reset Zoom'}>
+            <IconButton
+              size="sm"
+              aria-label={'input-type'}
+              px="1"
+              onClick={resetZoom}
+              minWidth="45px"
+              maxWidth="45px"
+              icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
+            ></IconButton>
+          </Tooltip>
+          <Tooltip label={'Zoom Out'}>
+            <IconButton size="sm" icon={<MdRemove />} fontSize="lg" aria-label={'input-type'} onClick={() => zoomOut(10)}></IconButton>
+          </Tooltip>
+        </ButtonGroup>
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}
@@ -455,27 +475,12 @@ export function UILayer(props: UILayerProps) {
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
 
-      <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <UsersPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
-
-      <AssetsPanel boardId={props.boardId} roomId={props.roomId} downloadRoomAssets={downloadRoomAssets} />
-
-      <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <AnnotationsPanel />
-
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
         <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-      {/* <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} /> */}
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}
