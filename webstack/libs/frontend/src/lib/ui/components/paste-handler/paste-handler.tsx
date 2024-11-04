@@ -12,8 +12,15 @@ import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader
 import { initialValues } from '@sage3/applications/initialValues';
 import { stringContainsCode } from '@sage3/shared';
 import {
-  isValidURL, setupApp, processContentURL, useFiles,
-  useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore
+  isValidURL,
+  setupApp,
+  processContentURL,
+  useFiles,
+  useUser,
+  useAuth,
+  useAppStore,
+  useCursorBoardPosition,
+  useUIStore,
 } from '@sage3/frontend';
 
 /**
@@ -177,7 +184,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerBoard);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp, boardSynced]);
 
   const createWeblink = () => {
     createApp(

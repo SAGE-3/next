@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import {
   Button,
   useToast,
@@ -64,10 +64,10 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
   const [validURL, setValidURL] = useState('');
 
   // Start dragging
-  function OnDragOver(event: React.DragEvent<HTMLOrSVGElement>) {
+  const OnDragOver = useCallback((event: React.DragEvent<HTMLOrSVGElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
-  }
+  }, []);
 
   const newApp = (type: AppName, w: number, h: number, x: number, y: number) => {
     if (!user) return;
@@ -234,7 +234,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
     [user?.data.userRole, canDrop]
   );
 
-  const createWeblink = () => {
+  const createWeblink = useCallback(() => {
     createApp(
       setupApp(
         'WebpageLink',
@@ -248,8 +248,8 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
       )
     );
     popOnClose();
-  };
-  const createWebview = () => {
+  }, [createApp, dropPosition.x, dropPosition.y, props.roomId, props.boardId, validURL, popOnClose]);
+  const createWebview = useCallback(() => {
     const final_url = processContentURL(validURL);
     let w = 800;
     let h = 800;
@@ -262,51 +262,59 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
       setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
     );
     popOnClose();
-  };
+  }, [createApp, dropPosition.x, dropPosition.y, props.roomId, props.boardId, validURL, popOnClose]);
 
-  const renderContent = (): ReactNode => (
-    <>
-      <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-        <Portal>
-          <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
-            <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
-              <Center>Create a Link or open URL</Center>
-            </PopoverHeader>
-            <PopoverBody>
-              <Center>
-                <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
-                  Create Link
-                </Button>
-                <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
-                  Open URL
-                </Button>
-              </Center>
-            </PopoverBody>
-          </PopoverContent>
-        </Portal>
-      </Popover>
+  const renderContent = useCallback(
+    (): ReactNode => (
+      <>
+        <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
+          <Portal>
+            <PopoverContent w={'250px'} style={{ position: 'absolute', left: dropCursor.x - 125 + 'px', top: dropCursor.y - 45 + 'px' }}>
+              <PopoverHeader fontSize={'sm'} fontWeight={'bold'}>
+                <Center>Create a Link or open URL</Center>
+              </PopoverHeader>
+              <PopoverBody>
+                <Center>
+                  <Button colorScheme="green" size="sm" mr={2} onClick={createWeblink}>
+                    Create Link
+                  </Button>
+                  <Button colorScheme="green" size="sm" mr={2} onClick={createWebview}>
+                    Open URL
+                  </Button>
+                </Center>
+              </PopoverBody>
+            </PopoverContent>
+          </Portal>
+        </Popover>
 
-      {/* Too many assets selected */}
-      <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Opening Assets</ModalHeader>
-          <ModalBody>Too many assets selected</ModalBody>
-          <ModalFooter>
-            <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
-              OK
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+        {/* Too many assets selected */}
+        <Modal isCentered isOpen={lotsIsOpen} onClose={lotsOnClose} size={'2xl'} blockScrollOnMount={false}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Opening Assets</ModalHeader>
+            <ModalBody>Too many assets selected</ModalBody>
+            <ModalFooter>
+              <Button colorScheme="red" size="sm" mr={3} onClick={lotsOnClose}>
+                OK
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </>
+    ),
+    [popIsOpen, popOnOpen, popOnClose, dropCursor.x, dropCursor.y, createWeblink, createWebview, lotsIsOpen, lotsOnClose]
+  );
+
+  const dragProps = useMemo(
+    () => ({
+      onDrop: OnDrop,
+      onDragOver: OnDragOver,
+    }),
+    [OnDrop, OnDragOver]
   );
 
   return {
-    dragProps: {
-      onDrop: OnDrop,
-      onDragOver: OnDragOver,
-    },
+    dragProps,
     renderContent,
   };
 };

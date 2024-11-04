@@ -44,6 +44,7 @@ import {
   AlertIcon,
   AlertDescription,
 } from '@chakra-ui/react';
+
 import {
   MdClose,
   MdCopyAll,
@@ -57,6 +58,7 @@ import {
   MdExpandLess,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
+import { IoMdExit } from 'react-icons/io';
 
 import { formatDistance } from 'date-fns';
 
@@ -100,6 +102,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -604,10 +607,10 @@ export function AppToolbar(props: AppToolbarProps) {
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => openEditModal(tag)}
           >
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Edit Tag'}>
               <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Delete Tag'}>
               <TagCloseButton
                 m={0}
                 onClick={(e) => {
@@ -816,7 +819,7 @@ export function AppToolbar(props: AppToolbarProps) {
               hasArrow={true}
               openDelay={400}
               ml="1"
-              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
+              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
             >
               <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
                 <MdZoomOutMap size="14px" color={buttonTextColor} />
@@ -835,13 +838,19 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
+            <Tooltip
+              placement="top"
+              hasArrow={true}
+              label={app.data.pinned ? 'Unpin Application' : 'Pin Application'}
+              openDelay={400}
+              ml="1"
+            >
               <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
                 {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
+            <Tooltip placement="top" hasArrow={true} label={'Duplicate Application'} openDelay={400} ml="1">
               <Button
                 onClick={() => duplicate([app._id])}
                 backgroundColor={commonButtonColors}
@@ -854,9 +863,15 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+            <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
               <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+
+            <Tooltip placement="top" hasArrow={true} label={'Deselect Application'} openDelay={400} ml="1">
+              <Button onClick={() => setSelectedApp('')} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <IoMdExit size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
 
@@ -878,7 +893,7 @@ export function AppToolbar(props: AppToolbarProps) {
     } else {
       // just the delete button
       return (
-        <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+        <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
           <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
             <HiOutlineTrash size="18px" color={buttonTextColor} />
           </Button>
@@ -904,17 +919,7 @@ export function AppToolbar(props: AppToolbarProps) {
       >
         <Box display="flex" flexDirection="column">
           <Box display="flex" flexDirection="row">
-            <Text
-              textAlign="left"
-              mx={0}
-              p={0}
-              color={textColor}
-              fontSize={14}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-            // className="handle"
-            >
+            <Text textAlign="left" mx={0} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">
