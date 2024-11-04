@@ -27,6 +27,7 @@ export function InteractionbarShortcuts() {
         setPrimaryActionMode('grab');
       }
     } else {
+      // The commented out code will cause rendering order issues, do not attempt to use
       // setCachedPrimaryActionMode((prev) => {
       //   if (prev) {
       //     setPrimaryActionMode(prev);
@@ -44,42 +45,6 @@ export function InteractionbarShortcuts() {
   useEffect(() => {
     handleSpacebarAction();
   }, [spacebarPressed]);
-
-  // useHotkeys(
-  //   'h',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('grab');
-  //   },
-  //   { dependencies: [] }
-  // );
-
-  // useHotkeys(
-  //   's',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('lasso');
-  //   },
-  //   { dependencies: [] }
-  // );
-
-  // useHotkeys(
-  //   'p',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('pen');
-  //   },
-  //   { dependencies: [] }
-  // );
-
-  // useHotkeys(
-  //   'e',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('eraser');
-  //   },
-  //   { dependencies: [] }
-  // );
 
   useHotkeys(
     '1',
