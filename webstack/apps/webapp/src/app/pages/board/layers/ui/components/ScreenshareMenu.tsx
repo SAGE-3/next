@@ -68,8 +68,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Start your screenshare
   const startScreenshare = () => {
     if (!user) return;
-    const height = 400;
-    const width = 400;
+    const width = 1280;
+    const height = 720;
     const size = { height, width, depth: 0 };
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - height / 2);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - width / 2);
