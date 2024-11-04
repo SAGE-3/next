@@ -108,12 +108,25 @@ export function Interactionbar() {
     allOnClose();
   };
 
+  useEffect(() => {
+    if (primaryActionMode === 'pen') {
+      eraserOnClose();
+      annotationsOnOpen();
+    } else if (primaryActionMode === 'eraser') {
+      annotationsOnClose();
+      eraserOnOpen();
+    } else {
+      eraserOnClose();
+      annotationsOnClose();
+    }
+  }, [primaryActionMode]);
+
   return (
     <>
       <ButtonGroup isAttached={false} spacing={0} size="xs">
         <Tooltip label={'Grab (Panning Tool) — [1]'} placement="top" hasArrow={true} openDelay={400}>
           <IconButton
-            borderRadius={"0.5rem 0 0 0.5rem"}
+            borderRadius={'0.5rem 0 0 0.5rem'}
             size="sm"
             colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
             sx={{
@@ -129,6 +142,7 @@ export function Interactionbar() {
               annotationsOnClose();
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
+              setSelectedApp('');
             }}
           ></IconButton>
         </Tooltip>
@@ -154,8 +168,7 @@ export function Interactionbar() {
         </Tooltip>
 
         <Popover isOpen={annotationsIsOpen && primaryActionMode === 'pen'}>
-          <Tooltip label={'Annotations — [3]'} placement="top" hasArrow={true} openDelay={400}
-            shouldWrapChildren={true}>
+          <Tooltip label={'Annotations — [3]'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
                 borderRadius={0}
@@ -171,7 +184,8 @@ export function Interactionbar() {
                 aria-label={'input-type'}
                 onClick={() => {
                   eraserOnClose();
-                  if (annotationsIsOpen) annotationsOnClose(); else annotationsOnOpen();
+                  if (annotationsIsOpen) annotationsOnClose();
+                  else annotationsOnOpen();
                   setPrimaryActionMode('pen');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
@@ -180,14 +194,14 @@ export function Interactionbar() {
             </PopoverTrigger>
           </Tooltip>
           <PopoverContent width="100%">
-            <PopoverHeader>Annotations</PopoverHeader>
+            <PopoverHeader userSelect="none">Annotations</PopoverHeader>
             <PopoverBody>
               <Flex direction="column" alignItems="center" my="2">
                 <Flex>
                   <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
                 </Flex>
                 <Flex width="100%" mt="3">
-                  <Text> Width</Text>
+                  <Text userSelect="none"> Width</Text>
                   <Slider
                     defaultValue={markerSize}
                     min={1}
@@ -212,7 +226,7 @@ export function Interactionbar() {
                   </Slider>
                 </Flex>
                 <Flex width="100%" mt="3">
-                  <Text>Opacity</Text>
+                  <Text userSelect="none">Opacity</Text>
                   <Slider
                     defaultValue={markerOpacity}
                     min={0.1}
@@ -241,11 +255,10 @@ export function Interactionbar() {
           </PopoverContent>
         </Popover>
         <Popover isOpen={eraserIsOpen && primaryActionMode === 'eraser'}>
-          <Tooltip label={'Eraser — [4]'} placement="top" hasArrow={true} openDelay={400}
-            shouldWrapChildren={true}>
+          <Tooltip label={'Eraser — [4]'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
-                borderRadius={"0 0.5rem 0.5rem 0"}
+                borderRadius={'0 0.5rem 0.5rem 0'}
                 size="sm"
                 colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
                 sx={{
@@ -258,7 +271,8 @@ export function Interactionbar() {
                 aria-label={'input-type'}
                 onClick={() => {
                   annotationsOnClose();
-                  if (eraserIsOpen) eraserOnClose(); else eraserOnOpen();
+                  if (eraserIsOpen) eraserOnClose();
+                  else eraserOnOpen();
                   setPrimaryActionMode('eraser');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
@@ -267,7 +281,7 @@ export function Interactionbar() {
             </PopoverTrigger>
           </Tooltip>
           <PopoverContent width="172px">
-            <PopoverHeader>Eraser</PopoverHeader>
+            <PopoverHeader userSelect="none">Eraser</PopoverHeader>
             <PopoverBody>
               <Flex direction="row" alignContent="left" my="2">
                 <Tooltip placement="top" hasArrow label="Undo Last Line">

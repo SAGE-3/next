@@ -187,6 +187,18 @@ export function LassoToolbar(props: LassoToolbarProps) {
     }
   };
 
+  const selectedAppNames = (): string => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    // Check if all of same type
+    let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+
+    if (isAllOfSameType) {
+      return (selectedApps[0]?.data?.type || '') + (selectedApps.length > 1 ? 's' : '');
+    } else {
+      return 'Apps';
+    }
+  };
+
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
   const selectedAppFunctions = (): JSX.Element | null => {
@@ -572,7 +584,8 @@ for b in bits:
               userSelect={'none'}
               className="handle"
             >
-              {'Actions'}
+              {`${lassoApps.length} ${selectedAppNames()} Selected`}
+              {/* {'Actions'} */}
             </Text>
             <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
@@ -742,7 +755,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
