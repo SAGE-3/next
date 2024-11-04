@@ -194,14 +194,14 @@ export function Interactionbar() {
             </PopoverTrigger>
           </Tooltip>
           <PopoverContent width="100%">
-            <PopoverHeader>Annotations</PopoverHeader>
+            <PopoverHeader userSelect="none">Annotations</PopoverHeader>
             <PopoverBody>
               <Flex direction="column" alignItems="center" my="2">
                 <Flex>
                   <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm"></ColorPicker>
                 </Flex>
                 <Flex width="100%" mt="3">
-                  <Text> Width</Text>
+                  <Text userSelect="none"> Width</Text>
                   <Slider
                     defaultValue={markerSize}
                     min={1}
@@ -226,7 +226,7 @@ export function Interactionbar() {
                   </Slider>
                 </Flex>
                 <Flex width="100%" mt="3">
-                  <Text>Opacity</Text>
+                  <Text userSelect="none">Opacity</Text>
                   <Slider
                     defaultValue={markerOpacity}
                     min={0.1}
@@ -281,7 +281,7 @@ export function Interactionbar() {
             </PopoverTrigger>
           </Tooltip>
           <PopoverContent width="172px">
-            <PopoverHeader>Eraser</PopoverHeader>
+            <PopoverHeader userSelect="none">Eraser</PopoverHeader>
             <PopoverBody>
               <Flex direction="row" alignContent="left" my="2">
                 <Tooltip placement="top" hasArrow label="Undo Last Line">
