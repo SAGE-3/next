@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // SAGE Imports
 import { Position, Size } from '@sage3/shared/types';
-import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUIToBoard } from '@sage3/frontend';
+import { useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUIToBoard } from '@sage3/frontend';
 import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {

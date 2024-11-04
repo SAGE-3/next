@@ -44,6 +44,7 @@ import {
   AlertIcon,
   AlertDescription,
 } from '@chakra-ui/react';
+
 import {
   MdClose,
   MdCopyAll,
@@ -57,6 +58,7 @@ import {
   MdExpandLess,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
+import { IoMdExit } from 'react-icons/io';
 
 import { formatDistance } from 'date-fns';
 
@@ -76,7 +78,6 @@ import {
 import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
-import { IoMdExit } from 'react-icons/io';
 
 type AppToolbarProps = {
   boardId: string;

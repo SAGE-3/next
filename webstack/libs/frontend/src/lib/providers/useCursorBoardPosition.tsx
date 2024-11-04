@@ -7,8 +7,9 @@
  */
 
 import { useCallback, useEffect, useState, createContext, useContext } from 'react';
-import { useUIStore } from '../stores';
 import { throttle } from 'throttle-debounce';
+
+import { useUIStore } from '../stores';
 
 type CursorBoardPositionContextType = {
   boardCursor: { x: number; y: number };

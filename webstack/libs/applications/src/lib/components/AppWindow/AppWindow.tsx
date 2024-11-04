@@ -8,6 +8,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
+
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
@@ -438,15 +439,15 @@ export function AppWindow(props: WindowProps) {
           sx={
             primaryActionMode === 'grab'
               ? {
-                  '&:active': {
-                    cursor: 'grabbing',
-                  },
-                }
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+              }
               : {}
           }
           userSelect={'none'}
           zIndex={3}
-          // borderRadius={innerBorderRadius}
+        // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

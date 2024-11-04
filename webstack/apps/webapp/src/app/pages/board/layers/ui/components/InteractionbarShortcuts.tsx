@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
 import { useCallback, useEffect, useState } from 'react';
+import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
 
 export function InteractionbarShortcuts() {
   // Settings
