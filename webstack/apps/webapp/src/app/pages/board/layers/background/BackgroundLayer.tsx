@@ -208,22 +208,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   ///////////////////////////////////////////
   // Mouse/TouchPad/TouchScreen Behaviours //
   ///////////////////////////////////////////
-  // Keep track of primary position for grab mode movement exiting app behaviour
-  // useEffect(() => {
-  //   // Recommened not to throttle for due to touch users being able to essentially teleport the cursor position
-  //   // const pointerMove = throttle(100, (e: PointerEvent) => {
-  //   //   setCursorPos({ x: e.clientX, y: e.clientY });
-  //   // });
-  //   const pointerMove = (e: PointerEvent) => {
-  //     setCursorPos({ x: e.clientX, y: e.clientY });
-  //   };
-
-  //   window.addEventListener('pointermove', pointerMove, { capture: true, passive: false });
-  //   return () => {
-  //     window.removeEventListener('pointermove', pointerMove);
-  //   };
-  // }, []);
-
   // (INITAL CLICKS) Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
@@ -273,19 +257,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       setLocalSynced((prev) => {
         if (prev) {
           draggedOnCheck(event.target as HTMLElement);
-          // This way ensures that it will be the most up to date element...
-          // setCursorPos((cur) => {
-          //   const element = document.elementFromPoint(cur.x, cur.y);
-          //   draggedOnCheck(element as HTMLElement);
-          //   return cur;
-          // });
         }
         return prev;
       });
 
       if (selectedApp) {
         // if (primaryActionMode === 'grab') {
-        //   // In an effort to acknowledge the time+0 input; Having a SetTimeout calling the re-calling the current function may not work due to the depency array
         //   grabModeDeselection();
         // }
         return;
@@ -480,8 +457,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* The board's apps */}
         <Apps />
+
         {/* Whiteboard */}
         <Whiteboard roomId={props.roomId} boardId={props.boardId} />
+
         {/* Lasso */}
         {canLasso && primaryActionMode === 'lasso' && <Lasso roomId={props.roomId} boardId={props.boardId} />}
 
@@ -497,13 +476,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     </Box>
   );
 }
-// const BackgroundMemo = React.memo(Background, (prevProps, nextProps) => {
-//   return prevProps.boardId === nextProps.boardId && prevProps.roomId === nextProps.roomId;
-// });
-// const BackgroundMemo = React.memo(Background);
-// const PresenceComponentMemo = React.memo(PresenceComponent);
-// const WhiteboardMemo = React.memo(Whiteboard);
-// const LassoMemo = React.memo(Lasso);
 const RndMemo = React.memo(RndSafety);
 
 // This code has been modified from the one present in useUIStore

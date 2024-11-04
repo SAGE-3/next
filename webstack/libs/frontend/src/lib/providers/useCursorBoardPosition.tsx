@@ -91,6 +91,7 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     };
   }, [throttleMoveRef]);
 
+  // Keep this here to revert if the above causes issues
   // // UseEffect to update the cursor position
   // useEffect(() => {
   //   const updateCursor = (e: MouseEvent) => {

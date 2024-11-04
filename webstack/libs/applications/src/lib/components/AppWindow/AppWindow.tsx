@@ -42,7 +42,7 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
+  const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
