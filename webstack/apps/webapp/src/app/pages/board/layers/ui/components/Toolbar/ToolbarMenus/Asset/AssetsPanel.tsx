@@ -12,10 +12,10 @@ import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from
 import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAbility } from '@sage3/frontend';
 
 import { FileEntry } from '@sage3/shared/types';
-import { Panel } from '../Panel';
+
 import { Files } from './Files';
 
-type AssetsPanelProps = {
+type AssetsMenuProps = {
   boardId: string;
   roomId: string;
   downloadRoomAssets: (ids: string[]) => void;
@@ -28,7 +28,7 @@ type AssetsPanelProps = {
  * @param {AssetsPanelProps} props containing the boardId and roomId
  * @returns {JSX.Element}
  */
-export function AssetsPanel(props: AssetsPanelProps) {
+export function AssetsMenu(props: AssetsMenuProps) {
   // Room Store
   const rooms = useRoomStore((state) => state.rooms);
   const [roomName, setRoomName] = useState('');
@@ -104,55 +104,48 @@ export function AssetsPanel(props: AssetsPanelProps) {
 
   return (
     <>
-      <Panel title={`Assets available in Room "${roomName}"`} name="assets" width={817} showClose={false}>
-        <Box display="flex" flexDirection="column">
-          <Box alignItems="center" p="1" width={'3xl'} display="flex">
-            <Files files={assetsList} setSelection={newSelection} />
-          </Box>
-          <Divider p={0} mt={1} mb={2} />
-          <Flex>
-            <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
-            <Spacer />
-
-            <Tooltip
-              placement="top-start"
-              label={!canDowload ? 'You cannot download assets' : 'Download selected or all assets'}
-              openDelay={500}
-              hasArrow
-            >
-              <Button
-                colorScheme="green"
-                width="80px"
-                size={'xs'}
-                onClick={downloadRoomAssets}
-                // Block guests from downloading assets
-                isDisabled={!canDowload || assetsList.length === 0}
-              >
-                Download
-              </Button>
-            </Tooltip>
-
-            <Tooltip
-              placement="top-start"
-              label={!canUpload ? 'You cannot upload assets' : 'Upload new assets'}
-              openDelay={500}
-              hasArrow
-            >
-              <Button
-                colorScheme="green"
-                width="80px"
-                size={'xs'}
-                ml={2}
-                onClick={onOpen}
-                // Block guests from uploading assets
-                isDisabled={!canUpload}
-              >
-                Upload
-              </Button>
-            </Tooltip>
-          </Flex>
+      <Box display="flex" flexDirection="column">
+        <Box alignItems="center" p="1" width={'3xl'} display="flex">
+          <Files files={assetsList} setSelection={newSelection} />
         </Box>
-      </Panel>
+        <Divider p={0} mt={1} mb={2} />
+        <Flex>
+          <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
+          <Spacer />
+
+          <Tooltip
+            placement="top-start"
+            label={!canDowload ? 'You cannot download assets' : 'Download selected or all assets'}
+            openDelay={500}
+            hasArrow
+          >
+            <Button
+              colorScheme="green"
+              width="80px"
+              size={'xs'}
+              onClick={downloadRoomAssets}
+              // Block guests from downloading assets
+              isDisabled={!canDowload || assetsList.length === 0}
+            >
+              Download
+            </Button>
+          </Tooltip>
+
+          <Tooltip placement="top-start" label={!canUpload ? 'You cannot upload assets' : 'Upload new assets'} openDelay={500} hasArrow>
+            <Button
+              colorScheme="green"
+              width="80px"
+              size={'xs'}
+              ml={2}
+              onClick={onOpen}
+              // Block guests from uploading assets
+              isDisabled={!canUpload}
+            >
+              Upload
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Box>
       {/* Upload dialog */}
       <UploadModal isOpen={isOpen} onOpen={onOpen} onClose={onClose}></UploadModal>
     </>

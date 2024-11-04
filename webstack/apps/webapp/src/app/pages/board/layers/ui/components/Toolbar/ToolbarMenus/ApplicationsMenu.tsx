@@ -14,7 +14,7 @@ import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
 
-import { ButtonPanel, Panel } from '../Panel';
+import { MenuButton } from './MenuButton';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -27,7 +27,7 @@ export interface ApplicationProps {
   roomId: string;
 }
 
-export function ApplicationsPanel(props: ApplicationProps) {
+export function ApplicationsMenu(props: ApplicationProps) {
   const [appsList, setAppsList] = useState<string[]>([]);
 
   // App Store
@@ -126,7 +126,7 @@ export function ApplicationsPanel(props: ApplicationProps) {
       {appsList
         // create a button for each application
         .map((appName) => (
-          <ButtonPanel key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
+          <MenuButton key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
         ))}
     </VStack>
   );

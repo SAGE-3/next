@@ -166,11 +166,11 @@ function usePresenceFollow(myId: string) {
   return { followUser, followMe, followMeStop, following };
 }
 
-type AvatarGroupProps = {
+type UsersMenuProps = {
   boardId: string;
 };
 
-export function UserAvatarGroup(props: AvatarGroupProps) {
+export function UsersMenu(props: UsersMenuProps) {
   // Get current user
   const { user } = useUser();
   if (!user) return null;

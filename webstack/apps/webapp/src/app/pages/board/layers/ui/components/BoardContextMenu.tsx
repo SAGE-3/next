@@ -7,36 +7,13 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Box,
-  Button,
-  useColorModeValue,
-  VStack,
-  Text,
-  useColorMode,
-  HStack,
-  Center,
-  Divider,
-  Spacer,
-  Flex,
-  IconButton,
-} from '@chakra-ui/react';
+import { Box, useColorModeValue, useColorMode, Flex, IconButton } from '@chakra-ui/react';
 
-import {
-  useAppStore,
-  useUIStore,
-  useUser,
-  useRouteNav,
-  useCursorBoardPosition,
-  usePanelStore,
-  useConfigStore,
-  useHexColor,
-} from '@sage3/frontend';
+import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, useConfigStore, useHexColor } from '@sage3/frontend';
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
-import { Interactionbar } from './Interactionbar';
-import { MdApps, MdArrowCircleUp, MdClose, MdFolder, MdLock, MdPeople, MdPin, MdPinDrop } from 'react-icons/md';
+import { MdApps, MdClose, MdFolder, MdLock, MdPeople } from 'react-icons/md';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { LiaHandPaperSolid, LiaMousePointerSolid } from 'react-icons/lia';
 import { BiPencil } from 'react-icons/bi';
@@ -92,9 +69,6 @@ export function BoardContextMenu(props: ContextProps) {
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   const { uiToBoard } = useCursorBoardPosition();
-
-  // UI Menu position setters
-  const updatePanel = usePanelStore((state) => state.updatePanel);
 
   // Theme
   const textColor = useColorModeValue('gray.800', 'gray.100');

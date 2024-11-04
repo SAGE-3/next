@@ -43,7 +43,7 @@ const appIcons = {
 type AppIconsKey = keyof typeof appIcons;
 const appIconsDefined = Object.keys(appIcons) as AppIconsKey[];
 
-export function NavigationPanel() {
+export function NavigationMenu() {
   // App Store
   const apps = useThrottleApps(250);
   // UI Store

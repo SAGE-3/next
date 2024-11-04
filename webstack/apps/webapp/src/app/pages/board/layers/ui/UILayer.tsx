@@ -62,24 +62,24 @@ import {
   AppToolbar,
   Twilio,
   LassoToolbar,
-  Controller,
-  AssetsPanel,
-  ApplicationsPanel,
-  NavigationPanel,
-  UsersPanel,
-  AnnotationsPanel,
-  PluginsPanel,
   PresenceFollow,
   BoardTitle,
-  KernelsPanel,
   TagsDisplay,
   Interactionbar,
   ScreenshareMenu,
+  ToolbarButton,
+  ApplicationsMenu,
+  NavigationMenu,
+  KernelsMenu,
+  PluginsMenu,
+  UsersMenu,
+  AssetsMenu,
 } from './components';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
 import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
 import { useState } from 'react';
+import { SAGEColors } from '@sage3/shared';
 
 type UILayerProps = {
   boardId: string;
@@ -344,25 +344,14 @@ export function UILayer(props: UILayerProps) {
       </HStack>
 
       {/* Main Button Bottom Left */}
-      <Box
-        position="absolute"
-        left="2"
-        bottom="2"
-        zIndex={101}
-        display={showUI ? 'flex' : 'none'}
-        // background="gray.700"
-        // py="2"
-        // px="3"
-        borderRadius="md"
-      >
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
         <Box display="flex" gap="1">
           <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
             <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
               <MdArrowBack />
             </Button>
           </Tooltip>
-          <Divider orientation="vertical" />
-
+          <Divider orientation="vertical" mx="1" />
           <MainButton
             buttonStyle="solid"
             backToRoom={() => toHome(props.roomId)}
@@ -374,34 +363,25 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-
-          <Divider orientation="vertical" />
-          <Interactionbar />
-          <Divider orientation="vertical" />
-          {/* <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} /> */}
-          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdPeople />} />
-          <Popover>
-            <Tooltip label={'Applications'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-              <PopoverTrigger>
-                <IconButton
-                  // colorScheme={showApps ? usersColor : 'gray'}
-                  size="sm"
-                  icon={<MdApps />}
-                  fontSize="lg"
-                  aria-label={'input-type'}
-                  // onClick={handleShowApps}
-                ></IconButton>
-              </PopoverTrigger>
-            </Tooltip>
-            <PopoverContent width="100%">
-              <PopoverHeader>Applications</PopoverHeader>
-              <PopoverBody>{room && board && <ApplicationsPanel roomId={room?._id} boardId={board?._id} />}</PopoverBody>
-            </PopoverContent>
-          </Popover>
-          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiPuzzle />} />
-          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<MdFolder />} />
-          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" icon={<HiChip />} />
-          <Divider orientation="vertical" />
+          <Divider orientation="vertical" mx="1" /> <Interactionbar />
+          <Divider orientation="vertical" mx="1" />
+          <ToolbarButton color={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+            <UsersMenu boardId={props.boardId} />
+            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          </ToolbarButton>
+          <ToolbarButton color={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton color={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton color={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
+            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
+          </ToolbarButton>
+          <ToolbarButton color={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <Divider orientation="vertical" mx="1" />{' '}
           <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" colorScheme={'purple'} icon={<IoSparklesSharp />} />
         </Box>
       </Box>
@@ -417,30 +397,20 @@ export function UILayer(props: UILayerProps) {
         // padding="2"
         borderRadius="md"
       >
-        <Popover offset={[20, 8]} isOpen={showMap}>
-          <Tooltip label={'Map'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-            <PopoverTrigger>
-              <IconButton
-                colorScheme={showMap ? usersColor : 'gray'}
-                mr="2"
-                size="sm"
-                icon={<MdMap />}
-                fontSize="lg"
-                aria-label={'input-type'}
-                onClick={handleShowMap}
-              ></IconButton>
-            </PopoverTrigger>
-          </Tooltip>
-          <PopoverContent width="100%">
-            <PopoverHeader>Map</PopoverHeader>
-            <PopoverBody>
-              <NavigationPanel />
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-        <ButtonGroup isAttached size="xs" gap="0">
+        <ButtonGroup isAttached size="xs" gap="0" mr="1">
           <Tooltip label={'Zoom In'}>
-            <IconButton size="sm" icon={<MdAdd />} fontSize="lg" aria-label={'input-type'} onClick={() => zoomIn(10)}></IconButton>
+            <IconButton
+              size="sm"
+              icon={<MdAdd />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomIn(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
           </Tooltip>
           <Tooltip label={'Reset Zoom'}>
             <IconButton
@@ -450,13 +420,32 @@ export function UILayer(props: UILayerProps) {
               onClick={resetZoom}
               minWidth="45px"
               maxWidth="45px"
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
               icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
             ></IconButton>
           </Tooltip>
           <Tooltip label={'Zoom Out'}>
-            <IconButton size="sm" icon={<MdRemove />} fontSize="lg" aria-label={'input-type'} onClick={() => zoomOut(10)}></IconButton>
+            <IconButton
+              size="sm"
+              icon={<MdRemove />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomOut(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
           </Tooltip>
         </ButtonGroup>
+        <ToolbarButton color={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]}>
+          <NavigationMenu />
+        </ToolbarButton>
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}
