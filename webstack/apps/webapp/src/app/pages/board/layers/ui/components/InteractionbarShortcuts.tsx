@@ -6,56 +6,52 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useUserSettings, useHotkeys, useUIStore } from '@sage3/frontend';
+import { useCallback, useEffect, useState } from 'react';
+import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
 
 export function InteractionbarShortcuts() {
   // Settings
-  const { setPrimaryActionMode } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+  const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
-  // useHotkeys(
-  //   'h',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('grab');
-  //   },
-  //   { dependencies: [] }
-  // );
+  const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | undefined>(undefined);
+  const spacebarPressed = useKeyPress(' ');
 
-  // useHotkeys(
-  //   's',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('lasso');
-  //   },
-  //   { dependencies: [] }
-  // );
+  const handleSpacebarAction = useCallback(() => {
+    if (spacebarPressed && !selectedApp) {
+      if (primaryActionMode !== 'grab') {
+        setCachedPrimaryActionMode(primaryActionMode);
+        setPrimaryActionMode('grab');
+      }
+    } else {
+      // The commented out code will cause rendering order issues, do not attempt to use
+      // setCachedPrimaryActionMode((prev) => {
+      //   if (prev) {
+      //     setPrimaryActionMode(prev);
+      //     return undefined;
+      //   }
+      //   return prev;
+      // });
+      if (cachedPrimaryActionMode) {
+        setPrimaryActionMode(cachedPrimaryActionMode);
+        setCachedPrimaryActionMode(undefined);
+      }
+    }
+  }, [spacebarPressed, primaryActionMode, cachedPrimaryActionMode, selectedApp]);
 
-  // useHotkeys(
-  //   'p',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('pen');
-  //   },
-  //   { dependencies: [] }
-  // );
-
-  // useHotkeys(
-  //   'e',
-  //   (event: KeyboardEvent): void | boolean => {
-  //     event.stopPropagation();
-  //     setPrimaryActionMode('eraser');
-  //   },
-  //   { dependencies: [] }
-  // );
+  useEffect(() => {
+    handleSpacebarAction();
+  }, [spacebarPressed]);
 
   useHotkeys(
     '1',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('grab');
-      setSelectedAppsIds([]);
+      setSelectedApp('');
     },
     { dependencies: [] }
   );

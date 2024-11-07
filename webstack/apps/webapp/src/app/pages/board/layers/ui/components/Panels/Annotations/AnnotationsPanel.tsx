@@ -42,7 +42,7 @@ import { SAGEColors } from '@sage3/shared';
 import { Panel } from '../Panel';
 
 export function AnnotationsPanel() {
-  const { setPrimaryActionMode, settings } = useUserSettings();
+  const { setPrimaryActionMode, setDefaultPrimaryActionMode, settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
   // UI Store
@@ -95,6 +95,8 @@ export function AnnotationsPanel() {
     if (panel) {
       if (panel.show && primaryActionMode !== 'pen' && primaryActionMode !== 'eraser') {
         setPrimaryActionMode('pen');
+      } else if (!panel.show) {
+        setDefaultPrimaryActionMode();
       }
     }
   }, [panel?.show]);
@@ -156,7 +158,13 @@ export function AnnotationsPanel() {
             <HStack m={0} p={0} spacing={'inherit'}>
               <Tooltip placement="top" hasArrow label={'Marker'}>
                 <Button
-                  onClick={() => setPrimaryActionMode('pen')}
+                  onClick={() => {
+                    if (primaryActionMode === 'pen') {
+                      setDefaultPrimaryActionMode();
+                    } else {
+                      setPrimaryActionMode('pen');
+                    }
+                  }}
                   size="sm"
                   mr="2"
                   colorScheme={primaryActionMode === 'pen' ? 'green' : 'gray'}
@@ -167,7 +175,13 @@ export function AnnotationsPanel() {
 
               <Tooltip placement="top" hasArrow label={'Eraser'}>
                 <Button
-                  onClick={() => setPrimaryActionMode('eraser')}
+                  onClick={() => {
+                    if (primaryActionMode === 'eraser') {
+                      setDefaultPrimaryActionMode();
+                    } else {
+                      setPrimaryActionMode('eraser');
+                    }
+                  }}
                   size="sm"
                   mr="2"
                   colorScheme={primaryActionMode === 'eraser' ? 'green' : 'gray'}
