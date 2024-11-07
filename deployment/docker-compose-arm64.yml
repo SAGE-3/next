@@ -32,6 +32,10 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
