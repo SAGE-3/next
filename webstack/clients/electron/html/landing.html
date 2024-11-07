@@ -198,11 +198,13 @@
 
     // Somone pastes in a URL and wants to join a board
     async function joinBoard(url) {
+      const isSage3 = url.startsWith('sage3://');
+      const isHttps = url.startsWith('https://') && url.includes('/#/enter/');
 
       // Check if the url starts with sage3://
-      if (!url.startsWith('sage3://')) {
+      if (!isSage3 && !isHttps) {
         // Change the page
-        showNotification('Invalid URL. URL should begin with \'sage3:/\'', true);
+        showNotification('Invalid SAGE3 URL', true);
         return;
       }
       // Replace the sage3:// with https://

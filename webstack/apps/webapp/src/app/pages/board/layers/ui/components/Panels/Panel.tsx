@@ -12,7 +12,7 @@ import { Text, Button, ButtonProps, useColorModeValue, Box, IconButton, Tooltip 
 import { DraggableData, Rnd } from 'react-rnd';
 import { MdExpandMore, MdExpandLess, MdClose } from 'react-icons/md';
 
-import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUserSettings } from '@sage3/frontend';
+import { PanelNames, PanelUI, StuckTypes, useHexColor, usePanelStore, useUser, useUserSettings } from '@sage3/frontend';
 
 // Font sizes
 const bigFont = 18;
@@ -65,14 +65,12 @@ export interface IconButtonPanelProps extends ButtonProps {
   icon: JSX.Element;
   description: string;
   isDisabled?: boolean;
-  onLongPress?: () => void;
 }
 
 // Button with a title and using the font size from parent panel
 export function IconButtonPanel(props: IconButtonPanelProps) {
   const iconColor = useColorModeValue('gray.600', 'gray.100');
   const iconHoverColor = useColorModeValue('teal.500', 'teal.500');
-  // const longPressEvent = useLongPress(props.onLongPress || (() => { }));
 
   return (
     <Box>
@@ -93,8 +91,6 @@ export function IconButtonPanel(props: IconButtonPanelProps) {
           onClick={props.onClick}
           isDisabled={props.isDisabled}
           _hover={{ color: props.isActive ? iconHoverColor : iconColor, transform: 'scale(1.15)' }}
-          onContextMenu={props.onLongPress ? props.onLongPress : () => {}} // Uncomment for alternative solution to longPressEvent
-          // {...longPressEvent} // if onContextMenu is uncommented, you should comment me
         />
       </Tooltip>
     </Box>
@@ -120,6 +116,8 @@ export type PanelProps = {
  * @returns
  */
 export function Panel(props: PanelProps) {
+  // User
+  const { user } = useUser();
   // Panel Store
   const panel = usePanelStore((state) => state.panels[props.name]);
   if (!panel) return null;
@@ -205,7 +203,9 @@ export function Panel(props: PanelProps) {
   }, [panel.stuck, winWidth, winHeight]);
 
   // Border color to show if panel is anchored to corners or sides
-  const borderColor = useHexColor('teal');
+  const usersColor = user ? user.data.color : 'teal';
+  const borderColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
+  const borderColor = useHexColor(user ? borderColorMode : 'teal');
   const border = `solid ${borderColor} 3px`;
   const borderTop =
     panel.stuck == StuckTypes.TopLeft || panel.stuck == StuckTypes.Top || panel.stuck == StuckTypes.TopRight ? border : '0px';

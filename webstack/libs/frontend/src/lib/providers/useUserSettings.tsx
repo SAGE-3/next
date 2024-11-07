@@ -60,6 +60,7 @@ type UserSettingsContextType = {
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => void;
+  setDefaultPrimaryActionMode: () => void;
   restoreDefaultSettings: () => void;
   setAIModel: (value: UserSettings['aiModel']) => void;
 };
@@ -74,6 +75,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowTags: () => { },
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
+  setDefaultPrimaryActionMode: () => { },
   restoreDefaultSettings: () => { },
   setAIModel: (value: UserSettings['aiModel']) => { },
 });
@@ -209,6 +211,15 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     [setSettings]
   );
 
+  const setDefaultPrimaryActionMode = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.primaryActionMode = defaultSettings.primaryActionMode;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
@@ -226,6 +237,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowTags,
         setBoardListView,
         setPrimaryActionMode,
+        setDefaultPrimaryActionMode,
         restoreDefaultSettings,
         setAIModel,
       }}
