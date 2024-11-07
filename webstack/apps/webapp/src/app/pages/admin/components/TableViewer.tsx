@@ -62,6 +62,19 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   const headerBackgroundColor = useColorModeValue('teal.200', 'teal.600');
   const headerTextColor = useColorModeValue('black', 'white');
 
+  // Handle download the data
+  const handleDownloadData = (data: any) => {
+    // Download the data
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Timestamp
+    const date = new Date();
+    a.download = `sage3_data_${date.toISOString()}.json`;
+    a.click();
+  };
+
   const TableHeader = (columns: (keyof T | keyof SBDoc)[]) => {
     return (
       <Thead position="sticky" top={0} zIndex={2} bg={headerBackgroundColor}>
@@ -112,6 +125,9 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
               })}
               {props.actions && (
                 <Td textOverflow="hidden" whiteSpace="hidden">
+                  <Button mr={2} colorScheme="teal" size="xs" onClick={() => handleDownloadData(item)}>
+                    Download
+                  </Button>
                   {props.actions.map((action, j) => (
                     <Button key={j} mr={j === 0 ? 0 : 2} colorScheme={action.color} size="xs" onClick={() => action.onClick(item._id)}>
                       {action.label}
