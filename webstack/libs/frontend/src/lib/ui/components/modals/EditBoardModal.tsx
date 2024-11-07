@@ -103,7 +103,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   // Update button handler
   const handleSubmit = () => {
     if (name !== props.board.data.name) {
-      const cleanedName = cleanNameCheckDoubles(name);
+      const cleanedName = cleanNameCheckDoubles(name, props.board.data.roomId);
       if (cleanedName) {
         updateBoard(props.board._id, { name: cleanedName });
       }
@@ -129,10 +129,11 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     props.onClose();
   };
 
-  function cleanNameCheckDoubles(name: string): string | null {
+  function cleanNameCheckDoubles(name: string, roomId: string): string | null {
     // remove leading and trailing space, and limit name length to 20
     const cleanedName = name.trim().substring(0, 20);
-    const boardNames = boards.filter((r) => r._id !== props.board._id).map((board) => board.data.name);
+    // Get the names of all boards in the same room, excluding the current board
+    const boardNames = boards.filter((r) => r.data.roomId === roomId && r._id !== props.board._id).map((board) => board.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
       toast({
         title: 'Name must have at least one character',
