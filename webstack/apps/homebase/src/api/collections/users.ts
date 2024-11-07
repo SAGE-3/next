@@ -12,8 +12,8 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 import { SAGEBase } from '@sage3/sagebase';
 
 import { config } from '../../config';
-import { RoomDeleteInfo, RoomsCollection } from './rooms';
-import { BoardDeleteInfo, BoardsCollection } from './boards';
+import { RoomsCollection } from './rooms';
+import { BoardsCollection } from './boards';
 import { AppsCollection } from './apps';
 import { AssetsCollection } from './assets';
 import { PluginsCollection } from './plugins';
@@ -79,9 +79,9 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       res.status(200).send({ success: true, data: { userStats } });
     });
 
-    router.post('/accountDeletion', async ({ body, user, authInfo }, res) => {
-      console.log(authInfo);
+    router.post('/accountDeletion', async ({ body, user }, res) => {
       const userId = (user as any).id;
+      console.log(userId);
       if (!userId) {
         res.status(401).send({ success: false, message: 'Unauthorized' });
         return;
@@ -100,8 +100,6 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         isSameUser = true;
       }
 
-      // Get Admins from config file
-      const adminEmails = config.auth.admins || [];
       // Get the user from the database
       const userDoc = await this.get(userIdToDelete);
       // Get the user email
@@ -113,13 +111,20 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         return;
       }
 
-      // Check if the user is an admin
+      // Check if the user who is requesting the deletion is an admin
+      // Get Admins from config file
+      const adminEmails = config.auth.admins || [];
       let isAdmin = false;
-      if (userEmail) {
-        isAdmin = adminEmails.includes(userEmail);
+      const userPerformingDeletion = await this.get(userId);
+      const userEmailPerformingDeletion = userPerformingDeletion?.data.email;
+      if (userEmailPerformingDeletion) {
+        isAdmin = adminEmails.includes(userEmailPerformingDeletion);
       }
 
-      // Only admins and the user themselves can delete their account
+      console.log('isAdmin:', isAdmin, 'userEmailPerformingDeletion:', userEmailPerformingDeletion);
+      console.log('isSameUser:', isSameUser);
+
+      // Only admins or the user themselves can delete their account
       if (!isAdmin && !isSameUser) {
         res.status(401).send({ success: false, message: 'Unauthorized' });
         return;

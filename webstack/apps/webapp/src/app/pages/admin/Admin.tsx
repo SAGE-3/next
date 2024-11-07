@@ -25,6 +25,10 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  useDisclosure,
+  Text,
+  IconButton,
+  Tooltip,
 } from '@chakra-ui/react';
 
 // Collection specific schemas
@@ -47,13 +51,11 @@ import {
   MessageSchema,
 } from '@sage3/shared/types';
 
-// Styles
-import './adminStyle.css';
-
 // Components
 import { TableViewer } from './components';
-import { MdSearch } from 'react-icons/md';
+import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
 import { throttle } from 'throttle-debounce';
+import { AccountDeletion } from 'libs/frontend/src/lib/ui/components/modals/AccountDeletion';
 
 export function AdminPage() {
   // SAGE3 Image
@@ -94,42 +96,66 @@ export function AdminPage() {
 
   const fetchApps = () => {
     APIHttp.GET<App>('/apps').then((bb) => {
-      if (bb.success && bb.data) setApps(bb.data);
+      if (bb.success && bb.data) {
+        setApps(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchBoards = () => {
     APIHttp.GET<Board>('/boards').then((bb) => {
-      if (bb.success && bb.data) setBoards(bb.data);
+      if (bb.success && bb.data) {
+        setBoards(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchAssets = () => {
     APIHttp.GET<Asset>('/assets').then((bb) => {
-      if (bb.success && bb.data) setAssets(bb.data);
+      if (bb.success && bb.data) {
+        setAssets(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchUsers = () => {
     APIHttp.GET<User>('/users').then((bb) => {
-      if (bb.success && bb.data) setUsers(bb.data);
+      if (bb.success && bb.data) {
+        setUsers(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchRooms = () => {
     APIHttp.GET<Room>('/rooms').then((bb) => {
-      if (bb.success && bb.data) setRooms(bb.data);
+      if (bb.success && bb.data) {
+        setRooms(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchMessages = () => {
     APIHttp.GET<Message>('/message').then((bb) => {
-      if (bb.success && bb.data) setMessages(bb.data);
+      if (bb.success && bb.data) {
+        setMessages(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchPresences = () => {
     APIHttp.GET<Presence>('/presence').then((bb) => {
-      if (bb.success && bb.data) setPresences(bb.data);
+      if (bb.success && bb.data) {
+        setPresences(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
   const fetchInsights = () => {
     APIHttp.GET<Insight>('/insight').then((bb) => {
-      if (bb.success && bb.data) setInsights(bb.data);
+      if (bb.success && bb.data) {
+        setInsights(bb.data);
+        setNumberOfElements(bb.data.length);
+      }
     });
   };
 
@@ -140,6 +166,7 @@ export function AdminPage() {
     setSearch('');
     setSearchValue('');
     clearAllFetchedData();
+    setNumberOfElements(0);
     if (index === 0) fetchRooms();
     if (index === 1) fetchBoards();
     if (index === 2) fetchApps();
@@ -148,6 +175,10 @@ export function AdminPage() {
     if (index === 5) fetchPresences();
     if (index === 6) fetchInsights();
     if (index === 7) fetchMessages();
+  };
+
+  const handleRefreshData = () => {
+    handleTabChange(tabIndex);
   };
 
   const toast = useToast();
@@ -216,18 +247,63 @@ export function AdminPage() {
     throttleSearchValueRef(e.target.value);
   };
 
+  // Account Deletion Modal Disclosure
+  const { isOpen: accountDelIsOpen, onOpen: accountDelOnOpen, onClose: accountDelOnClose } = useDisclosure();
+  const [accountDelUser, setAccountDelUser] = useState<User | null>(null);
+  const handleAccountDeletion = (userId: string) => {
+    const user = users.find((u) => u._id === userId);
+    if (!user) {
+      // toast to inform user that the user was not found
+      toast({ title: 'User not found', status: 'error', duration: 2000, isClosable: true });
+      return;
+    }
+    setAccountDelUser(user);
+    accountDelOnOpen();
+  };
+
+  // Number of Elelents
+  const [numberOfElements, setNumberOfElements] = useState<number>(0);
+
+  // Handle download the data
+  const handleDownloadData = () => {
+    // Download the data
+    const data = [rooms, boards, apps, assets, users, presences, insights, messages];
+    // Remove all the empty arrays
+    const filteredData = data.filter((d) => d.length > 0);
+    const dataArray = filteredData[0];
+    if (!dataArray || dataArray.length === 0) {
+      toast({ title: 'No data to download', status: 'info', duration: 2000, isClosable: true });
+      return;
+    }
+    const blob = new Blob([JSON.stringify(dataArray)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Timestamp
+    const date = new Date();
+    a.download = `sage3_data_${date.toISOString()}.json`;
+    a.click();
+  };
+
   return (
     <Flex direction="column" align="center" minH="100vh" py="2">
+      {accountDelUser && <AccountDeletion user={accountDelUser} isOpen={accountDelIsOpen} onClose={accountDelOnClose} />}
       <Flex direction="column" width="100%" maxW="1600px" flex="1">
         {/* Top Section */}
         <Box as="header">
-          <Box display="flex" justifyContent="left" gap="2">
-            <Button onClick={handleBackToHome} colorScheme="teal" size="sm">
-              Home
-            </Button>
-            <Button onClick={toggleColorMode} size="sm">
-              {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </Button>
+          <Box display="flex" justifyContent="space-between" alignItems={'center'}>
+            <Box display="flex" gap="2">
+              <Button onClick={handleBackToHome} colorScheme="teal" size="sm">
+                Home
+              </Button>
+              <Button onClick={toggleColorMode} size="sm">
+                {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+              </Button>
+            </Box>
+
+            <Text fontSize="2xl" my="0" fontWeight="bold">
+              SAGE3 Admin Page
+            </Text>
           </Box>
         </Box>
 
@@ -245,13 +321,31 @@ export function AdminPage() {
               <Tab>Messages</Tab>
               <Tab>Logs</Tab>
             </TabList>
+            <Text mt="3">Total Number of Elements: {numberOfElements}</Text>
             {/* Search Input */}
-            <InputGroup my="4" colorScheme="teal">
-              <InputLeftElement pointerEvents="none">
-                <MdSearch color="gray.300" />
-              </InputLeftElement>
-              <Input value={search} onChange={(e) => handleSearchChange(e)} placeholder="Search" width="500px" />
-            </InputGroup>
+            <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+              <InputGroup my="3" colorScheme="teal">
+                <InputLeftElement pointerEvents="none">
+                  <MdSearch color="gray.300" />
+                </InputLeftElement>
+                <Input value={search} onChange={(e) => handleSearchChange(e)} placeholder="Search" width="500px" />
+              </InputGroup>
+              <Box display="flex" gap="2">
+                <Tooltip label="Download Data" aria-label="Refresh Data" placement="top" hasArrow>
+                  <IconButton colorScheme="teal" icon={<MdRefresh />} variant={'outline'} onClick={handleRefreshData} aria-label={''} />
+                </Tooltip>
+                <Tooltip label="Download Data" aria-label="Download Data" placement="top" hasArrow>
+                  <IconButton
+                    colorScheme="teal"
+                    icon={<MdFileDownload />}
+                    variant={'outline'}
+                    onClick={handleDownloadData}
+                    aria-label={''}
+                  />
+                </Tooltip>
+              </Box>
+            </Box>
+
             <TabPanels flex="1" overflow="hidden" height="100%">
               <TabPanel p={0} height="100%">
                 {TableViewer<RoomSchema>({
@@ -300,7 +394,7 @@ export function AdminPage() {
                   search: searchValue,
                   columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'],
                   onRefresh: fetchUsers,
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'users') }],
+                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => handleAccountDeletion(id) }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
@@ -318,7 +412,7 @@ export function AdminPage() {
                   heading: 'Insights',
                   data: insights,
                   search: searchValue,
-                  columns: ['_id', 'app_id', 'boardId'],
+                  columns: ['_id', 'app_id', 'boardId', 'labels'],
                   onRefresh: fetchInsights,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'insight') }],
                 })}

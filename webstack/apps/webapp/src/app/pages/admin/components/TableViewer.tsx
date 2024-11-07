@@ -17,7 +17,6 @@ import { SBDoc } from '@sage3/shared/types';
  */
 type TableDataType<T> = SBDoc & { data: T };
 
-
 /**
  * Props for the TableViewer component.
  *
@@ -99,9 +98,12 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
                 } else {
                   // Check if column is in the data object
                   if (column in item.data) {
+                    let value = item.data[column];
+                    // Check if value is an array
+                    if (Array.isArray(value)) value = value.join(', ');
                     return (
                       <Td key={j} style={CellStyle}>
-                        {item.data[column]}
+                        {value}
                       </Td>
                     );
                   }
@@ -154,7 +156,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   return (
     // This height is really ugly but I couldnt figure out how to make the table reactively size with a scrollbar
     // The height is calculated by subtracting the height of the header, footer, tabs, search bar, and padding
-    <Box height="calc(100vh - 16px - 32px - 30px -  42px - 72px - 24px) " overflowY="auto">
+    <Box height="calc(100vh - 16px - 32px - 30px -  42px - 72px - 64px) " overflowY="auto">
       <Table variant="striped" size="sm" layout="fixed">
         {TableHeader(columns)}
         {TableBody(data.filter(searchFilter), columns)}
