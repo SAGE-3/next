@@ -11,3 +11,4 @@ export * from './mime-utils';
 export * from './fuzzy-search';
 export * from './platform-checker';
 export * from './is-alphanumeric';
+export * from './strings';

@@ -22,7 +22,7 @@ import { v4 as getUUID } from 'uuid';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { getFileType } from '@sage3/shared';
 // Local storage
-import { uploadMiddleware } from '../../../connectors/upload-connector';
+import { UploadConnector } from '../../../connectors/upload-connector';
 // Asset model
 import { AssetsCollection, MessageCollection } from '../../collections';
 
@@ -30,7 +30,7 @@ import { AssetsCollection, MessageCollection } from '../../collections';
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
 export function uploadHandler(req: express.Request, res: express.Response) {
-  return uploadMiddleware('files')(req, res, async (err) => {
+  return UploadConnector.getInstance().uploadMiddleware('files')(req, res, async (err) => {
     let hasError = false;
     let processError = '';
     // multerGoogleMiddleware("files")(req, res, (err) => {

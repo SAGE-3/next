@@ -48,7 +48,6 @@ import { FaPython } from 'react-icons/fa';
 import { LuFileCode, LuFileJson } from 'react-icons/lu';
 
 import {
-  humanFileSize,
   downloadFile,
   useUser,
   useAuth,
@@ -61,7 +60,7 @@ import {
   setupAppForFile,
   useConfigStore,
 } from '@sage3/frontend';
-import { getExtension } from '@sage3/shared';
+import { getExtension, humanFileSize } from '@sage3/shared';
 
 import './menu.scss';
 import { FileEntry } from '@sage3/shared/types';

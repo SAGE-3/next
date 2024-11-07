@@ -45,7 +45,6 @@ import {
   apiUrls,
   AssetHTTPService,
   downloadFile,
-  humanFileSize,
   useAssetStore,
   isElectron,
   useHexColor,
@@ -58,6 +57,7 @@ import {
 } from '@sage3/frontend';
 import {
   fuzzySearch,
+  humanFileSize,
   isCode,
   isVideo,
   isGIF,

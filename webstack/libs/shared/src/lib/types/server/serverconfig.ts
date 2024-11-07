@@ -45,6 +45,12 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
+  // Webserver configuration
+  webserver: {
+    logLevel: 'all' | 'partial' | 'none';
+    uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
+  };
+
   // FastAPI
   fastapi: { url: string };
 

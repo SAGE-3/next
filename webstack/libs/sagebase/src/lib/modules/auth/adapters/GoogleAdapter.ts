@@ -49,10 +49,10 @@ export function passportGoogleSetup(config: SBAuthGoogleConfig): boolean {
         }
       )
     );
-    console.log('Google Login> Setup done');
+    console.log('Login> Google setup done');
     return true;
   } catch (error) {
-    console.log('Google Login> Failed setup', error);
+    console.log('Login> Google failed setup', error);
     return false;
   }
 }
