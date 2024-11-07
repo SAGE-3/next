@@ -33,7 +33,7 @@ import {
 
 // Collection specific schemas
 import { App, AppSchema } from '@sage3/applications/schema';
-import { APIHttp, useRouteNav } from '@sage3/frontend';
+import { APIHttp, apiUrls, downloadFile, humanFileSize, useRouteNav } from '@sage3/frontend';
 import {
   Board,
   Asset,
@@ -285,6 +285,18 @@ export function AdminPage() {
     a.click();
   };
 
+  // handle download asset
+  const handleDownloadAsset = async (id: string) => {
+    const asset = assets.find((a) => a._id === id);
+    if (!asset) {
+      toast({ title: 'Asset not found', status: 'error', duration: 2000, isClosable: true });
+      return;
+    }
+    const filename = asset.data.originalfilename;
+    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+    downloadFile(fileURL, filename);
+  };
+
   return (
     <Flex direction="column" align="center" minH="100vh" py="2">
       {accountDelUser && <AccountDeletion user={accountDelUser} isOpen={accountDelIsOpen} onClose={accountDelOnClose} />}
@@ -383,8 +395,12 @@ export function AdminPage() {
                   data: assets,
                   search: searchValue,
                   columns: ['_id', 'originalfilename', 'mimetype', 'size'],
+                  formatColumns: { size: (value) => humanFileSize(value) },
                   onRefresh: fetchAssets,
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') }],
+                  actions: [
+                    { label: 'Download Asset', color: 'blue', onClick: (id) => handleDownloadAsset(id) },
+                    { label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') },
+                  ],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">

@@ -33,6 +33,7 @@ interface TableViewerProps<T> {
   heading: string;
   data: TableDataType<T>[];
   columns: (keyof T | keyof SBDoc)[];
+  formatColumns?: { [key: string]: (value: any) => string };
   onRefresh: () => void;
   search: string;
   actions?: {
@@ -112,6 +113,10 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
                   // Check if column is in the data object
                   if (column in item.data) {
                     let value = item.data[column];
+                    // Check if value is in the formatColumns object
+                    if (props.formatColumns && column in props.formatColumns) {
+                      value = props.formatColumns[column as string](value);
+                    }
                     // Check if value is an array
                     if (Array.isArray(value)) value = value.join(', ');
                     return (
@@ -125,11 +130,11 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
               })}
               {props.actions && (
                 <Td textOverflow="hidden" whiteSpace="hidden">
-                  <Button mr={2} colorScheme="teal" size="xs" onClick={() => handleDownloadData(item)}>
+                  <Button colorScheme="teal" mr="1" mb="1" size="xs" onClick={() => handleDownloadData(item)}>
                     Download
                   </Button>
                   {props.actions.map((action, j) => (
-                    <Button key={j} mr={j === 0 ? 0 : 2} colorScheme={action.color} size="xs" onClick={() => action.onClick(item._id)}>
+                    <Button key={j} colorScheme={action.color} size="xs" mb="1" mr="1" onClick={() => action.onClick(item._id)}>
                       {action.label}
                     </Button>
                   ))}
