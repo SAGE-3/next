@@ -1003,7 +1003,7 @@ if (process.platform === 'win32') {
         mainWindow.loadURL(newurl);
       } else {
         // save the URL for later
-        gotoURL = newurl;
+        // gotoURL = newurl;
       }
     });
   }
