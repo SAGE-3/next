@@ -50,8 +50,7 @@ export function InteractionbarShortcuts() {
     '1',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      setPrimaryActionMode('grab');
-      setSelectedApp('');
+      setPrimaryActionMode('lasso');
     },
     { dependencies: [] }
   );
@@ -60,7 +59,8 @@ export function InteractionbarShortcuts() {
     '2',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      setPrimaryActionMode('lasso');
+      setPrimaryActionMode('grab');
+      setSelectedApp('');
     },
     { dependencies: [] }
   );

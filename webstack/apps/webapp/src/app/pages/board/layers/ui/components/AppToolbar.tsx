@@ -838,6 +838,12 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
+            <Tooltip placement="top" hasArrow={true} label={'Deselect Application'} openDelay={400} ml="1">
+              <Button onClick={() => setSelectedApp('')} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
+                <IoMdExit size="18px" color={buttonTextColor} />
+              </Button>
+            </Tooltip>
+
             <Tooltip
               placement="top"
               hasArrow={true}
@@ -866,12 +872,6 @@ export function AppToolbar(props: AppToolbarProps) {
             <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
               <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
                 <HiOutlineTrash size="18px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Deselect Application'} openDelay={400} ml="1">
-              <Button onClick={() => setSelectedApp('')} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <IoMdExit size="18px" color={buttonTextColor} />
               </Button>
             </Tooltip>
 
