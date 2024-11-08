@@ -63,6 +63,8 @@ import {
   MdExpandMore,
   MdExpandLess,
   MdMenu,
+  MdPushPin,
+  MdOutlinePushPin,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { IoMdExit } from 'react-icons/io';
@@ -828,27 +830,33 @@ export function AppToolbar(props: AppToolbarProps) {
                   <MdMenu size="14px" color={buttonTextColor} />
                 </MenuButton>
               </Tooltip>
-              <MenuList minWidth="150px" fontSize={'sm'}>
+              <MenuList minWidth="150px" fontSize={'sm'} py="1px" m="0">
                 <MenuItem
-                  icon={app.data.pinned ? <MdLock size="18px" /> : <MdLockOpen size="18px" />}
+                  icon={app.data.pinned ? <MdPushPin size="18px" /> : <MdOutlinePushPin size="18px" />}
                   onClick={togglePin}
                   isDisabled={!canPin}
                 >
-                  {app.data.pinned ? 'Unpin App' : 'Pin App'}
+                  {app.data.pinned ? 'Unpin Application' : 'Pin Application'}
                 </MenuItem>
-                <MenuItem icon={<MdCopyAll size="18px" />} onClick={() => duplicate([app._id])} isDisabled={!canDuplicateApp}>
-                  Duplicate App
+                <MenuItem
+                  icon={<MdCopyAll size="18px" />}
+                  onClick={() => duplicate([app._id])}
+                  isDisabled={!canDuplicateApp}
+                  py="1px"
+                  m="0"
+                >
+                  Duplicate Application
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem icon={<MdTv size="18px" />} onClick={() => scaleApp()}>
+                <MenuItem icon={<MdTv size="18px" />} onClick={() => scaleApp()} py="1px" m="0">
                   {previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
                 </MenuItem>
-                <MenuItem icon={<MdZoomOutMap size="18px" />} onClick={() => moveToApp()}>
+                <MenuItem icon={<MdZoomOutMap size="18px" />} onClick={() => moveToApp()} py="1px" m="0">
                   {previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
                 </MenuItem>
                 <MenuDivider />
 
-                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')}>
+                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
                   Deselect Application
                 </MenuItem>
               </MenuList>
