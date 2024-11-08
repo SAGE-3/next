@@ -94,6 +94,9 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         return;
       }
 
+      // Delete all data?
+      const deleteAllData = body.deleteAllData ? body.deleteAllData : false;
+
       // Only admins and the user themselves can delete their account
       let isSameUser = false;
       if (userId === userIdToDelete) {
@@ -121,9 +124,6 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         isAdmin = adminEmails.includes(userEmailPerformingDeletion);
       }
 
-      console.log('isAdmin:', isAdmin, 'userEmailPerformingDeletion:', userEmailPerformingDeletion);
-      console.log('isSameUser:', isSameUser);
-
       // Only admins or the user themselves can delete their account
       if (!isAdmin && !isSameUser) {
         res.status(401).send({ success: false, message: 'Unauthorized' });
@@ -131,6 +131,7 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       }
 
       this.userDeleteLog('User Deletion Request Started', userEmail);
+      this.userDeleteLog(`Delete All Data: ${deleteAllData}`, userEmail);
 
       const userCollDelete = await this.delete(userIdToDelete);
       const userCollectionRemoval = userCollDelete ? true : false;
@@ -140,61 +141,69 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       const authCollectionRemoval = authCollDelete ? true : false;
       this.userDeleteLog(`Auth Collection Delete ${authCollectionRemoval ? 'Success' : 'Failed'}`, userEmail);
 
-      // Delete the User's Rooms
-      const roomsDeleteInfo = await RoomsCollection.deleteUsersRooms(userIdToDelete);
+      if (!deleteAllData) {
+        this.userDeleteLog('User data will not be deleted and will be transfered to the server admin.', userEmail);
 
-      // Delete the User's Boards
-      const boardsDeleteInfo = await BoardsCollection.deleteUsersBoards(userIdToDelete);
+        // TODO Logic to transfer ownership of rooms, boards, apps, assets, and plugins to the server admins
+      } else {
+        this.userDeleteLog('User data will be permentately deleted', userEmail);
 
-      // Delete the User's Apps
-      const appsDeleted = await AppsCollection.deleteUsersApps(userIdToDelete);
+        // Delete the User's Rooms
+        const roomsDeleteInfo = await RoomsCollection.deleteUsersRooms(userIdToDelete);
 
-      // Delete the User's Assets
-      const assetsDelete = await AssetsCollection.deleteUsersAssets(userIdToDelete);
+        // Delete the User's Boards
+        const boardsDeleteInfo = await BoardsCollection.deleteUsersBoards(userIdToDelete);
 
-      // Delete the User's Plugins
-      const pluginsDeleted = await PluginsCollection.deletePluginsByUser(userIdToDelete);
+        // Delete the User's Apps
+        const appsDeleted = await AppsCollection.deleteUsersApps(userIdToDelete);
 
-      // Total Rooms Deleted
-      const totalRoomsDeleted = roomsDeleteInfo.length;
+        // Delete the User's Assets
+        const assetsDelete = await AssetsCollection.deleteUsersAssets(userIdToDelete);
 
-      // Total Boards Deleted
-      const boards = [];
-      roomsDeleteInfo.forEach((room) => {
-        boards.push(...room.boardsDeleteInfo);
-      });
-      boards.push(...boardsDeleteInfo);
-      const totalBoardsDeleted = boards.length;
+        // Delete the User's Plugins
+        const pluginsDeleted = await PluginsCollection.deletePluginsByUser(userIdToDelete);
 
-      // Total Apps Deleted
-      let boardApps = 0;
-      boards.forEach((board) => {
-        boardApps += board.appsDeleted;
-      });
-      const totalAppsDeleted = appsDeleted + boardApps;
+        // Total Rooms Deleted
+        const totalRoomsDeleted = roomsDeleteInfo.length;
 
-      // Total Assets Deleted
-      let roomAssets = 0;
-      roomsDeleteInfo.forEach((room) => {
-        roomAssets += room.assetsDeleted;
-      });
-      const totalAssetsDeleted = roomAssets + assetsDelete;
+        // Total Boards Deleted
+        const boards = [];
+        roomsDeleteInfo.forEach((room) => {
+          boards.push(...room.boardsDeleteInfo);
+        });
+        boards.push(...boardsDeleteInfo);
+        const totalBoardsDeleted = boards.length;
 
-      // Total Plugins Deleted
-      let roomPlugins = 0;
-      roomsDeleteInfo.forEach((room) => {
-        roomPlugins += room.pluginsDeleted;
-      });
-      const totalPluginsDeleted = roomPlugins + pluginsDeleted;
+        // Total Apps Deleted
+        let boardApps = 0;
+        boards.forEach((board) => {
+          boardApps += board.appsDeleted;
+        });
+        const totalAppsDeleted = appsDeleted + boardApps;
 
-      this.userDeleteLog(`Rooms Deleted: ${totalRoomsDeleted}`, userEmail);
-      this.userDeleteLog(`Boards Deleted: ${totalBoardsDeleted}`, userEmail);
-      this.userDeleteLog(`Apps Deleted: ${totalAppsDeleted}`, userEmail);
-      this.userDeleteLog(`Assets Deleted: ${totalAssetsDeleted}`, userEmail);
-      this.userDeleteLog(`Plugins Deleted: ${totalPluginsDeleted}`, userEmail);
+        // Total Assets Deleted
+        let roomAssets = 0;
+        roomsDeleteInfo.forEach((room) => {
+          roomAssets += room.assetsDeleted;
+        });
+        const totalAssetsDeleted = roomAssets + assetsDelete;
 
-      this.userDeleteLog('User Deletion Request Finished', userEmail);
-      res.status(200).send({ success: true });
+        // Total Plugins Deleted
+        let roomPlugins = 0;
+        roomsDeleteInfo.forEach((room) => {
+          roomPlugins += room.pluginsDeleted;
+        });
+        const totalPluginsDeleted = roomPlugins + pluginsDeleted;
+
+        this.userDeleteLog(`Rooms Deleted: ${totalRoomsDeleted}`, userEmail);
+        this.userDeleteLog(`Boards Deleted: ${totalBoardsDeleted}`, userEmail);
+        this.userDeleteLog(`Apps Deleted: ${totalAppsDeleted}`, userEmail);
+        this.userDeleteLog(`Assets Deleted: ${totalAssetsDeleted}`, userEmail);
+        this.userDeleteLog(`Plugins Deleted: ${totalPluginsDeleted}`, userEmail);
+
+        this.userDeleteLog('User Deletion Request Finished', userEmail);
+        res.status(200).send({ success: true });
+      }
     });
 
     this.httpRouter = router;

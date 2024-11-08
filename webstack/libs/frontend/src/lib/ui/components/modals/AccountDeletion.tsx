@@ -27,10 +27,18 @@ import {
   Tr,
   useToast,
   Progress,
+  Icon,
+  FormControl,
+  FormLabel,
+  Switch,
+  Tooltip,
+  Tfoot,
+  Thead,
 } from '@chakra-ui/react';
 
 import { formatDateAndTime, useHexColor, useUsersStore } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
+import { MdInfo } from 'react-icons/md';
 
 // Props for the AccountDeletion
 interface AccountDeletionProps {
@@ -69,17 +77,23 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
 
   const redText = useColorModeValue('red.500', 'red.300');
   const redTextHex = useHexColor(redText);
-  const tealText = useColorModeValue('teal.500', 'teal.300');
-  const tealTextHex = useHexColor(tealText);
 
   // Processing
   const [isProcessing, setProcessing] = useState(false);
 
-  const [value, setValue] = useState('');
+  //
+  const [emailValue, setEmailValue] = useState('');
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValue(event.target.value);
+    setEmailValue(event.target.value);
   };
 
+  // Delete all data checkbox state
+  const [deleteAllData, setDeleteAllData] = useState<boolean>(false);
+  const handleDeleteAllData = () => {
+    setDeleteAllData(!deleteAllData);
+  };
+
+  // Toast for success or error
   const toast = useToast();
 
   const handleDeleteAccount = async () => {
@@ -87,7 +101,7 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
     const userId = user?._id;
     if (!userId) return;
     setProcessing(true);
-    const response = await accountDelete(userId);
+    const response = await accountDelete(userId, deleteAllData);
     setProcessing(false);
     props.onClose();
     // Toast message
@@ -111,6 +125,7 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
     };
 
     fetchUserStats();
+    setDeleteAllData(false);
   }, [props.isOpen, user, getUserStats]);
 
   return (
@@ -145,47 +160,65 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
                   </Tbody>
                 </Table>
               </TableContainer>
-              <Text mb={3} fontSize="xl">
-                Account Data to be permentely deleted:
-              </Text>
+              <FormControl display="flex" alignItems="center">
+                <FormLabel htmlFor="delete-data" mb="0">
+                  Delete Account Data
+                </FormLabel>
+                <Switch id="delete-data" colorScheme="red" onChange={handleDeleteAllData} isChecked={deleteAllData} />
+                <Tooltip
+                  defaultIsOpen={false}
+                  label={
+                    'Your data will be retained and transferred to the SAGE3 server administrator unless you choose to delete all data associated with your account.'
+                  }
+                  placement="top"
+                  shouldWrapChildren={true}
+                  openDelay={200}
+                  hasArrow={true}
+                >
+                  <Icon transform={`translate(4px, 2px)`} as={MdInfo}></Icon>
+                </Tooltip>
+              </FormControl>
               {/* Show data in a table */}
-              <TableContainer width="200px">
-                <Table size="sm">
-                  <Tbody>
-                    <Tr>
-                      <Td>Rooms</Td>
-                      <Td> {stats?.numRooms}</Td>
-                    </Tr>
-                    <Tr>
-                      <Td>Boards</Td>
-                      <Td>{stats?.numBoards}</Td>
-                    </Tr>
-                    <Tr>
-                      <Td>Apps</Td>
-                      <Td>{stats?.numApps}</Td>
-                    </Tr>
-                    <Tr>
-                      <Td>Assets</Td>
-                      <Td> {stats?.numAssets}</Td>
-                    </Tr>
-                    <Tr>
-                      <Td>Plugins</Td>
-                      <Td> {stats?.numPlugins}</Td>
-                    </Tr>
-                  </Tbody>
-                </Table>
-              </TableContainer>
-              <Text my={3} fontWeight={'bold'} fontSize={'2xl'} color={redTextHex}>
-                THIS ACTION CAN NOT BE UNDONE
+              {deleteAllData && (
+                <TableContainer width="280px">
+                  <Table size="sm">
+                    <Tbody>
+                      <Tr>
+                        <Td>Rooms</Td>
+                        <Td> {stats?.numRooms}</Td>
+                      </Tr>
+                      <Tr>
+                        <Td>Boards</Td>
+                        <Td>{stats?.numBoards}</Td>
+                      </Tr>
+                      <Tr>
+                        <Td>Apps</Td>
+                        <Td>{stats?.numApps}</Td>
+                      </Tr>
+                      <Tr>
+                        <Td>Assets</Td>
+                        <Td> {stats?.numAssets}</Td>
+                      </Tr>
+                      <Tr>
+                        <Td>Plugins</Td>
+                        <Td> {stats?.numPlugins}</Td>
+                      </Tr>
+                    </Tbody>
+                  </Table>
+                </TableContainer>
+              )}
+
+              <Text fontWeight={'bold'} fontSize={'md'} color={redTextHex} my={2}>
+                Warning: This action is permanent and cannot be undone.
               </Text>
               <Text mt={3}>Please enter the account's email address below to confirm:</Text>
-              <Text fontWeight={'bold'} fontSize="xl" color={tealTextHex}>
+              <Text fontWeight={'bold'} fontSize="xl" color={redTextHex}>
                 {email}
               </Text>
 
               <Input
                 my="3"
-                value={value}
+                value={emailValue}
                 onChange={handleEmailChange}
                 placeholder="Enter your email"
                 _placeholder={{ color: inputColor }}
@@ -194,7 +227,7 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
               />
 
               <Box my={2}>
-                <Button width="100%" isDisabled={value !== email} colorScheme="red" onClick={handleDeleteAccount}>
+                <Button width="100%" isDisabled={emailValue !== email} colorScheme="red" onClick={handleDeleteAccount}>
                   Delete Account
                 </Button>
               </Box>

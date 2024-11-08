@@ -30,7 +30,7 @@ interface UserState {
   users: User[];
   error: string | null;
   getUserStats: (userId: string) => Promise<UserStats | null>;
-  accountDeletion: (id: string) => Promise<{ success: boolean; message: string }>;
+  accountDeletion: (id: string, deleteAllData: boolean) => Promise<{ success: boolean; message: string }>;
   clearError: () => void;
   get: (id: string) => Promise<User | null>;
   subscribeToUsers: () => Promise<void>;
@@ -64,10 +64,10 @@ const UsersStore = create<UserState>()((set, get) => {
         return null;
       }
     },
-    accountDeletion: async (id: string) => {
+    accountDeletion: async (id: string, deleteAllData) => {
       // POST Request to delete the user
       const res = await fetch('/api/users/accountDeletion', {
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, deleteAllData }),
         method: 'POST',
         credentials: 'include',
         headers: {
