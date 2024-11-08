@@ -34,7 +34,6 @@ interface TableViewerProps<T> {
   data: TableDataType<T>[];
   columns: (keyof T | keyof SBDoc)[];
   formatColumns?: { [key: string]: (value: any) => string };
-  onRefresh: () => void;
   search: string;
   actions?: {
     label: string;

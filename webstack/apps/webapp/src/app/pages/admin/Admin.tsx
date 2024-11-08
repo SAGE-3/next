@@ -32,8 +32,6 @@ import {
 } from '@chakra-ui/react';
 
 // Collection specific schemas
-import { App, AppSchema } from '@sage3/applications/schema';
-import { APIHttp, apiUrls, downloadFile, humanFileSize, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
 import {
   Board,
   Asset,
@@ -50,12 +48,13 @@ import {
   InsightSchema,
   MessageSchema,
 } from '@sage3/shared/types';
+import { App, AppSchema } from '@sage3/applications/schema';
 
 // Components
+import { APIHttp, apiUrls, CollectionDocs, downloadFile, humanFileSize, useRouteNav, useUser, AccountDeletion } from '@sage3/frontend';
 import { TableViewer } from './components';
 import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
 import { throttle } from 'throttle-debounce';
-import { AccountDeletion } from 'libs/frontend/src/lib/ui/components/modals/AccountDeletion';
 
 export function AdminPage() {
   // SAGE3 Image
@@ -68,14 +67,7 @@ export function AdminPage() {
   const displayUserInfo = `${username} (${email})`;
 
   // Collections
-  const [boards, setBoards] = useState<Board[]>([]);
-  const [apps, setApps] = useState<App[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [presences, setPresences] = useState<Presence[]>([]);
-  const [insights, setInsights] = useState<Insight[]>([]);
+  const [data, setData] = useState<any[]>([]);
 
   // Pre element for displaying messages
   const preRef = useRef<HTMLPreElement>(null);
@@ -86,84 +78,20 @@ export function AdminPage() {
     toHome();
   };
 
+  // Toast Message
+  const toast = useToast();
+
   // Chakra Toggle Color Mode
   const { toggleColorMode, colorMode } = useColorMode();
 
-  const clearAllFetchedData = () => {
-    setBoards([]);
-    setApps([]);
-    setAssets([]);
-    setUsers([]);
-    setRooms([]);
-    setMessages([]);
-    setPresences([]);
-    setInsights([]);
-  };
-
-  const fetchApps = () => {
-    APIHttp.GET<App>('/apps').then((bb) => {
-      if (bb.success && bb.data) {
-        setApps(bb.data);
-        setNumberOfElements(bb.data.length);
+  // Fetch Data
+  function fetchData<T extends CollectionDocs>(collection: string) {
+    APIHttp.GET<T>(`/${collection}`).then((d) => {
+      if (d.success && d.data) {
+        setData(d.data);
       }
     });
-  };
-  const fetchBoards = () => {
-    APIHttp.GET<Board>('/boards').then((bb) => {
-      if (bb.success && bb.data) {
-        setBoards(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchAssets = () => {
-    APIHttp.GET<Asset>('/assets').then((bb) => {
-      if (bb.success && bb.data) {
-        setAssets(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchUsers = () => {
-    APIHttp.GET<User>('/users').then((bb) => {
-      if (bb.success && bb.data) {
-        setUsers(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchRooms = () => {
-    APIHttp.GET<Room>('/rooms').then((bb) => {
-      if (bb.success && bb.data) {
-        setRooms(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchMessages = () => {
-    APIHttp.GET<Message>('/message').then((bb) => {
-      if (bb.success && bb.data) {
-        setMessages(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchPresences = () => {
-    APIHttp.GET<Presence>('/presence').then((bb) => {
-      if (bb.success && bb.data) {
-        setPresences(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
-  const fetchInsights = () => {
-    APIHttp.GET<Insight>('/insight').then((bb) => {
-      if (bb.success && bb.data) {
-        setInsights(bb.data);
-        setNumberOfElements(bb.data.length);
-      }
-    });
-  };
+  }
 
   // Tab Index
   const [tabIndex, setTabIndex] = useState(0);
@@ -171,23 +99,20 @@ export function AdminPage() {
     setTabIndex(index);
     setSearch('');
     setSearchValue('');
-    clearAllFetchedData();
-    setNumberOfElements(0);
-    if (index === 0) fetchRooms();
-    if (index === 1) fetchBoards();
-    if (index === 2) fetchApps();
-    if (index === 3) fetchAssets();
-    if (index === 4) fetchUsers();
-    if (index === 5) fetchPresences();
-    if (index === 6) fetchInsights();
-    if (index === 7) fetchMessages();
+    setData([]);
+    if (index === 0) fetchData<Room>('rooms');
+    if (index === 1) fetchData<Board>('boards');
+    if (index === 2) fetchData<App>('apps');
+    if (index === 3) fetchData<Asset>('assets');
+    if (index === 4) fetchData<User>('users');
+    if (index === 5) fetchData<Presence>('presence');
+    if (index === 6) fetchData<Insight>('insight');
+    if (index === 7) fetchData<Message>('message');
   };
 
   const handleRefreshData = () => {
     handleTabChange(tabIndex);
   };
-
-  const toast = useToast();
 
   // Add log messages to the output log
   const processLogMessage = (ev: MessageEvent<any>) => {
@@ -211,11 +136,11 @@ export function AdminPage() {
     }
   };
 
+  // Use Effect at launch of Admin Page
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Admin';
-
-    fetchRooms();
+    handleTabChange(0);
     // Open websocket connection to the server
     const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socketUrl = `${socketType}//${window.location.host}/logs`;
@@ -231,6 +156,7 @@ export function AdminPage() {
     });
   }, []);
 
+  // Delete an item
   const deleteItem = (id: string, collection: string) => {
     APIHttp.DELETE(`/${collection}/` + id).then((resp) => {
       if (resp.success) {
@@ -239,6 +165,7 @@ export function AdminPage() {
     });
   };
 
+  // Search of the data
   const [search, setSearch] = useState('');
   const [searchValue, setSearchValue] = useState('');
   // Set Search Throttle
@@ -257,7 +184,7 @@ export function AdminPage() {
   const { isOpen: accountDelIsOpen, onOpen: accountDelOnOpen, onClose: accountDelOnClose } = useDisclosure();
   const [accountDelUser, setAccountDelUser] = useState<User | null>(null);
   const handleAccountDeletion = (userId: string) => {
-    const user = users.find((u) => u._id === userId);
+    const user = (data as User[]).find((u) => u._id === userId);
     if (!user) {
       // toast to inform user that the user was not found
       toast({ title: 'User not found', status: 'error', duration: 2000, isClosable: true });
@@ -267,33 +194,26 @@ export function AdminPage() {
     accountDelOnOpen();
   };
 
-  // Number of Elelents
-  const [numberOfElements, setNumberOfElements] = useState<number>(0);
-
   // Handle download the data
   const handleDownloadData = () => {
-    // Download the data
-    const data = [rooms, boards, apps, assets, users, presences, insights, messages];
-    // Remove all the empty arrays
-    const filteredData = data.filter((d) => d.length > 0);
-    const dataArray = filteredData[0];
-    if (!dataArray || dataArray.length === 0) {
+    // Check if there is data to download
+    if (data.length === 0) {
       toast({ title: 'No data to download', status: 'info', duration: 2000, isClosable: true });
       return;
     }
-    const blob = new Blob([JSON.stringify(dataArray)], { type: 'application/json' });
+    // Create a blob and download the data
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    // Timestamp
     const date = new Date();
     a.download = `sage3_data_${date.toISOString()}.json`;
     a.click();
   };
 
-  // handle download asset
+  // Handle download asset
   const handleDownloadAsset = async (id: string) => {
-    const asset = assets.find((a) => a._id === id);
+    const asset = (data as Asset[]).find((a) => a._id === id);
     if (!asset) {
       toast({ title: 'Asset not found', status: 'error', duration: 2000, isClosable: true });
       return;
@@ -339,7 +259,7 @@ export function AdminPage() {
               <Tab>Messages</Tab>
               <Tab>Logs</Tab>
             </TabList>
-            <Text mt="3">Total Number of Elements: {numberOfElements}</Text>
+            <Text mt="3">Total Number of Elements: {data.length}</Text>
             {/* Search Input */}
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
               <InputGroup my="3" colorScheme="teal">
@@ -368,41 +288,37 @@ export function AdminPage() {
               <TabPanel p={0} height="100%">
                 {TableViewer<RoomSchema>({
                   heading: 'Rooms',
-                  data: rooms,
+                  data: data as Room[],
                   search: searchValue,
                   columns: ['_id', 'name', 'description', 'color'],
-                  onRefresh: fetchRooms,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'rooms') }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<BoardSchema>({
                   heading: 'Boards',
-                  data: boards,
+                  data: data as Board[],
                   search: searchValue,
                   columns: ['_id', 'name', 'description', 'isPrivate'],
-                  onRefresh: fetchBoards,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'boards') }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<AppSchema>({
                   heading: 'Apps',
-                  data: apps,
+                  data: data as App[],
                   search: searchValue,
                   columns: ['_id', 'type', 'title', 'boardId'],
-                  onRefresh: fetchApps,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'apps') }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<AssetSchema>({
                   heading: 'Assets',
-                  data: assets,
+                  data: data as Asset[],
                   search: searchValue,
                   columns: ['_id', 'originalfilename', 'mimetype', 'size'],
                   formatColumns: { size: (value) => humanFileSize(value) },
-                  onRefresh: fetchAssets,
                   actions: [
                     { label: 'Download Asset', color: 'blue', onClick: (id) => handleDownloadAsset(id) },
                     { label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') },
@@ -412,40 +328,36 @@ export function AdminPage() {
               <TabPanel p={0} height="100%">
                 {TableViewer<UserSchema>({
                   heading: 'Users',
-                  data: users,
+                  data: data as User[],
                   search: searchValue,
                   columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'],
-                  onRefresh: fetchUsers,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => handleAccountDeletion(id) }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<PresenceSchema>({
                   heading: 'Presences',
-                  data: presences,
+                  data: data as Presence[],
                   search: searchValue,
                   columns: ['_id', 'userId', 'roomId', 'boardId'],
-                  onRefresh: fetchPresences,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'presence') }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<InsightSchema>({
                   heading: 'Insights',
-                  data: insights,
+                  data: data as Insight[],
                   search: searchValue,
                   columns: ['_id', 'app_id', 'boardId', 'labels'],
-                  onRefresh: fetchInsights,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'insight') }],
                 })}
               </TabPanel>
               <TabPanel p={0} height="100%">
                 {TableViewer<MessageSchema>({
                   heading: 'Messages',
-                  data: messages,
+                  data: data as Message[],
                   search: searchValue,
                   columns: ['_id', 'type'],
-                  onRefresh: fetchMessages,
                   actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'message') }],
                 })}
               </TabPanel>

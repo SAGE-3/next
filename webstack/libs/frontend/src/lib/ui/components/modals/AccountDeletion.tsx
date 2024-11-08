@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Chakra UI Modal for accoutn deletion
+// Chakra UI Modal for account deletion
 import { useEffect, useState } from 'react';
 import {
   Modal,
@@ -21,13 +21,9 @@ import {
   Button,
   Input,
   Table,
-  TableCaption,
   TableContainer,
   Tbody,
   Td,
-  Tfoot,
-  Th,
-  Thead,
   Tr,
   useToast,
   Progress,
