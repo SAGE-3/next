@@ -91,14 +91,14 @@ export function AccountDeletion(props: AccountDeletionProps): JSX.Element {
     const userId = user?._id;
     if (!userId) return;
     setProcessing(true);
-    const success = await accountDelete(userId);
+    const response = await accountDelete(userId);
     setProcessing(false);
     props.onClose();
     // Toast message
     toast({
-      title: success ? 'Account Deleted' : 'Failed to delete account',
-      description: success ? 'The account has been deleted' : 'Failed to delete account',
-      status: success ? 'success' : 'error',
+      title: response.success ? 'Account Deleted' : 'Failed to Delete Account',
+      description: response.success ? 'The account has been deleted' : response.message,
+      status: response.success ? 'success' : 'error',
       duration: 5000,
       isClosable: true,
     });

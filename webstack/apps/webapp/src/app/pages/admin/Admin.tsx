@@ -33,7 +33,7 @@ import {
 
 // Collection specific schemas
 import { App, AppSchema } from '@sage3/applications/schema';
-import { APIHttp, apiUrls, downloadFile, humanFileSize, useRouteNav } from '@sage3/frontend';
+import { APIHttp, apiUrls, downloadFile, humanFileSize, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
 import {
   Board,
   Asset,
@@ -60,6 +60,12 @@ import { AccountDeletion } from 'libs/frontend/src/lib/ui/components/modals/Acco
 export function AdminPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+
+  // Current User Information
+  const { user } = useUser();
+  const username = user?.data.name || 'Admin';
+  const email = user?.data.email || '';
+  const displayUserInfo = `${username} (${email})`;
 
   // Collections
   const [boards, setBoards] = useState<Board[]>([]);
@@ -298,7 +304,7 @@ export function AdminPage() {
   };
 
   return (
-    <Flex direction="column" align="center" minH="100vh" py="2">
+    <Flex direction="column" align="center" minH="100vh" py="2" mx="4">
       {accountDelUser && <AccountDeletion user={accountDelUser} isOpen={accountDelIsOpen} onClose={accountDelOnClose} />}
       <Flex direction="column" width="100%" maxW="1600px" flex="1">
         {/* Top Section */}
@@ -456,8 +462,10 @@ export function AdminPage() {
 
         {/* Bottom Bar */}
         <Box as="footer">
-          <div></div>
-          <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sage3" userSelect={'auto'} draggable={false} />
+          <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+            <Text>{displayUserInfo}</Text>
+            <Image src={imageUrl} height="30px" style={{ opacity: 0.7 }} alt="sage3" userSelect={'auto'} draggable={false} />
+          </Box>
         </Box>
       </Flex>
     </Flex>

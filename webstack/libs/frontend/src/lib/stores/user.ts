@@ -30,7 +30,7 @@ interface UserState {
   users: User[];
   error: string | null;
   getUserStats: (userId: string) => Promise<UserStats | null>;
-  accountDeletion: (id: string) => Promise<boolean>;
+  accountDeletion: (id: string) => Promise<{ success: boolean; message: string }>;
   clearError: () => void;
   get: (id: string) => Promise<User | null>;
   subscribeToUsers: () => Promise<void>;
@@ -77,10 +77,9 @@ const UsersStore = create<UserState>()((set, get) => {
       });
       const jsonResponse = await res.json();
       if (jsonResponse.success) {
-        return true;
+        return { success: true, message: 'Account Deleted' };
       } else {
-        set({ error: jsonResponse.message });
-        return false;
+        return { success: false, message: jsonResponse.message };
       }
     },
     clearError: () => {
