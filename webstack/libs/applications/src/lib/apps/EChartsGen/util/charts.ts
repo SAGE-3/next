@@ -1336,7 +1336,7 @@ export const charts = {
           }
 
           if (tree[parentName].children) {
-            tree[parentName].children.push(node as TreeNode);
+            tree[parentName].children?.push(node as TreeNode);
           }
         }
 
