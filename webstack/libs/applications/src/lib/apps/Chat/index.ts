@@ -19,6 +19,7 @@ export const schema = z.object({
   context: z.string(),
   token: z.string(),
   sources: z.array(z.string()),
+  firstQuestion: z.string(),
   messages: z
     .object({
       id: z.string(),
@@ -39,6 +40,7 @@ export const init: Partial<state> = {
   context: '',
   token: '',
   sources: [],
+  firstQuestion: '',
   messages: [
     {
       id: 'starting',
