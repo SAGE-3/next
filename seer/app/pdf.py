@@ -7,9 +7,9 @@
 # -----------------------------------------------------------------------------
 
 # PDFAgent
-
 import json, os
 from logging import Logger
+import asyncio
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -27,7 +27,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile
+from libs.utils import getModelsInfo, getPDFFiles
 
 # ChromaDB AI vector DB
 import chromadb
@@ -39,8 +39,12 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 import pymupdf4llm
 import pymupdf
 from io import BytesIO
+
+from langchain.vectorstores.base import VectorStoreRetriever
+from typing import Dict
+
 # from libs.pdf.pdf_utils import generate_answer
-from libs.pdf.pdf_v2 import generate_answer
+from libs.pdf.pdf_v3 import generate_answer
 
 class PDFAgent:
     def __init__(
@@ -115,27 +119,64 @@ class PDFAgent:
         # Default answer
         description = "No description available."
         # Retrieve the PDF content
-        pdfContent = getPDFFile(self.ps3, qq.asset)
+        # TODO: make cleaner
+        # Define the loop to run getPDFFiles in an executor for each asset
+        loop = asyncio.get_event_loop()
+        
+        # Use run_in_executor for each asset ID to avoid blocking the event loop
+        pdfContents = [
+            {
+                "id": assetid,
+                "content": await loop.run_in_executor(None, getPDFFiles, self.ps3, assetid)
+            }
+            for assetid in qq.assetids
+        ]
+    
+        
+        self.logger.info(f"pdfs: {len(pdfContents)}")
+        self.logger.info(f"pdf: {pdfContents[0]['id']}, {len(pdfContents[0]['content'])}")
+        
+        pdfContent = getPDFFiles(self.ps3, qq.assetids[0])
+        self.logger.info(f"\n\nqq, {qq}\n\n")
 
         # Used to filter documents in the vector DB
-        sage_asset_ids = [qq.asset] # array to accomodate for more than 1 pdf in the future
-        sage_asset_filter = {"sage_asset_id": {"$in": sage_asset_ids}}
+        sage_asset_ids = qq.assetids # array to accomodate for more than 1 pdf in the future
+        # sage_asset_filter = {"sage_asset_id": {"$in": sage_asset_ids}}
         # Retriever is used to get documents from Chroma
-        retriever = self.vector_store.as_retriever(
-          search_type="similarity_score_threshold",
-          search_kwargs={"filter": sage_asset_filter, "score_threshold": 0.7}
-        )
+        # retriever = self.vector_store.as_retriever(
+        #   search_type="similarity_score_threshold",
+        #   search_kwargs={"filter": sage_asset_filter, "score_threshold": 0.7}
+        # )
+        
+        retrievers: Dict[str, VectorStoreRetriever] = {
+            sage_asset_id: self.vector_store.as_retriever(
+                search_type="similarity_score_threshold",
+                search_kwargs={
+                    "filter": {"sage_asset_id": sage_asset_id},
+                    "score_threshold": 0.7
+                },
+            )
+            for sage_asset_id in sage_asset_ids
+        }
+        
+        self.logger.info(f"sage retrievers: {retrievers}")
 
         if pdfContent:
             # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
             pdf_stream = BytesIO(pdfContent)
             pdf_document = pymupdf.open(stream=pdf_stream, filetype="pdf")
             # TODO: Check token length for context length limits on long documents
+            pdfs_to_md = {
+              pdf["id"]: await loop.run_in_executor(
+                None, pymupdf4llm.to_markdown, pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
+              )
+              for pdf in pdfContents
+            }
+            self.logger.info(f"pdfs_to_md, {pdfs_to_md.keys()}")
+            self.logger.info(f"pdf_to_md key value, {pdfs_to_md['0b29bdc5-ccc7-4de7-ba94-969609dba8f9']}")
             md = pymupdf4llm.to_markdown(pdf_document)
             
-            print(f"\n\nasset: {qq.asset}\n\n")
-            
-            if len(self.vector_store.get(where={"sage_asset_id": qq.asset})["documents"]) == 0:
+            if len(self.vector_store.get(where={"sage_asset_id": qq.assetids[0]})["documents"]) == 0:
               print("\n\nadding to chroma\n\n")
               text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000,
@@ -143,7 +184,7 @@ class PDFAgent:
               )
 
               splits = text_splitter.split_documents([Document(md, metadata={
-                "sage_asset_id": qq.asset,
+                "sage_asset_id": qq.assetids[0],
               })])
               
               res = await self.vector_store.aadd_documents(documents=splits)
@@ -153,8 +194,8 @@ class PDFAgent:
             answer = await generate_answer(
               qq=qq,
               llm=self.llm_openai,
-              retriever=retriever,
-              pdf_md=md
+              retrievers=retrievers,
+              markdown_files_dict=pdfs_to_md
             )
 
         text = answer

@@ -1,5 +1,6 @@
 configurations/mongo/data
 configurations/redis/data
+configurations/chroma/data
 configurations/jupyter/conf/info.json
 configurations/node/keys/*.crt
 configurations/node/keys/*.key

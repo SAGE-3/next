@@ -398,6 +398,10 @@ export function LassoToolbar(props: LassoToolbarProps) {
             return acc;
           }, '');
         }
+        if (selectedApps[0].data.type === 'PDFViewer') {
+          console.log('apps', selectedApps);
+          console.log('lasso apps', lassoApps);
+        }
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
       } else {
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
@@ -593,17 +597,23 @@ for b in bits:
                   ml="1"
                   label={'Open selected application in Chat with SAGE Intelligence'}
                 >
-                  <Button onClick={openInChat} backgroundColor={intelligenceColor}
-                    variant='solid' size="xs" m={0} mr={2} p={0}
-                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
-                    <HiOutlineSparkles size="20px" color={"white"} />
+                  <Button
+                    onClick={openInChat}
+                    backgroundColor={intelligenceColor}
+                    variant="solid"
+                    size="xs"
+                    m={0}
+                    mr={2}
+                    p={0}
+                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                  >
+                    <HiOutlineSparkles size="20px" color={'white'} />
                   </Button>
                 </Tooltip>
               </Box>
             </Box>
 
-            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}
-              minWidth={"100px"}>
+            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'} minWidth={'100px'}>
               {/* Show the GroupedToolberComponent here */}
               {selectedAppFunctions()}
 
@@ -730,7 +740,7 @@ for b in bits:
               </Menu>
 
               <Tooltip placement="top" hasArrow={true} label={'Close the selected applications'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme='red' isDisabled={!canDeleteApp}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme="red" isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" color={buttonTextColor} />
                 </Button>
               </Tooltip>
@@ -757,7 +767,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

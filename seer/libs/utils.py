@@ -29,7 +29,7 @@ def getModelsInfo(ps3):
     return {"llama": llama, "openai": openai}
 
 
-def getPDFFile(ps3, assetid):
+def getPDFFiles(ps3, assetids):
     """
     Retrieve a PDF file from the SAGE3 basset manager based on the provided asset ID.
 
@@ -43,9 +43,9 @@ def getPDFFile(ps3, assetid):
     """
     # Get all the assets
     assets = ps3.s3_comm.get_assets()
-    # Find the asset in question
+    # Find the asset
     for f in assets:
-        if f["_id"] == assetid:
+        if f["_id"] == assetids:
             asset = f["data"]
             # Build the URL
             url = (
