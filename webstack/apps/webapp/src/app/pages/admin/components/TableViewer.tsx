@@ -7,6 +7,7 @@
  */
 
 import { Thead, Tr, Th, Tbody, Td, Button, Table, Box, useColorModeValue } from '@chakra-ui/react';
+
 import { SAGEColors, fuzzySearch } from '@sage3/shared';
 import { SBDoc } from '@sage3/shared/types';
 

@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Chakra UI Modal for account deletion
 import { useEffect, useState } from 'react';
 import {
   Modal,
@@ -32,13 +31,11 @@ import {
   FormLabel,
   Switch,
   Tooltip,
-  Tfoot,
-  Thead,
 } from '@chakra-ui/react';
+import { MdInfo } from 'react-icons/md';
 
 import { formatDateAndTime, useHexColor, useUsersStore } from '@sage3/frontend';
 import { User } from '@sage3/shared/types';
-import { MdInfo } from 'react-icons/md';
 
 // Props for the AccountDeletion
 interface AccountDeletionProps {
@@ -54,8 +51,9 @@ type UserStats = {
   numAssets: number;
   numPlugins: number;
 };
+
 /**
- * Account Deletion Modal
+ * Chakra UI Modal for account deletion
  * @param props
  * @returns
  */

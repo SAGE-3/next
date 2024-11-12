@@ -31,6 +31,9 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 
+import { throttle } from 'throttle-debounce';
+import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
+
 // Collection specific schemas
 import {
   Board,
@@ -51,10 +54,9 @@ import {
 import { App, AppSchema } from '@sage3/applications/schema';
 
 // Components
-import { APIHttp, apiUrls, CollectionDocs, downloadFile, humanFileSize, useRouteNav, useUser, AccountDeletion } from '@sage3/frontend';
+import { humanFileSize } from '@sage3/shared';
+import { APIHttp, apiUrls, CollectionDocs, downloadFile, useRouteNav, useUser, AccountDeletion } from '@sage3/frontend';
 import { TableViewer } from './components';
-import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
-import { throttle } from 'throttle-debounce';
 
 export function AdminPage() {
   // SAGE3 Image
