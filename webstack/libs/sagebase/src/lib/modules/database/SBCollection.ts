@@ -310,7 +310,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       // THIS IS A FIX FOR UUIDS. REDIS DOESNT LIKE DASHES
       // ** https://redis.io/docs/stack/search/reference/escaping/
       // ** https://redis.io/docs/stack/search/reference/tags/
-      if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
+      if (typeof query === 'string') query = `{${query.replace(/[#-.@]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
       const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`, {
         LIMIT: { from: 0, size: 1000 },

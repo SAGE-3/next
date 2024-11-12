@@ -55,6 +55,15 @@ class SAGE3BoardsCollection extends SAGE3Collection<BoardSchema> {
     return boardsDeleteInfo;
   }
 
+  // Transfer all the boards of a user to another user
+  public async transferUsersBoards(oldUserId: string, newOwnerId: string): Promise<boolean> {
+    // Get all the boards of the user
+    const userBoards = await this.query('ownerId', oldUserId);
+    const boardsIds = userBoards ? userBoards.map((board) => board._id) : [];
+    const res = await Promise.all(boardsIds.map((boardId) => this.update(boardId, newOwnerId, { ownerId: newOwnerId })));
+    return res ? true : false;
+  }
+
   /**
    * This will delete the board and all the associated apps, annotations, and insights
    * @param boardId The id of the board you want to delete

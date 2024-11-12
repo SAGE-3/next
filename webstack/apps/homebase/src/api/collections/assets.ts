@@ -220,6 +220,16 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     const assetsDeleted = await this.deleteBatch(assetIds);
     return assetsDeleted ? assetsDeleted.length : 0;
   }
+
+  // Transfer all the assets of a user to another user
+  public async transferUsersAssets(oldUserId: string, newOwner: string): Promise<boolean> {
+    // Get all the assets of the user
+    const userAssets = await this.query('owner', oldUserId);
+    const assetsIds = userAssets ? userAssets.map((asset) => asset._id) : [];
+    // Update the owner field of the assets
+    const assetsUpdated = await Promise.all(assetsIds.map((assetId) => this.update(assetId, newOwner, { owner: newOwner })));
+    return assetsUpdated ? true : false;
+  }
 }
 
 export const AssetsCollection = new SAGE3AssetsCollection();

@@ -37,6 +37,16 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
     const appsDeleted = await this.deleteBatch(appsIds);
     return appsDeleted ? appsDeleted.length : 0;
   }
+
+  // Transfer all the apps of a user to another user
+  public async transferUsersApps(oldUserId: string, newCreatedBy: string): Promise<boolean> {
+    // Get all the apps of the user
+    const userApps = await this.query('_createdBy', oldUserId);
+    const appsIds = userApps ? userApps.map((app) => app._id) : [];
+    // Update the createdBy field of the apps
+    const appsUpdated = await Promise.all(appsIds.map((appId) => this.updateCreatedBy(appId, newCreatedBy)));
+    return appsUpdated ? true : false;
+  }
 }
 
 export const AppsCollection = new SAGE3AppsCollection();

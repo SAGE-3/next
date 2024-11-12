@@ -70,6 +70,16 @@ class SAGE3RoomsCollection extends SAGE3Collection<RoomSchema> {
     results.roomMembersDeleted = membersDeleted ? membersDeleted : 0;
     return results;
   }
+
+  // Transfer a user's rooms to another user
+  public async transferUsersRooms(oldOwnerId: string, newOwnerId: string): Promise<string[]> {
+    const userRooms = await this.query('ownerId', oldOwnerId);
+    const roomsIds = userRooms ? userRooms.map((room) => room._id) : [];
+    const res = await Promise.all(roomsIds.map((roomId) => this.update(roomId, newOwnerId, { ownerId: newOwnerId })));
+    const updatedRooms = res ? roomsIds : [];
+    // Filter undefined values
+    return updatedRooms.filter((r) => r);
+  }
 }
 
 export const RoomsCollection = new SAGE3RoomsCollection();

@@ -203,6 +203,15 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     const numberDeleted = results.filter((r) => r).length;
     return numberDeleted;
   }
+
+  // Transfer all the plugins of a user to another user
+  public async transferUsersPlugins(oldUserId: string, newOwnerId: string): Promise<boolean> {
+    // Get all the plugins of the user
+    const userPlugins = await this.query('ownerId', oldUserId);
+    const pluginIds = userPlugins ? userPlugins.map((plugin) => plugin._id) : [];
+    const res = await Promise.all(pluginIds.map((pluginId) => this.update(pluginId, newOwnerId, { ownerId: newOwnerId })));
+    return res ? true : false;
+  }
 }
 
 function ensureDirectoryExistence(filePath: string) {

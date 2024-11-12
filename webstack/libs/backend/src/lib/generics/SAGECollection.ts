@@ -180,6 +180,16 @@ export class SAGE3Collection<T extends SBJSON> {
     }
   }
 
+  public async updateCreatedBy(id: string, newCreatedBy: string): Promise<SBDocument<T> | undefined> {
+    try {
+      const response = await this._collection.docRef(id).updateCreatedBy(newCreatedBy);
+      return response.doc;
+    } catch (error) {
+      this.printError(error);
+      return undefined;
+    }
+  }
+
   public async delete(id: string): Promise<string | undefined> {
     try {
       const response = await this._collection.docRef(id).delete();
