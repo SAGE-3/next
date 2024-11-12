@@ -163,6 +163,10 @@ export function AdminPage() {
     APIHttp.DELETE(`/${collection}/` + id).then((resp) => {
       if (resp.success) {
         toast({ title: 'Item Deleted', status: 'info', duration: 2000, isClosable: true });
+        const newData = data.filter((d) => d._id !== id);
+        setData(newData);
+      } else {
+        toast({ title: 'Error Deleting Item', status: 'error', duration: 2000, isClosable: true });
       }
     });
   };
