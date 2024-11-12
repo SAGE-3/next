@@ -50,7 +50,7 @@ export const useStore = create<SockStore>()((set) => ({
   setSocket: (id: string, sock: WebSocket) => set((state) => ({ sock: { ...state.sock, ...{ [id]: sock } } })),
 }));
 
-/* App component for BoardLink */
+/* App component for WebpageLink */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;

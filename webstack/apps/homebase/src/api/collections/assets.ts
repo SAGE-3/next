@@ -27,6 +27,7 @@ import { isPDF, isImage, isGIF, isVideo } from '@sage3/shared';
 
 // Queue for tasks
 import { PDFProcessor, ImageProcessor, MetadataProcessor } from '../../processors';
+import { UploadConnector } from '../../connectors/upload-connector';
 import { uploadHandler } from '../routers/custom';
 import { config } from '../../config';
 
@@ -42,6 +43,8 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   }
 
   public async initialize(clear?: boolean, ttl?: number): Promise<void> {
+    // Create an upload instance
+    UploadConnector.getInstance();
     // call the base class method
     await super.initialize(clear, ttl);
     // Upload files: POST /api/assets/upload

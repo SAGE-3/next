@@ -35,11 +35,11 @@ export function passportGuestSetup(): boolean {
         }
       })
     );
-    console.log('Guest Login> Setup done');
+    console.log('Login> Guest setup done');
     return true;
   } catch (error) {
     console.log(error);
-    console.log('Guest Login> Failed to Connect');
+    console.log('Login> Guest failed to Connect');
     return false;
   }
 }

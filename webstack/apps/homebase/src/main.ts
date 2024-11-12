@@ -66,6 +66,8 @@ process.on('unhandledRejection', (reason: Error) => {
  * The SAGE3 Main entry point
  */
 async function startServer() {
+  console.log('Server> Starting SAGE3 Server');
+
   // Load the right configuration file
   const config: ServerConfiguration = await loadConfig();
 
@@ -74,7 +76,7 @@ async function startServer() {
 
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
-  const app = createApp(assetPath);
+  const app = createApp(assetPath, config);
 
   // HTTP/HTTPS server
   let server: Server;
