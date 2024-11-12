@@ -198,6 +198,25 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
+  /**
+   * Change the _createdBy field of the document
+   */
+  public async updateCreatedBy(newId: string): Promise<SBDocWriteResult<Type>> {
+    const redisRes = await this._redisClient.json.set(`${this.path}`, `._createdBy`, newId, { XX: true });
+    if (redisRes && redisRes != 'OK') {
+      this.refreshUpdate(newId);
+      console.error('updateCreatedBy', redisRes);
+      return generateWriteResult<Type>('update', this._colName, false);
+    } else {
+      const newValue = await this.read();
+      // Publish the new document value
+      if (newValue) {
+        await this.publishUpdateAction(newValue, {});
+      }
+      return generateWriteResult<Type>('update', this._colName, true, newValue);
+    }
+  }
+
   public async delete(publish = true): Promise<SBDocWriteResult<Type>> {
     try {
       const oldValue = await this.read();
