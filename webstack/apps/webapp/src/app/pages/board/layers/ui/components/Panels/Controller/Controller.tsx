@@ -25,7 +25,7 @@ import { MdApps, MdArrowBack, MdFolder, MdGroups, MdMap } from 'react-icons/md';
 import { BiPencil } from 'react-icons/bi';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 
-import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility } from '@sage3/frontend';
+import { PanelUI, StuckTypes, usePanelStore, useRoomStore, useRouteNav, useAbility, useUser, useHexColor } from '@sage3/frontend';
 import { IconButtonPanel, Panel } from '../Panel';
 
 export interface ControllerProps {
@@ -60,18 +60,6 @@ export function Controller(props: ControllerProps) {
   const plugins = usePanelStore((state) => state.panels['plugins']);
   const kernels = usePanelStore((state) => state.panels['kernels']);
   const main = usePanelStore((state) => state.panels['controller']);
-
-  // Redirect the user back to the homepage when clicking the arrow button
-  const { toHome, back } = useRouteNav();
-  function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-    if (event.shiftKey) {
-      // Just go back to the previous room
-      back();
-    } else {
-      // Back to the homepage with the room id
-      toHome(props.roomId);
-    }
-  }
 
   // Show the various panels
   const handleShowPanel = (panel: PanelUI | undefined) => {
@@ -128,9 +116,6 @@ export function Controller(props: ControllerProps) {
     bringPanelForward(panel.name);
   };
 
-  // Popover for long press
-  const { isOpen: popIsOpen, onOpen: popOnOpen, onClose: popOnClose } = useDisclosure();
-
   // Track the stuck state of the main panel to change the orientation of the panel
   useEffect(() => {
     if (main.stuck === StuckTypes.Left || main.stuck === StuckTypes.Right) {
@@ -155,36 +140,6 @@ export function Controller(props: ControllerProps) {
   return (
     <Panel name="controller" title="" width={430} showClose={false} showMinimize={false}>
       <Stack w="100%" direction={direction}>
-        <Popover isOpen={popIsOpen} onOpen={popOnOpen} onClose={popOnClose}>
-          <IconButtonPanel
-            icon={<MdArrowBack />}
-            isActive={false}
-            onClick={handleHomeClick}
-            onLongPress={popOnOpen}
-            description={`Back to ${room?.data.name} (Right-click for more options)`}
-          />
-          <PopoverContent
-            fontSize={'sm'}
-            width={'200px'}
-            top={main.stuck === StuckTypes.Bottom ? '-100px' : main.stuck === StuckTypes.Top ? '60px' : '0px'}
-            left={main.stuck === StuckTypes.Left ? '90px' : main.stuck === StuckTypes.Right ? '-205px' : '50px'}
-          >
-            <PopoverArrow />
-            <PopoverCloseButton />
-            <PopoverHeader>Navigate</PopoverHeader>
-            <PopoverBody userSelect={'text'}>
-              <VStack display={'block'}>
-                <Button variant={'link'} fontSize={'sm'} onClick={() => toHome(props.roomId)}>
-                  Back to {room?.data.name}
-                </Button>
-                <Button variant={'link'} fontSize={'sm'} onClick={back}>
-                  Back to previous board
-                </Button>
-              </VStack>
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
-
         <IconButtonPanel icon={<MdGroups />} description="Users" isActive={users?.show} onClick={() => handleShowPanel(users)} />
         <IconButtonPanel
           icon={<MdApps />}
@@ -223,13 +178,13 @@ export function Controller(props: ControllerProps) {
           isActive={navigation?.show}
           onClick={() => handleShowPanel(navigation)}
         />
-        <IconButtonPanel
+        {/* <IconButtonPanel
           icon={<BiPencil size="32px" />}
           description="Annotation"
           isActive={annotations?.show}
           isDisabled={!canAnnotate}
           onClick={() => handleShowPanel(annotations)}
-        />
+        /> */}
       </Stack>
     </Panel>
   );

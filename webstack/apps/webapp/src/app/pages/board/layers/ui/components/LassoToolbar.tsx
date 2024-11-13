@@ -191,6 +191,18 @@ export function LassoToolbar(props: LassoToolbarProps) {
     }
   };
 
+  const selectedAppNames = (): string => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    // Check if all of same type
+    let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+
+    if (isAllOfSameType) {
+      return (selectedApps[0]?.data?.type || '') + (selectedApps.length > 1 ? 's' : '');
+    } else {
+      return 'Apps';
+    }
+  };
+
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
   const selectedAppFunctions = (): JSX.Element | null => {

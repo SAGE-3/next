@@ -8,12 +8,11 @@
 
 import { useColorModeValue } from '@chakra-ui/react';
 // Arrow library
-import { getArrow, getBoxToBoxArrow } from "perfect-arrows";
+import { getBoxToBoxArrow } from "perfect-arrows";
 
 // SAGE Imports
 import { useThrottleApps, useUIStore, useUserSettings, useHexColor, } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-
 
 /**
  * The Arrows component, showing arrows between apps.
@@ -56,6 +55,7 @@ export function Arrows() {
             left: 0,
             top: 0,
             cursor: 'crosshair',
+            zIndex: 1000,
           }}
         >
           {/* All arrows */}
@@ -178,66 +178,30 @@ function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string,
   const s0h = Math.round(size0.height);
   const s1w = Math.round(size1.width);
   const s1h = Math.round(size1.height);
-  try {
-    // Automatically calculate the arrow
-    const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
-      bow: 0.1,
-      padStart: 20,
-      padEnd: 40,
-      stretchMin: 40,
-      stretchMax: 300,
-      stretch: 0.5,
-    });
 
-    // For bottom right corner to top left corner arrow
-    // const arrow = getArrow(p0x + s0w + 20, p0y + s0h + 20, p1x, p1y, {
-    //   bow: 0.1,
-    //   padStart: 0,
-    //   padEnd: 40,
-    //   stretchMin: 40,
-    //   stretchMax: 300,
-    //   stretch: 0.5,
-    // });
+  const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
+    padStart: 0, // leave at 0 - otherwise bug in lib
+    padEnd: 0,   // leave at 0 - otherwise bug in lib
+    bow: 0.25,
+    straights: true,
+    stretch: 0.5,
+    stretchMin: 0,
+    stretchMax: 360,
+    flip: false,
+  });
 
-    const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
-    const endAngleAsDegrees = ae * (180 / Math.PI);
-    return (<g key={`array-${id1}-${id2}`}>
-      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor}
-        strokeWidth={10} />
-      <polygon
-        points="0,-6 12,0, 0,6"
-        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-        stroke={tipColor}
-        strokeWidth={8}
-        fill="blue"
-      />
-      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
-    </g>);
+  const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
+  const endAngleAsDegrees = ae * (180 / Math.PI);
 
-
-  } catch (e) {
-    // console.log('Error in arrow calculation. Using corner to corner arrow instead.', e);
-    const arrow = getArrow(p0x, p0y, p1x, p1y, {
-      bow: 0.2,
-      padStart: 20,
-      padEnd: 40,
-      stretchMin: 40,
-      stretchMax: 420,
-      stretch: 0.5,
-    });
-    const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
-    const endAngleAsDegrees = ae * (180 / Math.PI);
-    return (<g key={`array-${id1}-${id2}`}>
-      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor}
-        strokeWidth={10} />
-      <polygon
-        points="0,-6 12,0, 0,6"
-        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-        stroke={tipColor}
-        strokeWidth={8}
-        fill="blue"
-      />
-      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
-    </g>);
-  }
+  return (<g key={`array-${id1}-${id2}`}>
+    <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor}
+      strokeWidth={10} />
+    <polygon
+      points="-18,-6 -6,0, -18,6" // offset since no padding
+      transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
+      stroke={tipColor}
+      strokeWidth={8}
+    />
+    <circle cx={sx} cy={sy} r={8} fill={dotColor} />
+  </g>);
 }

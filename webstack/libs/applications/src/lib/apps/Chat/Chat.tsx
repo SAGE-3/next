@@ -209,6 +209,12 @@ function AppComponent(props: App): JSX.Element {
   }, [s.token]);
 
   useEffect(() => {
+    if (s.firstQuestion) {
+      newMessage('@S ' + s.firstQuestion);
+    }
+  }, [s.firstQuestion]);
+
+  useEffect(() => {
     if (s.sources && s.sources.length >= 1) {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
       if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
