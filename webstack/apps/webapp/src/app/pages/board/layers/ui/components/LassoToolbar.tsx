@@ -719,7 +719,7 @@ for b in bits:
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
+              <Tooltip placement="top" hasArrow={true} label={'Delete  Applications'} openDelay={400}>
                 <Button onClick={deleteOnOpen} size="xs" p="0" colorScheme="red" isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" />
                 </Button>
@@ -733,11 +733,14 @@ for b in bits:
         isOpen={deleteIsOpen}
         onClose={deleteOnClose}
         onConfirm={closeSelectedApps}
-        title="Close Selected Apps"
-        message={`Are you sure you want to close the selected ${lassoApps.length > 1 ? `${lassoApps.length} apps?` : 'app?'} `}
+        title="Delete Selected Applications"
+        message={`Are you sure you want to delete the selected ${
+          lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+        } `}
         cancelText="Cancel"
-        confirmText="Yes"
-        confirmColor="teal"
+        confirmText="Delete"
+        confirmColor="red"
+        size="lg"
       ></ConfirmModal>
     </>
   );

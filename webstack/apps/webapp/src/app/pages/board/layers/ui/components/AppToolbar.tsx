@@ -857,7 +857,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </MenuList>
             </Menu>
 
-            <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
+            <Tooltip placement="top" hasArrow={true} label={'Delete Application'} openDelay={400} ml="1">
               <Button onClick={onDeleteOpen} colorScheme="red" size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
                 <HiOutlineTrash size="18px" />
               </Button>
@@ -867,11 +867,10 @@ export function AppToolbar(props: AppToolbarProps) {
               isOpen={isDeleteOpen}
               onClose={onDeleteClose}
               onConfirm={() => deleteApp(app._id)}
-              title="Delete this Application"
+              title="Delete Application"
               message="Are you sure you want to delete this application?"
               cancelText="Cancel"
               confirmText="Delete"
-              cancelColor="green"
               confirmColor="red"
               size="lg"
             />
