@@ -20,7 +20,7 @@ import bbox from '@turf/bbox';
 import center from '@turf/center';
 
 import { Asset } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, useAssetStore, apiUrls, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../../schema';
 import { state as AppState } from '../index';
@@ -61,6 +61,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   const saveMap = useStore((state) => state.saveMap);
   const map = useStore((state) => state.map[props._id + '0']);
   const [units, setUnits] = useState<string>('');
+  const scale = useUIStore((state) => state.scale);
 
   // Assets store
   const assets = useAssetStore((state) => state.assets);
@@ -291,10 +292,11 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             const el = document.createElement('div');
 
             el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%; transform: scale(${
-              s.stationScale
-            }); background-color: #2fa9ee; width: 20px; height: 20px; color: white; border: 2px solid black; display: flex; flex-direction: column; justify-content: center; ">
-            <p  style="font-size:5px; font-weight: bold; text-align: center">
+            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%;  transform: scale(${Math.min(
+              Math.max(s.stationScale / scale - 1.5, 1.5),
+              5.5
+            )}); background-color: rgb(47,169,238); width: 20px; height: 20px; color: white; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
+            <p  style="font-size:7px; font-weight: bold; text-align: center">
             ${Number(latestValue).toFixed(1)}</p>
             </div>
             </div>`;
@@ -315,7 +317,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       }
       // });
     }
-  }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale)]);
+    console.log(Math.max(s.stationScale / scale - 2.5, 1));
+  }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale), scale]);
 
   const increaseScaleSize = () => {
     if (s.stationScale < 8) {

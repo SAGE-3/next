@@ -49,8 +49,8 @@ export const init: Partial<state> = {
   sensorData: {},
   stationNames: ['016HI', '012HI', '014HI'],
   listOfStationNames: '016HI',
-  location: [-157.816, 21.297], //lnglat
-  zoom: 10,
+  location: [-157.816, 20.9], //lnglat
+  zoom: 6,
   baseLayer: 'OpenStreetMap',
   bearing: 0,
   pitch: 0,
