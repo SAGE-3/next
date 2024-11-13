@@ -123,6 +123,9 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const panelBackground = useHexColor(background);
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.500');
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
+  const deleteButtonColors = useHexColor('red');
+  const buttonTextColor = useColorModeValue('white', 'black');
 
   // Modal disclosure for the Close selected apps
   const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
@@ -592,9 +595,11 @@ for b in bits:
               {selectedAppFunctions()}
 
               <Menu>
-                <MenuButton size="xs" as={Button} mr={'2px'} colorScheme="yellow">
-                  <MdMenu />
-                </MenuButton>
+                <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+                  <MenuButton size="xs" as={Button} mr="1" p={0} display="grid" placeItems="center" backgroundColor={commonButtonColors}>
+                    <MdMenu size="14px" color={buttonTextColor} />
+                  </MenuButton>
+                </Tooltip>
                 <MenuList p="0" m="0">
                   <MenuGroup title="Actions" m="1">
                     <MenuItem onClick={fitSelectedApps} icon={<MdZoomOutMap />} py="0" m="0">
@@ -716,7 +721,7 @@ for b in bits:
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
+              {/* <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
                 <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
                   <MdChat size="18px" />
                 </Button>
@@ -725,17 +730,19 @@ for b in bits:
                 <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
                   <FaPython size="18px" />
                 </Button>
-              </Tooltip>
+              </Tooltip> */}
 
               <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
-                  <HiOutlineTrash size="18px" />
+                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" backgroundColor={deleteButtonColors} isDisabled={!canDeleteApp}>
+                  <HiOutlineTrash size="18px" color={buttonTextColor} />
                 </Button>
               </Tooltip>
+
             </Box>
           </Box>
-        </Box>
-      )}
+        </Box >
+      )
+      }
 
       <ConfirmModal
         isOpen={deleteIsOpen}
