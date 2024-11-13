@@ -47,7 +47,6 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  ButtonGroup,
   MenuDivider,
 } from '@chakra-ui/react';
 
@@ -56,8 +55,6 @@ import {
   MdCopyAll,
   MdInfoOutline,
   MdZoomOutMap,
-  MdLock,
-  MdLockOpen,
   MdTv,
   MdAddCircleOutline,
   MdExpandMore,
@@ -119,7 +116,6 @@ export function AppToolbar(props: AppToolbarProps) {
 
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
-  const deleteButtonColors = useHexColor('red');
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
 
@@ -788,7 +784,6 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
@@ -863,8 +858,8 @@ export function AppToolbar(props: AppToolbarProps) {
             </Menu>
 
             <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
-              <Button onClick={onDeleteOpen} backgroundColor={deleteButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
-                <HiOutlineTrash size="18px" color={buttonTextColor} />
+              <Button onClick={onDeleteOpen} colorScheme="red" size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
+                <HiOutlineTrash size="18px" />
               </Button>
             </Tooltip>
 

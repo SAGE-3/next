@@ -124,7 +124,6 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.500');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
-  const deleteButtonColors = useHexColor('red');
   const buttonTextColor = useColorModeValue('white', 'black');
 
   // Modal disclosure for the Close selected apps
@@ -593,10 +592,9 @@ for b in bits:
             <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
               {/* Show the GroupedToolberComponent here */}
               {selectedAppFunctions()}
-
               <Menu>
                 <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
-                  <MenuButton size="xs" as={Button} mr="1" p={0} display="grid" placeItems="center" backgroundColor={commonButtonColors}>
+                  <MenuButton size="xs" as={Button} p={0} display="grid" placeItems="center" mx="1" backgroundColor={commonButtonColors}>
                     <MdMenu size="14px" color={buttonTextColor} />
                   </MenuButton>
                 </Tooltip>
@@ -721,28 +719,15 @@ for b in bits:
                 </MenuList>
               </Menu>
 
-              {/* <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
-                <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdChat size="18px" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Open in SageCell'} openDelay={400}>
-                <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <FaPython size="18px" />
-                </Button>
-              </Tooltip> */}
-
               <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" backgroundColor={deleteButtonColors} isDisabled={!canDeleteApp}>
-                  <HiOutlineTrash size="18px" color={buttonTextColor} />
+                <Button onClick={deleteOnOpen} size="xs" p="0" colorScheme="red" isDisabled={!canDeleteApp}>
+                  <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
-
             </Box>
           </Box>
-        </Box >
-      )
-      }
+        </Box>
+      )}
 
       <ConfirmModal
         isOpen={deleteIsOpen}
@@ -762,7 +747,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
