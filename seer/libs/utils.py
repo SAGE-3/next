@@ -102,6 +102,100 @@ def getModelsInfo(ps3):
     return {"llama": llama, "openai": openai}
 
 
+def getRoomInfo(ps3, room_id):
+    """
+    Retrieve room information from the SAGE3 server based on the provided room ID.
+
+    Args:
+      ps3 (object): SAGE3 API handle.
+      room_id (str): The unique identifier of the room to retrieve.
+
+    Returns:
+      DotDict: A DotDict containing the room information if found and successfully retrieved.
+      None: If the board is not found or the request fails.
+    """
+    url = (
+        ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/rooms/" + room_id
+    )
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        res = r.json()
+        return DotDict(res).data[0]
+    return None
+
+
+def getBoardInfo(ps3, board_id):
+    """
+    Retrieve board information from the SAGE3 server based on the provided board ID.
+
+    Args:
+      ps3 (object): SAGE3 API handle.
+      board_id (str): The unique identifier of the board to retrieve.
+
+    Returns:
+      DotDict: A DotDict containing the board information if found and successfully retrieved.
+      None: If the board is not found or the request fails.
+    """
+    url = (
+        ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"]
+        + "/api/boards/"
+        + board_id
+    )
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        res = r.json()
+        return DotDict(res).data[0]
+    return None
+
+
+def getRooms(ps3):
+    """
+    Retrieve list of rooms information from the SAGE3 server.
+
+    Args:
+      ps3 (object): SAGE3 API handle.
+
+    Returns:
+      DotDict: A DotDict containing the rooms information if found and successfully retrieved.
+    """
+    url = ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/rooms"
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        res = r.json()
+        return DotDict(res).data
+    return None
+
+
+def getBoards(ps3, room_id=None):
+    """
+    Retrieve list of boards information from the SAGE3 server based on the provided room ID.
+
+    Args:
+      ps3 (object): SAGE3 API handle.
+      room_id (str): The unique identifier of the room to retrieve.
+
+    Returns:
+      DotDict: A DotDict containing the board information if found and successfully retrieved.
+      None: If the board is not found or the request fails.
+    """
+    url = ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/boards"
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        res = r.json()
+        rooms = []
+        data = DotDict(res).data
+        if room_id is not None:
+            rooms = [x for x in data if x.data.roomId == room_id]
+        else:
+            rooms = data
+        return rooms
+    return None
+
+
 def getAssets(ps3, room_id=None):
     """
     Retrieve a list of assets from the given ps3 object, optionally filtered by room_id.
