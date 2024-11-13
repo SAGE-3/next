@@ -86,6 +86,33 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
 
     this.httpRouter = router;
   }
+  public async addMember(roomId: string, userId: string): Promise<boolean> {
+    const currentDoc = await this.get(roomId);
+    if (currentDoc) {
+      // Update the doc with the new member
+      let members = [...currentDoc.data.members, userId];
+      members = removeDuplicates(members);
+      const res = await this.update(roomId, userId, { members });
+      return res ? true : false;
+    } else {
+      // Create a new doc
+      const res = await this.add({ roomId, members: [userId] }, userId, roomId);
+      return res ? true : false;
+    }
+  }
+
+  // Delete all the members of a specific room
+  public async deleteMembersInRoom(roomId: string): Promise<number> {
+    // Delete the members on the room
+    const roommemberDocs = await this.query('roomId', roomId);
+    if (!roommemberDocs) return 0;
+    const docIds = roommemberDocs.map((doc) => doc._id);
+    // Delete the members in a Promise.all
+    const deletePromises = docIds.map((memberId) => this.delete(memberId));
+    const results = await Promise.all(deletePromises);
+    const numberDeleted = results.filter((r) => r).length;
+    return numberDeleted;
+  }
 }
 
 // Take and array and remove all duplicates

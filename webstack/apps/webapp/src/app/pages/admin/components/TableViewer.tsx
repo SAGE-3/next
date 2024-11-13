@@ -7,6 +7,7 @@
  */
 
 import { Thead, Tr, Th, Tbody, Td, Button, Table, Box, useColorModeValue } from '@chakra-ui/react';
+
 import { SAGEColors, fuzzySearch } from '@sage3/shared';
 import { SBDoc } from '@sage3/shared/types';
 
@@ -16,7 +17,6 @@ import { SBDoc } from '@sage3/shared/types';
  * @template T - The type of the `data` property.
  */
 type TableDataType<T> = SBDoc & { data: T };
-
 
 /**
  * Props for the TableViewer component.
@@ -34,7 +34,7 @@ interface TableViewerProps<T> {
   heading: string;
   data: TableDataType<T>[];
   columns: (keyof T | keyof SBDoc)[];
-  onRefresh: () => void;
+  formatColumns?: { [key: string]: (value: any) => string };
   search: string;
   actions?: {
     label: string;
@@ -62,6 +62,19 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
 
   const headerBackgroundColor = useColorModeValue('teal.200', 'teal.600');
   const headerTextColor = useColorModeValue('black', 'white');
+
+  // Handle download the data
+  const handleDownloadData = (data: any) => {
+    // Download the data
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Timestamp
+    const date = new Date();
+    a.download = `sage3_data_${date.toISOString()}.json`;
+    a.click();
+  };
 
   const TableHeader = (columns: (keyof T | keyof SBDoc)[]) => {
     return (
@@ -99,9 +112,16 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
                 } else {
                   // Check if column is in the data object
                   if (column in item.data) {
+                    let value = item.data[column];
+                    // Check if value is in the formatColumns object
+                    if (props.formatColumns && column in props.formatColumns) {
+                      value = props.formatColumns[column as string](value);
+                    }
+                    // Check if value is an array
+                    if (Array.isArray(value)) value = value.join(', ');
                     return (
                       <Td key={j} style={CellStyle}>
-                        {item.data[column]}
+                        {value}
                       </Td>
                     );
                   }
@@ -110,8 +130,11 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
               })}
               {props.actions && (
                 <Td textOverflow="hidden" whiteSpace="hidden">
+                  <Button colorScheme="teal" mr="1" mb="1" size="xs" onClick={() => handleDownloadData(item)}>
+                    Download
+                  </Button>
                   {props.actions.map((action, j) => (
-                    <Button key={j} mr={j === 0 ? 0 : 2} colorScheme={action.color} size="xs" onClick={() => action.onClick(item._id)}>
+                    <Button key={j} colorScheme={action.color} size="xs" mb="1" mr="1" onClick={() => action.onClick(item._id)}>
                       {action.label}
                     </Button>
                   ))}
@@ -154,7 +177,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   return (
     // This height is really ugly but I couldnt figure out how to make the table reactively size with a scrollbar
     // The height is calculated by subtracting the height of the header, footer, tabs, search bar, and padding
-    <Box height="calc(100vh - 16px - 32px - 30px -  42px - 72px - 24px) " overflowY="auto">
+    <Box height="calc(100vh - 16px - 32px - 30px -  42px - 72px - 64px) " overflowY="auto">
       <Table variant="striped" size="sm" layout="fixed">
         {TableHeader(columns)}
         {TableBody(data.filter(searchFilter), columns)}
