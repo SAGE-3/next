@@ -27,7 +27,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFiles
+from libs.utils import getModelsInfo, getPDFFile
 
 # ChromaDB AI vector DB
 import chromadb
@@ -120,14 +120,14 @@ class PDFAgent:
         description = "No description available."
         # Retrieve the PDF content
         # TODO: make cleaner
-        # Define the loop to run getPDFFiles in an executor for each asset
+        # Define the loop to run getPDFFile in an executor for each asset
         loop = asyncio.get_event_loop()
         
         # Use run_in_executor for each asset ID to avoid blocking the event loop
         pdfContents = [
             {
                 "id": assetid,
-                "content": await loop.run_in_executor(None, getPDFFiles, self.ps3, assetid)
+                "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
             }
             for assetid in qq.assetids
         ]
