@@ -377,34 +377,28 @@ export function UILayer(props: UILayerProps) {
           />
           <Divider orientation="vertical" mx="1" /> <Interactionbar />
           <Divider orientation="vertical" mx="1" />
-          <ToolbarButton color={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
           </ToolbarButton>
-          <ToolbarButton color={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
             <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
           </ToolbarButton>
-          <ToolbarButton color={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
             {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
-          <ToolbarButton color={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
             {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
-          <ToolbarButton color={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
             {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
           </ToolbarButton>
-          <ToolbarButton color={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
-          <IconButton
-            aria-label="Up Arrow"
-            fontSize="lg"
-            variant="solid"
-            size="sm"
-            colorScheme={'purple'}
-            icon={<IoSparklesSharp />}
-            isDisabled
-          />
+          <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
+            <Text>Hello Mr. Anderson.</Text>
+          </ToolbarButton>
         </Box>
       </Box>
 
@@ -465,7 +459,7 @@ export function UILayer(props: UILayerProps) {
             ></IconButton>
           </Tooltip>
         </ButtonGroup>
-        <ToolbarButton color={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]}>
+        <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
           <NavigationMenu />
         </ToolbarButton>
       </Box>

@@ -6,7 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { IconButton, Tooltip, Popover, PopoverBody, PopoverContent, PopoverHeader, PopoverTrigger } from '@chakra-ui/react';
+import {
+  IconButton,
+  Tooltip,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  useDisclosure,
+  PopoverCloseButton,
+} from '@chakra-ui/react';
 
 import { JSXElementConstructor, ReactElement, useState } from 'react';
 
@@ -16,44 +26,64 @@ import { useHexColor } from '@sage3/frontend';
 
 interface ToolbarButtonProps {
   children?: ReactNode;
-  color: SAGEColors;
+  bgColor: SAGEColors;
   offset?: [number, number];
   icon: ReactElement<any, string | JSXElementConstructor<any>> | undefined;
   tooltip: string;
   title: string;
-  onClick?: () => void;
-  isOpen?: boolean;
+  stayActive?: boolean;
 }
 
 export function ToolbarButton(props: ToolbarButtonProps) {
-  const [showMenu, setShowMenu] = useState(props.isOpen ? props.isOpen : false);
-  const handleShowMenu = () => {
-    props.children && setShowMenu(!showMenu);
-    props.onClick && props.onClick();
+  const { onOpen, onClose, isOpen } = useDisclosure();
+  const bgColor = useHexColor(props.bgColor);
+
+  const handleClick = () => {
+    isOpen ? onClose() : onOpen();
   };
 
-  const bgColor = useHexColor(props.color + '.200');
-
   return (
-    <Popover isOpen={showMenu} offset={props.offset ? props.offset : undefined}>
+    <Popover
+      offset={props.offset ? props.offset : undefined}
+      onOpen={props.stayActive ? () => {} : onOpen}
+      onClose={props.stayActive ? () => {} : onClose}
+      isOpen={isOpen}
+    >
       <Tooltip label={props.tooltip} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
         <PopoverTrigger>
-          <IconButton
-            colorScheme={showMenu ? props.color : 'gray'}
-            size="sm"
-            icon={props.icon}
-            fontSize="lg"
-            aria-label={`Open ${props.title} Menu`}
-            sx={{
-              _dark: {
-                bg: showMenu ? bgColor : 'gray.600', // 'inherit' didnt seem to work
-              },
-            }}
-            onClick={handleShowMenu}
-          ></IconButton>
+          {/* If stayActive need a different button...sadly very simliar code */}
+          {props.stayActive ? (
+            <IconButton
+              colorScheme={isOpen ? props.bgColor : 'gray'}
+              size="sm"
+              icon={props.icon}
+              fontSize="lg"
+              aria-label={`Open ${props.title} Menu`}
+              sx={{
+                _dark: {
+                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              onClick={handleClick}
+            ></IconButton>
+          ) : (
+            <IconButton
+              colorScheme={isOpen ? props.bgColor : 'gray'}
+              size="sm"
+              icon={props.icon}
+              fontSize="lg"
+              aria-label={`Open ${props.title} Menu`}
+              sx={{
+                _dark: {
+                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
+          )}
         </PopoverTrigger>
       </Tooltip>
       <PopoverContent width="100%">
+        {props.stayActive && <PopoverCloseButton onClick={handleClick} />}
         <PopoverHeader>{props.title}</PopoverHeader>
         <PopoverBody>{props.children}</PopoverBody>
       </PopoverContent>
