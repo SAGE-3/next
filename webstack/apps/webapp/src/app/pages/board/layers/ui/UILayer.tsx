@@ -315,22 +315,12 @@ export function UILayer(props: UILayerProps) {
     }
   }
 
-  const [showMap, setShowMap] = useState(false);
-  const handleShowMap = () => {
-    setShowMap(!showMap);
-  };
-
-  const [showApps, setShowApps] = useState(false);
-  const handleShowApps = () => {
-    setShowApps(!showApps);
-  };
-
   return (
     <>
       {/* Presence settings modal dialog */}
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
-      {/* The Corner SAGE3 Image Bottom Right */}
+      {/* The bottom right corner showing the visibility icon when the user decides to hide the UI */}
       <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
         {!showUI && (
           <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
@@ -355,64 +345,8 @@ export function UILayer(props: UILayerProps) {
         )}
       </HStack>
 
-      {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
-        <Box display="flex" gap="1">
-          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
-              <MdArrowBack />
-            </Button>
-          </Tooltip>
-          <Divider orientation="vertical" mx="1" />
-          <MainButton
-            buttonStyle="solid"
-            backToRoom={() => toHome(props.roomId)}
-            boardInfo={{
-              boardId: props.boardId,
-              roomId: props.roomId,
-              boardName: board ? board?.data.name : '',
-              roomName: room ? room?.data.name : '',
-            }}
-            config={config}
-          />
-          <Divider orientation="vertical" mx="1" /> <Interactionbar />
-          <Divider orientation="vertical" mx="1" />
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
-            <UsersMenu boardId={props.boardId} />
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
-            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
-            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
-            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
-            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
-            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <Divider orientation="vertical" mx="1" />{' '}
-          <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
-            <Text>Hello Mr. Anderson.</Text>
-          </ToolbarButton>
-        </Box>
-      </Box>
-
-      {/* Main Button Bottom Right */}
-      <Box
-        position="absolute"
-        right="2"
-        bottom="2"
-        zIndex={101}
-        display={showUI ? 'flex' : 'none'}
-        // background="gray.700"
-        // padding="2"
-        borderRadius="md"
-      >
+      {/* Map Buttons Bottom Right */}
+      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
         <ButtonGroup isAttached size="xs" gap="0" mr="1">
           <Tooltip label={'Zoom In'}>
             <IconButton
@@ -464,6 +398,53 @@ export function UILayer(props: UILayerProps) {
         </ToolbarButton>
       </Box>
 
+      {/* Main Button Bottom Left */}
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
+        <Box display="flex" gap="1">
+          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
+              <MdArrowBack />
+            </Button>
+          </Tooltip>
+          <Divider orientation="vertical" mx="1" />
+          <MainButton
+            buttonStyle="solid"
+            backToRoom={() => toHome(props.roomId)}
+            boardInfo={{
+              boardId: props.boardId,
+              roomId: props.roomId,
+              boardName: board ? board?.data.name : '',
+              roomName: room ? room?.data.name : '',
+            }}
+            config={config}
+          />
+          <Divider orientation="vertical" mx="1" /> <Interactionbar />
+          <Divider orientation="vertical" mx="1" />
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+            <UsersMenu boardId={props.boardId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
+            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
+            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <Divider orientation="vertical" mx="1" />{' '}
+          <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
+            <Text>Hello Mr. Anderson.</Text>
+          </ToolbarButton>
+        </Box>
+      </Box>
+
       {/* Hub-Room-Board Name Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
@@ -474,8 +455,10 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
+      {/* App Toolbar to show when the user selects an app */}
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
+      {/* Right click context menu */}
       <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
         <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
       </ContextMenu>
@@ -485,6 +468,7 @@ export function UILayer(props: UILayerProps) {
         <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
+      {/* Twilio connection component */}
       <Twilio roomName={props.boardId} connect={twilioConnect} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
