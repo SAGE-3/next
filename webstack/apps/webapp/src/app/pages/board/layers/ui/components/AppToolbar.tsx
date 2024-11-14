@@ -43,6 +43,11 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
   Spacer,
 } from '@chakra-ui/react';
 
@@ -51,12 +56,13 @@ import {
   MdCopyAll,
   MdInfoOutline,
   MdZoomOutMap,
-  MdLock,
-  MdLockOpen,
   MdTv,
   MdAddCircleOutline,
   MdExpandMore,
   MdExpandLess,
+  MdMenu,
+  MdPushPin,
+  MdOutlinePushPin,
 } from 'react-icons/md';
 import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
 import { IoMdExit } from 'react-icons/io';
@@ -784,13 +790,12 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
                 <>
                   <PopoverTrigger>
-                    <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                    <Button backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
                       <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
                     </Button>
                   </PopoverTrigger>
@@ -819,65 +824,48 @@ export function AppToolbar(props: AppToolbarProps) {
               )}
             </Popover>
 
-            {/* Common Actions */}
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              openDelay={400}
-              ml="1"
-              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
-            >
-              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
-                <MdZoomOutMap size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
+            {/* Hamburger */}
+            <Menu placement="top-start">
+              <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+                <MenuButton size="xs" as={Button} backgroundColor={commonButtonColors} mr="1" p={0} display="grid" placeItems="center">
+                  <MdMenu size="14px" color={buttonTextColor} />
+                </MenuButton>
+              </Tooltip>
+              <MenuList minWidth="150px" fontSize={'sm'} py="1px" m="0">
+                <MenuItem
+                  icon={app.data.pinned ? <MdPushPin size="18px" /> : <MdOutlinePushPin size="18px" />}
+                  onClick={togglePin}
+                  isDisabled={!canPin}
+                >
+                  {app.data.pinned ? 'Unpin Application' : 'Pin Application'}
+                </MenuItem>
+                <MenuItem
+                  icon={<MdCopyAll size="18px" />}
+                  onClick={() => duplicate([app._id])}
+                  isDisabled={!canDuplicateApp}
+                  py="1px"
+                  m="0"
+                >
+                  Duplicate Application
+                </MenuItem>
+                <MenuDivider />
+                <MenuItem icon={<MdTv size="18px" />} onClick={() => scaleApp()} py="1px" m="0">
+                  {previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
+                </MenuItem>
+                <MenuItem icon={<MdZoomOutMap size="18px" />} onClick={() => moveToApp()} py="1px" m="0">
+                  {previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
+                </MenuItem>
+                <MenuDivider />
 
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              label={previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
-              openDelay={400}
-              ml="1"
-            >
-              <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <MdTv size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
+                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
+                  Deselect Application
+                </MenuItem>
+              </MenuList>
+            </Menu>
 
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              label={app.data.pinned ? 'Unpin Application' : 'Pin Application'}
-              openDelay={400}
-              ml="1"
-            >
-              <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
-                {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Duplicate Application'} openDelay={400} ml="1">
-              <Button
-                onClick={() => duplicate([app._id])}
-                backgroundColor={commonButtonColors}
-                size="xs"
-                mr="1"
-                p={0}
-                isDisabled={!canDuplicateApp}
-              >
-                <MdCopyAll size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
-              <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
-                <HiOutlineTrash size="18px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Deselect Application'} openDelay={400} ml="1">
-              <Button onClick={() => setSelectedApp('')} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <IoMdExit size="18px" color={buttonTextColor} />
+            <Tooltip placement="top" hasArrow={true} label={'Delete Application'} openDelay={400} ml="1">
+              <Button onClick={onDeleteOpen} colorScheme="red" size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
+                <HiOutlineTrash size="18px" />
               </Button>
             </Tooltip>
 
@@ -885,11 +873,10 @@ export function AppToolbar(props: AppToolbarProps) {
               isOpen={isDeleteOpen}
               onClose={onDeleteClose}
               onConfirm={() => deleteApp(app._id)}
-              title="Close this Application"
-              message="Are you sure you want to close this application?"
+              title="Delete Application"
+              message="Are you sure you want to delete this application?"
               cancelText="Cancel"
               confirmText="Delete"
-              cancelColor="green"
               confirmColor="red"
               size="lg"
             />

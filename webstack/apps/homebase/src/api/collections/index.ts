@@ -106,4 +106,7 @@ export async function loadCollections(): Promise<void> {
       });
     }
   });
+
+  // Remove all temporary user accounts at server startup
+  UsersCollection.removeAllTemporaryAccount();
 }

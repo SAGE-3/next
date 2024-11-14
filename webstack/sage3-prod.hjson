@@ -42,6 +42,11 @@
   "agents": {
     "url": "http://seer:9999"
   },
+  // Webserver configuration
+  "webserver": {
+    "logLevel": "partial", // all | partial | none,
+    "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
+  },
 
   // Feedback URL
   "feedback": {

@@ -52,6 +52,10 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -62,7 +66,7 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "100m"
   kernelserver:
     image: "ghcr.io/sage-3/sagekernelserver:arm64"
     ports:

@@ -461,11 +461,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Arrows />
 
         {/* Whiteboard */}
-        <Whiteboard roomId={props.roomId} boardId={props.boardId} />
+        <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
 
 
         {/* Lasso */}
-        {canLasso && primaryActionMode === 'lasso' && <Lasso roomId={props.roomId} boardId={props.boardId} />}
+        {canLasso && primaryActionMode === 'lasso' && <LassoMemo roomId={props.roomId} boardId={props.boardId} />}
 
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
@@ -480,6 +480,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   );
 }
 const RndMemo = React.memo(RndSafety);
+const LassoMemo = React.memo(Lasso);
+const WhiteboardMemo = React.memo(Whiteboard);
 
 // This code has been modified from the one present in useUIStore
 function zoomOnLocationNewPosition(

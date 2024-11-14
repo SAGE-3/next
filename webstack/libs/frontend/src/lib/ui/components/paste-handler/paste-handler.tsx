@@ -23,6 +23,9 @@ import {
   useUIStore,
 } from '@sage3/frontend';
 
+// Development or production
+const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
 /**
  * Handling copy/paste events on a board
  */
@@ -121,11 +124,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else if (pastedText) {
           // check and validate the URL
           const isValid = isValidURL(pastedText.trim());
-          // If the start of pasted text is http, can assume is a url
-          if (isValid) {
-            setValidURL(isValid);
-            popOnOpen();
-          } else if (pastedText.startsWith('sage3://') || (pastedText.startsWith('https://') && pastedText.includes('/#/enter/'))) {
+          const iscustomURL = pastedText.startsWith('sage3://');
+          const isdevboard = development && pastedText.startsWith('http://') && pastedText.includes('/#/enter/');
+          const isprodboard = pastedText.startsWith('https://') && pastedText.includes('/#/enter/');
+          // If the pasted text is a SAGE3 URL, create a BoardLink app
+          if (iscustomURL || isdevboard || isprodboard) {
             // Create a board link app
             createApp({
               title: 'BoardLink',
@@ -140,6 +143,9 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               dragging: false,
               pinned: false,
             });
+          } else if (isValid) {
+            setValidURL(isValid);
+            popOnOpen();
           } else {
             // Create a new stickie
             const lang = stringContainsCode(pastedText);
