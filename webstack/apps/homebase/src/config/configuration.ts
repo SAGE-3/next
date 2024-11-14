@@ -31,7 +31,6 @@ let config: ServerConfiguration;
 async function loadConfig(): Promise<ServerConfiguration> {
   // Test if development or production mode
   let production = false;
-  console.log('NODE_ENV =', process.env.NODE_ENV);
   if (process.env.NODE_ENV && process.env.NODE_ENV.indexOf('production') > -1) {
     production = true;
   }
@@ -53,6 +52,8 @@ async function loadConfig(): Promise<ServerConfiguration> {
   config = conf;
   // adding the version information
   config.version = version;
+
+  console.log('Configuration> loaded from', filename);
 
   // Return the typed value
   return conf as ServerConfiguration;

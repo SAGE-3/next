@@ -49,6 +49,11 @@ export interface ServerConfiguration {
   kernels: { url: string };
   // Python server for agents
   agents: { url: string };
+  // Webserver configuration
+  webserver: {
+    logLevel: 'all' | 'partial' | 'none';
+    uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
+  };
 
   // Feedback server
   feedback: { url: string };

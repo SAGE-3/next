@@ -17,9 +17,20 @@ import { SAGE3Ability } from '@sage3/shared';
 
 import { APIHttp, SocketAPI } from '../api';
 
+type UserStats = {
+  userId: string;
+  numRooms: number;
+  numBoards: number;
+  numApps: number;
+  numAssets: number;
+  numPlugins: number;
+};
+
 interface UserState {
   users: User[];
   error: string | null;
+  getUserStats: (userId: string) => Promise<UserStats | null>;
+  accountDeletion: (id: string, deleteAllData: boolean) => Promise<{ success: boolean; message: string }>;
   clearError: () => void;
   get: (id: string) => Promise<User | null>;
   subscribeToUsers: () => Promise<void>;
@@ -34,6 +45,43 @@ const UsersStore = create<UserState>()((set, get) => {
   return {
     users: [],
     error: null,
+    getUserStats: async (userId: string) => {
+      const res = await fetch('/api/users/userStats', {
+        body: JSON.stringify({ userId }),
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const jsonResponse = await res.json();
+      if (jsonResponse.success) {
+        const data = jsonResponse.data as any;
+        return data.userStats as UserStats;
+      } else {
+        set({ error: jsonResponse.message });
+        return null;
+      }
+    },
+    accountDeletion: async (id: string, deleteAllData) => {
+      // POST Request to delete the user
+      const res = await fetch('/api/users/accountDeletion', {
+        body: JSON.stringify({ id, deleteAllData }),
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const jsonResponse = await res.json();
+      if (jsonResponse.success) {
+        return { success: true, message: 'Account Deleted' };
+      } else {
+        return { success: false, message: jsonResponse.message };
+      }
+    },
     clearError: () => {
       set({ error: null });
     },
