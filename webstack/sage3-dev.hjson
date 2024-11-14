@@ -34,6 +34,12 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
+  // Webserver configuration
+  "webserver": {
+    "logLevel": "partial", // all | partial | none,
+    "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
+  },
+
   // Fastapi python server
   "fastapi": {
     "url": "http://127.0.0.1:8000"

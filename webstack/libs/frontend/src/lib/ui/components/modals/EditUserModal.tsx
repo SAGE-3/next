@@ -24,6 +24,7 @@ import {
   Radio,
   FormLabel,
   FormControl,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { MdPerson } from 'react-icons/md';
 import { formatDistance } from 'date-fns';
@@ -34,6 +35,7 @@ import { useAuth } from '@sage3/frontend';
 
 import { useUser } from '../../../providers';
 import { ColorPicker } from '../general';
+import { AccountDeletion } from './AccountDeletion';
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -61,6 +63,9 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
   const handleColorChange = (color: string) => setColor(color as SAGEColors);
   const handleTypeChange = (type: UserSchema['userType']) => setType(type);
+
+  // Account Delete Disclosure
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
@@ -95,6 +100,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
 
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
+      {user && <AccountDeletion user={user} isOpen={isOpen} onClose={onClose} />}
       <ModalOverlay />
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit User Account</ModalHeader>
@@ -151,7 +157,10 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
             </Text>
           )}
         </ModalBody>
-        <ModalFooter>
+        <ModalFooter justifyContent={'space-between'}>
+          <Button colorScheme="red" onClick={onOpen} isDisabled={!user}>
+            Delete Account
+          </Button>
           <Button colorScheme="green" onClick={() => updateAccount()} isDisabled={!name.trim()}>
             Update
           </Button>

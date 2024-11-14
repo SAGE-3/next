@@ -81,18 +81,6 @@ export function zeroPad(num: number, places: number): string {
 }
 
 /**
- * Return a string for a file size number
- *
- * @param {number} size
- * @returns {string}
- */
-export function humanFileSize(size: number): string {
-  const i = Math.floor(Math.log(size) / Math.log(1024));
-  const val = Number((size / Math.pow(1024, i)).toFixed(1));
-  return val + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
-}
-
-/**
  * Process a URL to be embedded
  *
  * @param {string} view_url

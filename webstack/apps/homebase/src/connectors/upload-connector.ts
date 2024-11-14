@@ -17,52 +17,72 @@
 import * as express from 'express';
 import * as multer from 'multer';
 import { v4 as getUUID } from 'uuid';
+import { parseFileSize, humanFileSize } from '@sage3/shared';
+
+import { config } from '../config';
+
+/**
+ * Multer Middleware for local storage
+ **/
+
+export class UploadConnector {
+  private static instance: UploadConnector;
+  private upload: multer.Multer;
+
+  private constructor() {
+    const filesizeLimit = config.webserver?.uploadLimit ? parseFileSize(config.webserver.uploadLimit) : 1024 * 1024 * 1024 * 5;
+    console.log('Upload> destination', config.public, 'limit', humanFileSize(filesizeLimit));
+    // const filesizeLimit = 1024 * 1024 * 1024 * 5;
+
+    this.upload = multer({
+      // use local storage
+      storage: multer.diskStorage({
+        destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
+          console.log('Upload> config', config.public);
+          return cb(null, config.public);
+        },
+        filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
+          return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));
+        },
+      }),
+      // filter allowed files
+      fileFilter: function (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+        console.log('Upload> filter', file.originalname, file.mimetype);
+        // To accept the file pass true
+        cb(null, true);
+      },
+      // File size limits
+      limits: { fileSize: filesizeLimit },
+    });
+  }
+
+  // Public static method to get the singleton instance
+  public static getInstance(): UploadConnector {
+    if (!UploadConnector.instance) {
+      UploadConnector.instance = new UploadConnector();
+    }
+    return UploadConnector.instance;
+  }
+
+  /**
+   * Middleware connector for Multer.
+   * @param fieldname Shared name of the multipart form fields to process.
+   * @returns express.RequestHandler
+   */
+  public uploadMiddleware(fieldname: string): express.RequestHandler {
+    return this.upload.array(fieldname);
+  }
+}
+
+/**
+ * Multer Middleware for Google storage
+ **/
 
 // Google storage
 // import MulterGoogleCloudStorage from 'multer-cloud-storage';
 // AWS S3 storage
 // import * as AWS from 'aws-sdk';
 // import * as multerS3 from 'multer-s3';
-
-import { config } from '../config';
-/**
- * Multer Middleware for local storage
- **/
-
-const upload = multer({
-  // use local storage
-  storage: multer.diskStorage({
-    destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-      return cb(null, config.public);
-    },
-    filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
-      return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));
-    },
-  }),
-  // filter allowed files
-  fileFilter: function (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
-    console.log('Upload> filter', file.originalname, file.mimetype);
-    // To accept the file pass true
-    cb(null, true);
-  },
-  // File size limits
-  limits: {
-    fileSize: 1024 * 1024 * 1024 * 5, // 5GB
-  },
-});
-
-/**
- * Middleware connector for Multer.
- * @param fieldname Shared name of the multipart form fields to process.
- * @returns express.RequestHandler
- */
-export function uploadMiddleware(fieldname: string): express.RequestHandler {
-  return upload.array(fieldname);
-}
-
-/**
- * Multer Middleware for Google storage
- **/
 
 /*
  const googleProjectId = "sage3-302419";

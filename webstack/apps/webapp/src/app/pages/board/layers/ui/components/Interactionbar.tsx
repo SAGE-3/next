@@ -124,9 +124,30 @@ export function Interactionbar() {
   return (
     <>
       <ButtonGroup isAttached={false} spacing={0} size="xs">
-        <Tooltip label={'Grab (Panning Tool) — [1]'} placement="top" hasArrow={true} openDelay={400}>
+        <Tooltip label={'Selection — [1]'} placement="top" hasArrow={true} openDelay={400}>
           <IconButton
             borderRadius={'0.5rem 0 0 0.5rem'}
+            size="sm"
+            colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
+              },
+            }}
+            icon={<LiaMousePointerSolid />}
+            fontSize="xl"
+            aria-label={'input-type'}
+            onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
+              setPrimaryActionMode('lasso');
+            }}
+          ></IconButton>
+        </Tooltip>
+
+        <Tooltip label={'Grab (Panning Tool) — [2]'} placement="top" hasArrow={true} openDelay={400}>
+          <IconButton
+            borderRadius={0}
             size="sm"
             colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
             sx={{
@@ -143,26 +164,6 @@ export function Interactionbar() {
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
               setSelectedApp('');
-            }}
-          ></IconButton>
-        </Tooltip>
-        <Tooltip label={'Selection — [2]'} placement="top" hasArrow={true} openDelay={400}>
-          <IconButton
-            borderRadius={0}
-            size="sm"
-            colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<LiaMousePointerSolid />}
-            fontSize="lg"
-            aria-label={'input-type'}
-            onClick={() => {
-              eraserOnClose();
-              annotationsOnClose();
-              setPrimaryActionMode('lasso');
             }}
           ></IconButton>
         </Tooltip>
