@@ -7,13 +7,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useColorModeValue } from '@chakra-ui/react';
+import { IconButton, useColorModeValue } from '@chakra-ui/react';
 
 import { useUIStore } from '../../../stores';
 import { useUserSettings } from '../../../providers';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
+import { MdClose } from 'react-icons/md';
 
 /**
  * Convert a touch position to a mouse position
@@ -60,13 +61,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
-
-  const handleClick = useCallback(() => {
-    // timeout to allow button click to fire before hiding menu
-    if (showContextMenu) {
-      // setTimeout(() => setShowContextMenu(false));
-    }
-  }, [showContextMenu]);
+  const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
 
   const handleContextMenu = useCallback(
     (event: any) => {
@@ -84,10 +79,11 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
         // local position plus board position
         setContextMenuPos({ x, y });
         setContextMenuPosition({ x, y });
+        setContextMenuOpen(true);
         setTimeout(() => setShowContextMenu(true));
       }
     },
-    [setContextMenuPos, props.divIds, setContextMenuPosition]
+    [props.divIds, primaryActionMode, setContextMenuPosition]
   );
 
   useEffect(() => {
@@ -108,28 +104,39 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
         }
       }
     });
-    document.addEventListener('click', handleClick);
+    // document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
-      document.removeEventListener('click', handleClick);
+      // document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
-
-  const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
+  }, [showContextMenu, handleContextMenu, setContextMenuPosition, props.divIds]);
 
   return showContextMenu ? (
     <div
       className="contextmenu"
       id="this-context"
       style={{
-        top: contextMenuPos.y + 2,
-        left: contextMenuPos.x + 2,
-        // backgroundColor: bgColor,
+        top: contextMenuPos.y,
+        left: contextMenuPos.x,
       }}
     >
       {props.children}
+      <IconButton
+        aria-label={'close-context'}
+        icon={<MdClose />}
+        size="sm"
+        borderRadius={'100%'}
+        position="absolute"
+        transform={'translate(-50%, -50%)'}
+        onClick={() => {
+          setShowContextMenu(false);
+          setContextMenuOpen(false);
+        }}
+        variant={'outline'}
+        colorScheme="red"
+      ></IconButton>
     </div>
   ) : null;
 };

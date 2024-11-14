@@ -88,6 +88,8 @@ interface UIState {
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
+  contextMenuOpen: boolean;
+  setContextMenuOpen: (open: boolean) => void;
 
   // RndSafety: to fix appWindows from disappearing
   rndSafeForAction: boolean;
@@ -157,6 +159,8 @@ export const useUIStore = create<UIState>()((set, get) => ({
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  contextMenuOpen: false,
+  setContextMenuOpen: (open: boolean) => set((state) => ({ ...state, contextMenuOpen: open })),
   viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,

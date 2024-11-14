@@ -112,6 +112,7 @@ export function UILayer(props: UILayerProps) {
   const resetZoom = useUIStore((state) => state.resetZoom);
   const zoomIn = useUIStore((state) => state.zoomInDelta);
   const zoomOut = useUIStore((state) => state.zoomOutDelta);
+  const isContextMenuOpen = useUIStore((state) => state.contextMenuOpen);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -126,9 +127,6 @@ export function UILayer(props: UILayerProps) {
   // Apps
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
-
-  // Logo
-  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // Navigation
   const { toHome, back } = useRouteNav();
@@ -281,17 +279,12 @@ export function UILayer(props: UILayerProps) {
   });
 
   // Redirect the user back to the homepage when clicking the arrow button
-  function handleHomeClick(event: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-    if (event.shiftKey) {
-      // Just go back to the previous room
-      back();
+  function handleHomeClick() {
+    if (room) {
+      // Back to the homepage with the room id
+      toHome(room._id);
     } else {
-      if (room) {
-        // Back to the homepage with the room id
-        toHome(room._id);
-      } else {
-        back();
-      }
+      back();
     }
   }
 
@@ -398,7 +391,8 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Divider orientation="vertical" mx="1" /> <Interactionbar />
+          <Divider orientation="vertical" mx="1" />
+          <Interactionbar isContextMenuOpen={isContextMenuOpen} />
           <Divider orientation="vertical" mx="1" />
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
@@ -446,6 +440,7 @@ export function UILayer(props: UILayerProps) {
           clearBoard={clearOnOpen}
           showAllApps={showAllApps}
           downloadRoomAssets={downloadRoomAssets}
+          backHomeClick={handleHomeClick}
         />
       </ContextMenu>
 
