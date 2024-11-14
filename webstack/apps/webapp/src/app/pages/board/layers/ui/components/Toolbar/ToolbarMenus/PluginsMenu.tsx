@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure } from '@chakra-ui/react';
+import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure, Button } from '@chakra-ui/react';
 import { format } from 'date-fns';
 
 import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
@@ -73,10 +73,8 @@ export function PluginsMenu(props: PluginsMenuProps) {
 
       <VStack
         maxH={300}
-        w={'100%'}
+        // w={'100%'}
         m={0}
-        mb="2"
-        pr={2}
         spacing={1}
         overflow="auto"
         css={{
@@ -103,7 +101,6 @@ export function PluginsMenu(props: PluginsMenuProps) {
                 key={plugin._id}
                 shouldWrapChildren
                 hasArrow={true}
-                p="2"
                 openDelay={500}
                 borderRadius="8px"
                 placement="right"
@@ -146,14 +143,10 @@ export function PluginsMenu(props: PluginsMenuProps) {
             );
           })}
         <Divider my="1" />
-        <Tooltip shouldWrapChildren hasArrow={true} p="2" openDelay={500} borderRadius="8px" placement="right" label="Upload a new plugin">
-          <MenuButton
-            title={'Upload'}
-            style={{ width: '175px', overflow: 'hidden', backgroundColor: uploadButtonColorHex }}
-            // disable dragging for now since it doesnt work for plugins
-            draggable={false}
-            onClick={() => pluginOnOpen()}
-          />
+        <Tooltip hasArrow={true} openDelay={500} borderRadius="8px" placement="right" label="Upload a new plugin">
+          <Button onClick={() => pluginOnOpen()} py="1px" m="0" width="100%" size="sm" height="30px" colorScheme={'green'}>
+            Upload
+          </Button>
         </Tooltip>
       </VStack>
     </>

@@ -396,7 +396,15 @@ export function UILayer(props: UILayerProps) {
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
-          <IconButton aria-label="Up Arrow" fontSize="lg" variant="solid" size="sm" colorScheme={'purple'} icon={<IoSparklesSharp />} />
+          <IconButton
+            aria-label="Up Arrow"
+            fontSize="lg"
+            variant="solid"
+            size="sm"
+            colorScheme={'purple'}
+            icon={<IoSparklesSharp />}
+            isDisabled
+          />
         </Box>
       </Box>
 
