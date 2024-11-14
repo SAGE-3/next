@@ -292,7 +292,7 @@ def getPDFFile(ps3, assetid):
     assets = ps3.s3_comm.get_assets()
     # Find the asset
     for f in assets:
-        if f["_id"] == assetids:
+        if f["_id"] == assetid:
             asset = f["data"]
             # Build the URL
             url = (

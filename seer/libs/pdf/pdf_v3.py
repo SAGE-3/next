@@ -84,7 +84,7 @@ async def generate_answer(qq: PDFQuery, llm: ChatOpenAI, retrievers, markdown_fi
   qa_prompt_template = """
   Paper Id: {id}
 
-  Extract the title of the paper, then concisely address this: {action}
+  Concisely address this: {action}
 
   Use the following context and DO NOT HALLUCINATE.
   """
