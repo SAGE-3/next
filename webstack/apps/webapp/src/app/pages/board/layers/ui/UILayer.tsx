@@ -26,7 +26,19 @@ import {
   PopoverHeader,
   PopoverTrigger,
 } from '@chakra-ui/react';
-import { MdAdd, MdApps, MdArrowBack, MdArrowCircleLeft, MdFolder, MdLock, MdMap, MdPeople, MdRemove, MdRemoveRedEye } from 'react-icons/md';
+import {
+  MdAdd,
+  MdApps,
+  MdArrowBack,
+  MdArrowCircleLeft,
+  MdFolder,
+  MdLock,
+  MdMap,
+  MdPeople,
+  MdRemove,
+  MdRemoveRedEye,
+  MdScreenShare,
+} from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -367,6 +379,8 @@ export function UILayer(props: UILayerProps) {
           <Divider orientation="vertical" mx="1" />
           <ToolbarButton color={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
+          </ToolbarButton>
+          <ToolbarButton color={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
             <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
           </ToolbarButton>
           <ToolbarButton color={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>

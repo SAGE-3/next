@@ -6,34 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import {
-  Box,
-  useDisclosure,
-  Modal,
-  useToast,
-  useColorModeValue,
-  HStack,
-  IconButton,
-  Tooltip,
-  Divider,
-  ButtonGroup,
-  Text,
-  Button,
-  Flex,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTrigger,
-} from '@chakra-ui/react';
-import { MdAdd, MdApps, MdArrowBack, MdArrowCircleLeft, MdFolder, MdLock, MdMap, MdPeople, MdRemove, MdRemoveRedEye } from 'react-icons/md';
+import { IconButton, Tooltip, Popover, PopoverBody, PopoverContent, PopoverHeader, PopoverTrigger } from '@chakra-ui/react';
 
 import { JSXElementConstructor, ReactElement, useState } from 'react';
 
 import { ReactNode } from 'react';
 import { SAGEColors } from '@sage3/shared';
 import { useHexColor } from '@sage3/frontend';
-import { set } from 'date-fns';
 
 interface ToolbarButtonProps {
   children?: ReactNode;
@@ -43,10 +22,11 @@ interface ToolbarButtonProps {
   tooltip: string;
   title: string;
   onClick?: () => void;
+  isOpen?: boolean;
 }
 
 export function ToolbarButton(props: ToolbarButtonProps) {
-  const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(props.isOpen ? props.isOpen : false);
   const handleShowMenu = () => {
     props.children && setShowMenu(!showMenu);
     props.onClick && props.onClick();
