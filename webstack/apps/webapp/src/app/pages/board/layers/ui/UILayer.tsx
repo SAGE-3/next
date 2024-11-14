@@ -19,26 +19,8 @@ import {
   ButtonGroup,
   Text,
   Button,
-  Flex,
-  Popover,
-  PopoverBody,
-  PopoverContent,
-  PopoverHeader,
-  PopoverTrigger,
 } from '@chakra-ui/react';
-import {
-  MdAdd,
-  MdApps,
-  MdArrowBack,
-  MdArrowCircleLeft,
-  MdFolder,
-  MdLock,
-  MdMap,
-  MdPeople,
-  MdRemove,
-  MdRemoveRedEye,
-  MdScreenShare,
-} from 'react-icons/md';
+import { MdAdd, MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye, MdScreenShare } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -89,8 +71,6 @@ import {
 } from './components';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
-import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
-import { useState } from 'react';
 import { SAGEColors } from '@sage3/shared';
 
 type UILayerProps = {
@@ -460,7 +440,13 @@ export function UILayer(props: UILayerProps) {
 
       {/* Right click context menu */}
       <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
-        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
+        <BoardContextMenu
+          boardId={props.boardId}
+          roomId={props.roomId}
+          clearBoard={clearOnOpen}
+          showAllApps={showAllApps}
+          downloadRoomAssets={downloadRoomAssets}
+        />
       </ContextMenu>
 
       {/* Clear board dialog */}

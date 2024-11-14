@@ -7,7 +7,6 @@
  */
 
 export * from './AppToolbar';
-export * from './BoardContextMenu';
 export * from './ClearBoardModal';
 export * from './LassoToolbar';
 export * from './Twilio';
@@ -17,4 +16,4 @@ export * from './TagsDisplay';
 export * from './Interactionbar';
 export * from './InteractionbarShortcuts';
 export * from './ScreenshareMenu';
-export * from './Toolbar';
+export * from './Menus';
