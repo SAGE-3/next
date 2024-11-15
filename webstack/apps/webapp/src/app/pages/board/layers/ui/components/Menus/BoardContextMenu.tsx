@@ -6,13 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, useColorMode, Flex, IconButton } from '@chakra-ui/react';
+import { Box, useColorModeValue, Flex, IconButton } from '@chakra-ui/react';
 
-import { useAppStore, useUIStore, useUser, useRouteNav, useCursorBoardPosition, useConfigStore, useHexColor } from '@sage3/frontend';
-import { AppName, AppState } from '@sage3/applications/schema';
-import { initialValues } from '@sage3/applications/initialValues';
-import { Applications } from '@sage3/applications/apps';
+import { useUser, useHexColor } from '@sage3/frontend';
+
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 

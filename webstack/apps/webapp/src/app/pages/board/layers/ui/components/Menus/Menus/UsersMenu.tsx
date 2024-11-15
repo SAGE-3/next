@@ -11,7 +11,23 @@ import { useCallback } from 'react';
 import { useParams } from 'react-router';
 
 // Theme and icons
-import { Avatar, Tooltip, GridItem, Grid, Menu, MenuButton, MenuItem, MenuList, MenuGroup, useToast } from '@chakra-ui/react';
+import {
+  Avatar,
+  Tooltip,
+  GridItem,
+  Grid,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuGroup,
+  useToast,
+  Button,
+  Divider,
+  Box,
+  VStack,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
 import { MdPerson, MdStop } from 'react-icons/md';
@@ -184,6 +200,9 @@ export function UsersMenu(props: UsersMenuProps) {
   // User Presence
   const userPresence = useThrottlePresenceUsers(1000, user?._id, props.boardId);
 
+  // Theme
+  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+
   // Sort walls to top
   userPresence.sort((a, b) => {
     const aType = a?.user.data.userType === 'wall' ? 0 : 1;
@@ -192,55 +211,27 @@ export function UsersMenu(props: UsersMenuProps) {
   });
 
   return (
-    <>
-      <Grid templateColumns="repeat(10, 0fr)" gap={2}>
-        <GridItem w="100%" h="10" key={'userpanel-' + user?._id}>
-          <Menu>
-            <Tooltip label={'You'} placement="top" hasArrow shouldWrapChildren={true}>
-              <MenuButton
-                as={Avatar}
-                name={' '}
-                backgroundColor={myColor}
-                size="sm"
-                color="white"
-                showBorder={true}
-                borderRadius={user?.data.userType === 'wall' ? '0%' : '100%'}
-                borderColor="transparent"
-                cursor="pointer"
-                textAlign="center"
-                fontWeight="bold"
-                fontSize="14px"
-              >
-                <MdPerson
-                  style={{
-                    fontSize: '22px',
-                    transform: 'translateX(3px)',
-                  }}
-                />
-              </MenuButton>
-            </Tooltip>
-
-            <MenuList>
-              <MenuGroup title={'You'} mt={0} mb={1} p={0} fontSize="md">
-                <Tooltip label={'Force everyone to follow you'} placement="top" openDelay={400} hasArrow>
-                  <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => followMe()}>
-                    Follow Me
-                  </MenuItem>
-                </Tooltip>
-                <Tooltip label={'Force everyone to unfollow you'} placement="top" openDelay={400} hasArrow>
-                  <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => followMeStop()}>
-                    Unfollow Me
-                  </MenuItem>
-                </Tooltip>
-                <Tooltip label={'Force everyone to unfollow you'} placement="top" openDelay={400} hasArrow>
-                  <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={everyoneMatchMyViewport}>
-                    Match Me
-                  </MenuItem>
-                </Tooltip>
-              </MenuGroup>
-            </MenuList>
-          </Menu>
-        </GridItem>
+    <Box>
+      <VStack
+        maxH={300}
+        w={'100%'}
+        m={0}
+        pr={2}
+        spacing={2}
+        overflow="auto"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: gripColor,
+            borderRadius: 'md',
+          },
+        }}
+      >
         {userPresence.map((el) => {
           const followingYou = el.presence.data.following === user?._id;
           const yourFollowing = following === el.user._id;
@@ -261,8 +252,36 @@ export function UsersMenu(props: UsersMenuProps) {
             />
           );
         })}
-      </Grid>
-    </>
+      </VStack>
+      <Divider my="2" />
+      <Menu>
+        <Tooltip label={'You'} placement="top" hasArrow shouldWrapChildren={true}>
+          <MenuButton as={Button} size="xs" width="150px" textAlign={'left'} leftIcon={<MdPerson fontSize={'16px'} color={myColor} />}>
+            {'You'}
+          </MenuButton>
+        </Tooltip>
+
+        <MenuList>
+          <MenuGroup title={'You'} mt={0} mb={1} p={0} fontSize="md">
+            <Tooltip label={'Force everyone to follow you'} placement="top" openDelay={400} hasArrow>
+              <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => followMe()}>
+                Follow Me
+              </MenuItem>
+            </Tooltip>
+            <Tooltip label={'Force everyone to unfollow you'} placement="top" openDelay={400} hasArrow>
+              <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => followMeStop()}>
+                Unfollow Me
+              </MenuItem>
+            </Tooltip>
+            <Tooltip label={'Force everyone to unfollow you'} placement="top" openDelay={400} hasArrow>
+              <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={everyoneMatchMyViewport}>
+                Match Me
+              </MenuItem>
+            </Tooltip>
+          </MenuGroup>
+        </MenuList>
+      </Menu>
+    </Box>
   );
 }
 
@@ -284,83 +303,54 @@ export function UserAvatar(props: UserAvatarProps) {
   const color = useHexColor(props.color);
   const { username, userId, isWall } = props;
   return (
-    <GridItem w="100%" h="10" key={'userpanel-' + userId}>
-      <Menu>
-        <Tooltip aria-label="username" hasArrow={true} placement="top" label={username} shouldWrapChildren={true}>
-          <MenuButton
-            as={Avatar}
-            name={' '}
-            backgroundColor={color || 'orange'}
-            size="sm"
-            color="white"
-            showBorder={true}
-            borderRadius={isWall ? '0%' : '100%'}
-            borderWidth={'3px'}
-            borderColor={'transparent'}
-            cursor="pointer"
-            textAlign="center"
-            fontWeight="bold"
-            fontSize="13px"
-            whiteSpace="nowrap"
-            onDoubleClick={() => props.goToViewport(userId, username)}
-          >
-            {props.followingYou ? (
-              <HiOutlineChevronDoubleLeft
-                style={{
-                  fontSize: '18px',
-                  transform: 'translateX(4px)',
-                }}
-              />
-            ) : props.yourFollowing ? (
-              <HiOutlineChevronDoubleRight
-                style={{
-                  fontSize: '18px',
-                  transform: 'translateX(4px)',
-                }}
-              />
-            ) : (
-              initials(username)
-            )}
-          </MenuButton>
-        </Tooltip>
-        <MenuList>
-          <MenuGroup title={username} mt={0} mb={1} p={0} fontSize="md">
-            <Tooltip hasArrow={true} placement="top" label={`${props.yourFollowing ? 'Unfollow' : 'Follow'} ${username}`} openDelay={400}>
-              <MenuItem
-                fontSize="sm"
-                height="2em"
-                icon={props.yourFollowing ? <MdStop /> : <HiOutlineChevronDoubleRight />}
-                onClick={() => props.followUser(userId)}
-              >
-                {props.yourFollowing ? 'Unfollow Them' : 'Follow Them'}
+    <Menu>
+      <MenuButton
+        as={Button}
+        size="xs"
+        width="150px"
+        textAlign={'left'}
+        minHeight="24px"
+        leftIcon={isWall ? <MdStop fontSize={'16px'} color={color} /> : <MdPerson fontSize={'16px'} color={color} />}
+      >
+        {username}
+      </MenuButton>
+      <MenuList>
+        <MenuGroup title={username} mt={0} mb={1} p={0} fontSize="md">
+          <Tooltip hasArrow={true} placement="top" label={`${props.yourFollowing ? 'Unfollow' : 'Follow'} ${username}`} openDelay={400}>
+            <MenuItem
+              fontSize="sm"
+              height="2em"
+              icon={props.yourFollowing ? <MdStop /> : <HiOutlineChevronDoubleRight />}
+              onClick={() => props.followUser(userId)}
+            >
+              {props.yourFollowing ? 'Unfollow Them' : 'Follow Them'}
+            </MenuItem>
+          </Tooltip>
+          {props.followingYou ? (
+            <Tooltip hasArrow={true} placement="top" label={`Force ${username} to unfollow`} openDelay={400}>
+              <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => props.followMeStop(userId)}>
+                Unfollow Me
               </MenuItem>
             </Tooltip>
-            {props.followingYou ? (
-              <Tooltip hasArrow={true} placement="top" label={`Force ${username} to unfollow`} openDelay={400}>
-                <MenuItem fontSize="sm" height="2em" icon={<MdStop />} onClick={() => props.followMeStop(userId)}>
-                  Unfollow Me
-                </MenuItem>
-              </Tooltip>
-            ) : (
-              <Tooltip hasArrow={true} placement="top" label={`Force ${username} to follow`} openDelay={400}>
-                <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => props.followMe(userId)}>
-                  Follow Me
-                </MenuItem>
-              </Tooltip>
-            )}
-            <Tooltip hasArrow={true} placement="top" label={`Match ${username}'s view`} openDelay={400}>
-              <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => props.goToViewport(userId, username)}>
-                Match Them
+          ) : (
+            <Tooltip hasArrow={true} placement="top" label={`Force ${username} to follow`} openDelay={400}>
+              <MenuItem fontSize="sm" height="2em" icon={<HiOutlineChevronDoubleLeft />} onClick={() => props.followMe(userId)}>
+                Follow Me
               </MenuItem>
             </Tooltip>
-            <Tooltip hasArrow={true} placement="top" label={`Match ${username}'s view`} openDelay={400}>
-              <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => props.matchMe(userId)}>
-                Match Me
-              </MenuItem>
-            </Tooltip>
-          </MenuGroup>
-        </MenuList>
-      </Menu>
-    </GridItem>
+          )}
+          <Tooltip hasArrow={true} placement="top" label={`Match ${username}'s view`} openDelay={400}>
+            <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => props.goToViewport(userId, username)}>
+              Match Them
+            </MenuItem>
+          </Tooltip>
+          <Tooltip hasArrow={true} placement="top" label={`Match ${username}'s view`} openDelay={400}>
+            <MenuItem fontSize="sm" height="2em" icon={<IoMdSquareOutline />} onClick={() => props.matchMe(userId)}>
+              Match Me
+            </MenuItem>
+          </Tooltip>
+        </MenuGroup>
+      </MenuList>
+    </Menu>
   );
 }
