@@ -19,6 +19,7 @@ import {
   // YjsRooms,
   useAbility,
   useAnnotationStore,
+  useHotkeys,
   // useHotkeys,
   // useKeyPress,
   useThrottleScale,
@@ -320,6 +321,19 @@ export function Whiteboard(props: WhiteboardProps) {
     if (delComplete) updateBoardLines();
   };
 
+  // Undo last line Windows
+  useHotkeys('alt+z', () => {
+    if (primaryActionMode === 'pen') {
+      setUndoLastMaker(true);
+    }
+  });
+  // Undo last line Mac
+  useHotkeys('cmd+z', () => {
+    if (primaryActionMode === 'pen') {
+      setUndoLastMaker(true);
+    }
+  });
+
   return (
     <div
       className="canvas-container"
@@ -345,7 +359,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
         {...dragProps}
-      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+        // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}
