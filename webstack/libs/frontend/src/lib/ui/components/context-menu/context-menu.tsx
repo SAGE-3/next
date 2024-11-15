@@ -7,14 +7,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { IconButton, useColorModeValue } from '@chakra-ui/react';
+import { IconButton } from '@chakra-ui/react';
 
 import { useUIStore } from '../../../stores';
-import { useUserSettings } from '../../../providers';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
 import { MdClose } from 'react-icons/md';
+import { useHotkeys } from '../../../hooks';
 
 /**
  * Convert a touch position to a mouse position
@@ -28,23 +28,13 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
     x: evt.targetTouches ? evt.targetTouches[0].pageX : evt.clientX,
     y: evt.targetTouches ? evt.targetTouches[0].pageY : evt.clientY,
   };
-
   while (parent.offsetParent) {
     position.x -= parent.offsetLeft - parent.scrollLeft;
     position.y -= parent.offsetTop - parent.scrollTop;
     parent = parent.offsetParent;
   }
-
   return position;
 }
-
-/**
- * Check if the device is a touch device using CSS media queries
- * @returns boolean
- */
-// function isTouchDevice(): boolean {
-//   return window.matchMedia('(any-pointer: coarse)').matches;
-// }
 
 /**
  * ContextMenu component
@@ -52,8 +42,6 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * @returns JSX.Element
  */
 export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) => {
-  const { settings } = useUserSettings();
-  const primaryActionMode = settings.primaryActionMode;
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -62,6 +50,18 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
   const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
+  const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
+
+  useEffect(() => {
+    if (contextMenuPos !== contextMenuPosition) {
+      setContextMenuPos(contextMenuPosition);
+    }
+  }, [contextMenuPosition, contextMenuPos]);
+
+  useHotkeys('esc', () => {
+    setShowContextMenu(false);
+    setContextMenuOpen(false);
+  });
 
   const handleContextMenu = useCallback(
     (event: any) => {
@@ -83,7 +83,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
         setTimeout(() => setShowContextMenu(true));
       }
     },
-    [props.divIds, primaryActionMode, setContextMenuPosition]
+    [props.divIds, setContextMenuPosition, setContextMenuOpen]
   );
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
           setShowContextMenu(false);
           setContextMenuOpen(false);
         }}
-        variant={'outline'}
+        variant={'solid'}
         colorScheme="red"
       ></IconButton>
     </div>
