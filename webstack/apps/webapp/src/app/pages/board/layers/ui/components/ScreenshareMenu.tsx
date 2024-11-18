@@ -31,6 +31,7 @@ interface ScreensharesMenuProps {
 export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Stores (Users, Apps, UI)
   const { user, accessId } = useUser();
+  const uid = user?._id;
   const users = useUsersStore((state) => state.users);
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
@@ -109,7 +110,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         if (!user) return null;
         const userName = user.data.name;
         const color = user.data.color;
-        const yours = app._createdBy === user?._id;
+        const yours = app._createdBy === uid;
         return (
           <Box
             display="flex"
