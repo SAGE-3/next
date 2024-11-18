@@ -24,12 +24,10 @@ import {
   IconButton,
   Tooltip,
   MenuGroup,
-  Icon,
   Text,
 } from '@chakra-ui/react';
 
 import {
-  MdPerson,
   MdArrowBack,
   MdInvertColors,
   MdLink,

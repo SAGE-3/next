@@ -11,7 +11,7 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useUserSettings } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;

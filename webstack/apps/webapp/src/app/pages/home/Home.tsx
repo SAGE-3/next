@@ -49,6 +49,7 @@ import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joy
 // Icons
 import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdFolder, MdDashboard } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
+import { PiStackPlusFill } from 'react-icons/pi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
@@ -77,14 +78,12 @@ import {
   isElectron,
   useUserSettings,
   useAssetStore,
-  apiUrls,
   isUUIDv4,
 } from '@sage3/frontend';
 
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
-import { PiStackPlusFill } from 'react-icons/pi';
 
 /**
  * Home page for SAGE3
@@ -987,7 +986,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
+      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1881,7 +1880,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

@@ -8,12 +8,12 @@
 
 // React and Chakra Imports
 import { useEffect, useState } from 'react';
-import { Box, Button, Divider, Text, useColorMode, useColorModeValue } from '@chakra-ui/react';
-import { MdPerson, MdPlayArrow, MdStop } from 'react-icons/md';
+import { Box, Button, Divider, Text, useColorModeValue } from '@chakra-ui/react';
+import { MdPerson } from 'react-icons/md';
 
 // SAGE3 Imports
-import { initialValues } from '@sage3/applications/initialValues';
 import { App } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
 import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Props for the ScreensharesMenu component

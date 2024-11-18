@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { ReactNode, JSXElementConstructor, ReactElement } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -18,9 +19,6 @@ import {
   PopoverCloseButton,
 } from '@chakra-ui/react';
 
-import { JSXElementConstructor, ReactElement } from 'react';
-
-import { ReactNode } from 'react';
 import { SAGEColors } from '@sage3/shared';
 import { useHexColor } from '@sage3/frontend';
 
@@ -46,8 +44,8 @@ export function ContextButton(props: ContextButtonProps) {
   return (
     <Popover
       offset={props.offset ? props.offset : undefined}
-      onOpen={props.stayActive ? () => {} : onOpen}
-      onClose={props.stayActive ? () => {} : onClose}
+      onOpen={props.stayActive ? () => { } : onOpen}
+      onClose={props.stayActive ? () => { } : onClose}
       isOpen={isOpen}
       placement={props.placement ? props.placement : 'top'}
     >

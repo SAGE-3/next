@@ -10,9 +10,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Box, Button, useDisclosure, Text, Flex, Divider, Spacer, Tooltip } from '@chakra-ui/react';
 
 import { UploadModal, useAssetStore, useRoomStore, useUsersStore, useAbility } from '@sage3/frontend';
-
 import { FileEntry } from '@sage3/shared/types';
-
 import { Files } from './Files';
 
 type AssetsMenuProps = {

@@ -7,29 +7,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip, IconButton, Text, ButtonGroup } from '@chakra-ui/react';
+import { Box, useColorModeValue, Tooltip } from '@chakra-ui/react';
 
-import {
-  MdDelete,
-  MdLock,
-  MdLockOpen,
-  MdFitScreen,
-  MdAdd,
-  MdRemove,
-  MdRestore,
-  MdOutlineResetTv,
-  MdImage,
-  MdOutlineStickyNote2,
-  MdMovie,
-  MdWindow,
-  MdChat,
-} from 'react-icons/md';
-import { BsFiletypePdf } from 'react-icons/bs';
 import { FaPython } from 'react-icons/fa';
+import { BsFiletypePdf } from 'react-icons/bs';
+import { MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat, } from 'react-icons/md';
 
-import { useAbility, useThrottleScale, useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
-import { Presence, User } from '@sage3/shared/types';
+import { useThrottleScale, useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 
 // Icons for the minimap
 const appIcons = {
@@ -47,27 +32,27 @@ export function NavigationMenu() {
   // App Store
   const apps = useThrottleApps(250);
   // UI Store
+  // const boardLocked = useUIStore((state) => state.boardLocked);
+  // const lockBoard = useUIStore((state) => state.lockBoard);
+  // const zoomIn = useUIStore((state) => state.zoomIn);
+  // const zoomOut = useUIStore((state) => state.zoomOut);
+  // const resetZoom = useUIStore((state) => state.resetZoom);
+  // const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const boardLocked = useUIStore((state) => state.boardLocked);
-  const lockBoard = useUIStore((state) => state.lockBoard);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const zoomIn = useUIStore((state) => state.zoomIn);
-  const zoomOut = useUIStore((state) => state.zoomOut);
   const setScale = useUIStore((state) => state.setScale);
-  const resetZoom = useUIStore((state) => state.resetZoom);
-  const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
   const userViewport = useUIStore((state) => state.viewport);
 
   // Scale
   const scale = useThrottleScale(250);
-  const formattedScale = `${Math.floor(scale * 100)}%`;
+  // const formattedScale = `${Math.floor(scale * 100)}%`;
 
   // User viewport
   const { user } = useUser();
 
   // Abilities
-  const canOrganize = useAbility('update', 'apps');
-  const canDelete = useAbility('delete', 'apps');
+  // const canOrganize = useAbility('update', 'apps');
+  // const canDelete = useAbility('delete', 'apps');
 
   // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');

@@ -8,13 +8,13 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { IconButton } from '@chakra-ui/react';
+import { MdClose } from 'react-icons/md';
 
 import { useUIStore } from '../../../stores';
+import { useHotkeys } from '../../../hooks';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
-import { MdClose } from 'react-icons/md';
-import { useHotkeys } from '../../../hooks';
 
 /**
  * Convert a touch position to a mouse position

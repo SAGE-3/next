@@ -32,11 +32,11 @@ import {
 } from '@chakra-ui/react';
 
 import { getExtension } from '@sage3/shared';
+import { FileEntry } from '@sage3/shared/types';
 import { AppSchema } from '@sage3/applications/schema';
 import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile, useThrottleScale } from '@sage3/frontend';
 
 import { RowFile } from './RowFile';
-import { FileEntry } from '@sage3/shared/types';
 
 export interface FilesProps {
   files: FileEntry[];

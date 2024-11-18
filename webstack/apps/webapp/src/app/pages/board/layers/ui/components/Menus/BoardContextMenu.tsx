@@ -6,20 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect } from 'react';
 import { Box, useColorModeValue, Flex, IconButton, Tooltip } from '@chakra-ui/react';
 
+import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { FaExpandArrowsAlt } from 'react-icons/fa';
+import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
+
+import { SAGEColors } from '@sage3/shared';
 import { useUser, useHexColor, useUIStore } from '@sage3/frontend';
 
-import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
-import { HiChip, HiPuzzle } from 'react-icons/hi';
-
 import { ContextButton } from './ContextButton';
-import { ApplicationsMenu, AssetsMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
-import { SAGEColors } from '@sage3/shared';
 import { ScreenshareMenu } from '../ScreenshareMenu';
 import { Interactionbar } from '../Interactionbar';
-import { FaExpandArrowsAlt } from 'react-icons/fa';
-import { useEffect } from 'react';
+import { ApplicationsMenu, AssetsMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
 
 type BoardContextProps = {
   roomId: string;
@@ -34,11 +34,11 @@ export function BoardContextMenu(props: BoardContextProps) {
   // User information
   const { user } = useUser();
   const userColor = user ? user.data.color : 'teal';
-  const userColorHex = useHexColor(userColor);
+  // const userColorHex = useHexColor(userColor);
 
   // A semi transparent gray blur background
-  const background = useColorModeValue('gray.200', 'gray.600');
-  const backgroundHex = useHexColor(background);
+  // const background = useColorModeValue('gray.200', 'gray.600');
+  // const backgroundHex = useHexColor(background);
 
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);

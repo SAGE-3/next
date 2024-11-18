@@ -11,23 +11,20 @@ import * as Simplify from 'simplify-js';
 
 // Yjs Imports
 import * as Y from 'yjs';
-// import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
 import {
   YjsRoomConnection,
-  // YjsRooms,
   useAbility,
   useAnnotationStore,
   useHotkeys,
-  // useHotkeys,
-  // useKeyPress,
   useThrottleScale,
   useUIStore,
   useUser,
   useUserSettings,
   useYjs,
 } from '@sage3/frontend';
+
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
 
@@ -359,7 +356,7 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerUp={handlePointerUp}
         onTouchMove={handleTouchMove}
         {...dragProps}
-        // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
           {/* Lines */}

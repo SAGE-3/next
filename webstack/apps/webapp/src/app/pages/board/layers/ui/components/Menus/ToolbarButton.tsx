@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { ReactNode, JSXElementConstructor, ReactElement } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -18,9 +19,6 @@ import {
   PopoverCloseButton,
 } from '@chakra-ui/react';
 
-import { JSXElementConstructor, ReactElement, useState } from 'react';
-
-import { ReactNode } from 'react';
 import { SAGEColors } from '@sage3/shared';
 import { useHexColor } from '@sage3/frontend';
 
@@ -45,8 +43,8 @@ export function ToolbarButton(props: ToolbarButtonProps) {
   return (
     <Popover
       offset={props.offset ? props.offset : undefined}
-      onOpen={props.stayActive ? () => {} : onOpen}
-      onClose={props.stayActive ? () => {} : onClose}
+      onOpen={props.stayActive ? () => { } : onOpen}
+      onClose={props.stayActive ? () => { } : onClose}
       isOpen={isOpen}
     >
       <Tooltip label={props.tooltip} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>

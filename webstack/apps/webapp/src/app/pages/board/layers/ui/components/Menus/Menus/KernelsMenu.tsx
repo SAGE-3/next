@@ -7,15 +7,13 @@
  */
 
 // React
+import { useEffect, useState } from 'react';
 import { Tooltip, Box, Text, useToast, Flex, IconButton, Divider, useDisclosure, Button, Spacer, HStack } from '@chakra-ui/react';
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
 import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
-
-// App imports
-import { useEffect, useState } from 'react';
 
 // Props to the Kernels Panel component
 export interface KernelsMenuProps {

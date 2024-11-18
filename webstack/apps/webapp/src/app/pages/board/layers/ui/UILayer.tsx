@@ -20,6 +20,9 @@ import {
   Text,
   Button,
 } from '@chakra-ui/react';
+
+import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { IoSparklesSharp } from 'react-icons/io5';
 import { MdAdd, MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye, MdScreenShare } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
@@ -49,6 +52,7 @@ import {
   useUser,
   useThrottleScale,
 } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
 
 import {
   BoardContextMenu,
@@ -69,9 +73,6 @@ import {
   UsersMenu,
   AssetsMenu,
 } from './components';
-import { HiChip, HiPuzzle } from 'react-icons/hi';
-import { IoSparklesSharp } from 'react-icons/io5';
-import { SAGEColors } from '@sage3/shared';
 
 type UILayerProps = {
   boardId: string;

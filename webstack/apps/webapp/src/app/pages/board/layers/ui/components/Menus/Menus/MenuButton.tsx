@@ -10,7 +10,7 @@ import { CSSProperties } from 'react';
 import { Button, useColorModeValue, Box } from '@chakra-ui/react';
 
 // Font sizes
-const bigFont = 18;
+// const bigFont = 18;
 const smallFont = 14;
 
 // Add a title to the chakra button props
