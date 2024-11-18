@@ -15,8 +15,8 @@ export type VariableProps = {
   high: number;
   low: number;
   unit: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   stationSTIDName: string;
   color: string;
 };

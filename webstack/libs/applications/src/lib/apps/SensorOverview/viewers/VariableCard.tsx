@@ -12,6 +12,7 @@ import { Box, Spinner, Text, Divider, useColorMode } from '@chakra-ui/react';
 import { AppState } from '@sage3/applications/schema';
 import variableUnits from '../data/variableUnits';
 import { VariableProps } from '../types/types';
+import { getSingleMeasurement } from '../router';
 
 // Calculate the average of all the numbers
 const calculateMean = (values: number[]) => {
@@ -58,78 +59,82 @@ export default function VariableCard(
   const [variablesToDisplay, setVariablesToDisplay] = useState<VariableProps[]>([]);
   const [secondaryValuesToDisplay, setSecondaryValuesToDisplay] = useState<any>();
   let previousStationName: string | null = null;
-
   useEffect(() => {
     const values: VariableProps[] = [];
     let secondaryValues = [];
     if (s.widget.yAxisNames.length === 0 && props.generateAllVariables === false) return;
-    for (let i = 0; i < props.stationMetadata.length; i++) {
-      props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
-      props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
-      props.stationMetadata[i].OBSERVATIONS['longitude'] = [props.stationMetadata[i].LONGITUDE];
-      // props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
-      props.stationMetadata[i].OBSERVATIONS['current temperature'] = [
-        props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'][props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'].length - 1],
-      ];
-    }
+    // for (let i = 0; i < props.stationMetadata.length; i++) {
+    //   props.stationMetadata[i].OBSERVATIONS['elevation'] = [props.stationMetadata[i].ELEVATION];
+    //   props.stationMetadata[i].OBSERVATIONS['latitude'] = [props.stationMetadata[i].LATITUDE];
+    //   props.stationMetadata[i].OBSERVATIONS['longitude'] = [props.stationMetadata[i].LONGITUDE];
+    //   // props.stationMetadata[i].OBSERVATIONS['name'] = [props.stationMetadata[i].NAME];
+    //   props.stationMetadata[i].OBSERVATIONS['current temperature'] = [
+    //     props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'][props.stationMetadata[i].OBSERVATIONS['air_temp_set_1'].length - 1],
+    //   ];
+    // }
+    const fetchData = async () => {
+      const sensorValues = getSingleMeasurement(props.stationNames, s.widget.yAxisNames[0]);
+    };
 
     for (let i = 0; i < props.stationMetadata.length; i++) {
       // Check here if generating all the variable names for a station
-      if (props.generateAllVariables) {
-        s.widget.yAxisNames = Object.getOwnPropertyNames(props.stationMetadata[i].OBSERVATIONS);
-      }
+
       for (let j = 0; j < s.widget.yAxisNames.length; j++) {
-        const sensorValues = props.stationMetadata[i].OBSERVATIONS[s.widget.yAxisNames[j]];
-        if (sensorValues) {
-          let unit = '';
-          let color = '#ffffff';
+        const sensorValues = [];
+        let stationName = '';
+        let unit = '';
+        let color = '#ffffff';
+        const variableName = props.stationMetadata[i].variable;
+        if (variableName == s.widget.yAxisNames[j]) {
+          stationName = props.stationMetadata[i]['station_name'];
+          sensorValues.push(props.stationMetadata[i].value);
           for (let i = 0; i < variableUnits.length; i++) {
             if (s.widget.yAxisNames[j].includes(variableUnits[i].variable)) {
               unit = variableUnits[i].unit;
-
               color = variableUnits[i].color;
             }
           }
-          if (sensorValues.length !== 0) {
-            values.push({
-              variableName: s.widget.yAxisNames[j],
-              stationName: props.stationMetadata[i].NAME,
-              value: sensorValues[sensorValues.length - 1],
-              average: calculateMean(sensorValues),
-              stdDev: calculateStdDev(sensorValues),
-              high: Math.max(...sensorValues),
-              low: Math.min(...sensorValues),
-              unit: unit,
-              stationSTIDName: props.stationMetadata[i].STID,
-              startDate: props.stationMetadata[i].OBSERVATIONS['date_time'][0],
-              endDate: props.stationMetadata[i].OBSERVATIONS['date_time'][props.stationMetadata[i].OBSERVATIONS['date_time'].length - 1],
-
-              color: color,
-            });
-          } else {
-            values.push({
-              variableName: s.widget.yAxisNames[j],
-              stationName: props.stationMetadata[i].NAME,
-              value: 0,
-              average: 0,
-              stdDev: 0,
-              high: 0,
-              low: 0,
-              unit: unit,
-              stationSTIDName: props.stationMetadata[i].STID,
-              startDate: props.startDate,
-              endDate: '2022-04-25T19:55:00Z',
-
-              color: color,
-            });
-          }
-
-          // Air Temperature has Celius and Fahrenheit to display as "secondary"
-          if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
-            secondaryValues = celsiusToFahrenheit(sensorValues);
-            setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
-          }
+          values.push({
+            variableName: s.widget.yAxisNames[j],
+            stationName: stationName,
+            value: sensorValues[sensorValues.length - 1],
+            average: calculateMean(sensorValues),
+            stdDev: calculateStdDev(sensorValues),
+            high: Math.max(...sensorValues),
+            low: Math.min(...sensorValues),
+            unit: unit,
+            stationSTIDName: props.stationMetadata[i].STID,
+            color: color,
+          });
         }
+
+        // if (sensorValues) {
+        // let unit = '';
+        // let color = '#ffffff';
+
+        //   if (sensorValues.length !== 0) {
+
+        //   } else {
+        //     values.push({
+        //       variableName: s.widget.yAxisNames[j],
+        //       stationName: stationName,
+        //       value: 0,
+        //       average: 0,
+        //       stdDev: 0,
+        //       high: 0,
+        //       low: 0,
+        //       unit: unit,
+        //       stationSTIDName: props.stationMetadata[i].STID,
+        //       color: color,
+        //     });
+        //   }
+
+        //   // Air Temperature has Celius and Fahrenheit to display as "secondary"
+        //   if (s.widget.yAxisNames[0] === 'air_temp_set_1') {
+        //     secondaryValues = celsiusToFahrenheit(sensorValues);
+        //     setSecondaryValuesToDisplay(secondaryValues[secondaryValues.length - 1]);
+        //   }
+        // }
       }
     }
     setVariablesToDisplay(values);
@@ -220,9 +225,7 @@ export default function VariableCard(
                     low: 12,
                     unit: 'unit',
                     color: '#fff321',
-                    startDate: props.startDate,
                     stationSTIDName: 'HI012',
-                    endDate: '2022-04-25T19:55:00Z',
                   }
             }
           />

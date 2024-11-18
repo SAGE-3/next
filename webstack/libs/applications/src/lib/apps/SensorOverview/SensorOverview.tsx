@@ -36,6 +36,9 @@ import {
 
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-icons/md';
 import { RangeDatepicker } from 'chakra-dayzed-datepicker';
+import { stationList } from './data/stationList';
+import { variableList } from './data/variableList';
+import { getDBMeasurements } from './router';
 
 // Sage Imports
 import { useAppStore } from '@sage3/frontend';
@@ -52,6 +55,7 @@ import StationMetadata from './viewers/StationMetadata';
 import FriendlyVariableCard from './viewers/FriendlyVariableCard';
 import StatisticCard from './viewers/StatisticCard';
 import MapViewer from './viewers/MapViewer';
+import SingleValue from './viewers/SingleValue';
 import { checkAvailableVisualizations } from './utils';
 import MapGL from './MapGL';
 
@@ -92,7 +96,7 @@ const convertToStringFormat = (date: string) => {
   }
 };
 
-const resolveTimePeriod = (timePeriod: string) => {
+const resolveTimePeriod = (timePeriod: string): Number => {
   switch (timePeriod) {
     case '24 hours':
       return 1440;
@@ -101,7 +105,7 @@ const resolveTimePeriod = (timePeriod: string) => {
     case '1 month':
       return 43200;
     default:
-      return 'Custom date range';
+      return 1;
   }
 };
 
@@ -174,7 +178,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     const interval = setInterval(
       () => {
-        if (s.widget.liveData) {
+        if (s.widget.liveData && s.widget.yAxisNames.length > 0) {
           fetchStationData();
           setLastUpdate(Date.now());
         }
@@ -191,37 +195,32 @@ function AppComponent(props: App): JSX.Element {
   const fetchStationData = async () => {
     setIsLoaded(false);
     let tmpStationMetadata: any = [];
-    let url = '';
-
-    if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
-        s.widget.timePeriod
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
-      //   s.widget.timePeriod
-      // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    } else if (!s.widget.liveData) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-        s.widget.startDate
-      }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    }
-
-    const response = await fetch(url);
-    const sensor = await response.json();
-
-    if (sensor) {
-      const sensorData = sensor['STATION'];
-      tmpStationMetadata = sensorData;
-      console.log(sensorData);
-    }
-    const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
-    availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
-    availableVariableNames.push('Elevation & Current Temperature');
-
-    updateState(props._id, { availableVariableNames: availableVariableNames });
-    setStationMetadata(tmpStationMetadata);
-
+    const sensor = await getDBMeasurements(s.stationNames, s.widget.yAxisNames[0], 1);
+    setStationMetadata(sensor);
     setIsLoaded(true);
+    console.log(sensor);
+    // if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
+    //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
+    //     s.widget.timePeriod
+    //   )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    // } else if (!s.widget.liveData) {
+    //   url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
+    //     s.widget.startDate
+    //   }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+    // }
+    // const response = await fetch(url);
+    // const sensor = await response.json();
+    // if (sensor) {
+    //   const sensorData = sensor['STATION'];
+    //   tmpStationMetadata = sensorData;
+    //   console.log(sensorData);
+    // }
+    // const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
+    // availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
+    // availableVariableNames.push('Elevation & Current Temperature');
+    // updateState(props._id, { availableVariableNames: availableVariableNames });
+    // setStationMetadata(tmpStationMetadata);
+    // setIsLoaded(true);
   };
 
   const handleLockAspectRatio = () => {
@@ -357,7 +356,15 @@ function AppComponent(props: App): JSX.Element {
           )}
         </Box>
 
-        {stationMetadata.length > 0 ? (
+        {s.widget.visualizationType === 'variableCard' ? (
+          <SingleValue
+            size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
+            state={props.data.state}
+            stationNames={s.stationNames}
+          />
+        ) : null}
+
+        {/* {stationMetadata.length > 0 ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
             <HStack>
               <Box>
@@ -457,7 +464,7 @@ function AppComponent(props: App): JSX.Element {
           >
             <Spinner thickness="5px" speed="1s" emptyColor="gray.200" />
           </Box>
-        )}
+        )} */}
       </Box>
     </AppWindow>
   );
@@ -658,7 +665,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <Button mr="1rem" size="xs" onClick={onOpen}>
         Select Stations
       </Button>
-      <Modal size="xl" isOpen={isOpen} onClose={onClose}>
+      <Modal size="xl" isOpen={false} onClose={onClose}>
         <ModalOverlay />
         <ModalContent maxH="60rem" maxW="60rem">
           <ModalHeader>Station Selection</ModalHeader>
@@ -726,22 +733,20 @@ function ToolbarComponent(props: App): JSX.Element {
                   })}
                   {!isLoaded
                     ? null
-                    : stationMetadata.map((station: any, index: number) => {
-                        const isSelected = s.stationNames.includes(station.STID);
+                    : stationList.map((station: any, index: number) => {
+                        const isSelected = s.stationNames.includes(station.id);
                         return (
                           <tr key={index}>
                             <td style={{ textAlign: 'center', width: '10px' }}>
                               <Checkbox
                                 colorScheme="teal"
                                 isChecked={isSelected}
-                                onChange={(e) => handleChangeSelectedStation(e, station.STID)}
+                                onChange={(e) => handleChangeSelectedStation(e, station.id)}
                               />
                             </td>
-                            <td>{station.NAME}</td>
-                            <td>{station.COUNTY}</td>
-                            <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
+                            <td style={{ textAlign: 'right' }}>{station.elevation}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.latitude).toFixed(1)}</td>
+                            <td style={{ textAlign: 'right' }}>{Number(station.longitude).toFixed(1)}</td>
                             {/* <td>variable</td> */}
                           </tr>
                         );

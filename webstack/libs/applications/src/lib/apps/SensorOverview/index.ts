@@ -8,6 +8,7 @@
 
 import { z } from 'zod';
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
+import { variableList } from './data/variableList';
 
 export type Baselayer = z.infer<typeof Baselayer>;
 
@@ -31,7 +32,6 @@ const widget = {
 export const schema = z.object({
   sensorData: z.any(),
   stationNames: z.string().array(),
-  listOfStationNames: z.string(),
   widget: z.any(),
   location: z.array(z.number(), z.number()),
   zoom: z.number(),
@@ -47,8 +47,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sensorData: {},
-  stationNames: ['016HI', '012HI', '014HI'],
-  listOfStationNames: '016HI',
+  stationNames: ['0133', '0134', '0214'],
   location: [-157.816, 20.9], //lnglat
   zoom: 6,
   baseLayer: 'OpenStreetMap',
@@ -56,7 +55,7 @@ export const init: Partial<state> = {
   pitch: 0,
   overlay: true,
   widget: widget,
-  availableVariableNames: [],
+  availableVariableNames: variableList.map((value) => value.standard_name),
   stationScale: 5,
 };
 
