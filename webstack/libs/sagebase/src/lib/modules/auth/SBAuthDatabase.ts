@@ -46,12 +46,12 @@ class SBAuthDatabase {
     for (const key of guestKeys) {
       await this._redisClient.del(key);
     }
-    console.log('SBAuth > Deleted all guest accounts. Count:', guestKeys.length);
+    console.log('SBAuth> Deleted all guest accounts. Count:', guestKeys.length);
     const spectatorKeys = await this._redisClient.keys(`${this._prefix}:spectator*`);
     for (const key of spectatorKeys) {
       await this._redisClient.del(key);
     }
-    console.log('SBAuth > Deleted all spectator accounts. Count:', spectatorKeys.length);
+    console.log('SBAuth> Deleted all spectator accounts. Count:', spectatorKeys.length);
   }
 
   /**
@@ -155,7 +155,7 @@ class SBAuthDatabase {
       const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
       const docs = response.documents;
       if (docs.length > 1) {
-        console.log('SBAuth Error > Found Mulitple Auths with the same email');
+        console.log('SBAuth> Error Found Multiple Auths with the same email');
         console.log(docs);
         return undefined;
       } else if (docs.length == 0) {
@@ -167,18 +167,18 @@ class SBAuthDatabase {
         if (provider && providerId) {
           const result = await this.deleteAuth(provider, providerId);
           if (result) {
-            console.log('SBAuth > Auth Deleted', provider, providerId);
+            console.log('SBAuth> Auth Deleted', provider, providerId);
             return docs[0].value as SBAuthSchema;
           } else {
             return undefined;
           }
         } else {
-          console.log('SBAuth Error > Auth not found');
+          console.log('SBAuth> Error Auth not found');
           return undefined;
         }
       }
     } catch (error) {
-      console.log('SAGEBase SBAuthDatabase error> ', error);
+      console.log('SAGEBase> SBAuthDatabase error', error);
       return undefined;
     }
   }
