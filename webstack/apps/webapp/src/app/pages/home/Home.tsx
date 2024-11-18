@@ -47,8 +47,9 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
+import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdFolder, MdDashboard } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
+import { PiStackPlusFill } from 'react-icons/pi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
@@ -77,14 +78,12 @@ import {
   isElectron,
   useUserSettings,
   useAssetStore,
-  apiUrls,
   isUUIDv4,
 } from '@sage3/frontend';
 
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
-import { PiStackPlusFill } from 'react-icons/pi';
 
 /**
  * Home page for SAGE3
@@ -1324,7 +1323,7 @@ export function HomePage() {
               <Tabs colorScheme="teal">
                 <TabList>
                   <Tab>
-                    <Icon as={MdBorderAll} mr="1"></Icon>Boards
+                    <Icon as={MdDashboard} mr="1"></Icon>Boards
                   </Tab>
                   <Tab>
                     <Icon as={MdPeople} mr="1"></Icon>Members

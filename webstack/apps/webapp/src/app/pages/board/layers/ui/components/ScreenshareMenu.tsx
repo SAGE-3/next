@@ -8,13 +8,13 @@
 
 // React and Chakra Imports
 import { useEffect, useState } from 'react';
-import { Badge, Button, Menu, MenuButton, MenuGroup, MenuItem, MenuList, Text, Tooltip } from '@chakra-ui/react';
-import { MdPerson, MdPlayArrow, MdStop } from 'react-icons/md';
+import { Box, Button, Divider, Text, useColorModeValue } from '@chakra-ui/react';
+import { MdPerson } from 'react-icons/md';
 
 // SAGE3 Imports
-import { initialValues } from '@sage3/applications/initialValues';
 import { App } from '@sage3/applications/schema';
-import { useAppStore, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { initialValues } from '@sage3/applications/initialValues';
+import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Props for the ScreensharesMenu component
 interface ScreensharesMenuProps {
@@ -31,6 +31,7 @@ interface ScreensharesMenuProps {
 export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Stores (Users, Apps, UI)
   const { user, accessId } = useUser();
+  const uid = user?._id;
   const users = useUsersStore((state) => state.users);
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
@@ -42,6 +43,10 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Local State
   const [screenshares, setScreenshares] = useState<App[]>([]);
   const [yourScreenshare, setYourScreenshare] = useState<App | null>(null);
+
+  // Color
+  const bgHoverColor = useColorModeValue('gray.100', 'gray.600');
+  const bgHoverHexColor = useHexColor(bgHoverColor);
 
   // Use effect that tracks the lenght of the apps array and updates the screenshares state
   useEffect(() => {
@@ -66,7 +71,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   };
 
   // Start your screenshare
-  const startScreenshare = () => {
+  const startYourScreenshare = () => {
     if (!user) return;
     const width = 1280;
     const height = 720;
@@ -89,59 +94,58 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     });
   };
 
+  // Handle starting and stopping your screenshare
+  const handleStartStop = () => {
+    if (yourScreenshare) {
+      stopYourScreenshare();
+    } else {
+      startYourScreenshare();
+    }
+  };
+
   return (
-    <Menu>
-      <Tooltip label="List of current screenshares" aria-label="Screenshares" placement="top" hasArrow={true} openDelay={400}>
-        <MenuButton
-          as={Button} size="sm"
-          maxWidth="150px"
-          variant={'solid'}
-          colorScheme='gray'
-          sx={{
-            _dark: {
-              bg: 'gray.600', // 'inherit' didnt seem to work
-            },
-          }}
-        >
-          Screenshares
-          <Badge ml="1" colorScheme={screenshares.length > 0 ? user!.data.color : 'gray'}>
-            {screenshares.length}
-          </Badge>
-        </MenuButton>
-      </Tooltip>
-      <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={'100%'} p="2px" m="0">
-        <MenuGroup title="Screenshares" cursor="default" p="0" m="1">
-          {screenshares.map((app) => {
-            const userName = users.find((u) => u._id === app._createdBy)?.data.name;
-            const yours = app._createdBy === user?._id;
-            return yours ? (
-              <MenuItem py="1px" m="0" icon={<MdPerson size="24px" />} justifyContent="right"
-                key={app._id} onClick={() => handleGoToApp(app)} >
-                {userName} (Yours)
-              </MenuItem>
-            ) : (
-              <MenuItem py="1px" m="0" icon={<MdPerson size="24px" />} justifyContent="right"
-                key={app._id} onClick={() => handleGoToApp(app)} >
-                {userName}
-              </MenuItem>
-            );
-          })}
-          {screenshares.length === 0 && (
-            <Text ml="18px" cursor="default">
-              No Screenshares
-            </Text>
-          )}
-        </MenuGroup>
-        <MenuGroup title="Actions" cursor="default" m="1">
-          {/* py="1px" m="0"> */}
-          <MenuItem onClick={() => startScreenshare()} icon={<MdPlayArrow fontSize="24px" />} isDisabled={yourScreenshare !== null} py="1px" m="0">
-            Start Sharing
-          </MenuItem>
-          <MenuItem onClick={() => stopYourScreenshare()} icon={<MdStop fontSize="24px" />} isDisabled={yourScreenshare == null} py="1px" m="0">
-            Stop Sharing
-          </MenuItem>
-        </MenuGroup>
-      </MenuList>
-    </Menu >
+    <Box maxHeight="60vh" overflowY={'auto'} overflowX="clip" width="200px">
+      {screenshares.map((app) => {
+        const user = users.find((u) => u._id === app._createdBy);
+        if (!user) return null;
+        const userName = user.data.name;
+        const color = user.data.color;
+        const yours = app._createdBy === uid;
+        return (
+          <Box
+            display="flex"
+            justifyContent="left"
+            gap="2"
+            my="1"
+            key={app._id}
+            onClick={() => handleGoToApp(app)}
+            _hover={{ cursor: 'pointer', bg: bgHoverHexColor }}
+            transition="background-color 0.4s"
+            p="1"
+            borderRadius="md"
+          >
+            <MdPerson size="24px" />
+            {userName} {yours ? '(Yours)' : ''}
+          </Box>
+        );
+      })}
+      {screenshares.length === 0 && (
+        <Text ml="6px" cursor="default">
+          No Screenshares
+        </Text>
+      )}
+      <Divider my="2" />
+      <Button
+        onClick={() => handleStartStop()}
+        py="1px"
+        m="0"
+        width="100%"
+        size="sm"
+        height="30px"
+        colorScheme={yourScreenshare ? 'red' : 'green'}
+      >
+        {yourScreenshare == null ? 'Start' : 'Stop'} Sharing
+      </Button>
+    </Box>
   );
 }

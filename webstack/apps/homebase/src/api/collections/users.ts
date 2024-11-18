@@ -278,7 +278,7 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
     const spectatorsIds = spectators ? spectators.map((spectator) => spectator._id) : [];
     const allIds = [...guestsIds, ...spectatorsIds];
     await this.deleteBatch(allIds);
-    console.log('SBUser > All Temporary Accounts Deleted. Count:', allIds.length);
+    console.log('SBUser> All Temporary Accounts Deleted. Count:', allIds.length);
   }
 }
 

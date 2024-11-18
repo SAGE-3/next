@@ -7,10 +7,11 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { useColorModeValue } from '@chakra-ui/react';
+import { IconButton } from '@chakra-ui/react';
+import { MdClose } from 'react-icons/md';
 
 import { useUIStore } from '../../../stores';
-import { useUserSettings } from '../../../providers';
+import { useHotkeys } from '../../../hooks';
 import ContextMenuHandler from './ContextMenuHandler';
 
 import './style.scss';
@@ -27,23 +28,13 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
     x: evt.targetTouches ? evt.targetTouches[0].pageX : evt.clientX,
     y: evt.targetTouches ? evt.targetTouches[0].pageY : evt.clientY,
   };
-
   while (parent.offsetParent) {
     position.x -= parent.offsetLeft - parent.scrollLeft;
     position.y -= parent.offsetTop - parent.scrollTop;
     parent = parent.offsetParent;
   }
-
   return position;
 }
-
-/**
- * Check if the device is a touch device using CSS media queries
- * @returns boolean
- */
-// function isTouchDevice(): boolean {
-//   return window.matchMedia('(any-pointer: coarse)').matches;
-// }
 
 /**
  * ContextMenu component
@@ -51,8 +42,6 @@ function getOffsetPosition(evt: any, parent: any): { x: number; y: number } {
  * @returns JSX.Element
  */
 export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) => {
-  const { settings } = useUserSettings();
-  const primaryActionMode = settings.primaryActionMode;
   // Cursor position
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   // Hide menu
@@ -60,19 +49,25 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
+  const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
+  const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
-  const handleClick = useCallback(() => {
-    // timeout to allow button click to fire before hiding menu
-    if (showContextMenu) {
-      setTimeout(() => setShowContextMenu(false));
+  useEffect(() => {
+    if (contextMenuPos !== contextMenuPosition) {
+      setContextMenuPos(contextMenuPosition);
     }
-  }, [showContextMenu]);
+  }, [contextMenuPosition, contextMenuPos]);
+
+  useHotkeys('esc', () => {
+    setShowContextMenu(false);
+    setContextMenuOpen(false);
+  });
 
   const handleContextMenu = useCallback(
     (event: any) => {
       event.preventDefault();
       // Check if right div ID is clicked
-      if (props.divIds.includes(event.target.id) && primaryActionMode !== 'pen') {
+      if (props.divIds.includes(event.target.id)) {
         // Not Great but works for now
         const el = document.getElementById('this-context')?.getBoundingClientRect();
         const cmw = el ? el.width : 400;
@@ -84,10 +79,11 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
         // local position plus board position
         setContextMenuPos({ x, y });
         setContextMenuPosition({ x, y });
+        setContextMenuOpen(true);
         setTimeout(() => setShowContextMenu(true));
       }
     },
-    [setContextMenuPos, props.divIds, setContextMenuPosition]
+    [props.divIds, setContextMenuPosition, setContextMenuOpen]
   );
 
   useEffect(() => {
@@ -108,28 +104,39 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
         }
       }
     });
-    document.addEventListener('click', handleClick);
+    // document.addEventListener('click', handleClick);
     document.addEventListener('contextmenu', handleContextMenu);
 
     return () => {
-      document.removeEventListener('click', handleClick);
+      // document.removeEventListener('click', handleClick);
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, [showContextMenu, handleClick, handleContextMenu, setContextMenuPosition]);
-
-  const bgColor = useColorModeValue('#EDF2F7', '#4A5568');
+  }, [showContextMenu, handleContextMenu, setContextMenuPosition, props.divIds]);
 
   return showContextMenu ? (
     <div
       className="contextmenu"
       id="this-context"
       style={{
-        top: contextMenuPos.y + 2,
-        left: contextMenuPos.x + 2,
-        // backgroundColor: bgColor,
+        top: contextMenuPos.y,
+        left: contextMenuPos.x,
       }}
     >
       {props.children}
+      <IconButton
+        aria-label={'close-context'}
+        icon={<MdClose />}
+        size="sm"
+        borderRadius={'100%'}
+        position="absolute"
+        transform={'translate(-50%, -50%)'}
+        onClick={() => {
+          setShowContextMenu(false);
+          setContextMenuOpen(false);
+        }}
+        variant={'solid'}
+        colorScheme="red"
+      ></IconButton>
     </div>
   ) : null;
 };
