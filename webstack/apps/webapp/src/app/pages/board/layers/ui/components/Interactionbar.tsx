@@ -37,10 +37,11 @@ import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 import { SAGEColors } from '@sage3/shared';
 import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal } from '@sage3/frontend';
 
-export function Interactionbar() {
+export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
+  const isContextMenuOpen = props.isContextMenuOpen ? props.isContextMenuOpen : false;
 
   // User
   const { user } = useUser();
@@ -51,7 +52,6 @@ export function Interactionbar() {
 
   // Divider Color
   const dividerColorMode = useColorModeValue('gray.400', 'gray.200');
-  const dividerColor = useHexColor(dividerColorMode);
 
   // Annotation Settings
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
@@ -109,17 +109,22 @@ export function Interactionbar() {
   };
 
   useEffect(() => {
-    if (primaryActionMode === 'pen') {
+    if (isContextMenuOpen) {
       eraserOnClose();
-      annotationsOnOpen();
-    } else if (primaryActionMode === 'eraser') {
       annotationsOnClose();
-      eraserOnOpen();
     } else {
-      eraserOnClose();
-      annotationsOnClose();
+      if (primaryActionMode === 'pen') {
+        eraserOnClose();
+        annotationsOnOpen();
+      } else if (primaryActionMode === 'eraser') {
+        annotationsOnClose();
+        eraserOnOpen();
+      } else {
+        eraserOnClose();
+        annotationsOnClose();
+      }
     }
-  }, [primaryActionMode]);
+  }, [isContextMenuOpen, primaryActionMode]);
 
   return (
     <>
@@ -156,7 +161,7 @@ export function Interactionbar() {
               },
             }}
             icon={<LiaHandPaperSolid />}
-            fontSize="xl"
+            fontSize="lg"
             aria-label={'input-type'}
             onClick={() => {
               eraserOnClose();
@@ -181,12 +186,16 @@ export function Interactionbar() {
                   },
                 }}
                 icon={<BiPencil />}
-                fontSize="xl"
+                fontSize="lg"
                 aria-label={'input-type'}
                 onClick={() => {
                   eraserOnClose();
                   if (annotationsIsOpen) annotationsOnClose();
-                  else annotationsOnOpen();
+                  else {
+                    if (!isContextMenuOpen) {
+                      annotationsOnOpen();
+                    }
+                  }
                   setPrimaryActionMode('pen');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
@@ -268,12 +277,16 @@ export function Interactionbar() {
                   },
                 }}
                 icon={<BsEraserFill />}
-                fontSize="xl"
+                fontSize="lg"
                 aria-label={'input-type'}
                 onClick={() => {
                   annotationsOnClose();
                   if (eraserIsOpen) eraserOnClose();
-                  else eraserOnOpen();
+                  else {
+                    if (!isContextMenuOpen) {
+                      eraserOnOpen();
+                    }
+                  }
                   setPrimaryActionMode('eraser');
                   setSelectedApp('');
                   setSelectedAppsIds([]);

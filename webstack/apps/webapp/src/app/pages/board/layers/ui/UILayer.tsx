@@ -6,8 +6,24 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Box, useDisclosure, Modal, useToast, useColorModeValue, HStack, IconButton, Tooltip } from '@chakra-ui/react';
-import { MdRemoveRedEye } from 'react-icons/md';
+import {
+  Box,
+  useDisclosure,
+  Modal,
+  useToast,
+  useColorModeValue,
+  HStack,
+  IconButton,
+  Tooltip,
+  Divider,
+  ButtonGroup,
+  Text,
+  Button,
+} from '@chakra-ui/react';
+
+import { HiChip, HiPuzzle } from 'react-icons/hi';
+import { IoSparklesSharp } from 'react-icons/io5';
+import { MdAdd, MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye, MdScreenShare } from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -34,7 +50,9 @@ import {
   useHexColor,
   EditVisibilityModal,
   useUser,
+  useThrottleScale,
 } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
 
 import {
   BoardContextMenu,
@@ -42,20 +60,19 @@ import {
   AppToolbar,
   Twilio,
   LassoToolbar,
-  Controller,
-  AssetsPanel,
-  ApplicationsPanel,
-  NavigationPanel,
-  UsersPanel,
-  AnnotationsPanel,
-  PluginsPanel,
   PresenceFollow,
   BoardTitle,
-  KernelsPanel,
   TagsDisplay,
   IntelligencePane,
   Interactionbar,
   ScreenshareMenu,
+  ToolbarButton,
+  ApplicationsMenu,
+  NavigationMenu,
+  KernelsMenu,
+  PluginsMenu,
+  UsersMenu,
+  AssetsMenu,
 } from './components';
 
 type UILayerProps = {
@@ -79,6 +96,12 @@ export function UILayer(props: UILayerProps) {
 
   // User
   const { user } = useUser();
+  const usersColor = user ? user.data.color : 'teal';
+  const usersColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
+  const userColorHex = useHexColor(user ? usersColorMode : 'teal');
+
+  // Scale
+  const scale = useThrottleScale(250);
 
   // UI Store
   const fitApps = useUIStore((state) => state.fitApps);
@@ -88,6 +111,10 @@ export function UILayer(props: UILayerProps) {
   const savedSelectedAppsIds = useUIStore((state) => state.savedSelectedAppsIds);
   const clearSavedSelectedAppsIds = useUIStore((state) => state.clearSavedSelectedAppsIds);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const resetZoom = useUIStore((state) => state.resetZoom);
+  const zoomIn = useUIStore((state) => state.zoomInDelta);
+  const zoomOut = useUIStore((state) => state.zoomOutDelta);
+  const isContextMenuOpen = useUIStore((state) => state.contextMenuOpen);
 
   // Asset store
   const assets = useAssetStore((state) => state.assets);
@@ -103,11 +130,8 @@ export function UILayer(props: UILayerProps) {
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
 
-  // Logo
-  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
-
   // Navigation
-  const { toHome } = useRouteNav();
+  const { toHome, back } = useRouteNav();
 
   // Toast
   const toast = useToast();
@@ -256,12 +280,22 @@ export function UILayer(props: UILayerProps) {
     return false;
   });
 
+  // Redirect the user back to the homepage when clicking the arrow button
+  function handleHomeClick() {
+    if (room) {
+      // Back to the homepage with the room id
+      toHome(room._id);
+    } else {
+      back();
+    }
+  }
+
   return (
     <>
       {/* Presence settings modal dialog */}
       <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
 
-      {/* The Corner Bottom Right */}
+      {/* The bottom right corner showing the visibility icon when the user decides to hide the UI */}
       <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
         {!showUI && (
           <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
@@ -297,9 +331,67 @@ export function UILayer(props: UILayerProps) {
 
       </HStack>
 
+      {/* Map Buttons Bottom Right */}
+      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
+        <ButtonGroup isAttached size="xs" gap="0" mr="1">
+          <Tooltip label={'Zoom In'}>
+            <IconButton
+              size="sm"
+              icon={<MdAdd />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomIn(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}></IconButton>
+          </Tooltip>
+          <Tooltip label={'Reset Zoom'}>
+            <IconButton
+              size="sm"
+              aria-label={'input-type'}
+              px="1"
+              onClick={resetZoom}
+              minWidth="45px"
+              maxWidth="45px"
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
+            ></IconButton>
+          </Tooltip>
+          <Tooltip label={'Zoom Out'}>
+            <IconButton
+              size="sm"
+              icon={<MdRemove />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomOut(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
+          </Tooltip>
+        </ButtonGroup>
+        <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
+          <NavigationMenu />
+        </ToolbarButton>
+      </Box>
+
       {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'}>
-        <Box display="flex" gap="2">
+      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
+        <Box display="flex" gap="1">
+          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
+              <MdArrowBack />
+            </Button>
+          </Tooltip>
+          <Divider orientation="vertical" mx="1" />
           <MainButton
             buttonStyle="solid"
             backToRoom={() => toHome(props.roomId)}
@@ -311,8 +403,31 @@ export function UILayer(props: UILayerProps) {
             }}
             config={config}
           />
-          <Interactionbar />
-          <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          <Divider orientation="vertical" mx="1" />
+          <Interactionbar isContextMenuOpen={isContextMenuOpen} />
+          <Divider orientation="vertical" mx="1" />
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+            <UsersMenu boardId={props.boardId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
+            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
+            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <Divider orientation="vertical" mx="1" />{' '}
+          <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
+            <Text>Hello Mr. Anderson.</Text>
+          </ToolbarButton>
         </Box>
       </Box>
 
@@ -326,33 +441,28 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
+      {/* App Toolbar to show when the user selects an app */}
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
+      {/* Right click context menu */}
       <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
-        <BoardContextMenu boardId={props.boardId} roomId={props.roomId} clearBoard={clearOnOpen} showAllApps={showAllApps} />
+        <BoardContextMenu
+          boardId={props.boardId}
+          roomId={props.roomId}
+          clearBoard={clearOnOpen}
+          showAllApps={showAllApps}
+          downloadRoomAssets={downloadRoomAssets}
+          backHomeClick={handleHomeClick}
+        />
       </ContextMenu>
-
-      <ApplicationsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <UsersPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <NavigationPanel clearBoard={clearOnOpen} fitApps={showAllApps} boardId={props.boardId} />
-
-      <AssetsPanel boardId={props.boardId} roomId={props.roomId} downloadRoomAssets={downloadRoomAssets} />
-
-      <PluginsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <KernelsPanel boardId={props.boardId} roomId={props.roomId} />
-
-      <AnnotationsPanel />
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>
         <ClearBoardModal onClick={onClearConfirm} onClose={clearOnClose} isOpen={clearIsOpen}></ClearBoardModal>
       </Modal>
 
+      {/* Twilio connection component */}
       <Twilio roomName={props.boardId} connect={twilioConnect} />
-      <Controller boardId={props.boardId} roomId={props.roomId} plugins={config.features ? config.features.plugins : false} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}

@@ -61,9 +61,9 @@ import {
   useConfigStore,
 } from '@sage3/frontend';
 import { getExtension, humanFileSize } from '@sage3/shared';
+import { FileEntry } from '@sage3/shared/types';
 
 import './menu.scss';
-import { FileEntry } from '@sage3/shared/types';
 
 export type RowFileProps = {
   file: FileEntry;

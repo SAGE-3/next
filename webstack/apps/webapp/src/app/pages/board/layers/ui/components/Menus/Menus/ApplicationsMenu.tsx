@@ -9,12 +9,12 @@
 import { useEffect, useState } from 'react';
 import { useColorModeValue, VStack } from '@chakra-ui/react';
 
-import { useAppStore, useUIStore, useUser, GetConfiguration, useThrottleScale } from '@sage3/frontend';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
+import { useAppStore, useUIStore, useUser, GetConfiguration, useThrottleScale } from '@sage3/frontend';
 
-import { ButtonPanel, Panel } from '../Panel';
+import { MenuButton } from './MenuButton';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -27,7 +27,7 @@ export interface ApplicationProps {
   roomId: string;
 }
 
-export function ApplicationsPanel(props: ApplicationProps) {
+export function ApplicationsMenu(props: ApplicationProps) {
   const [appsList, setAppsList] = useState<string[]>([]);
 
   // App Store
@@ -103,34 +103,31 @@ export function ApplicationsPanel(props: ApplicationProps) {
   };
 
   return (
-    <Panel title="Applications" name="applications" width={300} showClose={false}>
-      <VStack
-        maxH={300}
-        w={'100%'}
-        m={0}
-        pr={2}
-        spacing={1}
-        overflow="auto"
-        css={{
-          '&::-webkit-scrollbar': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            width: '6px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: gripColor,
-            borderRadius: 'md',
-          },
-        }}
-      >
-        {appsList
-          // create a button for each application
-          .map((appName) => (
-            <ButtonPanel key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
-          ))}
-      </VStack>
-      {/* </Box> */}
-    </Panel>
+    <VStack
+      maxH={300}
+      w={'100%'}
+      m={0}
+      pr={2}
+      spacing={1}
+      overflow="auto"
+      css={{
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: gripColor,
+          borderRadius: 'md',
+        },
+      }}
+    >
+      {appsList
+        // create a button for each application
+        .map((appName) => (
+          <MenuButton key={appName} title={appName} draggable={true} onClick={() => newApplication(appName as AppName)} />
+        ))}
+    </VStack>
   );
 }
