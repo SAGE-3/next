@@ -421,12 +421,12 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}
-      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
+      <Box position="absolute" left="0" top="1" display={showUI ? 'initial' : 'none'}>
         <BoardTitle room={room} board={board} config={config} />
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1">
+      <Box position="absolute" right="0" top="1">
         <Clock isBoard={true} />
       </Box>
 

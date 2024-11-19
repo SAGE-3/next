@@ -76,7 +76,7 @@ export function LoginPage() {
       </Box>
 
       {/* Server Name */}
-      <Box left="2" top="5" position="absolute">
+      <Box left="2" top="1" position="absolute">
         <Text
           fontSize="xl"
           flex="1 1 0px"
