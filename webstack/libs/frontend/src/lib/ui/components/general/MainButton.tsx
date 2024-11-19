@@ -24,14 +24,10 @@ import {
   IconButton,
   Tooltip,
   MenuGroup,
-  Icon,
   Text,
 } from '@chakra-ui/react';
 
 import {
-  MdOutlineGridOn,
-  MdAccountCircle,
-  MdPerson,
   MdArrowBack,
   MdInvertColors,
   MdLink,
@@ -42,7 +38,6 @@ import {
   MdArrowForward,
   MdLock,
   MdLockOpen,
-  MdPeople,
   MdBugReport,
   MdSearch,
   MdRemoveRedEye,
@@ -155,8 +150,6 @@ export function MainButton(props: MainButtonProps) {
     }
   }, [user, props.config]);
 
-  const isWall = user?.data.userType === 'wall';
-
   const toast = useToast();
   // Copy a sharable link to the user's os clipboard
   const handleCopyLink = (e: React.MouseEvent, board?: Board) => {
@@ -231,9 +224,8 @@ export function MainButton(props: MainButtonProps) {
               maxWidth="150px"
               variant={props.buttonStyle ? props.buttonStyle : 'outline'}
               colorScheme={user?.data.color ? user.data.color : 'white'}
-              leftIcon={isWall ? <MdOutlineGridOn fontSize="18px" /> : <MdAccountCircle fontSize="18px" />}
             >
-              <Box textOverflow={'ellipsis'} overflow={'hidden'}>
+              <Box textOverflow={'ellipsis'} overflow={'hidden'} fontSize="sm" alignContent={'center'}>
                 {name}
               </Box>
             </MenuButton>
@@ -253,8 +245,7 @@ export function MainButton(props: MainButtonProps) {
             _hover={{ cursor: 'pointer' }}
           >
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-              <Box display="flex">
-                <Icon as={MdPerson} fontSize="24px" mx="2" />
+              <Box display="flex" pl="4">
                 <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
                   {name}
                 </Text>
@@ -289,17 +280,6 @@ export function MainButton(props: MainButtonProps) {
                 Feedback
               </MenuItem>
             )}
-          </MenuGroup>
-
-          <MenuDivider />
-
-          <MenuGroup title="Settings" m="1">
-            <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
-              {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
-            </MenuItem>
-            <MenuItem onClick={handlePresenceSettingsOpen} icon={<MdRemoveRedEye fontSize="24px" />} justifyContent="right" py="1px" m="0">
-              Visibility
-            </MenuItem>
           </MenuGroup>
 
           <MenuDivider />
@@ -389,19 +369,23 @@ export function MainButton(props: MainButtonProps) {
             </>
           )}
 
-          <MenuGroup title="Account" m="1">
+          <MenuGroup title="Settings" m="1">
             <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />} py="1px" m="0">
               Account
             </MenuItem>
+
+            <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
+              {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
+            </MenuItem>
+            <MenuItem onClick={handlePresenceSettingsOpen} icon={<MdRemoveRedEye fontSize="24px" />} justifyContent="right" py="1px" m="0">
+              Visibility
+            </MenuItem>
+
             {(isAdmin || !isProduction) && (
               <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
                 Admin Page
               </MenuItem>
             )}
-
-            <MenuItem onClick={userSearchOnOpen} icon={<MdPeople fontSize="24px" />} py="1px" m="0">
-              Users
-            </MenuItem>
 
             <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />} py="1px" m="0">
               Logout

@@ -12,7 +12,7 @@
   "description": "Directory containing an NX setup, for the 'homebase' web server and the React web applications such as 'CollaborationSpace' (the main collaboration canvas) but might contain also other web apps during development (admin, monitoring, login, ...). Could also contain other API services if needed.",
   "scripts": {
     "nx": "nx",
-    "start": "nx serve",
+    "start": "nx serve --inspect=false",
     "build": "nx build",
     "buildall": "nx run-many --target=build --configuration=development --parallel=4 --verbose",
     "buildallprod": "nx run-many --target=build --configuration=production --parallel=4 --verbose",

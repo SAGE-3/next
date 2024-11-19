@@ -11,22 +11,20 @@ import * as Simplify from 'simplify-js';
 
 // Yjs Imports
 import * as Y from 'yjs';
-// import { WebsocketProvider } from 'y-websocket';
 
 // SAGE Imports
 import {
   YjsRoomConnection,
-  // YjsRooms,
   useAbility,
   useAnnotationStore,
-  // useHotkeys,
-  // useKeyPress,
+  useHotkeys,
   useThrottleScale,
   useUIStore,
   useUser,
   useUserSettings,
   useYjs,
 } from '@sage3/frontend';
+
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
 
@@ -319,6 +317,19 @@ export function Whiteboard(props: WhiteboardProps) {
     // If the line was deleted, update the board lines
     if (delComplete) updateBoardLines();
   };
+
+  // Undo last line Windows
+  useHotkeys('alt+z', () => {
+    if (primaryActionMode === 'pen') {
+      setUndoLastMaker(true);
+    }
+  });
+  // Undo last line Mac
+  useHotkeys('cmd+z', () => {
+    if (primaryActionMode === 'pen') {
+      setUndoLastMaker(true);
+    }
+  });
 
   return (
     <div

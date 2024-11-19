@@ -17,8 +17,8 @@ import { Position, Size } from '@sage3/shared/types';
 import { useAppStore } from './app';
 
 // Zoom limits, from 2% to 300%
-export const MinZoom = 0.02;
-export const MaxZoom = 3;
+export const MinZoom = 0.1;
+export const MaxZoom = 6;
 // When using mouse wheel, repeated events
 export const WheelStepZoom = 0.008;
 
@@ -88,6 +88,8 @@ interface UIState {
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
+  contextMenuOpen: boolean;
+  setContextMenuOpen: (open: boolean) => void;
 
   // RndSafety: to fix appWindows from disappearing
   rndSafeForAction: boolean;
@@ -157,6 +159,8 @@ export const useUIStore = create<UIState>()((set, get) => ({
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  contextMenuOpen: false,
+  setContextMenuOpen: (open: boolean) => set((state) => ({ ...state, contextMenuOpen: open })),
   viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
@@ -323,7 +327,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomInVal);
           return { ...state, boardPosition: pos, scale: zoomInVal };
         } else {
-          return { ...state, scale: zoomInVal };
+          // Zoom towards the center of the screen
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomInVal);
+          return { ...state, boardPosition: pos, scale: zoomInVal };
         }
       });
   },
@@ -338,7 +348,12 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomOutVal);
           return { ...state, boardPosition: pos, scale: zoomOutVal };
         } else {
-          return { ...state, scale: zoomOutVal };
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomOutVal);
+          return { ...state, boardPosition: pos, scale: zoomOutVal };
         }
       });
   },
