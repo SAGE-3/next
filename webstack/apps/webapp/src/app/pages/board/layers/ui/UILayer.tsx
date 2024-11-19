@@ -63,7 +63,7 @@ import {
   PresenceFollow,
   BoardTitle,
   TagsDisplay,
-  IntelligencePane,
+  IntelligenceMenu,
   Interactionbar,
   ScreenshareMenu,
   ToolbarButton,
@@ -325,10 +325,6 @@ export function UILayer(props: UILayerProps) {
             <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
           </Box>
         )} */}
-
-        {/* Intelligence Panel */}
-        <IntelligencePane isBoard={true} notificationCount={0} />
-
       </HStack>
 
       {/* Map Buttons Bottom Right */}
@@ -426,7 +422,7 @@ export function UILayer(props: UILayerProps) {
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
           <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
-            <Text>Hello Mr. Anderson.</Text>
+            {room && board && <IntelligenceMenu roomId={room?._id} boardId={board?._id} notificationCount={0} />}
           </ToolbarButton>
         </Box>
       </Box>

@@ -13,7 +13,6 @@ export * from './Twilio';
 export * from './PresenceFollow';
 export * from './BoardTitle';
 export * from './TagsDisplay';
-export * from './IntelligencePane';
 export * from './Interactionbar';
 export * from './InteractionbarShortcuts';
 export * from './ScreenshareMenu';
