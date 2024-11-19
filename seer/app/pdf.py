@@ -121,16 +121,17 @@ class PDFAgent:
         # Retrieve the PDF content
         # TODO: make cleaner
         # Define the loop to run getPDFFile in an executor for each asset
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
         
-        # Use run_in_executor for each asset ID to avoid blocking the event loop
-        pdfContents = [
-            {
-                "id": assetid,
-                "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
-            }
-            for assetid in qq.assetids
-        ]
+        # # Use run_in_executor for each asset ID to avoid blocking the event loop
+        # pdfContents = [
+        #     {
+        #         "id": assetid,
+        #         "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
+        #     }
+        #     for assetid in qq.assetids
+        # ]
+        pdfContents = [{"id": assetid, "content": getPDFFile(self.ps3, assetid)} for assetid in qq.assetids]
     
         
         self.logger.info(f"pdfs: {len(pdfContents)}")
@@ -159,11 +160,14 @@ class PDFAgent:
             # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
             # TODO: Check token length for context length limits on long documents
             # Convert pdfs to markdown
+            # pdfs_to_md = {
+            #   pdf["id"]: await loop.run_in_executor(
+            #     None, pymupdf4llm.to_markdown, pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
+            #   )
+            #   for pdf in pdfContents
+            # }
             pdfs_to_md = {
-              pdf["id"]: await loop.run_in_executor(
-                None, pymupdf4llm.to_markdown, pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
-              )
-              for pdf in pdfContents
+              pdf["id"]: pymupdf4llm.to_markdown(pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")) for pdf in pdfContents
             }
 
             self.logger.info(f"pdfs_to_md, {pdfs_to_md.keys()}")
