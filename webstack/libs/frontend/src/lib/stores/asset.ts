@@ -69,6 +69,7 @@ const AssetStore = create<AssetState>()((set, get) => {
           case 'CREATE': {
             const docs = message.doc as Asset[];
             set({ assets: [...get().assets, ...docs] });
+            console.log('AssetStore: CREATE #', docs.length, '- id', docs[0]._id);
             break;
           }
           case 'UPDATE': {

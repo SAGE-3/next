@@ -436,6 +436,15 @@ export function useFiles(): UseFiles {
           if (res) {
             batch.push(...res);
             xpos += res[0].size.width + 10;
+            console.log('Files> openApps> created app for asset', up);
+          } else {
+            toast({
+              title: 'Error',
+              description: 'Could not find asset ' + up,
+              status: 'error',
+              duration: 6000,
+              isClosable: true,
+            });
           }
         }
         createBatch(batch);
