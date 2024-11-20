@@ -77,7 +77,7 @@ export function IntelligenceMenu(props: IntelligenceProps) {
   }, [settings.aiModel, openai]);
 
   return (
-    <Box display="flex" flexDirection="column" minWidth={"450px"} maxWidth={"40vw"} height={"450px"}>
+    <Box display="flex" flexDirection="column" minWidth={"450px"} maxWidth={"40vw"} height={"250px"}>
       <Tabs style={{ width: '100%', height: '100%' }}>
 
         <TabList>
@@ -106,8 +106,8 @@ export function IntelligenceMenu(props: IntelligenceProps) {
                 </RadioGroup>
               </VStack>
 
-              <VStack p={1} pt={2} w="100%" align={"left"}>
-                <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise <small>(Not Yet Implemented)</small></Text>
+              <VStack p={1} pt={2} w="100%" align={"left"} hidden={true}>
+                <Text fontSize="lg" mb={1} fontWeight={"bold"}>Expertise level</Text>
                 <Flex>
                   <Text fontSize="md">Novice</Text>
                   <Spacer />
@@ -138,8 +138,8 @@ export function IntelligenceMenu(props: IntelligenceProps) {
                 </Slider>
               </VStack>
 
-              <VStack p={1} pt={6} w="100%" align={"left"}>
-                <Text fontSize="lg" mb={1} fontWeight={"bold"}>Granularity <small>(Not Yet Implemented)</small></Text>
+              <VStack p={1} pt={6} w="100%" align={"left"} hidden={true}>
+                <Text fontSize="lg" mb={1} fontWeight={"bold"}>Answer details</Text>
                 <Flex>
                   <Text fontSize="md">Snapshot</Text>
                   <Spacer />
@@ -187,7 +187,7 @@ export function IntelligenceMenu(props: IntelligenceProps) {
                     navigator.geolocation.getCurrentPosition(function (location) {
                       setLocation(location.coords.latitude + ',' + location.coords.longitude);
                     }, function (e) { console.log('Location> error', e); });
-                  }}> Get Location </Button>
+                  }}> Update </Button>
                 <Spacer />
                 <Text fontSize="md" mt={1}>Lat-Lng: {location}</Text>
               </HStack>
