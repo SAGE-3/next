@@ -9,11 +9,11 @@
 // React
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, HStack, Flex, Icon } from '@chakra-ui/react';
+import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, Flex, Icon } from '@chakra-ui/react';
 import { FiExternalLink } from 'react-icons/fi';
 
 // SAGE3
-import { isElectron, useHexColor } from '@sage3/frontend';
+import { isElectron, useHexColor, useRouteNav } from '@sage3/frontend';
 
 export function OpenDesktopPage() {
   // Navigation and routing
@@ -24,6 +24,8 @@ export function OpenDesktopPage() {
   // SAGE3 Image
   const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
   const [sage3url, setSage3Url] = useState<string>('');
+
+  const { toHome, toBoard } = useRouteNav();
 
   const openDesktopApp = () => {
     if (!boardId || !roomId) return;
@@ -42,11 +44,9 @@ export function OpenDesktopPage() {
     // Stop this page from openeing in the Electron Client
     if (isElectron()) {
       if (boardId && roomId) {
-        openDesktopApp();
+        toBoard(roomId, boardId);
       } else {
-        // Open to the home page
-        const link = `sage3://${window.location.host}/#/home/`;
-        window.open(link, '_self');
+        toHome();
       }
     }
   }, [roomId, boardId]);
