@@ -32,7 +32,6 @@ export class UploadConnector {
   private constructor() {
     const filesizeLimit = config.webserver?.uploadLimit ? parseFileSize(config.webserver.uploadLimit) : 1024 * 1024 * 1024 * 5;
     console.log('Upload> destination', config.public, 'limit', humanFileSize(filesizeLimit));
-    // const filesizeLimit = 1024 * 1024 * 1024 * 5;
 
     this.upload = multer({
       // use local storage

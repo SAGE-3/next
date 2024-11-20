@@ -573,8 +573,10 @@ export function useFiles(): UseFiles {
           setUploadInProgress(false);
         });
       if (response) {
-        // Save the list of uploaded files
-        setUploadSuccess(response.data.map((a: any) => a.id));
+        // Get the new asset IDs
+        const newids = response.data as string[];
+        // Refresh the asset store
+        await useAssetStore.getState().update();
         // Show a success message
         if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
@@ -585,6 +587,8 @@ export function useFiles(): UseFiles {
           });
         }
         setUploadInProgress(false);
+        // Finish the upload by updating with the new asset IDs
+        setUploadSuccess(newids);
       }
     }
   }
