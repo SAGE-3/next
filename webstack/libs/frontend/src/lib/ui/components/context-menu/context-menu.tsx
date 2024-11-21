@@ -88,7 +88,6 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
 
   useEffect(() => {
     const ctx = new ContextMenuHandler((type: string, event: any) => {
-      console.log(type);
       if (type === 'contextmenu') {
         const pos = getOffsetPosition(event, event.target);
         setContextMenuPos({ x: pos.x, y: pos.y });

@@ -1,27 +1,29 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
 #  University of Hawaii, University of Illinois Chicago, Virginia Tech
 #
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
+from typing import Optional, TypeVar
 from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
 from foresight.smartbits.smartbit import TrackedBaseModel
 from pydantic import Field, PrivateAttr
-from typing import Optional, TypeVar
 from urllib.request import urlopen
 from urllib.parse import urlparse
 from os.path import splitext
 import pandas as pd
 import numpy as np
+
 # import pyarrow as pa
 import pyarrow.csv as csv
 import time
 import math
+
 # import magic
 
-PandasDataFrame = TypeVar('pandas.core.frame.DataFrame')
+PandasDataFrame = TypeVar("pandas.core.frame.DataFrame")
 
 
 class DataTableState(TrackedBaseModel):
@@ -65,12 +67,14 @@ class DataTable(SmartBit):
         pageNumbers = []
         self.state.totalRows = self._modified_df.shape[0]
         while i <= math.ceil(self.state.totalRows / self.state.rowsPerPage):
-            pageNumbers.append(i);
+            pageNumbers.append(i)
             i += 1
         self.state.pageNumbers = pageNumbers
         self.state.indexOfLastRow = self.state.currentPage * self.state.rowsPerPage
         self.state.indexOfFirstRow = self.state.indexOfLastRow - self.state.rowsPerPage
-        self._current_rows = self._modified_df.iloc[self.state.indexOfFirstRow:self.state.indexOfLastRow]
+        self._current_rows = self._modified_df.iloc[
+            self.state.indexOfFirstRow : self.state.indexOfLastRow
+        ]
         print("_current_rows")
         print(self._current_rows)
         self.state.viewData = self._current_rows.to_dict("split")
@@ -124,24 +128,26 @@ class DataTable(SmartBit):
         # Leave magic in for retrieving file extensions of uploaded datasets, not API datasets
         # print(magic.from_file(response))
         # print(magic.from_file(response, mime=True))
-        valid_exts = ['csv', 'tsv', 'json', 'xlxs']
+        valid_exts = ["csv", "tsv", "json", "xlxs"]
         if extension in valid_exts:
-            if extension == 'csv':
+            if extension == "csv":
                 arrow_tbl = csv.read_csv(response)
                 self._modified_df = arrow_tbl.to_pandas()
                 # self._modified_df = pd.read_csv(response)
-            elif extension == 'tsv':
+            elif extension == "tsv":
                 self._modified_df = pd.read_table(response)
-            elif extension == 'json':
+            elif extension == "json":
                 self._modified_df = pd.read_json(response)
-            elif extension == 'xlxs':
+            elif extension == "xlxs":
                 self._modified_df = pd.read_excel(response)
         else:
             raise Exception("unsupported format")
 
         # self._modified_df = pd.read_json(response)
         # self._modified_df = pd.read_json(url)
-        if pd.Index(np.arange(0, len(self._modified_df))).equals(self._modified_df.index):
+        if pd.Index(np.arange(0, len(self._modified_df))).equals(
+            self._modified_df.index
+        ):
             pass
         else:
             self._modified_df.reset_index()
@@ -250,7 +256,9 @@ class DataTable(SmartBit):
         if filter_input == "":
             self.restore_table()
         else:
-            self._modified_df = self._modified_df[self._modified_df[col].str.lower().str.contains(filter_input.lower())]
+            self._modified_df = self._modified_df[
+                self._modified_df[col].str.lower().str.contains(filter_input.lower())
+            ]
         # if col.isnumeric():
         #     self._modified_df = self._modified_df.loc[self._modified_df[col] == int(filter_input)]
         # else:

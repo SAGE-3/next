@@ -6,17 +6,24 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from typing import List
+from pydantic import BaseModel
+from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
+class Box(BaseModel):
+    label: str
+    xmin: float
+    ymin: float
+    xmax: float
+    ymax: float
+
+
 class ImageViewerState(TrackedBaseModel):
-    # class Config:
-    #     arbitrary_types_allowed = True
-    boxes: dict
     assetid: str
     annotations: bool
-    executeInfo: ExecuteInfo
+    boxes: List[Box]
 
 
 class ImageViewer(SmartBit):
@@ -27,17 +34,6 @@ class ImageViewer(SmartBit):
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
         super(ImageViewer, self).__init__(**kwargs)
-
-    def set_bboxes(self, bboxes):
-        """
-        Sets bounding boxes from output produced by AI Pane
-        """
-        print("+++++++++++++++++")
-        print("running set_boxes")
-        self.state.boxes = bboxes
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
-        self.send_updates()
 
     def clean_up(self):
         pass

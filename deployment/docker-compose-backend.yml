@@ -9,6 +9,26 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+  chromadb:
+    image: "chromadb/chroma:0.5.16"
+    ports:
+      - "127.0.0.1:8100:8000"
+    volumes:
+      - ./configurations/chroma/data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+    command: "--workers 1 --proxy-headers --port 8000 --host 0.0.0.0 --timeout-keep-alive 30"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -20,8 +40,8 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
-  fastapi:
-    image: "ghcr.io/mahdi-b/sagekernelserver:latest"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:arm64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -53,7 +73,7 @@ services:
       - "8888:8888"
     environment:
       - ENVIRONMENT=development
-      - SAGE3_SERVER=host.docker.internal
+      - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
     depends_on:
       - "redis-server"

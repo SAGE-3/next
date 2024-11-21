@@ -158,7 +158,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+                state: { ...initialValues['Stickie'], text: pastedText, fontSize: 24, color: user.data.color || 'yellow' },
                 raised: true,
                 dragging: false,
                 pinned: false,

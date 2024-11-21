@@ -14,7 +14,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 import { KernelInfo, ExecOutput } from '@sage3/shared/types';
 
-import { FastAPI } from '../api';
+import { Kernels } from '../api';
 
 type KernelStoreState = {
   kernels: KernelInfo[];
@@ -37,59 +37,59 @@ type KernelStoreState = {
  */
 export const useKernelStore = create<KernelStoreState>()((set, get) => {
   // Heartbeat check for status of the API
-  const checkFastAPIStatus = async () => {
-    const online = await FastAPI.checkStatus();
+  const checkKernelsStatus = async () => {
+    const online = await Kernels.checkStatus();
     set({ apiStatus: online });
   };
 
   // Get Kernel Types
   const fetchKernelTypes = async () => {
-    const kernelTypes = await FastAPI.fetchKernelTypes();
+    const kernelTypes = await Kernels.fetchKernelTypes();
     set({ kernelTypes });
     return kernelTypes;
   };
 
   // Fetch kernels
   const fetchKernels = async () => {
-    const kernels = await FastAPI.fetchKernels();
+    const kernels = await Kernels.fetchKernels();
     set({ kernels });
     return kernels;
   };
 
   // Create a kernel
   const createKernel = async (kernelInfo: KernelInfo): Promise<boolean> => {
-    const response = await FastAPI.createKernel(kernelInfo);
+    const response = await Kernels.createKernel(kernelInfo);
     fetchKernels();
     return response;
   };
 
   // Delete a kernel
   const deleteKernel = async (kernelId: string): Promise<boolean> => {
-    const response = await FastAPI.deleteKernel(kernelId);
+    const response = await Kernels.deleteKernel(kernelId);
     fetchKernels();
     return response;
   };
 
   // Interrupt a kernel
   const interruptKernel = async (kernelId: string): Promise<boolean> => {
-    const response = await FastAPI.interruptKernel(kernelId);
+    const response = await Kernels.interruptKernel(kernelId);
     return response;
   };
 
   // Restart a kernel
   const restartKernel = async (kernelId: string): Promise<boolean> => {
-    const response = await FastAPI.restartKernel(kernelId);
+    const response = await Kernels.restartKernel(kernelId);
     return response;
   };
 
   // Execute code on a kernel
   const executeCode = async (code: string, kernelId: string, userId: string): Promise<{ ok: boolean; msg_id: string }> => {
-    const response = await FastAPI.executeCode(code, kernelId, userId);
+    const response = await Kernels.executeCode(code, kernelId, userId);
     return response;
   };
 
   const fetchResults = async (msgId: string): Promise<{ ok: boolean; execOutput: ExecOutput }> => {
-    const response = await FastAPI.fetchResults(msgId);
+    const response = await Kernels.fetchResults(msgId);
     return response;
   };
 
@@ -99,7 +99,7 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
 
   const keepChecking = () => {
     // 5 second interval
-    timerAPI = window.setInterval(checkFastAPIStatus, 5000);
+    timerAPI = window.setInterval(checkKernelsStatus, 5000);
 
     // 30 Second interval
     timerTypes = window.setInterval(fetchKernelTypes, 30000);
@@ -116,7 +116,7 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
   };
 
   // First checks
-  checkFastAPIStatus();
+  checkKernelsStatus();
   fetchKernelTypes();
   fetchKernels();
 

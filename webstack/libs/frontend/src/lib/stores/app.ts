@@ -238,7 +238,9 @@ const AppStore = create<Applications>()((set, get) => {
           // Deep Copy
           const state = structuredClone(app.data);
           state.position.x += xShift;
-
+          // Remember the source app
+          state.state.sources = [app._id];
+          // Add to the batch
           newApps.push(state);
         });
         get().createBatch(newApps);

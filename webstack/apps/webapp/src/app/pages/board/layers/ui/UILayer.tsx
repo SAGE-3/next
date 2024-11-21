@@ -63,6 +63,7 @@ import {
   PresenceFollow,
   BoardTitle,
   TagsDisplay,
+  IntelligenceMenu,
   Interactionbar,
   ScreenshareMenu,
   ToolbarButton,
@@ -317,6 +318,13 @@ export function UILayer(props: UILayerProps) {
             />
           </Tooltip>
         )}
+
+        {/* The Corner SAGE3 Image Bottom Right */}
+        {/* {showUI && (
+          <Box opacity={0.7} userSelect={'none'}>
+            <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
+          </Box>
+        )} */}
       </HStack>
 
       {/* Map Buttons Bottom Right */}
@@ -333,8 +341,7 @@ export function UILayer(props: UILayerProps) {
                 _dark: {
                   bg: 'gray.600', // 'inherit' didnt seem to work
                 },
-              }}
-            ></IconButton>
+              }}></IconButton>
           </Tooltip>
           <Tooltip label={'Reset Zoom'}>
             <IconButton
@@ -415,7 +422,7 @@ export function UILayer(props: UILayerProps) {
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
           <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
-            <Text>Hello Mr. Anderson.</Text>
+            {room && board && <IntelligenceMenu roomId={room?._id} boardId={board?._id} notificationCount={0} />}
           </ToolbarButton>
         </Box>
       </Box>
