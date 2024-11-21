@@ -110,7 +110,7 @@ const MessageStore = create<MessageState>()((set, get) => {
         switch (message.type) {
           case 'CREATE': {
             const docs = message.doc as Message[];
-            set({ messages: [...get().messages, ...docs] });
+            set({ messages: [...get().messages, ...docs], lastone: docs[0] });
             break;
           }
           case 'UPDATE': {
