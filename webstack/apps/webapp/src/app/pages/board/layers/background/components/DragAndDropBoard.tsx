@@ -215,7 +215,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
                 const batch: AppSchema[] = [];
                 let xpos = xdrop;
                 for (let i = 0; i < num; i++) {
-                  const res = await openAppForFile(fileIDs[i], fileTypes[i], xpos, ydrop, props.roomId, props.boardId);
+                  const res = await openAppForFile(fileIDs[i], xpos, ydrop, props.roomId, props.boardId);
                   if (res) {
                     batch.push(res);
                     xpos += res.size.width + 10;

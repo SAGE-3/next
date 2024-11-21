@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useEffect, useState, useCallback } from 'react';
-import { Flex, Progress, ToastId, useToast, Text } from '@chakra-ui/react';
+import { useRef, useEffect, useState } from 'react';
+import { ToastId, useToast } from '@chakra-ui/react';
 // Upload with axios and progress event
 import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 // Date manipulation (for filename)
@@ -38,7 +38,7 @@ import {
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
+import { Asset, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 import { apiUrls } from '../config';
 import { useUser } from '../providers';
@@ -80,18 +80,327 @@ export function setupApp(
   };
 }
 
+// Functions to export
 type UseFiles = {
   uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string) => void;
-  openAppForFile: (
-    fileID: string,
-    fileType: string,
-    xDrop: number,
-    yDrop: number,
-    roomId: string,
-    boardId: string
-  ) => Promise<AppSchema | null>;
+  openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string,) => Promise<AppSchema | null>;
   uploadInProgress: boolean;
 };
+
+
+/**
+ * Open an application for a given asset
+ *
+ * @param {Asset} a - The asset to open
+ * @param {number} xDrop - The x-coordinate where the file was dropped
+ * @param {number} yDrop - The y-coordinate where the file was dropped
+ * @param {string} roomId - The ID of the room
+ * @param {string} boardId - The ID of the board
+ * @returns {Promise<AppSchema | null>} - The schema of the created application or null
+ */
+async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
+  const w = 400;
+  const fileType = a.data.mimetype;
+  const fileID = a._id;
+  if (isGeoTiff(fileType)) {
+    return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+  } else if (isFileURL(fileType)) {
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    // Get the content of the file
+    const text = await response.text();
+    const lines = text.split('\n');
+    for (const line of lines) {
+      // look for a line starting with URL=
+      if (line.startsWith('URL')) {
+        const words = line.split('=');
+        // the URL
+        const goto = words[1].trim();
+        return setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto });
+      }
+    }
+    return null;
+  } else if (isCode(fileType)) {
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    // Get the content of the file
+    const text = await response.text();
+    // Get Language from mimetype
+    const lang = mimeToCode(a.data.mimetype);
+    // Create a note from the text
+    return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
+      { content: text, language: lang, filename: a.data.originalfilename });
+  } else if (isGIF(fileType)) {
+    const extras = a.data.derived as ExtraImageType;
+    const imw = w;
+    const imh = w / (extras.aspectRatio || 1);
+    return setupApp(
+      a.data.originalfilename,
+      'ImageViewer',
+      xDrop,
+      yDrop,
+      roomId,
+      boardId,
+      { w: imw, h: imh },
+      { assetid: fileID }
+    );
+  } else if (isImage(fileType)) {
+    // Check if it is a GeoTiff in disguise
+    if (isTiff(fileType)) {
+      // Look for the metadata, maybe it's a GeoTiff
+      if (a.data.metadata) {
+        const localurl = apiUrls.assets.getAssetById(a.data.metadata);
+        // Get the content of the file
+        const response = await fetch(localurl, {
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+        });
+        const metadata = await response.json();
+        // Check if it is a GeoTiff
+        if (metadata && metadata.GeoTiffVersion) {
+          return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+        }
+      }
+    }
+    // Look for the file in the asset store
+    const extras = a.data.derived as ExtraImageType;
+    return setupApp(
+      a.data.originalfilename,
+      'ImageViewer',
+      xDrop,
+      yDrop,
+      roomId,
+      boardId,
+      { w: w, h: w / (extras.aspectRatio || 1) },
+      { assetid: fileID }
+    );
+  } else if (isVideo(fileType)) {
+    // Look for the file in the asset store
+    const extras = a.data.derived as ExtraImageType;
+    let vw = 800;
+    let vh = 450;
+    const ar = extras.aspectRatio || 1;
+    if (ar > 1) {
+      vh = Math.round(vw / ar);
+    } else {
+      vw = Math.round(vh * ar);
+    }
+    return setupApp('', 'VideoViewer', xDrop, yDrop, roomId, boardId, { w: vw, h: vh }, { assetid: fileID });
+  } else if (isCSV(fileType)) {
+    return setupApp('', 'CSVViewer', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+  } else if (isDZI(fileType)) {
+    return setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+  } else if (isGLTF(fileType)) {
+    return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
+  } else if (isGeoJSON(fileType)) {
+    return setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+  } else if (isMD(fileType)) {
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    const text = await response.text();
+    // Create a note from the text
+    return setupApp('Stickie', 'Stickie', xDrop, yDrop, roomId, boardId, { w: 400, h: 420 }, { text: text });
+  } else if (isPython(fileType)) {
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'text/plain',
+        Accept: 'text/plain',
+      },
+    });
+    const text = await response.text();
+    // Create a note from the text
+    return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
+  } else if (isPythonNotebook(fileType)) {
+    console.log('Jupyter> drag notebook')
+    // Look for the file in the asset store
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+    const json = await response.json();
+    // Create a notebook file in Jupyter with the content of the file
+    const conf = useConfigStore.getState().config;
+    // const conf = await GetConfiguration();
+    if (conf.token) {
+      // Create a new notebook
+      const base = `http://${window.location.hostname}:8888`;
+      // Talk to the jupyter server API
+      const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
+      const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
+      // Create a new notebook
+      const response = await fetch(j_url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Token ' + conf.token,
+        },
+        body: JSON.stringify(payload),
+      });
+      const res = await response.json();
+      console.log('Jupyter> notebook created', res);
+      // Create a note from the json
+      return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
+    }
+  } else if (isJSON(fileType)) {
+    const localurl = apiUrls.assets.getAssetById(a.data.file);
+    // Get the content of the file
+    const response = await fetch(localurl, {
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    });
+    // Parse the JSON specification
+    const spec = await response.json();
+    // Create a visualization from the JSON spec using VegaLite
+    return setupApp('', 'VegaLite', xDrop, yDrop, roomId, boardId, { w: 500, h: 600 }, { spec: JSON.stringify(spec, null, 2) });
+  } else if (isPDF(fileType)) {
+    // Get PDF metadata from derived data
+    const pages = a.data.derived as ExtraPDFType;
+    let aspectRatio = 1;
+    if (pages) {
+      // Get first page dimensions
+      const page = pages[0];
+      // Calculate aspect ratio from first page
+      aspectRatio = page[0].width / page[0].height;
+    }
+    // Create PDF viewer app with proper dimensions
+    return setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID });
+  }
+  return null;
+}
+
+/**
+ * Opens a saved session file and recreates all apps and assets
+ *
+ * @param a Asset containing the session file
+ * @param xDrop X coordinate where to place the session
+ * @param yDrop Y coordinate where to place the session  
+ * @param roomId Current room ID
+ * @param boardId Current board ID
+ * @returns Array of app schemas or null
+ */
+async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema[] | null> {
+  const localurl = apiUrls.assets.getAssetById(a.data.file);
+  // Get the session file content
+  const response = await fetch(localurl, {
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+  // Parse the session data
+  const session = await response.json();
+  const apps = session.apps as App[];
+  const newassets = session.assets as { id: string; url: string; filename: string }[];
+  // Find top-left corner of all apps
+  let xmin = useUIStore.getState().boardWidth;
+  let ymin = useUIStore.getState().boardHeight;
+  for (const app of apps) {
+    const pos = app.data.position;
+    if (pos.x < xmin) xmin = pos.x;
+    if (pos.y < ymin) ymin = pos.y;
+  }
+  const batch: AppSchema[] = [];
+  // Rebuild each app from the session
+  for (const app of apps) {
+    // Handle apps with associated assets 
+    if (app.data.state.assetid) {
+      // Find the asset in the session
+      const asset = newassets.find((a) => a.id === app.data.state.assetid);
+      // download the old asset
+      if (asset) {
+        // Get the content of the file
+        const response = await fetch(asset.url);
+        const blob = await response.blob();
+        // Create a form to upload the file
+        const fd = new FormData();
+        const codefile = new File([new Blob([blob])], asset.filename);
+        fd.append('files', codefile);
+        // Add fields to the upload form
+        fd.append('room', roomId);
+        // Upload with a POST request
+        const up = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd });
+        const result = await up.json();
+        const newasset = result[0];
+        // Rebuild the app with the new asset
+        app.data.state.assetid = newasset.id;
+      }
+    }
+    // Create an application
+    const newapp = {
+      title: app.data.title,
+      roomId: roomId,
+      boardId: boardId,
+      position: {
+        x: app.data.position.x - xmin + xDrop,
+        y: app.data.position.y - ymin + yDrop,
+        z: 0,
+      },
+      size: app.data.size,
+      rotation: app.data.rotation,
+      type: app.data.type,
+      state: app.data.state,
+      raised: false,
+      dragging: false,
+      pinned: false,
+    };
+    batch.push(newapp);
+  }
+  return batch;
+}
+
+/**
+ * Create an application after a file is uploaded
+ *
+ * @param {string} assetid - The ID of the uploaded asset
+ * @param {number} xpos - The x-coordinate where the file was dropped
+ * @param {number} ypos - The y-coordinate where the file was dropped
+ * @param {string} roomId - The ID of the room
+ * @param {string} boardId - The ID of the board
+ * @returns {Promise<AppSchema[] | null>} - The schema of the created application(s) or null
+ */
+async function createApplicationAfterUpload(assetid: string, xpos: number, ypos: number, roomId: string, boardId: string): Promise<AppSchema[] | null> {
+  const assets = useAssetStore.getState().assets;
+  for (const a of assets) {
+    if (a._id === assetid) {
+      if (isSessionFile(a.data.mimetype)) {
+        const sess = await openSession(a, xpos, ypos, roomId, boardId);
+        return sess;
+      } else {
+        const res = await openApplication(a, xpos, ypos, roomId, boardId);
+        if (res) return [res]; else return null;
+      }
+    }
+  }
+  return null;
+}
 
 /**
  * Hook to oberve window resize event
@@ -106,9 +415,6 @@ export function useFiles(): UseFiles {
   const { user } = useUser();
   // Assets store
   const assets = useAssetStore((state) => state.assets);
-  // App store
-  const createBatch = useAppStore((state) => state.createBatch);
-  const create = useAppStore((state) => state.create);
   // Upload success
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
   // Save the drop position
@@ -116,350 +422,51 @@ export function useFiles(): UseFiles {
   // Upload in progress
   const [uploadInProgress, setUploadInProgress] = useState(false);
 
-  const openAppForFile = useCallback(
-    async (fileID: string, fileType: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> => {
-      if (!user) return null;
-      const w = 400;
-      if (isGeoTiff(fileType)) {
-        for (const a of assets) {
-          if (a._id === fileID) {
-            return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
-          }
-        }
-      } else if (isFileURL(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'text/plain',
-                Accept: 'text/plain',
-              },
-            });
-            // Get the content of the file
-            const text = await response.text();
-            const lines = text.split('\n');
-            for (const line of lines) {
-              // look for a line starting with URL=
-              if (line.startsWith('URL')) {
-                const words = line.split('=');
-                // the URL
-                const goto = words[1].trim();
-                return setupApp(goto, 'WebpageLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: w, h: w }, { url: goto });
-              }
-            }
-            return null;
-          }
-        }
-      } else if (isCode(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'text/plain',
-                Accept: 'text/plain',
-              },
-            });
-            // Get the content of the file
-            const text = await response.text();
-            // Get Language from mimetype
-            const lang = mimeToCode(a.data.mimetype);
-            // Create a note from the text
-            return setupApp(
-              'CodeEditor',
-              'CodeEditor',
-              xDrop,
-              yDrop,
-              roomId,
-              boardId,
-              { w: 850, h: 400 },
-              { content: text, language: lang, filename: a.data.originalfilename }
-            );
-          }
-        }
-      } else if (isGIF(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const extras = a.data.derived as ExtraImageType;
-            const imw = w;
-            const imh = w / (extras.aspectRatio || 1);
-            return setupApp(a.data.originalfilename, 'ImageViewer', xDrop, yDrop, roomId, boardId, { w: imw, h: imh }, { assetid: fileID });
-          }
-        }
-      } else if (isImage(fileType)) {
-        // Check if it is a GeoTiff in disguise
-        if (isTiff(fileType)) {
-          for (const a of assets) {
-            if (a._id === fileID) {
-              // Look for the metadata, maybe it's a GeoTiff
-              if (a.data.metadata) {
-                const localurl = apiUrls.assets.getAssetById(a.data.metadata);
-                // Get the content of the file
-                const response = await fetch(localurl, {
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                  },
-                });
-                const metadata = await response.json();
-                // Check if it is a GeoTiff
-                if (metadata && metadata.GeoTiffVersion) {
-                  return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
-                }
-              }
-            }
-          }
-        }
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const extras = a.data.derived as ExtraImageType;
-            return setupApp(
-              a.data.originalfilename,
-              'ImageViewer',
-              xDrop,
-              yDrop,
-              roomId,
-              boardId,
-              { w: w, h: w / (extras.aspectRatio || 1) },
-              { assetid: fileID }
-            );
-          }
-        }
-      } else if (isVideo(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const extras = a.data.derived as ExtraImageType;
-            let vw = 800;
-            let vh = 450;
-            const ar = extras.aspectRatio || 1;
-            if (ar > 1) {
-              vh = Math.round(vw / ar);
-            } else {
-              vw = Math.round(vh * ar);
-            }
-            return setupApp('', 'VideoViewer', xDrop, yDrop, roomId, boardId, { w: vw, h: vh }, { assetid: fileID });
-          }
-        }
-      } else if (isCSV(fileType)) {
-        return setupApp('', 'CSVViewer', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
-      } else if (isDZI(fileType)) {
-        return setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
-      } else if (isGLTF(fileType)) {
-        return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
-      } else if (isGeoJSON(fileType)) {
-        return setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
-      } else if (isMD(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'text/plain',
-                Accept: 'text/plain',
-              },
-            });
-            const text = await response.text();
-            // Create a note from the text
-            return setupApp(user.data.name, 'Stickie', xDrop, yDrop, roomId, boardId, { w: 400, h: 420 }, { text: text });
-          }
-        }
-      } else if (isPython(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'text/plain',
-                Accept: 'text/plain',
-              },
-            });
-            const text = await response.text();
-            // Create a note from the text
-            return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
-          }
-        }
-      } else if (isPythonNotebook(fileType)) {
-        console.log('Jupyter> drag notebook');
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-            });
-            const json = await response.json();
-            // Create a notebook file in Jupyter with the content of the file
-            const conf = useConfigStore.getState().config;
-            // const conf = await GetConfiguration();
-            if (conf.token) {
-              // Create a new notebook
-              const base = `http://${window.location.hostname}:8888`;
-              // Talk to the jupyter server API
-              const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
-              const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-              // Create a new notebook
-              const response = await fetch(j_url, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: 'Token ' + conf.token,
-                },
-                body: JSON.stringify(payload),
-              });
-              const res = await response.json();
-              console.log('Jupyter> notebook created', res);
-              // Create a note from the json
-              return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
-            }
-          }
-        }
-      } else if (isJSON(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const localurl = apiUrls.assets.getAssetById(a.data.file);
-            // Get the content of the file
-            const response = await fetch(localurl, {
-              headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-              },
-            });
-            const spec = await response.json();
-            // Create a vis from the json spec
-            return setupApp('', 'VegaLite', xDrop, yDrop, roomId, boardId, { w: 500, h: 600 }, { spec: JSON.stringify(spec, null, 2) });
-          }
-        }
-      } else if (isPDF(fileType)) {
-        // Look for the file in the asset store
-        for (const a of assets) {
-          if (a._id === fileID) {
-            const pages = a.data.derived as ExtraPDFType;
-            let aspectRatio = 1;
-            if (pages) {
-              // First page
-              const page = pages[0];
-              // First image of the page
-              aspectRatio = page[0].width / page[0].height;
-            }
-            return setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID });
-          }
-        }
-      }
-      return null;
-    },
-    [assets, user]
-  );
-
-  const openApps = useCallback(
-    async (uploads: string[]) => {
-      const batch: AppSchema[] = [];
-      let xpos = configDrop.xDrop;
-      for await (const up of uploads) {
-        for (const a of assets) {
-          if (a._id === up) {
-            if (isSessionFile(a.data.mimetype)) {
-              const localurl = apiUrls.assets.getAssetById(a.data.file);
-              // Get the content of the file
-              const response = await fetch(localurl, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  Accept: 'application/json',
-                },
-              });
-              const session = await response.json();
-              const apps = session.apps as App[];
-              const newassets = session.assets as { id: string; url: string; filename: string }[];
-              let xmin = useUIStore.getState().boardWidth;
-              let ymin = useUIStore.getState().boardHeight;
-              for (const app of apps) {
-                const pos = app.data.position;
-                if (pos.x < xmin) xmin = pos.x;
-                if (pos.y < ymin) ymin = pos.y;
-              }
-              for (const app of apps) {
-                // Select only the usefull values to rebuild the app
-                if (app.data.state.assetid) {
-                  // Find the asset in the session
-                  const asset = newassets.find((a) => a.id === app.data.state.assetid);
-                  // download the old asset
-                  if (asset) {
-                    // Get the content of the file
-                    const response = await fetch(asset.url);
-                    const blob = await response.blob();
-                    // Create a form to upload the file
-                    const fd = new FormData();
-                    const codefile = new File([new Blob([blob])], asset.filename);
-                    fd.append('files', codefile);
-                    // Add fields to the upload form
-                    fd.append('room', configDrop.roomId);
-                    // Upload with a POST request
-                    const up = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd });
-                    const result = await up.json();
-                    const newasset = result[0];
-                    // Rebuild the app with the new asset
-                    app.data.state.assetid = newasset.id;
-                  }
-                }
-                // Create an application
-                const newapp = {
-                  title: app.data.title,
-                  roomId: configDrop.roomId,
-                  boardId: configDrop.boardId,
-                  position: {
-                    x: app.data.position.x - xmin + configDrop.xDrop,
-                    y: app.data.position.y - ymin + configDrop.yDrop,
-                    z: 0,
-                  },
-                  size: app.data.size,
-                  rotation: app.data.rotation,
-                  type: app.data.type,
-                  state: app.data.state,
-                  raised: false,
-                  dragging: false,
-                  pinned: false,
-                };
-                create(newapp);
-              }
-            } else {
-              const res = await openAppForFile(a._id, a.data.mimetype, xpos, configDrop.yDrop, configDrop.roomId, configDrop.boardId);
-              if (res) {
-                batch.push(res);
-                xpos += res.size.width + 10;
-              }
-            }
-          }
-        }
-      }
-      createBatch(batch);
-      setUploadSuccess([]);
-    },
-    [assets, configDrop.boardId, configDrop.roomId, configDrop.xDrop, configDrop.yDrop, create, createBatch, openAppForFile]
-  );
-
-  // When uplaod is done, open the apps
   useEffect(() => {
-    if (uploadSuccess.length > 0) {
-      openApps(uploadSuccess);
+    /**
+     * Function to open applications after files are uploaded
+     */
+    async function openApps() {
+      const createBatch = useAppStore.getState().createBatch;
+      if (uploadSuccess.length > 0) {
+        let xpos = configDrop.xDrop;
+        const batch: AppSchema[] = [];
+        for (const up of uploadSuccess) {
+          const res = await createApplicationAfterUpload(up, xpos, configDrop.yDrop, configDrop.roomId, configDrop.boardId);
+          if (res) {
+            batch.push(...res);
+            xpos += res[0].size.width + 10;
+            console.log('Files> openApps - created app for asset', up);
+          } else {
+            console.log('Files> openApps - Could not find asset', up);
+            toast({
+              title: 'Error',
+              description: 'Could not find asset ' + up,
+              status: 'error',
+              duration: 6000,
+              isClosable: true,
+            });
+          }
+        }
+        createBatch(batch);
+        setUploadSuccess([]);
+      }
     }
-  }, [openApps, uploadSuccess]);
 
+    // When uplaod is done, open the apps
+    openApps();
+
+  }, [uploadSuccess, configDrop]);
+
+  /**
+   * Upload files and create applications for them
+   *
+   * @param {File[]} input - The list of files to upload
+   * @param {number} dx - The x-coordinate where the files were dropped
+   * @param {number} dy - The y-coordinate where the files were dropped
+   * @param {string} roomId - The ID of the room
+   * @param {string} boardId - The ID of the board
+   */
   async function uploadFiles(input: File[], dx: number, dy: number, roomId: string, boardId: string) {
     if (input) {
       let filenames = '';
@@ -483,7 +490,7 @@ export function useFiles(): UseFiles {
           } else {
             let item;
             // Rename file for called image.png coming from the clipboard
-            if (input[i].name === 'image.png') {
+            if (input[i].name === "image.png") {
               // Create a more meaningful name
               const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
               const username = user?.data.name || 'user';
@@ -532,30 +539,11 @@ export function useFiles(): UseFiles {
         onUploadProgress: (p: AxiosProgressEvent) => {
           if (toastIdRef.current && p.progress) {
             const progress = (p.progress * 100).toFixed(0);
-            if (progress === '100') {
-              toast.update(toastIdRef.current, {
-                title: 'Processing Files',
-                status: 'loading',
-                description: (
-                  <Flex alignItems={'center'} my="2">
-                    <Text></Text>
-                    <Progress borderRadius="md" colorScheme="red" isIndeterminate width="100%" mr="2" />
-                  </Flex>
-                ),
-                isClosable: true,
-              });
-            } else {
-              toast.update(toastIdRef.current, {
-                title: 'Uploading Files',
-                status: 'loading',
-                description: (
-                  <Flex alignItems={'center'} my="2">
-                    <Progress borderRadius="md" colorScheme="red" value={p.progress * 100} width="100%" mr="2" /> <Text>{progress}%</Text>
-                  </Flex>
-                ),
-                isClosable: true,
-              });
-            }
+            toast.update(toastIdRef.current, {
+              title: 'Upload',
+              description: 'Progress: ' + progress + '%',
+              isClosable: true,
+            });
           }
         },
       })
@@ -585,8 +573,10 @@ export function useFiles(): UseFiles {
           setUploadInProgress(false);
         });
       if (response) {
-        // Save the list of uploaded files
-        setUploadSuccess(response.data.map((a: any) => a.id));
+        // Get the new asset IDs
+        const newids = response.data as string[];
+        // Refresh the asset store
+        await useAssetStore.getState().update();
         // Show a success message
         if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
@@ -597,8 +587,30 @@ export function useFiles(): UseFiles {
           });
         }
         setUploadInProgress(false);
+        // Finish the upload by updating with the new asset IDs
+        setUploadSuccess(newids);
       }
     }
+  }
+
+  /**
+   * Open an application for a given asset ID
+   *
+   * @param {string} fileID - The ID of the asset
+   * @param {number} xDrop - The x-coordinate where the file was dropped
+   * @param {number} yDrop - The y-coordinate where the file was dropped
+   * @param {string} roomId - The ID of the room
+   * @param {string} boardId - The ID of the board
+   * @returns {Promise<AppSchema | null>} - The schema of the created application or null
+   */
+  async function openAppForFile(fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
+    if (!user) return null;
+    for (const a of assets) {
+      if (a._id === fileID) {
+        return openApplication(a, xDrop, yDrop, roomId, boardId);
+      }
+    }
+    return null;
   }
 
   return { uploadFiles, openAppForFile, uploadInProgress };

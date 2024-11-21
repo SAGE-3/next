@@ -21,6 +21,7 @@ import { AssetHTTPService, SocketAPI } from '../api';
 interface AssetState {
   assets: Asset[];
   error: string | null;
+  update: () => void;
   clearError: () => void;
   subscribe: () => Promise<void>;
   unsubscribe: () => void;
@@ -43,6 +44,16 @@ const AssetStore = create<AssetState>()((set, get) => {
       if (assetSub) {
         assetSub();
         assetSub = null;
+      }
+    },
+    update: async () => {
+      if (!SAGE3Ability.canCurrentUser('read', 'assets')) return;
+      // Refresh the collection from the server with websockets
+      const res = await SocketAPI.sendRESTMessage('/assets', 'GET');
+      if (res.success) {
+        set({ assets: res.data });
+      } else {
+        set({ error: res.message });
       }
     },
     subscribe: async () => {
@@ -69,6 +80,7 @@ const AssetStore = create<AssetState>()((set, get) => {
           case 'CREATE': {
             const docs = message.doc as Asset[];
             set({ assets: [...get().assets, ...docs] });
+            console.log('AssetStore> CREATE new #', docs.length);
             break;
           }
           case 'UPDATE': {
