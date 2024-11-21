@@ -30,7 +30,10 @@ import { AssetSchema } from '@sage3/shared/types';
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
-export function uploadHandler(req: express.Request, res: express.Response) {
+export async function uploadHandler(req: express.Request, res: express.Response) {
+  // Signal the start of the upload
+  await MessageCollection.add({ type: 'upload', payload: `Uploading Assets`, close: false }, req.user.id);
+
   return UploadConnector.getInstance().uploadMiddleware('files')(req, res, async (err) => {
     let hasError = false;
     let processError = '';
@@ -58,8 +61,8 @@ export function uploadHandler(req: express.Request, res: express.Response) {
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
 
-    // Send message to clients
-    await MessageCollection.add({ type: 'upload', payload: `Processing Assets` }, user.id);
+    // Signal the start of the processing
+    await MessageCollection.add({ type: 'upload', payload: `Processing Assets`, close: false }, user.id);
 
     const newAssets: AssetSchema[] = [];
     const newIds: string[] = [];
@@ -85,8 +88,8 @@ export function uploadHandler(req: express.Request, res: express.Response) {
         return;
       });
       if (mdata) {
-        // Send message to clients
-        await MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}` }, user.id);
+        // Signal the end of processing of the file
+        await MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}`, close: false }, user.id);
         // Add the new file to a buffer
         newAssets.push({
           file: elt.filename,
@@ -103,6 +106,10 @@ export function uploadHandler(req: express.Request, res: express.Response) {
         });
       }
     }
+
+    // Signal the end of the processing
+    await MessageCollection.add({ type: 'upload', payload: `Assets Ready`, close: true }, user.id);
+
     // Add all the new files to the collection
     const lots = await AssetsCollection.addBatch(newAssets, user.id);
     if (lots) {

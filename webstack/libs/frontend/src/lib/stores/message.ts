@@ -107,7 +107,6 @@ const MessageStore = create<MessageState>()((set, get) => {
       const route = '/message';
       // Socket Listenting to updates from server
       msgSub = await SocketAPI.subscribe<Message>(route, (message) => {
-        // console.log('Got message:', message.doc[0].data);
         switch (message.type) {
           case 'CREATE': {
             const docs = message.doc as Message[];

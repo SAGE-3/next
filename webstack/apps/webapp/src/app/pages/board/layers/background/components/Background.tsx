@@ -78,19 +78,17 @@ export function Background(props: BackgroundProps) {
 
   // Get the last new message
   useEffect(() => {
-    console.log('Before Message', message);
     if (!user) return;
     if (!message) return;
-    console.log('Message', message?.data.payload, message._createdBy, user._id);
     if (message && message._createdBy === user._id) {
       const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
-      console.log("🚀 ~ useEffect ~ title:", title)
       // Update the toast if we can
-      if (toastIdRef.current) {
+      if (toastIdRef.current && toast.isActive(toastIdRef.current)) {
         toast.update(toastIdRef.current, {
           title: title,
+          status: message.data.close ? 'info' : 'loading',
           description: message.data.payload,
-          duration: 5000,
+          duration: message.data.close ? 5000 : null,
           isClosable: true,
         });
       } else {
@@ -98,19 +96,13 @@ export function Background(props: BackgroundProps) {
         toastIdRef.current = toast({
           title: title,
           description: message.data.payload,
-          status: 'info',
-          duration: 5000,
+          status: message.data.close ? 'info' : 'loading',
+          duration: message.data.close ? 5000 : null,
           isClosable: true,
         });
       }
     }
   }, [message]);
-
-  // useEffect(() => {
-  //   for (const msg of messages) {
-  //     console.log('Message', msg.data.type, msg.data.payload);
-  //   }
-  // }, [messages]);
 
   // Question mark character for help
   useHotkeys(

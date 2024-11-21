@@ -518,15 +518,6 @@ export function useFiles(): UseFiles {
       // Add fields to the upload form
       fd.append('room', roomId);
 
-      toastIdRef.current = toast({
-        title: 'Upload',
-        description: 'Starting upload of ' + filenames,
-        status: 'info',
-        // no duration, so it doesn't disappear
-        duration: null,
-        isClosable: true,
-      });
-
       // Save the drop position
       setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
       setUploadInProgress(true);
@@ -536,24 +527,19 @@ export function useFiles(): UseFiles {
         method: 'post',
         url: apiUrls.assets.upload,
         data: fd,
-        onUploadProgress: (p: AxiosProgressEvent) => {
-          if (toastIdRef.current && p.progress) {
-            const progress = (p.progress * 100).toFixed(0);
-            if (progress === '100') {
-              toast.update(toastIdRef.current, {
-                title: 'Upload',
-                description: 'Upload complete',
-                isClosable: true,
-              });
-            } else {
-              toast.update(toastIdRef.current, {
-                title: 'Upload',
-                description: 'Progress: ' + progress + '%',
-                isClosable: true,
-              });
-            }
-          }
-        },
+        // onUploadProgress: (p: AxiosProgressEvent) => {
+        // if (toastIdRef.current && p.progress) {
+        //   const progress = (p.progress * 100).toFixed(0);
+        //   if (p.progress < 1) {
+        //     toast.update(toastIdRef.current, {
+        //       title: 'Upload',
+        //       description: 'Progress: ' + progress + '%',
+        //       isClosable: true,
+        //       duration: 5000,
+        //     });
+        //   }
+        // }
+        // },
       })
         .finally(() => {
           // Some errors with the files
@@ -586,14 +572,15 @@ export function useFiles(): UseFiles {
         // Refresh the asset store
         await useAssetStore.getState().update();
         // Show a success message
-        if (toastIdRef.current) {
-          toast.update(toastIdRef.current, {
-            title: 'Upload',
-            description: 'Asset Processed',
-            duration: 4000,
-            isClosable: true,
-          });
-        }
+        // if (toastIdRef.current) {
+        //   toast.update(toastIdRef.current, {
+        //     title: 'Upload',
+        //     description: 'Asset Processed',
+        //     // duration: 4000,
+        //     duration: null,
+        //     isClosable: true,
+        //   });
+        // }
         setUploadInProgress(false);
         // Finish the upload by updating with the new asset IDs
         setUploadSuccess(newids);
