@@ -59,7 +59,7 @@ export function uploadHandler(req: express.Request, res: express.Response) {
     const user = req.user as SBAuthSchema;
 
     // Send message to clients
-    MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
+    await MessageCollection.add({ type: 'upload', payload: `Processing Assets` }, user.id);
 
     const newAssets: AssetSchema[] = [];
     const newIds: string[] = [];

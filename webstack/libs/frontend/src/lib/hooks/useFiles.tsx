@@ -539,11 +539,19 @@ export function useFiles(): UseFiles {
         onUploadProgress: (p: AxiosProgressEvent) => {
           if (toastIdRef.current && p.progress) {
             const progress = (p.progress * 100).toFixed(0);
-            toast.update(toastIdRef.current, {
-              title: 'Upload',
-              description: 'Progress: ' + progress + '%',
-              isClosable: true,
-            });
+            if (progress === '100') {
+              toast.update(toastIdRef.current, {
+                title: 'Upload',
+                description: 'Upload complete',
+                isClosable: true,
+              });
+            } else {
+              toast.update(toastIdRef.current, {
+                title: 'Upload',
+                description: 'Progress: ' + progress + '%',
+                isClosable: true,
+              });
+            }
           }
         },
       })
@@ -581,7 +589,7 @@ export function useFiles(): UseFiles {
         if (toastIdRef.current) {
           toast.update(toastIdRef.current, {
             title: 'Upload',
-            description: 'Upload complete',
+            description: 'Asset Processed',
             duration: 4000,
             isClosable: true,
           });
