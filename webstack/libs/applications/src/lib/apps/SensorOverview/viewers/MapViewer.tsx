@@ -284,22 +284,52 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
         if (props.stationMetadata[i].OBSERVATIONS[variableName]) {
           const latestValue =
             props.stationMetadata[i].OBSERVATIONS[variableName][props.stationMetadata[i].OBSERVATIONS[variableName].length - 1];
-
           const station: StationDataType | undefined = stationData.find(
             (station: StationDataType) => station.name == props.stationMetadata[i].STID
           );
           if (station) {
             const el = document.createElement('div');
-
-            el.innerHTML = `<div style="position: relative; ">
-            <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%;  transform: scale(${Math.min(
-              Math.max(s.stationScale / scale - 1.5, 1.5),
-              5.5
-            )}); background-color: rgb(47,169,238); width: 20px; height: 20px; color: white; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
-            <p  style="font-size:7px; font-weight: bold; text-align: center">
-            ${Number(latestValue).toFixed(1)}</p>
-            </div>
+            if (latestValue) {
+              el.innerHTML = `<div style="position: relative;">
+              <div style="
+                border-radius: 50%; 
+                position: absolute; 
+                left: 50%; 
+                top: 50%; 
+                transform: scale(${Math.min(Math.max(s.stationScale / scale - 1.5, 1.5), 5.5)}); 
+                background-color: rgb(47,169,238); 
+                width: 20px; 
+                height: 20px; 
+                color: white; 
+                border: 1px solid black; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: center;">
+                <p style="
+                  font-size: ${latestValue.toString().length > 4 ? '5px' : '7px'}; 
+                  font-weight: bold; 
+                  text-align: center; 
+                  white-space: nowrap; 
+                  word-wrap: break-word;
+                  line-height: 1;
+                  margin: 0;">
+                  ${Number(latestValue).toFixed(1)}
+                </p>
+              </div>
             </div>`;
+            } else {
+              el.innerHTML = `<div style="position: relative; ">
+              <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%;  transform: scale(${Math.min(
+                Math.max(s.stationScale / scale - 3.5, 1),
+                5.5
+              )}); background-color: rgb(200,200,200); width: 20px; height: 20px; color: white; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
+              <p  style="font-size:7px; font-weight: bold; text-align: center">
+              null</p>
+              </div>
+              </div>`;
+            }
+
             if (el && el !== null) {
               const marker = new maplibregl.Marker({
                 color: '#000000',
@@ -317,7 +347,6 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       }
       // });
     }
-    console.log(Math.max(s.stationScale / scale - 2.5, 1));
   }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale), scale]);
 
   const increaseScaleSize = () => {

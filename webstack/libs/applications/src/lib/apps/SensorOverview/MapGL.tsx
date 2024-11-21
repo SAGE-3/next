@@ -156,7 +156,6 @@ const MapGL = (
       // when the map is loaded, add the source and layers
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
-        console.log('MapGL> Adding source to map', newURL);
         // Get the GEOJSON data from the asset
         const response = await fetch(newURL, {
           headers: {
@@ -322,7 +321,6 @@ const MapGL = (
           const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.id));
 
           const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.id));
-          console.log('I get called to load');
           // Add sources
           map.addSource('selectedStations', {
             type: 'geojson',
@@ -385,7 +383,6 @@ const MapGL = (
 
           map.on('click', 'notSelectedCircle', (e: any) => {
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            console.log('Adding station:', stationInfo);
 
             // Create marker
             const el = document.createElement('div');
@@ -406,14 +403,11 @@ const MapGL = (
               props.stationNameRef.current.push(stationInfo.id);
               updateState(props._id, { stationNames: props.stationNameRef.current });
             }
-
-            console.log('Updated station list after addition:', props.stationNameRef.current);
           });
 
           map.on('click', 'selectedCircle', (e: any) => {
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
             const element = document.getElementById(`marker-${stationInfo.id}`);
-            console.log('Removing station:', stationInfo);
 
             if (element) {
               // Remove marker from the map
@@ -424,11 +418,9 @@ const MapGL = (
             const updatedStations = props.stationNameRef.current.filter((name: string) => name !== stationInfo.id);
             props.stationNameRef.current = updatedStations;
             updateState(props._id, { stationNames: updatedStations });
-
-            console.log('Updated station list after removal:', updatedStations);
           });
 
-          map.on('mouseenter', 'notSelectedCircle', () => {
+          map.on('mouseenter', 'notSelectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
           });
 
@@ -436,7 +428,7 @@ const MapGL = (
             map.getCanvas().style.cursor = '';
           });
 
-          map.on('mouseenter', 'selectedCircle', () => {
+          map.on('mouseenter', 'selectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
           });
 
