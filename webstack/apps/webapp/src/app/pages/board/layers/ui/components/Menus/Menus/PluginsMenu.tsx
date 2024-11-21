@@ -144,7 +144,7 @@ export function PluginsMenu(props: PluginsMenuProps) {
           })}
         <Divider my="1" />
         <Tooltip hasArrow={true} openDelay={500} borderRadius="8px" placement="right" label="Upload a new plugin">
-          <Button onClick={() => pluginOnOpen()} py="1px" m="0" width="100%" size="sm" height="30px" colorScheme={'green'}>
+          <Button onClick={() => pluginOnOpen()} py="1px" m="0" width="100%" size="xs" colorScheme={'green'}>
             Upload
           </Button>
         </Tooltip>

@@ -32,7 +32,6 @@ import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-i
 // Sage
 import { usePresenceStore, useUser, useHexColor, useUIStore, useThrottlePresenceUsers } from '@sage3/frontend';
 
-
 // Hook to change your view to another user's viewport
 function usePresenceViewport(myId: string) {
   // BoardId
@@ -217,6 +216,7 @@ export function UsersMenu(props: UsersMenuProps) {
         pr={2}
         spacing={2}
         overflow="auto"
+        overflowX={'hidden'}
         css={{
           '&::-webkit-scrollbar': {
             width: '6px',
@@ -252,7 +252,7 @@ export function UsersMenu(props: UsersMenuProps) {
         })}
       </VStack>
       <Divider my="2" />
-      <Menu>
+      <Menu placement="right">
         <Tooltip label={'You'} placement="top" hasArrow shouldWrapChildren={true}>
           <MenuButton as={Button} size="xs" width="150px" textAlign={'left'} leftIcon={<MdPerson fontSize={'16px'} color={myColor} />}>
             {'You'}
@@ -300,8 +300,10 @@ type UserAvatarProps = {
 export function UserAvatar(props: UserAvatarProps) {
   const color = useHexColor(props.color);
   const { username, userId, isWall } = props;
+
+  const trimUserName = `${username.substring(0, 14)}...`;
   return (
-    <Menu>
+    <Menu placement="right">
       <MenuButton
         as={Button}
         size="xs"
@@ -309,8 +311,10 @@ export function UserAvatar(props: UserAvatarProps) {
         textAlign={'left'}
         minHeight="24px"
         leftIcon={isWall ? <MdStop fontSize={'16px'} color={color} /> : <MdPerson fontSize={'16px'} color={color} />}
+        style={{ textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}
+        onDoubleClick={() => props.goToViewport(userId, username)}
       >
-        {username}
+        {trimUserName}
       </MenuButton>
       <MenuList>
         <MenuGroup title={username} mt={0} mb={1} p={0} fontSize="md">
