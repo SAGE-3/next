@@ -14,7 +14,7 @@ import { MdPerson } from 'react-icons/md';
 // SAGE3 Imports
 import { App } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore, truncateWithEllipsis } from '@sage3/frontend';
 
 // Props for the ScreensharesMenu component
 interface ScreensharesMenuProps {
@@ -109,7 +109,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         const user = users.find((u) => u._id === app._createdBy);
         if (!user) return null;
         const userName = user.data.name;
-        const color = user.data.color;
+        const trimName = truncateWithEllipsis(userName, 14);
+        // const color = user.data.color;
         const yours = app._createdBy === uid;
         return (
           <Box
@@ -121,11 +122,15 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
             onClick={() => handleGoToApp(app)}
             _hover={{ cursor: 'pointer', bg: bgHoverHexColor }}
             transition="background-color 0.4s"
-            p="1"
+            p="2"
             borderRadius="md"
+            height="24px"
+            alignItems={'center'}
           >
-            <MdPerson size="24px" />
-            {userName} {yours ? '(Yours)' : ''}
+            <MdPerson size="16px" />
+            <Text fontSize="14px">
+              {trimName} {yours ? '(Yours)' : ''}
+            </Text>
           </Box>
         );
       })}
@@ -135,15 +140,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         </Text>
       )}
       <Divider my="2" />
-      <Button
-        onClick={() => handleStartStop()}
-        py="1px"
-        m="0"
-        width="100%"
-        size="sm"
-        height="30px"
-        colorScheme={yourScreenshare ? 'red' : 'green'}
-      >
+      <Button onClick={() => handleStartStop()} py="1px" m="0" width="100%" size="xs" colorScheme={yourScreenshare ? 'red' : 'green'}>
         {yourScreenshare == null ? 'Start' : 'Stop'} Sharing
       </Button>
     </Box>
