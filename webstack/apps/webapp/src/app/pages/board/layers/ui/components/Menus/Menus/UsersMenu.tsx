@@ -30,7 +30,7 @@ import { IoMdSquareOutline } from 'react-icons/io';
 import { HiOutlineChevronDoubleLeft, HiOutlineChevronDoubleRight } from 'react-icons/hi';
 
 // Sage
-import { usePresenceStore, useUser, useHexColor, useUIStore, useThrottlePresenceUsers } from '@sage3/frontend';
+import { usePresenceStore, useUser, useHexColor, useUIStore, useThrottlePresenceUsers, truncateWithEllipsis } from '@sage3/frontend';
 
 // Hook to change your view to another user's viewport
 function usePresenceViewport(myId: string) {
@@ -251,7 +251,9 @@ export function UsersMenu(props: UsersMenuProps) {
           );
         })}
       </VStack>
-      <Divider my="2" />
+
+      {userPresence.length > 0 && <Divider my="2" />}
+
       <Menu placement="right">
         <Tooltip label={'You'} placement="top" hasArrow shouldWrapChildren={true}>
           <MenuButton as={Button} size="xs" width="150px" textAlign={'left'} leftIcon={<MdPerson fontSize={'16px'} color={myColor} />}>
@@ -301,7 +303,7 @@ export function UserAvatar(props: UserAvatarProps) {
   const color = useHexColor(props.color);
   const { username, userId, isWall } = props;
 
-  const trimUserName = `${username.substring(0, 14)}...`;
+  const trimUserName = truncateWithEllipsis(username, 14);
   return (
     <Menu placement="right">
       <MenuButton

@@ -14,7 +14,7 @@ import { MdPerson } from 'react-icons/md';
 // SAGE3 Imports
 import { App } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore, truncateWithEllipsis } from '@sage3/frontend';
 
 // Props for the ScreensharesMenu component
 interface ScreensharesMenuProps {
@@ -109,8 +109,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         const user = users.find((u) => u._id === app._createdBy);
         if (!user) return null;
         const userName = user.data.name;
-        const trimName = userName.substring(0, 14);
-        const color = user.data.color;
+        const trimName = truncateWithEllipsis(userName, 14);
+        // const color = user.data.color;
         const yours = app._createdBy === uid;
         return (
           <Box

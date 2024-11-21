@@ -80,6 +80,7 @@ import {
   usePresenceStore,
   useUserSettings,
   ColorPicker,
+  truncateWithEllipsis,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { Applications } from '@sage3/applications/apps';
@@ -593,11 +594,6 @@ export function AppToolbar(props: AppToolbarProps) {
       setTagColor(color as SAGEColors);
     };
 
-    const truncateStr = (str: string) => {
-      const maxLen = 10;
-      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
-    };
-
     return (
       <HStack spacing={1} ref={tagsContainerRef}>
         {/* Main list of tags */}
@@ -614,7 +610,7 @@ export function AppToolbar(props: AppToolbarProps) {
             onClick={() => openEditModal(tag)}
           >
             <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Edit Tag'}>
-              <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+              <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
             </Tooltip>
             <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Delete Tag'}>
               <TagCloseButton
@@ -664,7 +660,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       colorScheme={tag.split(delimiter)[1]}
                       onClick={() => openEditModal(tag)}
                     >
-                      <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+                      <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
                       <TagCloseButton
                         m={0}
                         onClick={(e) => {
