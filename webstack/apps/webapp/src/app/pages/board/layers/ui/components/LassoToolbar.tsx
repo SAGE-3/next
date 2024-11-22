@@ -38,6 +38,7 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Spacer,
 } from '@chakra-ui/react';
 
 import {
@@ -53,7 +54,7 @@ import {
   MdAutoAwesomeMotion,
   MdAddCircleOutline,
 } from 'react-icons/md';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -125,6 +126,8 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const borderColor = useColorModeValue('gray.200', 'gray.500');
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
 
   // Modal disclosure for the Close selected apps
   const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
@@ -400,16 +403,18 @@ export function LassoToolbar(props: LassoToolbarProps) {
       // Check if all of same type
       const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
       let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
-      let context = '';
       if (isAllOfSameType) {
+        let context = '';
         if (selectedApps[0].data.type === 'Stickie') {
           context = selectedApps.reduce((acc, el) => {
-            acc += el.data.state.text + '\n';
+            acc += el.data.state.text + '\n\n';
             return acc;
           }, '');
         }
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
+      } else {
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
       }
-      createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
     }
   };
 
@@ -575,22 +580,44 @@ for b in bits:
           zIndex={1410} // above the drawer but with tooltips
         >
           <Box display="flex" flexDirection="column">
-            <Text
-              w="100%"
-              textAlign="left"
-              mx={1}
-              color={textColor}
-              fontSize={12}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-              className="handle"
-            >
-              {`${lassoApps.length} ${selectedAppNames()} Selected`}
-              {/* {'Actions'} */}
-            </Text>
-            <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
-              {/* Show the GroupedToolberComponent here */}
+            <Box display="flex" flexDirection="row">
+              <Text
+                textAlign="left"
+                mx={0}
+                p={0}
+                color={textColor}
+                fontSize={14}
+                fontWeight="bold"
+                h={'auto'}
+                userSelect={'none'}
+                className="handle"
+              >
+                Actions
+              </Text>
+
+              <Spacer />
+
+              {/* Sage Intelligence */}
+              <Box>
+                <Tooltip
+                  placement="top"
+                  hasArrow={true}
+                  openDelay={400}
+                  ml="1"
+                  label={'Open selected application in Chat with SAGE Intelligence'}
+                >
+                  <Button onClick={openInChat} backgroundColor={intelligenceColor}
+                    variant='solid' size="xs" m={0} mr={1} p={0}
+                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
+                    <HiOutlineSparkles size="20px" color={"white"} />
+                  </Button>
+                </Tooltip>
+              </Box>
+            </Box>
+
+            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}
+              minWidth={"100px"}>
+              {/* Show the GroupedToolbarComponent here */}
               {selectedAppFunctions()}
               <Menu>
                 <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
@@ -708,18 +735,15 @@ for b in bits:
 
                   <MenuDivider />
 
-                  <MenuGroup title="AI Actions" m="1">
+                  <MenuGroup title="Actions" m="1">
                     <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
-                    </MenuItem>
-                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />} py="0" m="0">
-                      Open in Chat
                     </MenuItem>
                   </MenuGroup>
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Delete  Applications'} openDelay={400}>
+              <Tooltip placement="top" hasArrow={true} label={'Delete Applications'} openDelay={400}>
                 <Button onClick={deleteOnOpen} size="xs" p="0" colorScheme="red" isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" />
                 </Button>
@@ -734,9 +758,8 @@ for b in bits:
         onClose={deleteOnClose}
         onConfirm={closeSelectedApps}
         title="Delete Selected Applications"
-        message={`Are you sure you want to delete the selected ${
-          lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-        } `}
+        message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+          } `}
         cancelText="Cancel"
         confirmText="Delete"
         confirmColor="red"
@@ -750,7 +773,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

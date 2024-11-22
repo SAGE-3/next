@@ -13,6 +13,7 @@ export const schema = z.object({
   fontSize: z.number(),
   color: z.string(),
   lock: z.boolean(),
+  sources: z.array(z.string()),
   executeInfo: z.object({
     executeFunc: z.string(),
     params: z.any(),
@@ -22,9 +23,10 @@ export type state = z.infer<typeof schema>;
 
 export const init: state = {
   text: 'stickie note',
-  fontSize: 36,
+  fontSize: 24,
   color: 'yellow',
   lock: false,
+  sources: [],
   executeInfo: { executeFunc: '', params: {} },
 };
 

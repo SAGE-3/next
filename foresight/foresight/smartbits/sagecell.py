@@ -8,7 +8,7 @@
 
 from pydantic import PrivateAttr
 
-from foresight.smartbits.smartbit import SmartBit, ExecuteInfo
+from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 from foresight.jupyterkernelproxy import JupyterKernelProxy
 
@@ -27,7 +27,6 @@ class SageCellState(TrackedBaseModel):
     privateMessage: list = []
     availableKernels: list = []
     output: str = ""
-    executeInfo: ExecuteInfo = {"executeFunc": "", "params": {}}
     msgId: str = ("",)
     history: list = []
     streaming: bool = False
@@ -45,21 +44,15 @@ class SageCell(SmartBit):
         super(SageCell, self).__init__(**kwargs)
         self._jupyter_client = JupyterKernelProxy()
         self._r_json = self._jupyter_client.redis_server.json()
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         if self._r_json.get(self._redis_space) is None:
             self._r_json.set(self._redis_space, ".", {})
 
     def handle_exec_result(self, msg):
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         self.state.output = json.dumps(msg)
         self.send_updates()
 
     def generate_error_message(self, user_uuid, error_msg):
         pm = [{"userId": user_uuid, "message": error_msg}]
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         self.state.privateMessage = pm
         self.send_updates()
 
@@ -67,8 +60,6 @@ class SageCell(SmartBit):
         """
         This function will get the kernels from the redis server
         """
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         # get all valid kernel ids from jupyter server
         valid_kernel_list = [k["id"] for k in self._jupyter_client.get_kernels()]
         # get all kernels from redis server
@@ -94,8 +85,6 @@ class SageCell(SmartBit):
         :param code:
         :return:
         """
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         command_info = {
             "uuid": _uuid,
             "call_fn": self.handle_exec_result,
@@ -107,8 +96,6 @@ class SageCell(SmartBit):
             self._jupyter_client.execute(command_info)
 
     def interrupt(self, _uuid=None):
-        self.state.executeInfo.executeFunc = ""
-        self.state.executeInfo.params = {}
         command_info = {
             "uuid": _uuid,
             "call_fn": self.handle_exec_result,

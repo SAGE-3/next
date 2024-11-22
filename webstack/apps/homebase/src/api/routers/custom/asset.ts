@@ -25,11 +25,15 @@ import { getFileType } from '@sage3/shared';
 import { UploadConnector } from '../../../connectors/upload-connector';
 // Asset model
 import { AssetsCollection, MessageCollection } from '../../collections';
+import { AssetSchema } from '@sage3/shared/types';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
-export function uploadHandler(req: express.Request, res: express.Response) {
+export async function uploadHandler(req: express.Request, res: express.Response) {
+  // Signal the start of the upload
+  await MessageCollection.add({ type: 'upload', payload: `Uploading Assets`, close: false }, req.user.id);
+
   return UploadConnector.getInstance().uploadMiddleware('files')(req, res, async (err) => {
     let hasError = false;
     let processError = '';
@@ -57,8 +61,11 @@ export function uploadHandler(req: express.Request, res: express.Response) {
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
 
-    // Send message to clients
-    MessageCollection.add({ type: 'upload', payload: `Upload done` }, user.id);
+    // Signal the start of the processing
+    await MessageCollection.add({ type: 'upload', payload: `Processing Assets`, close: false }, user.id);
+
+    const newAssets: AssetSchema[] = [];
+    const newIds: string[] = [];
 
     // Do something with the files
     for await (const elt of files) {
@@ -81,38 +88,42 @@ export function uploadHandler(req: express.Request, res: express.Response) {
         return;
       });
       if (mdata) {
-        // Send message to clients
-        await MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}` }, user.id);
-        // Add the new file to the collection
-        const newAsset = await AssetsCollection.add(
-          {
-            file: elt.filename,
-            owner: user.id || '-',
-            room: req.body.room || '-',
-            originalfilename: elt.originalname,
-            path: elt.path,
-            destination: elt.destination,
-            size: elt.size,
-            mimetype: elt.mimetype,
-            dateAdded: now,
-            derived: pdata || {},
-            ...mdata,
-          },
-          user.id
-        );
-        if (newAsset) {
-          // save the id of the asset in the file object, sent back to the client
-          elt.id = newAsset._id;
-        }
+        // Signal the end of processing of the file
+        await MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}`, close: false }, user.id);
+        // Add the new file to a buffer
+        newAssets.push({
+          file: elt.filename,
+          owner: user.id || '-',
+          room: req.body.room || '-',
+          originalfilename: elt.originalname,
+          path: elt.path,
+          destination: elt.destination,
+          size: elt.size,
+          mimetype: elt.mimetype,
+          dateAdded: now,
+          derived: pdata || {},
+          ...mdata,
+        });
       }
+    }
+
+    // Signal the end of the processing
+    await MessageCollection.add({ type: 'upload', payload: `Assets Ready`, close: true }, user.id);
+
+    // Add all the new files to the collection
+    const lots = await AssetsCollection.addBatch(newAssets, user.id);
+    if (lots) {
+      // Collect the ids of the new files
+      const ids = lots.map((l) => l._id);
+      newIds.push(...ids);
     }
 
     if (hasError && processError) {
       // Return error with the information
       res.status(500).send(processError);
     } else {
-      // Return success with the information
-      res.status(200).send(files);
+      // Return success with the ids of the new files
+      res.status(200).send(newIds);
     }
   });
 }

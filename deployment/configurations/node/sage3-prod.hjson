@@ -40,10 +40,15 @@
     "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
   },
 
-  // Fastapi python server
-  "fastapi": {
-    "url": "http://fastapi:8000"
+  // Fastapi python server for kernels
+  "kernels": {
+    "url": "http://kernelserver:8000"
   },
+  // Fastapi python server for agents
+  "agents": {
+    "url": "http://seer:9999"
+  },
+
 
   // Feedback URL
   "feedback": {
@@ -67,11 +72,15 @@
       // "model": "gpt-3.5-turbo"
       "model": "gpt-4o-mini"
     },
-    "chat": {
-      "url": "https://arcade.evl.uic.edu/llama",
-      "model": "llama3",
-      "max_tokens": 2048,
-      "apiKey": ""
+    "llama": {
+      // "url": "https://arcade.evl.uic.edu/llama",
+      // "model": "llama3",
+      // "max_tokens": 2048,
+      // "apiKey": ""
+      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
+      "model": "/data/11Bf",
+      "apiKey": "",
+      "max_tokens": 1000
     },
     "codellama": {
       "url": "https://arcade.evl.uic.edu/llama31_8bf",

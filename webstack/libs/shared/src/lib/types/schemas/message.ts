@@ -16,6 +16,7 @@ import { SBDoc } from './SBSchema';
 const schema = z.object({
   type: z.string(),
   payload: z.string(),
+  close: z.boolean(),
 });
 
 export type MessageSchema = z.infer<typeof schema>;

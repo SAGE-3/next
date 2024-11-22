@@ -28,9 +28,12 @@ import {
   PopoverTrigger,
   UnorderedList,
   useToast,
+  InputLeftAddon,
+  useColorModeValue,
 } from '@chakra-ui/react';
 
 // Icons for file types
+import { HiOutlineSparkles } from 'react-icons/hi';
 import {
   MdOutlinePictureAsPdf,
   MdOutlineImage,
@@ -61,7 +64,7 @@ import {
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
-import { getExtension } from '@sage3/shared';
+import { getExtension, genId } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
 
 type props = {
@@ -94,6 +97,17 @@ export function Alfred(props: props) {
   // User
   const { user, accessId } = useUser();
   const { boardCursor } = useCursorBoardPosition();
+  const [username, setUsername] = useState('');
+
+
+  useEffect(() => {
+    if (user) {
+      // User name
+      const u = user.data.name;
+      const firstName = u.split(' ')[0];
+      setUsername(firstName);
+    }
+  }, [user]);
 
   // Function to create a new app
   const newApplication = (appName: AppName) => {
@@ -286,6 +300,52 @@ export function Alfred(props: props) {
         // Batch delete all the apps
         const ids = apps.map((a) => a._id);
         deleteApp(ids);
+      } else {
+        // redo the calculations for the position
+        const ww = 820;
+        const hh = 620;
+        // Get around  the center of the board
+        const bx = useUIStore.getState().boardPosition.x;
+        const by = useUIStore.getState().boardPosition.y;
+        const scale = useUIStore.getState().scale;
+        let px = Math.floor(-bx + window.innerWidth / scale / 2);  // center
+        let py = Math.floor(-by + window.innerHeight / scale / 3); // 1/3 down
+        px -= ww / 2;
+        py -= hh / 2;
+
+        // Build the question
+        const question = {
+          id: 'starting',
+          creationId: 'starting',
+          creationDate: Date.now(),
+          userName: '',
+          query: '',
+          response: 'I am SAGE AI! Ask me anything by directing the question to me (@S), or chat with people in the board',
+          userId: '',
+        };
+
+        // Send the text to chat
+        createApp({
+          title: "AI Chat",
+          roomId: props.roomId,
+          boardId: props.boardId,
+          position: { x: px, y: py, z: 0 },
+          size: { width: ww, height: hh, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'Chat',
+          state: {
+            ...(initialValues['Stickie'] as AppState),
+            firstQuestion: term,
+            messages: [question],
+            previousQ: '',
+            previousA: '',
+            context: '',
+            token: '',
+            sources: [],
+          }, raised: true,
+          dragging: false,
+          pinned: false,
+        });
       }
     },
     [user, apps, props.boardId, boardCursor, colorMode]
@@ -330,6 +390,8 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const { user } = useUser();
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
+  // colors
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -340,6 +402,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       setTerm(val.trim());
     } else {
       setTerm('');
+      setListIndex(0);
     }
   };
 
@@ -362,6 +425,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     } else {
       // Full list if no search term
       setFilteredList(assetsList);
+      setListIndex(0);
     }
   }, [term, assetsList]);
 
@@ -465,11 +529,12 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     const buttons = actions.slice(0, MaxElements).map((b, i) => (
       <Button
         key={b.id}
-        my={1}
-        minHeight={'40px'}
-        width={'100%'}
+        m={"1px 4px 1px 1px"}
+        p={2}
+        minHeight={'36px'}
+        width={'99%'}
         leftIcon={b.icon}
-        fontSize="lg"
+        fontSize="md"
         justifyContent="flex-start"
         variant="outline"
         backgroundColor={b.selected ? 'blue.500' : ''}
@@ -483,6 +548,12 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     ));
     setButtonList(buttons);
   }, [filteredList, listIndex]);
+
+  useEffect(() => {
+    if (filteredList.length === 0) {
+      setListIndex(0);
+    }
+  }, [filteredList]);
 
   return (
     <Modal
@@ -498,13 +569,17 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
         <HStack>
           {/* Search box */}
           <InputGroup>
+            <InputLeftAddon p={2} m={"8px 0px 8px 8px"} backgroundColor={intelligenceColor}>
+              <HiOutlineSparkles size="20px" color={"white"} />
+            </InputLeftAddon>
             <Input
               ref={initialRef}
-              placeholder="Asset or Command..."
+              placeholder="Asset, Command, or ask SAGE Intellingence"
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              m={2}
-              p={2}
+              p={2} m={"8px 0px 8px 0px"}
               focusBorderColor="gray.500"
+              _focusVisible={{ borderColor: 'gray.500' }}
+              boxSizing="border-box"
               fontSize="xl"
               onChange={handleChange}
               onKeyDown={onSubmit}
@@ -514,7 +589,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
           {/* Help box */}
           <Popover trigger="hover">
             <PopoverTrigger>
-              <Button m={2} p={2}>
+              <Button p={0} m={"8px 8px 8px 0px"}>
                 <MdInfoOutline fontSize={'18px'} />
               </Button>
             </PopoverTrigger>
@@ -569,7 +644,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             </PopoverContent>
           </Popover>
         </HStack>
-        <VStack m={1} p={1} overflowY={'auto'} ref={listRef}>
+        <VStack m={"0px 4px 4px 6px"} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
           {buttonList}
         </VStack>
       </ModalContent>

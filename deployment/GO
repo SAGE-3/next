@@ -33,7 +33,7 @@ function cleanup() {
 
 if [ $# -eq 0 ]; then
 	echo "Docker Run"
-	$CMD $modules  up --remove-orphans
+	$CMD $modules up -d --remove-orphans
 else
 	if [ $1 = "stop" ]; then
 		echo "Docker Stop"

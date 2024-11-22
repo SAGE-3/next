@@ -19,22 +19,22 @@ class SmartBitFactory:
 
     # TODO: read these names from some conf file; not hardcoded here
     class_names = {
-        "Counter": "counter",
-        "Note": "note",
-        "Stickie": "stickie",
-        "DataTable": "data_table",
-        "CSVViewer": "csvviewer",
-        "SageCell": "sagecell",
-        "VegaLite": "vegalite",
-        "PDFViewer": "pdfviewer",
-        "VegaLiteViewer": "vegaliteviewer",
-        "ImageViewer": "imageviewer",
         "Chat": "chat",
-        "MapGL": "mapgl",
-        "webview": "webview",
-        "VideoViewer": "videoviewer",
+        "CodeEditor": "codeeditor",
+        "Counter": "counter",
+        "CSVViewer": "csvviewer",
+        "GLTFViewer": "gltfviewer",
         "IFrame": "iframe",
-        "Seer": "seer",
+        "ImageViewer": "imageviewer",
+        "MapGL": "mapgl",
+        "Notepad": "note",
+        "PDFViewer": "pdfviewer",
+        "SageCell": "sagecell",
+        "Stickie": "stickie",
+        "VegaLite": "vegalite",
+        "VegaLiteViewer": "vegaliteviewer",
+        "VideoViewer": "videoviewer",
+        "Webview": "webview",
     }
 
     @classmethod
