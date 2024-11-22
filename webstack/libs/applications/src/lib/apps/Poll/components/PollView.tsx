@@ -8,7 +8,7 @@
 
 import React, { useState } from 'react';
 import { Box, Button, Divider, IconButton, Input, Progress, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
-import { MdAdd, MdEdit, MdRemove, MdSave, MdUndo } from 'react-icons/md';
+import { MdAdd, MdEdit, MdRemove, MdSave } from 'react-icons/md';
 
 import { PollOption } from '../index';
 import { ConfirmModal, useAppStore } from '@sage3/frontend';
