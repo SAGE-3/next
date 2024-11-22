@@ -59,7 +59,7 @@ jobs:
 
 
   build-and-push-arm:
-    runs-on: macos-14
+    runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - name: Checkout
