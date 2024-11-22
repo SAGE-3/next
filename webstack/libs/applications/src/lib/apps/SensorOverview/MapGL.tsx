@@ -420,20 +420,55 @@ const MapGL = (
             updateState(props._id, { stationNames: updatedStations });
           });
 
+          // Add tooltip
+          const tooltip = document.createElement('div');
+          tooltip.style.position = 'absolute';
+          tooltip.style.backgroundColor = 'white';
+          tooltip.style.border = '2px solid black';
+          tooltip.style.borderRadius = '8px';
+          tooltip.style.padding = '5px';
+          tooltip.style.pointerEvents = 'none';
+          tooltip.style.display = 'none';
+          tooltip.style.zIndex = '999999';
+          tooltip.style.color = 'black';
+          document.body.appendChild(tooltip);
+
+          const showTooltip = (e: any, data: any) => {
+            console.log(data);
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${e.clientX + 5}px`;
+            tooltip.style.top = `${e.clientY + 5}px`;
+            tooltip.innerHTML = `
+            <strong>Name:</strong> ${data.name} (${data.id})<br/>
+            <strong>Coordinates:</strong> [${data.lon.toFixed(1)}, ${data.lat.toFixed(1)}]<br/>
+            <strong>Elevation:</strong> ${data.elevation.toFixed(1)}
+          `;
+          };
+
+          const hideTooltip = () => {
+            tooltip.style.display = 'none';
+          };
+
           map.on('mouseenter', 'notSelectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            showTooltip(e.originalEvent, stationInfo);
           });
 
           map.on('mouseleave', 'notSelectedCircle', () => {
             map.getCanvas().style.cursor = '';
+            hideTooltip();
           });
 
           map.on('mouseenter', 'selectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            showTooltip(e.originalEvent, stationInfo);
           });
 
           map.on('mouseleave', 'selectedCircle', () => {
             map.getCanvas().style.cursor = '';
+            hideTooltip();
           });
         });
       }
