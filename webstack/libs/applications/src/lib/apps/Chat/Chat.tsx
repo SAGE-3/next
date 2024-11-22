@@ -1307,7 +1307,7 @@ function AppComponent(props: App): JSX.Element {
                                     },
                                   },
                                 }}
-                                style={{ userSelect: 'none', border: 'solid red 1px' }}
+                                style={{ userSelect: 'none' }}
                               >
                                 {message.response}
                               </Markdown>

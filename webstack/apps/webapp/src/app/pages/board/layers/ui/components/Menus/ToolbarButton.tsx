@@ -34,7 +34,7 @@ interface ToolbarButtonProps {
 
 export function ToolbarButton(props: ToolbarButtonProps) {
   const { onOpen, onClose, isOpen } = useDisclosure();
-  const bgColor = useHexColor(`${props.bgColor}.300`);
+  const bgColor = useHexColor(`${props.bgColor}.200`);
 
   const handleClick = () => {
     isOpen ? onClose() : onOpen();
