@@ -13,20 +13,13 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
   Textarea,
   Tooltip,
   useColorModeValue,
   useToast,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu, MdStickyNote2 } from 'react-icons/md';
-
-// Debounce updates to the textarea
-// import { debounce } from 'throttle-debounce';
+import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdStickyNote2 } from 'react-icons/md';
 
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
