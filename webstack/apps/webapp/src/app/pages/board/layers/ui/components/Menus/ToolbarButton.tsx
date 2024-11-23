@@ -34,7 +34,7 @@ interface ToolbarButtonProps {
 
 export function ToolbarButton(props: ToolbarButtonProps) {
   const { onOpen, onClose, isOpen } = useDisclosure();
-  const bgColor = useHexColor(props.bgColor);
+  const bgColor = useHexColor(`${props.bgColor}.200`);
 
   const handleClick = () => {
     isOpen ? onClose() : onOpen();
@@ -43,8 +43,8 @@ export function ToolbarButton(props: ToolbarButtonProps) {
   return (
     <Popover
       offset={props.offset ? props.offset : undefined}
-      onOpen={props.stayActive ? () => { } : onOpen}
-      onClose={props.stayActive ? () => { } : onClose}
+      onOpen={props.stayActive ? () => {} : onOpen}
+      onClose={props.stayActive ? () => {} : onClose}
       isOpen={isOpen}
     >
       <Tooltip label={props.tooltip} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
