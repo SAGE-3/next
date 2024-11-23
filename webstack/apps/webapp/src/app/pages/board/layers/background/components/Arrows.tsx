@@ -55,7 +55,7 @@ export function Arrows() {
             left: 0,
             top: 0,
             cursor: 'crosshair',
-            zIndex: 1000,
+            zIndex: 0,
           }}
         >
           {/* All arrows */}
