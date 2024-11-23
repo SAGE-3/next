@@ -9,7 +9,6 @@
 // React Imports
 import { useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 // Library imports
 import {
@@ -47,7 +46,6 @@ import {
   serverTime,
   useUser,
   YjsRoomConnection,
-  setupApp,
 } from '@sage3/frontend';
 
 import { App } from '../../schema';
@@ -80,12 +78,16 @@ const languageExtensions = [
 
 interface CodeStore {
   editor: { [key: string]: editor.IStandaloneCodeEditor };
+  preview: { [key: string]: boolean };
   setEditor: (id: string, r: editor.IStandaloneCodeEditor) => void;
+  setPreview: (id: string, b: boolean) => void;
 }
 
 const useStore = create<CodeStore>()((set) => ({
-  editor: {} as { [key: string]: editor.IStandaloneCodeEditor },
+  editor: {},
+  preview: {},
   setEditor: (id: string, editor: editor.IStandaloneCodeEditor) => set((s) => ({ ...s, editor: { ...s.editor, ...{ [id]: editor } } })),
+  setPreview: (id: string, b: boolean) => set((s) => ({ ...s, preview: { ...s.preview, ...{ [id]: b } } })),
 }));
 
 /* App component for CodeEditor */
@@ -99,10 +101,16 @@ function AppComponent(props: App): JSX.Element {
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
+  // Mardown colors
+  const mdText = useColorModeValue('black', 'white');
+  const mdBg = useColorModeValue('white', 'black');
 
   // Monaco Editor Ref
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const { setEditor } = useStore();
+
+  // Local store
+  const preview = useStore((state) => state.preview[props._id]);
+  const setEditor = useStore((state) => state.setEditor);
 
   // Use Yjs
   const { yApps } = useYjs();
@@ -177,7 +185,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={MdCode}>
       <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
-        <Editor
+        {!preview ? <Editor
           // value={spec}
           onChange={handleTextChange}
           onMount={handleMount}
@@ -214,7 +222,162 @@ function AppComponent(props: App): JSX.Element {
               arrowSize: 30,
             },
           }}
-        />
+        /> :
+          <Box bg={mdBg} p={2} rounded={"md"} height="100%">
+            <Markdown
+              options={{
+                overrides: {
+                  a: {
+                    component: 'a',
+                    props: {
+                      onClick: (e: any) => {
+                        e.preventDefault();
+                        window.open(e.target.href, '_blank');
+                      },
+                      style: {
+                        color: '#555',
+                        textDecoration: 'underline',
+                      },
+                    },
+                  },
+                  h1: {
+                    component: 'h1',
+                    props: {
+                      style: {
+                        fontSize: '1.5em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  h2: {
+                    component: 'h2',
+                    props: {
+                      style: {
+                        fontSize: '1.3em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  h3: {
+                    component: 'h3',
+                    props: {
+                      style: {
+                        fontSize: '1.1em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  h4: {
+                    component: 'h4',
+                    props: {
+                      style: {
+                        fontSize: '1em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  h5: {
+                    component: 'h5',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  h6: {
+                    component: 'h6',
+                    props: {
+                      style: {
+                        fontSize: '0.8em',
+                        fontWeight: 'bold',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  p: {
+                    component: 'p',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  li: {
+                    component: 'li',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        display: 'list-item',
+                        margin: '1em',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  ul: {
+                    component: 'ul',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  ol: {
+                    component: 'ol',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        listStyleType: 'decimal',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  blockquote: {
+                    component: 'blockquote',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        borderLeft: '0.2em solid #008080',
+                        paddingLeft: '0.5em',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  code: {
+                    component: 'code',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        padding: '0.2em',
+                        fontFamily: 'monospace',
+                        color: mdText,
+                      },
+                    },
+                  },
+                  del: {
+                    component: 'del',
+                    props: {
+                      style: {
+                        fontSize: '0.9em',
+                        textDecoration: 'line-through',
+                        color: mdText,
+                      },
+                    },
+                  },
+                },
+              }}
+            >
+              {s.content}
+            </Markdown>
+          </Box>
+        }
       </Box>
     </AppWindow>
   );
@@ -236,6 +399,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Editor in Store
   // const editor = useStore((state) => state.editor[props._id] as editor.IStandaloneCodeEditor);
+  const preview = useStore((state) => state.preview[props._id]);
+  const setPreview = useStore((state) => state.setPreview);
 
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
@@ -263,18 +428,19 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Preview the markdown
   const previewMD = (): void => {
-    if (!roomId || !boardId) return;
-    // Create a new app with the markdown
-    const elt = <Markdown>{s.content}</Markdown>;
-    const htmlResult = renderToStaticMarkup(elt);
-    const w = props.data.size.width;
-    const h = props.data.size.height;
-    const x = props.data.position.x + w + 20;
-    const y = props.data.position.y;
-    createApp(
-      setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
-    );
+    setPreview(props._id, !preview);
 
+    // if (!roomId || !boardId) return;
+    // // Create a new app with the markdown
+    // const elt = <Markdown>{s.content}</Markdown>;
+    // const htmlResult = renderToStaticMarkup(elt);
+    // const w = props.data.size.width;
+    // const h = props.data.size.height;
+    // const x = props.data.position.x + w + 20;
+    // const y = props.data.position.y;
+    // createApp(
+    //   setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
+    // );
   };
 
   // Save the code in the asset manager
