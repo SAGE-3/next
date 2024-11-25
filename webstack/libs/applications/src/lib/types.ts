@@ -9,6 +9,7 @@ import { state as ChatState, name as ChatName } from './apps/Chat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
+import { state as CollabBrowserState, name as CollabBrowserName } from './apps/CollabBrowser';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as EChartsViewerState, name as EChartsViewerName } from './apps/EChartsViewer';
@@ -51,6 +52,7 @@ export type AppState =
   | ClockState
   | CobrowseState
   | CodeEditorState
+  | CollabBrowserState
   | CounterState
   | DeepZoomImageState
   | EChartsViewerState
@@ -81,5 +83,42 @@ export type AppState =
   | WebpageLinkState
   | WebviewState;
 
-
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AIPaneName 
+| typeof BoardLinkName 
+| typeof CSVViewerName 
+| typeof CalculatorName 
+| typeof ChartGeneratorName 
+| typeof ChatName 
+| typeof ClockName 
+| typeof CobrowseName 
+| typeof CodeEditorName 
+| typeof CounterName 
+| typeof CollabBrowserName 
+| typeof DeepZoomImageName 
+| typeof EChartsViewerName 
+| typeof GLTFViewerName 
+| typeof HCDPName 
+| typeof IFrameName 
+| typeof ImageViewerName 
+| typeof JupyterLabName 
+| typeof LeafLetName 
+| typeof LinkerName 
+| typeof MapGLName 
+| typeof NotepadName 
+| typeof PDFResultName 
+| typeof PDFViewerName 
+| typeof PluginAppName 
+| typeof PollName 
+| typeof RTCChatName 
+| typeof SageCellName 
+| typeof SeerName 
+| typeof SensorOverviewName 
+| typeof StickieName 
+| typeof TLDrawName 
+| typeof TimerName 
+| typeof TwilioScreenshareName 
+| typeof VegaLiteName 
+| typeof VegaLiteViewerName 
+| typeof VideoViewerName 
+| typeof WebpageLinkName 
+| typeof WebviewName;
