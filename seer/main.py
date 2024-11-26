@@ -9,6 +9,8 @@ from libs.localtypes import (
     PDFQuery,
     CodeRequest,
     WebScreenshot,
+    ExportQueryType,
+    ExportReturnType
 )
 
 # Web API
@@ -35,7 +37,7 @@ from app.web import WebAgent
 from app.image import ImageAgent
 from app.pdf import PDFAgent
 from app.code import CodeAgent
-
+from app.exportAgent import ExportAgent
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
@@ -44,6 +46,7 @@ summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
+export_agent = ExportAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
 
 # set to debug the queries into langchain
@@ -160,6 +163,27 @@ async def webshot(qq: WebScreenshot):
         # Get the error message
         text = e.detail
         raise HTTPException(status_code=500, detail=text)
+    
+
+# @app.post("/export/room")
+# async def export_room(qq: ExportQueryType):
+#     try:
+#         data = await export_agent.export_room_data(qq)
+#         return data
+#     except HTTPException as e:
+#         # Get the error message
+#         text = e.detail
+#         raise HTTPException(status_code=500, detail=text)
+
+# @app.post("/export/board")
+# async def export_room(qq: ExportQueryType):
+#     try:
+#         data = await export_agent.export_room_data(qq)
+#         return data
+#     except HTTPException as e:
+#         # Get the error message
+#         text = e.detail
+#         raise HTTPException(status_code=500, detail=text)
 
 
 if __name__ == "__main__":

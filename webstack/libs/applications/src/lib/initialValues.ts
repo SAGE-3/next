@@ -12,6 +12,7 @@ import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEd
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
+import { name as ExportBoardName, init as defaultExportBoard } from './apps/ExportBoard';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
 import { name as IFrameName, init as defaultIFrame } from './apps/IFrame';
@@ -52,6 +53,7 @@ export const initialValues = {
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [EChartsViewerName]: defaultEChartsViewer,
+  [ExportBoardName]: defaultExportBoard,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
   [IFrameName]: defaultIFrame,

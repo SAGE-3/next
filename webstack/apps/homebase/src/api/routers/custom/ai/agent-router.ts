@@ -23,6 +23,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  ExportQueryType,
+  ExportReturnType,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -82,6 +84,14 @@ const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
   const route = AgentRoutes.pdf;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const exportRoomHandler: RpcHandlerPost<ExportQueryType, ExportReturnType> = (req) => {
+  const route = AgentRoutes.exportRoom;
+  return fetchPost(`${config.agents.url}${route}`, req)
+};
+const exportBoardHandler: RpcHandlerPost<ExportQueryType, ExportReturnType> = (req) => {
+  const route = AgentRoutes.exportBoard;
+  return fetchPost(`${config.agents.url}${route}`, req)
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -93,6 +103,8 @@ handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
+handlers[AgentRoutes.exportRoom] = { func: exportRoomHandler, method: 'POST' };
+handlers[AgentRoutes.exportBoard] = { func: exportBoardHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

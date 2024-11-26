@@ -106,3 +106,14 @@ class WebScreenshotAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
+
+class ExportQueryType(BaseModel):
+    ctx: Context
+    room_id: str 
+    board_id: str
+    model: str
+
+class ExportReturnType(BaseModel):
+    data: str
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed

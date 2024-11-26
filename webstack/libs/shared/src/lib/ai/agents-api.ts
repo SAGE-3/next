@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { string } from "zod";
+
 // Base Types
 export type SError = {
   message: string;
@@ -105,6 +107,20 @@ export type CodeResponse = {
   actions?: any[];
 };
 
+// Export Type
+export type ExportQueryType = {
+  ctx?:{ previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  room_id: string;
+  board_id: string;
+  model?: string;
+};
+
+export type ExportReturnType = {
+  data: string;
+  sucess: boolean;
+  actions?: any[];
+};
+
 // Agent routes
 export const AgentRoutes = {
   status: '/status',
@@ -115,4 +131,6 @@ export const AgentRoutes = {
   image: '/image',
   pdf: '/pdf',
   code: '/code',
+  exportRoom: '/export/room',
+  exportBoard: "/export/board"
 } as const;

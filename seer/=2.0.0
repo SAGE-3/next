@@ -1,0 +1,40 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting git+https://github.com/SAGE-3/next.git@dev-ai2#subdirectory=foresight (from -r requirements.txt (line 17))
+  Cloning https://github.com/SAGE-3/next.git (to revision dev-ai2) to /tmp/pip-req-build-t7g3f6mh
+  Resolved https://github.com/SAGE-3/next.git to commit b6eb5217023f1d2b5aafd49a05228531c7245db0
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: pydantic in /home/sshrxt/.local/lib/python3.10/site-packages (2.9.2)
+Collecting langchain-nvidia-ai-endpoints==0.2.0
+  Downloading langchain_nvidia_ai_endpoints-0.2.0-py3-none-any.whl.metadata (9.4 kB)
+Collecting langchain_openai==0.1.25
+  Downloading langchain_openai-0.1.25-py3-none-any.whl.metadata (2.6 kB)
+Requirement already satisfied: httpx in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 2)) (0.27.2)
+Requirement already satisfied: rectpack in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 3)) (0.2.2)
+Requirement already satisfied: networkx in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 4)) (3.4.2)
+Requirement already satisfied: graphviz in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 5)) (0.20.3)
+Requirement already satisfied: websocket-client in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 7)) (1.8.0)
+Requirement already satisfied: redis in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 8)) (5.2.0)
+Requirement already satisfied: requests in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 9)) (2.32.3)
+Requirement already satisfied: ws4py in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 10)) (0.5.1)
+Requirement already satisfied: celery~=5.2.2 in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 11)) (5.2.7)
+Requirement already satisfied: numpy>=1.22.2 in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 13)) (1.26.3)
+Requirement already satisfied: urllib3>=2.2.2 in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 14)) (2.2.3)
+Requirement already satisfied: python-dotenv in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 18)) (1.0.1)
+Requirement already satisfied: fastapi==0.111.0 in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 21)) (0.111.0)
+Requirement already satisfied: fastapi-cli in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 22)) (0.0.5)
+Requirement already satisfied: uvicorn in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 23)) (0.27.0.post1)
+Requirement already satisfied: langchain_huggingface==0.1.0 in /home/sshrxt/.local/lib/python3.10/site-packages (from -r requirements.txt (line 29)) (0.1.0)
+
+The conflict is caused by:
+    The user requested langchain-nvidia-ai-endpoints==0.2.0
+    The user requested langchain-nvidia-ai-endpoints==0.3.3
+
+To fix this you could try to:
+1. loosen the range of package versions you've specified
+2. remove package versions to allow pip to attempt to solve the dependency conflict
+

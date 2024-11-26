@@ -13,6 +13,7 @@ import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
+import { name as ExportBoardName } from './apps/ExportBoard';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
@@ -53,6 +54,7 @@ import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
+import ExportBoard from './apps/ExportBoard/ExportBoard';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
@@ -95,6 +97,7 @@ export const Applications = {
   [CounterName]: { AppComponent: React.memo(Counter.AppComponent), ToolbarComponent: Counter.ToolbarComponent, GroupedToolbarComponent: Counter.GroupedToolbarComponent },
   [DeepZoomImageName]: { AppComponent: React.memo(DeepZoomImage.AppComponent), ToolbarComponent: DeepZoomImage.ToolbarComponent, GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent },
   [EChartsViewerName]: { AppComponent: React.memo(EChartsViewer.AppComponent), ToolbarComponent: EChartsViewer.ToolbarComponent, GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent },
+  [ExportBoardName]: { AppComponent: React.memo(ExportBoard.AppComponent), ToolbarComponent: ExportBoard.ToolbarComponent, GroupedToolbarComponent: ExportBoard.GroupedToolbarComponent },
   [GLTFViewerName]: { AppComponent: React.memo(GLTFViewer.AppComponent), ToolbarComponent: GLTFViewer.ToolbarComponent, GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent },
   [HCDPName]: { AppComponent: React.memo(HCDP.AppComponent), ToolbarComponent: HCDP.ToolbarComponent, GroupedToolbarComponent: HCDP.GroupedToolbarComponent },
   [IFrameName]: { AppComponent: React.memo(IFrame.AppComponent), ToolbarComponent: IFrame.ToolbarComponent, GroupedToolbarComponent: IFrame.GroupedToolbarComponent },
