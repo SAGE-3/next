@@ -321,11 +321,11 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
             } else {
               el.innerHTML = `<div style="position: relative; ">
               <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%;  transform: scale(${Math.min(
-                Math.max(s.stationScale / scale - 3.5, 1),
+                Math.max(s.stationScale / scale - 3.5, 2),
                 5.5
-              )}); background-color: rgb(200,200,200); width: 20px; height: 20px; color: white; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
+              )}); background-color: rgb(200,200,200); width: 20px; height: 20px; color: black; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
               <p  style="font-size:7px; font-weight: bold; text-align: center">
-              null</p>
+              -</p>
               </div>
               </div>`;
             }
