@@ -936,11 +936,11 @@ function AppComponent(props: App): JSX.Element {
  */
   // Array of prompts for PDFs
   const pdfPrompts = [
-    { title: 'Generate Summary', action: onContentPDF, prompt: 'Read the PDF files and provide a short summary.' },
-    { title: 'List Contribution', action: onContentPDF, prompt: 'What are the contributions of these papers.' },
-    { title: 'List Related Works', action: onContentPDF, prompt: 'Find the most related publications to these papers, in the text or the bibliography sections.' },
-    { title: 'List Methods', action: onContentPDF, prompt: 'What are the scientific methods, techniques and processes used in these papers.' },
-    { title: 'Explain implications', action: onContentPDF, prompt: 'Explain the practical implications of these papers.' },
+    { title: 'Generate Summary', action: onContentPDF, prompt: 'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.' },
+    { title: 'Gaps and Limitations', action: onContentPDF, prompt: 'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.' },
+    { title: 'Literature and References', action: onContentPDF, prompt: 'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.' },
+    { title: 'Methodology Analysis', action: onContentPDF, prompt: 'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.' },
+    { title: 'Explain implications', action: onContentPDF, prompt: 'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.' },
   ];
 
 
