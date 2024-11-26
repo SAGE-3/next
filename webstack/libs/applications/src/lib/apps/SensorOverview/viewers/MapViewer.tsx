@@ -325,7 +325,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
                 5.5
               )}); background-color: rgb(200,200,200); width: 20px; height: 20px; color: black; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
               <p  style="font-size:7px; font-weight: bold; text-align: center">
-              null</p>
+              -</p>
               </div>
               </div>`;
             }
