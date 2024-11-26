@@ -184,7 +184,6 @@ const createXAxis = (
       min: 'dataMin',
     };
   } else {
-    console.log('XAxisData: ', xAxisData);
     options.xAxis = {
       data: xAxisData,
       name: xAxisAttributes[0],

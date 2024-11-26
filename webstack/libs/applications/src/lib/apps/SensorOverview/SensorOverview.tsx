@@ -212,7 +212,6 @@ function AppComponent(props: App): JSX.Element {
     if (sensor) {
       const sensorData = sensor['STATION'];
       tmpStationMetadata = sensorData;
-      console.log(sensorData);
     }
     const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
     availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
@@ -440,7 +439,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
-                    <Box id={'container' + props._id} width={props.data.size.width} height={props.data.size.height}>
+                    <Box id={'container' + props._id} width={props.data.size.width - 30} height={props.data.size.height - 78}>
                       <MapViewer {...props} isSelectingStations={false} isLoaded={isLoaded} stationMetadata={stationMetadata} />
                     </Box>
                   </>
@@ -493,6 +492,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const accentColor: string = useColorModeValue('#DFDFDF', '#424242');
 
   const stationNameRef = useRef<any>(s.stationNames);
+  const toolbarStationData = useRef<any>(stationData);
 
   useEffect(() => {
     if (selectedDates.length === 2) {
@@ -581,7 +581,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const isFirstTime = isSortedOn.name !== attributeName || isSortedOn.direction === 'ascending';
     const isSecondTime = isSortedOn.name === attributeName && isSortedOn.direction === 'descending';
     if (isFirstTime) {
-      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
+      const tmpStationMetadata = toolbarStationData.current.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
             if (s.stationNames.includes(a['STID'])) {
@@ -596,10 +596,10 @@ function ToolbarComponent(props: App): JSX.Element {
           return Number(a[attributeName]) > Number(b[attributeName]) ? 1 : -1;
         }
       });
-      setStationMetadata(tmpStationMetadata);
+      toolbarStationData.current = tmpStationMetadata;
       setIsSortedOn({ name: attributeName, direction: 'descending' });
     } else if (isSecondTime) {
-      const tmpStationMetadata = stationMetadata.sort((a: any, b: any) => {
+      const tmpStationMetadata = toolbarStationData.current.sort((a: any, b: any) => {
         if (isNaN(a[attributeName])) {
           if (attributeName === 'SELECTED') {
             if (s.stationNames.includes(a['STID'])) {
@@ -614,33 +614,32 @@ function ToolbarComponent(props: App): JSX.Element {
           return Number(a[attributeName]) < Number(b[attributeName]) ? 1 : -1;
         }
       });
-      setStationMetadata(tmpStationMetadata);
+      toolbarStationData.current = tmpStationMetadata;
       setIsSortedOn({ name: attributeName, direction: 'ascending' });
     }
   };
 
   const tableRows = [
-    { propName: 'SELECTED', name: 'Selected' },
-
-    { propName: 'NAME', name: 'Station Name' },
-    { propName: 'COUNTY', name: 'County Name' },
-    { propName: 'ELEVATION', name: 'Elevation' },
-    { propName: 'LATITUDE', name: 'Latitude' },
-    { propName: 'LONGITUDE', name: 'Longitude' },
+    { propName: 'selected', name: 'Selected' },
+    { propName: 'ID', name: 'ID' },
+    { propName: 'name', name: 'Station Name' },
+    { propName: 'county', name: 'County Name' },
+    { propName: 'elevation', name: 'Elevation' },
+    { propName: 'lat', name: 'Latitude' },
+    { propName: 'lon', name: 'Longitude' },
   ];
-
   const handleChangeSelectedStation = (e: React.ChangeEvent<HTMLInputElement>, stationSTID: string) => {
-    const tmpSelectedStations = s.stationNames;
+    let updatedStations;
+
     if (e.target.checked) {
-      tmpSelectedStations.push(stationSTID);
+      updatedStations = [...s.stationNames, stationSTID]; // Create a new array with the added station
     } else {
-      for (let i = 0; i < tmpSelectedStations.length; i++) {
-        if (tmpSelectedStations[i] === stationSTID) {
-          tmpSelectedStations.splice(i, 1);
-        }
-      }
+      updatedStations = s.stationNames.filter((name) => name !== stationSTID); // Create a new array without the removed station
     }
-    updateState(props._id, { stationNames: tmpSelectedStations });
+
+    // Update the state and the ref
+    updateState(props._id, { stationNames: updatedStations });
+    stationNameRef.current = updatedStations;
   };
 
   const handleChangeLiveData = (val: ChangeEvent<HTMLInputElement>) => {
@@ -683,9 +682,6 @@ function ToolbarComponent(props: App): JSX.Element {
                 </Heading>
               </Box>
               <Box overflowY="scroll" height="15rem" width="58rem">
-                {/* //MdKeyboardArrowUp
-                //MdArrowDropDown
-                //MdArrowDropUp */}
                 <table id="stationTable" style={{ width: '100%' }}>
                   {tableRows.map((row, index) => {
                     let icon = null;
@@ -697,22 +693,25 @@ function ToolbarComponent(props: App): JSX.Element {
                     }
 
                     switch (row.propName) {
-                      case 'SELECTED':
+                      case 'selected':
                         widthSize = '9%';
                         break;
-                      case 'NAME':
-                        widthSize = '21%';
+                      case 'ID':
+                        widthSize = '9%';
                         break;
-                      case 'COUNTY':
+                      case 'name':
+                        widthSize = '18%';
+                        break;
+                      case 'county':
                         widthSize = '20%';
                         break;
-                      case 'ELEVATION':
+                      case 'elevation':
                         widthSize = '10%';
                         break;
-                      case 'LATITUDE':
+                      case 'lat':
                         widthSize = '10%';
                         break;
-                      case 'LONGITUDE':
+                      case 'lon':
                         widthSize = '10%';
                         break;
                     }
@@ -724,28 +723,27 @@ function ToolbarComponent(props: App): JSX.Element {
                       </th>
                     );
                   })}
-                  {!isLoaded
-                    ? null
-                    : stationMetadata.map((station: any, index: number) => {
-                        const isSelected = s.stationNames.includes(station.STID);
-                        return (
-                          <tr key={index}>
-                            <td style={{ textAlign: 'center', width: '10px' }}>
-                              <Checkbox
-                                colorScheme="teal"
-                                isChecked={isSelected}
-                                onChange={(e) => handleChangeSelectedStation(e, station.STID)}
-                              />
-                            </td>
-                            <td>{station.NAME}</td>
-                            <td>{station.COUNTY}</td>
-                            <td style={{ textAlign: 'right' }}>{station.ELEVATION}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LATITUDE).toFixed(1)}</td>
-                            <td style={{ textAlign: 'right' }}>{Number(station.LONGITUDE).toFixed(1)}</td>
-                            {/* <td>variable</td> */}
-                          </tr>
-                        );
-                      })}
+                  {toolbarStationData.current.map((station: any, index: number) => {
+                    const isSelected = s.stationNames.includes(station.id);
+                    return (
+                      <tr key={index}>
+                        <td style={{ textAlign: 'center', width: '10px' }}>
+                          <Checkbox
+                            colorScheme="teal"
+                            isChecked={isSelected}
+                            onChange={(e) => handleChangeSelectedStation(e, station.id)}
+                          />
+                        </td>
+                        <td>{station.id}</td>
+                        <td>{station.name}</td>
+                        <td>{station.county}</td>
+                        <td style={{ textAlign: 'right' }}>{station.elevation}</td>
+                        <td style={{ textAlign: 'right' }}>{Number(station.lat).toFixed(1)}</td>
+                        <td style={{ textAlign: 'right' }}>{Number(station.lon).toFixed(1)}</td>
+                        {/* <td>variable</td> */}
+                      </tr>
+                    );
+                  })}
                 </table>
                 {!isLoaded ? (
                   <Box width="100%" height="100%" position="relative">
@@ -988,263 +986,365 @@ function findDuplicateElementsInArray(...arrays: any) {
   return duplicates;
 }
 
-// For now, this is hard-coded. Will change when HCDP is ready.
-export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
+export const stationData: { id: string; name: string; lat: number; lon: number; county: string; elevation: number; selected: boolean }[] = [
   {
-    lat: 20.8415,
-    lon: -156.2948,
-    name: '017HI',
-    selected: false,
-  },
-  {
-    lat: 20.7067,
-    lon: -156.3554,
-    name: '016HI',
-    selected: false,
-  },
-  {
-    lat: 20.79532,
-    lon: -156.35991,
-    name: '042HI',
-    selected: false,
-  },
-  {
+    id: '001HI',
+    name: 'Kula Ag',
+    elevation: 3163.0,
     lat: 20.7579,
     lon: -156.32,
-    name: '001HI',
+    county: 'Maui',
     selected: false,
   },
   {
-    lat: 20.7458,
-    lon: -156.4306,
-    name: '039HI',
-    selected: false,
-  },
-  {
-    lat: 20.89072,
-    lon: -156.65493,
-    name: '036HI',
-    selected: false,
-  },
-  // {
-  //   lat: 20.64422,
-  //   lon: -156.342056,
-  //   name: '028HI',
-  //   selected: false, // this station has no observations
-  // },
-  {
-    lat: 20.63395,
-    lon: -156.27389,
-    name: '019HI',
-    selected: false,
-  },
-  {
-    lat: 20.644215,
-    lon: -156.284703,
-    name: '032HI',
-    selected: false,
-  },
-  {
+    id: '002HI',
+    name: 'Park HQ',
+    elevation: 6936.0,
     lat: 20.7598,
     lon: -156.2482,
-    name: '002HI',
-    selected: false,
-  },
-
-  {
-    lat: 20.7382,
-    lon: -156.2458,
-    name: '013HI',
+    county: 'Maui',
     selected: false,
   },
   {
+    id: '003HI',
+    name: 'Summit',
+    elevation: 9800.0,
     lat: 20.7104,
     lon: -156.2567,
-    name: '003HI',
+    county: 'Maui',
     selected: false,
   },
   {
-    lat: 20.7736,
-    lon: -156.2223,
-    name: '020HI',
+    id: '004HI',
+    name: 'Nahuku',
+    elevation: 3944.0,
+    lat: 19.4152,
+    lon: -155.2384,
+    county: 'Hawaii',
     selected: false,
   },
   {
-    lat: 20.7195,
-    lon: -156.00236,
-    name: '023HI',
-    selected: false,
-  },
-  {
-    lat: 19.415215,
-    lon: -155.238394,
-    name: '004HI',
-    selected: false,
-  },
-  {
-    lat: 19.6061748,
-    lon: -155.051523,
-    name: '033HI',
-    selected: false,
-  },
-  {
-    lat: 19.845036,
-    lon: -155.362586,
-    name: '022HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.7064,
-    lon: -155.1874,
-    name: '040HI',
-    selected: false,
-  },
-  {
-    lat: 19.1689,
-    lon: -155.5704,
-    name: '018HI',
-    selected: false,
-  },
-  {
-    lat: 19.6687,
-    lon: -155.9575,
-    name: '029HI',
-    selected: false,
-  },
-  {
-    lat: 19.77241,
-    lon: -155.83118,
-    name: '034HI',
-    selected: false,
-  },
-  {
-    lat: 19.2068247,
-    lon: -155.81098,
-    name: '035HI',
-    selected: false,
-  },
-  {
-    lat: 20.12283,
-    lon: -155.749328,
-    name: '025HI',
-    selected: false,
-  },
-
-  {
-    lat: 20.019528,
-    lon: -155.677085,
-    name: '027HI',
-    selected: false,
-  },
-  {
+    id: '005HI',
+    name: 'IPIF',
+    elevation: 367.0,
     lat: 19.6974,
     lon: -155.0954,
-    name: '005HI',
+    county: 'Hawaii',
     selected: false,
   },
   {
+    id: '006HI',
+    name: 'Spencer',
+    elevation: 1539.0,
     lat: 19.964,
     lon: -155.25,
-    name: '006HI',
+    county: 'Hawaii',
     selected: false,
   },
   {
+    id: '007HI',
+    name: 'Laupahoehoe',
+    elevation: 3776.0,
     lat: 19.932,
     lon: -155.291,
-    name: '007HI',
+    county: 'Hawaii',
     selected: false,
   },
   {
+    id: '008HI',
+    name: 'Palamamnui',
+    elevation: 869.0,
     lat: 19.748,
     lon: -155.996,
-    name: '008HI',
+    county: 'Hawaii',
     selected: false,
   },
   {
+    id: '009HI',
+    name: 'Mamalahoa',
+    elevation: 1978.0,
     lat: 19.803,
     lon: -155.851,
-    name: '009HI',
+    county: 'Hawaii',
     selected: false,
   },
   {
-    lat: 19.73,
-    lon: -155.87,
-    name: '010HI',
+    id: '010HI',
+    name: 'PuuWaawaa',
+    elevation: 5427.0,
+    lat: 19.7254,
+    lon: -155.8738,
+    county: 'Hawaii',
     selected: false,
   },
   {
-    lat: 21.145283,
-    lon: -156.729459,
-    name: '030HI',
-    selected: false,
-  },
-  {
-    lat: 21.131411,
-    lon: -156.758628,
-    name: '031HI',
-    selected: false,
-  },
-  {
+    id: '011HI',
+    name: 'Lyon',
+    elevation: 495.0,
     lat: 21.333,
     lon: -157.8025,
-    name: '011HI',
+    county: 'Honolulu',
     selected: false,
   },
   {
+    id: '012HI',
+    name: 'Nuuanu Res 1',
+    elevation: 384.0,
     lat: 21.3391,
     lon: -157.8369,
-    name: '012HI',
+    county: 'Honolulu',
     selected: false,
   },
   {
-    lat: 21.3467,
-    lon: -157.8364,
-    name: '037HI',
+    id: '013HI',
+    name: 'Nene Nest',
+    elevation: 8497.0,
+    lat: 20.7382,
+    lon: -156.2458,
+    county: 'Maui',
     selected: false,
   },
   {
-    lat: 21.3376,
-    lon: -157.8409,
-    name: '038HI',
-    selected: false,
-  },
-
-  {
-    lat: 21.506875,
-    lon: -158.145114,
-    name: '03HI',
-    selected: false,
-  },
-  {
-    lat: 21.506875,
-    lon: -158.145114,
-    name: '026HI',
-    selected: false,
-  },
-
-  {
+    id: '014HI',
+    name: 'Waipa',
+    elevation: 16.0,
     lat: 22.2026,
     lon: -159.5188,
-    name: '014HI',
+    county: 'Kauai',
     selected: false,
   },
   {
+    id: '015HI',
+    name: 'Common Ground',
+    elevation: 364.0,
     lat: 22.1975,
     lon: -159.421,
-    name: '015HI',
+    county: 'Kauai',
     selected: false,
   },
-
   {
+    id: '016HI',
+    name: 'Keokea',
+    elevation: 2858.0,
+    lat: 20.7067,
+    lon: -156.3554,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '017HI',
+    name: 'Piiholo',
+    elevation: 2090.0,
+    lat: 20.8415,
+    lon: -156.2948,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '018HI',
+    name: 'Kaiholena',
+    elevation: 2070.0,
+    lat: 19.1689,
+    lon: -155.5704,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '019HI',
+    name: 'Kahikinui',
+    elevation: 2339.0,
+    lat: 20.6339,
+    lon: -156.2739,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '020HI',
+    name: 'Waikamoi',
+    elevation: 6348.0,
+    lat: 20.7736,
+    lon: -156.2223,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '021HI',
+    name: 'Kulaimano',
+    elevation: 853.0,
+    lat: 19.8343,
+    lon: -155.1224,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '022HI',
+    name: 'Kanakaleonui',
+    elevation: 7715.0,
+    lat: 19.845,
+    lon: -155.3626,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '023HI',
+    name: 'Hamoa',
+    elevation: 347.0,
+    lat: 20.7195,
+    lon: -156.0024,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '024HI',
+    name: 'Lower Limahuli',
+    elevation: 102.0,
     lat: 22.2198,
-    lon: -159.57525,
-    name: '024HI',
+    lon: -159.5752,
+    county: 'Kauai',
+    selected: false,
+  },
+  {
+    id: '025HI',
+    name: 'Kehena Ditch Cabin',
+    elevation: 3799.0,
+    lat: 20.1228,
+    lon: -155.7493,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '026HI',
+    name: 'Kaala',
+    elevation: 3950.0,
+    lat: 21.5069,
+    lon: -158.1451,
+    county: 'Honolulu',
+    selected: false,
+  },
+  {
+    id: '027HI',
+    name: 'Lalamilo',
+    elevation: 2631.0,
+    lat: 20.0195,
+    lon: -155.6771,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '029HI',
+    name: 'Keahuolu',
+    elevation: 1761.0,
+    lat: 19.6687,
+    lon: -155.9575,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '030HI',
+    name: 'Keopukaloa',
+    elevation: 614.0,
+    lat: 21.1453,
+    lon: -156.7295,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '031HI',
+    name: 'Honolimaloo',
+    elevation: 1319.0,
+    lat: 21.1314,
+    lon: -156.7586,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '032HI',
+    name: 'Upper Kahikinui',
+    elevation: 3392.0,
+    lat: 20.6442,
+    lon: -156.2847,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '033HI',
+    name: 'Keaau',
+    elevation: 597.0,
+    lat: 19.6062,
+    lon: -155.0515,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '034HI',
+    name: 'Kaiaulu Puu Waawaa',
+    elevation: 3809.0,
+    lat: 19.7724,
+    lon: -155.8312,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '035HI',
+    name: 'Kona Hema',
+    elevation: 4209.0,
+    lat: 19.2068,
+    lon: -155.811,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '036HI',
+    name: 'Lahaina WTP',
+    elevation: 801.0,
+    lat: 20.8907,
+    lon: -156.6549,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '037HI',
+    name: 'Upper Waiolani',
+    elevation: 663.0,
+    lat: 21.3467,
+    lon: -157.8364,
+    county: 'Honolulu',
+    selected: false,
+  },
+  {
+    id: '038HI',
+    name: 'Waiolani',
+    elevation: 322.0,
+    lat: 21.3376,
+    lon: -157.8409,
+    county: 'Honolulu',
+    selected: false,
+  },
+  {
+    id: '039HI',
+    name: 'Lipoa',
+    elevation: 289.0,
+    lat: 20.7458,
+    lon: -156.4306,
+    county: 'Maui',
+    selected: false,
+  },
+  {
+    id: '040HI',
+    name: 'Piihonua',
+    elevation: 1988.0,
+    lat: 19.7064,
+    lon: -155.1874,
+    county: 'Hawaii',
+    selected: false,
+  },
+  {
+    id: '042HI',
+    name: 'Pulehu',
+    elevation: 1401.0,
+    lat: 20.7953,
+    lon: -156.3599,
+    county: 'Maui',
     selected: false,
   },
 ];
