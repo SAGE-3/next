@@ -503,7 +503,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('is pdf');
     console.log('sources', s.sources);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
@@ -935,9 +934,15 @@ function AppComponent(props: App): JSX.Element {
       Future works suggested in this paper
       Find Related Papers
  */
-  const onPDFSummary = async () => {
-    return onContentPDF('Read the PDF file and provide a short summary.');
-  };
+  // Array of prompts for PDFs
+  const pdfPrompts = [
+    { title: 'Generate Summary', action: onContentPDF, prompt: 'Read the PDF files and provide a short summary.' },
+    { title: 'List Contribution', action: onContentPDF, prompt: 'What are the contributions of these papers.' },
+    { title: 'List Related Works', action: onContentPDF, prompt: 'Find the most related publications to these papers, in the text or the bibliography sections.' },
+    { title: 'List Methods', action: onContentPDF, prompt: 'What are the scientific methods, techniques and processes used in these papers.' },
+    { title: 'Explain implications', action: onContentPDF, prompt: 'Explain the practical implications of these papers.' },
+  ];
+
 
   const onCodeComment = async () => {
     if (!user) return;
@@ -1719,22 +1724,25 @@ function AppComponent(props: App): JSX.Element {
         )}
         {mode === 'pdf' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short summary for this PDF file'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onPDFSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Summary</Text>
-              </Button>
-            </Tooltip>
+            {pdfPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                </Button>
+              </Tooltip>
+            ))}
           </HStack>
         )}
         {mode === 'web' && (
