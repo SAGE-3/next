@@ -40,7 +40,7 @@ export function WindowBorder(props: WindowBorderProps) {
   const highight = props.isHighlight;
 
   // Calculate the outline width based on the scale, clamped between 4 and 16
-  const outlineWidth = Math.min(Math.max(Math.round(4 / props.scale), 4), 16);
+  const outlineWidth = Math.min(Math.max(Math.round(4 / props.scale), 3), 14);
 
   return (
     <Box
@@ -50,7 +50,8 @@ export function WindowBorder(props: WindowBorderProps) {
       width={size.width + borderWidth * 2}
       height={size.height + borderWidth * 2}
       borderRadius={borderRadius}
-      opacity={isGrouped || dragging ? 0.6 : 1}
+      // opacity={isGrouped || dragging ? 0.6 : 1}
+      opacity={0.8}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
       // background={selected || isGrouped || highight ? selectColor : borderColor}
       background={selected || highight ? selectColor : isGrouped ? 'none' : borderColor}
