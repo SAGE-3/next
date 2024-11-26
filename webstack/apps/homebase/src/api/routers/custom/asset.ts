@@ -107,9 +107,6 @@ export async function uploadHandler(req: express.Request, res: express.Response)
       }
     }
 
-    // Signal the end of the processing
-    await MessageCollection.add({ type: 'upload', payload: `Assets Ready`, close: true }, user.id);
-
     // Add all the new files to the collection
     const lots = await AssetsCollection.addBatch(newAssets, user.id);
     if (lots) {
@@ -117,6 +114,9 @@ export async function uploadHandler(req: express.Request, res: express.Response)
       const ids = lots.map((l) => l._id);
       newIds.push(...ids);
     }
+
+    // Signal the end of the processing
+    await MessageCollection.add({ type: 'upload', payload: `Assets Ready`, close: true }, user.id);
 
     if (hasError && processError) {
       // Return error with the information
