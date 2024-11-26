@@ -60,6 +60,18 @@ import { AppWindow } from '../../components';
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 import { dataTool } from 'echarts';
 
+const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ol style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ol>
+);
+
+const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ul style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ul>
+);
+
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
 
 // AI model information from the backend
@@ -1176,13 +1188,14 @@ function AppComponent(props: App): JSX.Element {
                         closeDelay={2000}
                       >
                         <Box
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           boxShadow="md"
                           fontFamily="arial"
                           textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           maxWidth="70%"
                           userSelect={'none'}
@@ -1251,11 +1264,12 @@ function AppComponent(props: App): JSX.Element {
                       >
                         <Box
                           boxShadow="md"
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           textAlign={'left'}
                           bg={sageColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           fontFamily="arial"
                           onDoubleClick={() => {
@@ -1274,7 +1288,7 @@ function AppComponent(props: App): JSX.Element {
                           }}
                         >
                           <Box
-                            pl={3}
+                            // pl={3}
                             draggable={true}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
@@ -1291,7 +1305,23 @@ function AppComponent(props: App): JSX.Element {
                               );
                             }}
                           >
-                            <Markdown style={{ textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            <Box>
+                              <Markdown
+                                options={{
+                                  overrides: {
+                                    ol: {
+                                      component: OrderedList,
+                                    },
+                                    ul: {
+                                      component: UnorderedList,
+                                    },
+                                  },
+                                }}
+                                style={{ userSelect: 'none' }}
+                              >
+                                {message.response}
+                              </Markdown>
+                            </Box>
                           </Box>
                         </Box>
                       </Tooltip>
