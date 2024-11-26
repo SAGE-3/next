@@ -54,9 +54,8 @@ jobs:
           context: "{{defaultContext}}:."
           platforms: linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/sage-3/agents:dev_amd64
+          tags: ${{ env.REGISTRY }}/sage-3/seer:dev_amd64
           labels: ${{ steps.meta.outputs.labels }}
-
 
   build-and-push-arm:
     runs-on: [self-hosted, macOS, ARM64]
@@ -104,5 +103,5 @@ jobs:
           context: "{{defaultContext}}:."
           platforms: linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/sage-3/agents:dev_arm64
+          tags: ${{ env.REGISTRY }}/sage-3/seer:dev_arm64
           labels: ${{ steps.meta.outputs.labels }}
