@@ -329,7 +329,7 @@ async function startServer() {
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
   // Serve the plugins folder
-  app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
+  app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { maxAge: '1d' }));
 
   // Handle termination
   function exitHandler() {

@@ -98,14 +98,14 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
   let timerKernels: number | null = null;
 
   const keepChecking = () => {
-    // 5 second interval
-    timerAPI = window.setInterval(checkKernelsStatus, 5000);
+    // 10 second interval
+    timerAPI = window.setInterval(checkKernelsStatus, 10000);
 
-    // 30 Second interval
+    // 30 second interval
     timerTypes = window.setInterval(fetchKernelTypes, 30000);
 
-    // 5 second interval
-    timerKernels = window.setInterval(fetchKernels, 5000);
+    // 10 second interval
+    timerKernels = window.setInterval(fetchKernels, 10000);
   };
 
   const stopChecking = () => {
