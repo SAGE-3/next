@@ -11,18 +11,6 @@ jobs:
   build-and-push-amd:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - dockerfile: deployment/node_server/Dockerfile
-            image: ghcr.io/sage-3/next
-          - dockerfile: deployment/seer/Dockerfile
-            image: ghcr.io/sage-3/seer
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,32 +34,31 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
 
       # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build and push Docker image for node
         uses: docker/build-push-action@v5
         with:
+          file: deployment/node_server/Dockerfile
           context: "{{defaultContext}}:."
-          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.REGISTRY }}/sage-3/next:dev_amd64
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image for seer
+        uses: docker/build-push-action@v5
+        with:
+          file: deployment/seer/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/agents:dev_amd64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
     runs-on: [self-hosted, macOS, ARM64]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - dockerfile: deployment/node_server/Dockerfile
-            image: ghcr.io/sage-3/next
-          - dockerfile: deployment/seer/Dockerfile
-            image: ghcr.io/sage-3/seer
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout
@@ -96,15 +83,25 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
 
       # https://github.com/docker/build-push-action
-      - name: Build and push Docker image
+      - name: Build and push Docker image for node
         uses: docker/build-push-action@v5
         with:
+          file: deployment/node_server/Dockerfile
           context: "{{defaultContext}}:."
-          file: ${{ matrix.dockerfile }}
           platforms: linux/arm64
           push: true
-          tags: dev_arm64
+          tags: ${{ env.REGISTRY }}/sage-3/next:dev_arm64
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image for seer
+        uses: docker/build-push-action@v5
+        with:
+          file: deployment/seer/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/agents:dev_arm64
           labels: ${{ steps.meta.outputs.labels }}
