@@ -58,6 +58,7 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { dataTool } from 'echarts';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -498,6 +499,12 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
+    console.log('is pdf');
+    console.log('sources', s.sources);
+
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+
     if (s.sources.length > 0) {
       // Update the context with the stickies
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
@@ -511,66 +518,69 @@ function AppComponent(props: App): JSX.Element {
             userId: user._id,
             creationId: '',
             creationDate: now.epoch,
-            userName: 'SAGE',
+            userName: name,
             query: prompt,
-            response: 'Working on it...',
+            response: isQuestion ? 'Working on it...' : '',
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          const assetid = apps[0].data.state.assetid;
-          // Build the query
-          const q: PDFQuery = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
-            },
-            q: prompt,
-            user: username,
-            asset: assetid,
-          };
-          setProcessing(true);
-          setActions([]);
-          // Invoke the agent
-          const response = await callPDF(q);
-          setProcessing(false);
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+            // Build the query
+            const q: PDFQuery = {
+              ctx: {
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
+              },
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callPDF(q);
+            setProcessing(false);
 
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(response.r);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
+            if ('message' in response) {
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(response.r);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: 'Describe the content',
+                previousA: response.r,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.r,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
             }
           }
         }

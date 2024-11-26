@@ -31,12 +31,16 @@ langchain-nvidia-ai-endpoints==0.3.3
 langchain_openai
 langchain_experimental
 langgraph
+langchain_chroma
 
 # Image
 Pillow
 
 # Web scrapping
 playwright
+
+# PDF
+pymupdf4llm
 
 # ChromaDB AI vector DB
 chromadb==0.5.16

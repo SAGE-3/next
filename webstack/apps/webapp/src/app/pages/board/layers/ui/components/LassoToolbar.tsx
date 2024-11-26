@@ -411,6 +411,10 @@ export function LassoToolbar(props: LassoToolbarProps) {
             return acc;
           }, '');
         }
+        if (selectedApps[0].data.type === 'PDFViewer') {
+          console.log('apps', selectedApps);
+          console.log('lasso apps', lassoApps);
+        }
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
       } else {
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
