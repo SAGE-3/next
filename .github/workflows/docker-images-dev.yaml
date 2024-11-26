@@ -16,9 +16,9 @@ jobs:
       matrix:
         include:
           - dockerfile: deployment/node_server/Dockerfile
-            image: ghcr.io/sage-3/next:dev_amd64
+            image: ghcr.io/sage-3/next
           - dockerfile: deployment/seer/Dockerfile
-            image: ghcr.io/sage-3/seer:dev_amd64
+            image: ghcr.io/sage-3/seer
     permissions:
       contents: read
       packages: write
@@ -56,7 +56,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: dev_amd64
           labels: ${{ steps.meta.outputs.labels }}
 
   build-and-push-arm:
@@ -66,9 +66,9 @@ jobs:
       matrix:
         include:
           - dockerfile: deployment/node_server/Dockerfile
-            image: ghcr.io/sage-3/next:dev_arm64
+            image: ghcr.io/sage-3/next
           - dockerfile: deployment/seer/Dockerfile
-            image: ghcr.io/sage-3/seer:dev_arm64
+            image: ghcr.io/sage-3/seer
     permissions:
       contents: read
       packages: write
@@ -106,5 +106,5 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: dev_arm64
           labels: ${{ steps.meta.outputs.labels }}
