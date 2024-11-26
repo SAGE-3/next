@@ -301,7 +301,7 @@ const DrawBox = (props: BoxProps) => {
   return (
     <rect
       style={{
-        strokeWidth: 6 / scale,
+        strokeWidth: 4 / scale,
         strokeDasharray: 10 / scale,
         stroke: strokeColor,
         fill: strokeColor,
