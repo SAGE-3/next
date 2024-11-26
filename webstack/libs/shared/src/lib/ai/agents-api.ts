@@ -78,7 +78,7 @@ export type ImageAnswer = {
 // PDF request
 export type PDFQuery = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
-  asset: string;
+  assetids: string[];
   user: string;
   q: string;
 };

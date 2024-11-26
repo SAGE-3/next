@@ -30,7 +30,7 @@ import {
   Textarea,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
-import { HiCommandLine } from "react-icons/hi2";
+import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
 import { formatDistance } from 'date-fns';
@@ -40,17 +40,25 @@ import Markdown from 'markdown-to-jsx';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI, useUserSettings, useUIStore } from '@sage3/frontend';
 import {
-  genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery,
-  WebScreenshot, WebScreenshotAnswer,
-} from '@sage3/shared';
+  useAppStore,
+  useHexColor,
+  useUser,
+  serverTime,
+  downloadFile,
+  useUsersStore,
+  AiAPI,
+  useUserSettings,
+  useUIStore,
+} from '@sage3/frontend';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, WebScreenshotAnswer } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { dataTool } from 'echarts';
 
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
 
@@ -60,7 +68,6 @@ interface modelInfo {
   model: string;
   maxTokens: number;
 }
-
 
 /* App component for Chat */
 
@@ -103,7 +110,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [status,] = useState<string>("AI can make mistakes. Check important information.");
+  const [status] = useState<string>('AI can make mistakes. Check important information.');
   const [actions, setActions] = useState<any[]>([]);
   const [mode, setMode] = useState<OperationMode>('chat');
   const [location, setLocation] = useState('');
@@ -172,9 +179,14 @@ function AppComponent(props: App): JSX.Element {
       const firstName = u.split(' ')[0];
       setUsername(firstName);
       // Location
-      navigator.geolocation.getCurrentPosition(function (location) {
-        setLocation(location.coords.latitude + ',' + location.coords.longitude);
-      }, function (e) { console.log('Location> error', e); });
+      navigator.geolocation.getCurrentPosition(
+        function (location) {
+          setLocation(location.coords.latitude + ',' + location.coords.longitude);
+        },
+        function (e) {
+          console.log('Location> error', e);
+        }
+      );
     }
   }, [user]);
 
@@ -254,7 +266,8 @@ function AppComponent(props: App): JSX.Element {
             previousQ: previousQuestion,
             previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!, boardId: boardId!
+            roomId: roomId!,
+            boardId: boardId!,
           },
           user: username,
           id: genId(),
@@ -375,19 +388,19 @@ function AppComponent(props: App): JSX.Element {
 
   const onImageSummary = async () => {
     return onContentImage('Describe the image in details');
-  }
+  };
   const onImageCaption = async () => {
     return onContentImage('Generate a caption for the image, fit for a scientific publication');
-  }
+  };
   const onImageProsCons = async () => {
     return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
-  }
+  };
   const onImageKeywords = async () => {
     return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
-  }
+  };
   const onImageFacts = async () => {
     return onContentImage('Read the image and provide two or three interesting facts from the image');
-  }
+  };
 
   const onContentImage = async (prompt: string) => {
     if (!user) return;
@@ -417,7 +430,8 @@ function AppComponent(props: App): JSX.Element {
               previousQ: previousQuestion,
               previousA: previousAnswer,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId, boardId
+              roomId,
+              boardId,
             },
             q: prompt,
             user: username,
@@ -473,6 +487,12 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
+    console.log('is pdf');
+    console.log('sources', s.sources);
+
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+
     if (s.sources.length > 0) {
       // Update the context with the stickies
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
@@ -486,65 +506,69 @@ function AppComponent(props: App): JSX.Element {
             userId: user._id,
             creationId: '',
             creationDate: now.epoch,
-            userName: 'SAGE',
+            userName: name,
             query: prompt,
-            response: 'Working on it...',
+            response: isQuestion ? 'Working on it...' : '',
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          const assetid = apps[0].data.state.assetid;
-          // Build the query
-          const q: PDFQuery = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId, boardId
-            },
-            q: prompt,
-            user: username,
-            asset: assetid,
-          };
-          setProcessing(true);
-          setActions([]);
-          // Invoke the agent
-          const response = await callPDF(q);
-          setProcessing(false);
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+            // Build the query
+            const q: PDFQuery = {
+              ctx: {
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
+              },
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callPDF(q);
+            setProcessing(false);
 
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(response.r);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
+            if ('message' in response) {
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(response.r);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: 'Describe the content',
+                previousA: response.r,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.r,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
             }
           }
         }
@@ -553,27 +577,36 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onWebSummary = async () => {
-    return onContentWeb('Read the page content and identify the main topics, themes, and key concepts that are covered. Provide all your answers in a few sentences using the Markdown syntax.');
+    return onContentWeb(
+      'Read the page content and identify the main topics, themes, and key concepts that are covered. Provide all your answers in a few sentences using the Markdown syntax.'
+    );
   };
 
   const onWebLinks = async () => {
-    return onContentWeb('Read the page content and list the main links that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.');
+    return onContentWeb(
+      'Read the page content and list the main links that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.'
+    );
   };
   const onWebPDF = async () => {
-    return onContentWeb('Read the page content and find the pdf file that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.');
+    return onContentWeb(
+      'Read the page content and find the pdf file that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.'
+    );
   };
 
   const onWebKeywords = async () => {
-    return onContentWeb('Read the page and extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text. Provide all your answers using a list in Markdown syntax.');
+    return onContentWeb(
+      'Read the page and extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text. Provide all your answers using a list in Markdown syntax.'
+    );
   };
 
   const onWebFacts = async () => {
-    return onContentWeb('Read the page content and provide two or three interesting facts from the document, using a list in Markdown syntax.');
+    return onContentWeb(
+      'Read the page content and provide two or three interesting facts from the document, using a list in Markdown syntax.'
+    );
   };
   const onWebScreenshot = async () => {
     return onContentWebScreenshot();
   };
-
 
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
@@ -602,7 +635,8 @@ function AppComponent(props: App): JSX.Element {
               previousQ: previousQuestion,
               previousA: previousAnswer,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId, boardId
+              roomId,
+              boardId,
             },
             q: prompt,
             url: apps[0].data.state.webviewurl,
@@ -684,7 +718,8 @@ function AppComponent(props: App): JSX.Element {
               previousQ: previousQuestion,
               previousA: previousAnswer,
               pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId, boardId
+              roomId,
+              boardId,
             },
             url: apps[0].data.state.webviewurl,
             user: username,
@@ -765,7 +800,8 @@ function AppComponent(props: App): JSX.Element {
             previousQ: previousQuestion,
             previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!, boardId: boardId!
+            roomId: roomId!,
+            boardId: boardId!,
           },
           user: username,
           id: genId(),
@@ -887,7 +923,6 @@ function AppComponent(props: App): JSX.Element {
     return onContentPDF('Read the PDF file and provide a short summary.');
   };
 
-
   const onCodeComment = async () => {
     if (!user) return;
     // Get the current context
@@ -999,7 +1034,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-
     async function fetchStatus() {
       const response = await AiAPI.chat.status();
       const models = response.onlineModels as modelInfo[];
@@ -1030,11 +1064,10 @@ function AppComponent(props: App): JSX.Element {
     if (settings.aiModel) {
       const model = onlineModels.find((m) => m.name === settings.aiModel);
       if (model) {
-        setSelectedModel(model.name as "openai" | "llama");
+        setSelectedModel(model.name as 'openai' | 'llama');
       }
     }
   }, [settings.aiModel, onlineModels]);
-
 
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
@@ -1044,7 +1077,6 @@ function AppComponent(props: App): JSX.Element {
     }
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
-
 
   const applyAction = (action: any) => async () => {
     // Test JSON data
@@ -1282,26 +1314,24 @@ function AppComponent(props: App): JSX.Element {
           })}
 
           {/* In progress SAGE Messages */}
-          {
-            streamText && (
-              <Box position="relative" my={1} maxWidth={'70%'}>
-                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                    AI is typing...
-                  </Text>
-                </Box>
+          {streamText && (
+            <Box position="relative" my={1} maxWidth={'70%'}>
+              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                  AI is typing...
+                </Text>
+              </Box>
 
-                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                    {streamText}
-                  </Box>
+              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                  {streamText}
                 </Box>
               </Box>
-            )
-          }
+            </Box>
+          )}
 
           <Box display={'flex'} justifyContent={'left'}>
-            {actions &&
+            {actions && (
               <List>
                 {actions.map((action, index) => (
                   <Box
@@ -1315,22 +1345,22 @@ function AppComponent(props: App): JSX.Element {
                     m={3}
                     // maxWidth="80%"
                     userSelect={'none'}
-                    _hover={{ background: "purple.300" }}
+                    _hover={{ background: 'purple.300' }}
                     background={'purple.200'}
                     onDoubleClick={applyAction(action)}
-                    key={"list-" + index}
+                    key={'list-' + index}
                   >
                     <Tooltip label="Double click to apply action" aria-label="A tooltip">
-                      <ListItem key={index}><ListIcon as={MdSettings} color='green.500' />
+                      <ListItem key={index}>
+                        <ListIcon as={MdSettings} color="green.500" />
                         Show result {index + 1} on the board: {action.type} {action.app}
                       </ListItem>
                     </Tooltip>
                   </Box>
                 ))}
               </List>
-            }
+            )}
           </Box>
-
         </Box>
         <HStack>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
@@ -1376,12 +1406,18 @@ function AppComponent(props: App): JSX.Element {
           </Tooltip>
         </HStack>
 
-        {mode !== "chat" && <hr />}
+        {mode !== 'chat' && <hr />}
 
         {/* AI Prompts */}
         {mode === 'text' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the main topics, themes, and key concepts that are covered in the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Identify the main topics, themes, and key concepts that are covered in the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1389,10 +1425,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Summary</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
               <Button
@@ -1402,12 +1441,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onProsCons}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give feedback</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Give feedback</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1415,10 +1463,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onKeywords}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Keywords</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
               <Button
@@ -1428,12 +1479,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onOpinion}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Provide Opinion</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Provide Opinion</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts from the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Provide two or three interesting facts from the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1441,10 +1501,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onFacts}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Facts</Text>
+              </Button>
             </Tooltip>
           </HStack>
         )}
@@ -1459,10 +1522,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onCodeRefactor}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Refactor Code</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Refactor Code</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Explain the code'} openDelay={400}>
               <Button
@@ -1472,10 +1538,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onCodeExplain}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Explain Code</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Explain Code</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Comment the code'} openDelay={400}>
               <Button
@@ -1485,10 +1554,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onCodeComment}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Comment Code</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Comment Code</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate some code'} openDelay={400}>
               <Button
@@ -1498,10 +1570,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onCodeGenerate}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Code</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Code</Text>
+              </Button>
             </Tooltip>
           </HStack>
         )}
@@ -1516,10 +1591,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onImageSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Describe Image</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Describe Image</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
               <Button
@@ -1529,12 +1607,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onImageCaption}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Caption</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Caption</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the good parts and then the bad parts of the image'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Describe the good parts and then the bad parts of the image'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1542,12 +1629,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onImageProsCons}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Give Feedback</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Give Feedback</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1555,12 +1651,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onImageKeywords}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Keywords</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts about the image'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Provide two or three interesting facts about the image'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1568,10 +1673,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onImageFacts}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Facts</Text>
+              </Button>
             </Tooltip>
           </HStack>
         )}
@@ -1585,10 +1693,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onPDFSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Summary</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Summary</Text>
+              </Button>
             </Tooltip>
           </HStack>
         )}
@@ -1602,12 +1713,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebSummary}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Web Summary</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Web Summary</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'What are the main links that I should read to expand on the subject matter of the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'What are the main links that I should read to expand on the subject matter of the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1615,10 +1735,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebLinks}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Links</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Links</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Find the PDF in the page'} openDelay={400}>
               <Button
@@ -1628,12 +1751,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebPDF}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find PDF</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find PDF</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1641,12 +1773,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebKeywords}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Generate Keywords</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Keywords</Text>
+              </Button>
             </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide two or three interesting facts from the text'} openDelay={400}>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Provide two or three interesting facts from the text'}
+              openDelay={400}
+            >
               <Button
                 aria-label="stop"
                 size={'xs'}
@@ -1654,10 +1795,13 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebFacts}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Find Facts</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Facts</Text>
+              </Button>
             </Tooltip>
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Screenshot the page'} openDelay={400}>
               <Button
@@ -1667,19 +1811,21 @@ function AppComponent(props: App): JSX.Element {
                 m={0}
                 colorScheme={'blue'}
                 variant="ghost"
-                textAlign={"left"}
+                textAlign={'left'}
                 onClick={onWebScreenshot}
                 width="34%"
-              ><HiCommandLine fontSize={"24px"} /><Text ml={"2"}>Take screenshot</Text></Button>
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Take screenshot</Text>
+              </Button>
             </Tooltip>
           </HStack>
         )}
 
-
         {/* Input Text */}
-        <InputGroup bg={'blackAlpha.100'} maxHeight={"120px"}>
+        <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
           <Textarea
-            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel ? " (" + selectedModel + " model)" : "")}
+            placeholder={'Chat with friends or ask SAGE with @S' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -1699,7 +1845,6 @@ function AppComponent(props: App): JSX.Element {
             {status}
           </Text>
         </Box>
-
       </Flex>
     </AppWindow>
   );

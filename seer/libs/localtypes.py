@@ -70,7 +70,8 @@ class ImageAnswer(BaseModel):
 
 class PDFQuery(BaseModel):
     ctx: Context  # context
-    asset: str  # question
+    # asset: str  # question
+    assetids: List[str] # pdfs in sage
     user: str  # user name
     q: str  # question
 
