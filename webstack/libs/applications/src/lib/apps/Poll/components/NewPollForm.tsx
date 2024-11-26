@@ -7,17 +7,19 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Text, Button } from '@chakra-ui/react';
-import { MdOutlineDelete } from 'react-icons/md';
+import { Text, Button, Box, Input, IconButton, useColorModeValue, Divider } from '@chakra-ui/react';
+import { MdClose } from 'react-icons/md';
 
 interface NewPollFormProps {
   onSave: (question: string, options: string[]) => void;
 }
 
-const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
+export const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
   const [question, setQuestion] = useState('');
   const [options, setOptions] = useState(['']);
   const optionRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const inputtextcolor = useColorModeValue('black', 'white');
 
   useEffect(() => {
     optionRefs.current = optionRefs.current.slice(0, options.length);
@@ -69,44 +71,57 @@ const NewPollForm: React.FC<NewPollFormProps> = ({ onSave }) => {
   }, [onSave, question, options, isEmpty]);
 
   return (
-    <div>
-      <Text className="poll-mb-3 poll-font-bold">Poll Question</Text>
-      <input
-        id="poll-question"
-        type="text"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="Enter poll question"
-        className="poll-input-text poll-w-full poll-p-2 poll-focus:border-blue-500 poll-focus:outline-none"
-      />
+    <Box p="4" display="flex" flexDir="column" gap="4">
+      <Box display="flex" flexDir="column" gap="1">
+        <Text fontSize="xl" fontWeight={'bold'}>
+          Question
+        </Text>
+        <Input
+          type="text"
+          size="md"
+          _placeholder={{ color: inputtextcolor }}
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Enter poll question"
+        />
+      </Box>
+      <Box display="flex" flexDir="column" gap="1">
+        <Divider />
+        <Text fontSize="md" mb="0" fontWeight={'bold'}>
+          Options
+        </Text>
+      </Box>
       {options.map((option, index) => (
-        <div key={index} className="poll-mb-3 poll-flex poll-items-center poll-gap-4 poll-border-top">
-          <Text className="poll-nowrap whitespace-nowrap">Option {index + 1}</Text>
-          <input
+        <Box key={index} display="flex" alignItems={'center'} gap="3">
+          <Text fontSize="lg">{index + 1}</Text>
+          <Input
             ref={(el) => (optionRefs.current[index] = el)}
             id={`poll-option-${index}`}
             type="text"
+            size="sm"
             value={option}
             onChange={(e) => handleOptionChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyPress(e, index)}
             placeholder="Enter option"
-            className="poll-input-text poll-w-full poll-p-2 poll-focus:border-blue-500 poll-focus:outline-none"
+            _placeholder={{ color: inputtextcolor }}
           />
-          <Button colorScheme="red" onClick={() => handleRemoveOption(index)}>
-            <MdOutlineDelete size={40} />
-          </Button>
-        </div>
+          <IconButton
+            icon={<MdClose />}
+            colorScheme="red"
+            size="sm"
+            variant={'solid'}
+            onClick={() => handleRemoveOption(index)}
+            aria-label={'delete-option'}
+          ></IconButton>
+        </Box>
       ))}
-      <div className="poll-flex poll-justify-between poll-border-top">
-        <Button colorScheme="blue" onClick={handleAddOption}>
-          Add Another Option
-        </Button>
-        <Button colorScheme="green" onClick={handleSubmit} className={isEmpty ? 'poll-button-disabled' : ''}>
-          Create Poll
-        </Button>
-      </div>
-    </div>
+      <Button colorScheme="blue" size="sm" variant="solid" onClick={handleAddOption}>
+        Add Option
+      </Button>
+      <Divider />
+      <Button colorScheme="green" size="sm" variant="solid" onClick={handleSubmit} isDisabled={isEmpty}>
+        Create Poll
+      </Button>
+    </Box>
   );
 };
-
-export default NewPollForm;

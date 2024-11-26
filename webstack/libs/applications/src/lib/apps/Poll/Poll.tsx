@@ -6,21 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback } from 'react';
-import { Button } from '@chakra-ui/react';
+import { useCallback } from 'react';
 
 import { useAppStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
-import NewPollForm from './components/NewPollForm.react';
-import PollView from './components/PollView.react';
-import ConfirmationModal from './components/ConfirmationModal.react';
+import { NewPollForm, PollView } from './components';
 import { usePollsStore } from './stores/pollStore';
 import { AppWindow } from '../../components';
-
-// Styling
-import './styling.css';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
 /* App component for poll */
 
@@ -29,8 +24,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const pollStore = usePollsStore((state) => updateState(props._id, { poll: state }));
 
-  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
-  const [shouldRemovePoll, setShouldRemovePoll] = useState<boolean>(false);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   const handleSavePoll = useCallback(
     (question: string, options: string[]) => {
@@ -49,24 +43,6 @@ function AppComponent(props: App): JSX.Element {
     },
     [poll, pollStore]
   );
-
-  const handleRemovePoll = useCallback(() => {
-    setShouldRemovePoll(true);
-    setIsRemoveModalOpen(true);
-  }, []);
-
-  const confirmRemovePoll = useCallback(() => {
-    if (shouldRemovePoll) {
-      pollStore.removePoll();
-      setShouldRemovePoll(false);
-    }
-    setIsRemoveModalOpen(false);
-  }, [shouldRemovePoll, pollStore]);
-
-  const cancelRemovePoll = useCallback(() => {
-    setShouldRemovePoll(false);
-    setIsRemoveModalOpen(false);
-  }, []);
 
   const handleAddOption = useCallback(
     (option: string) => {
@@ -91,33 +67,21 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <div className="poll-container poll-mx-auto poll-p-4 poll-overflow-y-auto poll-h-max">
+      <Box height="100%" width="100%" background={backgroundColor}>
         {poll == null ? (
           <NewPollForm onSave={handleSavePoll} />
         ) : (
-          <>
-            <PollView
-              question={poll.question}
-              options={poll.options}
-              updatePollQuestion={updatePollQuestion}
-              addNewOption={handleAddOption}
-              onUpVote={handleUpVote}
-              onDownVote={handleDownVote}
-            />
-            <Button colorScheme="red" onClick={() => handleRemovePoll()}>
-              Clear Poll
-            </Button>
-          </>
-        )}
-
-        {isRemoveModalOpen && (
-          <ConfirmationModal
-            onConfirm={confirmRemovePoll}
-            onCancel={cancelRemovePoll}
-            message="Are you sure you want to clear this poll?"
+          <PollView
+            _id={props._id}
+            question={poll.question}
+            options={poll.options}
+            updatePollQuestion={updatePollQuestion}
+            addNewOption={handleAddOption}
+            onUpVote={handleUpVote}
+            onDownVote={handleDownVote}
           />
         )}
-      </div>
+      </Box>
     </AppWindow>
   );
 }
