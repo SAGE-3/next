@@ -51,14 +51,13 @@ import {
   useUserSettings,
   useUIStore,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, WebScreenshotAnswer } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
-import { dataTool } from 'echarts';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -92,15 +91,20 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
-  const myColor = useHexColor(user?.data.color || 'blue');
-  const sageColor = useHexColor('purple');
-  const aiTypingColor = useHexColor('orange');
-  const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.200', 'gray.800');
-  const fgColor = useColorModeValue('gray.800', 'gray.200');
-  const sc = useColorModeValue('gray.400', 'gray.200');
+  // Chat Bubble Colors
+  const myColor = useHexColor(`blue.300`);
+  const sageColor = useHexColor('purple.300');
+  const aiTypingColor = useHexColor('orange.300');
+  const otherUserColor = useHexColor('gray.300');
+  // Background, scrollbar, and Foreground Colors
+  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
+  const backgroundColorHex = useHexColor(backgroundColor);
+  const bgColor = useColorModeValue('gray.100', 'gray.700');
+  const fgColor = useColorModeValue('gray.900', 'gray.200');
+  const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+
   // App state management
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
@@ -1126,7 +1130,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
         <Box
           flex={1}
