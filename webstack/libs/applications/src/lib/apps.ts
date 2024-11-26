@@ -277,6 +277,6 @@ export const Applications = {
 >;
 
 // List of AI enabled apps
-export const AI_ENABLED_APPS = ['Chat', 'ImageViewer', 'PDFViewer', 'Stickie'] as AppName[];
+export const AI_ENABLED_APPS = ['Chat', 'ImageViewer', 'PDFViewer', 'Stickie', 'CodeEditor'] as AppName[];
 
 export * from './components';
