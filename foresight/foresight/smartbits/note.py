@@ -11,7 +11,7 @@ from foresight.smartbits.smartbit import TrackedBaseModel
 
 
 class NoteState(TrackedBaseModel):
-    content: dict
+    content: dict = Field(description="notepas content")
 
 
 class Note(SmartBit):
