@@ -54,7 +54,7 @@ import {
   MdAutoAwesomeMotion,
   MdAddCircleOutline,
 } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -80,6 +80,7 @@ import { AppSchema } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Board } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 type LassoToolbarProps = {
   downloadAssets: () => void;
@@ -636,7 +637,7 @@ for b in bits:
                         p={0}
                         _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
                       >
-                        <HiOutlineSparkles size="20px" color={'white'} />
+                        <IoSparklesSharp size="16px" color={'white'} />{' '}
                       </Button>
                     </Tooltip>
                   </Box>

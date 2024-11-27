@@ -26,16 +26,20 @@ interface ContextButtonProps {
   children?: ReactNode;
   bgColor: SAGEColors;
   placement?: 'top' | 'bottom' | 'left' | 'right';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   offset?: [number, number];
   icon: ReactElement<any, string | JSXElementConstructor<any>> | undefined;
   tooltip: string;
   title: string;
   stayActive?: boolean;
+  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
+  iconSize?: 'xs' | 'sm' | 'md' | 'lg';
+  colorActiveAlways?: boolean;
 }
 
 export function ContextButton(props: ContextButtonProps) {
   const { onOpen, onClose, isOpen } = useDisclosure();
-  const bgColor = useHexColor(props.bgColor);
+  const bgColor = useHexColor(props.bgColor + '.200');
 
   const handleClick = () => {
     isOpen ? onClose() : onOpen();
@@ -44,38 +48,44 @@ export function ContextButton(props: ContextButtonProps) {
   return (
     <Popover
       offset={props.offset ? props.offset : undefined}
-      onOpen={props.stayActive ? () => { } : onOpen}
-      onClose={props.stayActive ? () => { } : onClose}
+      onOpen={props.stayActive ? () => {} : onOpen}
+      onClose={props.stayActive ? () => {} : onClose}
       isOpen={isOpen}
       placement={props.placement ? props.placement : 'top'}
     >
-      <Tooltip label={props.tooltip} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+      <Tooltip
+        label={props.tooltip}
+        placement={props.tooltipPlacement ? props.tooltipPlacement : 'top'}
+        hasArrow={true}
+        openDelay={400}
+        shouldWrapChildren={true}
+      >
         <PopoverTrigger>
           {/* If stayActive need a different button...sadly very simliar code */}
           {props.stayActive ? (
             <IconButton
-              colorScheme={isOpen ? props.bgColor : 'gray'}
-              size="sm"
+              colorScheme={isOpen || props.colorActiveAlways ? props.bgColor : 'gray'}
+              size={props.size ? props.size : 'sm'}
               icon={props.icon}
-              fontSize="lg"
+              fontSize={props.iconSize ? props.iconSize : 'lg'}
               aria-label={`Open ${props.title} Menu`}
               sx={{
                 _dark: {
-                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                  bg: isOpen || props.colorActiveAlways ? bgColor : 'gray.600', // 'inherit' didnt seem to work
                 },
               }}
               onClick={handleClick}
             ></IconButton>
           ) : (
             <IconButton
-              colorScheme={isOpen ? props.bgColor : 'gray'}
-              size="sm"
+              colorScheme={isOpen || props.colorActiveAlways ? props.bgColor : 'gray'}
+              size={props.size ? props.size : 'sm'}
               icon={props.icon}
-              fontSize="lg"
+              fontSize={props.iconSize ? props.iconSize : 'lg'}
               aria-label={`Open ${props.title} Menu`}
               sx={{
                 _dark: {
-                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                  bg: isOpen || props.colorActiveAlways ? bgColor : 'gray.600', // 'inherit' didnt seem to work
                 },
               }}
             ></IconButton>

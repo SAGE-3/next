@@ -64,8 +64,9 @@ import {
   MdPushPin,
   MdOutlinePushPin,
 } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi';
 import { IoMdExit } from 'react-icons/io';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 import { formatDistance } from 'date-fns';
 
@@ -1003,7 +1004,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       p={0}
                       _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
                     >
-                      <HiOutlineSparkles size="20px" color={'white'} />
+                      <IoSparklesSharp size="16px" color={'white'} />
                     </Button>
                   </Tooltip>
                 </Box>
