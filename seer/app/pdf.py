@@ -27,7 +27,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile
+from libs.utils import getModelsInfo, getPDFFile, getMDfromPDF
 
 # ChromaDB AI vector DB
 import chromadb
@@ -164,17 +164,10 @@ class PDFAgent:
         if len(pdfContents) > 0:
             # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
             # TODO: Check token length for context length limits on long documents
-            # Convert pdfs to markdown
-            # pdfs_to_md = {
-            #   pdf["id"]: await loop.run_in_executor(
-            #     None, pymupdf4llm.to_markdown, pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
-            #   )
-            #   for pdf in pdfContents
-            # }
+
+            # Convert PDFs to markdown
             pdfs_to_md = {
-                pdf["id"]: pymupdf4llm.to_markdown(
-                    pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
-                )
+                pdf["id"]: getMDfromPDF(pdf["id"], pdf["content"])
                 for pdf in pdfContents
             }
 

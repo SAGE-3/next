@@ -51,14 +51,13 @@ import {
   useUserSettings,
   useUIStore,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, WebScreenshotAnswer } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
-import { dataTool } from 'echarts';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -92,15 +91,20 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
-  const myColor = useHexColor(user?.data.color || 'blue');
-  const sageColor = useHexColor('purple');
-  const aiTypingColor = useHexColor('orange');
-  const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.200', 'gray.800');
-  const fgColor = useColorModeValue('gray.800', 'gray.200');
-  const sc = useColorModeValue('gray.400', 'gray.200');
+  // Chat Bubble Colors
+  const myColor = useHexColor(`blue.300`);
+  const sageColor = useHexColor('purple.300');
+  const aiTypingColor = useHexColor('orange.300');
+  const otherUserColor = useHexColor('gray.300');
+  // Background, scrollbar, and Foreground Colors
+  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
+  const backgroundColorHex = useHexColor(backgroundColor);
+  const bgColor = useColorModeValue('gray.100', 'gray.700');
+  const fgColor = useColorModeValue('gray.900', 'gray.200');
+  const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+
   // App state management
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
@@ -499,7 +503,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('is pdf');
     console.log('sources', s.sources);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
@@ -588,38 +591,7 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const onWebSummary = async () => {
-    return onContentWeb(
-      'Read the page content and identify the main topics, themes, and key concepts that are covered. Provide all your answers in a few sentences using the Markdown syntax.'
-    );
-  };
-
-  const onWebLinks = async () => {
-    return onContentWeb(
-      'Read the page content and list the main links that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.'
-    );
-  };
-  const onWebPDF = async () => {
-    return onContentWeb(
-      'Read the page content and find the pdf file that I should read to expand on the subject matter of the page. Answer using the Markdown syntax.'
-    );
-  };
-
-  const onWebKeywords = async () => {
-    return onContentWeb(
-      'Read the page and extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text. Provide all your answers using a list in Markdown syntax.'
-    );
-  };
-
-  const onWebFacts = async () => {
-    return onContentWeb(
-      'Read the page content and provide two or three interesting facts from the document, using a list in Markdown syntax.'
-    );
-  };
-  const onWebScreenshot = async () => {
-    return onContentWebScreenshot();
-  };
-
+  // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
     if (s.sources.length > 0) {
@@ -703,6 +675,7 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Get a screenshot of the web content
   const onContentWebScreenshot = async () => {
     if (!user) return;
     if (s.sources.length > 0) {
@@ -783,6 +756,18 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Array of prompts for Web content
+  const webPrompts = [
+    { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
+    { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
+    { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
+    { title: 'Generate Keywords', action: onContentWeb, prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.' },
+    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
+    { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
+  ];
+
+
+  // Code section
   const onContentCode = async (prompt: string, method: string) => {
     if (!user) return;
     // Get server time
@@ -931,9 +916,15 @@ function AppComponent(props: App): JSX.Element {
       Future works suggested in this paper
       Find Related Papers
  */
-  const onPDFSummary = async () => {
-    return onContentPDF('Read the PDF file and provide a short summary.');
-  };
+  // Array of prompts for PDFs
+  const pdfPrompts = [
+    { title: 'Generate Summary', action: onContentPDF, prompt: 'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.' },
+    { title: 'Gaps and Limitations', action: onContentPDF, prompt: 'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.' },
+    { title: 'Literature and References', action: onContentPDF, prompt: 'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.' },
+    { title: 'Methodology Analysis', action: onContentPDF, prompt: 'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.' },
+    { title: 'Explain implications', action: onContentPDF, prompt: 'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.' },
+  ];
+
 
   const onCodeComment = async () => {
     if (!user) return;
@@ -1126,7 +1117,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
         <Box
           flex={1}
@@ -1714,141 +1705,51 @@ function AppComponent(props: App): JSX.Element {
           </HStack>
         )}
         {mode === 'pdf' && (
+          // Generate the prompt and buttons for the PDFs
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short summary for this PDF file'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onPDFSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Summary</Text>
-              </Button>
-            </Tooltip>
+            {pdfPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                </Button>
+              </Tooltip>
+            ))}
           </HStack>
         )}
         {mode === 'web' && (
+          // Generate the prompt and buttons for the Webviews
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Summarize this webpage'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Web Summary</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'What are the main links that I should read to expand on the subject matter of the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebLinks}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Links</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Find the PDF in the page'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebPDF}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find PDF</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebKeywords}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Keywords</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Provide two or three interesting facts from the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebFacts}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Facts</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Screenshot the page'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onWebScreenshot}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Take screenshot</Text>
-              </Button>
-            </Tooltip>
+            {webPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                </Button>
+              </Tooltip>
+            ))}
           </HStack>
         )}
 

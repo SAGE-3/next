@@ -10,9 +10,14 @@
 from PIL import Image
 from io import BytesIO
 import base64
-import time
+import time, os
 from datetime import datetime
 from zoneinfo import ZoneInfo
+
+# PDF
+import pymupdf4llm
+import pymupdf
+from io import BytesIO
 
 
 class DotDict(dict):
@@ -274,6 +279,33 @@ def getUsers(ps3):
         users = DotDict(res).data
         return users
     return None
+
+
+def getMDfromPDF(id, content):
+    """
+    Converts a PDF content to Markdown format and caches the result in a temporary file.
+
+    Args:
+      id (str): A unique identifier for the PDF content.
+      content (bytes): The binary content of the PDF file.
+
+    Returns:
+      str: The Markdown representation of the PDF content.
+
+    If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
+    Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
+    """
+    file_path = f"/tmp/{id}.md"
+    if os.path.exists(file_path):
+        with open(file_path, "r") as file:
+            return file.read()
+    else:
+        md = pymupdf4llm.to_markdown(
+            pymupdf.open(stream=BytesIO(content), filetype="pdf")
+        )
+        with open(file_path, "w") as file:
+            file.write(md)
+        return md
 
 
 def getPDFFile(ps3, assetid):

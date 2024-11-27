@@ -332,14 +332,14 @@ class WebAgent:
             filedata = f.read()
             r = self.ps3.upload_file(qq.ctx.roomId, "screenshot.jpg", filedata)
             if r and r.status_code == 200:
+                # Get the asset id from the response
                 asset = r.json()[0]
-
                 # Propose the answer to the user
                 action1 = json.dumps(
                     {
                         "type": "create_app",
                         "app": "ImageViewer",
-                        "state": {"assetid": asset["id"]},
+                        "state": {"assetid": asset},
                         "data": {
                             "title": "Screenshot",
                             "position": {
@@ -348,8 +348,8 @@ class WebAgent:
                                 "z": 0,
                             },
                             "size": {
-                                "width": 800,
-                                "height": 800 / aspect_ratio,
+                                "width": 600 * aspect_ratio,
+                                "height": 600,
                                 "depth": 0,
                             },
                         },
