@@ -550,6 +550,27 @@ function AppComponent(props: App): JSX.Element {
             setProcessing(false);
 
             if ('message' in response) {
+              const errorMessage = 'There has been an error, please try again or report it through the menu.';
+              setStreamText('');
+              setPreviousAnswer(errorMessage);
+              updateState(props._id, {
+                ...s,
+                previousQ: q.q,
+                previousA: errorMessage,
+                messages: [
+                  ...s.messages,
+                  q,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: errorMessage,
+                  },
+                ],
+              });
               toast({
                 title: 'Error',
                 description: response.message || 'Error sending query to the agent. Please try again.',
@@ -936,13 +957,37 @@ function AppComponent(props: App): JSX.Element {
  */
   // Array of prompts for PDFs
   const pdfPrompts = [
-    { title: 'Generate Summary', action: onContentPDF, prompt: 'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.' },
-    { title: 'Gaps and Limitations', action: onContentPDF, prompt: 'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.' },
-    { title: 'Literature and References', action: onContentPDF, prompt: 'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.' },
-    { title: 'Methodology Analysis', action: onContentPDF, prompt: 'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.' },
-    { title: 'Explain implications', action: onContentPDF, prompt: 'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.' },
+    {
+      title: 'Generate Summary',
+      action: onContentPDF,
+      prompt:
+        'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.',
+    },
+    {
+      title: 'Gaps and Limitations',
+      action: onContentPDF,
+      prompt:
+        'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.',
+    },
+    {
+      title: 'Literature and References',
+      action: onContentPDF,
+      prompt:
+        'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.',
+    },
+    {
+      title: 'Methodology Analysis',
+      action: onContentPDF,
+      prompt:
+        'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.',
+    },
+    {
+      title: 'Explain implications',
+      action: onContentPDF,
+      prompt:
+        'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.',
+    },
   ];
-
 
   const onCodeComment = async () => {
     if (!user) return;
@@ -1739,7 +1784,9 @@ function AppComponent(props: App): JSX.Element {
                   width="34%"
                 >
                   <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
                 </Button>
               </Tooltip>
             ))}
