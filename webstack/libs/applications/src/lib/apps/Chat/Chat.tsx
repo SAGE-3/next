@@ -559,7 +559,7 @@ function AppComponent(props: App): JSX.Element {
                 previousA: errorMessage,
                 messages: [
                   ...s.messages,
-                  q,
+                  initialAnswer,
                   {
                     id: genId(),
                     userId: user._id,
