@@ -90,7 +90,7 @@ export function OtherServerCard(props: App): JSX.Element {
         height="250px"
         backgroundSize="contain"
         p="2"
-        backgroundColor={`teal.400`}
+        backgroundColor={`green.400`}
         display="flex"
         alignItems="center"
         justifyContent="center"
