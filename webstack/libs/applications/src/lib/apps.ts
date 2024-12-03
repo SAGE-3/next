@@ -2,6 +2,7 @@
 
 import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
+import { name as AssetLinkName } from './apps/AssetLink';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as CalculatorName } from './apps/Calculator';
@@ -42,6 +43,7 @@ import { name as WebviewName } from './apps/Webview';
 
 
 import AIPane from './apps/AIPane/AIPane';
+import AssetLink from './apps/AssetLink/AssetLink';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import Calculator from './apps/Calculator/Calculator';
@@ -84,6 +86,7 @@ import React from 'react';
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent, GroupedToolbarComponent: AIPane.GroupedToolbarComponent },
+  [AssetLinkName]: { AppComponent: React.memo(AssetLink.AppComponent), ToolbarComponent: AssetLink.ToolbarComponent, GroupedToolbarComponent: AssetLink.GroupedToolbarComponent },
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
   [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },

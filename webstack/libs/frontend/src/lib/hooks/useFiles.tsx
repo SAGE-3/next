@@ -293,7 +293,8 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     // Create PDF viewer app with proper dimensions
     return setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID });
   } else {
-    console.log('Files> openApplication - Unknown file type', fileType);
+    // Create a generic asset link
+    return setupApp('Asset', 'AssetLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: 400, h: 375 }, { assetid: fileID });
   }
   return null;
 }
