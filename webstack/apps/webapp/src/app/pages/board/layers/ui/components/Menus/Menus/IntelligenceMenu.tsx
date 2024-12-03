@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 import {
-  Button, Box, useColorModeValue, useDisclosure,
+  Button, Box,
   Badge, Tab, TabList, TabPanel, TabPanels, Tabs, Text, Spacer,
   VStack,
   Slider,
@@ -34,16 +34,11 @@ type IntelligenceProps = {
 
 // Intelligence Panel
 export function IntelligenceMenu(props: IntelligenceProps) {
-  const isBoard = props.boardId ? true : false;
   const { settings, setAIModel } = useUserSettings();
-  const showUI = settings.showUI;
   // Configuration information
   const config = useConfigStore((state) => state.config);
   const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
   const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
-
-  // Intelligence modal
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const [sliderValue1, setSliderValue1] = useState(4);
   const [sliderValue2, setSliderValue2] = useState(3);
@@ -97,7 +92,7 @@ export function IntelligenceMenu(props: IntelligenceProps) {
             <VStack>
               <VStack p={1} pt={1} w="100%" align={"left"}>
                 <Text fontSize="lg" mb={1} fontWeight={"bold"}>Models</Text>
-                <RadioGroup defaultValue={selectedModel} onChange={setAIModel}>
+                <RadioGroup defaultValue={selectedModel} onChange={setAIModel} colorScheme='purple'>
                   <Stack>
                     <Radio value='llama' isDisabled={!llama?.url}><b>Llama</b>: {llama?.model} - {llama?.url.substring(0, 12) + '•'.repeat(10)}</Radio>
                     <Radio value='openai' isDisabled={!openai?.apiKey}><b>OpenAI</b>: {openai?.model} - {openai?.apiKey ? openai?.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
