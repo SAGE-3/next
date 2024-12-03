@@ -18,9 +18,9 @@ import {
   useMessageStore,
   useHotkeys,
   useCursorBoardPosition,
-  useKeyPress,
   setupApp,
   HelpModal,
+  useAssetStore,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
@@ -46,6 +46,7 @@ export function Background(props: BackgroundProps) {
   const subMessage = useMessageStore((state) => state.subscribe);
   const unsubMessage = useMessageStore((state) => state.unsubscribe);
   const message = useMessageStore((state) => state.lastone);
+  // const messages = useMessageStore((state) => state.messages);
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
@@ -78,14 +79,16 @@ export function Background(props: BackgroundProps) {
   // Get the last new message
   useEffect(() => {
     if (!user) return;
-    if (message && message._createdBy === user._id) {
+    if (!message) return;
+    if (message._createdBy === user._id) {
       const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
       // Update the toast if we can
-      if (toastIdRef.current) {
+      if (toastIdRef.current && toast.isActive(toastIdRef.current)) {
         toast.update(toastIdRef.current, {
           title: title,
+          status: message.data.close ? 'info' : 'loading',
           description: message.data.payload,
-          duration: 5000,
+          duration: message.data.close ? 5000 : null,
           isClosable: true,
         });
       } else {
@@ -93,11 +96,14 @@ export function Background(props: BackgroundProps) {
         toastIdRef.current = toast({
           title: title,
           description: message.data.payload,
-          status: 'info',
-          duration: 5000,
+          status: message.data.close ? 'info' : 'loading',
+          duration: message.data.close ? 5000 : null,
           isClosable: true,
         });
       }
+    } else if (message.data.type === 'upload' && message.data.payload === 'Assets Ready') {
+      // Update the asset store when someones uploads an asset
+      useAssetStore.getState().update();
     }
   }, [message]);
 

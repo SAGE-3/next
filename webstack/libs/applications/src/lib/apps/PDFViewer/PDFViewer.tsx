@@ -10,7 +10,7 @@ import { useEffect, useState, useCallback, useRef, MouseEvent } from 'react';
 import { useParams } from 'react-router';
 
 // Chakra UI
-import { Box, Button, ButtonGroup, Tooltip, Menu, MenuItem, MenuList, MenuButton, HStack, Fade } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Tooltip, HStack, Fade } from '@chakra-ui/react';
 // Icons
 import {
   MdFileDownload,
@@ -18,7 +18,6 @@ import {
   MdOutlineFastForward,
   MdAdd,
   MdRemove,
-  MdMenu,
   MdSkipPrevious,
   MdSkipNext,
   MdNavigateNext,
@@ -400,8 +399,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspectRatio] = useState(1);
-  // User information
-  // const { user } = useUser();
 
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
@@ -476,18 +473,6 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }
 
-  // Analyze the PDF
-  // function analyzePDF() {
-  //   if (file && user) {
-  //     updateState(props._id, {
-  //       client: user._id,
-  //       executeInfo: { executeFunc: 'analyze_pdf', params: { asset: file.data.file, user: user._id } },
-  //     });
-  //   }
-  // }
-
-  // console.log('PDFViewer ToolbarComponent', props.data);
-
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -529,7 +514,19 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={0}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Back 10 pages'} openDelay={400}>
+          <Button onClick={() => handlePrev(10)}>
+            <MdOutlineFastRewind />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Forward 10 pages'} openDelay={400}>
+          <Button onClick={() => handleNext(10)}>
+            <MdOutlineFastForward />
+          </Button>
+        </Tooltip>
+
         <Tooltip placement="top-start" hasArrow={true} label={'Download PDF'} openDelay={400}>
           <Button
             onClick={() => {
@@ -544,10 +541,11 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileDownload />
           </Button>
         </Tooltip>
+
       </ButtonGroup>
 
       {/* Extra Actions */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout">
@@ -577,7 +575,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuItem>
           </MenuList>
         </Menu>
-      </ButtonGroup>
+      </ButtonGroup> */}
 
       {/* Remote Action in Python */}
       {/* <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>

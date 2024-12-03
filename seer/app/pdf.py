@@ -27,7 +27,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile
+from libs.utils import getModelsInfo, getPDFFile, getMDfromPDF
 
 # ChromaDB AI vector DB
 import chromadb
@@ -45,6 +45,7 @@ from typing import Dict
 
 # from libs.pdf.pdf_utils import generate_answer
 from libs.pdf.pdf_v3 import generate_answer
+
 
 class PDFAgent:
     def __init__(
@@ -103,11 +104,11 @@ class PDFAgent:
         # OpenAI for now, can explore more in the future
         self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
 
-        # Langchain Chroma 
+        # Langchain Chroma
         self.vector_store = Chroma(
-          client=self.chroma,
-          collection_name="pdf_docs",
-          embedding_function=self.embedding_model
+            client=self.chroma,
+            collection_name="pdf_docs",
+            embedding_function=self.embedding_model,
         )
 
         # Using Langchain's Chromadb
@@ -116,13 +117,12 @@ class PDFAgent:
 
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
-        # Default answer
-        description = "No description available."
+
         # Retrieve the PDF content
         # TODO: make cleaner
         # Define the loop to run getPDFFile in an executor for each asset
         # loop = asyncio.get_event_loop()
-        
+
         # # Use run_in_executor for each asset ID to avoid blocking the event loop
         # pdfContents = [
         #     {
@@ -131,69 +131,83 @@ class PDFAgent:
         #     }
         #     for assetid in qq.assetids
         # ]
-        pdfContents = [{"id": assetid, "content": getPDFFile(self.ps3, assetid)} for assetid in qq.assetids]
-    
-        
+        pdfContents = [
+            {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
+            for assetid in qq.assetids
+        ]
+
         self.logger.info(f"pdfs: {len(pdfContents)}")
-        self.logger.info(f"pdf: {pdfContents[0]['id']}, {len(pdfContents[0]['content'])}")
-        
+        self.logger.info(
+            f"pdf: {pdfContents[0]['id']}, {len(pdfContents[0]['content'])}"
+        )
+
         self.logger.info(f"\n\nqq, {qq}\n\n")
 
         # Used to filter documents in the vector DB
-        sage_asset_ids = qq.assetids # array to accomodate for more than 1 pdf in the future
-        
+        #   using an array to accomodate for more than 1 pdf in the future
+        sage_asset_ids = qq.assetids
+
         # Create retrievers for each document
         retrievers: Dict[str, VectorStoreRetriever] = {
             sage_asset_id: self.vector_store.as_retriever(
                 search_type="similarity_score_threshold",
                 search_kwargs={
                     "filter": {"sage_asset_id": sage_asset_id},
-                    "score_threshold": 0.7
+                    "score_threshold": 0.7,
                 },
             )
             for sage_asset_id in sage_asset_ids
         }
-        
+
         self.logger.info(f"sage retrievers: {retrievers}")
 
         if len(pdfContents) > 0:
             # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
             # TODO: Check token length for context length limits on long documents
-            # Convert pdfs to markdown
-            # pdfs_to_md = {
-            #   pdf["id"]: await loop.run_in_executor(
-            #     None, pymupdf4llm.to_markdown, pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")
-            #   )
-            #   for pdf in pdfContents
-            # }
+
+            # Convert PDFs to markdown
             pdfs_to_md = {
-              pdf["id"]: pymupdf4llm.to_markdown(pymupdf.open(stream=BytesIO(pdf["content"]), filetype="pdf")) for pdf in pdfContents
+                pdf["id"]: getMDfromPDF(pdf["id"], pdf["content"])
+                for pdf in pdfContents
             }
 
             self.logger.info(f"pdfs_to_md, {pdfs_to_md.keys()}")
-            
+
             for assetid in qq.assetids:
-              # If asset id is not in vector store, add it
-              if len(self.vector_store.get(where={"sage_asset_id": assetid})["documents"]) == 0:
-                print("\n\nadding to chroma\n\n")
-                text_splitter = RecursiveCharacterTextSplitter(
-                  chunk_size=1000,
-                  chunk_overlap=200
-                )
+                # If asset id is not in vector store, add it
+                if (
+                    len(
+                        self.vector_store.get(where={"sage_asset_id": assetid})[
+                            "documents"
+                        ]
+                    )
+                    == 0
+                ):
+                    print("\n\nadding to chroma\n\n")
+                    text_splitter = RecursiveCharacterTextSplitter(
+                        chunk_size=1000, chunk_overlap=200
+                    )
 
-                splits = text_splitter.split_documents([Document(pdfs_to_md[assetid], metadata={
-                  "sage_asset_id": assetid,
-                })])
-                
-                res = await self.vector_store.aadd_documents(documents=splits)
+                    splits = text_splitter.split_documents(
+                        [
+                            Document(
+                                pdfs_to_md[assetid],
+                                metadata={
+                                    "sage_asset_id": assetid,
+                                },
+                            )
+                        ]
+                    )
 
-                print(f"\n\ndocument splits: {len(res)}\n\n")
-            
+                    res = await self.vector_store.aadd_documents(documents=splits)
+
+                    print(f"\n\ndocument splits: {len(res)}\n\n")
+
             answer = await generate_answer(
-              qq=qq,
-              llm=self.llm_openai,
-              retrievers=retrievers,
-              markdown_files_dict=pdfs_to_md
+                qq=qq,
+                llm=self.llm_openai,
+                retrievers=retrievers,
+                markdown_files_dict=pdfs_to_md,
             )
 
         text = answer

@@ -17,7 +17,7 @@ import { SAGEColors } from '@sage3/shared';
 import { useUser, useHexColor, useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
-import { ScreenshareMenu } from '../ScreenshareMenu';
+import { ScreenshareMenu } from './Menus/ScreenshareMenu';
 import { Interactionbar } from '../Interactionbar';
 import { ApplicationsMenu, AssetsMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
 

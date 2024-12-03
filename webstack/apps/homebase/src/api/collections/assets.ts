@@ -51,7 +51,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     this.router().post('/upload', uploadHandler);
     // Access to uploaded files: GET /api/assets/static/:filename
     const assetFolder = config.public;
-    this.router().use('/static', express.static(assetFolder));
+    this.router().use('/static', express.static(assetFolder, { maxAge: '30d' }));
     // Finish the initialization by adding file processors
     this.setup();
     // Check the consistency of the collection

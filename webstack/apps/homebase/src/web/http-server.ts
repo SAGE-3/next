@@ -34,6 +34,30 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   // Express app
   const app = express();
 
+  // Adding a logger to HTTP requests: 'all' | 'partial' | 'none';
+  let level = 'partial';
+  if (config.webserver) {
+    level = config.webserver.logLevel || 'partial';
+    console.log('Web> Webserver logging enabled', level);
+  }
+  if (level === 'partial') {
+    // Small logging and showing only errors
+    app.use(
+      morgan('tiny', {
+        // Ignore the HTTP 200 good messages
+        skip: function (req: express.Request, res: express.Response) {
+          return res.statusCode === 200 || res.statusCode === 304;
+        },
+      })
+    );
+  } else if (level === 'all') {
+    // Standard Apache common log output.
+    app.use(morgan('common'));
+  } else if (level === 'none') {
+    // No logging
+    console.log('Web> Webserver logging disabled');
+  }
+
   // Set express attributes
   app.use(favicon(path.join(assetPath, 'favicon.ico')));
 
@@ -67,30 +91,6 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   // Compress the traffic
   app.use(compression());
 
-  // Adding a logger to HTTP requests: 'all' | 'partial' | 'none';
-  let level = 'partial';
-  if (config.webserver) {
-    level = config.webserver.logLevel || 'partial';
-    console.log('Web> Webserver logging enabled', level);
-  }
-  if (level === 'partial') {
-    // Small logging and showing only errors
-    app.use(
-      morgan('tiny', {
-        // Ignore the HTTP 200 good messages
-        skip: function (req: express.Request, res: express.Response) {
-          return res.statusCode === 200 || res.statusCode === 304;
-        },
-      })
-    );
-  } else if (level === 'all') {
-    // Standard Apache common log output.
-    app.use(morgan('common'));
-  } else if (level === 'none') {
-    // No logging
-    console.log('Web> Webserver logging disabled');
-  }
-
   return app;
 }
 
@@ -120,5 +120,5 @@ export function listenApp(app: express.Express, listenPort: number): Server {
  */
 export function serveApp(app: express.Express, webPath: string): void {
   // Serves the static react files from webapp folder
-  app.use('/', express.static(webPath));
+  app.use('/', express.static(webPath, { maxAge: '1d' }));
 }

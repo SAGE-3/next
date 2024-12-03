@@ -60,6 +60,18 @@ import { AppWindow } from '../../components';
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callCSV } from './tRPC';
 import { dataTool } from 'echarts';
 
+const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ol style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ol>
+);
+
+const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ul style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ul>
+);
+
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'csv';
 
 // AI model information from the backend
@@ -80,15 +92,20 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
-  const myColor = useHexColor(user?.data.color || 'blue');
-  const sageColor = useHexColor('purple');
-  const aiTypingColor = useHexColor('orange');
-  const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.200', 'gray.800');
-  const fgColor = useColorModeValue('gray.800', 'gray.200');
-  const sc = useColorModeValue('gray.400', 'gray.200');
+  // Chat Bubble Colors
+  const myColor = useHexColor(`blue.300`);
+  const sageColor = useHexColor('purple.300');
+  const aiTypingColor = useHexColor('orange.300');
+  const otherUserColor = useHexColor('gray.300');
+  // Background, scrollbar, and Foreground Colors
+  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
+  const backgroundColorHex = useHexColor(backgroundColor);
+  const bgColor = useColorModeValue('gray.100', 'gray.700');
+  const fgColor = useColorModeValue('gray.900', 'gray.200');
+  const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+
   // App state management
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
@@ -586,7 +603,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('is pdf');
     console.log('sources', s.sources);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
@@ -634,6 +650,27 @@ function AppComponent(props: App): JSX.Element {
             setProcessing(false);
 
             if ('message' in response) {
+              const errorMessage = 'There has been an error, please try again or report it through the menu.';
+              setStreamText('');
+              setPreviousAnswer(errorMessage);
+              updateState(props._id, {
+                ...s,
+                previousQ: q.q,
+                previousA: errorMessage,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: errorMessage,
+                  },
+                ],
+              });
               toast({
                 title: 'Error',
                 description: response.message || 'Error sending query to the agent. Please try again.',
@@ -1018,9 +1055,39 @@ function AppComponent(props: App): JSX.Element {
       Future works suggested in this paper
       Find Related Papers
  */
-  const onPDFSummary = async () => {
-    return onContentPDF('Read the PDF file and provide a short summary.');
-  };
+  // Array of prompts for PDFs
+  const pdfPrompts = [
+    {
+      title: 'Generate Summary',
+      action: onContentPDF,
+      prompt:
+        'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.',
+    },
+    {
+      title: 'Gaps and Limitations',
+      action: onContentPDF,
+      prompt:
+        'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.',
+    },
+    {
+      title: 'Literature and References',
+      action: onContentPDF,
+      prompt:
+        'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.',
+    },
+    {
+      title: 'Methodology Analysis',
+      action: onContentPDF,
+      prompt:
+        'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.',
+    },
+    {
+      title: 'Explain implications',
+      action: onContentPDF,
+      prompt:
+        'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.',
+    },
+  ];
 
   const onCodeComment = async () => {
     if (!user) return;
@@ -1213,7 +1280,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
         <img src={`data:image/png;base64,${base64String}`} />
         <Box
@@ -1276,13 +1343,14 @@ function AppComponent(props: App): JSX.Element {
                         closeDelay={2000}
                       >
                         <Box
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           boxShadow="md"
                           fontFamily="arial"
                           textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           maxWidth="70%"
                           userSelect={'none'}
@@ -1351,11 +1419,12 @@ function AppComponent(props: App): JSX.Element {
                       >
                         <Box
                           boxShadow="md"
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           textAlign={'left'}
                           bg={sageColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           fontFamily="arial"
                           onDoubleClick={() => {
@@ -1374,7 +1443,7 @@ function AppComponent(props: App): JSX.Element {
                           }}
                         >
                           <Box
-                            pl={3}
+                            // pl={3}
                             draggable={true}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
@@ -1391,7 +1460,23 @@ function AppComponent(props: App): JSX.Element {
                               );
                             }}
                           >
-                            <Markdown style={{ textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            <Box>
+                              <Markdown
+                                options={{
+                                  overrides: {
+                                    ol: {
+                                      component: OrderedList,
+                                    },
+                                    ul: {
+                                      component: UnorderedList,
+                                    },
+                                  },
+                                }}
+                                style={{ userSelect: 'none' }}
+                              >
+                                {message.response}
+                              </Markdown>
+                            </Box>
                           </Box>
                         </Box>
                       </Tooltip>
@@ -1785,22 +1870,27 @@ function AppComponent(props: App): JSX.Element {
         )}
         {mode === 'pdf' && (
           <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short summary for this PDF file'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onPDFSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Summary</Text>
-              </Button>
-            </Tooltip>
+            {pdfPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
           </HStack>
         )}
         {mode === 'web' && (

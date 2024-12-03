@@ -402,6 +402,7 @@ export function AppWindow(props: WindowProps) {
         selected={selected}
         isGrouped={isGrouped}
         dragging={!appDragging && props.app.data.dragging}
+        scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
         selectColor={selectColor}
