@@ -51,16 +51,16 @@ import {
   useUserSettings,
   useUIStore,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, WebScreenshotAnswer } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, CSVQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callCSV } from './tRPC';
 import { dataTool } from 'echarts';
 
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'csv';
 
 // AI model information from the backend
 interface modelInfo {
@@ -97,6 +97,7 @@ function AppComponent(props: App): JSX.Element {
   const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
+  const [base64String, setBase64String] = useState('');
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -147,6 +148,9 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'web') {
       // Code
       onContentWeb(text);
+    } else if (mode === 'csv') {
+      // Code
+      onContentCsvViewer(text);
     } else {
       await newMessage(text);
     }
@@ -217,6 +221,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.sources && s.sources.length >= 1) {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      console.log(apps[0].data.type);
       if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
         setMode('image');
       } else if (apps && apps[0] && apps[0].data.type === 'PDFViewer') {
@@ -225,6 +230,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('code');
       } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
         setMode('web');
+      } else if (apps && apps[0] && apps[0].data.type === 'CSVViewer') {
+        setMode('csv');
       } else {
         setMode('text');
       }
@@ -478,6 +485,98 @@ function AppComponent(props: App): JSX.Element {
             });
             if (response.actions) {
               setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onContentCsvViewer = async (prompt: string) => {
+    if (!user) return;
+    console.log('is chartMaker');
+    console.log('sources', s.sources);
+
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for csv
+      if (apps && apps[0].data.type === 'CSVViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: name,
+            query: prompt,
+            response: isQuestion ? 'Working on it...' : '',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+            // Build the query
+            const q: CSVQuery = {
+              ctx: {
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
+              },
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callCSV(q);
+            setProcessing(false);
+
+            if ('message' in response) {
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(response.r);
+              setBase64String(response.r);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: 'Describe the content',
+                previousA: response.r,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.r,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
             }
           }
         }
@@ -1116,6 +1215,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
         {/* Display Messages */}
+        <img src={`data:image/png;base64,${base64String}`} />
         <Box
           flex={1}
           bg={bgColor}

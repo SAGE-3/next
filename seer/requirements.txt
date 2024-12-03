@@ -45,3 +45,6 @@ pymupdf4llm
 # ChromaDB AI vector DB
 chromadb==0.5.16
 
+# CSV 
+pandas
+matplotlib

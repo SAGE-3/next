@@ -23,6 +23,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  CSVQuery,
+  CSVAnswer,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -82,6 +84,10 @@ const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
   const route = AgentRoutes.pdf;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const csvHandler: RpcHandlerPost<CSVQuery, CSVAnswer> = (req) => {
+  const route = AgentRoutes.csv;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -92,6 +98,7 @@ handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
+handlers[AgentRoutes.csv] = { func: csvHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
 
 /*

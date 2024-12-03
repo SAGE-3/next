@@ -24,6 +24,7 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  CSVAnswer,
 } from '@sage3/shared';
 
 /**
@@ -89,6 +90,9 @@ export const callImage = async (data: ImageQuery) => {
 };
 export const callPDF = async (data: PDFQuery) => {
   return makeRpcPost(AgentRoutes.pdf, data) as Promise<PDFAnswer | SError>;
+};
+export const callCSV = async (data: PDFQuery) => {
+  return makeRpcPost(AgentRoutes.csv, data) as Promise<CSVAnswer | SError>;
 };
 export const callCode = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.code, data) as Promise<AskResponse | SError>;

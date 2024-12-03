@@ -88,6 +88,19 @@ export type PDFAnswer = {
   actions?: any[];
 };
 
+// PDF request
+export type CSVQuery = {
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  assetids: string[];
+  user: string;
+  q: string;
+};
+export type CSVAnswer = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Code request
 export type CodeRequest = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
@@ -114,5 +127,6 @@ export const AgentRoutes = {
   webshot: '/webshot',
   image: '/image',
   pdf: '/pdf',
+  csv: '/csv',
   code: '/code',
 } as const;

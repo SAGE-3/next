@@ -8,7 +8,9 @@
 
 # Models
 from typing import List, NamedTuple, Optional
-from pydantic import BaseModel, Json
+from pydantic import BaseModel, Json, ConfigDict
+import io
+import base64
 
 # Pydantic models: Question, Answer, Context
 
@@ -80,7 +82,35 @@ class PDFAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
+    
+class CSVQuery(BaseModel):
+    ctx: Context  # context
+    # asset: str  # question
+    assetids: List[str] # pdfs in sage
+    user: str  # user name
+    q: str  # question
 
+
+class CSVAnswer(BaseModel):
+    r: str  # Store the buffer as a Base64-encoded string
+    success: bool = True  # success flag
+    actions: List[dict]  # actions to be performed
+
+    @staticmethod
+    def buffer_to_base64(buffer: io.BytesIO) -> str:
+        buffer.seek(0)  # Ensure the cursor is at the start
+        return base64.b64encode(buffer.read()).decode('utf-8')
+
+    @staticmethod
+    def base64_to_buffer(data: str) -> io.BytesIO:
+        return io.BytesIO(base64.b64decode(data))
+
+    @classmethod
+    def from_buffer(cls, buffer: io.BytesIO, **kwargs):
+        return cls(r=cls.buffer_to_base64(buffer), **kwargs)
+
+    def to_buffer(self) -> io.BytesIO:
+        return self.base64_to_buffer(self.r)
 
 class WebQuery(BaseModel):
     ctx: Context  # context
