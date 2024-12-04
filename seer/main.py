@@ -1,6 +1,7 @@
 # python modules
 import logging, asyncio
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 from libs.localtypes import (
     ImageQuery,
@@ -50,8 +51,38 @@ asyncio.ensure_future(webAG.init())
 # set_debug(True)
 # set_verbose(True)
 
+
+# Tasks
+
+
+# Function to be run periodically
+async def my_periodic_task():
+    while True:
+        print("Task is running: number of assets ->", len(ps3.assets))
+        await asyncio.sleep(3)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the periodic task
+    task = asyncio.create_task(my_periodic_task())
+    yield  # Application runs here
+    # Cleanup on shutdown
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        print("Periodic task cancelled")
+
+
 # Web server
-app = FastAPI(title="Seer", description="A LangChain proxy for SAGE3.", version="0.1.0")
+app = FastAPI(
+    lifespan=lifespan,
+    title="Seer",
+    description="A LangChain proxy for SAGE3.",
+    version="0.1.0",
+)
+
 
 #
 # API routes
