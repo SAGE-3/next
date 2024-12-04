@@ -301,7 +301,12 @@ def getMDfromPDF(id, content):
             return file.read()
     else:
         md = pymupdf4llm.to_markdown(
-            pymupdf.open(stream=BytesIO(content), filetype="pdf")
+            pymupdf.open(stream=BytesIO(content), filetype="pdf"),
+            write_images=False,
+            embed_images=False,
+            # speed up the process by skipping complex pages
+            graphics_limit=500,
+            show_progress=True,
         )
         with open(file_path, "w") as file:
             file.write(md)
