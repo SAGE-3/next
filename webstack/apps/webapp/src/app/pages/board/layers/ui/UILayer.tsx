@@ -341,7 +341,8 @@ export function UILayer(props: UILayerProps) {
                 _dark: {
                   bg: 'gray.600', // 'inherit' didnt seem to work
                 },
-              }}></IconButton>
+              }}
+            ></IconButton>
           </Tooltip>
           <Tooltip label={'Reset Zoom'}>
             <IconButton
@@ -421,7 +422,13 @@ export function UILayer(props: UILayerProps) {
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
-          <ToolbarButton bgColor={'purple'} icon={<IoSparklesSharp />} tooltip={'SAGE Intelligence'} title={'SAGE Intelligence'}>
+          <ToolbarButton
+            bgColor={'purple'}
+            icon={<IoSparklesSharp />}
+            tooltip={'SAGE Intelligence'}
+            title={'SAGE Intelligence'}
+            colorActiveAlways
+          >
             {room && board && <IntelligenceMenu roomId={room?._id} boardId={board?._id} notificationCount={0} />}
           </ToolbarButton>
         </Box>

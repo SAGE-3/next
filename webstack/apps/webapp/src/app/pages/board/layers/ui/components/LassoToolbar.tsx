@@ -54,7 +54,7 @@ import {
   MdAutoAwesomeMotion,
   MdAddCircleOutline,
 } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi';
 import { FaPython } from 'react-icons/fa';
 
 import {
@@ -75,11 +75,12 @@ import {
   useUserSettings,
   ColorPicker,
 } from '@sage3/frontend';
-import { Applications } from '@sage3/applications/apps';
+import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Board } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 type LassoToolbarProps = {
   downloadAssets: () => void;
@@ -225,6 +226,19 @@ export function LassoToolbar(props: LassoToolbarProps) {
     }
     // Return the component
     return component;
+  };
+
+  // Check if all the selected apps are of the same type and are Ai_Enabled
+  const isAllOfSameTypeAndAiEnabled = (): boolean => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const sameApps = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+    if (sameApps) {
+      const firstApp = selectedApps[0];
+      if (!firstApp) return false;
+      return AI_ENABLED_APPS.includes(firstApp.data.type);
+    } else {
+      return false;
+    }
   };
 
   // Duplicate all the selected apps
@@ -602,25 +616,36 @@ for b in bits:
               <Spacer />
 
               {/* Sage Intelligence */}
-              <Box>
-                <Tooltip
-                  placement="top"
-                  hasArrow={true}
-                  openDelay={400}
-                  ml="1"
-                  label={'Open selected application in Chat with SAGE Intelligence'}
-                >
-                  <Button onClick={openInChat} backgroundColor={intelligenceColor}
-                    variant='solid' size="xs" m={0} mr={1} p={0}
-                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
-                    <HiOutlineSparkles size="20px" color={"white"} />
-                  </Button>
-                </Tooltip>
-              </Box>
+              {
+                // Are apps all the same type and Ai_Enabled
+                isAllOfSameTypeAndAiEnabled() && (
+                  <Box>
+                    <Tooltip
+                      placement="top"
+                      hasArrow={true}
+                      openDelay={400}
+                      ml="1"
+                      label={'Open selected application in Chat with SAGE Intelligence'}
+                    >
+                      <Button
+                        onClick={openInChat}
+                        backgroundColor={intelligenceColor}
+                        variant="solid"
+                        size="xs"
+                        m={0}
+                        mr={1}
+                        p={0}
+                        _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                      >
+                        <IoSparklesSharp size="16px" color={'white'} />{' '}
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                )
+              }
             </Box>
 
-            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}
-              minWidth={"100px"}>
+            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'} minWidth={'100px'}>
               {/* Show the GroupedToolbarComponent here */}
               {selectedAppFunctions()}
               <Menu>
@@ -762,8 +787,9 @@ for b in bits:
         onClose={deleteOnClose}
         onConfirm={closeSelectedApps}
         title="Delete Selected Applications"
-        message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-          } `}
+        message={`Are you sure you want to delete the selected ${
+          lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+        } `}
         cancelText="Cancel"
         confirmText="Delete"
         confirmColor="red"
@@ -777,7 +803,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
