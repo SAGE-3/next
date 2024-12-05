@@ -92,7 +92,8 @@ class CSVQuery(BaseModel):
 
 
 class CSVAnswer(BaseModel):
-    r: str  # Store the buffer as a Base64-encoded string
+    img: str  # Store the buffer as a Base64-encoded string
+    content: str
     success: bool = True  # success flag
     actions: List[dict]  # actions to be performed
 
@@ -107,10 +108,10 @@ class CSVAnswer(BaseModel):
 
     @classmethod
     def from_buffer(cls, buffer: io.BytesIO, **kwargs):
-        return cls(r=cls.buffer_to_base64(buffer), **kwargs)
+        return cls(img=cls.buffer_to_base64(buffer), **kwargs)
 
     def to_buffer(self) -> io.BytesIO:
-        return self.base64_to_buffer(self.r)
+        return self.base64_to_buffer(self.img)
 
 class WebQuery(BaseModel):
     ctx: Context  # context

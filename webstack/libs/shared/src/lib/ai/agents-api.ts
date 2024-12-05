@@ -96,7 +96,8 @@ export type CSVQuery = {
   q: string;
 };
 export type CSVAnswer = {
-  r: string;
+  img: string;
+  content: string;
   success: boolean;
   actions?: any[];
 };

@@ -570,13 +570,13 @@ function AppComponent(props: App): JSX.Element {
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(response.r);
-              setBase64String(response.r);
+              setPreviousAnswer(response.content);
+              setBase64String(response.img);
+              console.log(response);
               // Add messages
               updateState(props._id, {
                 ...s,
                 previousQ: 'Describe the content',
-                previousA: response.r,
                 messages: [
                   ...s.messages,
                   initialAnswer,
@@ -587,7 +587,7 @@ function AppComponent(props: App): JSX.Element {
                     creationDate: now.epoch + 1,
                     userName: 'SAGE',
                     query: '',
-                    response: response.r,
+                    response: response.content,
                   },
                 ],
               });
@@ -1282,7 +1282,9 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
-        <img src={`data:image/png;base64,${base64String}`} />
+        <Box p="1rem">
+          <img src={`data:image/png;base64,${base64String}`} alt="Base64 Example" />
+        </Box>
         <Box
           flex={1}
           bg={bgColor}

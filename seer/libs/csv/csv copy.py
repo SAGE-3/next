@@ -34,10 +34,10 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
       python'''
       import pandas as pd
       import matplotlib.pyplot as plt
-      
-      df = pd.read_csv(csv_buffer)
+      import numpy as np
       '''
       
+      df = pd.read_csv(csv_buffer)
       
       Here are the contents of the df
       {df.head(5).to_string(index=False)}
@@ -47,10 +47,6 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
       Create the visualization such that it provides evidence that backs up an answer.
       For instance, if the question asks for the most expensive car, show the price ranges of other cars.
       
-      Ensure the title, axis, and labels are readble. 
-      Do not overlap the text.
-      
-      Do not read the csv again and do not import extra libraries
       Do not respond with extra text.
       ONLY RESPOND WITH CODE TO VISUALIZE THE USER'S REQUEST
   """)
@@ -169,7 +165,8 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
     # Prepare an environment to execute the code
     exec_globals = {'plt': plt}
     exec_locals = {'df': df}
-
+    code = code.replace("plt.show()", "")
+    
     # Execute the received code
     exec(code, exec_globals, exec_locals)
 
@@ -190,14 +187,45 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
   ]})
   code =''
   
+  def compress_in_memory(image_buf, format="JPEG", quality=85):
+      compressed_buf = io.BytesIO()
+      with Image.open(image_buf) as img:
+          img.save(compressed_buf, format=format, optimize=True, quality=quality)
+      compressed_buf.seek(0)
+      return compressed_buf
+  def evaluate_plot(plt_buf, code, llm):
+    # Convert plot buffer to base64 or some other format
+    import base64
+    encoded_plot = base64.b64encode(plt_buf.getvalue()).decode()
+
+    # Prompt LLM to evaluate aesthetics
+    evaluation_prompt = f"""
+    Here is an image of a plot and the code that generated it:
+    
+    [Base64 Image: {encoded_plot}]
+    
+    Code:
+    ```
+    {code}
+    ```
+    
+    Please assess whether the plot looks aesthetically pleasing and is easy to interpret. If not, provide updated code to improve it. Otherwise, confirm it is acceptable.
+    """
+    response = llm.invoke(evaluation_prompt)
+    print(response)
+    return response
+  
   for i in res["messages"]:
     if i.name == 'visualization_generator':
       # print(f"\n{i}\n, this is the code")
       # buf = parse_and_execute(i.content)
       # print(buf)
-      code = parse(i.content)
+      buf = parse_and_execute(i.content)
+      code = i.content
+      buf = compress_in_memory(buf)
+      evaluate_plot(buf, code, llm)
       
-    
+
   
   if res["messages"][-1].content:
     return_message = {"content": res["messages"][-1].content, "code": code}

@@ -146,6 +146,7 @@ class CSVAgent:
         # Parse csvContents
         asset_id = csv_item["id"]
         csv_data = csv_item["content"]  # Extract the CSV string
+        print(csv_data, 'datatatatata')
         csv_buffer = StringIO(csv_data)  # Wrap string in StringIO
         df = pd.read_csv(csv_buffer)  # Automatically infer columns from the first row
         print(f"DataFrame for id {csv_item['id']}:\n", df)
@@ -196,29 +197,22 @@ class CSVAgent:
         #         },
         #     }
         # )
-        print(answer)
-        code = """
-import matplotlib.pyplot as plt
-import numpy as np
+        print(answer, 'answer')
+        code = answer['code'].replace("plt.show()", "")
 
-x = np.linspace(0, 10, 100)
-y = np.sin(x)
-
-plt.figure(figsize=(6, 4))
-plt.plot(x, y, label='sin(x)')
-plt.title('Sin(x) Plot')
-plt.legend()
-"""
+        exec_globals = {'plt': plt}
+        exec_locals = {'df': df}
         
-        exec(code)
+        exec(code, exec_globals, exec_locals)
         
         # Save the generated plot to a BytesIO object
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         plt.close()  # Close the plot to prevent reusing it
         buf.seek(0)
-
+        print(answer['code'])
         # Build the answer object
-        val = CSVAnswer.from_buffer(buf, success=True, actions=[])
+        print("BEFORE VAL")
+        val = CSVAnswer.from_buffer(buf, success=True, actions=[], content=answer['content'])
 
         return val
