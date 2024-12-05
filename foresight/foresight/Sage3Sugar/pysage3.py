@@ -45,11 +45,10 @@ class PySage3:
         }
 
         self.rooms = {}
-        self.assets = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
 
-        self.socket.subscribe(["/api/apps", "/api/rooms", "/api/boards", "/api/assets"])
+        self.socket.subscribe(["/api/apps", "/api/rooms", "/api/boards"])
 
         # Grab and load info already on the board
         self.__populate_existing()
@@ -70,10 +69,6 @@ class PySage3:
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
-        # Populate existing apps
-        assets_info = self.s3_comm.get_assets()
-        for asset_info in assets_info:
-            self.__handle_create("ASSETS", asset_info)
 
     def create_app(self, room_id, board_id, app_type, state, app=None):
         try:
@@ -175,8 +170,8 @@ class PySage3:
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"creating {doc} \n")
+        # with open("/tmp/log.out", "w") as out_file:
+        #     out_file.write(f"creating {doc} \n")
         # we need state to be at the same level as data
         if collection == "ROOMS":
             new_room = Room(doc)
@@ -196,9 +191,6 @@ class PySage3:
                     self.rooms[room_id].boards[board_id].smartbits[
                         smartbit.app_id
                     ] = smartbit
-        elif collection == "ASSETS":
-            self.assets[doc["_id"]] = doc
-            print("Asset created", doc["data"]["originalfilename"])
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
@@ -212,8 +204,17 @@ class PySage3:
             room_id = doc["data"]["roomId"]
             # TODO: proceed to BOARD update with the updates field passed as param
         elif collection == "APPS":
+            print("update app")
             board_id = doc["data"]["boardId"]
             room_id = doc["data"]["roomId"]
+            print("   board room", board_id, room_id)
+            if room_id not in self.rooms:
+                print(f"Room {room_id} not found")
+                return
+            if board_id not in self.rooms[room_id].boards:
+                print(f"Board {board_id} not found")
+                return
+            print("   sb", self.rooms[room_id].boards[board_id].smartbits)
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if sb is not None and type(sb) is not GenericSmartBit:
@@ -223,8 +224,8 @@ class PySage3:
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         """Delete not yet supported through API"""
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"Deleting {doc} \n")
+        # with open("/tmp/log.out", "w") as out_file:
+        #     out_file.write(f"Deleting {doc} \n")
         room_id = doc["data"]["roomId"]
         board_id = doc["data"]["boardId"]
         smartbit_id = doc["_id"]
@@ -234,41 +235,52 @@ class PySage3:
         message = json.loads(msg)
         # Duplicate messages for the time being to allow python to work
         # event.doc is now an array of docs
-        for doc in message["event"]["doc"]:
-            msg = message.copy()
-            msg["event"]["doc"] = doc
-            # End of duplicating messages so old code can work
-            collection = msg["event"]["col"]
-            doc = msg["event"]["doc"]
-            msg_type = msg["event"]["type"]
-            app_id = doc["_id"]
 
-            # Its a create message
-            if msg_type == "CREATE":
-                self.__MSG_METHODS[msg_type](collection, doc)
-            # Its a delete message
-            elif msg_type == "DELETE":
-                self.__MSG_METHODS[msg_type](collection, doc)
-            # Its an update message
-            elif msg_type == "UPDATE":
-                # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
-                all_updates = msg["event"]["updates"]
-                msg_updates = {}
-                # find the updates for this specific app
-                for u in all_updates:
-                    if u["id"] == app_id:
-                        msg_updates = u["updates"]
-                        break
-                msg["event"]["updates"] = msg_updates
+        try:
+            print("Processing message", message)
+            print("  MSG", message["event"]["type"], message["event"]["col"])
+            for doc in message["event"]["doc"]:
+                print("----------")
+                print(doc)
+                print("----------")
+                # msg = message.copy()
+                # msg["event"]["doc"] = doc
+                # End of duplicating messages so old code can work
+                collection = message["event"]["col"]
+                # doc = msg["event"]["doc"]
+                msg_type = message["event"]["type"]
+                print("  doc id", doc["_id"])
+                app_id = doc["_id"]
 
-                if (
-                    "updates" in msg["event"]
-                    and "raised" in msg["event"]["updates"]
-                    and msg["event"]["updates"]["raised"]
-                ):
-                    pass
+                # Its a create/delete message
+                if msg_type == "CREATE" or msg_type == "DELETE":
+                    self.__MSG_METHODS[msg_type](collection, doc)
+                # Its an update message
+                elif msg_type == "UPDATE":
+                    # all updates for this message [{id: string, updates: {}}, {id:string, updates: {}}...]
+                    all_updates = msg["event"]["updates"]
+                    print("  all_updates", all_updates)
+                    msg_updates = {}
+                    # find the updates for this specific app
+                    for u in all_updates:
+                        print("  u", u)
+                        if u["id"] == app_id:
+                            msg_updates = u["updates"]
+                            self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
+                    print(" ##")
+                    # msg["event"]["updates"] = msg_updates
 
-                self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
+                    # if (
+                    #     "updates" in msg["event"]
+                    #     and "raised" in msg["event"]["updates"]
+                    #     and msg["event"]["updates"]["raised"]
+                    # ):
+                    #     pass
+
+                    # self.__MSG_METHODS[msg_type](collection, doc, msg_updates)
+
+        except Exception as e:
+            print("An exception occurred", e)
 
     def update_size(self, app, width=None, height=None, depth=None):
         if not isinstance(app, SmartBit):

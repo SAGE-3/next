@@ -16,6 +16,7 @@ import time
 import sys
 
 import logging
+import traceback
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +46,10 @@ class SageWebsocket:
         self.connected = True
 
     def on_message(self, ws, message):
-        logger.warning(
-            f"received message in default func on_message {message}, WRANIGN---not doing anything"
-        )
+        pass
+        # logger.warning(
+        #     f"received message in default func on_message {message}, WARNING---not doing anything"
+        # )
         # msg = json.loads(message)
         # sub_id = msg['id']
         # if self.queue_list[sub_id]:
@@ -58,7 +60,9 @@ class SageWebsocket:
         #         msg['event']['type'], msg['event']['doc']['_updatedAt'])
 
     def on_error(self, ws, error):
-        logger.error(f"error in webserver websocket connection {error}")
+        logger.error(f"websocket error> {error}")
+        print("Call trace:")
+        print("".join(traceback.format_stack()))
 
     # Check if the ws has connected
     # attempts (number of times to attempt) 2 attempt per second default 10
@@ -100,10 +104,11 @@ class SageWebsocket:
         # try to jon thread
         nb_tries = 3
         for _ in range(nb_tries):
-            if self.wst.is_alive():
+            if self.wst and self.wst.is_alive():
                 time.sleep(0.2)
             else:
-                self.wst.join()
+                if self.wst:
+                    self.wst.join()
                 break
         else:
             logger.error("Couldn't cleanly terminate the websocket")

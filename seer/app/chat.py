@@ -41,12 +41,12 @@ class ChatAgent:
         models = getModelsInfo(ps3)
         openai = models["openai"]
         llama = models["llama"]
-        self.logger.info(
-            ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
-        )
-        self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
-        )
+        # self.logger.info(
+        #     ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
+        # )
+        # self.logger.info(
+        #     "chat server: url: " + llama["url"] + " - model: " + llama["model"],
+        # )
 
         llm_llama = None
         llm_openai = None

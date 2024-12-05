@@ -9,15 +9,11 @@
 # PDFAgent
 import json, os
 from logging import Logger
-import asyncio
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
 
 # AI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
@@ -34,11 +30,6 @@ import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
 from langchain_openai.embeddings import OpenAIEmbeddings
-
-# PDF
-import pymupdf4llm
-import pymupdf
-from io import BytesIO
 
 from langchain.vectorstores.base import VectorStoreRetriever
 from typing import Dict
