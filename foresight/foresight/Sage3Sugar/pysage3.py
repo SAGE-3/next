@@ -175,8 +175,6 @@ class PySage3:
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"creating {doc} \n")
         # we need state to be at the same level as data
         if collection == "ROOMS":
             new_room = Room(doc)
@@ -223,8 +221,6 @@ class PySage3:
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         """Delete not yet supported through API"""
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"Deleting {doc} \n")
         room_id = doc["data"]["roomId"]
         board_id = doc["data"]["boardId"]
         smartbit_id = doc["_id"]
