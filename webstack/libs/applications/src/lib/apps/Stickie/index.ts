@@ -14,10 +14,6 @@ export const schema = z.object({
   color: z.string(),
   lock: z.boolean(),
   sources: z.array(z.string()),
-  executeInfo: z.object({
-    executeFunc: z.string(),
-    params: z.any(),
-  }),
 });
 export type state = z.infer<typeof schema>;
 
@@ -27,7 +23,6 @@ export const init: state = {
   color: 'yellow',
   lock: false,
   sources: [],
-  executeInfo: { executeFunc: '', params: {} },
 };
 
 export const name = 'Stickie';
