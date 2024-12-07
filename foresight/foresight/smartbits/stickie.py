@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 
 from pydantic import Field
+from typing import List
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
@@ -19,6 +20,7 @@ class StickieState(TrackedBaseModel):
     )
     fontSize: int = Field(description="The font size to use for the text", default=36)
     lock: bool = Field(description="Is the note locked for editing", default=False)
+    sources: List[str] = Field(description="List of application sources", default=False)
 
 
 class Stickie(SmartBit):
