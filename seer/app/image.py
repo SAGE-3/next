@@ -67,7 +67,7 @@ class ImageAgent:
                 api_key=openai["apiKey"],
                 # needs to be gpt-4o-mini or better, for image processing
                 model=openai["model"],
-                max_tokens=1000,
+                # max_tokens=1000,
                 streaming=False,
             )
 
@@ -84,6 +84,7 @@ class ImageAgent:
 
             if qq.model == "llama":
                 data = {
+                    "model": self.model,
                     "messages": [
                         {
                             "role": "assistant",

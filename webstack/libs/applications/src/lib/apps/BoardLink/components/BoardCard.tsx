@@ -133,7 +133,7 @@ export function BoardCard(props: App): JSX.Element {
         // backgroundImage={}
         backgroundSize="contain"
         p="2"
-        backgroundColor={`${board?.data.color}.400`}
+        backgroundColor={`blue.400`}
         display="flex"
         alignItems="center"
         justifyContent="center"

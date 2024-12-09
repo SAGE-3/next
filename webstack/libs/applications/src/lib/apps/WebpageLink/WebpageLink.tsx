@@ -56,7 +56,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
-  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  const backgroundColor = useColorModeValue('red.400', 'red.400');
   // App store
   const update = useAppStore((state) => state.update);
 
@@ -154,6 +154,7 @@ function AppComponent(props: App): JSX.Element {
               justifyContent="center"
               textAlign={'center'}
               flexDir={'column'}
+              color="white"
             >
               {imageUrl ? <Image src={imageUrl} /> : <MdWeb size={256} />}
             </Box>

@@ -18,7 +18,6 @@ def split_image_into_tiles(image_path, tile_height, output_path):
     tile_width = img_width
     columns = img_height // tile_height
     rows = img_width // tile_width
-    print("🚀 ~ rows:", columns, rows)
 
     # Create a new image to store the tiles in a grid
     tiled_image = Image.new(
@@ -26,7 +25,6 @@ def split_image_into_tiles(image_path, tile_height, output_path):
     )
 
     for col in range(columns):
-        print("col:", col)
         # Calculate the coordinates of the tile
         left = 0
         top = col * tile_height

@@ -33,7 +33,7 @@ import {
 } from '@chakra-ui/react';
 
 // Icons for file types
-import { HiOutlineSparkles } from 'react-icons/hi';
+import { IoSparklesSharp } from 'react-icons/io5';
 import {
   MdOutlinePictureAsPdf,
   MdOutlineImage,
@@ -64,7 +64,7 @@ import {
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
-import { getExtension, genId } from '@sage3/shared';
+import { getExtension } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
 
 type props = {
@@ -98,7 +98,6 @@ export function Alfred(props: props) {
   const { user, accessId } = useUser();
   const { boardCursor } = useCursorBoardPosition();
   const [username, setUsername] = useState('');
-
 
   useEffect(() => {
     if (user) {
@@ -308,7 +307,7 @@ export function Alfred(props: props) {
         const bx = useUIStore.getState().boardPosition.x;
         const by = useUIStore.getState().boardPosition.y;
         const scale = useUIStore.getState().scale;
-        let px = Math.floor(-bx + window.innerWidth / scale / 2);  // center
+        let px = Math.floor(-bx + window.innerWidth / scale / 2); // center
         let py = Math.floor(-by + window.innerHeight / scale / 3); // 1/3 down
         px -= ww / 2;
         py -= hh / 2;
@@ -326,7 +325,7 @@ export function Alfred(props: props) {
 
         // Send the text to chat
         createApp({
-          title: "AI Chat",
+          title: 'AI Chat',
           roomId: props.roomId,
           boardId: props.boardId,
           position: { x: px, y: py, z: 0 },
@@ -342,7 +341,8 @@ export function Alfred(props: props) {
             context: '',
             token: '',
             sources: [],
-          }, raised: true,
+          },
+          raised: true,
           dragging: false,
           pinned: false,
         });
@@ -529,7 +529,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     const buttons = actions.slice(0, MaxElements).map((b, i) => (
       <Button
         key={b.id}
-        m={"1px 4px 1px 1px"}
+        m={'1px 4px 1px 1px'}
         p={2}
         minHeight={'36px'}
         width={'99%'}
@@ -569,14 +569,15 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
         <HStack>
           {/* Search box */}
           <InputGroup>
-            <InputLeftAddon p={2} m={"8px 0px 8px 8px"} backgroundColor={intelligenceColor}>
-              <HiOutlineSparkles size="20px" color={"white"} />
+            <InputLeftAddon p={2} m={'8px 0px 8px 8px'} backgroundColor={intelligenceColor}>
+              <IoSparklesSharp size="22px" color={'white'} />{' '}
             </InputLeftAddon>
             <Input
               ref={initialRef}
               placeholder="Asset, Command, or ask SAGE Intellingence"
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              p={2} m={"8px 0px 8px 0px"}
+              p={2}
+              m={'8px 0px 8px 0px'}
               focusBorderColor="gray.500"
               _focusVisible={{ borderColor: 'gray.500' }}
               boxSizing="border-box"
@@ -589,7 +590,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
           {/* Help box */}
           <Popover trigger="hover">
             <PopoverTrigger>
-              <Button p={0} m={"8px 8px 8px 0px"}>
+              <Button p={0} m={'8px 8px 8px 0px'}>
                 <MdInfoOutline fontSize={'18px'} />
               </Button>
             </PopoverTrigger>
@@ -644,7 +645,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             </PopoverContent>
           </Popover>
         </HStack>
-        <VStack m={"0px 4px 4px 6px"} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
+        <VStack m={'0px 4px 4px 6px'} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
           {buttonList}
         </VStack>
       </ModalContent>

@@ -292,6 +292,9 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     }
     // Create PDF viewer app with proper dimensions
     return setupApp('', 'PDFViewer', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 / aspectRatio }, { assetid: fileID });
+  } else {
+    // Create a generic asset link
+    return setupApp('Asset', 'AssetLink', xDrop - 200, yDrop - 200, roomId, boardId, { w: 400, h: 375 }, { assetid: fileID });
   }
   return null;
 }
@@ -477,41 +480,40 @@ export function useFiles(): UseFiles {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
-        if (isValid(filetype)) {
-          if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
-            // 100MB
-            toast({
-              title: 'File too large',
-              description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
-              status: 'error',
-              duration: 6000,
-              isClosable: true,
-            });
-          } else {
-            let item;
-            // Rename file for called image.png coming from the clipboard
-            if (input[i].name === "image.png") {
-              // Create a more meaningful name
-              const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
-              const username = user?.data.name || 'user';
-              const filename = username + '-' + dt + '.png';
-              // Create a new file with the new name
-              item = new File([input[i]], filename, { type: input[i].type });
-            } else {
-              item = input[i];
-            }
-            fd.append('files', item);
-            if (filenames) filenames += ', ' + item.name;
-            else filenames = item.name;
-          }
-        } else {
+        if (!isValid(filetype)) {
           toast({
-            title: 'Invalid file type',
-            description: `Type not recognized: ${input[i].type} for file ${input[i].name}`,
-            status: 'error',
+            title: 'Unknown file type',
+            description: `Limited support for type: ${input[i].type} for file ${input[i].name}`,
+            status: 'warning',
             duration: 5000,
             isClosable: true,
           });
+        }
+        if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
+          // 100MB
+          toast({
+            title: 'File too large',
+            description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
+            status: 'error',
+            duration: 6000,
+            isClosable: true,
+          });
+        } else {
+          let item;
+          // Rename file for called image.png coming from the clipboard
+          if (input[i].name === "image.png") {
+            // Create a more meaningful name
+            const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
+            const username = user?.data.name || 'user';
+            const filename = username + '-' + dt + '.png';
+            // Create a new file with the new name
+            item = new File([input[i]], filename, { type: input[i].type });
+          } else {
+            item = input[i];
+          }
+          fd.append('files', item);
+          if (filenames) filenames += ', ' + item.name;
+          else filenames = item.name;
         }
       }
 

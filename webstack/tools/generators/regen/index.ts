@@ -69,14 +69,14 @@ async function updateApps(root: string) {
     output += `import { name as ${it}Name } from './apps/${it}';\n`;
   }
 
-  output += `\n`;
+  output += `\n\n`;
+  output += `import React from 'react';\n`;
+  output += `import { AppGroup } from './schema';\n`;
   output += `\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `import ${it} from './apps/${it}/${it}';\n`;
   }
-  output += `import React from 'react';\n`;
-  output += `import { App, AppGroup } from './schema';\n`;
 
   output += `\n`;
   output += `\n`;
@@ -89,6 +89,7 @@ async function updateApps(root: string) {
 
   output += `\n`;
   output += `export * from './components';\n`;
+  output += `export * from './ai-apps';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);
