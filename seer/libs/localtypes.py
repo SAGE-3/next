@@ -95,7 +95,7 @@ class CSVAnswer(BaseModel):
     img: str  # Store the buffer as a Base64-encoded string
     content: str
     success: bool = True  # success flag
-    actions: List[dict]  # actions to be performed
+    actions: List[Json]  # actions to be performed
 
     @staticmethod
     def buffer_to_base64(buffer: io.BytesIO) -> str:

@@ -13,16 +13,7 @@ import { MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import {
-  useThrottleScale,
-  useAssetStore,
-  useAppStore,
-  useMeasure,
-  downloadFile,
-  isUUIDv4,
-  apiUrls,
-  useUIStore,
-} from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
@@ -59,8 +50,10 @@ function AppComponent(props: App): JSX.Element {
   // Convert the ID to an asset
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
+    console.log(isUUID, s);
     if (isUUID) {
       const myasset = assets.find((a) => a._id === s.assetid);
+      console.log(s.assetid);
       if (myasset) {
         setFile(myasset);
         // Update the app title
@@ -142,24 +135,24 @@ function AppComponent(props: App): JSX.Element {
 
           {s.boxes && Array.isArray(s.boxes)
             ? s.boxes.map((box, idx) => {
-              // TODO Need to handle text overflow for labels
-              return (
-                <Box
-                  key={'label' + idx}
-                  position="absolute"
-                  left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
-                  top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
-                  style={{ display: s.annotations === true ? 'block' : 'none' }}
-                >
-                  <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                    {box.label || 'Unknown'}
+                // TODO Need to handle text overflow for labels
+                return (
+                  <Box
+                    key={'label' + idx}
+                    position="absolute"
+                    left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                    top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                    width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                    height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
+                    border="2px solid red"
+                    style={{ display: s.annotations === true ? 'block' : 'none' }}
+                  >
+                    <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                      {box.label || 'Unknown'}
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })
+                );
+              })
             : null}
         </>
       </div>
@@ -258,7 +251,6 @@ const GroupedToolbarComponent = () => {
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
-
 
 /*
 type YoloObject = {

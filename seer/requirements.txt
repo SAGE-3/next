@@ -48,3 +48,5 @@ chromadb==0.5.16
 # CSV 
 pandas
 matplotlib
+seaborn
+plotly

@@ -58,7 +58,7 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callCSV } from './tRPC';
-import { dataTool } from 'echarts';
+import { apiUrls } from '../../../../../frontend/src/lib/config';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -238,7 +238,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.sources && s.sources.length >= 1) {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-      console.log(apps[0].data.type);
       if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
         setMode('image');
       } else if (apps && apps[0] && apps[0].data.type === 'PDFViewer') {
@@ -509,10 +508,43 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  const upload = async (base64Image: string) => {
+    if (base64Image) {
+      const fd = new FormData();
+      // Convert the base64 string to a Blob
+      const blob = base64ToBlob(base64Image, 'image/jpeg'); // Assuming JPEG, you can adjust MIME type
+      const file = new File([blob], `image_${base64Image.substring(0, 5)}.jpg`, { type: 'image/jpeg' }); // Provide a filename and MIME type
+      fd.append('files', file);
+
+      // Add other form fields
+      fd.append('room', roomId!);
+
+      // Upload with a POST request
+      const response = await fetch(apiUrls.assets.upload, {
+        method: 'POST',
+        body: fd,
+      }).catch((error: Error) => {
+        console.log('Upload> Error: ', error);
+      });
+      if (response) return await response.json();
+    }
+  };
+
+  // Helper function to convert base64 to Blob
+  function base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64.split(',')[1]);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset++) {
+      const byte = byteCharacters.charCodeAt(offset);
+      byteArrays.push(byte);
+    }
+
+    return new Blob([new Uint8Array(byteArrays)], { type: mimeType });
+  }
+
   const onContentCsvViewer = async (prompt: string) => {
     if (!user) return;
-    console.log('is chartMaker');
-    console.log('sources', s.sources);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
@@ -570,13 +602,20 @@ function AppComponent(props: App): JSX.Element {
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(response.content);
+
               setBase64String(response.img);
-              console.log(response);
+              const response_upload = await upload(`data:image/png;base64,${response.img}`);
+              let code_response = '';
+              if (response.actions && response_upload) {
+                response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
+                code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
+              }
+              setPreviousAnswer(response.content + code_response);
+              setPreviousQuestion(request);
               // Add messages
               updateState(props._id, {
                 ...s,
-                previousQ: 'Describe the content',
+                previousQ: previousQuestion,
                 messages: [
                   ...s.messages,
                   initialAnswer,
@@ -603,7 +642,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('sources', s.sources);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
@@ -1282,9 +1320,6 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
-        <Box p="1rem">
-          <img src={`data:image/png;base64,${base64String}`} alt="Base64 Example" />
-        </Box>
         <Box
           flex={1}
           bg={bgColor}
@@ -1520,31 +1555,33 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => (
-                  <Box
-                    color="black"
-                    rounded={'md'}
-                    boxShadow="md"
-                    fontFamily="arial"
-                    textAlign={'left'}
-                    bg={textColor}
-                    p={1}
-                    m={3}
-                    // maxWidth="80%"
-                    userSelect={'none'}
-                    _hover={{ background: 'purple.300' }}
-                    background={'purple.200'}
-                    onDoubleClick={applyAction(action)}
-                    key={'list-' + index}
-                  >
-                    <Tooltip label="Double click to apply action" aria-label="A tooltip">
-                      <ListItem key={index}>
-                        <ListIcon as={MdSettings} color="green.500" />
-                        Show result {index + 1} on the board: {action.type} {action.app}
-                      </ListItem>
-                    </Tooltip>
-                  </Box>
-                ))}
+                {actions.map((action, index) => {
+                  return (
+                    <Box
+                      color="black"
+                      rounded={'md'}
+                      boxShadow="md"
+                      fontFamily="arial"
+                      textAlign={'left'}
+                      bg={textColor}
+                      p={1}
+                      m={3}
+                      // maxWidth="80%"
+                      userSelect={'none'}
+                      _hover={{ background: 'purple.300' }}
+                      background={'purple.200'}
+                      onDoubleClick={applyAction(action)}
+                      key={'list-' + index}
+                    >
+                      <Tooltip label="Double click to apply action" aria-label="A tooltip">
+                        <ListItem key={index}>
+                          <ListIcon as={MdSettings} color="green.500" />
+                          Show result {index + 1} on the board: {action.type} {action.app}
+                        </ListItem>
+                      </Tooltip>
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>

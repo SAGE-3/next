@@ -14,7 +14,9 @@ from io import StringIO
 import io
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
+import base64
+import httpx
+from PIL import Image
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -28,11 +30,11 @@ from langchain_core.documents import Document
 
 # from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAI
 
 # Typing for RPC
 from libs.localtypes import CSVQuery, CSVAnswer
-from libs.utils import getModelsInfo, getCSVFile
+from libs.utils import getModelsInfo, getCSVFile, scaleImage
 
 # ChromaDB AI vector DB
 import chromadb
@@ -67,6 +69,7 @@ class CSVAgent:
         self.server = llama["url"]
         self.model = llama["model"]
         self.llm_openai = 0
+        self.httpx_client = httpx.Client(timeout=None)
         # Llama model
         if llama["url"] and llama["model"]:
             self.llm_llama = ChatNVIDIA(
@@ -139,21 +142,16 @@ class CSVAgent:
             }
             for assetid in qq.assetids
         ]
-        print(csvContents)
         csv_item = csvContents[0]
         # for csv_item in csvContents:
         
         # Parse csvContents
         asset_id = csv_item["id"]
         csv_data = csv_item["content"]  # Extract the CSV string
-        print(csv_data, 'datatatatata')
         csv_buffer = StringIO(csv_data)  # Wrap string in StringIO
         df = pd.read_csv(csv_buffer)  # Automatically infer columns from the first row
-        print(f"DataFrame for id {csv_item['id']}:\n", df)
         
         # Display the DataFrame
-        print(f"Asset ID: {asset_id}")
-        print(df)
         # self.logger.info(f"pdfs: {len(df)}")
         # self.logger.info(f"csv: {df[0]}, {len(df[0])}")
         
@@ -184,35 +182,89 @@ class CSVAgent:
 
         # text = answer
 
-        # # Propose the answer to the user
-        # action1 = json.dumps(
-        #     {
-        #         "type": "create_app",
-        #         "app": "Image",
-        #         "state": {"text": text, "fontSize": 16, "color": "purple"},
-        #         "data": {
-        #             "title": "Answer",
-        #             "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-        #             "size": {"width": 400, "height": 500, "depth": 0},
-        #         },
-        #     }
-        # )
-        print(answer, 'answer')
+
         code = answer['code'].replace("plt.show()", "")
 
         exec_globals = {'plt': plt}
         exec_locals = {'df': df}
         
+        # Execute the code to generate the plot
         exec(code, exec_globals, exec_locals)
-        
-        # Save the generated plot to a BytesIO object
+
+        # Save the generated plot to the original buffer
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         plt.close()  # Close the plot to prevent reusing it
-        buf.seek(0)
-        print(answer['code'])
-        # Build the answer object
-        print("BEFORE VAL")
-        val = CSVAnswer.from_buffer(buf, success=True, actions=[], content=answer['content'])
+        buf.seek(0)  # Reset buffer to the beginning
+
+        
+        # Resize the image (creates a new buffer, does not modify the original)
+        img = Image.open(buf)
+            # Convert the image to RGB format
+        img = img.convert("RGB")
+        buf_resized = io.BytesIO()
+        img.save(buf_resized, format='JPEG')
+        buf_resized.seek(0)
+        
+        # Encode the resized image to Base64 for API
+        image_base64 = base64.b64encode(buf_resized.getvalue()).decode('utf-8')
+        data = {
+                    "messages": [
+                        {
+                            "role": "assistant",
+                            "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
+                        },
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": qq.q},
+                                {
+                                    "type": "image_url",
+                                    "image_url": {
+                                        "url": f"data:image/jpeg;base64,{image_base64}"
+                                    },
+                                    "detail": "high",
+                                },
+                            ],
+                        },
+                    ],
+                }
+        url = self.server + "/v1/chat/completions"
+        llm_response = self.httpx_client.post(url, json=data)
+        print(llm_response)
+        if llm_response.status_code == 200:
+            description = llm_response.json()["choices"][0]["message"]["content"]
+            print(description)
+
+        # Use original buffer for CSVAnswer
+        action1 = json.dumps(
+            {
+                "type": "create_app",
+                "app": "ImageViewer",
+                "state": {"assetid": ""},
+                "data": {
+                    "title": "Answer",
+                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                    "size": {"width": 500, "height": 500, "depth": 0},
+                },
+            }
+        )
+
+        action2 = json.dumps(
+            {
+                "type": "create_app",
+                "app": "CodeEditor",
+                "state": {"content": answer['code'], "language": 'python'},
+                "data": {
+                    "title": "Answer",
+                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                    "size": {"width": 500, "height": 500, "depth": 0},
+                },
+            }
+        )
+
+        # Pass the original buffer to CSVAnswer
+        buf.seek(0)  # Ensure the buffer is reset before use
+        val = CSVAnswer.from_buffer(buf, success=True, actions=[action1, action2], content=answer['content'])
 
         return val
