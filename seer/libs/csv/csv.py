@@ -85,13 +85,14 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
   system_prompt = (f"""
       You are an assistant for cretaing matplotlib code for visualizations. 
       You have access to the following visualization libraries: matplotlib, seaborn.
-      Import these libraries as needed.
       
       The code is currently structured as:
       
       python'''
+      import matplotlib.pyplot as plt
       import pandas as pd
-      
+      import seaborn as sns
+
       df = pd.read_csv(csv_buffer)
       '''
       

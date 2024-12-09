@@ -610,6 +610,7 @@ function AppComponent(props: App): JSX.Element {
                 response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
                 code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
               }
+              console.log('response_upload', response_upload);
               setPreviousAnswer(response.content + code_response);
               setPreviousQuestion(request);
               // Add messages
@@ -920,11 +921,14 @@ function AppComponent(props: App): JSX.Element {
     { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
     { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
     { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
-    { title: 'Generate Keywords', action: onContentWeb, prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.' },
+    {
+      title: 'Generate Keywords',
+      action: onContentWeb,
+      prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.',
+    },
     { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
     { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
   ];
-
 
   // Code section
   const onContentCode = async (prompt: string, method: string) => {
@@ -1273,6 +1277,7 @@ function AppComponent(props: App): JSX.Element {
       const pos = action.data.position;
       const state = action.state;
       // Create the app
+
       createApp({
         title: type,
         roomId: roomId!,
@@ -1933,7 +1938,9 @@ function AppComponent(props: App): JSX.Element {
                   width="34%"
                 >
                   <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
                 </Button>
               </Tooltip>
             ))}

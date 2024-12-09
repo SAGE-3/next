@@ -50,10 +50,8 @@ function AppComponent(props: App): JSX.Element {
   // Convert the ID to an asset
   useEffect(() => {
     const isUUID = isUUIDv4(s.assetid);
-    console.log(isUUID, s);
     if (isUUID) {
       const myasset = assets.find((a) => a._id === s.assetid);
-      console.log(s.assetid);
       if (myasset) {
         setFile(myasset);
         // Update the app title
