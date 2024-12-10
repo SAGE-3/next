@@ -165,25 +165,25 @@ async def webshot(qq: WebScreenshot):
         raise HTTPException(status_code=500, detail=text)
     
 
-# @app.post("/export/room")
-# async def export_room(qq: ExportQueryType):
-#     try:
-#         data = await export_agent.export_room_data(qq)
-#         return data
-#     except HTTPException as e:
-#         # Get the error message
-#         text = e.detail
-#         raise HTTPException(status_code=500, detail=text)
+@app.post("/export/room")
+async def export_room(qq: ExportQueryType):
+    try:
+        data = await export_agent.export_room_data(qq)
+        return data
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
 
-# @app.post("/export/board")
-# async def export_room(qq: ExportQueryType):
-#     try:
-#         data = await export_agent.export_room_data(qq)
-#         return data
-#     except HTTPException as e:
-#         # Get the error message
-#         text = e.detail
-#         raise HTTPException(status_code=500, detail=text)
+@app.post("/export/board")
+async def export_room(qq: ExportQueryType):
+    try:
+        data = await export_agent.export_board_data(qq)
+        return data
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
 
 
 if __name__ == "__main__":
