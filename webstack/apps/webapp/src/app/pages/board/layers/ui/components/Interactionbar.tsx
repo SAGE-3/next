@@ -35,13 +35,18 @@ import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal } from '@sage3/frontend';
+import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal, useCursorBoardPosition } from '@sage3/frontend';
 
-export function Interactionbar(props: { isContextMenuOpen?: boolean; tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right' }) {
+export function Interactionbar(props: {
+  isContextMenuOpen?: boolean;
+  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right',
+  position?: { x: number; y: number }
+}) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
   const isContextMenuOpen = props.isContextMenuOpen ? props.isContextMenuOpen : false;
+  const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   // User
   const { user } = useUser();
@@ -320,6 +325,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean; tooltipPlac
           </PopoverContent>
         </Popover>
       </ButtonGroup>
+
       <ConfirmModal
         isOpen={myIsOpen}
         onClose={myOnClose}
@@ -331,7 +337,9 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean; tooltipPlac
         cancelColor="green"
         confirmColor="red"
         size="lg"
+        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
       />
+
       <ConfirmModal
         isOpen={allIsOpen}
         onClose={allOnClose}
@@ -343,7 +351,9 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean; tooltipPlac
         cancelColor="green"
         confirmColor="red"
         size="lg"
+        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
       />
+
     </>
   );
 }
