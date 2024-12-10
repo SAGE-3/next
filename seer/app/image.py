@@ -15,7 +15,7 @@ import httpx
 # Image
 from PIL import Image
 from io import BytesIO
-import base64
+import base64, requests
 from typing import List
 
 # SAGE3 API
@@ -31,7 +31,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
-from libs.utils import getModelsInfo, getImageFile, scaleImage
+from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL
 
 # Downsized image size for processing by LLMs
 ImageSize = 600
@@ -74,8 +74,15 @@ class ImageAgent:
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
-        # Retrieve the PDF content
-        imageContent = getImageFile(self.ps3, qq.asset)
+
+        if isURL(qq.asset):
+            # Fetch and load an image from a URL
+            response = requests.get(qq.asset)
+            imageContent = BytesIO(response.content).getbuffer()
+        else:
+            # Retrieve the image content from SAGE3
+            imageContent = getImageFile(self.ps3, qq.asset)
+
         if imageContent:
             # Scale the image to the desired size
             image_bytes = scaleImage(imageContent, ImageSize)
