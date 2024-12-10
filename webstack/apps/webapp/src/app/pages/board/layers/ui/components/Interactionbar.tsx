@@ -46,7 +46,6 @@ export function Interactionbar(props: {
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
   const isContextMenuOpen = props.isContextMenuOpen ? props.isContextMenuOpen : false;
-  const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
 
   // User
   const { user } = useUser();

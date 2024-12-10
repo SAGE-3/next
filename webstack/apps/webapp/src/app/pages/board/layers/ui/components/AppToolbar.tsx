@@ -880,6 +880,7 @@ export function AppToolbar(props: AppToolbarProps) {
               confirmText="Delete"
               confirmColor="red"
               size="lg"
+              xOffSet={Math.min(0.75, (position.x + 150) / window.innerWidth)}
             />
           </>
         </ErrorBoundary>
