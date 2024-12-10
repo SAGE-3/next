@@ -196,7 +196,6 @@ class PySage3:
                     ] = smartbit
         elif collection == "ASSETS":
             self.assets[doc["_id"]] = doc
-            print("Asset created", doc["data"]["originalfilename"])
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
