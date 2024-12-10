@@ -58,7 +58,7 @@ class ExportAgent:
                 base_url= "https://arcade.evl.uic.edu/llama32-11B-vision" + "/v1",
                 model="meta/llama-3.2-11b-vision-instruct",
                 stream=False,
-                max_tokens=1000,
+                max_tokens=10000,
         )
 
         self.session = prompt | self.llm_llama | output_parser
@@ -129,6 +129,9 @@ class ExportAgent:
         self.logger.info(f"Exporting data for board: {board_id}")
         report = "# Board Info: "
 
+        board_info = getBoardInfo(self.ps3, board_id)
+        print("BOARD INFO:", board_info)
+
         # get the list of apps running 
         app_list = self.ps3.get_apps(room_id, board_id)
         print("Return value from list of apps: \n", app_list)
@@ -177,13 +180,28 @@ class ExportAgent:
                     url = self.ps3.get_public_url(asset_id)
                     self.logger.info("CSV URL" + url)
                     #turn into data frame
-                    df = pd.read_csv(url)
+                    try:
+                        df = pd.read_csv(url)
 
-                    # store dataframe in dictionary
-                    if app_type not in board_layout:
-                        board_layout[app_type] = {}
-                    board_layout[app_type][app_id] = df.to_string()
-                    self.logger.info("CSV Dataframe: " + df.to_string())
+                        # store dataframe in dictionary
+                        if app_type not in board_layout:
+                            board_layout[app_type] = {}
+                        board_layout[app_type][app_id] = df.to_string()
+                        self.logger.info("CSV Dataframe: " + df.to_string())
+                    except Exception as e:
+                        self.logger.error(f"Failed to read CSV at {url}", e)
+                        continue
+
+            if app_type == "CodeEditor":
+                text = app.get("data", {}).get("state", {}).get("content")
+                  # init the dictionary for this app type if it doesnt exist
+                if app_type not in board_layout:
+                    board_layout[app_type] = {}
+
+                # store text into dictionary
+                board_layout[app_type][app_id] = text
+                self.logger.info("Code editor text: " + text)
+
 
             # add more in the future
 
@@ -196,20 +214,31 @@ class ExportAgent:
 
         today = time.asctime()
 
-        new_question = {
-            "Okay, first go through each application, which is distinct by the name and its asset id, and provide a detailed summary on its contents. Moreover, return ur summary grouped by application type in markdown format please. Here are the apps and their states:\n" 
-            + ai_query
-        }
-
+        new_question = (
+            "Please analyze the applications provided and give a detailed summary for each one. "
+            "If the data is in the form of a DataFrame, please provide a summary of the entire DataFrame, highlighting key trends or insights, "
+            "and avoid listing individual application details. Otherwise, provide a detailed summary of each application, grouped by its type. "
+            "Below are the applications and their states: \n"
+            + ai_query + "\n"
+            + "Please enumerate each application and its details, such as:\n"
+            + "app_id (assetid: e8d03d7f-315b-457a-b5f2-ed750ac388ae):\n"
+            + "- Detailed summary of its contents here.\n"
+            + "app_id (assetid: xyz12345):\n"
+            + "- Detailed summary of its contents here.\n"
+            + "\n"
+        )
+        
         response = await self.session.ainvoke(
             {
                 "question": new_question,
+                "username": "Shrut",
+                "location": "Illinois",
                 "date": today,
             }
         )
 
         report = response
-
+        print(report)
         # self.logger.info(f"Data export for board {board_id} completed")
         # data = f"board: {board_info}\n assets{board_assets}"
         export_return = ExportReturnType(
