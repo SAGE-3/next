@@ -13,7 +13,6 @@ from logging import Logger
 import httpx
 
 # Image
-from PIL import Image
 from io import BytesIO
 import base64, requests
 from typing import List
@@ -31,7 +30,7 @@ from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
-from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL
+from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL, isDataURL
 
 # Downsized image size for processing by LLMs
 ImageSize = 600
@@ -75,7 +74,10 @@ class ImageAgent:
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
 
-        if isURL(qq.asset):
+        if isDataURL(qq.asset):
+            # Load an image from a base64 encoded data URL
+            imageContent = BytesIO(base64.b64decode(qq.asset.split(",")[1])).getbuffer()
+        elif isURL(qq.asset):
             # Fetch and load an image from a URL
             response = requests.get(qq.asset)
             imageContent = BytesIO(response.content).getbuffer()
