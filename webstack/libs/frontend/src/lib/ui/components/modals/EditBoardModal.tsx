@@ -29,7 +29,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
 import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
-import { SAGEColors } from '@sage3/shared';
+import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {
@@ -102,30 +102,47 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   // Update button handler
   const handleSubmit = () => {
+    let updated = false;
     if (name !== props.board.data.name) {
       const cleanedName = cleanNameCheckDoubles(name, props.board.data.roomId);
       if (cleanedName) {
         updateBoard(props.board._id, { name: cleanedName });
+        updated = true;
+      } else {
+        return;
       }
     }
     if (description !== props.board.data.description) {
       updateBoard(props.board._id, { description });
+      updated = true;
     }
     if (color !== props.board.data.color) {
       updateBoard(props.board._id, { color });
+      updated = true;
     }
     if (isProtected !== props.board.data.isPrivate) {
       updateBoard(props.board._id, { isPrivate: isProtected });
+      updated = true;
     }
     if (isProtected && isPasswordChanged) {
       if (password) {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         updateBoard(props.board._id, { privatePin: key });
+        updated = true;
       } else {
         setValid(false);
       }
     }
+    if (updated) {
+      toast({
+        title: 'Board updated',
+        status: 'success',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+    }
+
     props.onClose();
   };
 
@@ -147,6 +164,14 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
         title: 'Board name already exists',
         status: 'error',
         duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
+      toast({
+        title: 'Name must only contain characters A-Z, 0-9, and spaces',
+        status: 'error',
+        duration: 3 * 1000,
         isClosable: true,
       });
       return null;
