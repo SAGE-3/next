@@ -24,7 +24,8 @@ from foresight.config import config as conf, prod_type
 from foresight.Sage3Sugar.pysage3 import PySage3
 
 # SAGE3 handle
-ps3 = PySage3(conf, prod_type)
+# ps3 = PySage3(conf, prod_type)
+ps3 = None
 
 # AI
 from langchain.globals import set_debug, set_verbose
@@ -39,13 +40,13 @@ from app.code import CodeAgent
 
 
 # Instantiate each module's class
-chatAG = ChatAgent(logger, ps3)
-codeAG = CodeAgent(logger, ps3)
-summaryAG = SummaryAgent(logger, ps3)
-imageAG = ImageAgent(logger, ps3)
-pdfAG = PDFAgent(logger, ps3)
-webAG = WebAgent(logger, ps3)
-asyncio.ensure_future(webAG.init())
+ps3 = None
+chatAG = None
+codeAG = None
+summaryAG = None
+imageAG = None
+pdfAG = None
+webAG = None
 
 # set to debug the queries into langchain
 # set_debug(True)
@@ -55,15 +56,34 @@ asyncio.ensure_future(webAG.init())
 # Tasks
 
 
+# Initialize the app
+# This function is called when the app is started using FastAPI's lifespan context manager
+async def applicationInit():
+    global ps3, chatAG, codeAG, summaryAG, imageAG, pdfAG, webAG
+    # SAGE3 handle
+    ps3 = PySage3(conf, prod_type)
+    # Instantiate each module's class
+    chatAG = ChatAgent(logger, ps3)
+    codeAG = CodeAgent(logger, ps3)
+    summaryAG = SummaryAgent(logger, ps3)
+    imageAG = ImageAgent(logger, ps3)
+    pdfAG = PDFAgent(logger, ps3)
+    webAG = WebAgent(logger, ps3)
+    await webAG.init()
+
+
 # Function to be run periodically
 async def my_periodic_task():
     while True:
-        print("Task is running: number of assets ->", len(ps3.assets))
-        await asyncio.sleep(3)
+        if ps3:
+            logger.info(f"Task is running")
+        await asyncio.sleep(30)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Init
+    await applicationInit()
     # Start the periodic task
     task = asyncio.create_task(my_periodic_task())
     yield  # Application runs here
@@ -72,7 +92,7 @@ async def lifespan(app: FastAPI):
     try:
         await task
     except asyncio.CancelledError:
-        print("Periodic task cancelled")
+        logger.warning("Periodic task cancelled")
 
 
 # Web server
@@ -100,10 +120,9 @@ def read_root():
 @app.post("/ask")
 async def ask_question(qq: Question):
     try:
-        # do the work
-        val = await chatAG.process(qq)
-        return val
-
+        if chatAG:
+            val = await chatAG.process(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -114,10 +133,9 @@ async def ask_question(qq: Question):
 @app.post("/code")
 async def code_question(qq: CodeRequest):
     try:
-        # do the work
-        val = await codeAG.process(qq)
-        return val
-
+        if codeAG:
+            val = await codeAG.process(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -128,9 +146,9 @@ async def code_question(qq: CodeRequest):
 @app.post("/summary")
 async def summary(qq: Question):
     try:
-        # do the work
-        val = await summaryAG.process(qq)
-        return val
+        if summaryAG:
+            val = await summaryAG.process(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -140,10 +158,10 @@ async def summary(qq: Question):
 @app.post("/image")
 async def image(qq: ImageQuery):
     try:
-        # do the work
-        # val = await imageAG.process(qq)
-        val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
-        return val
+        if imageAG:
+            # val = await imageAG.process(qq)
+            val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
+            return val
     except asyncio.TimeoutError as e:
         print("Timeout error")
         # Get the error message
@@ -158,9 +176,9 @@ async def image(qq: ImageQuery):
 @app.post("/pdf")
 async def pdf(qq: PDFQuery):
     try:
-        # do the work
-        val = await pdfAG.process(qq)
-        return val
+        if pdfAG:
+            val = await pdfAG.process(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -171,9 +189,9 @@ async def pdf(qq: PDFQuery):
 @app.post("/web")
 async def webquery(qq: WebQuery):
     try:
-        # do the work
-        val = await webAG.process(qq)
-        return val
+        if webAG:
+            val = await webAG.process(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
@@ -184,9 +202,9 @@ async def webquery(qq: WebQuery):
 @app.post("/webshot")
 async def webshot(qq: WebScreenshot):
     try:
-        # do the work
-        val = await webAG.process_screenshot(qq)
-        return val
+        if webAG:
+            val = await webAG.process_screenshot(qq)
+            return val
     except HTTPException as e:
         # Get the error message
         text = e.detail
