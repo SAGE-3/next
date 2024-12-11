@@ -28,7 +28,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
-import { SAGEColors } from '@sage3/shared';
+import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
 import { useRouteNav } from '@sage3/frontend';
@@ -100,31 +100,57 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   const handleSubmit = () => {
-    const cleanedName = cleanNameCheckDoubles(name);
-    if (!cleanedName) return;
-    updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
+    let updated = false;
+    if (name !== props.room.data.name) {
+      const cleanedName = cleanNameCheckDoubles(name);
+      if (cleanedName) {
+        updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
+        updated = true;
+      } else {
+        return;
+      }
+    }
+    if (description !== props.room.data.description) {
+      updateRoom(props.room._id, { description });
+      updated = true;
+    }
+    if (color !== props.room.data.color) {
+      updateRoom(props.room._id, { color });
+      updated = true;
+    }
+    if (isListed !== props.room.data.isListed) {
+      updateRoom(props.room._id, { isListed });
+      updated = true;
+    }
+
     if (passwordChanged) {
       if (!isProtected) {
+        updated = true;
+
         updateRoom(props.room._id, { privatePin: '', isPrivate: false });
       } else {
         if (password === '') {
+          updated = true;
           updateRoom(props.room._id, { privatePin: '', isPrivate: false });
         } else {
+          updated = true;
+
           // hash the PIN: the namespace comes from the server configuration
           const key = uuidv5(password, config.namespace);
           updateRoom(props.room._id, { privatePin: key, isPrivate: true });
         }
       }
+      setPasswordChanged(false);
+    }
+    if (updated) {
       toast({
         title: 'Room Updated',
-        description: 'Room password has been updated',
+        description: 'Room has been updated',
         status: 'success',
         duration: 3000,
       });
-      setPasswordChanged(false);
+      props.onClose();
     }
-
-    props.onClose();
   };
 
   function cleanNameCheckDoubles(name: string): string | null {
@@ -144,6 +170,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         title: 'Room name already exists',
         status: 'error',
         duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
+      toast({
+        title: 'Name must only contain characters A-Z, 0-9, and spaces',
+        status: 'error',
+        duration: 3 * 1000,
         isClosable: true,
       });
       return null;
