@@ -140,7 +140,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [status] = useState<string>('AI can make mistakes. Check important information.');
+  const [status] = useState<string>('AI can make mistakes. User caution is advised.');
   const [actions, setActions] = useState<any[]>([]);
   const [mode, setMode] = useState<OperationMode>('chat');
   const [location, setLocation] = useState('');
