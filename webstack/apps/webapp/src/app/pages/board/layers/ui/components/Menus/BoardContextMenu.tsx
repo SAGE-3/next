@@ -7,20 +7,19 @@
  */
 
 import { useEffect } from 'react';
-import { Box, useColorModeValue, Flex, IconButton, Tooltip } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Tooltip } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
-import { FaExpandArrowsAlt } from 'react-icons/fa';
+import { IoSparklesSharp } from 'react-icons/io5';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUser, useHexColor, useUIStore } from '@sage3/frontend';
+import { useUser, useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
 import { Interactionbar } from '../Interactionbar';
 import { ApplicationsMenu, AssetsMenu, IntelligenceMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
-import { IoSparklesSharp } from 'react-icons/io5';
 
 type BoardContextProps = {
   roomId: string;
@@ -70,7 +69,9 @@ export function BoardContextMenu(props: BoardContextProps) {
       // Only set the position if it has changed
       const newX = x !== start_x ? x : contextMenuPosition.x;
       const newY = y !== start_y ? y : contextMenuPosition.y;
-      if (x !== start_x || y !== start_y) setContextMenuPosition({ x: newX, y: newY });
+      if (x !== start_x || y !== start_y) {
+        setContextMenuPosition({ x: newX, y: newY });
+      }
     }
   }, [contextMenuPosition]);
 
@@ -128,7 +129,7 @@ export function BoardContextMenu(props: BoardContextProps) {
           </ContextButton>
         </Flex>
         <Flex gap="1" justifyContent={'center'}>
-          <Interactionbar tooltipPlacement="bottom" />
+          <Interactionbar tooltipPlacement="bottom" position={contextMenuPosition} />
         </Flex>
       </Flex>
     </Box>
