@@ -63,6 +63,8 @@ import {
   ImageAnswer,
   CSVAnswer,
   PDFAnswer,
+  WebAnswer,
+  CodeResponse,
 } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -452,7 +454,11 @@ function AppComponent(props: App): JSX.Element {
     return initialAnswer;
   };
 
-  const newAIMessage = async (new_input: string, query: CSVQuery | ImageQuery | PDFQuery, type: 'csv' | 'image' | 'pdf') => {
+  const newAIMessage = async (
+    new_input: string,
+    query: CSVQuery | ImageQuery | PDFQuery | WebQuery | CodeRequest,
+    type: 'csv' | 'image' | 'pdf' | 'web' | 'code'
+  ) => {
     if (!user) return;
     const isQuestion = new_input.toUpperCase().startsWith('@S');
     // Add messages
@@ -478,8 +484,15 @@ function AppComponent(props: App): JSX.Element {
           } else if (type === 'pdf') {
             response = await callPDF(query as PDFQuery);
             setProcessing(false);
-
             return response as PDFAnswer;
+          } else if (type === 'web') {
+            response = await callWeb(query as WebQuery);
+            setProcessing(false);
+            return response as WebAnswer;
+          } else if (type === 'code') {
+            response = await callCode(query as CodeRequest);
+            setProcessing(false);
+            return response as CodeResponse;
           }
           return response;
         }
@@ -744,82 +757,59 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
-    if (s.sources.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-
-      // Check for image
-      if (apps && apps[0].data.type === 'Webview') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: 'SAGE',
-            query: prompt,
-            response: 'Working on it...',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          // Build the query
-          const q: WebQuery = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    const now = await serverTime();
+    if (roomId && boardId) {
+      const request = prompt.slice(2);
+      // Build the query
+      const q: WebQuery = {
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+          roomId,
+          boardId,
+        },
+        q: request,
+        url: apps[0].data.state.webviewurl,
+        user: username,
+        model: selectedModel || 'llama',
+        extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
+      };
+      const response = (await newAIMessage(prompt, q, 'web')) as WebAnswer;
+      if ('message' in response) {
+        toast({
+          title: 'Error',
+          description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+      } else {
+        // Clear the stream text
+        setStreamText('');
+        ctrlRef.current = null;
+        setPreviousAnswer(response.r);
+        // Add messages
+        updateState(props._id, {
+          ...s,
+          previousQ: 'Describe the content',
+          previousA: response.r,
+          messages: [
+            ...s.messages,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'SAGE',
+              query: request,
+              response: response.r,
             },
-            q: prompt,
-            url: apps[0].data.state.webviewurl,
-            user: username,
-            model: selectedModel || 'llama',
-            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
-          };
-          setProcessing(true);
-          setActions([]);
-          // Invoke the agent
-          const response = await callWeb(q);
-          setProcessing(false);
-
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(response.r);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
-            }
-          }
+          ],
+        });
+        if (response.actions) {
+          setActions(response.actions);
         }
       }
     }
@@ -923,55 +913,41 @@ function AppComponent(props: App): JSX.Element {
   // Code section
   const onContentCode = async (prompt: string, method: string) => {
     if (!user) return;
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
     // Get server time
     const now = await serverTime();
-    // Is it a question to SAGE?
-    const isQuestion = prompt.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-    // Add messages
-    const initialAnswer = {
-      id: genId(),
-      userId: user._id,
-      creationId: '',
-      creationDate: now.epoch,
-      userName: name,
-      query: prompt,
-      response: isQuestion ? 'Working on it...' : '',
-    };
-    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
-      setProcessing(true);
-      // Remove the @S from the question
-      const request = isQuestion ? prompt.slice(2) : prompt;
 
-      if (isQuestion) {
-        const body: CodeRequest = {
-          ctx: {
-            previousQ: previousQuestion,
-            previousA: previousAnswer,
-            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!,
-            boardId: boardId!,
-          },
-          user: username,
-          id: genId(),
-          model: selectedModel || 'llama',
-          location: location,
-          q: request,
-          method: method,
-        };
-        const response = await callCode(body);
+    if (roomId && boardId) {
+      // Remove the @S from the question
+      const request = prompt.slice(2);
+
+      const body: CodeRequest = {
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+          roomId: roomId!,
+          boardId: boardId!,
+        },
+        user: username,
+        id: genId(),
+        model: selectedModel || 'llama',
+        location: location,
+        q: request,
+        method: method,
+      };
+      const response = (await newAIMessage(prompt, body, 'code')) as CodeResponse;
+      if (response) {
         if ('message' in response) {
           toast({
             title: 'Error',
-            description: response.message || 'Error sending query to the agent. Please try again.',
+            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
             status: 'error',
             duration: 4000,
             isClosable: true,
           });
         } else {
           const new_text = response.r || '';
-          setProcessing(false);
           // Clear the stream text
           setStreamText('');
           ctrlRef.current = null;
@@ -983,7 +959,6 @@ function AppComponent(props: App): JSX.Element {
             previousA: new_text,
             messages: [
               ...s.messages,
-              initialAnswer,
               {
                 id: genId(),
                 userId: user._id,
