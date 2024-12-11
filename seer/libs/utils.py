@@ -9,7 +9,7 @@
 # Image
 from PIL import Image
 from io import BytesIO
-import base64
+import re
 import time, os
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -344,6 +344,43 @@ def getPDFFile(ps3, assetid):
             if r.is_success:
                 return r.content
     return None
+
+
+def isDataURL(string):
+    """
+    Check if the given string is a valid data URL.
+
+    Args:
+      string (str): The string to be checked.
+
+    Returns:
+      bool: True if the string is a valid data URL, False otherwise.
+
+    The data URL must start with data:, followed by a MIME type and base64 encoded data.
+    """
+    data_url_pattern = re.compile(r"^data:.*;base64,.*")
+    return bool(data_url_pattern.match(string))
+
+
+def isURL(string):
+    """
+    Check if the given string is a valid URL.
+
+    Args:
+      string (str): The string to be checked.
+
+    Returns:
+      bool: True if the string is a valid URL, False otherwise.
+
+    The URL must start with http:// or https://, followed by a domain name,
+    and may optionally include a port and a path.
+    """
+    url_pattern = re.compile(
+        r"^(https?://)"  # Starts with http:// or https://
+        r"([a-zA-Z0-9.-]+)"  # Domain name
+        r"(:\d+)?(/.*)?$"  # Optional port and path
+    )
+    return bool(url_pattern.match(string))
 
 
 def getImageFile(ps3, assetid):
