@@ -15570,7 +15570,7 @@ tinyqueue@^3.0.0:
   resolved "https://registry.yarnpkg.com/tinyqueue/-/tinyqueue-3.0.0.tgz#101ea761ccc81f979e29200929e78f1556e3661e"
   integrity sha512-gRa9gwYU3ECmQYv3lslts5hxuIa90veaEcxDYuu3QGOIAEM2mOZkVHp48ANJuu1CURtRdHKUBY5Lm1tHV+sD4g==
 
-tldraw@^3.0.0:
+tldraw@^3.6.0:
   version "3.6.0"
   resolved "https://registry.yarnpkg.com/tldraw/-/tldraw-3.6.0.tgz#5abb5ca8330a80a57d6dbb82077c57c80470f9d9"
   integrity sha512-ok4zF6PtK1C633/+0pNEUEgtSCEa+lx5OZqpt3eyJgydDriTAtLLP7TO18TnALWRdtcQanZ2s7/hg5Wwmhb7+Q==
