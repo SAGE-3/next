@@ -51,7 +51,19 @@ import {
   useUserSettings,
   useUIStore,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, CSVQuery } from '@sage3/shared';
+import {
+  genId,
+  AskRequest,
+  ImageQuery,
+  PDFQuery,
+  CodeRequest,
+  WebQuery,
+  WebScreenshot,
+  CSVQuery,
+  ImageAnswer,
+  CSVAnswer,
+  PDFAnswer,
+} from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -59,6 +71,7 @@ import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callCSV } from './tRPC';
 import { apiUrls } from '../../../../../frontend/src/lib/config';
+import { get } from 'http';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -114,7 +127,6 @@ function AppComponent(props: App): JSX.Element {
   const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
-  const [base64String, setBase64String] = useState('');
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -425,83 +437,113 @@ function AppComponent(props: App): JSX.Element {
     return onContentImage('Read the image and provide two or three interesting facts from the image');
   };
 
-  const onContentImage = async (prompt: string) => {
+  const getInitialAnswer = async (input: string, isQuestion: boolean) => {
     if (!user) return;
+    const now = await serverTime();
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: 'SAGE',
+      query: input,
+      response: isQuestion ? 'Working on it...' : '',
+    };
+    return initialAnswer;
+  };
+
+  const newAIMessage = async (new_input: string, query: CSVQuery | ImageQuery | PDFQuery, type: 'csv' | 'image' | 'pdf') => {
+    if (!user) return;
+    const isQuestion = new_input.toUpperCase().startsWith('@S');
+    // Add messages
     if (s.sources.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      if (roomId && boardId) {
+        const initialAnswer = await getInitialAnswer(new_input, isQuestion);
+        updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-      // Check for image
-      if (apps && apps[0].data.type === 'ImageViewer') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: 'SAGE',
-            query: prompt,
-            response: 'Working on it...',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          const assetid = apps[0].data.state.assetid;
-          // Build the query
-          const q: ImageQuery = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
-            },
-            q: prompt,
-            user: username,
-            asset: assetid,
-            model: selectedModel || 'llama',
-          };
+        if (isQuestion) {
           setProcessing(true);
           setActions([]);
-          // Invoke the agent
-          const response = await callImage(q);
-          setProcessing(false);
+          let response;
+          if (type === 'image') {
+            response = await callImage(query as ImageQuery);
+            setProcessing(false);
 
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(response.r);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
-            }
+            return response as ImageAnswer;
+          } else if (type === 'csv') {
+            response = await callCSV(query as CSVQuery);
+            setProcessing(false);
+
+            return response as CSVAnswer;
+          } else if (type === 'pdf') {
+            response = await callPDF(query as PDFQuery);
+            setProcessing(false);
+
+            return response as PDFAnswer;
+          }
+          return response;
+        }
+      }
+    }
+    return null;
+  };
+
+  const onContentImage = async (prompt: string) => {
+    if (!user) return;
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    const assetids = apps.map((d) => d.data.state.assetid);
+    const now = await serverTime();
+    if (roomId && boardId) {
+      const request = prompt.slice(2);
+      const q: ImageQuery = {
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+          roomId,
+          boardId,
+        },
+        q: request,
+        user: username,
+        asset: assetids[0],
+        model: selectedModel || 'llama',
+      };
+
+      const response = (await newAIMessage(prompt, q, 'image')) as ImageAnswer;
+      if (response) {
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(response.r);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: 'Describe the content',
+            previousA: response.r,
+            messages: [
+              ...s.messages,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: prompt,
+                response: response.r,
+              },
+            ],
+          });
+          if (response.actions) {
+            setActions(response.actions);
           }
         }
       }
@@ -545,96 +587,72 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentCsvViewer = async (prompt: string) => {
     if (!user) return;
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    const assetids = apps.map((d) => d.data.state.assetid);
+    const now = await serverTime();
 
-    const isQuestion = prompt.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
+    if (roomId && boardId) {
+      const request = prompt.slice(2);
 
-    if (s.sources.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      // Build the query
+      const q: CSVQuery = {
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+          roomId,
+          boardId,
+        },
+        q: request,
+        user: username,
+        assetids: assetids,
+      };
+      const response = (await newAIMessage(prompt, q, 'csv')) as CSVAnswer;
+      if (response) {
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
 
-      // Check for csv
-      if (apps && apps[0].data.type === 'CSVViewer') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: name,
-            query: prompt,
-            response: isQuestion ? 'Working on it...' : '',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          if (isQuestion) {
-            const request = isQuestion ? prompt.slice(2) : prompt;
-            const assetids = apps.map((d) => d.data.state.assetid);
-            // Build the query
-            const q: CSVQuery = {
-              ctx: {
-                previousQ: previousQuestion,
-                previousA: previousAnswer,
-                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-                roomId,
-                boardId,
+          const response_upload = await upload(`data:image/png;base64,${response.img}`);
+          let code_response = '';
+          if (response.actions && response_upload) {
+            response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
+            code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
+          }
+          if ('content' in response) {
+            setPreviousAnswer(response.content + code_response);
+          }
+          setPreviousQuestion(request);
+          console.log(getInitialAnswer(prompt, true));
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: previousQuestion,
+            messages: [
+              ...s.messages,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: prompt,
+                response: response.content,
+                metadata: code_response,
               },
-              q: request,
-              user: username,
-              assetids: assetids,
-            };
-            setProcessing(true);
-            setActions([]);
-            // Invoke the agent
-            const response = await callCSV(q);
-            setProcessing(false);
-
-            if ('message' in response) {
-              toast({
-                title: 'Error',
-                description: response.message || 'Error sending query to the agent. Please try again.',
-                status: 'error',
-                duration: 4000,
-                isClosable: true,
-              });
-            } else {
-              // Clear the stream text
-              setStreamText('');
-              ctrlRef.current = null;
-
-              setBase64String(response.img);
-              const response_upload = await upload(`data:image/png;base64,${response.img}`);
-              let code_response = '';
-              if (response.actions && response_upload) {
-                response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
-                code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
-              }
-              console.log('response_upload', response_upload);
-              setPreviousAnswer(response.content + code_response);
-              setPreviousQuestion(request);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: previousQuestion,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: response.content,
-                  },
-                ],
-              });
-              if (response.actions) {
-                setActions(response.actions);
-              }
-            }
+            ],
+          });
+          if (response.actions) {
+            setActions(response.actions);
           }
         }
       }
@@ -643,113 +661,85 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    const assetids = apps.map((d) => d.data.state.assetid);
+    const now = await serverTime();
 
-    const isQuestion = prompt.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-
-    if (s.sources.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-
-      // Check for image
-      if (apps && apps[0].data.type === 'PDFViewer') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: name,
-            query: prompt,
-            response: isQuestion ? 'Working on it...' : '',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          if (isQuestion) {
-            const request = isQuestion ? prompt.slice(2) : prompt;
-            const assetids = apps.map((d) => d.data.state.assetid);
-            // Build the query
-            const q: PDFQuery = {
-              ctx: {
-                previousQ: previousQuestion,
-                previousA: previousAnswer,
-                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-                roomId,
-                boardId,
+    if (roomId && boardId) {
+      const request = prompt.slice(2);
+      const q: PDFQuery = {
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+          roomId,
+          boardId,
+        },
+        q: request,
+        user: username,
+        assetids: assetids,
+      };
+      const response = (await newAIMessage(prompt, q, 'pdf')) as PDFAnswer;
+      if (response) {
+        if ('message' in response) {
+          const errorMessage = 'There has been an error, please try again or report it through the menu.';
+          setStreamText('');
+          setPreviousAnswer(errorMessage);
+          updateState(props._id, {
+            ...s,
+            previousQ: q.q,
+            previousA: errorMessage,
+            messages: [
+              ...s.messages,
+              getInitialAnswer(prompt, true),
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: '',
+                response: errorMessage,
               },
-              q: request,
-              user: username,
-              assetids: assetids,
-            };
-            setProcessing(true);
-            setActions([]);
-            // Invoke the agent
-            const response = await callPDF(q);
-            setProcessing(false);
-
-            if ('message' in response) {
-              const errorMessage = 'There has been an error, please try again or report it through the menu.';
-              setStreamText('');
-              setPreviousAnswer(errorMessage);
-              updateState(props._id, {
-                ...s,
-                previousQ: q.q,
-                previousA: errorMessage,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: errorMessage,
-                  },
-                ],
-              });
-              toast({
-                title: 'Error',
-                description: response.message || 'Error sending query to the agent. Please try again.',
-                status: 'error',
-                duration: 4000,
-                isClosable: true,
-              });
-            } else {
-              // Clear the stream text
-              setStreamText('');
-              ctrlRef.current = null;
-              setPreviousAnswer(response.r);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: 'Describe the content',
-                previousA: response.r,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: response.r,
-                  },
-                ],
-              });
-              if (response.actions) {
-                setActions(response.actions);
-              }
-            }
+            ],
+          });
+          toast({
+            title: 'Error',
+            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(response.r);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: 'Describe the content',
+            messages: [
+              ...s.messages,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: prompt,
+                response: response.r,
+              },
+            ],
+          });
+          if (response.actions) {
+            setActions(response.actions);
           }
         }
       }
     }
   };
+  console.log(s.messages);
 
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {

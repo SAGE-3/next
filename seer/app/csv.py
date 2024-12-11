@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import base64
 import httpx
 from PIL import Image
-
+import seaborn as sns
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
 
@@ -152,6 +152,7 @@ class CSVAgent:
         df = pd.read_csv(csv_buffer)  # Automatically infer columns from the first row
         
         # Display the DataFrame
+
         # self.logger.info(f"pdfs: {len(df)}")
         # self.logger.info(f"csv: {df[0]}, {len(df[0])}")
         
@@ -184,8 +185,7 @@ class CSVAgent:
 
 
         code = answer['code'].replace("plt.show()", "")
-
-        exec_globals = {'plt': plt}
+        exec_globals = {'plt': plt, 'sns': sns, 'pd': pd}
         exec_locals = {'df': df}
         
         # Execute the code to generate the plot
@@ -196,45 +196,44 @@ class CSVAgent:
         plt.savefig(buf, format='png')
         plt.close()  # Close the plot to prevent reusing it
         buf.seek(0)  # Reset buffer to the beginning
-
         
-        # Resize the image (creates a new buffer, does not modify the original)
-        img = Image.open(buf)
-            # Convert the image to RGB format
-        img = img.convert("RGB")
-        buf_resized = io.BytesIO()
-        img.save(buf_resized, format='JPEG')
-        buf_resized.seek(0)
+        # # Resize the image (creates a new buffer, does not modify the original)
+        # img = Image.open(buf)
+        #     # Convert the image to RGB format
+        # # img = img.convert("RGB")
+        # buf_resized = io.BytesIO()
+        # img.save(buf_resized, format='PNG')
+        # buf_resized.seek(0)
         
-        # Encode the resized image to Base64 for API
-        image_base64 = base64.b64encode(buf_resized.getvalue()).decode('utf-8')
-        data = {
-                    "messages": [
-                        {
-                            "role": "assistant",
-                            "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-                        },
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": qq.q},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/jpeg;base64,{image_base64}"
-                                    },
-                                    "detail": "high",
-                                },
-                            ],
-                        },
-                    ],
-                }
-        url = self.server + "/v1/chat/completions"
-        llm_response = self.httpx_client.post(url, json=data)
-        print(llm_response)
-        if llm_response.status_code == 200:
-            description = llm_response.json()["choices"][0]["message"]["content"]
-            print(description)
+        # # Encode the resized image to Base64 for API
+        # image_base64 = base64.b64encode(buf_resized.getvalue()).decode('utf-8')
+        # data = {
+        #             "messages": [
+        #                 {
+        #                     "role": "assistant",
+        #                     "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
+        #                 },
+        #                 {
+        #                     "role": "user",
+        #                     "content": [
+        #                         {"type": "text", "text": qq.q},
+        #                         {
+        #                             "type": "image_url",
+        #                             "image_url": {
+        #                                 "url": f"data:image/jpeg;base64,{image_base64}"
+        #                             },
+        #                             "detail": "high",
+        #                         },
+        #                     ],
+        #                 },
+        #             ],
+        #         }
+        # url = self.server + "/v1/chat/completions"
+        # llm_response = self.httpx_client.post(url, json=data)
+        # print(llm_response)
+        # if llm_response.status_code == 200:
+        #     description = llm_response.json()["choices"][0]["message"]["content"]
+        #     print(description)
 
         # Use original buffer for CSVAnswer
         action1 = json.dumps(
@@ -262,9 +261,8 @@ class CSVAgent:
                 },
             }
         )
-
         # Pass the original buffer to CSVAnswer
-        buf.seek(0)  # Ensure the buffer is reset before use
+        # buf.seek(0)  # Ensure the buffer is reset before use
         val = CSVAnswer.from_buffer(buf, success=True, actions=[action1, action2], content=answer['content'])
 
         return val

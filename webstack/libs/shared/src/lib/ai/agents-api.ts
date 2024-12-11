@@ -90,7 +90,14 @@ export type PDFAnswer = {
 
 // PDF request
 export type CSVQuery = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context?: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   assetids: string[];
   user: string;
   q: string;
