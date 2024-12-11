@@ -211,6 +211,12 @@ class PySage3:
         elif collection == "APPS":
             board_id = doc["data"]["boardId"]
             room_id = doc["data"]["roomId"]
+            if room_id not in self.rooms:
+                print(f"Room {room_id} not found")
+                return
+            if board_id not in self.rooms[room_id].boards:
+                print(f"Board {board_id} not found")
+                return
             sb = self.rooms[room_id].boards[board_id].smartbits[id]
 
             if sb is not None and type(sb) is not GenericSmartBit:
@@ -219,11 +225,26 @@ class PySage3:
 
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
-        """Delete not yet supported through API"""
-        room_id = doc["data"]["roomId"]
-        board_id = doc["data"]["boardId"]
-        smartbit_id = doc["_id"]
-        del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
+        """Deletes the document from the collection"""
+        if collection == "APPS":
+            room_id = doc["data"]["roomId"]
+            board_id = doc["data"]["boardId"]
+            smartbit_id = doc["_id"]
+            if smartbit_id in self.rooms[room_id].boards[board_id].smartbits:
+                del self.rooms[room_id].boards[board_id].smartbits[smartbit_id]
+        elif collection == "BOARDS":
+            room_id = doc["data"]["roomId"]
+            board_id = doc["_id"]
+            if board_id in self.rooms[room_id].boards:
+                del self.rooms[room_id].boards[board_id]
+        elif collection == "ROOMS":
+            room_id = doc["_id"]
+            if room_id in self.rooms:
+                del self.rooms[room_id]
+        elif collection == "ASSETS":
+            asset_id = doc["_id"]
+            if asset_id in self.assets:
+                del self.assets[asset_id]
 
     def __process_messages(self, ws, msg):
         message = json.loads(msg)

@@ -100,10 +100,11 @@ class SageWebsocket:
         # try to jon thread
         nb_tries = 3
         for _ in range(nb_tries):
-            if self.wst.is_alive():
+            if self.wst and self.wst.is_alive():
                 time.sleep(0.2)
             else:
-                self.wst.join()
+                if self.wst:
+                    self.wst.join()
                 break
         else:
             logger.error("Couldn't cleanly terminate the websocket")

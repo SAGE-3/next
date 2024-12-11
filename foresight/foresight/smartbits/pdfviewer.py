@@ -6,13 +6,13 @@
 # -----------------------------------------------------------------------------
 
 from typing import Optional
-from pydantic import Field, UUID4
+from pydantic import Field
 from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
 class PDFViewerState(TrackedBaseModel):
-    assetid: UUID4 = Field(description="The UUID4 string representation of the asset")
+    assetid: str = Field(description="The UUID4 string representation of the asset")
     currentPage: int = Field(description="The page number currently showing", default=0)
     numPages: Optional[int] = Field(
         description="The total number of pages in the pdf document"
