@@ -87,7 +87,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     setPassword('');
   }, [props.room]);
 
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
 
@@ -154,7 +153,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   function cleanNameCheckDoubles(name: string): string | null {
-    // remove leading and trailing space, and limit name length to 20
+    // Remove leading and trailing space, and limit name length to 20
     const cleanedName = name.trim().substring(0, 19);
     const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
@@ -175,7 +174,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       return null;
     } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
       toast({
-        title: 'Name must only contain characters A-Z, 0-9, and spaces',
+        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
         status: 'error',
         duration: 3 * 1000,
         isClosable: true,
