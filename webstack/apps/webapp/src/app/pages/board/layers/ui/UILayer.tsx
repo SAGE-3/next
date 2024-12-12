@@ -62,7 +62,6 @@ import {
   PresenceFollow,
   BoardTitle,
   TagsDisplay,
-  IntelligenceMenu,
   Interactionbar,
   ScreenshareMenu,
   ToolbarButton,
@@ -98,7 +97,6 @@ export function UILayer(props: UILayerProps) {
   const { user } = useUser();
   const usersColor = user ? user.data.color : 'teal';
   const usersColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
-  const userColorHex = useHexColor(user ? usersColorMode : 'teal');
 
   // Scale
   const scale = useThrottleScale(250);
@@ -421,15 +419,9 @@ export function UILayer(props: UILayerProps) {
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
-          <Divider orientation="vertical" mx="1" />{' '}
+          <Divider orientation="vertical" mx="1" />
 
-          <Tooltip
-            label={"SAGE Intelligence"}
-            placement={'top'}
-            hasArrow={true}
-            openDelay={400}
-            shouldWrapChildren={true}
-          >
+          <Tooltip label={"SAGE Intelligence"} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <IconButton
               colorScheme={'purple'}
               size="sm"
@@ -437,7 +429,7 @@ export function UILayer(props: UILayerProps) {
               fontSize="lg"
               aria-label={`Open Alfred Menu`}
               onClick={alfredOnOpen}
-            ></IconButton>
+            />
           </Tooltip>
 
         </Box>
