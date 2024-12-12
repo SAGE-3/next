@@ -73,7 +73,6 @@ import {
   EditBoardModal,
   EnterBoardModal,
   ConfirmModal,
-  MainButton,
   Clock,
   isElectron,
   useUserSettings,
@@ -84,6 +83,7 @@ import {
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
+import { MainButton } from '../board/layers/ui/components';
 
 /**
  * Home page for SAGE3

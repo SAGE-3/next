@@ -116,8 +116,8 @@ export function BoardContextMenu(props: BoardContextProps) {
           <ContextButton
             bgColor={'purple'}
             icon={<IoSparklesSharp />}
-            tooltip={'SAGE Intelligince'}
-            title={'SAGE Intelligince'}
+            tooltip={'SAGE Intelligence'}
+            title={'SAGE Intelligence'}
             tooltipPlacement="right"
             placement="top"
             size="xs"
@@ -125,7 +125,7 @@ export function BoardContextMenu(props: BoardContextProps) {
             offset={[0, 50]}
             colorActiveAlways
           >
-            <IntelligenceMenu roomId={props.roomId} boardId={props.boardId} notificationCount={0} />
+            <IntelligenceMenu notificationCount={0} />
           </ContextButton>
         </Flex>
         <Flex gap="1" justifyContent={'center'}>

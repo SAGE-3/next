@@ -35,7 +35,6 @@ import {
   useAppStore,
   useUIStore,
   useBoardStore,
-  MainButton,
   useRouteNav,
   useRoomStore,
   useConfigStore,
@@ -73,6 +72,7 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
+  MainButton,
 } from './components';
 
 type UILayerProps = {
@@ -422,15 +422,24 @@ export function UILayer(props: UILayerProps) {
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />{' '}
-          <ToolbarButton
-            bgColor={'purple'}
-            icon={<IoSparklesSharp />}
-            tooltip={'SAGE Intelligence'}
-            title={'SAGE Intelligence'}
-            colorActiveAlways
+
+          <Tooltip
+            label={"SAGE Intelligence"}
+            placement={'top'}
+            hasArrow={true}
+            openDelay={400}
+            shouldWrapChildren={true}
           >
-            {room && board && <IntelligenceMenu roomId={room?._id} boardId={board?._id} notificationCount={0} />}
-          </ToolbarButton>
+            <IconButton
+              colorScheme={'purple'}
+              size="sm"
+              icon={<IoSparklesSharp />}
+              fontSize="lg"
+              aria-label={`Open Alfred Menu`}
+              onClick={alfredOnOpen}
+            ></IconButton>
+          </Tooltip>
+
         </Box>
       </Box>
 
