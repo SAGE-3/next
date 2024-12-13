@@ -425,19 +425,19 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onImageSummary = async () => {
-    return onContentImage('Describe the image in details');
+    return onContentImage('@S Describe the image in details');
   };
   const onImageCaption = async () => {
-    return onContentImage('Generate a caption for the image, fit for a scientific publication');
+    return onContentImage('@S Generate a caption for the image, fit for a scientific publication');
   };
   const onImageProsCons = async () => {
-    return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
+    return onContentImage('@S Describe the good parts and then the bad parts of the image at conveying its message');
   };
   const onImageKeywords = async () => {
-    return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+    return onContentImage('@S Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
   };
   const onImageFacts = async () => {
-    return onContentImage('Read the image and provide two or three interesting facts from the image');
+    return onContentImage('@S Read the image and provide two or three interesting facts from the image');
   };
 
   const getInitialAnswer = async (input: string, isQuestion: boolean) => {
