@@ -79,7 +79,17 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
   class RagChain(BaseModel):
     df: Any
     question: str
+    
+  # Format historical context
+  def format_history(context):
+      formatted = "\n".join([
+          f"- Question: {entry['query']}\n  Answer: {entry['response']}"
+          for entry in context
+      ])
+      return formatted
 
+  # Incorporate historical context into the system prompt
+  history_context = format_history(qq.ctx.context)
   # The prompt only asks for matplotlib and seaborn visualization libs
   # I can include plotly if needed, but it might be more susceiptble to errors.
   system_prompt = (f"""
@@ -101,6 +111,9 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
       
       Here is a summary of the df:
       {generate_enhanced_data_summary}
+      
+      Here is the conversation history:
+      {history_context}
       
       Only respond with code that creates a visualization.
       If you are unable to fully answer the question, try to create a visualization that attemtpts to answer the question.
@@ -239,15 +252,12 @@ async def generate_answer(qq: CSVQuery, llm: ChatOpenAI, df):
   
   res = await app.ainvoke({"messages": [
     ("system", f"{agent_system_prompt}"),
-    ("human", f"For extra context, here is the user's previous question: \n-----{qq.ctx.previousQ}---. \nHere is the system's response: \n---{qq.ctx.previousA}---. \n\nHere is the current question: {qq.q}")
+    ("human", f"Here is the current question: {qq.q}")
   ]})
   code =''
   for i in res["messages"]:
     if i.name == 'visualization_generator':
-      code = parse(i.content)
-      
-  print(f"For extra context, here is the user's previous question: \n-----{qq.ctx.previousQ}---. \nHere is the system's response: \n---{qq.ctx.previousA}---. \n\nHere is the current question: {qq.q}")
-      
+      code = parse(i.content)      
     
   
   if res["messages"][-1].content:

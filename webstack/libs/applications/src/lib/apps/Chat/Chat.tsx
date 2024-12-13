@@ -300,6 +300,7 @@ function AppComponent(props: App): JSX.Element {
 
         const body: AskRequest = {
           ctx: {
+            context: [],
             previousQ: previousQuestion,
             previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -466,7 +467,11 @@ function AppComponent(props: App): JSX.Element {
       if (roomId && boardId) {
         const initialAnswer = await getInitialAnswer(new_input, isQuestion);
         updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
+        for (let i = 0; i < s.messages.length; i++) {
+          const message = s.messages[i];
+          const prevQuery = message.query.slice(2);
+          query.ctx.context.push({ query: prevQuery, response: message.response });
+        }
         if (isQuestion) {
           setProcessing(true);
           setActions([]);
@@ -510,6 +515,7 @@ function AppComponent(props: App): JSX.Element {
       const request = prompt.slice(2);
       const q: ImageQuery = {
         ctx: {
+          context: [],
           previousQ: previousQuestion,
           previousA: previousAnswer,
           pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -610,6 +616,7 @@ function AppComponent(props: App): JSX.Element {
       // Build the query
       const q: CSVQuery = {
         ctx: {
+          context: [],
           previousQ: previousQuestion,
           previousA: previousAnswer,
           pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -642,10 +649,9 @@ function AppComponent(props: App): JSX.Element {
             code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
           }
           if ('content' in response) {
-            setPreviousAnswer(response.content + code_response);
+            setPreviousAnswer(code_response);
           }
           setPreviousQuestion(request);
-          console.log(getInitialAnswer(prompt, true));
           // Add messages
           updateState(props._id, {
             ...s,
@@ -659,7 +665,7 @@ function AppComponent(props: App): JSX.Element {
                 creationDate: now.epoch + 1,
                 userName: 'SAGE',
                 query: prompt,
-                response: response.content,
+                response: code_response,
                 metadata: code_response,
               },
             ],
@@ -682,6 +688,8 @@ function AppComponent(props: App): JSX.Element {
       const request = prompt.slice(2);
       const q: PDFQuery = {
         ctx: {
+          context: [],
+
           previousQ: previousQuestion,
           previousA: previousAnswer,
           pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -752,7 +760,6 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   };
-  console.log(s.messages);
 
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
@@ -764,6 +771,8 @@ function AppComponent(props: App): JSX.Element {
       // Build the query
       const q: WebQuery = {
         ctx: {
+          context: [],
+
           previousQ: previousQuestion,
           previousA: previousAnswer,
           pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -913,7 +922,6 @@ function AppComponent(props: App): JSX.Element {
   // Code section
   const onContentCode = async (prompt: string, method: string) => {
     if (!user) return;
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
     // Get server time
     const now = await serverTime();
 
@@ -923,6 +931,7 @@ function AppComponent(props: App): JSX.Element {
 
       const body: CodeRequest = {
         ctx: {
+          context: [],
           previousQ: previousQuestion,
           previousA: previousAnswer,
           pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],

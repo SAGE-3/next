@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 # Models
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Dict
 from pydantic import BaseModel, Json, ConfigDict
 import io
 import base64
@@ -16,12 +16,13 @@ import base64
 
 
 class Context(NamedTuple):
+    context: List[Dict[str,str]]
     previousQ: str  # previous prompt
     previousA: str  # previous answer
     pos: List[float]  # position in the board
     roomId: str  # room ID
     boardId: str  # board ID
-
+    
 
 class Question(BaseModel):
     ctx: Context  # context
