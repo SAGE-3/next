@@ -29,6 +29,7 @@ export const schema = z.object({
       query: z.string(),
       response: z.string(),
       userId: z.string(),
+      metadata: z.string(),
     })
     .array(),
 });
@@ -50,6 +51,7 @@ export const init: Partial<state> = {
       query: '',
       response: 'I am SAGE AI! Ask me anything by directing the question to me (@S), or chat with people in the board',
       userId: '',
+      metadata: '',
     },
   ],
 };
