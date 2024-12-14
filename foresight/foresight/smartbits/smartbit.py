@@ -219,7 +219,7 @@ class Data(TrackedBaseModel):
 
 
 class SmartBit(TrackedBaseModel):
-    app_id: str = Field(alias="_id", description="A valid UUID4 of this asset.")
+    app_id: UUID4 = Field(alias="_id", description="A valid UUID4 of this asset.")
     data: Data = Field(description="Generic app data like position, width and height")
     tags: List[str] = Field(description="List of tag assigned to this app", default=[])
     _createdAt: int
@@ -233,8 +233,6 @@ class SmartBit(TrackedBaseModel):
         self.set_path()
 
     def send_updates(self):
-
-        print(f"Sending updates for {self.app_id}")
         new_data = self.get_all_touched_fields_dict()
         self.touched.clear()
         self._s3_comm.send_app_update(self.app_id, new_data)
