@@ -40,9 +40,6 @@ class SageWebsocket:
         if on_message_fn is not None:
             self.on_message = on_message_fn
 
-    # def subscribe(self, route):
-    #     return self.socket.setup_sub_queue(route)
-
     def on_open(self, ws):
         logger.debug("Websocket connected")
         self.connected = True
@@ -88,7 +85,7 @@ class SageWebsocket:
 
         # WS Message
         for route in routes:
-            # # Generate id for subscription
+            # Generate id for subscription
             subscription_id = str(uuid.uuid4())
             msg_sub = {"route": route, "id": subscription_id, "method": "SUB"}
             self.ws.send(json.dumps(msg_sub))

@@ -64,8 +64,9 @@ import {
   MdPushPin,
   MdOutlinePushPin,
 } from 'react-icons/md';
-import { HiOutlineTrash, HiOutlineSparkles } from 'react-icons/hi';
+import { HiOutlineTrash } from 'react-icons/hi';
 import { IoMdExit } from 'react-icons/io';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 import { formatDistance } from 'date-fns';
 
@@ -87,7 +88,7 @@ import {
   apiUrls,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { Applications } from '@sage3/applications/apps';
+import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
 
@@ -879,6 +880,7 @@ export function AppToolbar(props: AppToolbarProps) {
               confirmText="Delete"
               confirmColor="red"
               size="lg"
+              xOffSet={Math.min(0.75, (position.x + 150) / window.innerWidth)}
             />
           </>
         </ErrorBoundary>
@@ -961,7 +963,6 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   };
 
-
   if (showUI && app)
     return (
       <Box
@@ -989,29 +990,34 @@ export function AppToolbar(props: AppToolbarProps) {
             <Spacer />
 
             {/* Sage Intelligence */}
-            <Box>
-              <Tooltip
-                placement="top"
-                hasArrow={true}
-                openDelay={400}
-                ml="1"
-                label={'Chat with SAGE Intelligence'}
-              >
-                <Button onClick={openChat} backgroundColor={intelligenceColor}
-                  variant='solid' size="xs" m={0} mr={2} p={0}
-                  _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}>
-                  <HiOutlineSparkles size="20px" color={"white"} />
-                </Button>
-              </Tooltip>
-            </Box>
-
+            {
+              // Is app AiEnabled
+              AI_ENABLED_APPS.includes(app.data.type) && (
+                <Box>
+                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                    <Button
+                      onClick={openChat}
+                      backgroundColor={intelligenceColor}
+                      variant="solid"
+                      size="xs"
+                      m={0}
+                      mr={2}
+                      p={0}
+                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                    >
+                      <IoSparklesSharp size="16px" color={'white'} />
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )
+            }
           </Box>
 
           <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>
             {getAppToolbar()}
           </Box>
-        </Box >
-      </Box >
+        </Box>
+      </Box>
     );
   else return null;
 }

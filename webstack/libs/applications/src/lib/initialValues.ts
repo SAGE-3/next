@@ -1,6 +1,7 @@
 // SAGE3 Generated from apps.json file
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
+import { name as AssetLinkName, init as defaultAssetLink } from './apps/AssetLink';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
 import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
@@ -41,6 +42,7 @@ import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
+  [AssetLinkName]: defaultAssetLink,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
   [CalculatorName]: defaultCalculator,

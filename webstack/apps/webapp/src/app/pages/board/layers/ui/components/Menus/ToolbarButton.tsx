@@ -30,6 +30,7 @@ interface ToolbarButtonProps {
   tooltip: string;
   title: string;
   stayActive?: boolean;
+  colorActiveAlways?: boolean;
 }
 
 export function ToolbarButton(props: ToolbarButtonProps) {
@@ -52,28 +53,28 @@ export function ToolbarButton(props: ToolbarButtonProps) {
           {/* If stayActive need a different button...sadly very simliar code */}
           {props.stayActive ? (
             <IconButton
-              colorScheme={isOpen ? props.bgColor : 'gray'}
+              colorScheme={isOpen || props.colorActiveAlways ? props.bgColor : 'gray'}
               size="sm"
               icon={props.icon}
               fontSize="lg"
               aria-label={`Open ${props.title} Menu`}
               sx={{
                 _dark: {
-                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                  bg: isOpen || props.colorActiveAlways ? bgColor : 'gray.600', // 'inherit' didnt seem to work
                 },
               }}
               onClick={handleClick}
             ></IconButton>
           ) : (
             <IconButton
-              colorScheme={isOpen ? props.bgColor : 'gray'}
+              colorScheme={isOpen || props.colorActiveAlways ? props.bgColor : 'gray'}
               size="sm"
               icon={props.icon}
               fontSize="lg"
               aria-label={`Open ${props.title} Menu`}
               sx={{
                 _dark: {
-                  bg: isOpen ? bgColor : 'gray.600', // 'inherit' didnt seem to work
+                  bg: isOpen || props.colorActiveAlways ? bgColor : 'gray.600', // 'inherit' didnt seem to work
                 },
               }}
             ></IconButton>

@@ -249,18 +249,35 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
     );
     popOnClose();
   }, [createApp, dropPosition.x, dropPosition.y, props.roomId, props.boardId, validURL, popOnClose]);
-  const createWebview = useCallback(() => {
-    const final_url = processContentURL(validURL);
-    let w = 800;
-    let h = 800;
-    if (final_url !== validURL) {
-      // might be a video
-      w = 1280;
-      h = 720;
+
+  function isImageUrl(url: string) {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+    const ext = url.split('.').pop();
+    if (ext) {
+      const extension = ext.toLowerCase().split('?')[0];
+      return imageExtensions.includes(extension);
     }
-    createApp(
-      setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
-    );
+    return false;
+  }
+
+  const createWebview = useCallback(() => {
+    if (isImageUrl(validURL)) {
+      createApp(
+        setupApp('ImageViewer', 'ImageViewer', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: 800, h: 800 }, { assetid: validURL })
+      );
+    } else {
+      const final_url = processContentURL(validURL);
+      let w = 800;
+      let h = 800;
+      if (final_url !== validURL) {
+        // might be a video
+        w = 1280;
+        h = 720;
+      }
+      createApp(
+        setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
+      );
+    }
     popOnClose();
   }, [createApp, dropPosition.x, dropPosition.y, props.roomId, props.boardId, validURL, popOnClose]);
 

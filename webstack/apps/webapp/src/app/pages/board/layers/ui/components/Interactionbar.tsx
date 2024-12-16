@@ -35,9 +35,13 @@ import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal } from '@sage3/frontend';
+import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal, useCursorBoardPosition } from '@sage3/frontend';
 
-export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
+export function Interactionbar(props: {
+  isContextMenuOpen?: boolean;
+  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right',
+  position?: { x: number; y: number }
+}) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
@@ -50,8 +54,8 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
 
-  // Divider Color
-  const dividerColorMode = useColorModeValue('gray.400', 'gray.200');
+  // Tooltip Placment
+  const tooltipPlacement = props.tooltipPlacement ? props.tooltipPlacement : 'top';
 
   // Annotation Settings
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
@@ -129,7 +133,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
   return (
     <>
       <ButtonGroup isAttached={false} spacing={0} size="xs">
-        <Tooltip label={'Selection — [1]'} placement="top" hasArrow={true} openDelay={400}>
+        <Tooltip label={'Selection — [1]'} placement={tooltipPlacement} hasArrow={true} openDelay={400}>
           <IconButton
             borderRadius={'0.5rem 0 0 0.5rem'}
             size="sm"
@@ -150,7 +154,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
           ></IconButton>
         </Tooltip>
 
-        <Tooltip label={'Grab (Panning Tool) — [2]'} placement="top" hasArrow={true} openDelay={400}>
+        <Tooltip label={'Grab (Panning Tool) — [2]'} placement={tooltipPlacement} hasArrow={true} openDelay={400}>
           <IconButton
             borderRadius={0}
             size="sm"
@@ -174,7 +178,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
         </Tooltip>
 
         <Popover isOpen={annotationsIsOpen && primaryActionMode === 'pen'}>
-          <Tooltip label={'Annotations — [3]'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <Tooltip label={'Annotations — [3]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
                 borderRadius={0}
@@ -228,7 +232,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
                       <Box position="relative" right={10} />
                       <SliderFilledTrack bg={sliderColor} />
                     </SliderTrack>
-                    <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip2} label={`${sliderValue2}`}>
+                    <Tooltip hasArrow bg="teal.500" color="white" placement="top" isOpen={showTooltip2} label={`${sliderValue2}`}>
                       <SliderThumb boxSize={4}>
                         <Box color={thumbColor} as={MdGraphicEq} />
                       </SliderThumb>
@@ -253,7 +257,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
                       <Box position="relative" right={10} />
                       <SliderFilledTrack bg={sliderColor} />
                     </SliderTrack>
-                    <Tooltip hasArrow bg="teal.500" color="white" placement="bottom" isOpen={showTooltip1} label={`${sliderValue1}`}>
+                    <Tooltip hasArrow bg="teal.500" color="white" placement="top" isOpen={showTooltip1} label={`${sliderValue1}`}>
                       <SliderThumb boxSize={4}>
                         <Box color={thumbColor} as={MdGraphicEq} />
                       </SliderThumb>
@@ -265,7 +269,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
           </PopoverContent>
         </Popover>
         <Popover isOpen={eraserIsOpen && primaryActionMode === 'eraser'}>
-          <Tooltip label={'Eraser — [4]'} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <Tooltip label={'Eraser — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
                 borderRadius={'0 0.5rem 0.5rem 0'}
@@ -320,6 +324,7 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
           </PopoverContent>
         </Popover>
       </ButtonGroup>
+
       <ConfirmModal
         isOpen={myIsOpen}
         onClose={myOnClose}
@@ -331,7 +336,9 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
         cancelColor="green"
         confirmColor="red"
         size="lg"
+        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
       />
+
       <ConfirmModal
         isOpen={allIsOpen}
         onClose={allOnClose}
@@ -343,7 +350,9 @@ export function Interactionbar(props: { isContextMenuOpen?: boolean }) {
         cancelColor="green"
         confirmColor="red"
         size="lg"
+        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
       />
+
     </>
   );
 }

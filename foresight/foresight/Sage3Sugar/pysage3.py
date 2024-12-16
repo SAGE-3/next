@@ -45,10 +45,12 @@ class PySage3:
         }
 
         self.rooms = {}
+        self.assets = {}
         self.s3_comm = SageCommunication(self.conf, self.prod_type)
         self.socket = SageWebsocket(on_message_fn=self.__process_messages)
 
-        self.socket.subscribe(["/api/apps", "/api/rooms", "/api/boards"])
+        self.socket.subscribe(["/api/apps", "/api/rooms", "/api/boards", "/api/assets"])
+
         # Grab and load info already on the board
         self.__populate_existing()
         self.room = None
@@ -68,6 +70,10 @@ class PySage3:
         apps_info = self.s3_comm.get_apps()
         for app_info in apps_info:
             self.__handle_create("APPS", app_info)
+        # Populate existing apps
+        assets_info = self.s3_comm.get_assets()
+        for asset_info in assets_info:
+            self.__handle_create("ASSETS", asset_info)
 
     def create_app(self, room_id, board_id, app_type, state, app=None):
         try:
@@ -169,8 +175,6 @@ class PySage3:
 
     # Handle Create Messages
     def __handle_create(self, collection, doc):
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"creating {doc} \n")
         # we need state to be at the same level as data
         if collection == "ROOMS":
             new_room = Room(doc)
@@ -190,6 +194,8 @@ class PySage3:
                     self.rooms[room_id].boards[board_id].smartbits[
                         smartbit.app_id
                     ] = smartbit
+        elif collection == "ASSETS":
+            self.assets[doc["_id"]] = doc
 
     # Handle Update Messages
     def __handle_update(self, collection, doc, updates):
@@ -214,8 +220,6 @@ class PySage3:
     # Handle Delete Messages
     def __handle_delete(self, collection, doc):
         """Delete not yet supported through API"""
-        with open("/tmp/log.out", "w") as out_file:
-            out_file.write(f"Deleting {doc} \n")
         room_id = doc["data"]["roomId"]
         board_id = doc["data"]["boardId"]
         smartbit_id = doc["_id"]

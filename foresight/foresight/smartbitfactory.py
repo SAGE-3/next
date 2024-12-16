@@ -27,7 +27,7 @@ class SmartBitFactory:
         "IFrame": "iframe",
         "ImageViewer": "imageviewer",
         "MapGL": "mapgl",
-        "Notepad": "note",
+        #"Notepad": "note",
         "PDFViewer": "pdfviewer",
         "SageCell": "sagecell",
         "Stickie": "stickie",

@@ -7,19 +7,19 @@
  */
 
 import { useEffect } from 'react';
-import { Box, useColorModeValue, Flex, IconButton, Tooltip } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Tooltip } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
-import { FaExpandArrowsAlt } from 'react-icons/fa';
+import { IoSparklesSharp } from 'react-icons/io5';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUser, useHexColor, useUIStore } from '@sage3/frontend';
+import { useUser, useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
 import { Interactionbar } from '../Interactionbar';
-import { ApplicationsMenu, AssetsMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
+import { ApplicationsMenu, AssetsMenu, IntelligenceMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
 
 type BoardContextProps = {
   roomId: string;
@@ -69,7 +69,9 @@ export function BoardContextMenu(props: BoardContextProps) {
       // Only set the position if it has changed
       const newX = x !== start_x ? x : contextMenuPosition.x;
       const newY = y !== start_y ? y : contextMenuPosition.y;
-      if (x !== start_x || y !== start_y) setContextMenuPosition({ x: newX, y: newY });
+      if (x !== start_x || y !== start_y) {
+        setContextMenuPosition({ x: newX, y: newY });
+      }
     }
   }, [contextMenuPosition]);
 
@@ -100,7 +102,7 @@ export function BoardContextMenu(props: BoardContextProps) {
           </ContextButton>
         </Flex>
         <Flex justifyContent={'space-between'} width="100px" height="24px">
-          <Tooltip label="Back Home" aria-label="back-home" hasArrow placement="top" openDelay={500}>
+          <Tooltip label="Back Home" aria-label="back-home" hasArrow placement="left" openDelay={500}>
             <IconButton
               aria-label="Up Arrow"
               variant="solid"
@@ -111,19 +113,23 @@ export function BoardContextMenu(props: BoardContextProps) {
             />
           </Tooltip>
 
-          <Tooltip label="Show All Apps" aria-label="Show All Apps" hasArrow placement="top" openDelay={500}>
-            <IconButton
-              aria-label="Up Arrow"
-              variant="solid"
-              colorScheme={'gray'}
-              size="xs"
-              icon={<FaExpandArrowsAlt />}
-              onClick={props.showAllApps}
-            />
-          </Tooltip>
+          <ContextButton
+            bgColor={'purple'}
+            icon={<IoSparklesSharp />}
+            tooltip={'SAGE Intelligince'}
+            title={'SAGE Intelligince'}
+            tooltipPlacement="right"
+            placement="top"
+            size="xs"
+            iconSize="sm"
+            offset={[0, 50]}
+            colorActiveAlways
+          >
+            <IntelligenceMenu roomId={props.roomId} boardId={props.boardId} notificationCount={0} />
+          </ContextButton>
         </Flex>
         <Flex gap="1" justifyContent={'center'}>
-          <Interactionbar />
+          <Interactionbar tooltipPlacement="bottom" position={contextMenuPosition} />
         </Flex>
       </Flex>
     </Box>
