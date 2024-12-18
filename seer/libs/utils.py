@@ -300,6 +300,8 @@ def getMDfromPDF(id, content):
         with open(file_path, "r") as file:
             return file.read()
     else:
+        document = pymupdf.open(stream=BytesIO(content), filetype="pdf")
+        
         md = pymupdf4llm.to_markdown(
             pymupdf.open(stream=BytesIO(content), filetype="pdf"),
             write_images=False,
