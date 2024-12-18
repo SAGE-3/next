@@ -152,7 +152,13 @@ class PDFAgent:
       messages: List[BaseMessage] = []
       messages.append(
         SystemMessage(
-          content="You are a helpful optical character recognition assistant. Read the page an extract all of the text in Markdown format. Do not wrap it in a code block. Only return the text that you have read. Do not make any information up."
+          content="""
+            You are a helpful optical character recognition assistant
+            - Read the page an extract all of the text in Markdown format
+            - Do not wrap it in a code block
+            - Only return the text that you have read
+            - Do not make any information up
+          """
         )
       )
       messages.append(
@@ -205,7 +211,6 @@ class PDFAgent:
                 file.write(md)
           else:
             print("\n\n Convert to images \n\n")
-            # For now just testing with llama
             images = self.pdf_to_base64_images(document)
             print("\n\n Images: ", len(images), "\n\n")
             pages = []
@@ -215,25 +220,14 @@ class PDFAgent:
             
             pages.sort(key=lambda x: x["index"])
             md = "\n\n".join(page["content"] for page in pages)
+            with open(file_path, "w") as file:
+                file.write(md)
             
           return md
 
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
 
-        # Retrieve the PDF content
-        # TODO: make cleaner
-        # Define the loop to run getPDFFile in an executor for each asset
-        # loop = asyncio.get_event_loop()
-
-        # # Use run_in_executor for each asset ID to avoid blocking the event loop
-        # pdfContents = [
-        #     {
-        #         "id": assetid,
-        #         "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
-        #     }
-        #     for assetid in qq.assetids
-        # ]
         pdfContents = [
             {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
             for assetid in qq.assetids
