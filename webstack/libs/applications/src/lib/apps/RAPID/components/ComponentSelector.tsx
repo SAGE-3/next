@@ -3,7 +3,7 @@ import { App, AppState } from '@sage3/applications/schema';
 import LineGraph from './LineGraph';
 import Overview from './Overview';
 // import ControlPanel from './ControlPanel';
-import LocationMap from './Map';
+// import LocationMap from './Map';
 // import SageStats from './SageStats';
 import { CATEGORIES } from '../data/constants';
 
@@ -18,7 +18,7 @@ export type RAPIDState = {
 const components = {
   [CATEGORIES.GRAPH]: (props: App) => <LineGraph.AppComponent {...props} />,
   [CATEGORIES.OVERVIEW]: (props: App) => <Overview.AppComponent {...props} />,
-  [CATEGORIES.MAP]: (props: App) => <LocationMap.AppComponent {...props} />,
+  // [CATEGORIES.MAP]: (props: App) => <LocationMap.AppComponent {...props} />,
 };
 
 /**

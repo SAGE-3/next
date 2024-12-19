@@ -13,6 +13,7 @@ export interface SageNodeQueryParams {
     sensor?: string;
     vsn?: string;
   };
+  waggle_meta?: string; // here because you can't filter by CPU core, not actually used in api
 }
 
 export interface MesonetQueryParams {
@@ -95,7 +96,11 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
     // Define constant for 5 minutes in milliseconds
     const FIVE_MINUTES = 5 * 60 * 1000;
     // Fetch raw Waggle Node data
-    const metrics = await getSageNodeData(query);
+    let metrics = await getSageNodeData(query);
+
+    if (query.filter?.name === 'sys.freq.cpu_perc' && query.waggle_meta) {
+      metrics = metrics.filter((data: any) => data.meta.cpu === query.waggle_meta);
+    }
     // Return empty array if no metrics are found
     if (!metrics.length) return [];
     // Initialize the previous timestamp to 5 minutes before the first data point
@@ -134,6 +139,17 @@ export const getFormattedSageNodeData = async (query: SageNodeQueryParams): Prom
         time: data.timestamp,
         value: Number((data.value * conversionMetersPerSecondToKmPerHr).toFixed(2)),
       }));
+    }
+
+    if (query.filter?.name === 'sys.freq.cpu_perc') {
+      console.log('query waggle meta', query.waggle_meta);
+      console.log('filteredMetrics', filteredMetrics);
+      const filteredData = filteredMetrics.map((data: any) => ({
+        time: data.timestamp,
+        value: data.value,
+      }));
+      console.log('filteredData', filteredData);
+      return filteredData;
     }
 
     return filteredMetrics.map((data: any) => ({ time: data.timestamp, value: data.value }));

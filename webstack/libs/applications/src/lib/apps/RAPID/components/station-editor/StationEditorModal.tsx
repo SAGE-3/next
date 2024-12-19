@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, Modal, ModalOverlay, ModalContent, Box, useColorMode, Flex } from '@chakra-ui/react';
 import { App } from '@sage3/applications/schema';
 import { useAppStore } from '@sage3/frontend';

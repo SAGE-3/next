@@ -95,6 +95,7 @@ export const MESONET_METRICS: MesonetMetrics = {
 export interface Metric {
   name: string;
   waggle: string;
+  waggle_meta?: string;
   mesonet: string | null;
 }
 
@@ -140,13 +141,59 @@ export const METRICS: Metric[] = [
     mesonet: 'wind_speed_set_1',
   },
   {
-    name: 'CPU Load (%)',
+    name: 'CPU 0 Load (%)',
     waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '0',
+    mesonet: null,
+  },
+  {
+    name: 'CPU 1 Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '1',
+    mesonet: null,
+  },
+  {
+    name: 'CPU 2 Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '2',
+    mesonet: null,
+  },
+  {
+    name: 'CPU 3 Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '3',
+    mesonet: null,
+  },
+  {
+    name: 'CPU 4 Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '4',
+    mesonet: null,
+  },
+  {
+    name: 'CPU 5 Load (%)',
+    waggle: 'sys.freq.cpu_perc',
+    waggle_meta: '5',
     mesonet: null,
   },
   {
     name: 'GPU Load (%)',
-    waggle: 'sys.freq.gpu',
+    waggle: 'sys.freq.gpu_perc',
+    mesonet: null,
+  },
+  {
+    name: 'Power (Watts)',
+    waggle: 'sys.power',
+    mesonet: null,
+  },
+  {
+    name: 'Disk Size (bits)',
+    waggle: 'sys.fs.size',
+    mesonet: null,
+  },
+  {
+    name: 'Disk Free (bits)',
+    waggle: 'sys.fs.avail',
     mesonet: null,
   },
 ];

@@ -25,6 +25,7 @@ export const schema = z.object({
   metric: z.object({
     name: z.string(),
     waggle: z.string(),
+    waggle_meta: z.string().optional(),
     mesonet: z.string().nullable(),
   }),
   startTime: z.date().nullable(),

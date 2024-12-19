@@ -27,9 +27,9 @@ import DateRangeSelector from './components/station-editor/components/DateRangeS
 
 /* App component for RAPID */
 function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const createApp = useAppStore((state) => state.create);
+  // const s = props.data.state as AppState;
+  // const updateState = useAppStore((state) => state.updateState);
+  // const createApp = useAppStore((state) => state.create);
 
   // used to get userId
   // const { user } = useUser();

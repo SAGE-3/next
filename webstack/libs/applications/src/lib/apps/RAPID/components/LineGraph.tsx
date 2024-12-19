@@ -7,8 +7,7 @@ import { App, AppState } from '@sage3/applications/schema';
 import { SensorQuery } from '../api/apis';
 import { SageNodeQueryParams, MesonetQueryParams } from '../api/apis';
 import useEchartsStore from '../store/echartsStore';
-import { AiAPI, useAppStore, useAssetStore } from '@sage3/frontend';
-import { apiUrls } from '@sage3/frontend';
+import { useAppStore } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Box, Button, useToast } from '@chakra-ui/react';
 
@@ -26,6 +25,7 @@ function AppComponent(props: App) {
   const [isLoading, setIsLoading] = useState(false);
   const s = props.data.state;
 
+  console.log('app state', s);
   const createQueries = useMemo(() => {
     const queries: { waggleNodes: SensorQuery<SageNodeQueryParams>[]; mesonetStations: SensorQuery<MesonetQueryParams>[] } = {
       waggleNodes: [],
@@ -44,6 +44,7 @@ function AppComponent(props: App) {
               sensor: 'bme680',
               vsn: id,
             },
+            waggle_meta: s.metric?.waggle_meta,
           },
         });
       });
@@ -58,6 +59,7 @@ function AppComponent(props: App) {
               name: s.metric.waggle,
               vsn: id,
             },
+            waggle_meta: s.metric?.waggle_meta,
           },
         });
       });
@@ -78,7 +80,7 @@ function AppComponent(props: App) {
     }
 
     return queries;
-  }, [s.metric, s.sensors, s.startTime, s.endTime]);
+  }, [s.metric?.name, s.metric?.waggle_meta, s.sensors, s.startTime, s.endTime]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -100,6 +102,7 @@ function AppComponent(props: App) {
   }, [JSON.stringify(s)]);
 
   // console.log('data', data);
+  console.log('data', data);
 
   useEffect(() => {
     if (data && data.length > 0) {
@@ -338,7 +341,7 @@ function ToolbarComponent(props: App) {
   return (
     <Box>
       <Button size="xs" onClick={createChartImage} mx="2">
-        Open to Side
+        Copy as Image
       </Button>
       {/* <Button size="xs" onClick={explainChart}>
         Explain Chart
