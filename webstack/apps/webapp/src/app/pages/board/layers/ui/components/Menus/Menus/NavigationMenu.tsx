@@ -14,7 +14,7 @@ import { BsFiletypePdf } from 'react-icons/bs';
 import { MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat } from 'react-icons/md';
 
 import { App } from '@sage3/applications/schema';
-import { useThrottleScale, useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
+import { useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 
 // Icons for the minimap
 const appIcons = {
@@ -156,7 +156,7 @@ export function NavigationMenu() {
         </Box>
       </Box>
       <Button size="xs" colorScheme={user?.data.color} width="100% " variant="outline" onClick={fitAllApps}>
-        Show All Apps
+        Show All Applications
       </Button>
     </Box>
   );
