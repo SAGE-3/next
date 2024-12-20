@@ -35,7 +35,6 @@ import {
   useAppStore,
   useUIStore,
   useBoardStore,
-  MainButton,
   useRouteNav,
   useRoomStore,
   useConfigStore,
@@ -63,7 +62,6 @@ import {
   PresenceFollow,
   BoardTitle,
   TagsDisplay,
-  IntelligenceMenu,
   Interactionbar,
   ScreenshareMenu,
   ToolbarButton,
@@ -73,6 +71,7 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
+  MainButton,
 } from './components';
 
 type UILayerProps = {
@@ -98,7 +97,6 @@ export function UILayer(props: UILayerProps) {
   const { user } = useUser();
   const usersColor = user ? user.data.color : 'teal';
   const usersColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
-  const userColorHex = useHexColor(user ? usersColorMode : 'teal');
 
   // Scale
   const scale = useThrottleScale(250);
@@ -290,6 +288,10 @@ export function UILayer(props: UILayerProps) {
     }
   }
 
+  const handleOpenAlfred = () => {
+    alfredOnOpen();
+  };
+
   return (
     <>
       {/* Presence settings modal dialog */}
@@ -421,16 +423,18 @@ export function UILayer(props: UILayerProps) {
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
-          <Divider orientation="vertical" mx="1" />{' '}
-          <ToolbarButton
-            bgColor={'purple'}
-            icon={<IoSparklesSharp />}
-            tooltip={'SAGE Intelligence'}
-            title={'SAGE Intelligence'}
-            colorActiveAlways
-          >
-            {room && board && <IntelligenceMenu roomId={room?._id} boardId={board?._id} notificationCount={0} />}
-          </ToolbarButton>
+          <Divider orientation="vertical" mx="1" />
+
+          <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <IconButton
+              colorScheme={'purple'}
+              size="sm"
+              icon={<IoSparklesSharp />}
+              fontSize="lg"
+              aria-label={`Open Alfred Menu`}
+              onClick={alfredOnOpen}
+            />
+          </Tooltip>
         </Box>
       </Box>
 
@@ -456,6 +460,7 @@ export function UILayer(props: UILayerProps) {
           showAllApps={showAllApps}
           downloadRoomAssets={downloadRoomAssets}
           backHomeClick={handleHomeClick}
+          openAlfred={handleOpenAlfred}
         />
       </ContextMenu>
 

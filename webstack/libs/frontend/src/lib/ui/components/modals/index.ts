@@ -27,3 +27,4 @@ export * from './EditVisibilityModal';
 export * from './BoardInformationModal';
 export * from './FeedbackModal';
 export * from './AccountDeletion';
+export * from './IntelligenceModal';
