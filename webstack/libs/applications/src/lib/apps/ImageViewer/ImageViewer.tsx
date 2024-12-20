@@ -156,7 +156,7 @@ function AppComponent(props: App): JSX.Element {
           </>
         ) : (
           <Box display="flex" width="100%" height="100%" justifyContent="center" alignItems="center" flexDir="column" gap="0">
-            <MdBrokenImage size="md" />
+            <MdBrokenImage size="100%" />
           </Box>
         )}
       </div>
