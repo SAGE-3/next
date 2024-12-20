@@ -44,7 +44,6 @@ const getAppInfo = async (boardId: string): Promise<AppInfo[]> => {
 };
 
 const updateAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  console.log('Fetching apps for board:', boardId);
   const res = await APIHttp.QUERY<App>('/apps', { boardId });
   if (res.success && res.data) {
     const apps = res.data;
