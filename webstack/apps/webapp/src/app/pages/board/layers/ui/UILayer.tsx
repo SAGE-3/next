@@ -288,6 +288,10 @@ export function UILayer(props: UILayerProps) {
     }
   }
 
+  const handleOpenAlfred = () => {
+    alfredOnOpen();
+  };
+
   return (
     <>
       {/* Presence settings modal dialog */}
@@ -421,7 +425,7 @@ export function UILayer(props: UILayerProps) {
           </ToolbarButton>
           <Divider orientation="vertical" mx="1" />
 
-          <Tooltip label={"SAGE Intelligence"} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <IconButton
               colorScheme={'purple'}
               size="sm"
@@ -431,7 +435,6 @@ export function UILayer(props: UILayerProps) {
               onClick={alfredOnOpen}
             />
           </Tooltip>
-
         </Box>
       </Box>
 
@@ -457,6 +460,7 @@ export function UILayer(props: UILayerProps) {
           showAllApps={showAllApps}
           downloadRoomAssets={downloadRoomAssets}
           backHomeClick={handleHomeClick}
+          openAlfred={handleOpenAlfred}
         />
       </ContextMenu>
 

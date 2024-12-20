@@ -14,7 +14,7 @@ import { IoSparklesSharp } from 'react-icons/io5';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUser, useUIStore, Alfred } from '@sage3/frontend';
+import { useUser, useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
@@ -28,6 +28,7 @@ type BoardContextProps = {
   showAllApps: () => void;
   downloadRoomAssets: (ids: string[]) => void;
   backHomeClick: () => void;
+  openAlfred: () => void;
 };
 
 export function BoardContextMenu(props: BoardContextProps) {
@@ -37,8 +38,7 @@ export function BoardContextMenu(props: BoardContextProps) {
 
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
-  // Alfred Modal
-  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
 
   // Useeffect to check the position of the context menu to ensure it is not off screen...and if so position it correctly
   useEffect(() => {
@@ -71,6 +71,11 @@ export function BoardContextMenu(props: BoardContextProps) {
       }
     }
   }, [contextMenuPosition]);
+
+  const handleAlfredOpen = () => {
+    setContextMenuOpen(false);
+    props.openAlfred();
+  };
 
   return (
     <>
@@ -111,27 +116,22 @@ export function BoardContextMenu(props: BoardContextProps) {
               />
             </Tooltip>
 
-            <Tooltip label={"SAGE Intelligence"} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
               <IconButton
                 colorScheme={'purple'}
                 size="xs"
                 icon={<IoSparklesSharp />}
                 fontSize="sm"
                 aria-label={`Open Alfred Menu`}
-                onClick={alfredOnOpen}
+                onClick={handleAlfredOpen}
               />
             </Tooltip>
-
           </Flex>
           <Flex gap="1" justifyContent={'center'}>
             <Interactionbar tooltipPlacement="bottom" position={contextMenuPosition} />
           </Flex>
         </Flex>
       </Box>
-
-      {/* Alfred modal dialog */}
-      <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
-
     </>
   );
 }

@@ -49,14 +49,23 @@ export const ContextMenu = (props: { children: JSX.Element; divIds: string[] }) 
 
   // Set the position of the context menu
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
-  const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
+
+  const setContextMenuOpen = useUIStore((state) => state.setContextMenuOpen);
+  const contextMenuOpen = useUIStore((state) => state.contextMenuOpen);
 
   useEffect(() => {
     if (contextMenuPos !== contextMenuPosition) {
       setContextMenuPos(contextMenuPosition);
     }
   }, [contextMenuPosition, contextMenuPos]);
+
+  useEffect(() => {
+    if (contextMenuOpen !== showContextMenu) {
+      setShowContextMenu(contextMenuOpen);
+      setContextMenuOpen(contextMenuOpen);
+    }
+  }, [contextMenuOpen, setContextMenuOpen, showContextMenu]);
 
   useHotkeys('esc', () => {
     setShowContextMenu(false);
