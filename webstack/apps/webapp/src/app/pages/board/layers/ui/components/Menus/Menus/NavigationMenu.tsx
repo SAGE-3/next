@@ -7,11 +7,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Box, useColorModeValue, Tooltip } from '@chakra-ui/react';
+import { Box, useColorModeValue, Tooltip, Button } from '@chakra-ui/react';
 
 import { FaPython } from 'react-icons/fa';
 import { BsFiletypePdf } from 'react-icons/bs';
-import { MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat, } from 'react-icons/md';
+import { MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat } from 'react-icons/md';
 
 import { App } from '@sage3/applications/schema';
 import { useThrottleScale, useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
@@ -31,28 +31,14 @@ const appIconsDefined = Object.keys(appIcons) as AppIconsKey[];
 export function NavigationMenu() {
   // App Store
   const apps = useThrottleApps(250);
+
   // UI Store
-  // const boardLocked = useUIStore((state) => state.boardLocked);
-  // const lockBoard = useUIStore((state) => state.lockBoard);
-  // const zoomIn = useUIStore((state) => state.zoomIn);
-  // const zoomOut = useUIStore((state) => state.zoomOut);
-  // const resetZoom = useUIStore((state) => state.resetZoom);
-  // const resetBoardPosition = useUIStore((state) => state.resetBoardPosition);
+  const fitAllApps = useUIStore((state) => state.fitAllApps);
+  const fitApps = useUIStore((state) => state.fitAppsById);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const setScale = useUIStore((state) => state.setScale);
   const userViewport = useUIStore((state) => state.viewport);
 
-  // Scale
-  const scale = useThrottleScale(250);
-  // const formattedScale = `${Math.floor(scale * 100)}%`;
-
-  // User viewport
   const { user } = useUser();
-
-  // Abilities
-  // const canOrganize = useAbility('update', 'apps');
-  // const canDelete = useAbility('delete', 'apps');
 
   // User viewport
   const viewportBorderColor = useHexColor(user ? user.data.color : 'red.300');
@@ -96,35 +82,11 @@ export function NavigationMenu() {
   const moveToApp = (app: App) => {
     // set the app as selected
     setSelectedApp(app._id);
-
-    // Scale
-    const aW = app.data.size.width + 60; // Border Buffer
-    const aH = app.data.size.height + 100; // Border Buffer
-    const wW = window.innerWidth;
-    const wH = window.innerHeight;
-    const sX = wW / aW;
-    const sY = wH / aH;
-    const zoom = Math.min(sX, sY);
-
-    // Position
-    let aX = -app.data.position.x + 20;
-    let aY = -app.data.position.y + 20;
-    const w = app.data.size.width;
-    const h = app.data.size.height;
-    if (sX >= sY) {
-      aX = aX - w / 2 + wW / 2 / zoom;
-    } else {
-      aY = aY - h / 2 + wH / 2 / zoom;
-    }
-    const x = aX;
-    const y = aY;
-
-    setBoardPosition({ x, y });
-    setScale(zoom);
+    fitApps([app._id]);
   };
 
   return (
-    <Box alignItems="center" display="flex">
+    <Box alignItems="center" display="flex" flexDir="column" gap="2">
       <Box
         width={mapWidth}
         height={mapHeight}
@@ -193,6 +155,9 @@ export function NavigationMenu() {
           )}
         </Box>
       </Box>
+      <Button size="xs" colorScheme={user?.data.color} width="100% " variant="outline" onClick={fitAllApps}>
+        Show All Apps
+      </Button>
     </Box>
   );
 }

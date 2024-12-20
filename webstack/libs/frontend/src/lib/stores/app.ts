@@ -130,6 +130,56 @@ const AppStore = create<Applications>()((set, get) => {
         }
       }
     },
+    subToBoard: async (boardId: AppSchema['boardId']) => {
+      if (!SAGE3Ability.canCurrentUser('read', 'apps')) return;
+      set({ apps: [], fetched: false });
+      const apps = await APIHttp.QUERY<App>('/apps', { boardId });
+      if (apps.success) {
+        set({ apps: apps.data, fetched: true });
+      } else {
+        set({ error: { msg: apps.message || 'subscription error' } });
+        return;
+      }
+
+      // Unsubscribe old subscription
+      if (appsSub) {
+        appsSub();
+        appsSub = null;
+      }
+
+      // const route = `/subscription/boards/${boardId}`;
+      const route = `/apps?boardId=${boardId}`;
+      // Socket Listenting to updates from server about the current user
+      appsSub = await SocketAPI.subscribe<App>(route, (message) => {
+        if (message.col !== 'APPS') return;
+        switch (message.type) {
+          case 'CREATE': {
+            const docs = message.doc as App[];
+            set({ apps: [...get().apps, ...docs] });
+            break;
+          }
+          case 'UPDATE': {
+            const docs = message.doc as App[];
+            const apps = [...get().apps];
+            docs.forEach((doc) => {
+              const idx = apps.findIndex((el) => el._id === doc._id);
+              if (idx > -1) {
+                apps[idx] = doc;
+              }
+            });
+            set({ apps: apps });
+            break;
+          }
+          case 'DELETE': {
+            const docs = message.doc as App[];
+            const ids = docs.map((d) => d._id);
+            const apps = [...get().apps];
+            const remainingApps = apps.filter((a) => !ids.includes(a._id));
+            set({ apps: remainingApps });
+          }
+        }
+      });
+    },
     unsubToBoard: (uid: string) => {
       // Unsubscribe old subscription
       if (appsSub) {
@@ -246,56 +296,7 @@ const AppStore = create<Applications>()((set, get) => {
         get().createBatch(newApps);
       }
     },
-    subToBoard: async (boardId: AppSchema['boardId']) => {
-      if (!SAGE3Ability.canCurrentUser('read', 'apps')) return;
-      set({ apps: [], fetched: false });
-      const apps = await APIHttp.QUERY<App>('/apps', { boardId });
-      if (apps.success) {
-        set({ apps: apps.data, fetched: true });
-      } else {
-        set({ error: { msg: apps.message || 'subscription error' } });
-        return;
-      }
 
-      // Unsubscribe old subscription
-      if (appsSub) {
-        appsSub();
-        appsSub = null;
-      }
-
-      // const route = `/subscription/boards/${boardId}`;
-      const route = `/apps?boardId=${boardId}`;
-      // Socket Listenting to updates from server about the current user
-      appsSub = await SocketAPI.subscribe<App>(route, (message) => {
-        if (message.col !== 'APPS') return;
-        switch (message.type) {
-          case 'CREATE': {
-            const docs = message.doc as App[];
-            set({ apps: [...get().apps, ...docs] });
-            break;
-          }
-          case 'UPDATE': {
-            const docs = message.doc as App[];
-            const apps = [...get().apps];
-            docs.forEach((doc) => {
-              const idx = apps.findIndex((el) => el._id === doc._id);
-              if (idx > -1) {
-                apps[idx] = doc;
-              }
-            });
-            set({ apps: apps });
-            break;
-          }
-          case 'DELETE': {
-            const docs = message.doc as App[];
-            const ids = docs.map((d) => d._id);
-            const apps = [...get().apps];
-            const remainingApps = apps.filter((a) => !ids.includes(a._id));
-            set({ apps: remainingApps });
-          }
-        }
-      });
-    },
     async fetchBoardApps(boardId: AppSchema['boardId']) {
       if (!SAGE3Ability.canCurrentUser('read', 'apps')) return;
       const apps = await APIHttp.QUERY<App>('/apps', { boardId });
