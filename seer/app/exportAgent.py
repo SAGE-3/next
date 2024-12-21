@@ -194,7 +194,8 @@ class ExportAgent:
 
             if app_type == "CodeEditor":
                 text = app.get("data", {}).get("state", {}).get("content")
-                  # init the dictionary for this app type if it doesnt exist
+                
+                # init the dictionary for this app type if it doesnt exist
                 if app_type not in board_layout:
                     board_layout[app_type] = {}
 
@@ -246,6 +247,34 @@ class ExportAgent:
             success=True,
             actions=[],
         )
+
+        # Create the stickie note with AI response
+        stickie_state = {
+            "text": report,
+            "fontSize": 24,
+            "color": "purple",
+        }
+
+        # get the position for the stickie
+        stickie_data = {
+            "title": "Summary of the Board",
+            "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+            "size": {"width": 400, "height": 400, "depth": 0},
+        }
+
+        # Create stickie note via PS3 API
+        try:
+            stickie_response = await self.ps3.create_app(
+                room_id,
+                board_id,
+                "Stickie",
+                stickie_state,
+                stickie_data
+            )
+            self.logger.info("Stickie note created successfully:", stickie_response)
+        except Exception as e:
+            self.logger.error("Failed to create stickie note:", e)
+
         return export_return
     
 
